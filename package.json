@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "start": "next start -p $PORT",
+    "start": "cross-env PORT=$PORT next start",
     "lint": "next lint"
   },
   "dependencies": {
