@@ -37,12 +37,14 @@ export default async function handler(req, res) {
         const { messages, stream } = req.body; // Assuming the body contains a "message" field
         console.log("Request body:", req.body); // Imprime el contenido del body
         try {
-            // We do not manage chat history for demonstration purpose.
+            // Filtrar mensajes para eliminar aquellos con rol 'system'
+            const filteredMessages = messages.filter(message => message.role !== 'system');
+            
             // Find the last user conversation. 
-            const lastUserMessage = messages.findLast(message => message.role === 'user');
+            const lastUserMessage = filteredMessages.findLast(message => message.role === 'user');
             console.log("Last user message:", lastUserMessage); // Imprime el contenido del último mensaje
             const thread = await openai.beta.threads.create({
-                messages: messages // Enviar todos los mensajes para mantener el contexto
+                messages: filteredMessages // Enviar todos los mensajes filtrados para mantener el contexto
             });
 
             // We use the createAndStream SDK helper to create a run with
