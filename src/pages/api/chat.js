@@ -146,6 +146,14 @@ export default async function handler(req, res) {
                             message: 'Se requiere una acción adicional para completar el pedido.',
                             action: orderResult.requires_action
                         });
+                    } else {
+                        console.log("Order does not require additional action:", orderResult);
+                        // Confirmar el pedido si no se requiere ninguna acción adicional
+                        return res.status(200).json({
+                            status: 'success',
+                            message: 'Pedido confirmado exitosamente.',
+                            order: orderResult
+                        });
                     }
                 }
             }
