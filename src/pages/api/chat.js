@@ -42,10 +42,7 @@ export default async function handler(req, res) {
             const lastUserMessage = messages.findLast(message => message.role === 'user');
             console.log("Last user message:", lastUserMessage); // Imprime el contenido del último mensaje
             const thread = await openai.beta.threads.create({
-                messages: [{
-                    role: lastUserMessage.role,
-                    content: lastUserMessage.content
-                }]
+                messages: messages // Enviar todos los mensajes para mantener el contexto
             });
 
             // We use the createAndStream SDK helper to create a run with
