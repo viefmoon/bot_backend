@@ -119,8 +119,8 @@ export default async function handler(req, res) {
             }
 
             // Manejar la función create_order
-            if (messages && messages.data) {
-                const functionCall = messages.data.find(message => message.function_call);
+            if (messages && Array.isArray(messages)) {
+                const functionCall = messages.find(message => message.function_call);
                 if (functionCall && functionCall.name === 'create_order') {
                     console.log("Function call detected:", functionCall);
                     const { items, phone_number, delivery_address, total_price } = functionCall.parameters;
