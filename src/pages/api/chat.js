@@ -40,11 +40,14 @@ export default async function handler(req, res) {
             // Filtrar mensajes para eliminar aquellos con rol 'system'
             const filteredMessages = messages.filter(message => message.role !== 'system');
             
+            // Limitar el número de mensajes a los últimos 32
+            const limitedMessages = filteredMessages.slice(-32);
+            
             // Find the last user conversation. 
-            const lastUserMessage = filteredMessages.findLast(message => message.role === 'user');
+            const lastUserMessage = limitedMessages.findLast(message => message.role === 'user');
             console.log("Last user message:", lastUserMessage); // Imprime el contenido del último mensaje
             const thread = await openai.beta.threads.create({
-                messages: filteredMessages // Enviar todos los mensajes filtrados para mantener el contexto
+                messages: limitedMessages // Enviar los últimos 32 mensajes filtrados para mantener el contexto
             });
 
             // We use the createAndStream SDK helper to create a run with
