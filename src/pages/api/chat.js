@@ -38,8 +38,8 @@ export default async function handler(req, res) {
         const { messages, stream } = req.body; // Assuming the body contains a "message" field
         console.log("Request body:", req.body); // Imprime el contenido del body
         try {
-            // Filtrar mensajes para eliminar aquellos con rol 'system'
-            const filteredMessages = messages.filter(message => message.role !== 'system');
+            // Filtrar mensajes para eliminar aquellos con rol 'system' o contenido vacío
+            const filteredMessages = messages.filter(message => message.role !== 'system' && message.content.trim() !== '');
             
             // Limitar el número de mensajes a los últimos 32
             const limitedMessages = filteredMessages.slice(-32);
