@@ -42,7 +42,7 @@ export default async function handler(req, res) {
             const filteredMessages = messages.filter(message => message.role !== 'system' && message.content.trim() !== '');
             
             // Limitar el número de mensajes a los últimos 32
-            const limitedMessages = filteredMessages.slice(-32);
+            const limitedMessages = filteredMessages.slice(-10);
             
             // Find the last user conversation. 
             const lastUserMessage = limitedMessages.findLast(message => message.role === 'user');
@@ -135,6 +135,18 @@ export default async function handler(req, res) {
 
                     const orderResult = response.data;
                     console.log(orderResult);
+
+                    // Verificar si se requiere alguna acción adicional
+                    if (orderResult.requires_action) {
+                        console.log("Order requires additional action:", orderResult.requires_action);
+                        // Manejar la acción adicional aquí
+                        // Por ejemplo, podrías enviar una respuesta al cliente indicando la acción requerida
+                        return res.status(200).json({
+                            status: 'requires_action',
+                            message: 'Se requiere una acción adicional para completar el pedido.',
+                            action: orderResult.requires_action
+                        });
+                    }
                 }
             }
 
