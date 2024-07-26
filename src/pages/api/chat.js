@@ -119,21 +119,23 @@ export default async function handler(req, res) {
             }
 
             // Manejar la función create_order
-            const functionCall = messages.data.find(message => message.function_call);
-            if (functionCall && functionCall.name === 'create_order') {
-                console.log("Function call detected:", functionCall);
-                const { items, phone_number, delivery_address, total_price } = functionCall.parameters;
+            if (messages && messages.data) {
+                const functionCall = messages.data.find(message => message.function_call);
+                if (functionCall && functionCall.name === 'create_order') {
+                    console.log("Function call detected:", functionCall);
+                    const { items, phone_number, delivery_address, total_price } = functionCall.parameters;
 
-                // Llamar a la función create_order en tu backend
-                const response = await axios.post(`${process.env.BASE_URL}/api/create_order`, {
-                    items,
-                    phone_number,
-                    delivery_address,
-                    total_price
-                });
+                    // Llamar a la función create_order en tu backend
+                    const response = await axios.post(`${process.env.BASE_URL}/api/create_order`, {
+                        items,
+                        phone_number,
+                        delivery_address,
+                        total_price
+                    });
 
-                const orderResult = response.data;
-                console.log(orderResult);
+                    const orderResult = response.data;
+                    console.log(orderResult);
+                }
             }
 
         } catch (error) {
