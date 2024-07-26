@@ -35,13 +35,17 @@ export default async function handler(req, res) {
         validateApiKey(req, res);
         // Process a POST request
         const { messages, stream } = req.body; // Assuming the body contains a "message" field
+        console.log("Request body:", req.body); // Imprime el contenido del body
         try {
-            // Procesar todos los mensajes en lugar del último
+            // We do not manage chat history for demonstration purpose.
+            // Find the last user conversation. 
+            const lastUserMessage = messages.findLast(message => message.role === 'user');
+            console.log("Last user message:", lastUserMessage); // Imprime el contenido del último mensaje
             const thread = await openai.beta.threads.create({
-                messages: messages.map(message => ({
-                    role: message.role,
-                    content: message.content
-                }))
+                messages: [{
+                    role: lastUserMessage.role,
+                    content: lastUserMessage.content
+                }]
             });
 
             // We use the createAndStream SDK helper to create a run with
