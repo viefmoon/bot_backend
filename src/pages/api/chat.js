@@ -1,4 +1,5 @@
 import OpenAI from "openai";
+import axios from 'axios';
 
 const openai = new OpenAI({
     apiKey: process.env.OPENAI_API_KEY
@@ -116,6 +117,25 @@ export default async function handler(req, res) {
                 console.log(text);
                 res.status(200).send(text);
             }
+
+            // Manejar la función create_order
+            const functionCall = messages.data.find(message => message.function_call);
+            if (functionCall && functionCall.name === 'create_order') {
+                console.log("Function call detected:", functionCall);
+                const { items, phone_number, delivery_address, total_price } = functionCall.parameters;
+
+                // Llamar a la función create_order en tu backend
+                const response = await axios.post(`${process.env.BASE_URL}/api/create_order`, {
+                    items,
+                    phone_number,
+                    delivery_address,
+                    total_price
+                });
+
+                const orderResult = response.data;
+                console.log(orderResult);
+            }
+
         } catch (error) {
             console.error(error);
             res.status(500).json({ error: 'Failed to fetch data from OpenAI' });
