@@ -64,21 +64,28 @@ export default async function handler(req, res) {
                             console.log("Function call detected:", JSON.stringify(toolCall, null, 2));
                             const { items, phone_number, delivery_address, total_price } = JSON.parse(toolCall.function.arguments);
 
-                            // Llamar a la función create_order en tu backend
-                            const response = await axios.post(`${process.env.BASE_URL}/api/create_order`, {
-                                items,
-                                phone_number,
-                                delivery_address,
-                                total_price
-                            });
+                            try {
+                                const response = await axios.post(`${process.env.BASE_URL}/api/create_order`, {
+                                    items,
+                                    phone_number,
+                                    delivery_address,
+                                    total_price
+                                });
 
-                            const orderResult = response.data;
-                            console.log("Order result:", orderResult);
+                                const orderResult = response.data;
+                                console.log("Order result:", orderResult);
 
-                            return {
-                                tool_call_id: toolCall.id,
-                                output: JSON.stringify(orderResult)
-                            };
+                                return {
+                                    tool_call_id: toolCall.id,
+                                    output: JSON.stringify(orderResult)
+                                };
+                            } catch (error) {
+                                console.error("Error creating order:", error.response ? error.response.data : error.message);
+                                return {
+                                    tool_call_id: toolCall.id,
+                                    output: JSON.stringify({ error: "Failed to create order", details: error.message })
+                                };
+                            }
                         }
                     }));
 
