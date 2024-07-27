@@ -57,14 +57,27 @@ export default async function handler(req, res) {
                 if (run.status === 'requires_action') {
                     console.log("Action required:", run.required_action);
                     const toolCalls = run.required_action.submit_tool_outputs.tool_calls;
-                    
+                    console.log("Tool calls:", toolCalls);
+
                     const toolOutputs = await Promise.all(toolCalls.map(async (toolCall) => {
                         if (toolCall.function.name === 'create_order') {
-                            const args = JSON.parse(toolCall.function.arguments);
-                            const result = await createOrder(args);
+                            console.log("Function call detected:", JSON.stringify(toolCall, null, 2));
+                            const { items, phone_number, delivery_address, total_price } = JSON.parse(toolCall.function.arguments);
+
+                            // Llamar a la función create_order en tu backend
+                            const response = await axios.post(`${process.env.BASE_URL}/api/create_order`, {
+                                items,
+                                phone_number,
+                                delivery_address,
+                                total_price
+                            });
+
+                            const orderResult = response.data;
+                            console.log("Order result:", orderResult);
+
                             return {
                                 tool_call_id: toolCall.id,
-                                output: JSON.stringify(result)
+                                output: JSON.stringify(orderResult)
                             };
                         }
                     }));
@@ -81,13 +94,14 @@ export default async function handler(req, res) {
                         run.id
                     );
                 }
+                console.log("Run status:", run.status);
             }
 
             if (run.status === 'completed') {
                 const messages = await openai.beta.threads.messages.list(thread.id);
                 const assistantMessages = messages.data.filter(message => message.role === 'assistant');
                 const text = assistantMessages.map(message => message.content[0].text.value).join('\n');
-                console.log(text);
+                console.log("Assistant response:", text);
                 res.status(200).send(text);
             } else {
                 console.log("Run failed with status:", run.status);
@@ -95,27 +109,11 @@ export default async function handler(req, res) {
             }
 
         } catch (error) {
-            console.error(error);
+            console.error("Error:", error);
             res.status(500).json({ error: 'Failed to fetch data from OpenAI' });
         }
     } else {
         res.setHeader('Allow', ['POST']);
         res.status(405).end(`Method ${req.method} Not Allowed`);
-    }
-}
-
-async function createOrder(args) {
-    const { items, phone_number, delivery_address, total_price } = args;
-    try {
-        const response = await axios.post(`${process.env.BASE_URL}/api/create_order`, {
-            items,
-            phone_number,
-            delivery_address,
-            total_price
-        });
-        return response.data;
-    } catch (error) {
-        console.error("Error creating order:", error);
-        return { error: 'Failed to create order' };
     }
 }
