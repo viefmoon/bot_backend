@@ -99,10 +99,16 @@ export default async function handler(req, res) {
 
             if (run.status === 'completed') {
                 const messages = await openai.beta.threads.messages.list(thread.id);
-                const assistantMessages = messages.data.filter(message => message.role === 'assistant');
-                const text = assistantMessages.map(message => message.content[0].text.value).join('\n');
-                console.log("Assistant response:", text);
-                res.status(200).send(text);
+                // Obtener solo el mensaje más reciente del asistente
+                const lastAssistantMessage = messages.data.find(message => message.role === 'assistant');
+                if (lastAssistantMessage && lastAssistantMessage.content[0].text) {
+                    const text = lastAssistantMessage.content[0].text.value;
+                    console.log("Assistant response:", text);
+                    res.status(200).send(text);
+                } else {
+                    console.log("No assistant response found");
+                    res.status(500).json({ error: 'No assistant response found' });
+                }
             } else {
                 console.log("Run failed with status:", run.status);
                 res.status(500).json({ error: 'Failed to complete the conversation' });
