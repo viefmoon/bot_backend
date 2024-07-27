@@ -42,7 +42,7 @@ export default async function handler(req, res) {
             const filteredMessages = messages.filter(message => message.role !== 'system' && message.content.trim() !== '');
             
             // Limitar el número de mensajes a los últimos 32
-            const limitedMessages = filteredMessages.slice(-32);
+            const limitedMessages = filteredMessages.slice(-4);
             
             // Find the last user conversation. 
             const lastUserMessage = limitedMessages.findLast(message => message.role === 'user');
