@@ -4,7 +4,7 @@
   "private": true,
   "deploymentUrl": "https://openai-assistant-demo.chat-data.com/",
   "scripts": {
-    "dev": "next dev",
+    "dev": "cross-env PORT=$PORT next dev",
     "build": "next build",
     "start": "cross-env PORT=$PORT next start",
     "lint": "next lint"
