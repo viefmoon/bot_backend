@@ -31,109 +31,67 @@ const validateApiKey = (req, res) => {
 };
 
 export default async function handler(req, res) {
-    // Check if the request method is POST
     if (req.method === 'POST') {
         validateApiKey(req, res);
-        // Process a POST request
-        const { messages, stream } = req.body; // Assuming the body contains a "message" field
-        console.log("Request body:", req.body); // Imprime el contenido del body
+        const { messages, stream } = req.body;
+        console.log("Request body:", req.body);
+        
         try {
-            // Filtrar mensajes para eliminar aquellos con rol 'system' o contenido vacío
             const filteredMessages = messages.filter(message => message.role !== 'system' && message.content.trim() !== '');
-            
-            // Limitar el número de mensajes a los últimos 32
             const limitedMessages = filteredMessages.slice(-32);
-            
-            // Find the last user conversation. 
             const lastUserMessage = limitedMessages.findLast(message => message.role === 'user');
-            console.log("Last user message:", lastUserMessage); // Imprime el contenido del último mensaje
+            console.log("Last user message:", lastUserMessage);
+            
             const thread = await openai.beta.threads.create({
-                messages: limitedMessages // Enviar los últimos 32 mensajes filtrados para mantener el contexto
+                messages: limitedMessages
             });
 
-            // We use the createAndStream SDK helper to create a run with
-            // streaming. The SDK provides helpful event listeners to handle 
-            // the streamed response.
-            if (stream) {
-                const run = openai.beta.threads.runs.createAndStream(thread.id, {
-                    assistant_id: process.env.ASSISTANT_ID
-                })
-                    .on('end', () => {
-                        res.end();
-                    })
-                    .on('textDelta', (textDelta, snapshot) => {
-                        res.write(textDelta.value);
-                    })
-                    .on('toolCallCreated', (toolCall) => {
-                        res.write('\n```python\n');
-                    })
-                    .on('toolCallDelta', (toolCallDelta, snapshot) => {
-                        if (toolCallDelta.type === 'code_interpreter') {
-                            if (toolCallDelta.code_interpreter.input) {
-                                res.write(toolCallDelta.code_interpreter.input)
-                            }
-                            if (toolCallDelta.code_interpreter.outputs) {
-                                toolCallDelta.code_interpreter.outputs.forEach(output => {
-                                    if (output.type === "logs") {
-                                        res.write(`\n${output.logs}\n`);
-                                    }
-                                });
-                            }
+            let run = await openai.beta.threads.runs.create(
+                thread.id,
+                {
+                    assistant_id: process.env.ASSISTANT_ID,
+                }
+            );
+
+            while (['queued', 'in_progress', 'requires_action'].includes(run.status)) {
+                if (run.status === 'requires_action') {
+                    console.log("Action required:", run.required_action);
+                    const toolCalls = run.required_action.submit_tool_outputs.tool_calls;
+                    
+                    const toolOutputs = await Promise.all(toolCalls.map(async (toolCall) => {
+                        if (toolCall.function.name === 'create_order') {
+                            const args = JSON.parse(toolCall.function.arguments);
+                            const result = await createOrder(args);
+                            return {
+                                tool_call_id: toolCall.id,
+                                output: JSON.stringify(result)
+                            };
                         }
-                    })
-                    .on('toolCallDone', (toolCallDelta, snapshot) => {
-                        res.write('\n```\n');
-                    });
-            } else {
-                let run = await openai.beta.threads.runs.create(
-                    thread.id,
-                    {
-                        assistant_id: process.env.ASSISTANT_ID,
-                    }
-                );
-                while (['queued', 'in_progress', 'cancelling'].includes(run.status)) {
-                    await new Promise(resolve => setTimeout(resolve, 1000)); // Wait for 1 second
+                    }));
+
+                    run = await openai.beta.threads.runs.submitToolOutputs(
+                        thread.id,
+                        run.id,
+                        { tool_outputs: toolOutputs }
+                    );
+                } else {
+                    await new Promise(resolve => setTimeout(resolve, 1000));
                     run = await openai.beta.threads.runs.retrieve(
-                        run.thread_id,
+                        thread.id,
                         run.id
                     );
                 }
-                const results = [];
-                if (run.status === 'completed') {
-                    const messages = await openai.beta.threads.messages.list(
-                        run.thread_id
-                    );
-                    for (const message of messages.data) {
-                        if (message.role === 'user') {
-                            break;
-                        }
-                        results.push(message);
-                    }
-
-                } else {
-                    console.log(run.status);
-                }
-                const text = results.reverse().map(result => result.content[0].text.value).join('\n');
-                console.log(text);
-                res.status(200).send(text);
             }
 
-            // Manejar la función create_order
-            const functionCall = messages.data.find(message => message.function_call);
-            if (functionCall && functionCall.name === 'create_order') {
-                console.log("Function call detected:", functionCall);
-                const { items, phone_number, delivery_address, total_price } = functionCall.parameters;
-
-                // Llamar a la función create_order en tu backend
-                const response = await axios.post(`${process.env.BASE_URL}/api/create_order`, {
-                    items,
-                    phone_number,
-                    delivery_address,
-                    total_price
-                });
-
-                const orderResult = response.data;
-                console.log(orderResult);
+            if (run.status === 'completed') {
+                const messages = await openai.beta.threads.messages.list(thread.id);
+                const assistantMessages = messages.data.filter(message => message.role === 'assistant');
+                const text = assistantMessages.map(message => message.content[0].text.value).join('\n');
+                console.log(text);
+                res.status(200).send(text);
+            } else {
+                console.log("Run failed with status:", run.status);
+                res.status(500).json({ error: 'Failed to complete the conversation' });
             }
 
         } catch (error) {
@@ -141,8 +99,23 @@ export default async function handler(req, res) {
             res.status(500).json({ error: 'Failed to fetch data from OpenAI' });
         }
     } else {
-        // Handle any cases that are not POST
         res.setHeader('Allow', ['POST']);
         res.status(405).end(`Method ${req.method} Not Allowed`);
+    }
+}
+
+async function createOrder(args) {
+    const { items, phone_number, delivery_address, total_price } = args;
+    try {
+        const response = await axios.post(`${process.env.BASE_URL}/api/create_order`, {
+            items,
+            phone_number,
+            delivery_address,
+            total_price
+        });
+        return response.data;
+    } catch (error) {
+        console.error("Error creating order:", error);
+        return { error: 'Failed to create order' };
     }
 }
