@@ -1,3 +1,10 @@
 export default function handler(req, res) {
-    res.status(200).json({ message: 'Hello from API' })
+  if (req.method === 'GET') {
+    res.status(200).json({ message: 'Hola desde la API (GET)' })
+  } else if (req.method === 'POST') {
+    res.status(200).json({ message: 'Hola desde la API (POST)' })
+  } else {
+    res.setHeader('Allow', ['GET', 'POST'])
+    res.status(405).end(`Método ${req.method} no permitido`)
   }
+}
