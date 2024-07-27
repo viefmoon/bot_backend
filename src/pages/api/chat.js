@@ -36,17 +36,17 @@ export default async function handler(req, res) {
         validateApiKey(req, res);
         // Process a POST request
         const { messages, stream } = req.body; // Assuming the body contains a "message" field
-        console.log("Request body:", JSON.stringify(req.body, null, 2)); // Imprime el contenido del body de manera legible
+        console.log("Request body:", req.body); // Imprime el contenido del body
         try {
             // Filtrar mensajes para eliminar aquellos con rol 'system' o contenido vacío
             const filteredMessages = messages.filter(message => message.role !== 'system' && message.content.trim() !== '');
             
             // Limitar el número de mensajes a los últimos 32
-            const limitedMessages = filteredMessages.slice(-4);
+            const limitedMessages = filteredMessages.slice(-32);
             
             // Find the last user conversation. 
             const lastUserMessage = limitedMessages.findLast(message => message.role === 'user');
-            console.log("Last user message:", JSON.stringify(lastUserMessage, null, 2)); // Imprime el contenido del último mensaje de manera legible
+            console.log("Last user message:", lastUserMessage); // Imprime el contenido del último mensaje
             const thread = await openai.beta.threads.create({
                 messages: limitedMessages // Enviar los últimos 32 mensajes filtrados para mantener el contexto
             });
@@ -119,42 +119,21 @@ export default async function handler(req, res) {
             }
 
             // Manejar la función create_order
-            if (messages && Array.isArray(messages)) {
-                const functionCall = messages.find(message => message.function_call);
-                if (functionCall && functionCall.name === 'create_order') {
-                    console.log("Function call detected:", JSON.stringify(functionCall, null, 2)); // Imprime la llamada a la función de manera legible
-                    const { items, phone_number, delivery_address, total_price } = functionCall.parameters;
+            const functionCall = messages.data.find(message => message.function_call);
+            if (functionCall && functionCall.name === 'create_order') {
+                console.log("Function call detected:", functionCall);
+                const { items, phone_number, delivery_address, total_price } = functionCall.parameters;
 
-                    // Llamar a la función create_order en tu backend
-                    const response = await axios.post(`${process.env.BASE_URL}/api/create_order`, {
-                        items,
-                        phone_number,
-                        delivery_address,
-                        total_price
-                    });
+                // Llamar a la función create_order en tu backend
+                const response = await axios.post(`${process.env.BASE_URL}/api/create_order`, {
+                    items,
+                    phone_number,
+                    delivery_address,
+                    total_price
+                });
 
-                    const orderResult = response.data;
-                    console.log(orderResult);
-
-                    // Verificar si se requiere alguna acción adicional
-                    if (orderResult.requires_action) {
-                        console.log("Order requires additional action:", orderResult.requires_action);
-                        // Manejar la acción adicional aquí
-                        // Por ejemplo, podrías enviar una respuesta al cliente indicando la acción requerida
-                        return res.status(200).json({
-                            status: 'requires_action',
-                            message: 'Se requiere una acción adicional para completar el pedido.',
-                            action: orderResult.requires_action
-                        });
-                    } else {
-                        // Confirmar el pedido si no se requiere ninguna acción adicional
-                        return res.status(200).json({
-                            status: 'success',
-                            message: 'Pedido confirmado exitosamente.',
-                            order: orderResult
-                        });
-                    }
-                }
+                const orderResult = response.data;
+                console.log(orderResult);
             }
 
         } catch (error) {
