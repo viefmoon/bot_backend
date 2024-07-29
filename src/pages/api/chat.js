@@ -33,7 +33,7 @@ const validateApiKey = (req, res) => {
 async function getLatestConversation() {
     const endTimestamp = Date.now();
     const startTimestamp = endTimestamp - 60000; // 1 minuto antes
-    const url = `https://api.chat-data.com/api/v2/get-conversations/${process.env.CHATBOT_ID}?startTimestamp=${startTimestamp}&endTimestamp=${endTimestamp}&start=0&size=1`;
+    const url = `https://api.chat-data.com/api/v2/get-conversations/${process.env.CHATBOT_ID}`;
 
     try {
         const response = await axios.get(url, {
