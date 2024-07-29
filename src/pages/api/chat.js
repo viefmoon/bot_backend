@@ -31,9 +31,7 @@ const validateApiKey = (req, res) => {
 };
 
 async function getLatestConversation() {
-    const endTimestamp = Date.now();
-    const startTimestamp = endTimestamp - 60000; // 1 minuto antes
-    const url = `https://api.chat-data.com/api/v2/get-conversations/${process.env.CHATBOT_ID}`;
+    const url = `https://api.chat-data.com/api/v2/get-conversations/${process.env.CHATBOT_ID}?start=0&size=1`;
 
     try {
         const response = await axios.get(url, {
@@ -63,6 +61,7 @@ export default async function handler(req, res) {
             const latestConversation = await getLatestConversation();
             let phoneNumber = null;
             if (latestConversation) {
+                console.log("Latest conversation:", latestConversation);
                 phoneNumber = latestConversation.conversationId;
                 console.log("Número de teléfono del cliente:", phoneNumber);
             } else {
