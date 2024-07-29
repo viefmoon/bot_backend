@@ -56,7 +56,7 @@ export default async function handler(req, res) {
     if (req.method === 'POST') {
         validateApiKey(req, res);
         const { messages, stream } = req.body;
-        console.log("Request body:", req);
+        console.log("Request body:", req.body);
         
         try {
             // Obtener la última conversación
