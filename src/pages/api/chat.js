@@ -30,6 +30,28 @@ const validateApiKey = (req, res) => {
     }
 };
 
+async function getLatestConversation() {
+    const endTimestamp = Date.now();
+    const startTimestamp = endTimestamp - 60000; // 1 minuto antes
+    const url = `https://api.chat-data.com/api/v2/get-conversations/${process.env.CHATBOT_ID}?startTimestamp=${startTimestamp}&endTimestamp=${endTimestamp}&start=0&size=1`;
+
+    try {
+        const response = await axios.get(url, {
+            headers: {
+                'Authorization': `Bearer ${process.env.CHAT_DATA_API_TOKEN}`
+            }
+        });
+
+        if (response.data.conversations && response.data.conversations.length > 0) {
+            return response.data.conversations[0];
+        }
+        return null;
+    } catch (error) {
+        console.error("Error al obtener la última conversación:", error);
+        return null;
+    }
+}
+
 export default async function handler(req, res) {
     if (req.method === 'POST') {
         validateApiKey(req, res);
@@ -37,6 +59,16 @@ export default async function handler(req, res) {
         console.log("Request body:", req);
         
         try {
+            // Obtener la última conversación
+            const latestConversation = await getLatestConversation();
+            let phoneNumber = null;
+            if (latestConversation) {
+                phoneNumber = latestConversation.conversationId;
+                console.log("Número de teléfono del cliente:", phoneNumber);
+            } else {
+                console.log("No se pudo obtener la última conversación");
+            }
+
             const filteredMessages = messages.filter(message => message.role !== 'system' && message.content.trim() !== '');
             const limitedMessages = filteredMessages.slice(-10);
             const lastUserMessage = limitedMessages.findLast(message => message.role === 'user');
