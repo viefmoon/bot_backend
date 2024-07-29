@@ -34,11 +34,11 @@ export default async function handler(req, res) {
     if (req.method === 'POST') {
         validateApiKey(req, res);
         const { messages, stream } = req.body;
-        console.log("Request body:", req.body);
+        console.log("Request body:", req);
         
         try {
             const filteredMessages = messages.filter(message => message.role !== 'system' && message.content.trim() !== '');
-            const limitedMessages = filteredMessages.slice(-32);
+            const limitedMessages = filteredMessages.slice(-10);
             const lastUserMessage = limitedMessages.findLast(message => message.role === 'user');
             console.log("Last user message:", lastUserMessage);
             
