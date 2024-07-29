@@ -57,6 +57,9 @@ export default async function handler(req, res) {
         console.log("Request body:", req.body);
         
         try {
+            // Esperar 2 segundos antes de obtener la última conversación
+            await new Promise(resolve => setTimeout(resolve, 2000));
+            
             // Obtener la última conversación
             const latestConversation = await getLatestConversation();
             let phoneNumber = null;
