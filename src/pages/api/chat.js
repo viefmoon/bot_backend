@@ -61,7 +61,8 @@ export default async function handler(req, res) {
             const latestConversation = await getLatestConversation();
             let phoneNumber = null;
             if (latestConversation) {
-                console.log("Latest conversation:", latestConversation);
+                const lastMessage = latestConversation.messages[latestConversation.messages.length - 1];
+                console.log("Último mensaje de la conversación:", lastMessage);
                 phoneNumber = latestConversation.conversationId;
                 console.log("Número de teléfono del cliente:", phoneNumber);
             } else {
