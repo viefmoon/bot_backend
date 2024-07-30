@@ -9,7 +9,7 @@ export default async function handler(req, res) {
         try {
             const estaAbierto = await verificarHorarioAtencion();
             if (!estaAbierto) {
-                return res.status(400).json({ error: 'Lo sentimos, el restaurante está cerrado en este momento.' });
+                return res.status(400).json({ error: 'Lo sentimos, solo podre procesar tu pedido cuando el restaurante este abierto.' });
             }
 
             const { items, phone_number, delivery_address, total_price } = req.body;

@@ -86,14 +86,6 @@ export default async function handler(req, res) {
                             const { items, phone_number, delivery_address, total_price } = JSON.parse(toolCall.function.arguments);
 
                             try {
-                                const estaAbierto = await verificarHorarioAtencion();
-                                if (!estaAbierto) {
-                                    return {
-                                        tool_call_id: toolCall.id,
-                                        output: JSON.stringify({ error: "Lo sentimos, el restaurante está cerrado en este momento." })
-                                    };
-                                }
-
                                 const response = await axios.post(`${process.env.BASE_URL}/api/create_order`, {
                                     items,
                                     phone_number,
