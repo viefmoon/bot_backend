@@ -58,7 +58,7 @@ export default async function handler(req, res) {
         
         try {
             // Esperar 2 segundos antes de obtener la última conversación
-            await new Promise(resolve => setTimeout(resolve, 30000));
+            await new Promise(resolve => setTimeout(resolve, 1000));
             
             // Obtener la última conversación
             const latestConversation = await getLatestConversation();
@@ -146,6 +146,20 @@ export default async function handler(req, res) {
                 if (lastAssistantMessage && lastAssistantMessage.content[0].text) {
                     const text = lastAssistantMessage.content[0].text.value;
                     console.log("Assistant response:", text);
+
+                    // Obtener la última conversación y el número de teléfono aquí
+                    await new Promise(resolve => setTimeout(resolve, 1000));
+                    const latestConversation = await getLatestConversation();
+                    let phoneNumber = null;
+                    if (latestConversation) {
+                        const lastMessage = latestConversation.messages[latestConversation.messages.length - 2];
+                        console.log("Último mensaje de la conversación:", lastMessage);
+                        phoneNumber = latestConversation.conversationId;
+                        console.log("Número de teléfono del cliente:", phoneNumber);
+                    } else {
+                        console.log("No se pudo obtener la última conversación");
+                    }
+
                     res.status(200).send(text);
                 } else {
                     console.log("No assistant response found");
