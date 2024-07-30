@@ -126,26 +126,30 @@ export default async function handler(req, res) {
 
             if (run.status === 'completed') {
                 const messages = await openai.beta.threads.messages.list(thread.id);
-                // Obtener solo el mensaje más reciente del asistente
                 const lastAssistantMessage = messages.data.find(message => message.role === 'assistant');
                 if (lastAssistantMessage && lastAssistantMessage.content[0].text) {
                     const text = lastAssistantMessage.content[0].text.value;
                     console.log("Assistant response:", text);
 
-                    // Obtener la última conversación y el número de teléfono aquí
-                    await new Promise(resolve => setTimeout(resolve, 1000));
-                    const latestConversation = await getLatestConversation();
-                    let phoneNumber = null;
-                    if (latestConversation) {
-                        const lastMessage = latestConversation.messages[latestConversation.messages.length - 2];
-                        console.log("Último mensaje de la conversación:", lastMessage);
-                        phoneNumber = latestConversation.conversationId;
-                        console.log("Número de teléfono del cliente:", phoneNumber);
-                    } else {
-                        console.log("No se pudo obtener la última conversación");
-                    }
-
+                    // Enviar la respuesta inmediatamente
                     res.status(200).send(text);
+
+                    // Obtener la última conversación después de enviar la respuesta
+                    setTimeout(async () => {
+                        try {
+                            const latestConversation = await getLatestConversation();
+                            if (latestConversation) {
+                                const lastMessage = latestConversation.messages[latestConversation.messages.length - 1];
+                                console.log("Último mensaje de la conversación:", lastMessage);
+                                const phoneNumber = latestConversation.conversationId;
+                                console.log("Número de teléfono del cliente:", phoneNumber);
+                            } else {
+                                console.log("No se pudo obtener la última conversación");
+                            }
+                        } catch (error) {
+                            console.error("Error al obtener la última conversación:", error);
+                        }
+                    }, 1000);
                 } else {
                     console.log("No assistant response found");
                     res.status(500).json({ error: 'No assistant response found' });
