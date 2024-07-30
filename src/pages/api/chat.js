@@ -57,21 +57,6 @@ export default async function handler(req, res) {
         console.log("Request body:", req.body);
         
         try {
-            // Esperar 2 segundos antes de obtener la última conversación
-            await new Promise(resolve => setTimeout(resolve, 1000));
-            
-            // Obtener la última conversación
-            const latestConversation = await getLatestConversation();
-            let phoneNumber = null;
-            if (latestConversation) {
-                const lastMessage = latestConversation.messages[latestConversation.messages.length - 1];
-                console.log("Último mensaje de la conversación:", lastMessage);
-                phoneNumber = latestConversation.conversationId;
-                console.log("Número de teléfono del cliente:", phoneNumber);
-            } else {
-                console.log("No se pudo obtener la última conversación");
-            }
-
             const filteredMessages = messages.filter(message => message.role !== 'system' && message.content.trim() !== '');
             const limitedMessages = filteredMessages.slice(-10);
             const lastUserMessage = limitedMessages.findLast(message => message.role === 'user');
