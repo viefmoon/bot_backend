@@ -58,7 +58,7 @@ export default async function handler(req, res) {
         
         try {
             // Esperar 2 segundos antes de obtener la última conversación
-            await new Promise(resolve => setTimeout(resolve, 10000));
+            await new Promise(resolve => setTimeout(resolve, 30000));
             
             // Obtener la última conversación
             const latestConversation = await getLatestConversation();
