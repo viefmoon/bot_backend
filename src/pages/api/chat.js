@@ -134,6 +134,7 @@ export default async function handler(req, res) {
 
                     // Enviar la respuesta inmediatamente
                     res.status(200).send(text);
+                    res.status(200).send(text);
 
                     // Obtener la última conversación después de enviar la respuesta
                     setTimeout(async () => {
