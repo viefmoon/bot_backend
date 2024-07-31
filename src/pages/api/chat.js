@@ -143,14 +143,21 @@ export default async function handler(req, res) {
                             }
                         } else if (toolCall.function.name === 'create_order') {
                             console.log("Function call detected:", JSON.stringify(toolCall, null, 2));
-                            const { items, phone_number, delivery_address, total_price } = JSON.parse(toolCall.function.arguments);
+                            const { order_type, items, phone_number, delivery_address, pickup_name } = JSON.parse(toolCall.function.arguments);
+                            const clientId = findClientId(req.body.messages);
+
+                            // Calcular el precio total
+                            const total_price = items.reduce((total, item) => total + (item.price * item.quantity), 0);
 
                             try {
                                 const response = await axios.post(`${process.env.BASE_URL}/api/create_order`, {
+                                    order_type,
                                     items,
                                     phone_number,
                                     delivery_address,
-                                    total_price
+                                    pickup_name,
+                                    total_price,
+                                    client_id: clientId
                                 });
 
                                 const orderResult = response.data;
