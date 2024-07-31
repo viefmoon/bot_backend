@@ -86,6 +86,17 @@ async function generateUniqueClientId() {
     return clientId;
 }
 
+// Añadir esta función después de findClientId
+async function getCustomerData(clientId) {
+    try {
+        const response = await axios.get(`${process.env.BASE_URL}/api/get_customer_data?client_id=${clientId}`);
+        return response.data;
+    } catch (error) {
+        console.error("Error al obtener datos del cliente:", error);
+        return null;
+    }
+}
+
 export default async function handler(req, res) {
     if (req.method === 'POST') {
         validateApiKey(req, res);
@@ -116,7 +127,21 @@ export default async function handler(req, res) {
                     console.log("Tool calls:", toolCalls);
 
                     const toolOutputs = await Promise.all(toolCalls.map(async (toolCall) => {
-                        if (toolCall.function.name === 'create_order') {
+                        if (toolCall.function.name === 'get_customer_data') {
+                            const clientId = findClientId(req.body.messages);
+                            if (clientId) {
+                                const customerData = await getCustomerData(clientId);
+                                return {
+                                    tool_call_id: toolCall.id,
+                                    output: JSON.stringify(customerData)
+                                };
+                            } else {
+                                return {
+                                    tool_call_id: toolCall.id,
+                                    output: JSON.stringify({ error: "No se encontró ID de cliente" })
+                                };
+                            }
+                        } else if (toolCall.function.name === 'create_order') {
                             console.log("Function call detected:", JSON.stringify(toolCall, null, 2));
                             const { items, phone_number, delivery_address, total_price } = JSON.parse(toolCall.function.arguments);
 
@@ -169,37 +194,42 @@ export default async function handler(req, res) {
 
                     // Buscar el identificador de cliente en los mensajes anteriores
                     let clientId = findClientId(req.body.messages);
+                    let isNewClient = false;
                     
                     if (!clientId) {
                         // Generar nuevo identificador único si no se encuentra
                         clientId = await generateUniqueClientId();
                         text += `\n\nTu identificador de cliente es: ${clientId}`;
+                        isNewClient = true;
                     }
 
                     // Enviar la respuesta inmediatamente
                     res.status(200).send(text);
 
-                    // Obtener la última conversación después de enviar la respuesta
-                    setTimeout(async () => {
-                        try {
-                            const latestConversation = await getLatestConversation();
-                            if (latestConversation) {
-                                console.log("Latest conversation:", latestConversation);
-                                const phoneNumber = latestConversation.conversationId;
-                                console.log("Número de teléfono del cliente:", phoneNumber);
+                    // Asociar el número de teléfono solo para nuevos clientes
+                    if (isNewClient) {
+                        setTimeout(async () => {
+                            try {
+                                const latestConversation = await getLatestConversation();
+                                if (latestConversation) {
+                                    console.log("Latest conversation:", latestConversation);
+                                    const phoneNumber = latestConversation.conversationId;
+                                    console.log("Número de teléfono del cliente:", phoneNumber);
 
-                                // Asociar el número de teléfono con el identificador de cliente
-                                await Customer.upsert({
-                                    phone_number: phoneNumber,
-                                    client_id: clientId
-                                });
-                            } else {
-                                console.log("No se pudo obtener la última conversación");
+                                    // Asociar el número de teléfono con el identificador de cliente
+                                    await Customer.upsert({
+                                        phone_number: phoneNumber,
+                                        client_id: clientId
+                                    });
+                                    console.log("Nuevo cliente asociado:", clientId, phoneNumber);
+                                } else {
+                                    console.log("No se pudo obtener la última conversación para el nuevo cliente");
+                                }
+                            } catch (error) {
+                                console.error("Error al obtener la última conversación para el nuevo cliente:", error);
                             }
-                        } catch (error) {
-                            console.error("Error al obtener la última conversación:", error);
-                        }
-                    }, 1000);
+                        }, 1000);
+                    }
                 } else {
                     console.log("No assistant response found");
                     res.status(500).json({ error: 'No assistant response found' });

@@ -6,13 +6,13 @@ export default async function handler(req, res) {
 
     if (req.method === 'GET') {
         try {
-            const { phone_number } = req.query;
+            const { client_id } = req.query;
 
-            if (!phone_number) {
-                return res.status(400).json({ error: 'Se requiere el número de teléfono.' });
+            if (!client_id) {
+                return res.status(400).json({ error: 'Se requiere el ID del cliente.' });
             }
 
-            const customer = await Customer.findOne({ where: { phone_number } });
+            const customer = await Customer.findOne({ where: { client_id } });
 
             if (customer) {
                 res.status(200).json({
