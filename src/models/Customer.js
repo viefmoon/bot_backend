@@ -15,6 +15,11 @@ const Customer = sequelize.define('Customer', {
         type: DataTypes.STRING,
         allowNull: true,
     },
+    client_id: {
+        type: DataTypes.STRING(6),
+        allowNull: false,
+        unique: true,
+    },
 }, {
     timestamps: true,
 });

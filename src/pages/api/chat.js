@@ -1,6 +1,7 @@
 import OpenAI from "openai";
 import axios from 'axios';
 const { verificarHorarioAtencion } = require('../../utils/timeUtils');
+const Customer = require('../../models/Customer');
 
 const openai = new OpenAI({
     apiKey: process.env.OPENAI_API_KEY
@@ -51,13 +52,47 @@ async function getLatestConversation() {
     }
 }
 
+function findClientId(messages) {
+    const clientIdRegex = /Tu identificador de cliente es: ([A-Z0-9]{6})/;
+    for (let i = messages.length - 1; i >= 0; i--) {
+        if (messages[i].role === 'assistant') {
+            const match = messages[i].content.match(clientIdRegex);
+            if (match) {
+                return match[1];
+            }
+        }
+    }
+    return null;
+}
+
+async function generateUniqueClientId() {
+    const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    let clientId;
+    let isUnique = false;
+
+    while (!isUnique) {
+        clientId = '';
+        for (let i = 0; i < 6; i++) {
+            clientId += characters.charAt(Math.floor(Math.random() * characters.length));
+        }
+
+        // Verificar si el ID ya existe en la base de datos
+        const existingCustomer = await Customer.findOne({ where: { client_id: clientId } });
+        if (!existingCustomer) {
+            isUnique = true;
+        }
+    }
+
+    return clientId;
+}
+
 export default async function handler(req, res) {
     if (req.method === 'POST') {
         validateApiKey(req, res);
         const { messages, stream } = req.body;
         console.log("Request body:", req.body);
         
-        try {
+        try { 
             const filteredMessages = messages.filter(message => message.role !== 'system' && message.content.trim() !== '');
             const limitedMessages = filteredMessages.slice(-10);
             const lastUserMessage = limitedMessages.findLast(message => message.role === 'user');
@@ -66,7 +101,7 @@ export default async function handler(req, res) {
             const thread = await openai.beta.threads.create({
                 messages: limitedMessages
             });
-
+ 
             let run = await openai.beta.threads.runs.create(
                 thread.id,
                 {
@@ -75,7 +110,7 @@ export default async function handler(req, res) {
             );
 
             while (['queued', 'in_progress', 'requires_action'].includes(run.status)) {
-                if (run.status === 'requires_action') {
+                if (run.status === 'requires_action') { 
                     console.log("Action required:", run.required_action);
                     const toolCalls = run.required_action.submit_tool_outputs.tool_calls;
                     console.log("Tool calls:", toolCalls);
@@ -129,11 +164,19 @@ export default async function handler(req, res) {
                 const messages = await openai.beta.threads.messages.list(thread.id);
                 const lastAssistantMessage = messages.data.find(message => message.role === 'assistant');
                 if (lastAssistantMessage && lastAssistantMessage.content[0].text) {
-                    const text = lastAssistantMessage.content[0].text.value;
+                    let text = lastAssistantMessage.content[0].text.value;
                     console.log("Assistant response:", text);
 
+                    // Buscar el identificador de cliente en los mensajes anteriores
+                    let clientId = findClientId(req.body.messages);
+                    
+                    if (!clientId) {
+                        // Generar nuevo identificador único si no se encuentra
+                        clientId = await generateUniqueClientId();
+                        text += `\n\nTu identificador de cliente es: ${clientId}`;
+                    }
+
                     // Enviar la respuesta inmediatamente
-                    res.status(200).send(text);
                     res.status(200).send(text);
 
                     // Obtener la última conversación después de enviar la respuesta
@@ -142,10 +185,14 @@ export default async function handler(req, res) {
                             const latestConversation = await getLatestConversation();
                             if (latestConversation) {
                                 console.log("Latest conversation:", latestConversation);
-                                const lastMessage = latestConversation.messages[latestConversation.messages.length - 2];
-                                console.log("Último mensaje de la conversación:", lastMessage);
                                 const phoneNumber = latestConversation.conversationId;
                                 console.log("Número de teléfono del cliente:", phoneNumber);
+
+                                // Asociar el número de teléfono con el identificador de cliente
+                                await Customer.upsert({
+                                    phone_number: phoneNumber,
+                                    client_id: clientId
+                                });
                             } else {
                                 console.log("No se pudo obtener la última conversación");
                             }
