@@ -53,7 +53,7 @@ async function getLatestConversation() {
 }
 
 function findClientId(messages) {
-    const clientIdRegex = /Tu identificador de cliente es: ([A-Z0-9]{6})/;
+    const clientIdRegex = /Tu identificador de cliente es este: ([A-Z0-9]{6})/;
     for (let i = messages.length - 1; i >= 0; i--) {
         if (messages[i].role === 'assistant') {
             const match = messages[i].content.match(clientIdRegex);

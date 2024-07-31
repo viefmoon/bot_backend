@@ -13,7 +13,7 @@ Order.hasMany(Item, { foreignKey: 'orderId' });
 Item.belongsTo(Order, { foreignKey: 'orderId' });
 
 // Sincronizar todos los modelos con la base de datos
-sequelize.sync({ force: true })
+sequelize.sync({ force: true })  // Usa { alter: true } si no quieres eliminar datos existentes
     .then(() => {
         console.log('La base de datos ha sido sincronizada.');
     })

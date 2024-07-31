@@ -26,13 +26,4 @@ const Order = sequelize.define('Order', {
     timestamps: true,
 });
 
-// Sincronizar el modelo con la base de datos
-sequelize.sync({ alter: true })
-    .then(() => {
-        console.log('La tabla Orders ha sido actualizada.');
-    })
-    .catch(error => {
-        console.error('Error al sincronizar la tabla Orders:', error);
-    });
-
 module.exports = Order;
