@@ -54,7 +54,7 @@ async function getLatestConversation() {
 }
 
 function findClientId(messages) {
-    const clientIdRegex = /Tu identificador de cliente es este: ([A-Z0-9]{6})/;
+    const clientIdRegex = /Tu identificador de cliente: ([A-Z0-9]{6})/;
     for (let i = messages.length - 1; i >= 0; i--) {
         if (messages[i].role === 'assistant') {
             const match = messages[i].content.match(clientIdRegex);
@@ -212,7 +212,7 @@ export default async function handler(req, res) {
                     if (!clientId) {
                         // Generar nuevo identificador único si no se encuentra
                         clientId = await generateUniqueClientId();
-                        text += `\n\nTu identificador de cliente es: ${clientId}`;
+                        text += `\n\nTu identificador de cliente: ${clientId}`;
                         isNewClient = true;
                     }
 
