@@ -1,5 +1,6 @@
-import OpenAI from "openai";
-import axios from 'axios';
+const { connectDB } = require('../../lib/db');
+const OpenAI = require('openai');
+const axios = require('axios');
 const { verificarHorarioAtencion } = require('../../utils/timeUtils');
 const Customer = require('../../models/Customer');
 
@@ -132,6 +133,8 @@ async function createOrder(toolCall, req) {
 }
 
 export default async function handler(req, res) {
+    await connectDB(); // Conectar a la base de datos
+
     if (req.method === 'POST') {
         validateApiKey(req, res);
         const { messages, stream } = req.body;
