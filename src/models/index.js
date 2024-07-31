@@ -1,9 +1,4 @@
-const { Sequelize } = require('sequelize');
-const sequelize = new Sequelize('app', 'tu_usuario', 'tu_contraseña', {
-    host: 'localhost',
-    dialect: 'mysql',
-});
-
+const { sequelize } = require('../lib/db');
 const Customer = require('./Customer');
 const Item = require('./Item');
 const Order = require('./Order');
@@ -13,12 +8,15 @@ Order.hasMany(Item, { foreignKey: 'orderId' });
 Item.belongsTo(Order, { foreignKey: 'orderId' });
 
 // Sincronizar todos los modelos con la base de datos
-sequelize.sync({ force: true })  // Usa { alter: true } si no quieres eliminar datos existentes
-    .then(() => {
+const syncModels = async () => {
+    try {
+        await sequelize.sync({ alter: true });  // Usa { force: true } si quieres eliminar datos existentes
         console.log('La base de datos ha sido sincronizada.');
-    })
-    .catch(error => {
+    } catch (error) {
         console.error('Error al sincronizar la base de datos:', error);
-    });
+    }
+};
+
+syncModels();
 
 module.exports = { Customer, Item, Order, sequelize };
