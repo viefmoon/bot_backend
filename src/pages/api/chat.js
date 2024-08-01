@@ -1,7 +1,5 @@
-const { connectDB } = require('../../lib/db');
 const OpenAI = require('openai');
 const axios = require('axios');
-const { verificarHorarioAtencion } = require('../../utils/timeUtils');
 const Customer = require('../../models/Customer');
 
 const openai = new OpenAI({
@@ -142,6 +140,7 @@ export default async function handler(req, res) {
         try { 
             const filteredMessages = messages.filter(message => message.role !== 'system' && message.content.trim() !== '');
             const limitedMessages = filteredMessages.slice(-10);
+            console.log("Limited messages:", limitedMessages);
             const lastUserMessage = limitedMessages.findLast(message => message.role === 'user');
             console.log("Last user message:", lastUserMessage);
             

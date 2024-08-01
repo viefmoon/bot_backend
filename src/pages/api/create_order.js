@@ -36,10 +36,11 @@ export default async function handler(req, res) {
                 pickup_name: order_type === 'pickup' ? pickup_name : null,
                 total_price,
                 client_id,
+                status: 'created', // Añadimos el estado 'created'
             });
 
             // Crear los items asociados a la orden
-            await Promise.all(items.map(item => 
+            const createdItems = await Promise.all(items.map(item => 
                 Item.create({
                     name: item.name,
                     quantity: item.quantity,
@@ -66,7 +67,24 @@ export default async function handler(req, res) {
                 await Customer.upsert(updateData);
             }
 
-            res.status(201).json({ message: 'Order created successfully', order: newOrder });
+            res.status(201).json({ 
+                mensaje: 'Orden creada exitosamente', 
+                orden: {
+                    id: newOrder.id,
+                    tipo: newOrder.order_type,
+                    estado: newOrder.status,
+                    telefono: newOrder.phone_number,
+                    direccion_entrega: newOrder.delivery_address,
+                    nombre_recogida: newOrder.pickup_name,
+                    precio_total: newOrder.total_price,
+                    id_cliente: newOrder.client_id,
+                    items: createdItems.map(item => ({
+                        nombre: item.name,
+                        cantidad: item.quantity,
+                        precio: item.price
+                    }))
+                }
+            });
         } catch (error) {
             console.error('Error al crear la orden:', error);
             res.status(500).json({ error: 'Error al crear la orden' });
