@@ -138,7 +138,6 @@ export default async function handler(req, res) {
     if (req.method === 'POST') {
         validateApiKey(req, res);
         const { messages, stream } = req.body;
-        console.log("Request body:", req.body);
         
         try { 
             const filteredMessages = messages.filter(message => message.role !== 'system' && message.content.trim() !== '');
@@ -225,7 +224,6 @@ export default async function handler(req, res) {
                             try {
                                 const latestConversation = await getLatestConversation();
                                 if (latestConversation) {
-                                    console.log("Latest conversation:", latestConversation);
                                     const phoneNumber = latestConversation.conversationId;
                                     console.log("Número de teléfono del cliente:", phoneNumber);
 
