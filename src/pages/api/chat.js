@@ -139,7 +139,7 @@ export default async function handler(req, res) {
         
         try { 
             const filteredMessages = messages.filter(message => message.role !== 'system' && message.content.trim() !== '');
-            const limitedMessages = filteredMessages.slice(-1);
+            const limitedMessages = filteredMessages.slice(-15);
             console.log("Limited messages:", limitedMessages);
             const lastUserMessage = limitedMessages.findLast(message => message.role === 'user');
             console.log("Last user message:", lastUserMessage);
