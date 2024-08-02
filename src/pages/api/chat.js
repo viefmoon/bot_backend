@@ -152,22 +152,23 @@ function filterRelevantMessages(messages) {
         if (message.role === 'assistant' && !clientIdMessage) {
             const match = message.content.match(clientIdRegex);
             if (match) {
-                clientIdMessage = message;
-                continue; // Saltamos este mensaje para no añadirlo dos veces
+                clientIdMessage = {
+                    role: 'assistant',
+                    content: `Tu identificador de cliente: ${match[1]}`
+                };
             }
         }
         
         if (message.role === 'user' && keywordsUser.some(keyword => message.content.toLowerCase().includes(keyword))) {
             relevantMessages.unshift(message);
-            break; // Terminamos la búsqueda al encontrar una palabra clave de usuario
+            break;
         } else if (message.role === 'assistant' && keywordsAssistant.some(keyword => message.content.includes(keyword))) {
-            break; // Terminamos la búsqueda si encontramos un mensaje de finalización del asistente
+            break;
         } else {
             relevantMessages.unshift(message);
         }
     }
 
-    // Añadimos el mensaje con el identificador de cliente al principio si se encontró
     if (clientIdMessage) {
         relevantMessages.unshift(clientIdMessage);
     }
