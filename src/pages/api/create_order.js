@@ -62,7 +62,10 @@ export default async function handler(req, res) {
                 }
 
                 try {
-                    const [customer, created] = await Customer.upsert(updateData, { returning: true });
+                    const [customer, created] = await Customer.upsert(updateData, {
+                        where: { id: client_id },
+                        returning: true
+                    });
                     console.log(created ? 'Nuevo cliente creado:' : 'Cliente actualizado:', customer.toJSON());
                 } catch (error) {
                     console.error('Error al actualizar el cliente:', error);
