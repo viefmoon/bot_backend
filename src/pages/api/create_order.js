@@ -86,7 +86,16 @@ export default async function handler(req, res) {
                     nombre_recogida: newOrder.pickup_name,
                     precio_total: newOrder.total_price,
                     id_cliente: newOrder.client_id,
-                    fecha_creacion: newOrder.createdAt, // Añadimos la fecha de creación
+                    fecha_creacion: newOrder.createdAt.toLocaleString('es-MX', {
+                        timeZone: 'America/Mexico_City',
+                        year: 'numeric',
+                        month: '2-digit',
+                        day: '2-digit',
+                        hour: '2-digit',
+                        minute: '2-digit',
+                        second: '2-digit',
+                        hour12: true
+                    }),
                     items: createdItems.map(item => ({
                         nombre: item.name,
                         cantidad: item.quantity,
