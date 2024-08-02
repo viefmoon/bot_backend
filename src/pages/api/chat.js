@@ -136,7 +136,7 @@ async function createOrder(toolCall, req) {
 }
 
 export default async function handler(req, res) {
-    // await connectDB(); // Conectar a la base de datos
+    await connectDB(); // Conectar a la base de datos
 
     if (req.method === 'POST') {
         validateApiKey(req, res);
@@ -163,7 +163,6 @@ export default async function handler(req, res) {
 
             while (['queued', 'in_progress', 'requires_action'].includes(run.status)) {
                 if (run.status === 'requires_action') { 
-                    console.log("Action required:", run.required_action);
                     const toolCalls = run.required_action.submit_tool_outputs.tool_calls;
                     console.log("Tool calls:", toolCalls);
 
