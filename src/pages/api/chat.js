@@ -51,13 +51,18 @@ async function getLatestConversation() {
     }
 }
 
-function findClientId(messages) {
+async function findClientId(messages) {
     const clientIdRegex = /Tu identificador de cliente: ([A-Z0-9]{6})/;
     for (let i = messages.length - 1; i >= 0; i--) {
         if (messages[i].role === 'assistant') {
             const match = messages[i].content.match(clientIdRegex);
             if (match) {
-                return match[1];
+                const clientId = match[1];
+                // Verificar si el ID existe en la base de datos
+                const customer = await Customer.findOne({ where: { client_id: clientId } });
+                if (customer) {
+                    return clientId;
+                }
             }
         }
     }
@@ -210,12 +215,12 @@ export default async function handler(req, res) {
                     let text = lastAssistantMessage.content[0].text.value;
                     console.log("Assistant response:", text);
 
-                    // Buscar el identificador de cliente en los mensajes anteriores
-                    let clientId = findClientId(req.body.messages);
+                    // Buscar el identificador de cliente en los mensajes anteriores y verificar en la base de datos
+                    let clientId = await findClientId(req.body.messages);
                     let isNewClient = false;
                     
                     if (!clientId) {
-                        // Generar nuevo identificador único si no se encuentra
+                        // Generar nuevo identificador único si no se encuentra o no existe en la base de datos
                         clientId = await generateUniqueClientId();
                         text += `\n\nTu identificador de cliente: ${clientId}`;
                         isNewClient = true;
