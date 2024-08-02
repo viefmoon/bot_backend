@@ -1,7 +1,7 @@
 const OpenAI = require('openai');
 const axios = require('axios');
 const Customer = require('../../models/Customer');
-const connectDB = require('../../db');
+const { connectDB } = require('../../lib/db');
 
 const openai = new OpenAI({
     apiKey: process.env.OPENAI_API_KEY
