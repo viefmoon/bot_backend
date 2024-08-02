@@ -1,6 +1,7 @@
 const OpenAI = require('openai');
 const axios = require('axios');
 const Customer = require('../../models/Customer');
+const connectDB = require('../../db');
 
 const openai = new OpenAI({
     apiKey: process.env.OPENAI_API_KEY
@@ -136,6 +137,8 @@ async function createOrder(toolCall, req) {
 }
 
 export default async function handler(req, res) {
+
+    await connectDB();
     if (req.method === 'POST') {
         validateApiKey(req, res);
         const { messages, stream } = req.body;
