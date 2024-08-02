@@ -54,9 +54,10 @@ async function getLatestConversation() {
 
 async function findClientId(messages) {
     const clientIdRegex = /Tu identificador de cliente: ([A-Z0-9]{6})/;
-    for (let i = messages.length - 1; i >= 0; i--) {
-        if (messages[i].role === 'assistant') {
-            const match = messages[i].content.match(clientIdRegex);
+    const relevantMessages = filterRelevantMessages(messages);
+    for (let i = relevantMessages.length - 1; i >= 0; i--) {
+        if (relevantMessages[i].role === 'assistant') {
+            const match = relevantMessages[i].content.match(clientIdRegex);
             if (match) {
                 const clientId = match[1];
                 // Verificar si el ID existe en la base de datos
@@ -102,9 +103,9 @@ async function getCustomerData(clientId) {
     }
 }
 
-async function createOrder(toolCall, req) {
+async function createOrder(toolCall, relevantMessages) {
     const { order_type, items, phone_number, delivery_address, pickup_name } = JSON.parse(toolCall.function.arguments);
-    const clientId = findClientId(req.body.messages);
+    const clientId = findClientId(relevantMessages);
 
     // Calcular el precio total
     const total_price = items.reduce((total, item) => total + (item.price * item.quantity), 0);
@@ -139,12 +140,22 @@ async function createOrder(toolCall, req) {
 function filterRelevantMessages(messages) {
     const keywordsUser = ['olvida lo anterior', 'nuevo pedido', 'quiero ordenar'];
     const keywordsAssistant = ['Tu pedido ha sido generado', 'Gracias por tu orden'];
+    const clientIdRegex = /Tu identificador de cliente: ([A-Z0-9]{6})/;
     const MAX_MESSAGES = 20;
     
     let relevantMessages = [];
+    let clientIdMessage = null;
 
     for (let i = messages.length - 1; i >= 0 && relevantMessages.length < MAX_MESSAGES; i--) {
         const message = messages[i];
+        
+        if (message.role === 'assistant' && !clientIdMessage) {
+            const match = message.content.match(clientIdRegex);
+            if (match) {
+                clientIdMessage = message;
+                continue; // Saltamos este mensaje para no añadirlo dos veces
+            }
+        }
         
         if (message.role === 'user' && keywordsUser.some(keyword => message.content.toLowerCase().includes(keyword))) {
             relevantMessages.unshift(message);
@@ -154,6 +165,11 @@ function filterRelevantMessages(messages) {
         } else {
             relevantMessages.unshift(message);
         }
+    }
+
+    // Añadimos el mensaje con el identificador de cliente al principio si se encontró
+    if (clientIdMessage) {
+        relevantMessages.unshift(clientIdMessage);
     }
 
     return relevantMessages.length > 0 ? relevantMessages : messages.slice(-MAX_MESSAGES);
@@ -191,7 +207,7 @@ export default async function handler(req, res) {
 
                     const toolOutputs = await Promise.all(toolCalls.map(async (toolCall) => {
                         if (toolCall.function.name === 'get_customer_data') {
-                            const clientId = findClientId(req.body.messages);
+                            const clientId = findClientId(relevantMessages);
                             if (clientId) {
                                 const customerData = await getCustomerData(clientId);
                                 return {
@@ -205,7 +221,7 @@ export default async function handler(req, res) {
                                 };
                             }
                         } else if (toolCall.function.name === 'create_order') {
-                            return await createOrder(toolCall, req);
+                            return await createOrder(toolCall, relevantMessages);
                         }
                     }));
 
@@ -238,7 +254,7 @@ export default async function handler(req, res) {
                     console.log("Assistant response:", text);
 
                     // Buscar el identificador de cliente en los mensajes anteriores y verificar en la base de datos
-                    let clientId = await findClientId(req.body.messages);
+                    let clientId = await findClientId(relevantMessages);
                     let isNewClient = false;
                     
                     if (!clientId) {
