@@ -51,10 +51,7 @@ export default async function handler(req, res) {
 
             // Actualizar el cliente
             if (client_id && typeof client_id === 'string') {
-                const updateData = {
-                    phone_number,
-                    client_id,
-                };
+                const updateData = {};
 
                 if (order_type === 'delivery') {
                     updateData.last_delivery_address = delivery_address;
