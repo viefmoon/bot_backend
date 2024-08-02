@@ -136,6 +136,31 @@ async function createOrder(toolCall, req) {
     }
 }
 
+function filterRelevantMessages(messages) {
+    const keywordsUser = ['olvida lo anterior', 'nuevo pedido', 'quiero ordenar'];
+    const keywordsAssistant = ['Tu pedido ha sido generado', 'Gracias por tu orden'];
+    
+    let relevantMessages = [];
+    let foundRelevantContext = false;
+
+    for (let i = messages.length - 1; i >= 0; i--) {
+        const message = messages[i];
+        
+        if (foundRelevantContext) {
+            relevantMessages.unshift(message);
+        } else {
+            if (message.role === 'user' && keywordsUser.some(keyword => message.content.toLowerCase().includes(keyword))) {
+                foundRelevantContext = true;
+                relevantMessages.unshift(message);
+            } else if (message.role === 'assistant' && keywordsAssistant.some(keyword => message.content.includes(keyword))) {
+                break; // Detener la búsqueda si encontramos un mensaje de finalización de orden anterior
+            }
+        }
+    }
+
+    return relevantMessages;
+}
+
 export default async function handler(req, res) {
     await connectDB();
     if (req.method === 'POST') {
@@ -144,11 +169,11 @@ export default async function handler(req, res) {
         
         try { 
             const filteredMessages = messages.filter(message => message.role !== 'system' && message.content.trim() !== '');
-            const limitedMessages = filteredMessages.slice(-15);
-            console.log("Limited messages:", limitedMessages);
+            const relevantMessages = filterRelevantMessages(filteredMessages);
+            console.log("Mensajes relevantes:", relevantMessages);
             
             const thread = await openai.beta.threads.create({
-                messages: limitedMessages
+                messages: relevantMessages
             });
  
             const QUEUE_TIMEOUT = 15000; // 15 segundos
