@@ -1,19 +1,17 @@
 const { Sequelize } = require('sequelize');
 
-const sequelize = new Sequelize(process.env.MYSQL_DATABASE, process.env.MYSQL_USER, process.env.MYSQL_PASSWORD, {
-    host: process.env.MYSQL_HOST,
+const sequelize = new Sequelize(process.env.DATABASE_URL, {
     dialect: 'mysql',
+    logging: false,
 });
 
-const connectDB = async () => {
+async function connectDB() {
     try {
         await sequelize.authenticate();
         console.log('Connection has been established successfully.');
-        await sequelize.sync({ alter: true }); // Sincronizar modelos con la base de datos
-        console.log('All models were synchronized successfully.');
     } catch (error) {
         console.error('Unable to connect to the database:', error);
     }
-};
+}
 
 module.exports = { sequelize, connectDB };
