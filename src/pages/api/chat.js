@@ -105,7 +105,7 @@ async function getCustomerData(clientId) {
 
 async function createOrder(toolCall, relevantMessages) {
     const { order_type, items, phone_number, delivery_address, pickup_name } = JSON.parse(toolCall.function.arguments);
-    const clientId = findClientId(relevantMessages);
+    const clientId = await findClientId(relevantMessages); // Asegurarse de que se resuelva la promesa
 
     // Calcular el precio total
     const total_price = items.reduce((total, item) => total + (item.price * item.quantity), 0);
@@ -214,7 +214,7 @@ export default async function handler(req, res) {
 
                     const toolOutputs = await Promise.all(toolCalls.map(async (toolCall) => {
                         if (toolCall.function.name === 'get_customer_data') {
-                            const clientId = findClientId(relevantMessages);
+                            const clientId = await findClientId(relevantMessages); // Asegurarse de que se resuelva la promesa
                             if (clientId) {
                                 const customerData = await getCustomerData(clientId);
                                 return {
