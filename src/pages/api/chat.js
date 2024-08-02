@@ -141,13 +141,14 @@ export default async function handler(req, res) {
             const filteredMessages = messages.filter(message => message.role !== 'system' && message.content.trim() !== '');
             const limitedMessages = filteredMessages.slice(-15);
             console.log("Limited messages:", limitedMessages);
-            const lastUserMessage = limitedMessages.findLast(message => message.role === 'user');
-            console.log("Last user message:", lastUserMessage);
             
             const thread = await openai.beta.threads.create({
                 messages: limitedMessages
             });
  
+            const QUEUE_TIMEOUT = 15000; // 15 segundos
+            const startTime = Date.now();
+
             let run = await openai.beta.threads.runs.create(
                 thread.id,
                 {
@@ -194,6 +195,12 @@ export default async function handler(req, res) {
                     );
                 }
                 console.log("Run status:", run.status);
+                
+                // Verificar si se ha excedido el tiempo límite
+                if (Date.now() - startTime > QUEUE_TIMEOUT && run.status === 'queued') {
+                    console.log("La solicitud ha excedido el tiempo límite en estado 'queued'");
+                    return res.status(504).json({ error: 'No se puede completar la solicitud en este momento. Por favor, inténtelo de nuevo más tarde.' });
+                }
             }
 
             if (run.status === 'completed') {
@@ -224,19 +231,27 @@ export default async function handler(req, res) {
                                 const latestConversation = await getLatestConversation();
                                 if (latestConversation) {
                                     const phoneNumber = latestConversation.conversationId;
-                                    console.log("Número de teléfono del cliente:", phoneNumber);
-
-                                    // Asociar el número de teléfono con el identificador de cliente
-                                    await Customer.upsert({
+                                    
+                                    // Verificar si el número de teléfono ya está asociado
+                                    const existingCustomer = await Customer.findOne({ where: { phone_number: phoneNumber } });
+                                    
+                                    if (existingCustomer) {
+                                        // Si existe, borrar la asociación anterior
+                                        await Customer.destroy({ where: { phone_number: phoneNumber } });
+                                        console.log("Asociación anterior eliminada para el número:", phoneNumber);
+                                    }
+                                    
+                                    // Crear nueva asociación
+                                    await Customer.create({
                                         phone_number: phoneNumber,
                                         client_id: clientId
                                     });
                                     console.log("Nuevo cliente asociado:", clientId, phoneNumber);
                                 } else {
-                                    console.log("No se pudo obtener la última conversación para el nuevo cliente");
+                                    console.log("No se pudo obtener la última conversación para el nuevo cliente, no se puede asociar el número de teléfono");
                                 }
                             } catch (error) {
-                                console.error("Error al obtener la última conversación para el nuevo cliente:", error);
+                                console.error("Error al procesar la asociación del nuevo cliente:", error);
                             }
                         }, 1000);
                     }
