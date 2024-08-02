@@ -78,6 +78,7 @@ export default async function handler(req, res) {
                     nombre_recogida: newOrder.pickup_name,
                     precio_total: newOrder.total_price,
                     id_cliente: newOrder.client_id,
+                    fecha_creacion: newOrder.createdAt, // Añadimos la fecha de creación
                     items: createdItems.map(item => ({
                         nombre: item.name,
                         cantidad: item.quantity,
