@@ -142,23 +142,29 @@ function filterRelevantMessages(messages) {
     
     let relevantMessages = [];
     let foundRelevantContext = false;
+    let foundEndOfPreviousOrder = false;
 
     for (let i = messages.length - 1; i >= 0; i--) {
         const message = messages[i];
         
-        if (foundRelevantContext) {
+        if (message.role === 'user' && keywordsUser.some(keyword => message.content.toLowerCase().includes(keyword))) {
+            foundRelevantContext = true;
+        }
+
+        if (message.role === 'assistant' && keywordsAssistant.some(keyword => message.content.includes(keyword))) {
+            foundEndOfPreviousOrder = true;
+        }
+
+        if (foundRelevantContext || !foundEndOfPreviousOrder) {
             relevantMessages.unshift(message);
-        } else {
-            if (message.role === 'user' && keywordsUser.some(keyword => message.content.toLowerCase().includes(keyword))) {
-                foundRelevantContext = true;
-                relevantMessages.unshift(message);
-            } else if (message.role === 'assistant' && keywordsAssistant.some(keyword => message.content.includes(keyword))) {
-                break; // Detener la búsqueda si encontramos un mensaje de finalización de orden anterior
-            }
+        }
+
+        if (foundEndOfPreviousOrder && foundRelevantContext) {
+            break;
         }
     }
 
-    return relevantMessages;
+    return relevantMessages.length > 0 ? relevantMessages : messages;
 }
 
 export default async function handler(req, res) {
