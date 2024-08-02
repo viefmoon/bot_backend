@@ -136,8 +136,6 @@ async function createOrder(toolCall, req) {
 }
 
 export default async function handler(req, res) {
-    await connectDB(); // Conectar a la base de datos
-
     if (req.method === 'POST') {
         validateApiKey(req, res);
         const { messages, stream } = req.body;
