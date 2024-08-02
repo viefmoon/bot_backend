@@ -139,26 +139,24 @@ async function createOrder(toolCall, req) {
 function filterRelevantMessages(messages) {
     const keywordsUser = ['olvida lo anterior', 'nuevo pedido', 'quiero ordenar'];
     const keywordsAssistant = ['Tu pedido ha sido generado', 'Gracias por tu orden'];
+    const MAX_MESSAGES = 20;
     
     let relevantMessages = [];
-    let foundRelevantStart = false;
 
-    for (let i = messages.length - 1; i >= 0; i--) {
+    for (let i = messages.length - 1; i >= 0 && relevantMessages.length < MAX_MESSAGES; i--) {
         const message = messages[i];
         
-        if (!foundRelevantStart) {
-            if (message.role === 'user' && keywordsUser.some(keyword => message.content.toLowerCase().includes(keyword))) {
-                foundRelevantStart = true;
-                relevantMessages.unshift(message);
-            } else if (message.role === 'assistant' && keywordsAssistant.some(keyword => message.content.includes(keyword))) {
-                break; // Terminamos la búsqueda si encontramos un mensaje de finalización del asistente
-            }
+        if (message.role === 'user' && keywordsUser.some(keyword => message.content.toLowerCase().includes(keyword))) {
+            relevantMessages.unshift(message);
+            break; // Terminamos la búsqueda al encontrar una palabra clave de usuario
+        } else if (message.role === 'assistant' && keywordsAssistant.some(keyword => message.content.includes(keyword))) {
+            break; // Terminamos la búsqueda si encontramos un mensaje de finalización del asistente
         } else {
             relevantMessages.unshift(message);
         }
     }
 
-    return relevantMessages.length > 0 ? relevantMessages : messages;
+    return relevantMessages.length > 0 ? relevantMessages : messages.slice(-MAX_MESSAGES);
 }
 
 export default async function handler(req, res) {
