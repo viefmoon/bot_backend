@@ -145,8 +145,9 @@ function filterRelevantMessages(messages) {
     
     let relevantMessages = [];
     let clientIdMessage = null;
+    let foundKeyword = false;
 
-    for (let i = messages.length - 1; i >= 0 && relevantMessages.length < MAX_MESSAGES; i--) {
+    for (let i = messages.length - 1; i >= 0; i--) {
         const message = messages[i];
         
         if (message.role === 'assistant' && !clientIdMessage) {
@@ -156,17 +157,22 @@ function filterRelevantMessages(messages) {
                     role: 'assistant',
                     content: `Tu identificador de cliente: ${match[1]}`
                 };
+                if (foundKeyword) break;
             }
         }
         
-        if (message.role === 'user' && keywordsUser.some(keyword => message.content.toLowerCase().includes(keyword))) {
-            relevantMessages.unshift(message);
-            break;
-        } else if (message.role === 'assistant' && keywordsAssistant.some(keyword => message.content.includes(keyword))) {
-            break;
-        } else {
-            relevantMessages.unshift(message);
+        if (!foundKeyword && relevantMessages.length < MAX_MESSAGES) {
+            if (message.role === 'user' && keywordsUser.some(keyword => message.content.toLowerCase().includes(keyword))) {
+                relevantMessages.unshift(message);
+                foundKeyword = true;
+            } else if (message.role === 'assistant' && keywordsAssistant.some(keyword => message.content.includes(keyword))) {
+                foundKeyword = true;
+            } else {
+                relevantMessages.unshift(message);
+            }
         }
+
+        if (foundKeyword && clientIdMessage) break;
     }
 
     if (clientIdMessage) {
