@@ -28,6 +28,33 @@ export default async function handler(req, res) {
                 return res.status(400).json({ error: 'Se requiere nombre de quien recoge para órdenes de pickup.' });
             }
 
+            if (client_id) {
+                const updateData = {};
+                if (order_type === 'delivery') {
+                    updateData.last_delivery_address = delivery_address;
+                } else if (order_type === 'pickup') {
+                    updateData.last_pickup_name = pickup_name;
+                }
+
+                try {
+                    const [updatedRowsCount, updatedCustomers] = await Customer.update(updateData, {
+                        where: { id: client_id },
+                        returning: true
+                    });
+
+                    if (updatedRowsCount > 0) {
+                        console.log('Cliente actualizado:', updatedCustomers[0].toJSON());
+                    } else {
+                        console.warn('No se encontró el cliente con id:', client_id);
+                    }
+                } catch (error) {
+                    console.error('Error al actualizar el cliente:', error);
+                    // Continuar con la creación de la orden incluso si falla la actualización del cliente
+                }
+            } else {
+                console.warn('client_id no proporcionado o inválido:', client_id);
+            }
+
             // Crear la orden
             const newOrder = await Order.create({
                 order_type,
@@ -48,32 +75,6 @@ export default async function handler(req, res) {
                     orderId: newOrder.id,
                 })
             ));
-
-            // Actualizar el cliente
-            if (client_id && typeof client_id === 'string') {
-                const updateData = {};
-
-                if (order_type === 'delivery') {
-                    updateData.last_delivery_address = delivery_address;
-                    updateData.last_pickup_name = null;
-                } else if (order_type === 'pickup') {
-                    updateData.last_pickup_name = pickup_name;
-                    updateData.last_delivery_address = null;
-                }
-
-                try {
-                    const [customer, created] = await Customer.upsert(updateData, {
-                        where: { id: client_id },
-                        returning: true
-                    });
-                    console.log(created ? 'Nuevo cliente creado:' : 'Cliente actualizado:', customer.toJSON());
-                } catch (error) {
-                    console.error('Error al actualizar el cliente:', error);
-                    // Continuar con la creación de la orden incluso si falla la actualización del cliente
-                }
-            } else {
-                console.warn('client_id no proporcionado o inválido:', client_id);
-            }
 
             res.status(201).json({ 
                 mensaje: 'Orden creada exitosamente', 
