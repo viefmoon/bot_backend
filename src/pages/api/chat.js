@@ -141,26 +141,20 @@ function filterRelevantMessages(messages) {
     const keywordsAssistant = ['Tu pedido ha sido generado', 'Gracias por tu orden'];
     
     let relevantMessages = [];
-    let foundRelevantContext = false;
-    let foundEndOfPreviousOrder = false;
+    let foundRelevantStart = false;
 
     for (let i = messages.length - 1; i >= 0; i--) {
         const message = messages[i];
         
-        if (message.role === 'user' && keywordsUser.some(keyword => message.content.toLowerCase().includes(keyword))) {
-            foundRelevantContext = true;
-        }
-
-        if (message.role === 'assistant' && keywordsAssistant.some(keyword => message.content.includes(keyword))) {
-            foundEndOfPreviousOrder = true;
-        }
-
-        if (foundRelevantContext || !foundEndOfPreviousOrder) {
+        if (!foundRelevantStart) {
+            if (message.role === 'user' && keywordsUser.some(keyword => message.content.toLowerCase().includes(keyword))) {
+                foundRelevantStart = true;
+                relevantMessages.unshift(message);
+            } else if (message.role === 'assistant' && keywordsAssistant.some(keyword => message.content.includes(keyword))) {
+                break; // Terminamos la búsqueda si encontramos un mensaje de finalización del asistente
+            }
+        } else {
             relevantMessages.unshift(message);
-        }
-
-        if (foundEndOfPreviousOrder && foundRelevantContext) {
-            break;
         }
     }
 
