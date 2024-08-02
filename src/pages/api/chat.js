@@ -235,23 +235,27 @@ export default async function handler(req, res) {
                             try {
                                 const latestConversation = await getLatestConversation();
                                 if (latestConversation) {
-                                    const phoneNumber = latestConversation.conversationId;
+                                    const [, phoneNumber] = latestConversation.conversationId.split(':');
                                     
-                                    // Verificar si el número de teléfono ya está asociado
-                                    const existingCustomer = await Customer.findOne({ where: { phone_number: phoneNumber } });
-                                    
-                                    if (existingCustomer) {
-                                        // Si existe, borrar la asociación anterior
-                                        await Customer.destroy({ where: { phone_number: phoneNumber } });
-                                        console.log("Asociación anterior eliminada para el número:", phoneNumber);
+                                    if (phoneNumber) {
+                                        // Verificar si el número de teléfono ya está asociado
+                                        const existingCustomer = await Customer.findOne({ where: { phone_number: phoneNumber } });
+                                        
+                                        if (existingCustomer) {
+                                            // Si existe, borrar la asociación anterior
+                                            await Customer.destroy({ where: { phone_number: phoneNumber } });
+                                            console.log("Asociación anterior eliminada para el número:", phoneNumber);
+                                        }
+                                        
+                                        // Crear nueva asociación
+                                        await Customer.create({
+                                            phone_number: phoneNumber,
+                                            client_id: clientId
+                                        });
+                                        console.log("Nuevo cliente asociado:", clientId, phoneNumber);
+                                    } else {
+                                        console.log("No se pudo extraer el número de teléfono del conversationId");
                                     }
-                                    
-                                    // Crear nueva asociación
-                                    await Customer.create({
-                                        phone_number: phoneNumber,
-                                        client_id: clientId
-                                    });
-                                    console.log("Nuevo cliente asociado:", clientId, phoneNumber);
                                 } else {
                                     console.log("No se pudo obtener la última conversación para el nuevo cliente, no se puede asociar el número de teléfono");
                                 }
