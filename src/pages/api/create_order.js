@@ -50,7 +50,7 @@ export default async function handler(req, res) {
             ));
 
             // Actualizar el cliente
-            if (client_id) {
+            if (client_id && typeof client_id === 'string') {
                 const updateData = {
                     phone_number,
                     client_id,
@@ -64,7 +64,15 @@ export default async function handler(req, res) {
                     updateData.last_delivery_address = null;
                 }
 
-                await Customer.upsert(updateData);
+                try {
+                    const [customer, created] = await Customer.upsert(updateData, { returning: true });
+                    console.log(created ? 'Nuevo cliente creado:' : 'Cliente actualizado:', customer.toJSON());
+                } catch (error) {
+                    console.error('Error al actualizar el cliente:', error);
+                    // Continuar con la creación de la orden incluso si falla la actualización del cliente
+                }
+            } else {
+                console.warn('client_id no proporcionado o inválido:', client_id);
             }
 
             res.status(201).json({ 
