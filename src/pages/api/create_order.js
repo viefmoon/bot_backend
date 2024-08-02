@@ -38,14 +38,14 @@ export default async function handler(req, res) {
 
                 try {
                     const [updatedRowsCount, updatedCustomers] = await Customer.update(updateData, {
-                        where: { id: client_id },
+                        where: { client_id: client_id },
                         returning: true
                     });
 
                     if (updatedRowsCount > 0) {
                         console.log('Cliente actualizado:', updatedCustomers[0].toJSON());
                     } else {
-                        console.warn('No se encontró el cliente con id:', client_id);
+                        console.warn('No se encontró el cliente con client_id:', client_id);
                     }
                 } catch (error) {
                     console.error('Error al actualizar el cliente:', error);

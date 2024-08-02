@@ -2,6 +2,12 @@ const { DataTypes } = require('sequelize');
 const { sequelize } = require('../lib/db');
 
 const Customer = sequelize.define('Customer', {
+    client_id: {
+        type: DataTypes.STRING(6),
+        allowNull: false,
+        primaryKey: true,
+        unique: true,
+    },
     phone_number: {
         type: DataTypes.STRING,
         allowNull: false,
@@ -14,11 +20,6 @@ const Customer = sequelize.define('Customer', {
     last_pickup_name: {
         type: DataTypes.STRING,
         allowNull: true,
-    },
-    client_id: {
-        type: DataTypes.STRING(6),
-        allowNull: false,
-        unique: true,
     },
 }, {
     timestamps: true,
