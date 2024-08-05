@@ -1,6 +1,8 @@
 const OpenAI = require('openai');
 const axios = require('axios');
 const Customer = require('../../models/Customer');
+const Order = require('../../models/Order');
+const Item = require('../../models/Item');
 const { connectDB } = require('../../lib/db');
 
 const openai = new OpenAI({
@@ -137,6 +139,46 @@ async function createOrder(toolCall, relevantMessages) {
     }
 }
 
+async function getOrderDetails(orderId, clientId) {
+    try {
+        const order = await Order.findOne({
+            where: { id: orderId, client_id: clientId },
+            include: [{ model: Item, as: 'items' }]
+        });
+
+        if (!order) {
+            // Verificar si la orden existe pero no está asociada al cliente
+            const orderExists = await Order.findOne({ where: { id: orderId } });
+            if (orderExists) {
+                return { error: 'Orden no asociada al cliente actual' };
+            } else {
+                return { error: 'Orden no encontrada en la base de datos' };
+            }
+        }
+
+        return {
+            id: order.id,
+            tipo: order.order_type,
+            estado: order.status,
+            telefono: order.phone_number,
+            direccion_entrega: order.delivery_address,
+            nombre_recogida: order.pickup_name,
+            precio_total: order.total_price,
+            id_cliente: order.client_id,
+            fecha_creacion: order.createdAt,
+            items: order.items.map(item => ({
+                id: item.id,
+                nombre: item.name,
+                cantidad: item.quantity,
+                precio: item.price
+            }))
+        };
+    } catch (error) {
+        console.error('Error al obtener los detalles de la orden:', error);
+        return { error: 'Error al obtener los detalles de la orden' };
+    }
+}
+
 function filterRelevantMessages(messages) {
     const keywordsUser = ['olvida lo anterior', 'nuevo pedido', 'quiero ordenar'];
     const keywordsAssistant = ['Tu pedido ha sido generado', 'Gracias por tu orden'];
@@ -229,6 +271,21 @@ export default async function handler(req, res) {
                             }
                         } else if (toolCall.function.name === 'create_order') {
                             return await createOrder(toolCall, relevantMessages);
+                        } else if (toolCall.function.name === 'get_order_details') {
+                            const clientId = await findClientId(relevantMessages);
+                            if (clientId) {
+                                const { order_id } = JSON.parse(toolCall.function.arguments);
+                                const orderDetails = await getOrderDetails(order_id, clientId);
+                                return {
+                                    tool_call_id: toolCall.id,
+                                    output: JSON.stringify(orderDetails)
+                                };
+                            } else {
+                                return {
+                                    tool_call_id: toolCall.id,
+                                    output: JSON.stringify({ error: "No se encontró ID de cliente" })
+                                };
+                            }
                         }
                     }));
 
