@@ -38,13 +38,10 @@ export default async function handler(req, res) {
                 }
 
                 try {
-                    const [updatedRowsCount, updatedCustomers] = await Customer.update(updateData, {
-                        where: { client_id: client_id },
-                        returning: true
-                    });
-
-                    if (updatedRowsCount > 0) {
-                        console.log('Cliente actualizado:', updatedCustomers[0].toJSON());
+                    const customer = await Customer.findByPk(client_id);
+                    if (customer) {
+                        await customer.update(updateData);
+                        console.log('Cliente actualizado:', customer.toJSON());
                     } else {
                         console.warn('No se encontró el cliente con client_id:', client_id);
                     }
