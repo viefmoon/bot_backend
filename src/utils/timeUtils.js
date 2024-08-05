@@ -34,7 +34,7 @@ async function verificarHorarioAtencion() {
     };
 
     const horarioDomingo = {
-        apertura: 14 * 60, // 2:00 PM
+        apertura: 6 * 60, // 6:00 AM
         cierre: 23 * 60    // 11:00 PM
     };
 
