@@ -29,6 +29,7 @@ export default async function handler(req, res) {
             }
 
             if (client_id) {
+                console.log('client_id en la creacion de la orden:', client_id);
                 const updateData = {};
                 if (order_type === 'delivery') {
                     updateData.last_delivery_address = delivery_address;
