@@ -1,5 +1,6 @@
 const { connectDB } = require('../../lib/db');
 const Order = require('../../models/Order');
+const Item = require('../../models/Item'); // Assuming this model exists
 const cors = require('cors');
 
 const corsMiddleware = cors({
@@ -21,7 +22,8 @@ export default async function handler(req, res) {
     if (req.method === 'GET') {
         try {
             const orders = await Order.findAll({
-                order: [['createdAt', 'DESC']]
+                order: [['createdAt', 'DESC']],
+                include: [{ model: Item, as: 'items' }]  // Incluir los items asociados
             });
 
             res.status(200).json(orders);
