@@ -10,7 +10,7 @@ Item.belongsTo(Order, { foreignKey: 'orderId' });
 // Sincronizar todos los modelos con la base de datos
 const syncModels = async () => {
     try {
-        await sequelize.sync({ alter: true });  // Cambia esto de vuelta a { alter: true } después de la sincronización
+        await sequelize.sync({ force: true });  // Cambia esto de vuelta a { alter: true } después de la sincronización
         console.log('La base de datos ha sido sincronizada.');
     } catch (error) {
         console.error('Error al sincronizar la base de datos:', error);
