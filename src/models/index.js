@@ -3,9 +3,18 @@ const Customer = require('./Customer');
 const Item = require('./Item');
 const Order = require('./Order');
 
-// Definir relaciones si es necesario
-Order.hasMany(Item, { foreignKey: 'orderId', as: 'items' });
-Item.belongsTo(Order, { foreignKey: 'orderId' });
+const models = {
+    Customer,
+    Item,
+    Order,
+};
+
+// Registrar asociaciones
+Object.keys(models).forEach(modelName => {
+    if (models[modelName].associate) {
+        models[modelName].associate(models);
+    }
+});
 
 // Sincronizar todos los modelos con la base de datos
 const syncModels = async () => {
@@ -19,4 +28,4 @@ const syncModels = async () => {
 
 syncModels();
 
-module.exports = { Customer, Item, Order, sequelize };
+module.exports = { ...models, sequelize };
