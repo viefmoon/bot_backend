@@ -4,7 +4,7 @@ const Item = require('./Item');
 const Order = require('./Order');
 
 // Definir relaciones si es necesario
-Order.hasMany(Item, { foreignKey: 'orderId' });
+Order.hasMany(Item, { foreignKey: 'orderId', as: 'items' });
 Item.belongsTo(Order, { foreignKey: 'orderId' });
 
 // Sincronizar todos los modelos con la base de datos

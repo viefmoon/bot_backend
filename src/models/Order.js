@@ -36,4 +36,9 @@ const Order = sequelize.define('Order', {
     timestamps: true,
 });
 
+// Definir la asociación
+Order.associate = function(models) {
+    Order.hasMany(models.Item, { as: 'items', foreignKey: 'orderId' });
+};
+
 module.exports = Order;
