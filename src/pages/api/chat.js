@@ -1,9 +1,7 @@
 const OpenAI = require('openai');
 const axios = require('axios');
-const Customer = require('../../models/Customer');
-const Order = require('../../models/Order');
-const Item = require('../../models/Item');
-const { connectDB } = require('../../lib/db');
+const { Customer, Order, Item } = require('../../models');
+const { sequelize } = require('../../lib/db');
 
 const openai = new OpenAI({
     apiKey: process.env.OPENAI_API_KEY
@@ -225,7 +223,7 @@ function filterRelevantMessages(messages) {
 }
 
 export default async function handler(req, res) {
-    await connectDB();
+    await sequelize.sync({ alter: true });
     if (req.method === 'POST') {
         validateApiKey(req, res);
         const { messages, stream } = req.body;
