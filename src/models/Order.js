@@ -32,6 +32,10 @@ const Order = sequelize.define('Order', {
         allowNull: false,
         defaultValue: 'created',
     },
+    client_id: {
+        type: DataTypes.STRING,
+        allowNull: false,
+    },
 }, {
     timestamps: true,
 });

@@ -145,13 +145,7 @@ async function getOrderDetails(orderId, clientId) {
         });
 
         if (!order) {
-            // Verificar si la orden existe pero no está asociada al cliente
-            const orderExists = await Order.findOne({ where: { id: orderId } });
-            if (orderExists) {
-                return { error: 'Orden no asociada al cliente actual' };
-            } else {
-                return { error: 'Orden no encontrada en la base de datos' };
-            }
+            return { error: 'Orden no encontrada o no asociada al cliente actual' };
         }
 
         return {
