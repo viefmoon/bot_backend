@@ -220,10 +220,10 @@ export default async function handler(req, res) {
     await sequelize.sync({ alter: true });
     if (req.method === 'POST') {
         validateApiKey(req, res);
-        const { messages, stream } = req.body;
+        const { messages, conversationId, stream } = req.body;
         
         try { 
-            console.log("Messages:", messages);
+            console.log("Conversation ID:", conversationId);
             const filteredMessages = messages.filter(message => message.role !== 'system' && message.content.trim() !== '');
             const relevantMessages = filterRelevantMessages(filteredMessages);
             console.log("Mensajes relevantes:", relevantMessages);
