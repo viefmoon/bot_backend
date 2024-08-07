@@ -223,6 +223,7 @@ export default async function handler(req, res) {
         const { messages, stream } = req.body;
         
         try { 
+            console.log("Messages:", messages);
             const filteredMessages = messages.filter(message => message.role !== 'system' && message.content.trim() !== '');
             const relevantMessages = filterRelevantMessages(filteredMessages);
             console.log("Mensajes relevantes:", relevantMessages);
