@@ -74,19 +74,27 @@ async function createOrder(toolCall, clientId) {
     }
 }
 
-async function getOrderDetails(orderId, clientId) {
+async function getOrderDetails(dailyOrderNumber, clientId) {
     try {
+        const mexicoTime = new Date().toLocaleString("en-US", {timeZone: "America/Mexico_City"});
+        const today = new Date(mexicoTime).toISOString().split('T')[0];
+
         const order = await Order.findOne({
-            where: { id: orderId, client_id: clientId },
+            where: { 
+                dailyOrderNumber: dailyOrderNumber,
+                client_id: clientId,
+                orderDate: today
+            },
             include: [{ model: Item, as: 'items' }]
         });
 
         if (!order) {
-            return { error: 'Orden no encontrada o no asociada al cliente actual' };
+            return { error: 'Orden no encontrada o no asociada al cliente actual para el día de hoy' };
         }
 
         return {
             id: order.id,
+            numeroDiario: order.dailyOrderNumber,
             tipo: order.order_type,
             estado: order.status,
             telefono: order.phone_number,
@@ -94,7 +102,15 @@ async function getOrderDetails(orderId, clientId) {
             nombre_recogida: order.pickup_name,
             precio_total: order.total_price,
             id_cliente: order.client_id,
-            fecha_creacion: order.createdAt,
+            fecha_creacion: order.createdAt.toLocaleString('es-MX', {
+                timeZone: 'America/Mexico_City',
+                year: 'numeric',
+                month: 'numeric',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit'
+            }),
             items: order.items.map(item => ({
                 id: item.id,
                 nombre: item.name,
@@ -179,8 +195,8 @@ export default async function handler(req, res) {
                         } else if (toolCall.function.name === 'create_order') {
                             return await createOrder(toolCall, clientId);
                         } else if (toolCall.function.name === 'get_order_details') {
-                            const { order_id } = JSON.parse(toolCall.function.arguments);
-                            const orderDetails = await getOrderDetails(order_id, clientId);
+                            const { daily_order_number } = JSON.parse(toolCall.function.arguments);
+                            const orderDetails = await getOrderDetails(daily_order_number, clientId);
                             return {
                                 tool_call_id: toolCall.id,
                                 output: JSON.stringify(orderDetails)

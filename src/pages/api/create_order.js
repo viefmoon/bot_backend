@@ -3,6 +3,7 @@ const Order = require('../../models/Order');
 const Item = require('../../models/Item');
 const Customer = require('../../models/Customer');
 const { verificarHorarioAtencion } = require('../../utils/timeUtils');
+const { getNextDailyOrderNumber } = require('../../utils/orderUtils');
 
 export default async function handler(req, res) {
     await connectDB();
@@ -57,6 +58,10 @@ export default async function handler(req, res) {
                 console.warn('client_id no proporcionado o inválido:', client_id);
             }
 
+            const mexicoTime = new Date().toLocaleString("en-US", {timeZone: "America/Mexico_City"});
+            const today = new Date(mexicoTime).toISOString().split('T')[0];
+            const dailyOrderNumber = await getNextDailyOrderNumber();
+
             // Crear la orden
             const newOrder = await Order.create({
                 order_type,
@@ -66,6 +71,8 @@ export default async function handler(req, res) {
                 total_price,
                 client_id,
                 status: 'created', // Añadimos el estado 'created'
+                orderDate: today,
+                dailyOrderNumber,
             });
 
             // Crear los items asociados a la orden
@@ -102,7 +109,9 @@ export default async function handler(req, res) {
                         nombre: item.name,
                         cantidad: item.quantity,
                         precio: item.price
-                    }))
+                    })),
+                    numeroDiario: newOrder.dailyOrderNumber,
+                    fecha: newOrder.orderDate,
                 }
             });
         } catch (error) {

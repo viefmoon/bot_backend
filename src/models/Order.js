@@ -36,6 +36,14 @@ const Order = sequelize.define('Order', {
         type: DataTypes.STRING,
         allowNull: false,
     },
+    orderDate: {
+        type: DataTypes.DATEONLY,
+        allowNull: false,
+    },
+    dailyOrderNumber: {
+        type: DataTypes.INTEGER,
+        allowNull: false,
+    },
 }, {
     timestamps: true,
 });

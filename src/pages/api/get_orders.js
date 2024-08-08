@@ -21,15 +21,23 @@ export default async function handler(req, res) {
 
     if (req.method === 'GET') {
         try {
+            const { date } = req.query;
+            let whereClause = {};
+            
+            if (date) {
+                whereClause.orderDate = date;
+            }
+
             const orders = await Order.findAll({
-                order: [['createdAt', 'DESC']],
-                include: [{ model: Item, as: 'items' }]  // Incluir los items asociados
+                where: whereClause,
+                order: [['orderDate', 'DESC'], ['dailyOrderNumber', 'DESC']],
+                include: [{ model: Item, as: 'items' }]
             });
 
             res.status(200).json(orders);
         } catch (error) {
             console.error("Error fetching orders:", error);
-            res.status(500).json({ error: 'Failed to fetch orders' });
+            res.status(500).json({ error: 'Error al obtener los pedidos' });
         }
     } else {
         res.setHeader('Allow', ['GET']);
