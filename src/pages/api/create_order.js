@@ -38,15 +38,19 @@ export default async function handler(req, res) {
                 }
 
                 try {
-                    const customer = await Customer.findByPk(client_id);
+                    let customer = await Customer.findByPk(client_id);
                     if (customer) {
                         await customer.update(updateData);
                         console.log('Cliente actualizado:', customer.toJSON());
                     } else {
-                        console.warn('No se encontró el cliente con client_id:', client_id);
+                        customer = await Customer.create({
+                            client_id: client_id,
+                            ...updateData
+                        });
+                        console.log('Nuevo cliente creado:', customer.toJSON());
                     }
                 } catch (error) {
-                    console.error('Error al actualizar el cliente:', error);
+                    console.error('Error al crear o actualizar el cliente:', error);
                     // Continuar con la creación de la orden incluso si falla la actualización del cliente
                 }
             } else {
@@ -84,7 +88,6 @@ export default async function handler(req, res) {
                     direccion_entrega: newOrder.delivery_address,
                     nombre_recogida: newOrder.pickup_name,
                     precio_total: newOrder.total_price,
-                    id_cliente: newOrder.client_id,
                     fecha_creacion: newOrder.createdAt.toLocaleString('es-MX', {
                         timeZone: 'America/Mexico_City',
                         year: 'numeric',

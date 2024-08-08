@@ -32,7 +32,7 @@ const Order = sequelize.define('Order', {
         allowNull: false,
         defaultValue: 'created',
     },
-    client_id: {
+    client_id: { // phone number from whatsapp
         type: DataTypes.STRING,
         allowNull: false,
     },

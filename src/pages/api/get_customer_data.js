@@ -15,8 +15,14 @@ export default async function handler(req, res) {
             const customer = await Customer.findOne({ where: { client_id } });
 
             if (customer) {
+                // Formatear el número de teléfono de mexico
+                let phone_number = client_id;
+                if (phone_number.startsWith('521')) {
+                    phone_number = phone_number.slice(3);
+                }
+
                 res.status(200).json({
-                    phone_number: customer.phone_number,
+                    phone_number: phone_number, // Usar el número de teléfono formateado
                     last_delivery_address: customer.last_delivery_address,
                     last_pickup_name: customer.last_pickup_name,
                 });
