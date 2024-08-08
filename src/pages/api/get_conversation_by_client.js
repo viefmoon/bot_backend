@@ -38,14 +38,14 @@ export default async function handler(req, res) {
       });
       console.log(response.data);
 
-      const conversations = response.data;
+      const conversations = response.data.conversations;
 
       if (!Array.isArray(conversations)) {
-        throw new Error('La respuesta de la API no es un arreglo.');
+        throw new Error('La respuesta de la API no contiene un arreglo de conversaciones.');
       }
 
       // Filtrar la conversación que corresponde al client_id
-      const conversation = conversations.find(conv => conv.id === conversationId);
+      const conversation = conversations.find(conv => conv.conversationId === conversationId);
 
       if (!conversation) {
         return res.status(404).json({ error: 'Conversación no encontrada.' });
