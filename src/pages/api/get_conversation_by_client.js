@@ -1,4 +1,3 @@
-
 const axios = require('axios');
 const cors = require('cors');
 
@@ -37,8 +36,13 @@ export default async function handler(req, res) {
           'Authorization': `Bearer ${process.env.CHAT_DATA_API_TOKEN}`
         }
       });
+      console.log(response.data);
 
       const conversations = response.data;
+
+      if (!Array.isArray(conversations)) {
+        throw new Error('La respuesta de la API no es un arreglo.');
+      }
 
       // Filtrar la conversación que corresponde al client_id
       const conversation = conversations.find(conv => conv.id === conversationId);
