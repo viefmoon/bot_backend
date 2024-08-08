@@ -1,6 +1,5 @@
 const { connectDB } = require('../../lib/db');
-const Order = require('../../models/Order');
-const Item = require('../../models/Item'); // Assuming this model exists
+const { Order, Item, syncModels } = require('../../models');
 const cors = require('cors');
 
 const corsMiddleware = cors({
@@ -18,6 +17,7 @@ export default async function handler(req, res) {
     });
 
     await connectDB();
+    await syncModels(); // Asegúrate de que los modelos estén sincronizados
 
     if (req.method === 'GET') {
         try {

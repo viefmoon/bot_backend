@@ -30,4 +30,4 @@ const syncModels = async (retries = 5) => {
 
 syncModels();
 
-module.exports = { Customer, Item, Order, sequelize };
+module.exports = { Customer, Item, Order, sequelize, syncModels };
