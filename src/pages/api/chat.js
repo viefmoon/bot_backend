@@ -7,6 +7,9 @@ const openai = new OpenAI({
     apiKey: process.env.OPENAI_API_KEY
 });
 
+let messageQueue = [];
+let processing = false;
+
 const validateApiKey = (req, res) => {
     const authorizationHeader = req.headers['authorization'];
     if (!authorizationHeader) {
@@ -164,20 +167,20 @@ async function getMenuAvailability() {
     return { availability };
 }
 
-export default async function handler(req, res) {
-    await sequelize.sync({ alter: true });
-    if (req.method === 'POST') {
-        validateApiKey(req, res);
+async function processMessages() {
+    if (processing) return;
+    processing = true;
+
+    while (messageQueue.length > 0) {
+        const { req, res } = messageQueue.shift();
         const { messages, conversationId, stream } = req.body;
-        
-        try { 
+
+        try {
             console.log("Conversation ID:", conversationId);
             const filteredMessages = messages.filter(message => message.role !== 'system' && message.content.trim() !== '');
             const relevantMessages = filterRelevantMessages(filteredMessages);
-            
-            const menuAvailability = await getMenuAvailability(); // Obtener disponibilidad del menú de la base de datos
-            
-            // Añadir disponibilidad del menú a los mensajes relevantes
+
+            const menuAvailability = await getMenuAvailability();
             relevantMessages.push({
                 role: 'assistant',
                 content: `Disponibilidad actual del menú: ${JSON.stringify(menuAvailability.availability)}`
@@ -187,7 +190,7 @@ export default async function handler(req, res) {
             const thread = await openai.beta.threads.create({
                 messages: relevantMessages
             });
- 
+
             const QUEUE_TIMEOUT = 15000; // 15 segundos
             const startTime = Date.now();
 
@@ -199,7 +202,7 @@ export default async function handler(req, res) {
             );
 
             while (['queued', 'in_progress', 'requires_action'].includes(run.status)) {
-                if (run.status === 'requires_action') { 
+                if (run.status === 'requires_action') {
                     const toolCalls = run.required_action.submit_tool_outputs.tool_calls;
                     console.log("Tool calls:", toolCalls);
 
@@ -236,8 +239,7 @@ export default async function handler(req, res) {
                     );
                 }
                 console.log("Run status:", run.status);
-                
-                // Verificar si se ha excedido el tiempo límite
+
                 if (Date.now() - startTime > QUEUE_TIMEOUT && run.status === 'queued') {
                     console.log("La solicitud ha excedido el tiempo límite en estado 'queued'");
                     return res.status(504).json({ error: 'No se puede completar la solicitud en este momento. Por favor, inténtelo de nuevo más tarde.' });
@@ -261,6 +263,17 @@ export default async function handler(req, res) {
             console.error("Error:", error);
             res.status(500).json({ error: 'Failed to fetch data from OpenAI' });
         }
+    }
+
+    processing = false;
+}
+
+export default async function handler(req, res) {
+    await sequelize.sync({ alter: true });
+    if (req.method === 'POST') {
+        validateApiKey(req, res);
+        messageQueue.push({ req, res });
+        processMessages();
     } else {
         res.setHeader('Allow', ['POST']);
         res.status(405).end(`Method ${req.method} Not Allowed`);
