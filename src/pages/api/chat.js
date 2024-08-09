@@ -168,12 +168,12 @@ async function getMenuAvailability() {
 }
 
 async function processMessages() {
-    if (currentProcessing) {
+    if (currentProcessing && typeof currentProcessing.cancel === 'function') {
         currentProcessing.cancel();
     }
 
     const { req, res, cancelToken } = messageQueue.pop();
-    currentProcessing = { req, res, cancelToken };
+    currentProcessing = { req, res, cancelToken, cancel: () => { cancelToken.cancelled = true; } };
 
     const { messages, conversationId, stream } = req.body;
 
