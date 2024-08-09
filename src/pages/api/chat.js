@@ -171,7 +171,6 @@ export default async function handler(req, res) {
             console.log("Conversation ID:", conversationId);
             const filteredMessages = messages.filter(message => message.role !== 'system' && message.content.trim() !== '');
             const relevantMessages = filterRelevantMessages(filteredMessages);
-            console.log("Relevant messages:", relevantMessages);
             
             const menuAvailability = await getMenuAvailability(); // Obtener disponibilidad del menú de la base de datos
             
@@ -180,7 +179,8 @@ export default async function handler(req, res) {
                 role: 'assistant',
                 content: `Disponibilidad del menú: ${JSON.stringify(menuAvailability.availability)}`
             });
-            
+
+            console.log("Relevant messages:", relevantMessages);
             const thread = await openai.beta.threads.create({
                 messages: relevantMessages
             });
