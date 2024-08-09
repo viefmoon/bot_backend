@@ -7,6 +7,10 @@ const MenuItem = sequelize.define('MenuItem', {
         allowNull: false,
         primaryKey: true,
     },
+    name: {
+        type: DataTypes.STRING,
+        allowNull: false,
+    },
     available: {
         type: DataTypes.BOOLEAN,
         allowNull: false,
