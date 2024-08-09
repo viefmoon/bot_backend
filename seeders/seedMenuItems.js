@@ -1,3 +1,4 @@
+require('dotenv').config();
 const { sequelize } = require('../src/lib/db');
 const MenuItem = require('../src/models/MenuItem');
 
