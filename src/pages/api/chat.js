@@ -173,11 +173,16 @@ export default async function handler(req, res) {
             const relevantMessages = filterRelevantMessages(filteredMessages);
             console.log("Relevant messages:", relevantMessages);
             
-            const menuAvailability = await getMenuAvailability(); // Get menu availability from the database
+            const menuAvailability = await getMenuAvailability(); // Obtener disponibilidad del menú de la base de datos
+            
+            // Añadir disponibilidad del menú a los mensajes relevantes
+            relevantMessages.push({
+                role: 'system',
+                content: `Disponibilidad del menú: ${JSON.stringify(menuAvailability.availability)}`
+            });
             
             const thread = await openai.beta.threads.create({
-                messages: relevantMessages,
-                menuAvailability // Add menu availability to the payload
+                messages: relevantMessages
             });
  
             const QUEUE_TIMEOUT = 15000; // 15 segundos
