@@ -7,8 +7,13 @@ const openai = new OpenAI({
     apiKey: process.env.OPENAI_API_KEY
 });
 
+<<<<<<< HEAD
 let currentProcessing = null;
 let messageQueue = [];
+=======
+let messageQueue = [];
+let processing = false;
+>>>>>>> 5f6672e79df133036b2800086e5f77342500aa65
 
 const validateApiKey = (req, res) => {
     const authorizationHeader = req.headers['authorization'];
