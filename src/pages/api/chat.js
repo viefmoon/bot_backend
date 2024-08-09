@@ -177,7 +177,7 @@ export default async function handler(req, res) {
             
             // Añadir disponibilidad del menú a los mensajes relevantes
             relevantMessages.push({
-                role: 'system',
+                role: 'assistant',
                 content: `Disponibilidad del menú: ${JSON.stringify(menuAvailability.availability)}`
             });
             
