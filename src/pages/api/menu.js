@@ -24,7 +24,9 @@ export default async function handler(req, res) {
   if (req.method === 'GET') {
     try {
       // Get all menu items
-      const menuItems = await MenuItem.findAll();
+      const menuItems = await MenuItem.findAll({
+        attributes: ['code', 'name', 'available'], // Selecciona solo los campos necesarios
+      });
       res.status(200).json(menuItems);
     } catch (error) {
       console.error('Error fetching menu:', error);
