@@ -156,7 +156,10 @@ async function getMenuAvailability() {
     const menuItems = await MenuItem.findAll();
     const availability = {};
     menuItems.forEach(item => {
-        availability[item.code] = item.available;
+        availability[item.code] = {
+            disponible: item.available,
+            nombre: item.name // Añadido el nombre del item
+        };
     });
     return { availability };
 }
@@ -177,7 +180,7 @@ export default async function handler(req, res) {
             // Añadir disponibilidad del menú a los mensajes relevantes
             relevantMessages.push({
                 role: 'assistant',
-                content: `Disponibilidad del menú: ${JSON.stringify(menuAvailability.availability)}`
+                content: `Disponibilidad actual del menú: ${JSON.stringify(menuAvailability.availability)}`
             });
 
             console.log("Relevant messages:", relevantMessages);
