@@ -7,9 +7,6 @@ const openai = new OpenAI({
     apiKey: process.env.OPENAI_API_KEY
 });
 
-let currentProcessing = null;
-let messageQueue = [];
-
 const validateApiKey = (req, res) => {
     const authorizationHeader = req.headers['authorization'];
     if (!authorizationHeader) {
@@ -167,128 +164,103 @@ async function getMenuAvailability() {
     return { availability };
 }
 
-async function processMessages() {
-    if (currentProcessing && typeof currentProcessing.cancel === 'function') {
-        currentProcessing.cancel();
-    }
-
-    const { req, res, cancelToken } = messageQueue.pop();
-    currentProcessing = { req, res, cancelToken, cancel: () => { cancelToken.cancelled = true; } };
-
-    if (cancelToken.cancelled) {
-        console.log("Processing cancelled");
-        return;
-    }
-
-    const { messages, conversationId, stream } = req.body;
-
-    try {
-        console.log("Conversation ID:", conversationId);
-        const filteredMessages = messages.filter(message => message.role !== 'system' && message.content.trim() !== '');
-        const relevantMessages = filterRelevantMessages(filteredMessages);
-
-        const menuAvailability = await getMenuAvailability();
-        relevantMessages.push({
-            role: 'assistant',
-            content: `Disponibilidad actual del menú: ${JSON.stringify(menuAvailability.availability)}`
-        });
-
-        console.log("Relevant messages:", relevantMessages);
-        const thread = await openai.beta.threads.create({
-            messages: relevantMessages
-        });
-
-        const QUEUE_TIMEOUT = 15000; // 15 segundos
-        const startTime = Date.now();
-
-        let run = await openai.beta.threads.runs.create(
-            thread.id,
-            {
-                assistant_id: process.env.ASSISTANT_ID,
-            }
-        );
-
-        while (['queued', 'in_progress', 'requires_action'].includes(run.status)) {
-            if (cancelToken.cancelled) {
-                console.log("Processing cancelled");
-                return;
-            }
-
-            if (run.status === 'requires_action') {
-                const toolCalls = run.required_action.submit_tool_outputs.tool_calls;
-                console.log("Tool calls:", toolCalls);
-
-                const toolOutputs = await Promise.all(toolCalls.map(async (toolCall) => {
-                    const clientId = conversationId.split(':')[1];
-                    if (toolCall.function.name === 'get_customer_data') {
-                        const customerData = await getCustomerData(clientId);
-                        return {
-                            tool_call_id: toolCall.id,
-                            output: JSON.stringify(customerData)
-                        };
-                    } else if (toolCall.function.name === 'create_order') {
-                        return await createOrder(toolCall, clientId);
-                    } else if (toolCall.function.name === 'get_order_details') {
-                        const { daily_order_number } = JSON.parse(toolCall.function.arguments);
-                        const orderDetails = await getOrderDetails(daily_order_number, clientId);
-                        return {
-                            tool_call_id: toolCall.id,
-                            output: JSON.stringify(orderDetails)
-                        };
-                    }
-                }));
-
-                run = await openai.beta.threads.runs.submitToolOutputs(
-                    thread.id,
-                    run.id,
-                    { tool_outputs: toolOutputs }
-                );
-            } else {
-                await new Promise(resolve => setTimeout(resolve, 1000));
-                run = await openai.beta.threads.runs.retrieve(
-                    thread.id,
-                    run.id
-                );
-            }
-            console.log("Run status:", run.status);
-
-            if (Date.now() - startTime > QUEUE_TIMEOUT && run.status === 'queued') {
-                console.log("La solicitud ha excedido el tiempo límite en estado 'queued'");
-                return res.status(504).json({ error: 'No se puede completar la solicitud en este momento. Por favor, inténtelo de nuevo más tarde.' });
-            }
-        }
-
-        if (run.status === 'completed') {
-            const messages = await openai.beta.threads.messages.list(thread.id);
-            const lastAssistantMessage = messages.data.find(message => message.role === 'assistant');
-            if (lastAssistantMessage && lastAssistantMessage.content[0].text) {
-                let text = lastAssistantMessage.content[0].text.value;
-                console.log("Assistant response:", text);
-                res.status(200).send(text);
-            } else {
-                console.log("Run failed with status:", run.status);
-                res.status(500).json({ error: 'Failed to complete the conversation' });
-            }
-        }
-
-    } catch (error) {
-        console.error("Error:", error);
-        res.status(500).json({ error: 'Failed to fetch data from OpenAI' });
-    } finally {
-        currentProcessing = null;
-        if (messageQueue.length > 0) {
-            processMessages();
-        }
-    }
-}
-
 export default async function handler(req, res) {
     await sequelize.sync({ alter: true });
     if (req.method === 'POST') {
         validateApiKey(req, res);
-        const cancelToken = { cancelled: false };
-        messageQueue.push({ req, res, cancelToken });
-        processMessages();
+        const { messages, conversationId, stream } = req.body;
+        
+        try { 
+            console.log("Conversation ID:", conversationId);
+            const filteredMessages = messages.filter(message => message.role !== 'system' && message.content.trim() !== '');
+            const relevantMessages = filterRelevantMessages(filteredMessages);
+            
+            const menuAvailability = await getMenuAvailability(); // Obtener disponibilidad del menú de la base de datos
+            
+            // Añadir disponibilidad del menú a los mensajes relevantes
+            relevantMessages.push({
+                role: 'assistant',
+                content: `Disponibilidad actual del menú: ${JSON.stringify(menuAvailability.availability)}`
+            });
+
+            console.log("Relevant messages:", relevantMessages);
+            const thread = await openai.beta.threads.create({
+                messages: relevantMessages
+            });
+ 
+            const QUEUE_TIMEOUT = 15000; // 15 segundos
+            const startTime = Date.now();
+
+            let run = await openai.beta.threads.runs.create(
+                thread.id,
+                {
+                    assistant_id: process.env.ASSISTANT_ID,
+                }
+            );
+
+            while (['queued', 'in_progress', 'requires_action'].includes(run.status)) {
+                if (run.status === 'requires_action') { 
+                    const toolCalls = run.required_action.submit_tool_outputs.tool_calls;
+                    console.log("Tool calls:", toolCalls);
+
+                    const toolOutputs = await Promise.all(toolCalls.map(async (toolCall) => {
+                        const clientId = conversationId.split(':')[1];
+                        if (toolCall.function.name === 'get_customer_data') {
+                            const customerData = await getCustomerData(clientId);
+                            return {
+                                tool_call_id: toolCall.id,
+                                output: JSON.stringify(customerData)
+                            };
+                        } else if (toolCall.function.name === 'create_order') {
+                            return await createOrder(toolCall, clientId);
+                        } else if (toolCall.function.name === 'get_order_details') {
+                            const { daily_order_number } = JSON.parse(toolCall.function.arguments);
+                            const orderDetails = await getOrderDetails(daily_order_number, clientId);
+                            return {
+                                tool_call_id: toolCall.id,
+                                output: JSON.stringify(orderDetails)
+                            };
+                        }
+                    }));
+
+                    run = await openai.beta.threads.runs.submitToolOutputs(
+                        thread.id,
+                        run.id,
+                        { tool_outputs: toolOutputs }
+                    );
+                } else {
+                    await new Promise(resolve => setTimeout(resolve, 1000));
+                    run = await openai.beta.threads.runs.retrieve(
+                        thread.id,
+                        run.id
+                    );
+                }
+                console.log("Run status:", run.status);
+                
+                // Verificar si se ha excedido el tiempo límite
+                if (Date.now() - startTime > QUEUE_TIMEOUT && run.status === 'queued') {
+                    console.log("La solicitud ha excedido el tiempo límite en estado 'queued'");
+                    return res.status(504).json({ error: 'No se puede completar la solicitud en este momento. Por favor, inténtelo de nuevo más tarde.' });
+                }
+            }
+
+            if (run.status === 'completed') {
+                const messages = await openai.beta.threads.messages.list(thread.id);
+                const lastAssistantMessage = messages.data.find(message => message.role === 'assistant');
+                if (lastAssistantMessage && lastAssistantMessage.content[0].text) {
+                    let text = lastAssistantMessage.content[0].text.value;
+                    console.log("Assistant response:", text);
+                    res.status(200).send(text);
+                } else {
+                    console.log("Run failed with status:", run.status);
+                    res.status(500).json({ error: 'Failed to complete the conversation' });
+                }
+            }
+
+        } catch (error) {
+            console.error("Error:", error);
+            res.status(500).json({ error: 'Failed to fetch data from OpenAI' });
+        }
     } else {
         res.setHeader('Allow', ['POST']);
         res.status(405).end(`Method ${req.method} Not Allowed`);
