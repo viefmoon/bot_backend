@@ -175,6 +175,11 @@ async function processMessages() {
     const { req, res, cancelToken } = messageQueue.pop();
     currentProcessing = { req, res, cancelToken, cancel: () => { cancelToken.cancelled = true; } };
 
+    if (cancelToken.cancelled) {
+        console.log("Processing cancelled");
+        return;
+    }
+
     const { messages, conversationId, stream } = req.body;
 
     try {
