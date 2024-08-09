@@ -1,6 +1,6 @@
 const OpenAI = require('openai');
 const axios = require('axios');
-const { Order, Item } = require('../../models');
+const { Order, Item, MenuItem } = require('../../models');
 const { sequelize } = require('../../lib/db');
 
 const openai = new OpenAI({
@@ -152,6 +152,14 @@ function filterRelevantMessages(messages) {
     return relevantMessages.length > 0 ? relevantMessages : messages.slice(-MAX_MESSAGES);
 }
 
+async function getMenuAvailability() {
+    const menuItems = await MenuItem.findAll();
+    const availability = {};
+    menuItems.forEach(item => {
+        availability[item.code] = item.available;
+    });
+    return { availability };
+}
 
 export default async function handler(req, res) {
     await sequelize.sync({ alter: true });
@@ -163,10 +171,13 @@ export default async function handler(req, res) {
             console.log("Conversation ID:", conversationId);
             const filteredMessages = messages.filter(message => message.role !== 'system' && message.content.trim() !== '');
             const relevantMessages = filterRelevantMessages(filteredMessages);
-            console.log("Mensajes relevantes:", relevantMessages);
+            console.log("Relevant messages:", relevantMessages);
+            
+            const menuAvailability = await getMenuAvailability(); // Get menu availability from the database
             
             const thread = await openai.beta.threads.create({
-                messages: relevantMessages
+                messages: relevantMessages,
+                menuAvailability // Add menu availability to the payload
             });
  
             const QUEUE_TIMEOUT = 15000; // 15 segundos
