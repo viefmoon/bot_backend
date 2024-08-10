@@ -1,5 +1,5 @@
 const { connectDB } = require('../../lib/db');
-import RestaurantConfig from '../models/RestaurantConfig';
+import RestaurantConfig from '../../models/RestaurantConfig';
 
 export default async function handler(req, res) {
   await connectDB();
