@@ -2,7 +2,8 @@ const { sequelize } = require('../lib/db');
 const Customer = require('./Customer');
 const Item = require('./Item');
 const Order = require('./Order');
-const MenuItem = require('./MenuItem'); // Import the new model
+const MenuItem = require('./MenuItem');
+const RestaurantConfig = require('./RestaurantConfig'); // Import the new model
 
 // Define relationships
 Order.hasMany(Item, { foreignKey: 'orderId', as: 'items' });
@@ -15,7 +16,8 @@ const syncModels = async (retries = 5) => {
             await Customer.sync({ alter: true });
             await Item.sync({ alter: true });
             await Order.sync({ alter: true });
-            await MenuItem.sync({ alter: true }); // Sync the new model
+            await MenuItem.sync({ alter: true });
+            await RestaurantConfig.sync({ alter: true }); // Sync the new model
             console.log('All models have been synchronized.');
             break; // Exit the loop if synchronization is successful
         } catch (error) {
@@ -32,4 +34,4 @@ const syncModels = async (retries = 5) => {
 
 syncModels();
 
-module.exports = { Customer, Item, Order, MenuItem, sequelize, syncModels };
+module.exports = { Customer, Item, Order, MenuItem, RestaurantConfig, sequelize, syncModels };
