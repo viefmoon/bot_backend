@@ -27,7 +27,7 @@ export default async function handler(req, res) {
       }
 
       const chatbotId = process.env.CHATBOT_ID;
-      const conversationIdPrefix = '5219986399261:'; // Anteponer este número y los dos puntos al client_id
+      const conversationIdPrefix = process.env.CONVERSATION_ID_PREFIX; // Leer el prefijo del archivo .env
       const conversationId = `${conversationIdPrefix}${client_id}`;
 
       // Realizar la solicitud GET a la API de chat-data.com para obtener todas las conversaciones
