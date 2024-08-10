@@ -29,7 +29,7 @@ async function verificarHorarioAtencion() {
     const tiempoActual = ahora.hours() * 60 + ahora.minutes();
 
     const horarioNormal = {
-        apertura: 6 * 60, // 6:00 AM
+        apertura: 0 * 60, // 6:00 AM
         cierre: 23 * 60    // 11:00 PM
     };
 
