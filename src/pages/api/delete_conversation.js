@@ -32,10 +32,20 @@ export default async function handler(req, res) {
       const conversationIdPrefix = process.env.CONVERSATION_ID_PREFIX;
       const conversationId = `${conversationIdPrefix}${clientId}`;
 
+      // Verificar que el token de autorización es válido
+      const token = process.env.CHAT_DATA_API_TOKEN;
+      if (!token) {
+        return res.status(500).json({ error: 'Token de autorización no encontrado.' });
+      }
+
       // Realizar la solicitud DELETE a la API de chat-data.com para borrar la conversación
-      const response = await axios.delete(`https://api.chat-data.com/api/v1/chatbot/conversation?conversationId=${conversationId}&chatbotId=${chatbotId}`, {
+      const response = await axios.delete(`https://api.chat-data.com/api/v2/delete-conversation`, {
         headers: {
-          'Authorization': `Bearer ${process.env.CHAT_DATA_API_TOKEN}`
+          'Authorization': `Bearer ${token}`
+        },
+        data: {
+          chatbotId: chatbotId,
+          conversationId: conversationId
         }
       });
 
