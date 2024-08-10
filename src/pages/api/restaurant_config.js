@@ -8,8 +8,10 @@ export default async function handler(req, res) {
     try {
       const config = await RestaurantConfig.findOne();
       if (!config) {
+        console.log('Configuración no encontrada');
         return res.status(404).json({ error: 'Configuración no encontrada' });
       }
+      console.log('Configuración obtenida:', config);
       res.status(200).json({
         config: {
           acceptingOrders: config.acceptingOrders,
@@ -32,12 +34,14 @@ export default async function handler(req, res) {
           estimatedPickupTime, 
           estimatedDeliveryTime 
         });
+        console.log('Nueva configuración creada:', config);
       } else {
         await config.update({ 
           acceptingOrders, 
           estimatedPickupTime, 
           estimatedDeliveryTime 
         });
+        console.log('Configuración actualizada:', config);
       }
 
       res.status(200).json({ 
