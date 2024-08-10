@@ -39,9 +39,12 @@ export default async function handler(req, res) {
       }
 
       // Realizar la solicitud DELETE a la API de chat-data.com para borrar la conversación
-      const response = await axios.delete(`https://api.chat-data.com/api/v2/delete-conversation`, {
+      const response = await axios({
+        method: 'delete',
+        url: 'https://api.chat-data.com/api/v2/delete-conversation',
         headers: {
-          'Authorization': `Bearer ${token}`
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
         },
         data: {
           chatbotId: chatbotId,
