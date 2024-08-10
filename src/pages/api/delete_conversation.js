@@ -38,6 +38,9 @@ export default async function handler(req, res) {
         return res.status(500).json({ error: 'Token de autorización no encontrado.' });
       }
 
+      console.log('chatbotId:', chatbotId);
+      console.log('conversationId:', conversationId);
+
       // Realizar la solicitud DELETE a la API de chat-data.com para borrar la conversación
       const response = await axios({
         method: 'delete',
@@ -46,11 +49,13 @@ export default async function handler(req, res) {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
         },
-        data: {
+        params: {
           chatbotId: chatbotId,
           conversationId: conversationId
         }
       });
+
+      console.log('Respuesta de la API:', response.data);
 
       if (response.status === 200) {
         res.status(200).json({ mensaje: 'Conversación borrada exitosamente' });
@@ -58,7 +63,7 @@ export default async function handler(req, res) {
         res.status(response.status).json({ error: 'Error al borrar la conversación' });
       }
     } catch (error) {
-      console.error('Error al borrar la conversación:', error);
+      console.error('Error al borrar la conversación:', error.response ? error.response.data : error.message);
       res.status(500).json({ error: 'Error al borrar la conversación' });
     }
   } else {
