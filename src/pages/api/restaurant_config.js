@@ -4,7 +4,24 @@ const RestaurantConfig = require('../../models/RestaurantConfig');
 export default async function handler(req, res) {
   await connectDB();
 
-  if (req.method === 'POST') {
+  if (req.method === 'GET') {
+    try {
+      const config = await RestaurantConfig.findOne();
+      if (!config) {
+        return res.status(404).json({ error: 'Configuración no encontrada' });
+      }
+      res.status(200).json({
+        config: {
+          acceptingOrders: config.acceptingOrders,
+          estimatedPickupTime: config.estimatedPickupTime,
+          estimatedDeliveryTime: config.estimatedDeliveryTime
+        }
+      });
+    } catch (error) {
+      console.error('Error al obtener la configuración:', error);
+      res.status(500).json({ error: 'Error al obtener la configuración' });
+    }
+  } else if (req.method === 'POST') {
     try {
       const { acceptingOrders, estimatedPickupTime, estimatedDeliveryTime } = req.body;
 
@@ -36,7 +53,7 @@ export default async function handler(req, res) {
       res.status(500).json({ error: 'Error al actualizar la configuración' });
     }
   } else {
-    res.setHeader('Allow', ['POST']);
+    res.setHeader('Allow', ['GET', 'POST']);
     res.status(405).end(`Method ${req.method} Not Allowed`);
   }
 }
