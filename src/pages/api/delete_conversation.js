@@ -20,15 +20,15 @@ export default async function handler(req, res) {
 
   if (req.method === 'DELETE') {
     try {
-      const { phone_number } = req.query;
+      const { clientId } = req.query;
 
-      if (!phone_number) {
-        return res.status(400).json({ error: 'Se requiere el número de teléfono.' });
+      if (!clientId) {
+        return res.status(400).json({ error: 'Se requiere el ID del cliente.' });
       }
 
       const chatbotId = process.env.CHATBOT_ID;
-      const conversationIdPrefix = process.env.CONVERSATION_ID_PREFIX; // Leer el prefijo del archivo .env
-      const conversationId = `${conversationIdPrefix}${phone_number}`;
+      const conversationIdPrefix = process.env.CONVERSATION_ID_PREFIX;
+      const conversationId = `${conversationIdPrefix}${clientId}`;
 
       // Realizar la solicitud DELETE a la API de chat-data.com para borrar la conversación
       const response = await axios.delete(`https://api.chat-data.com/api/v1/chatbot/conversation?conversationId=${conversationId}&chatbotId=${chatbotId}`, {
