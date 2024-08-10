@@ -19,6 +19,7 @@ export default async function handler(req, res) {
   });
 
   if (req.method === 'DELETE') {
+    console.log("DELETE request received");
     try {
       const { clientId } = req.query;
 
