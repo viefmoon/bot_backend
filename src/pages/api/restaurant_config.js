@@ -1,7 +1,24 @@
 const { connectDB } = require('../../lib/db');
 import RestaurantConfig from '../../models/RestaurantConfig';
+const cors = require('cors');
+
+// Configurar CORS
+const corsMiddleware = cors({
+  origin: '*', // Permitir todos los orígenes en desarrollo. Ajustar esto en producción.
+  methods: ['GET', 'POST'],
+});
 
 export default async function handler(req, res) {
+  // Aplicar el middleware de CORS
+  await new Promise((resolve, reject) => {
+    corsMiddleware(req, res, (result) => {
+      if (result instanceof Error) {
+        return reject(result);
+      }
+      return resolve(result);
+    });
+  });
+
   await connectDB();
 
   if (req.method === 'GET') {
