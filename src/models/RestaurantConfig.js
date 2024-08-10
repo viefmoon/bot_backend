@@ -23,4 +23,4 @@ const RestaurantConfig = sequelize.define('RestaurantConfig', {
   }
 });
 
-module.exports = RestaurantConfig;
+export default RestaurantConfig;
