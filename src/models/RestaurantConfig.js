@@ -23,4 +23,17 @@ const RestaurantConfig = sequelize.define('RestaurantConfig', {
   }
 });
 
+// Método para crear una configuración por defecto si no existe
+RestaurantConfig.sync().then(async () => {
+  const count = await RestaurantConfig.count();
+  if (count === 0) {
+    await RestaurantConfig.create({
+      acceptingOrders: true,
+      estimatedPickupTime: 20,
+      estimatedDeliveryTime: 40
+    });
+    console.log('Configuración por defecto creada.');
+  }
+});
+
 module.exports = RestaurantConfig;
