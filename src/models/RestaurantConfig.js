@@ -1,5 +1,5 @@
 const { DataTypes } = require('sequelize');
-const sequelize = require('../lib/db');
+const { sequelize } = require('../lib/db');
 
 const RestaurantConfig = sequelize.define('RestaurantConfig', {
   id: {
@@ -23,4 +23,4 @@ const RestaurantConfig = sequelize.define('RestaurantConfig', {
   }
 });
 
-export default RestaurantConfig;
+module.exports = RestaurantConfig;
