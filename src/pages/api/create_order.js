@@ -4,12 +4,19 @@ const Item = require('../../models/Item');
 const Customer = require('../../models/Customer');
 const { verificarHorarioAtencion } = require('../../utils/timeUtils');
 const { getNextDailyOrderNumber } = require('../../utils/orderUtils');
+const RestaurantConfig = require('../../models/RestaurantConfig');
 
 export default async function handler(req, res) {
     await connectDB();
 
     if (req.method === 'POST') {
         try {
+            // Verificar si el restaurante está aceptando pedidos y obtener la configuración
+            const config = await RestaurantConfig.findOne();
+            if (!config || !config.acceptingOrders) {
+                return res.status(400).json({ error: 'Lo sentimos, el restaurante no está aceptando pedidos en este momento debido a saturación.' });
+            }
+
             const estaAbierto = await verificarHorarioAtencion();
             if (!estaAbierto) {
                 return res.status(400).json({ error: 'Lo sentimos, solo podre procesar tu pedido cuando el restaurante este abierto.' });
@@ -85,6 +92,9 @@ export default async function handler(req, res) {
                 })
             ));
 
+            // Determinar el tiempo estimado basado en el tipo de orden
+            const estimatedTime = order_type === 'pickup' ? config.estimatedPickupTime : config.estimatedDeliveryTime;
+
             res.status(201).json({ 
                 mensaje: 'Orden creada exitosamente', 
                 orden: {
@@ -112,6 +122,7 @@ export default async function handler(req, res) {
                     })),
                     numeroDiario: newOrder.dailyOrderNumber,
                     fecha: newOrder.orderDate,
+                    tiempoEstimado: estimatedTime,
                 }
             });
         } catch (error) {
