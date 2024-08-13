@@ -75,13 +75,13 @@ async function createOrder(toolCall, clientId) {
 }
 
 async function modifyOrder(toolCall, clientId) {
-    const { orderId, order_type, items, phone_number, delivery_address, pickup_name } = JSON.parse(toolCall.function.arguments);
+    const {  daily_order_number, order_type, items, phone_number, delivery_address, pickup_name } = JSON.parse(toolCall.function.arguments);
     const total_price = items.reduce((total, item) => total + (item.price * item.quantity), 0);
 
     try {
         const response = await axios.post(`${process.env.BASE_URL}/api/create_order`, {
             action: 'modify',
-            orderId,
+            daily_order_number,
             order_type,
             items,
             phone_number,
