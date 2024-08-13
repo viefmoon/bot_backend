@@ -30,7 +30,7 @@ export default async function handler(req, res) {
 
       const chatbotId = process.env.CHATBOT_ID;
       const conversationIdPrefix = process.env.CONVERSATION_ID_PREFIX;
-      const conversationId = `521${conversationIdPrefix}${clientId}`;
+      const conversationId = `${conversationIdPrefix}${clientId}`;
 
       // Verificar que el token de autorización es válido
       const token = process.env.CHAT_DATA_API_TOKEN;
