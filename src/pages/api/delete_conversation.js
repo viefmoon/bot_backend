@@ -41,12 +41,19 @@ export default async function handler(req, res) {
       console.log('chatbotId:', chatbotId);
       console.log('conversationId:', conversationId);
 
-      // Realizar la solicitud DELETE a la API de chat-data.com para borrar la conversación
-      const url = `https://api.chat-data.com/api/v2/delete-conversation?chatbotId=${chatbotId}&conversationId=${conversationId}`;
+      // Imprimir el contenido que se va a enviar
+      console.log('Contenido a enviar:', {
+        url: `https://api.chat-data.com/api/v2/delete-conversation?chatbotId=${chatbotId}&conversationId=${conversationId}`,
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
 
+      // Realizar la solicitud DELETE a la API de chat-data.com para borrar la conversación
       const response = await axios({
         method: 'delete',
-        url: url,
+        url: `https://api.chat-data.com/api/v2/delete-conversation?chatbotId=${chatbotId}&conversationId=${conversationId}`,
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
