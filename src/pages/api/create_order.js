@@ -57,11 +57,10 @@ async function createOrder(req, res) {
     }
 
     if (order_type === 'pickup' && !pickup_name) {
-        return res.status(400).json({ error: 'Se requiere nombre de quien recoge para órdenes de pickup.' });
+        return res.status(400).json({ error: 'Se requiere nombre de recoleccion para órdenes de pickup.' });
     }
 
     if (client_id) {
-        console.log('client_id en la creacion de la orden:', client_id);
         const updateData = {};
         if (order_type === 'delivery') {
             updateData.last_delivery_address = delivery_address;
@@ -73,17 +72,14 @@ async function createOrder(req, res) {
             let customer = await Customer.findByPk(client_id);
             if (customer) {
                 await customer.update(updateData);
-                console.log('Cliente actualizado:', customer.toJSON());
             } else {
                 customer = await Customer.create({
                     client_id: client_id,
                     ...updateData
                 });
-                console.log('Nuevo cliente creado:', customer.toJSON());
             }
         } catch (error) {
             console.error('Error al crear o actualizar el cliente:', error);
-            // Continuar con la creación de la orden incluso si falla la actualización del cliente
         }
     } else {
         console.warn('client_id no proporcionado o inválido:', client_id);
@@ -125,7 +121,7 @@ async function createOrder(req, res) {
     res.status(201).json({ 
         mensaje: 'Orden creada exitosamente', 
         orden: {
-            id: newOrder.id,
+            Id: newOrder.dailyOrderNumber,
             tipo: newOrder.order_type,
             estado: newOrder.status,
             telefono: newOrder.phone_number,
@@ -147,24 +143,39 @@ async function createOrder(req, res) {
                 cantidad: item.quantity,
                 precio: item.price
             })),
-            numeroDiario: newOrder.dailyOrderNumber,
-            fecha: newOrder.orderDate,
             tiempoEstimado: estimatedTime,
         }
     });
 }
 
 async function modifyOrder(req, res) {
-    const { orderId, order_type, items, phone_number, delivery_address, pickup_name, total_price, client_id } = req.body;
-
-    const order = await Order.findByPk(orderId);
-    if (!order || order.status !== 'created') {
-        return res.status(400).json({ error: 'La orden no existe o no se puede modificar' });
-    }
 
     const config = await RestaurantConfig.findOne();
-    if (!config || !config.acceptingOrders) {
-        return res.status(400).json({ error: 'Lo sentimos, el restaurante no está aceptando modificaciones en este momento.' });
+
+    const { daily_order_number, order_type, items, phone_number, delivery_address, pickup_name, total_price, client_id } = req.body;
+
+    // Obtener la fecha actual en la zona horaria de México
+    const mexicoTime = new Date().toLocaleString("en-US", {timeZone: "America/Mexico_City"});
+    const today = new Date(mexicoTime).toISOString().split('T')[0];
+
+    // Buscar la orden por dailyOrderNumber y fecha actual
+    const order = await Order.findOne({
+        where: {
+            dailyOrderNumber: daily_order_number,
+            orderDate: today
+        }
+    });
+
+    if (!order) {
+        return res.status(400).json({ error: 'La orden no existe o no es del día actual.' });
+    }
+
+    if (order.client_id !== client_id) {
+        return res.status(400).json({ error: 'La orden no corresponde al cliente proporcionado.' });
+    }
+
+    if (order.status !== 'created') {
+        return res.status(400).json({ error: 'La orden no se puede modificar porque su estado no es "creado".' });
     }
 
     const estaAbierto = await verificarHorarioAtencion();
@@ -231,10 +242,12 @@ async function modifyOrder(req, res) {
     // Borrar la conversación después de modificar la orden
     await deleteConversation(client_id);
 
+    const estimatedTime = order_type === 'pickup' ? config.estimatedPickupTime : config.estimatedDeliveryTime;
+
     res.status(200).json({ 
         mensaje: 'Orden modificada exitosamente', 
         orden: {
-            id: order.id,
+            id: order.dailyOrderNumbe,
             tipo: order.order_type,
             estado: order.status,
             telefono: order.phone_number,
@@ -246,29 +259,47 @@ async function modifyOrder(req, res) {
                 cantidad: item.quantity,
                 precio: item.price
             })),
-            numeroDiario: order.dailyOrderNumber,
-            fecha: order.orderDate,
+            tiempoEstimado: estimatedTime,
         }
     });
 }
 
 async function cancelOrder(req, res) {
-    const { orderId } = req.body;
+    const { daily_order_number, client_id } = req.body;
 
-    const order = await Order.findByPk(orderId);
-    if (!order || order.status !== 'created') {
-        return res.status(400).json({ error: 'La orden no existe o no se puede cancelar' });
+    // Obtener la fecha actual en la zona horaria de México
+    const mexicoTime = new Date().toLocaleString("en-US", {timeZone: "America/Mexico_City"});
+    const today = new Date(mexicoTime).toISOString().split('T')[0];
+
+    // Buscar la orden por dailyOrderNumber y fecha actual
+    const order = await Order.findOne({
+        where: {
+            dailyOrderNumber: daily_order_number,
+            orderDate: today
+        }
+    });
+
+    if (!order) {
+        return res.status(400).json({ error: 'La orden no existe o no es del día actual.' });
+    }
+
+    if (order.client_id !== client_id) {
+        return res.status(400).json({ error: 'La orden no corresponde al cliente proporcionado.' });
+    }
+
+    if (order.status !== 'created') {
+        return res.status(400).json({ error: 'La orden no se puede cancelar porque su estado no es "creado".' });
     }
 
     await order.update({ status: 'canceled' });
 
     // Borrar la conversación después de cancelar la orden
-    await deleteConversation(order.client_id);
+    await deleteConversation(client_id);
 
     res.status(200).json({ 
         mensaje: 'Orden cancelada exitosamente', 
         orden: {
-            id: order.id,
+            Id: order.dailyOrderNumber,
             estado: order.status,
         }
     });
