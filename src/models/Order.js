@@ -44,6 +44,11 @@ const Order = sequelize.define('Order', {
         type: DataTypes.INTEGER,
         allowNull: false,
     },
+    estimatedTime: {
+        type: DataTypes.INTEGER,
+        allowNull: false,
+        defaultValue: 0,
+    },
 }, {
     timestamps: true,
 });

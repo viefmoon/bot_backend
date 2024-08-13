@@ -89,6 +89,9 @@ async function createOrder(req, res) {
     const today = new Date(mexicoTime).toISOString().split('T')[0];
     const dailyOrderNumber = await getNextDailyOrderNumber();
 
+    // Determinar el tiempo estimado basado en el tipo de orden
+    const estimatedTime = order_type === 'pickup' ? config.estimatedPickupTime : config.estimatedDeliveryTime;
+
     // Crear la orden
     const newOrder = await Order.create({
         order_type,
@@ -100,6 +103,7 @@ async function createOrder(req, res) {
         status: 'created', // Añadimos el estado 'created'
         orderDate: today,
         dailyOrderNumber,
+        estimatedTime,
     });
 
     // Crear los items asociados a la orden
@@ -111,9 +115,6 @@ async function createOrder(req, res) {
             orderId: newOrder.id,
         })
     ));
-
-    // Determinar el tiempo estimado basado en el tipo de orden
-    const estimatedTime = order_type === 'pickup' ? config.estimatedPickupTime : config.estimatedDeliveryTime;
 
     res.status(201).json({ 
         mensaje: 'Orden creada exitosamente', 
@@ -140,14 +141,12 @@ async function createOrder(req, res) {
                 cantidad: item.quantity,
                 precio: item.price
             })),
-            tiempoEstimado: estimatedTime,
+            tiempoEstimado: newOrder.estimatedTime,
         }
     });
 }
 
 async function modifyOrder(req, res) {
-
-    const config = await RestaurantConfig.findOne();
 
     const { daily_order_number, order_type, items, phone_number, delivery_address, pickup_name, total_price, client_id } = req.body;
 
@@ -236,8 +235,6 @@ async function modifyOrder(req, res) {
         }
     }
 
-    const estimatedTime = order_type === 'pickup' ? config.estimatedPickupTime : config.estimatedDeliveryTime;
-
     res.status(200).json({ 
         mensaje: 'Orden modificada exitosamente', 
         orden: {
@@ -253,7 +250,7 @@ async function modifyOrder(req, res) {
                 cantidad: item.quantity,
                 precio: item.price
             })),
-            tiempoEstimado: estimatedTime,
+            tiempoEstimado: order.estimatedTime,
         }
     });
 }

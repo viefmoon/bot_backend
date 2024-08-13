@@ -160,15 +160,14 @@ async function getOrderDetails(dailyOrderNumber, clientId) {
         }
 
         return {
-            id: order.id,
-            numeroDiario: order.dailyOrderNumber,
+            id: order.dailyOrderNumber,
             tipo: order.order_type,
             estado: order.status,
             telefono: order.phone_number,
             direccion_entrega: order.delivery_address,
             nombre_recogida: order.pickup_name,
             precio_total: order.total_price,
-            id_cliente: order.client_id,
+            tiempo_estimado: order.estimatedTime,
             fecha_creacion: order.createdAt.toLocaleString('es-MX', {
                 timeZone: 'America/Mexico_City',
                 year: 'numeric',
