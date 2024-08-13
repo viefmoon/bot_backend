@@ -191,6 +191,11 @@ async function modifyOrder(req, res) {
         return res.status(400).json({ error: 'Se requiere nombre de quien recoge para órdenes de pickup.' });
     }
 
+    // Validar que los items existan y sean un array
+    if (!Array.isArray(items) || items.length === 0) {
+        return res.status(400).json({ error: 'Se requiere al menos un item para la orden.' });
+    }
+
     // Actualizar la orden
     await order.update({
         order_type,
@@ -200,7 +205,7 @@ async function modifyOrder(req, res) {
         total_price,
     });
 
-    // Actualizar o crear items
+    // Actualizar items
     await Item.destroy({ where: { orderId: order.id } });
     const updatedItems = await Promise.all(items.map(item => 
         Item.create({
