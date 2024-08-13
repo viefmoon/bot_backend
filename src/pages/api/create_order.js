@@ -38,8 +38,6 @@ async function createOrder(req, res) {
 
     const { order_type, items, phone_number, delivery_address, pickup_name, total_price, client_id } = req.body;
 
-    await deleteConversation(client_id);
-
     // Verificar si el restaurante está aceptando pedidos y obtener la configuración
     const config = await RestaurantConfig.findOne();
     if (!config || !config.acceptingOrders) {
@@ -146,6 +144,9 @@ async function createOrder(req, res) {
             tiempoEstimado: estimatedTime,
         }
     });
+
+    // Mover deleteConversation aquí, después de enviar la respuesta
+    await deleteConversation(client_id);
 }
 
 async function modifyOrder(req, res) {
@@ -239,9 +240,6 @@ async function modifyOrder(req, res) {
         }
     }
 
-    // Borrar la conversación después de modificar la orden
-    await deleteConversation(client_id);
-
     const estimatedTime = order_type === 'pickup' ? config.estimatedPickupTime : config.estimatedDeliveryTime;
 
     res.status(200).json({ 
@@ -262,6 +260,9 @@ async function modifyOrder(req, res) {
             tiempoEstimado: estimatedTime,
         }
     });
+
+    // Mover deleteConversation aquí, después de enviar la respuesta
+    await deleteConversation(client_id);
 }
 
 async function cancelOrder(req, res) {
@@ -293,9 +294,6 @@ async function cancelOrder(req, res) {
 
     await order.update({ status: 'canceled' });
 
-    // Borrar la conversación después de cancelar la orden
-    await deleteConversation(client_id);
-
     res.status(200).json({ 
         mensaje: 'Orden cancelada exitosamente', 
         orden: {
@@ -303,6 +301,9 @@ async function cancelOrder(req, res) {
             estado: order.status,
         }
     });
+
+    // Mover deleteConversation aquí, después de enviar la respuesta
+    await deleteConversation(client_id);
 }
 
 // Función para borrar la conversación

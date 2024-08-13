@@ -38,25 +38,12 @@ export default async function handler(req, res) {
         return res.status(500).json({ error: 'Token de autorización no encontrado.' });
       }
 
-      console.log('chatbotId:', chatbotId);
-      console.log('conversationId:', conversationId);
-
-      // Imprimir el contenido que se va a enviar
-      console.log('Contenido a enviar:', {
-        url: `https://api.chat-data.com/api/v2/delete-conversation?chatbotId=${chatbotId}&conversationId=${conversationId}`,
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
-      });
-
-      // Realizar la solicitud DELETE a la API de chat-data.com para borrar la conversación
       const response = await axios({
         method: 'delete',
         url: `https://api.chat-data.com/api/v2/delete-conversation?chatbotId=${chatbotId}&conversationId=${conversationId}`,
         headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
         }
       });
       if (response.status === 200) {
