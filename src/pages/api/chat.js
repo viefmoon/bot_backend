@@ -48,6 +48,7 @@ async function createOrder(toolCall, clientId) {
 
     try {
         const response = await axios.post(`${process.env.BASE_URL}/api/create_order`, {
+            action: 'create', // Añadimos la acción
             order_type,
             items,
             phone_number,
@@ -74,11 +75,12 @@ async function createOrder(toolCall, clientId) {
 }
 
 async function modifyOrder(toolCall, clientId) {
-    const {  daily_order_number, order_type, items, phone_number, delivery_address, pickup_name } = JSON.parse(toolCall.function.arguments);
+    const { daily_order_number, order_type, items, phone_number, delivery_address, pickup_name } = JSON.parse(toolCall.function.arguments);
     const total_price = items.reduce((total, item) => total + (item.price * item.quantity), 0);
 
     try {
         const response = await axios.post(`${process.env.BASE_URL}/api/create_order`, {
+            action: 'modify', // Añadimos la acción
             daily_order_number,
             order_type,
             items,
@@ -118,6 +120,7 @@ async function cancelOrder(toolCall, clientId) {
 
     try {
         const response = await axios.post(`${process.env.BASE_URL}/api/create_order`, {
+            action: 'cancel', // Añadimos la acción
             daily_order_number,
             client_id: clientId
         });
