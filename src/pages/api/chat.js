@@ -108,27 +108,35 @@ async function modifyOrder(toolCall, clientId) {
 }
 
 async function cancelOrder(toolCall, clientId) {
-    const { orderId } = JSON.parse(toolCall.function.arguments);
+    const { daily_order_number } = JSON.parse(toolCall.function.arguments);
+
+    if (!daily_order_number) {
+        console.error("Número de orden no proporcionado");
+        return {
+            tool_call_id: toolCall.id,
+            output: JSON.stringify({ error: "Número de orden no proporcionado" })
+        };
+    }
 
     try {
         const response = await axios.post(`${process.env.BASE_URL}/api/create_order`, {
             action: 'cancel',
-            orderId,
+            daily_order_number,
             client_id: clientId
         });
 
         const orderResult = response.data;
-        console.log("Order cancellation result:", orderResult);
+        console.log("Resultado de la cancelación de la orden:", orderResult);
 
         return {
             tool_call_id: toolCall.id,
             output: JSON.stringify(orderResult)
         };
     } catch (error) {
-        console.error("Error cancelling order:", error.response ? error.response.data : error.message);
+        console.error("Error al cancelar la orden:", error.response ? error.response.data : error.message);
         return {
             tool_call_id: toolCall.id,
-            output: JSON.stringify({ error: error.response ? error.response.data.error : "Failed to cancel order", details: error.message })
+            output: JSON.stringify({ error: error.response ? error.response.data.error : "No se pudo cancelar la orden", details: error.message })
         };
     }
 }

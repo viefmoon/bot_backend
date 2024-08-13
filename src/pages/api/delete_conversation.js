@@ -54,9 +54,6 @@ export default async function handler(req, res) {
           conversationId: conversationId
         }
       });
-
-      console.log('Respuesta de la API:', response.data);
-
       if (response.status === 200) {
         res.status(200).json({ mensaje: 'Conversación borrada exitosamente' });
       } else {
