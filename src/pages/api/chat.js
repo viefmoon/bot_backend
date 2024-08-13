@@ -48,7 +48,6 @@ async function createOrder(toolCall, clientId) {
 
     try {
         const response = await axios.post(`${process.env.BASE_URL}/api/create_order`, {
-            action: 'create',
             order_type,
             items,
             phone_number,
@@ -80,7 +79,6 @@ async function modifyOrder(toolCall, clientId) {
 
     try {
         const response = await axios.post(`${process.env.BASE_URL}/api/create_order`, {
-            action: 'modify',
             daily_order_number,
             order_type,
             items,
@@ -120,7 +118,6 @@ async function cancelOrder(toolCall, clientId) {
 
     try {
         const response = await axios.post(`${process.env.BASE_URL}/api/create_order`, {
-            action: 'cancel',
             daily_order_number,
             client_id: clientId
         });
@@ -336,12 +333,18 @@ export default async function handler(req, res) {
                     let text = lastAssistantMessage.content[0].text.value;
                     console.log("Assistant response:", text);
                     
+                    res.status(200).send(text);
+                    
+                    // Mover la lógica de borrado después de enviar la respuesta
                     if (shouldDeleteConversation) {
                         const clientId = conversationId.split(':')[1];
-                        await deleteConversation(clientId);
+                        try {
+                            await deleteConversation(clientId);
+                            console.log(`Conversación borrada para el cliente: ${clientId}`);
+                        } catch (error) {
+                            console.error(`Error al borrar la conversación para el cliente ${clientId}:`, error);
+                        }
                     }
-                    
-                    res.status(200).send(text);
                 } else {
                     console.log("Run failed with status:", run.status);
                     res.status(500).json({ error: 'Failed to complete the conversation' });
@@ -366,5 +369,6 @@ async function deleteConversation(clientId) {
         console.log('Conversación borrada:', deleteResponse.data);
     } catch (error) {
         console.error('Error al borrar la conversación:', error.response ? error.response.data : error.message);
+        // No lanzamos el error aquí para evitar que afecte al flujo principal
     }
 }
