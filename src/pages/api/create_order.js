@@ -35,6 +35,9 @@ export default async function handler(req, res) {
 }
 
 async function createOrder(req, res) {
+    
+    await deleteConversation(client_id);
+
     // Verificar si el restaurante está aceptando pedidos y obtener la configuración
     const config = await RestaurantConfig.findOne();
     if (!config || !config.acceptingOrders) {
@@ -111,9 +114,6 @@ async function createOrder(req, res) {
             orderId: newOrder.id,
         })
     ));
-
-    // Borrar la conversación después de crear la orden
-    await deleteConversation(client_id);
 
     // Determinar el tiempo estimado basado en el tipo de orden
     const estimatedTime = order_type === 'pickup' ? config.estimatedPickupTime : config.estimatedDeliveryTime;
