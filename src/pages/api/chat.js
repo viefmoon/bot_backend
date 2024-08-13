@@ -44,11 +44,11 @@ async function getCustomerData(clientId) {
 
 async function createOrder(toolCall, clientId) {
     const { order_type, items, phone_number, delivery_address, pickup_name } = JSON.parse(toolCall.function.arguments);
-    // Calcular el precio total
     const total_price = items.reduce((total, item) => total + (item.price * item.quantity), 0);
 
     try {
         const response = await axios.post(`${process.env.BASE_URL}/api/create_order`, {
+            action: 'create',
             order_type,
             items,
             phone_number,
@@ -70,6 +70,65 @@ async function createOrder(toolCall, clientId) {
         return {
             tool_call_id: toolCall.id,
             output: JSON.stringify({ error: error.response ? error.response.data.error : "Failed to create order", details: error.message })
+        };
+    }
+}
+
+async function modifyOrder(toolCall, clientId) {
+    const { orderId, order_type, items, phone_number, delivery_address, pickup_name } = JSON.parse(toolCall.function.arguments);
+    const total_price = items.reduce((total, item) => total + (item.price * item.quantity), 0);
+
+    try {
+        const response = await axios.post(`${process.env.BASE_URL}/api/create_order`, {
+            action: 'modify',
+            orderId,
+            order_type,
+            items,
+            phone_number,
+            delivery_address,
+            pickup_name,
+            total_price,
+            client_id: clientId
+        });
+
+        const orderResult = response.data;
+        console.log("Order modification result:", orderResult);
+
+        return {
+            tool_call_id: toolCall.id,
+            output: JSON.stringify(orderResult)
+        };
+    } catch (error) {
+        console.error("Error modifying order:", error.response ? error.response.data : error.message);
+        return {
+            tool_call_id: toolCall.id,
+            output: JSON.stringify({ error: error.response ? error.response.data.error : "Failed to modify order", details: error.message })
+        };
+    }
+}
+
+async function cancelOrder(toolCall, clientId) {
+    const { orderId } = JSON.parse(toolCall.function.arguments);
+
+    try {
+        const response = await axios.post(`${process.env.BASE_URL}/api/create_order`, {
+            action: 'cancel',
+            orderId,
+            client_id: clientId
+        });
+
+        const orderResult = response.data;
+        console.log("Order cancellation result:", orderResult);
+
+        return {
+            tool_call_id: toolCall.id,
+            output: JSON.stringify(orderResult)
+        };
+    } catch (error) {
+        console.error("Error cancelling order:", error.response ? error.response.data : error.message);
+        return {
+            tool_call_id: toolCall.id,
+            output: JSON.stringify({ error: error.response ? error.response.data.error : "Failed to cancel order", details: error.message })
         };
     }
 }
@@ -125,7 +184,7 @@ async function getOrderDetails(dailyOrderNumber, clientId) {
 }
 
 function filterRelevantMessages(messages) {
-    const keywordsUser = ['olvida lo anterior', 'nuevo pedido', 'quiero ordenar'];
+    const keywordsUser = ['olvida lo anterior', 'nuevo pedido',];
     const keywordsAssistant = ['Tu pedido ha sido generado', 'Gracias por tu orden'];
     const MAX_MESSAGES = 20;
     
@@ -171,7 +230,6 @@ export default async function handler(req, res) {
         const { messages, conversationId, stream } = req.body;
         
         try { 
-            console.log("Conversation ID:", conversationId);
             const filteredMessages = messages.filter(message => message.role !== 'system' && message.content.trim() !== '');
             const relevantMessages = filterRelevantMessages(filteredMessages);
             
@@ -205,21 +263,31 @@ export default async function handler(req, res) {
 
                     const toolOutputs = await Promise.all(toolCalls.map(async (toolCall) => {
                         const clientId = conversationId.split(':')[1];
-                        if (toolCall.function.name === 'get_customer_data') {
-                            const customerData = await getCustomerData(clientId);
-                            return {
-                                tool_call_id: toolCall.id,
-                                output: JSON.stringify(customerData)
-                            };
-                        } else if (toolCall.function.name === 'create_order') {
-                            return await createOrder(toolCall, clientId);
-                        } else if (toolCall.function.name === 'get_order_details') {
-                            const { daily_order_number } = JSON.parse(toolCall.function.arguments);
-                            const orderDetails = await getOrderDetails(daily_order_number, clientId);
-                            return {
-                                tool_call_id: toolCall.id,
-                                output: JSON.stringify(orderDetails)
-                            };
+                        switch (toolCall.function.name) {
+                            case 'get_customer_data':
+                                const customerData = await getCustomerData(clientId);
+                                return {
+                                    tool_call_id: toolCall.id,
+                                    output: JSON.stringify(customerData)
+                                };
+                            case 'create_order':
+                                return await createOrder(toolCall, clientId);
+                            case 'modify_order':
+                                return await modifyOrder(toolCall, clientId);
+                            case 'cancel_order':
+                                return await cancelOrder(toolCall, clientId);
+                            case 'get_order_details':
+                                const { daily_order_number } = JSON.parse(toolCall.function.arguments);
+                                const orderDetails = await getOrderDetails(daily_order_number, clientId);
+                                return {
+                                    tool_call_id: toolCall.id,
+                                    output: JSON.stringify(orderDetails)
+                                };
+                            default:
+                                return {
+                                    tool_call_id: toolCall.id,
+                                    output: JSON.stringify({ error: "Unknown function" })
+                                };
                         }
                     }));
 
