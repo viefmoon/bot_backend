@@ -12,22 +12,22 @@ export default async function handler(req, res) {
                 return res.status(400).json({ error: 'Se requiere el ID del cliente.' });
             }
 
+            // Formatear el número de teléfono de México
+            let phone_number = client_id;
+            if (phone_number.startsWith('521')) {
+                phone_number = phone_number.slice(3);
+            }
+
             const customer = await Customer.findOne({ where: { client_id } });
 
             if (customer) {
-                // Formatear el número de teléfono de mexico
-                let phone_number = client_id;
-                if (phone_number.startsWith('521')) {
-                    phone_number = phone_number.slice(3);
-                }
-
                 res.status(200).json({
-                    phone_number: phone_number, // Usar el número de teléfono formateado
+                    phone_number,
                     last_delivery_address: customer.last_delivery_address,
                     last_pickup_name: customer.last_pickup_name,
                 });
             } else {
-                res.status(404).json({ error: 'Cliente no encontrado.' });
+                res.status(200).json({ phone_number });
             }
         } catch (error) {
             console.error('Error al obtener datos del cliente:', error);
