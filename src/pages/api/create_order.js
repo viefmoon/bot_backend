@@ -5,6 +5,7 @@ const Customer = require('../../models/Customer');
 const { verificarHorarioAtencion } = require('../../utils/timeUtils');
 const { getNextDailyOrderNumber } = require('../../utils/orderUtils');
 const RestaurantConfig = require('../../models/RestaurantConfig');
+const axios = require('axios'); // Añadir axios para hacer la solicitud a delete_conversation
 
 export default async function handler(req, res) {
     await connectDB();
@@ -115,6 +116,9 @@ async function createOrder(req, res) {
         })
     ));
 
+    // Borrar la conversación después de crear la orden
+    await deleteConversation(client_id);
+
     // Determinar el tiempo estimado basado en el tipo de orden
     const estimatedTime = order_type === 'pickup' ? config.estimatedPickupTime : config.estimatedDeliveryTime;
 
@@ -224,6 +228,9 @@ async function modifyOrder(req, res) {
         }
     }
 
+    // Borrar la conversación después de modificar la orden
+    await deleteConversation(client_id);
+
     res.status(200).json({ 
         mensaje: 'Orden modificada exitosamente', 
         orden: {
@@ -255,6 +262,9 @@ async function cancelOrder(req, res) {
 
     await order.update({ status: 'canceled' });
 
+    // Borrar la conversación después de cancelar la orden
+    await deleteConversation(order.client_id);
+
     res.status(200).json({ 
         mensaje: 'Orden cancelada exitosamente', 
         orden: {
@@ -262,4 +272,16 @@ async function cancelOrder(req, res) {
             estado: order.status,
         }
     });
+}
+
+// Función para borrar la conversación
+async function deleteConversation(clientId) {
+    try {
+        const response = await axios.delete(`${process.env.BASE_URL}/api/delete_conversation`, {
+            params: { clientId }
+        });
+        console.log('Conversación borrada:', response.data);
+    } catch (error) {
+        console.error('Error al borrar la conversación:', error.response ? error.response.data : error.message);
+    }
 }
