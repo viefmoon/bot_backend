@@ -63,8 +63,7 @@ async function createOrder(toolCall, clientId) {
 
         return {
             tool_call_id: toolCall.id,
-            output: JSON.stringify(orderResult),
-            action: 'create'
+            output: JSON.stringify(orderResult)
         };
     } catch (error) {
         console.error("Error creating order:", error.response ? error.response.data : error.message);
@@ -97,8 +96,7 @@ async function modifyOrder(toolCall, clientId) {
 
         return {
             tool_call_id: toolCall.id,
-            output: JSON.stringify(orderResult),
-            action: 'modify'
+            output: JSON.stringify(orderResult)
         };
     } catch (error) {
         console.error("Error modifying order:", error.response ? error.response.data : error.message);
@@ -132,8 +130,7 @@ async function cancelOrder(toolCall, clientId) {
 
         return {
             tool_call_id: toolCall.id,
-            output: JSON.stringify(orderResult),
-            action: 'cancel'
+            output: JSON.stringify(orderResult)
         };
     } catch (error) {
         console.error("Error al cancelar la orden:", error.response ? error.response.data : error.message);
