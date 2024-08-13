@@ -35,7 +35,9 @@ export default async function handler(req, res) {
 }
 
 async function createOrder(req, res) {
-    
+
+    const { order_type, items, phone_number, delivery_address, pickup_name, total_price, client_id } = req.body;
+
     await deleteConversation(client_id);
 
     // Verificar si el restaurante está aceptando pedidos y obtener la configuración
@@ -48,8 +50,6 @@ async function createOrder(req, res) {
     if (!estaAbierto) {
         return res.status(400).json({ error: 'Lo sentimos, solo podre procesar tu pedido cuando el restaurante este abierto.' });
     }
-
-    const { order_type, items, phone_number, delivery_address, pickup_name, total_price, client_id } = req.body;
 
     if (!['delivery', 'pickup'].includes(order_type)) {
         return res.status(400).json({ error: 'Tipo de orden inválido. Debe ser "delivery" o "pickup".' });
