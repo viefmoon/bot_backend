@@ -5,7 +5,6 @@ const Customer = require('../../models/Customer');
 const { verificarHorarioAtencion } = require('../../utils/timeUtils');
 const { getNextDailyOrderNumber } = require('../../utils/orderUtils');
 const RestaurantConfig = require('../../models/RestaurantConfig');
-const axios = require('axios'); // Añadir axios para hacer la solicitud a delete_conversation
 
 export default async function handler(req, res) {
     await connectDB();
@@ -144,9 +143,6 @@ async function createOrder(req, res) {
             tiempoEstimado: estimatedTime,
         }
     });
-
-    // Mover deleteConversation aquí, después de enviar la respuesta
-    await deleteConversation(client_id);
 }
 
 async function modifyOrder(req, res) {
@@ -260,9 +256,6 @@ async function modifyOrder(req, res) {
             tiempoEstimado: estimatedTime,
         }
     });
-
-    // Mover deleteConversation aquí, después de enviar la respuesta
-    await deleteConversation(client_id);
 }
 
 async function cancelOrder(req, res) {
@@ -301,21 +294,4 @@ async function cancelOrder(req, res) {
             estado: order.status,
         }
     });
-
-    // Mover deleteConversation aquí, después de enviar la respuesta
-    await deleteConversation(client_id);
-}
-
-// Función para borrar la conversación
-async function deleteConversation(clientId) {
-    try {
-        // Borrar la conversación
-        const deleteResponse = await axios.delete(`${process.env.BASE_URL}/api/delete_conversation`, {
-            params: { clientId }
-        });
-        console.log('Conversación borrada:', deleteResponse.data);
-    } catch (error) {
-        console.error('Error al borrar la conversación:', error.response ? error.response.data : error.message);
-        throw error; // Lanzar el error para manejarlo en la función que llama a deleteConversation
-    }
 }
