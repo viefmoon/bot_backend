@@ -63,7 +63,8 @@ async function createOrder(toolCall, clientId) {
 
         return {
             tool_call_id: toolCall.id,
-            output: JSON.stringify(orderResult)
+            output: JSON.stringify(orderResult),
+            action: 'create'
         };
     } catch (error) {
         console.error("Error creating order:", error.response ? error.response.data : error.message);
@@ -96,7 +97,8 @@ async function modifyOrder(toolCall, clientId) {
 
         return {
             tool_call_id: toolCall.id,
-            output: JSON.stringify(orderResult)
+            output: JSON.stringify(orderResult),
+            action: 'modify'
         };
     } catch (error) {
         console.error("Error modifying order:", error.response ? error.response.data : error.message);
@@ -130,7 +132,8 @@ async function cancelOrder(toolCall, clientId) {
 
         return {
             tool_call_id: toolCall.id,
-            output: JSON.stringify(orderResult)
+            output: JSON.stringify(orderResult),
+            action: 'cancel'
         };
     } catch (error) {
         console.error("Error al cancelar la orden:", error.response ? error.response.data : error.message);
@@ -264,6 +267,8 @@ export default async function handler(req, res) {
                 }
             );
 
+            let shouldDeleteConversation = false; // Añadir esta variable
+
             while (['queued', 'in_progress', 'requires_action'].includes(run.status)) {
                 if (run.status === 'requires_action') { 
                     const toolCalls = run.required_action.submit_tool_outputs.tool_calls;
@@ -271,6 +276,7 @@ export default async function handler(req, res) {
 
                     const toolOutputs = await Promise.all(toolCalls.map(async (toolCall) => {
                         const clientId = conversationId.split(':')[1];
+                        let result;
                         switch (toolCall.function.name) {
                             case 'get_customer_data':
                                 const customerData = await getCustomerData(clientId);
@@ -279,11 +285,17 @@ export default async function handler(req, res) {
                                     output: JSON.stringify(customerData)
                                 };
                             case 'create_order':
-                                return await createOrder(toolCall, clientId);
+                                result = await createOrder(toolCall, clientId);
+                                shouldDeleteConversation = true; // Activar el borrado
+                                return result;
                             case 'modify_order':
-                                return await modifyOrder(toolCall, clientId);
+                                result = await modifyOrder(toolCall, clientId);
+                                shouldDeleteConversation = true; // Activar el borrado
+                                return result;
                             case 'cancel_order':
-                                return await cancelOrder(toolCall, clientId);
+                                result = await cancelOrder(toolCall, clientId);
+                                shouldDeleteConversation = true; // Activar el borrado
+                                return result;
                             case 'get_order_details':
                                 const { daily_order_number } = JSON.parse(toolCall.function.arguments);
                                 const orderDetails = await getOrderDetails(daily_order_number, clientId);
@@ -326,6 +338,12 @@ export default async function handler(req, res) {
                 if (lastAssistantMessage && lastAssistantMessage.content[0].text) {
                     let text = lastAssistantMessage.content[0].text.value;
                     console.log("Assistant response:", text);
+                    
+                    if (shouldDeleteConversation) {
+                        const clientId = conversationId.split(':')[1];
+                        await deleteConversation(clientId);
+                    }
+                    
                     res.status(200).send(text);
                 } else {
                     console.log("Run failed with status:", run.status);
@@ -340,5 +358,16 @@ export default async function handler(req, res) {
     } else {
         res.setHeader('Allow', ['POST']);
         res.status(405).end(`Method ${req.method} Not Allowed`);
+    }
+}
+
+async function deleteConversation(clientId) {
+    try {
+        const deleteResponse = await axios.delete(`${process.env.BASE_URL}/api/delete_conversation`, {
+            params: { clientId }
+        });
+        console.log('Conversación borrada:', deleteResponse.data);
+    } catch (error) {
+        console.error('Error al borrar la conversación:', error.response ? error.response.data : error.message);
     }
 }
