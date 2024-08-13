@@ -42,16 +42,14 @@ export default async function handler(req, res) {
       console.log('conversationId:', conversationId);
 
       // Realizar la solicitud DELETE a la API de chat-data.com para borrar la conversación
+      const url = `https://api.chat-data.com/api/v2/delete-conversation?chatbotId=${chatbotId}&conversationId=${conversationId}`;
+
       const response = await axios({
         method: 'delete',
-        url: 'https://api.chat-data.com/api/v2/delete-conversation',
+        url: url,
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
-        },
-        params: {
-          chatbotId: chatbotId,
-          conversationId: conversationId
         }
       });
       if (response.status === 200) {
