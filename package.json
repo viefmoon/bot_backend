@@ -3,7 +3,6 @@
   "version": "0.1.0",
   "private": true,
   "deploymentUrl": "https://openai-assistant-demo.chat-data.com/",
-  "type": "module",
   "scripts": {
     "dev": "cross-env PORT=$PORT next dev",
     "build": "next build",

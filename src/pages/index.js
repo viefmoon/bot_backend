@@ -1,7 +1,7 @@
-const { Inter } = require("next/font/google");
-const Head = require("next/head");
-const Image = require("next/image");
-const Link = require("next/link");
+import { Inter } from "next/font/google";
+import Head from "next/head";
+import Image from "next/image";
+import Link from "next/link";
 
 const inter = Inter({ subsets: ["latin"] });
 
