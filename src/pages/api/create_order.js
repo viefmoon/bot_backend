@@ -308,11 +308,21 @@ async function cancelOrder(req, res) {
 // Función para borrar la conversación
 async function deleteConversation(clientId) {
     try {
-        const response = await axios.delete(`${process.env.BASE_URL}/api/delete_conversation`, {
+        // Primero, recuperar la conversación
+        const getResponse = await axios.get(`${process.env.BASE_URL}/api/get_conversation_by_client`, {
+            params: { client_id: clientId }
+        });
+        console.log('Conversación recuperada:', getResponse.data);
+
+        // Luego, borrar la conversación
+        const deleteResponse = await axios.delete(`${process.env.BASE_URL}/api/delete_conversation`, {
             params: { clientId }
         });
-        console.log('Conversación borrada:', response.data);
+        console.log('Conversación borrada:', deleteResponse.data);
+
+        return getResponse.data; // Devolver la conversación recuperada
     } catch (error) {
-        console.error('Error al borrar la conversación:', error.response ? error.response.data : error.message);
+        console.error('Error al recuperar o borrar la conversación:', error.response ? error.response.data : error.message);
+        throw error; // Lanzar el error para manejarlo en la función que llama a deleteConversation
     }
 }
