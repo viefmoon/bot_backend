@@ -110,6 +110,7 @@ async function createOrder(req, res) {
     const createdItems = await Promise.all(items.map(item => 
         Item.create({
             name: item.name,
+            observations: item.observations,
             quantity: item.quantity,
             price: item.price,
             orderId: newOrder.id,
@@ -138,8 +139,9 @@ async function createOrder(req, res) {
             }),
             items: createdItems.map(item => ({
                 nombre: item.name,
+                observaciones: item.observations,
                 cantidad: item.quantity,
-                precio: item.price
+                precio: item.price,
             })),
             tiempoEstimado: newOrder.estimatedTime,
         }
@@ -210,6 +212,7 @@ async function modifyOrder(req, res) {
     const updatedItems = await Promise.all(items.map(item => 
         Item.create({
             name: item.name,
+            observations: item.observations,
             quantity: item.quantity,
             price: item.price,
             orderId: order.id,
@@ -252,6 +255,7 @@ async function modifyOrder(req, res) {
             precio_total: order.total_price,
             items: updatedItems.map(item => ({
                 nombre: item.name,
+                observaciones: item.observations,
                 cantidad: item.quantity,
                 precio: item.price
             })),

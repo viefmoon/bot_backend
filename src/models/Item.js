@@ -14,6 +14,10 @@ const Item = sequelize.define('Item', {
         type: DataTypes.FLOAT,
         allowNull: false,
     },
+    observations: {
+        type: DataTypes.TEXT,
+        allowNull: true,
+    },
     orderId: {
         type: DataTypes.INTEGER,
         allowNull: false,

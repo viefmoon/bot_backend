@@ -180,8 +180,9 @@ async function getOrderDetails(dailyOrderNumber, clientId) {
             items: order.items.map(item => ({
                 id: item.id,
                 nombre: item.name,
+                observaciones: item.observations,
                 cantidad: item.quantity,
-                precio: item.price
+                precio: item.price,
             }))
         };
     } catch (error) {
