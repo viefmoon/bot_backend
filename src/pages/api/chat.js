@@ -292,7 +292,7 @@ async function getMenuAvailability() {
 }
 
 export default async function handler(req, res) {
-  await sequelize.sync({ force: true });
+  await sequelize.sync({ alter: true });
   if (req.method === "POST") {
     validateApiKey(req, res);
     const { messages, conversationId, stream } = req.body;

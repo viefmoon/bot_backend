@@ -52,15 +52,51 @@ const syncModels = async (retries = 5) => {
       // Sync models in order, ensuring dependencies are created first
       await RestaurantConfig.sync({ alter: true });
       await Customer.sync({ alter: true });
-      await Order.sync({ alter: true });
       await Product.sync({ alter: true });
       await ProductVariant.sync({ alter: true });
-      await ModifierType.sync({ alter: true }); // Ensure this is synced before Modifier
+      await ModifierType.sync({ alter: true });
       await Modifier.sync({ alter: true });
-      await PizzaIngredient.sync({ alter: true });
+      await Order.sync({ alter: true });
       await OrderItem.sync({ alter: true });
+      await PizzaIngredient.sync({ alter: true });
       await SelectedPizzaIngredient.sync({ alter: true });
       await SelectedModifier.sync({ alter: true });
+
+      // After creating all tables, add relationships
+      await sequelize.query("SET FOREIGN_KEY_CHECKS = 0");
+      await Promise.all([
+        Order.hasMany(OrderItem, { foreignKey: "orderId", as: "orderItems" }),
+        OrderItem.belongsTo(Order, { foreignKey: "orderId" }),
+        Product.hasMany(ProductVariant, {
+          foreignKey: "productId",
+          as: "variants",
+        }),
+        ProductVariant.belongsTo(Product, { foreignKey: "productId" }),
+        Product.hasMany(PizzaIngredient, {
+          foreignKey: "productId",
+          as: "pizzaIngredients",
+        }),
+        PizzaIngredient.belongsTo(Product, { foreignKey: "productId" }),
+        OrderItem.hasMany(SelectedPizzaIngredient, {
+          foreignKey: "orderItemId",
+          as: "selectedIngredients",
+        }),
+        SelectedPizzaIngredient.belongsTo(OrderItem, {
+          foreignKey: "orderItemId",
+        }),
+        OrderItem.belongsTo(Product, { foreignKey: "productId" }),
+        OrderItem.belongsTo(ProductVariant, { foreignKey: "productVariantId" }),
+        ModifierType.hasMany(Modifier, {
+          foreignKey: "modifierTypeId",
+          as: "modifiers",
+        }),
+        Modifier.belongsTo(ModifierType, { foreignKey: "modifierTypeId" }),
+        OrderItem.hasMany(SelectedModifier, {
+          foreignKey: "orderItemId",
+          as: "selectedModifiers",
+        }),
+        SelectedModifier.belongsTo(OrderItem, { foreignKey: "orderItemId" }),
+      ]);
 
       console.log("All models have been synchronized.");
       break; // Exit the loop if synchronization is successful
