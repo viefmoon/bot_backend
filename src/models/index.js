@@ -3,11 +3,9 @@ const Customer = require("./Customer");
 const Order = require("./Order");
 const RestaurantConfig = require("./RestaurantConfig");
 const OrderItem = require("./orderItem");
-const PizzaFlavor = require("./pizzaFlavor");
 const PizzaIngredient = require("./pizzaIngredient");
 const Product = require("./product");
 const ProductVariant = require("./productVariant");
-const SelectedPizzaFlavor = require("./selectedPizzaFlavor");
 const { SelectedPizzaIngredient } = require("./selectedPizzaIngredient");
 const Modifier = require("./modifier");
 const ModifierType = require("./modifierType");
@@ -20,20 +18,11 @@ OrderItem.belongsTo(Order, { foreignKey: "orderId" });
 Product.hasMany(ProductVariant, { foreignKey: "productId", as: "variants" });
 ProductVariant.belongsTo(Product, { foreignKey: "productId" });
 
-Product.hasMany(PizzaFlavor, { foreignKey: "productId", as: "pizzaFlavors" });
-PizzaFlavor.belongsTo(Product, { foreignKey: "productId" });
-
 Product.hasMany(PizzaIngredient, {
   foreignKey: "productId",
   as: "pizzaIngredients",
 });
 PizzaIngredient.belongsTo(Product, { foreignKey: "productId" });
-
-OrderItem.hasMany(SelectedPizzaFlavor, {
-  foreignKey: "orderItemId",
-  as: "selectedFlavors",
-});
-SelectedPizzaFlavor.belongsTo(OrderItem, { foreignKey: "orderItemId" });
 
 OrderItem.hasMany(SelectedPizzaIngredient, {
   foreignKey: "orderItemId",
@@ -64,11 +53,9 @@ const syncModels = async (retries = 5) => {
       await Order.sync({ alter: true });
       await RestaurantConfig.sync({ alter: true });
       await OrderItem.sync({ alter: true });
-      await PizzaFlavor.sync({ alter: true });
       await PizzaIngredient.sync({ alter: true });
       await Product.sync({ alter: true });
       await ProductVariant.sync({ alter: true });
-      await SelectedPizzaFlavor.sync({ alter: true });
       await SelectedPizzaIngredient.sync({ alter: true });
       await Modifier.sync({ alter: true });
       await ModifierType.sync({ alter: true });
@@ -95,15 +82,12 @@ syncModels();
 
 module.exports = {
   Customer,
-  Item,
   Order,
   RestaurantConfig,
   OrderItem,
-  PizzaFlavor,
   PizzaIngredient,
   Product,
   ProductVariant,
-  SelectedPizzaFlavor,
   SelectedPizzaIngredient,
   Modifier,
   ModifierType,
