@@ -313,7 +313,12 @@ const menu = [
 
 const seedMenuItems = async () => {
   try {
-    await sequelize.sync({ alter: true });
+    // Sincronizar las tablas en el orden correcto
+    await ModifierType.sync({ alter: true });
+    await Modifier.sync({ alter: true });
+    await Product.sync({ alter: true });
+    await ProductVariant.sync({ alter: true });
+    await PizzaIngredient.sync({ alter: true });
 
     for (const product of menu) {
       const createdProduct = await Product.create({
