@@ -1,23 +1,22 @@
 const { DataTypes } = require('sequelize');
 const { sequelize } = require('../lib/db');
 
-const MenuItem = sequelize.define('MenuItem', {
-    code: {
+const Product = sequelize.define('Product', {
+    id: {
         type: DataTypes.STRING,
-        allowNull: false,
         primaryKey: true,
+        allowNull: false,
     },
     name: {
         type: DataTypes.STRING,
         allowNull: false,
     },
-    available: {
-        type: DataTypes.BOOLEAN,
-        allowNull: false,
-        defaultValue: true,
+    price: {
+        type: DataTypes.FLOAT,
+        allowNull: true,
     },
 }, {
     timestamps: true,
 });
 
-module.exports = MenuItem;
+module.exports = Product;

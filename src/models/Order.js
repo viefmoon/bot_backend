@@ -7,32 +7,36 @@ const Order = sequelize.define('Order', {
         primaryKey: true,
         autoIncrement: true,
     },
-    order_type: {
+    dailyOrderNumber: {
+        type: DataTypes.INTEGER,
+        allowNull: false,
+    },
+    orderType: {
         type: DataTypes.ENUM('delivery', 'pickup'),
         allowNull: false,
     },
-    phone_number: {
-        type: DataTypes.STRING,
-        allowNull: false,
-    },
-    delivery_address: {
-        type: DataTypes.STRING,
-        allowNull: true,
-    },
-    pickup_name: {
-        type: DataTypes.STRING,
-        allowNull: true,
-    },
-    total_price: {
-        type: DataTypes.FLOAT,
-        allowNull: false, 
-    },
     status: {
-        type: DataTypes.ENUM('created', 'accepted', 'preparing', 'delivering', 'completed', 'canceled'),
+        type: DataTypes.ENUM('created', 'in_preparation', 'prepared', 'in_delivery', 'finished', 'canceled'),
         allowNull: false,
         defaultValue: 'created',
     },
-    client_id: { // phone number from whatsapp
+    phoneNumber: {
+        type: DataTypes.STRING,
+        allowNull: false,
+    },
+    deliveryAddress: {
+        type: DataTypes.STRING,
+        allowNull: true,
+    },
+    customerName: {
+        type: DataTypes.STRING,
+        allowNull: true,
+    },
+    totalCost: {
+        type: DataTypes.FLOAT,
+        allowNull: false, 
+    },
+    clientId: {
         type: DataTypes.STRING,
         allowNull: false,
     },
@@ -40,14 +44,14 @@ const Order = sequelize.define('Order', {
         type: DataTypes.DATEONLY,
         allowNull: false,
     },
-    dailyOrderNumber: {
-        type: DataTypes.INTEGER,
-        allowNull: false,
-    },
     estimatedTime: {
         type: DataTypes.INTEGER,
         allowNull: false,
         defaultValue: 0,
+    },
+    scheduledDeliveryTime: {
+        type: DataTypes.DATE,
+        allowNull: true,
     },
 }, {
     timestamps: true,

@@ -1,121 +1,404 @@
-require('dotenv').config();
-const { sequelize } = require('../src/lib/db');
-const MenuItem = require('../src/models/MenuItem');
+require("dotenv").config();
+const { sequelize } = require("../src/lib/db");
+const Product = require("../src/models/product");
+const ProductVariant = require("../src/models/productVariant");
+const PizzaFlavor = require("../src/models/pizzaFlavor");
+const PizzaIngredient = require("../src/models/pizzaIngredient");
+const ModifierType = require("../src/models/modifierType");
+const Modifier = require("../src/models/modifier");
 
-const menuItems = [
-  { code: "E001", name: "Alitas", available: true },
-  { code: "E002", name: "Ordenes de Papas", available: true },
-  { code: "E002-V001", name: "Orden de Papas a la Francesa", available: true },
-  { code: "E002-V002", name: "Orden de Papas Gajo", available: true },
-  { code: "E002-V003", name: "Orden de Papas Mixtas (francesa y gajos)", available: true },
-  { code: "E003", name: "Dedos de Queso", available: true },
-  { code: "E004-V001", name: "Ensalada de Pollo", available: true },
-  { code: "E004-V002", name: "Ensalada de Jamón", available: true },
-  { code: "I001", name: "Pollo a la plancha", available: true },
-  { code: "I002", name: "Chile morrón", available: true },
-  { code: "I003", name: "Elote", available: true },
-  { code: "I004", name: "Lechuga", available: true },
-  { code: "I005", name: "Jitomate", available: true },
-  { code: "I006", name: "Zanahoria", available: true },
-  { code: "I007", name: "Queso parmesano", available: true },
-  { code: "I008", name: "Aderezo", available: true },
-  { code: "I009", name: "Betabel crujiente", available: true },
-  { code: "I010", name: "Extra pollo", available: true },
-  { code: "I011", name: "Con queso gouda", available: true },
-  { code: "I012", name: "Con vinagreta", available: true },
-  { code: "I013", name: "Con jamón", available: true },
-  { code: "I014", name: "Queso manchego", available: true },
-  { code: "I015", name: "Pepperoni", available: true },
-  { code: "I016", name: "Salchicha", available: true },
-  { code: "I017", name: "Salami", available: true },
-  { code: "I018", name: "Chorizo", available: true },
-  { code: "I019", name: "Piña", available: true },
-  { code: "I020", name: "Champiñón", available: true },
-  { code: "I021", name: "Tocino", available: true },
-  { code: "I022", name: "Chile jalapeño", available: true },
-  { code: "I023", name: "3 Quesos", available: true },
-  { code: "I024", name: "Albahaca", available: true },
-  { code: "I025", name: "Arándano", available: true },
-  { code: "I026", name: "Cebolla", available: true },
-  { code: "I027", name: "Calabaza", available: true },
-  { code: "I028", name: "Carne molida", available: true },
-  { code: "I029", name: "Pierna", available: true },
-  { code: "I030", name: "Pollo BBQ", available: true },
-  { code: "I031", name: "Queso de cabra", available: true },
-  { code: "I032", name: "Chile seco", available: true },
-  { code: "I033", name: "Queso philadelphia", available: true },
-  { code: "P001-T001", name: "Pizza Chica", available: true },
-  { code: "P001-T002", name: "Pizza Mediana", available: true },
-  { code: "P001-T003", name: "Pizza Grande", available: true },
-  { code: "O001", name: "Orilla rellena de queso", available: true },
-  { code: "O002", name: "Orilla rellena de pepperoni", available: true },
-  { code: "O003", name: "Orilla rellena de jalapeño", available: true },
-  { code: "P001", name: "Pizza Especial", available: true },
-  { code: "P002", name: "Pizza Carnes Frías", available: true },
-  { code: "P003", name: "Pizza Carranza", available: true },
-  { code: "P004", name: "Pizza Zapata", available: true },
-  { code: "P005", name: "Pizza Villa", available: true },
-  { code: "P006", name: "Pizza Margarita", available: true },
-  { code: "P007", name: "Pizza Adelita", available: true },
-  { code: "P008", name: "Pizza Hawaiana", available: true },
-  { code: "P009", name: "Pizza Mexicana", available: true },
-  { code: "P010", name: "Pizza Rivera", available: true },
-  { code: "P011", name: "Pizza Kahlo", available: true },
-  { code: "P012", name: "Pizza Lupita", available: true },
-  { code: "P013", name: "Pizza Pepperoni", available: true },
-  { code: "P014", name: "Pizza La Leña", available: true },
-  { code: "P015", name: "Pizza La María", available: true },
-  { code: "P016", name: "Pizza Malinche", available: true },
-  { code: "P017", name: "Pizza Philadelphia", available: true },
-  { code: "B001", name: "Agua de horchata 1 Litro", available: true },
-  { code: "B002", name: "Limonada 1 Litro", available: true },
-  { code: "B003-V001", name: "Coca Cola", available: true },
-  { code: "B003-V002", name: "7up", available: true },
-  { code: "B003-V003", name: "Mirinda", available: true },
-  { code: "B003-V004", name: "Refresco de Sangría", available: true },
-  { code: "B004", name: "Sangría Preparada", available: true },
-  { code: "B005-V001", name: "Michelada clara", available: true },
-  { code: "B005-V002", name: "Michelada oscura", available: true },
-  { code: "B006-V001", name: "Cafe Americano", available: true },
-  { code: "B006-V002", name: "Capuchino", available: true },
-  { code: "B006-V003", name: "Chocolate", available: true },
-  { code: "B007-V001", name: "Frappé Rompope", available: true },
-  { code: "B007-V002", name: "Frappé Mazapán", available: true },
-  { code: "B007-V003", name: "Frappé Magnum", available: true },
-  { code: "B008", name: "Malteadas", available: true },
-  { code: "C001", name: "Copa de vino", available: true },
-  { code: "C002", name: "Sangría con vino", available: true },
-  { code: "C003", name: "Vampiro", available: true },
-  { code: "C004", name: "Gin de Maracuyá", available: true },
-  { code: "C005", name: "Margarita", available: true },
-  { code: "C006", name: "Ruso Blanco", available: true },
-  { code: "C007", name: "Palo santo", available: true },
-  { code: "C008", name: "Gin de pepino", available: true },
-  { code: "C009", name: "Mojito", available: true },
-  { code: "C010", name: "Piña colada", available: true },
-  { code: "C011", name: "Piñada", available: true },
-  { code: "C012", name: "Conga", available: true },
-  { code: "C013", name: "Destornillador", available: true },
-  { code: "C014", name: "Paloma", available: true },
-  { code: "C015", name: "Carajillo", available: true },
-  { code: "C016", name: "Tinto de verano", available: true },
-  { code: "C017", name: "Clericot", available: true },
-  { code: "H001", name: "Hamburguesa Tradicional", available: true },
-  { code: "H002", name: "Hamburguesa Especial", available: true },
-  { code: "H003", name: "Hamburguesa Hawaiana", available: true },
-  { code: "H004", name: "Hamburguesa de Pollo", available: true },
-  { code: "H005", name: "Hamburguesa BBQ", available: true },
-  { code: "H006", name: "Hamburguesa Leñazo", available: true },
-  { code: "H007", name: "Hamburguesa Cubana", available: true },
+const menu = [
+  {
+    id: "A",
+    name: "Orden de Alitas",
+    variants: [
+      { id: "AV1", name: "Orden de Alitas BBQ", price: 135 },
+      { id: "AV2", name: "Media Orden de Alitas BBQ", price: 70 },
+      { id: "AV3", name: "Orden de Alitas Picosas", price: 135 },
+      { id: "AV4", name: "Media Orden de Alitas Picosas", price: 70 },
+      { id: "AV5", name: "Orden de Alitas Fritas", price: 135 },
+      { id: "AV6", name: "Media Orden de Alitas Fritas", price: 70 },
+      { id: "AV7", name: "Orden de Alitas Mixtas BBQ y picosas", price: 135 },
+    ],
+  },
+  {
+    id: "P",
+    name: "Ordenes de Papas",
+    variants: [
+      { id: "PV1", name: "Orden de Papas a la Francesa", price: 90 },
+      { id: "PV2", name: "Media Orden de Papas a la Francesa", price: 50 },
+      { id: "PV3", name: "Orden de Papas Gajos", price: 100 },
+      { id: "PV4", name: "Media Orden de Papas Gajos", price: 60 },
+      { id: "PV5", name: "Orden de Papas Mixtas francesa y gajos", price: 100 },
+    ],
+    modifiers: [
+      {
+        id: "P-Q",
+        typeName: "Queso",
+        acceptsMultiple: false,
+        options: [
+          { id: "P-Q-V1", name: "Sin queso", price: 0 },
+          { id: "P-Q-V2", name: "Con queso", price: 0 },
+        ],
+      },
+    ],
+  },
+  {
+    id: "D",
+    name: "Dedos de Queso",
+    price: 90,
+  },
+  {
+    id: "EN",
+    name: "Ensaladas",
+    variants: [
+      { id: "ENV1", name: "Ensalada de Pollo Chica", price: 90 },
+      { id: "ENV2", name: "Ensalada de Pollo Grande", price: 120 },
+      { id: "ENV3", name: "Ensalada de Jamón Chica", price: 80 },
+      { id: "ENV4", name: "Ensalada de Jamón Grande", price: 100 },
+    ],
+    modifiers: [
+      {
+        id: "E-E",
+        typeName: "Extras",
+        acceptsMultiple: true,
+        options: [
+          { id: "E-E-V1", name: "Con jamon", price: 10 },
+          { id: "E-E-V2", name: "Con queso gouda", price: 15 },
+          { id: "E-E-V3", name: "Con vinagreta", price: 0 },
+          { id: "E-E-V4", name: "Doble pollo", price: 15 },
+        ],
+      },
+    ],
+  },
+  {
+    id: "H",
+    name: "Hamburguesas",
+    variants: [
+      { id: "HV1", name: "H. Tradicional", price: 85 },
+      { id: "HV2", name: "H. Especial", price: 95 },
+      { id: "HV3", name: "H. Hawaiana", price: 95 },
+      { id: "HV4", name: "H. Pollo", price: 100 },
+      { id: "HV5", name: "H. BBQ", price: 100 },
+      { id: "HV6", name: "H. Lenazo", price: 110 },
+      { id: "HV7", name: "H. Cubana", price: 100 },
+    ],
+    modifiers: [
+      {
+        id: "H-P",
+        typeName: "Papas",
+        acceptsMultiple: false,
+        options: [
+          { id: "H-P-V1", name: "Con papas francesa", price: 10 },
+          { id: "H-P-V2", name: "Con gajos", price: 15 },
+          { id: "H-P-V3", name: "Con papas mixtas", price: 15 },
+        ],
+      },
+      {
+        id: "H-E",
+        typeName: "Extras",
+        acceptsMultiple: true,
+        options: [
+          { name: "Partida", price: 0 },
+          { id: "H-E-V1", name: "Queso en la papas", price: 5 },
+          { id: "H-E-V2", name: "Doble carne", price: 10 },
+          { id: "H-E-V3", name: "Doble pollo", price: 15 },
+          { id: "H-E-V4", name: "Extra queso", price: 5 },
+          { id: "H-E-V5", name: "Extra tocino", price: 5 },
+          { id: "H-E-V6", name: "Res -> Pollo", price: 15 },
+          { id: "H-E-V7", name: "Con pierna", price: 10 },
+          { id: "H-E-V8", name: "Con pina", price: 5 },
+          { id: "H-E-V9", name: "Con jamon", price: 5 },
+          { id: "H-E-V10", name: "Con salchicha", price: 5 },
+          { id: "H-E-V11", name: "Con ensalada", price: 15 },
+        ],
+      },
+    ],
+  },
+  {
+    id: "BEB1",
+    name: "Agua de horchata 1 Litro",
+    price: 35,
+  },
+  {
+    id: "BEB2",
+    name: "Limonada 1 Litro",
+    price: 35,
+  },
+  {
+    id: "BEB3",
+    name: "Refrescos 500ml",
+    variants: [
+      { id: "BEB3-V1", name: "Coca Cola", price: 30 },
+      { id: "BEB3-V2", name: "7up", price: 30 },
+      { id: "BEB3-V3", name: "Mirinda", price: 30 },
+      { id: "BEB3-V4", name: "Refresco de Sangría", price: 30 },
+    ],
+  },
+  {
+    id: "BEB4",
+    name: "Sangría Preparada",
+    price: 35,
+  },
+  {
+    id: "BEB5",
+    name: "Micheladas",
+    variants: [
+      { id: "BEB5-V1", name: "Michelada clara", price: 80 },
+      { id: "BEB5-V2", name: "Michelada oscura", price: 80 },
+    ],
+  },
+  {
+    id: "BEB6",
+    name: "Café Caliente",
+    variants: [
+      { id: "BEB6-V1", name: "Cafe Americano", price: 45 },
+      { id: "BEB6-V2", name: "Capuchino", price: 45 },
+      { id: "BEB6-V3", name: "Chocolate", price: 50 },
+    ],
+  },
+  {
+    id: "BEB7",
+    name: "Frappés",
+    variants: [
+      { id: "BEB7-V1", name: "Frappe Capuchino", price: 70 },
+      { id: "BEB7-V2", name: "Frappe Coco", price: 70 },
+      { id: "BEB7-V3", name: "Frappe Caramelo", price: 70 },
+      { id: "BEB7-V4", name: "Frappe Cajeta", price: 70 },
+      { id: "BEB7-V5", name: "Frappe Mocaccino", price: 70 },
+      { id: "BEB7-V6", name: "Frappe Galleta", price: 70 },
+      { id: "BEB7-V7", name: "Frappe Bombon", price: 70 },
+      { id: "BEB7-V8", name: "Frappe Rompope", price: 85 },
+      { id: "BEB7-V9", name: "Frappe Mazapan", price: 85 },
+      { id: "BEB7-V10", name: "Frappe Magnum", price: 85 },
+    ],
+  },
+  {
+    id: "COC1",
+    name: "Copa de vino",
+    price: 90,
+  },
+  {
+    id: "COC2",
+    name: "Sangría con vino",
+    price: 80,
+  },
+  {
+    id: "COC3",
+    name: "Vampiro",
+    price: 80,
+  },
+  {
+    id: "COC4",
+    name: "Gin de Maracuyá",
+    price: 90,
+  },
+  {
+    id: "COC5",
+    name: "Margarita",
+    price: 85,
+  },
+  {
+    id: "COC6",
+    name: "Ruso Blanco",
+    price: 85,
+  },
+  {
+    id: "COC7",
+    name: "Palo santo",
+    price: 80,
+  },
+  {
+    id: "COC8",
+    name: "Gin de pepino",
+    price: 90,
+  },
+  {
+    id: "COC9",
+    name: "Mojito",
+    price: 100,
+  },
+  {
+    id: "COC10",
+    name: "Piña colada",
+    price: 75,
+  },
+  {
+    id: "COC11",
+    name: "Piñada",
+    price: 70,
+  },
+  {
+    id: "COC12",
+    name: "Conga",
+    price: 75,
+  },
+  {
+    id: "COC13",
+    name: "Destornillador",
+    price: 75,
+  },
+  {
+    id: "COC14",
+    name: "Paloma",
+    price: 80,
+  },
+  {
+    id: "COC15",
+    name: "Carajillo",
+    price: 90,
+  },
+  {
+    id: "COC16",
+    name: "Tinto de verano",
+    price: 90,
+  },
+  {
+    id: "COC17",
+    name: "Clericot",
+    price: 80,
+  },
+  {
+    id: "PZ",
+    name: "Pizza",
+    variants: [
+      { id: "PZV1", name: "Pizza Grande", price: 240 },
+      { id: "PZV2", name: "Pizza Mediana", price: 190 },
+      { id: "PZV3", name: "Pizza Chica", price: 140 },
+      { id: "PZV4", name: "Pizza Grande C/R", price: 270 },
+      { id: "PZV5", name: "Pizza Mediana C/R", price: 220 },
+      { id: "PZV6", name: "Pizza Chica C/R", price: 160 },
+    ],
+    pizzaFlavors: [
+      { id: "PZS1", name: "Especial", price: 0 },
+      { id: "PZS2", name: "Carnes Frias", price: 0 },
+      { id: "PZS3", name: "Carranza", price: 0 },
+      { id: "PZS4", name: "Zapata", price: 0 },
+      { id: "PZS5", name: "Villa", price: 0 },
+      { id: "PZS6", name: "Margarita", price: 0 },
+      { id: "PZS7", name: "Adelita", price: 0 },
+      { id: "PZS8", name: "Hawaiana", price: 0 },
+      { id: "PZS9", name: "Mexicana", price: 0 },
+      { id: "PZS10", name: "Rivera", price: 0 },
+      { id: "PZS11", name: "Kahlo", price: 0 },
+      { id: "PZS12", name: "Lupita", price: 0 },
+      { id: "PZS13", name: "Pepperoni", price: 0 },
+      { id: "PZS14", name: "3 Quesos", price: 0 },
+      { id: "PZS15", name: "La Lena", price: 20 },
+      { id: "PZS16", name: "La Maria", price: 20 },
+      { id: "PZS17", name: "Malinche", price: 20 },
+      { id: "PZS18", name: "Philadelphia", price: 20 },
+    ],
+    pizzaIngredients: [
+      { id: "PZI1", name: "Especial", ingredientValue: 4 },
+      { id: "PZI2", name: "Carnes Frias", ingredientValue: 4 },
+      { id: "PZI3", name: "Carranza", ingredientValue: 4 },
+      { id: "PZI4", name: "Zapata", ingredientValue: 4 },
+      { id: "PZI5", name: "Villa", ingredientValue: 4 },
+      { id: "PZI6", name: "Margarita", ingredientValue: 4 },
+      { id: "PZI7", name: "Adelita", ingredientValue: 4 },
+      { id: "PZI8", name: "Hawaiana", ingredientValue: 4 },
+      { id: "PZI9", name: "Mexicana", ingredientValue: 4 },
+      { id: "PZI10", name: "Rivera", ingredientValue: 4 },
+      { id: "PZI11", name: "Kahlo", ingredientValue: 4 },
+      { id: "PZI12", name: "Lupita", ingredientValue: 4 },
+      { id: "PZI13", name: "Pepperoni", ingredientValue: 4 },
+      { id: "PZI14", name: "La Lena", ingredientValue: 6 },
+      { id: "PZI15", name: "La Maria", ingredientValue: 6 },
+      { id: "PZI16", name: "Malinche", ingredientValue: 6 },
+      { id: "PZI17", name: "Philadelphia", ingredientValue: 6 },
+      { id: "PZI18", name: "3 Quesos", ingredientValue: 2 },
+      { id: "PZI19", name: "Albahaca", ingredientValue: 1 },
+      { id: "PZI20", name: "Arandano", ingredientValue: 1 },
+      { id: "PZI21", name: "Calabaza", ingredientValue: 1 },
+      { id: "PZI22", name: "Cebolla", ingredientValue: 1 },
+      { id: "PZI23", name: "Champinon", ingredientValue: 1 },
+      { id: "PZI24", name: "Chile Seco", ingredientValue: 1 },
+      { id: "PZI25", name: "Chorizo", ingredientValue: 1 },
+      { id: "PZI26", name: "Elote", ingredientValue: 1 },
+      { id: "PZI27", name: "Jalapeno", ingredientValue: 1 },
+      { id: "PZI28", name: "Jamon", ingredientValue: 1 },
+      { id: "PZI29", name: "Jitomate", ingredientValue: 1 },
+      { id: "PZI30", name: "Molida", ingredientValue: 1 },
+      { id: "PZI31", name: "Morron", ingredientValue: 1 },
+      { id: "PZI32", name: "Pierna", ingredientValue: 2 },
+      { id: "PZI33", name: "Pina", ingredientValue: 1 },
+      { id: "PZI34", name: "Pollo BBQ", ingredientValue: 2 },
+      { id: "PZI35", name: "Queso de cabra", ingredientValue: 2 },
+      { id: "PZI36", name: "Salami", ingredientValue: 1 },
+      { id: "PZI37", name: "Salchicha", ingredientValue: 1 },
+      { id: "PZI38", name: "Tocino", ingredientValue: 1 },
+    ],
+  },
 ];
 
 const seedMenuItems = async () => {
   try {
     await sequelize.sync({ alter: true });
-    await MenuItem.bulkCreate(menuItems, { ignoreDuplicates: true });
-    console.log('Menu items have been seeded successfully.');
+
+    for (const product of menu) {
+      const createdProduct = await Product.create({
+        id: product.id,
+        name: product.name,
+        price: product.price || null,
+      });
+
+      if (product.variants) {
+        for (const variant of product.variants) {
+          await ProductVariant.create({
+            id: variant.id,
+            name: variant.name,
+            price: variant.price,
+            productId: createdProduct.id,
+          });
+        }
+      }
+
+      if (product.pizzaFlavors) {
+        for (const flavor of product.pizzaFlavors) {
+          await PizzaFlavor.create({
+            id: flavor.id,
+            name: flavor.name,
+            price: flavor.price,
+            productId: createdProduct.id,
+          });
+        }
+      }
+
+      if (product.pizzaIngredients) {
+        for (const ingredient of product.pizzaIngredients) {
+          await PizzaIngredient.create({
+            id: ingredient.id,
+            name: ingredient.name,
+            ingredientValue: ingredient.ingredientValue,
+            productId: createdProduct.id,
+          });
+        }
+      }
+
+      if (product.modifiers) {
+        for (const modifierType of product.modifiers) {
+          const createdModifierType = await ModifierType.create({
+            id: modifierType.id,
+            name: modifierType.typeName,
+            acceptsMultiple: modifierType.acceptsMultiple,
+            productId: createdProduct.id,
+          });
+
+          for (const option of modifierType.options) {
+            await Modifier.create({
+              id: option.id,
+              name: option.name,
+              price: option.price,
+              modifierTypeId: createdModifierType.id,
+            });
+          }
+        }
+      }
+    }
+    console.log("Menu items have been seeded successfully.");
   } catch (error) {
-    console.error('Error seeding menu items:', error);
+    console.error("Error seeding menu items:", error);
   } finally {
     await sequelize.close();
   }

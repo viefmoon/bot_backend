@@ -1,15 +1,16 @@
-const { Op } = require('sequelize');
-const Order = require('../models/Order');
+const { Order } = require("@/models");
 
 async function getNextDailyOrderNumber() {
-  const mexicoTime = new Date().toLocaleString("en-US", {timeZone: "America/Mexico_City"});
-  const today = new Date(mexicoTime).toISOString().split('T')[0];
-  
+  const mexicoTime = new Date().toLocaleString("en-US", {
+    timeZone: "America/Mexico_City",
+  });
+  const today = new Date(mexicoTime).toISOString().split("T")[0];
+
   const lastOrder = await Order.findOne({
     where: {
-      orderDate: today
+      orderDate: today,
     },
-    order: [['dailyOrderNumber', 'DESC']],
+    order: [["dailyOrderNumber", "DESC"]],
   });
 
   return lastOrder ? lastOrder.dailyOrderNumber + 1 : 1;

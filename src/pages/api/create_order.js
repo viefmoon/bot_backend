@@ -1,5 +1,5 @@
 const { connectDB } = require('../../lib/db');
-const Order = require('../../models/Order');
+const Order = require('../../models/order');
 const Item = require('../../models/Item');
 const Customer = require('../../models/Customer');
 const { verificarHorarioAtencion } = require('../../utils/timeUtils');
