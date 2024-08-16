@@ -48,25 +48,20 @@ async function getCustomerData(clientId) {
 }
 
 async function createOrder(toolCall, clientId) {
-  const { order_type, items, phone_number, delivery_address, pickup_name } =
+  const { orderType, items, phoneNumber, deliveryAddress, pickupName } =
     JSON.parse(toolCall.function.arguments);
-  const total_price = items.reduce(
-    (total, item) => total + item.price * item.quantity,
-    0
-  );
 
   try {
     const response = await axios.post(
       `${process.env.BASE_URL}/api/create_order`,
       {
-        action: "create", // Añadimos la acción
-        order_type,
-        items,
-        phone_number,
-        delivery_address,
-        pickup_name,
-        total_price,
-        client_id: clientId,
+        action: "create",
+        orderType,
+        orderItems: items,
+        phoneNumber,
+        deliveryAddress,
+        customerName: pickupName,
+        clientId,
       }
     );
 
@@ -96,31 +91,26 @@ async function createOrder(toolCall, clientId) {
 
 async function modifyOrder(toolCall, clientId) {
   const {
-    daily_order_number,
-    order_type,
+    dailyOrderNumber,
+    orderType,
     items,
-    phone_number,
-    delivery_address,
-    pickup_name,
+    phoneNumber,
+    deliveryAddress,
+    pickupName,
   } = JSON.parse(toolCall.function.arguments);
-  const total_price = items.reduce(
-    (total, item) => total + item.price * item.quantity,
-    0
-  );
 
   try {
     const response = await axios.post(
       `${process.env.BASE_URL}/api/create_order`,
       {
-        action: "modify", // Añadimos la acción
-        daily_order_number,
-        order_type,
-        items,
-        phone_number,
-        delivery_address,
-        pickup_name,
-        total_price,
-        client_id: clientId,
+        action: "modify",
+        dailyOrderNumber,
+        orderType,
+        orderItems: items,
+        phoneNumber,
+        deliveryAddress,
+        customerName: pickupName,
+        clientId,
       }
     );
 
@@ -302,7 +292,7 @@ async function getMenuAvailability() {
 }
 
 export default async function handler(req, res) {
-  await sequelize.sync({ alter: true });
+  await sequelize.sync({ force: true });
   if (req.method === "POST") {
     validateApiKey(req, res);
     const { messages, conversationId, stream } = req.body;
