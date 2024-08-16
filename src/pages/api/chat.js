@@ -313,7 +313,7 @@ export default async function handler(req, res) {
       );
       const relevantMessages = filterRelevantMessages(filteredMessages);
 
-      const menuAvailability = await getMenuAvailability(); // Obtener disponibilidad del menú de la base de datos
+      //const menuAvailability = await getMenuAvailability(); // Obtener disponibilidad del menú de la base de datos
 
       // Añadir disponibilidad del menú a los mensajes relevantes
       // relevantMessages.push({
@@ -402,12 +402,10 @@ export default async function handler(req, res) {
           console.log(
             "La solicitud ha excedido el tiempo límite en estado 'queued'"
           );
-          return res
-            .status(504)
-            .json({
-              error:
-                "No se puede completar la solicitud en este momento. Por favor, inténtelo de nuevo más tarde.",
-            });
+          return res.status(504).json({
+            error:
+              "No se puede completar la solicitud en este momento. Por favor, inténtelo de nuevo más tarde.",
+          });
         }
       }
 

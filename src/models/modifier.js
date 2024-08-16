@@ -21,7 +21,7 @@ const Modifier = sequelize.define(
       type: DataTypes.STRING,
       allowNull: false,
       references: {
-        model: "ModifierType",
+        model: "ModifierTypes",
         key: "id",
       },
     },

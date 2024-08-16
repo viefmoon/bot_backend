@@ -28,7 +28,6 @@ const ModifierType = sequelize.define(
     },
   },
   {
-    tableName: "ModifierTypes", // Explicitly set the table name
     timestamps: true,
   }
 );

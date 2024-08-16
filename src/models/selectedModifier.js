@@ -16,7 +16,7 @@ const SelectedModifier = sequelize.define(
       type: DataTypes.STRING,
       allowNull: false,
       references: {
-        model: "Modifier",
+        model: "Modifiers",
         key: "id",
       },
     },
