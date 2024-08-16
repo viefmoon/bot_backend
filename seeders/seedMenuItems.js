@@ -2,7 +2,6 @@ require("dotenv").config();
 const { sequelize } = require("../src/lib/db");
 const Product = require("../src/models/product");
 const ProductVariant = require("../src/models/productVariant");
-const PizzaFlavor = require("../src/models/pizzaFlavor");
 const PizzaIngredient = require("../src/models/pizzaIngredient");
 const ModifierType = require("../src/models/modifierType");
 const Modifier = require("../src/models/modifier");
@@ -269,26 +268,6 @@ const menu = [
       { id: "PZV5", name: "Pizza Mediana C/R", price: 220 },
       { id: "PZV6", name: "Pizza Chica C/R", price: 160 },
     ],
-    pizzaFlavors: [
-      { id: "PZS1", name: "Especial", price: 0 },
-      { id: "PZS2", name: "Carnes Frias", price: 0 },
-      { id: "PZS3", name: "Carranza", price: 0 },
-      { id: "PZS4", name: "Zapata", price: 0 },
-      { id: "PZS5", name: "Villa", price: 0 },
-      { id: "PZS6", name: "Margarita", price: 0 },
-      { id: "PZS7", name: "Adelita", price: 0 },
-      { id: "PZS8", name: "Hawaiana", price: 0 },
-      { id: "PZS9", name: "Mexicana", price: 0 },
-      { id: "PZS10", name: "Rivera", price: 0 },
-      { id: "PZS11", name: "Kahlo", price: 0 },
-      { id: "PZS12", name: "Lupita", price: 0 },
-      { id: "PZS13", name: "Pepperoni", price: 0 },
-      { id: "PZS14", name: "3 Quesos", price: 0 },
-      { id: "PZS15", name: "La Lena", price: 20 },
-      { id: "PZS16", name: "La Maria", price: 20 },
-      { id: "PZS17", name: "Malinche", price: 20 },
-      { id: "PZS18", name: "Philadelphia", price: 20 },
-    ],
     pizzaIngredients: [
       { id: "PZI1", name: "Especial", ingredientValue: 4 },
       { id: "PZI2", name: "Carnes Frias", ingredientValue: 4 },
@@ -349,17 +328,6 @@ const seedMenuItems = async () => {
             id: variant.id,
             name: variant.name,
             price: variant.price,
-            productId: createdProduct.id,
-          });
-        }
-      }
-
-      if (product.pizzaFlavors) {
-        for (const flavor of product.pizzaFlavors) {
-          await PizzaFlavor.create({
-            id: flavor.id,
-            name: flavor.name,
-            price: flavor.price,
             productId: createdProduct.id,
           });
         }
