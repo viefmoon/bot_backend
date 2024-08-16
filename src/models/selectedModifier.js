@@ -8,7 +8,7 @@ const SelectedModifier = sequelize.define(
       type: DataTypes.INTEGER,
       allowNull: false,
       references: {
-        model: "OrderItem",
+        model: "OrderItems",
         key: "id",
       },
     },
