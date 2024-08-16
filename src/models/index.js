@@ -51,70 +51,72 @@ const syncModels = async (retries = 5) => {
     try {
       await sequelize.query("SET FOREIGN_KEY_CHECKS = 0");
 
-      // Sync models in order, ensuring dependencies are created first
-      await RestaurantConfig.sync({ alter: true });
-      await Customer.sync({ alter: true });
-      await Product.sync({ alter: true });
-      await ProductVariant.sync({ alter: true });
-      await ModifierType.sync({ alter: true });
-      await Modifier.sync({ alter: true });
-      await Order.sync({ alter: true });
-      await OrderItem.sync({ alter: true });
-      await PizzaIngredient.sync({ alter: true });
-      await SelectedPizzaIngredient.sync({ alter: true });
-      await SelectedModifier.sync({ alter: true });
+      // Paso 1: Crear todas las tablas sin restricciones de clave foránea
+      const models = [
+        RestaurantConfig,
+        Customer,
+        Product,
+        ProductVariant,
+        ModifierType,
+        Modifier,
+        Order,
+        OrderItem,
+        PizzaIngredient,
+        SelectedPizzaIngredient,
+        SelectedModifier,
+      ];
 
+      for (const model of models) {
+        await model.sync({ alter: true, force: false });
+      }
+
+      // Paso 2: Añadir restricciones de clave foránea
       await sequelize.query("SET FOREIGN_KEY_CHECKS = 1");
 
-      // After creating all tables, add relationships
-      await Promise.all([
-        Order.hasMany(OrderItem, { foreignKey: "orderId", as: "orderItems" }),
-        OrderItem.belongsTo(Order, { foreignKey: "orderId" }),
-        Product.hasMany(ProductVariant, {
-          foreignKey: "productId",
-          as: "variants",
-        }),
-        ProductVariant.belongsTo(Product, { foreignKey: "productId" }),
-        Product.hasMany(PizzaIngredient, {
-          foreignKey: "productId",
-          as: "pizzaIngredients",
-        }),
-        PizzaIngredient.belongsTo(Product, { foreignKey: "productId" }),
-        OrderItem.hasMany(SelectedPizzaIngredient, {
-          foreignKey: "orderItemId",
-          as: "selectedIngredients",
-        }),
-        SelectedPizzaIngredient.belongsTo(OrderItem, {
-          foreignKey: "orderItemId",
-        }),
-        OrderItem.belongsTo(Product, { foreignKey: "productId" }),
-        OrderItem.belongsTo(ProductVariant, { foreignKey: "productVariantId" }),
-        ModifierType.hasMany(Modifier, {
-          foreignKey: "modifierTypeId",
-          as: "modifiers",
-        }),
-        Modifier.belongsTo(ModifierType, { foreignKey: "modifierTypeId" }),
-        OrderItem.hasMany(SelectedModifier, {
-          foreignKey: "orderItemId",
-          as: "selectedModifiers",
-        }),
-        SelectedModifier.belongsTo(OrderItem, { foreignKey: "orderItemId" }),
-      ]);
+      // Definir relaciones
+      Order.hasMany(OrderItem, { foreignKey: "orderId", as: "orderItems" });
+      OrderItem.belongsTo(Order, { foreignKey: "orderId" });
+      Product.hasMany(ProductVariant, {
+        foreignKey: "productId",
+        as: "variants",
+      });
+      ProductVariant.belongsTo(Product, { foreignKey: "productId" });
+      Product.hasMany(PizzaIngredient, {
+        foreignKey: "productId",
+        as: "pizzaIngredients",
+      });
+      PizzaIngredient.belongsTo(Product, { foreignKey: "productId" });
+      OrderItem.hasMany(SelectedPizzaIngredient, {
+        foreignKey: "orderItemId",
+        as: "selectedIngredients",
+      });
+      SelectedPizzaIngredient.belongsTo(OrderItem, {
+        foreignKey: "orderItemId",
+      });
+      OrderItem.belongsTo(Product, { foreignKey: "productId" });
+      OrderItem.belongsTo(ProductVariant, { foreignKey: "productVariantId" });
+      ModifierType.hasMany(Modifier, {
+        foreignKey: "modifierTypeId",
+        as: "modifiers",
+      });
+      Modifier.belongsTo(ModifierType, { foreignKey: "modifierTypeId" });
+      OrderItem.hasMany(SelectedModifier, {
+        foreignKey: "orderItemId",
+        as: "selectedModifiers",
+      });
+      SelectedModifier.belongsTo(OrderItem, { foreignKey: "orderItemId" });
 
-      console.log("All models have been synchronized.");
-      break; // Exit the loop if synchronization is successful
+      // Aplicar las relaciones
+      await sequelize.sync({ alter: true });
+
+      console.log("Todos los modelos han sido sincronizados.");
+      break; // Salir del bucle si la sincronización es exitosa
     } catch (error) {
-      if (
-        error.name === "SequelizeDatabaseError" &&
-        error.parent &&
-        error.parent.code === "ER_LOCK_DEADLOCK"
-      ) {
-        console.warn(`Deadlock detected. Retrying... (${i + 1}/${retries})`);
-        await new Promise((res) => setTimeout(res, 1000)); // Wait 1 second before retrying
-      } else {
-        console.error("Error synchronizing models:", error);
-        break; // Exit the loop if the error is not a deadlock
+      console.error("Error al sincronizar modelos:", error);
+      if (i === retries - 1) {
+        throw error; // Lanzar el error si hemos agotado todos los intentos
       }
+      await new Promise((res) => setTimeout(res, 1000)); // Esperar 1 segundo antes de reintentar
     }
   }
 };
