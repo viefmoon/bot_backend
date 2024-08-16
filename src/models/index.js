@@ -1,6 +1,5 @@
 const { sequelize } = require("../lib/db");
 const Customer = require("./Customer");
-const MenuItem = require("./MenuItem");
 const Order = require("./Order");
 const RestaurantConfig = require("./RestaurantConfig");
 const OrderItem = require("./orderItem");
@@ -62,7 +61,6 @@ const syncModels = async (retries = 5) => {
   for (let i = 0; i < retries; i++) {
     try {
       await Customer.sync({ alter: true });
-      await MenuItem.sync({ alter: true });
       await Order.sync({ alter: true });
       await RestaurantConfig.sync({ alter: true });
       await OrderItem.sync({ alter: true });
@@ -99,7 +97,6 @@ module.exports = {
   Customer,
   Item,
   Order,
-  MenuItem,
   RestaurantConfig,
   OrderItem,
   PizzaFlavor,
