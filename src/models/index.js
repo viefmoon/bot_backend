@@ -49,17 +49,19 @@ SelectedModifier.belongsTo(OrderItem, { foreignKey: "orderItemId" });
 const syncModels = async (retries = 5) => {
   for (let i = 0; i < retries; i++) {
     try {
-      await ModifierType.sync({ alter: true }); // Asegúrate de que ModifierType se sincroniza primero
-      await Modifier.sync({ alter: true }); // Luego sincroniza Modifier
+      // Sync models in order, ensuring dependencies are created first
       await Customer.sync({ alter: true });
       await Order.sync({ alter: true });
       await RestaurantConfig.sync({ alter: true });
-      await OrderItem.sync({ alter: true });
-      await PizzaIngredient.sync({ alter: true });
       await Product.sync({ alter: true });
       await ProductVariant.sync({ alter: true });
+      await PizzaIngredient.sync({ alter: true });
+      await ModifierType.sync({ alter: true }); // Ensure this is synced before Modifier
+      await Modifier.sync({ alter: true });
+      await OrderItem.sync({ alter: true });
       await SelectedPizzaIngredient.sync({ alter: true });
       await SelectedModifier.sync({ alter: true });
+
       console.log("All models have been synchronized.");
       break; // Exit the loop if synchronization is successful
     } catch (error) {
