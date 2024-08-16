@@ -49,6 +49,8 @@ SelectedModifier.belongsTo(OrderItem, { foreignKey: "orderItemId" });
 const syncModels = async (retries = 5) => {
   for (let i = 0; i < retries; i++) {
     try {
+      await sequelize.query("SET FOREIGN_KEY_CHECKS = 0");
+
       // Sync models in order, ensuring dependencies are created first
       await RestaurantConfig.sync({ alter: true });
       await Customer.sync({ alter: true });
@@ -62,8 +64,9 @@ const syncModels = async (retries = 5) => {
       await SelectedPizzaIngredient.sync({ alter: true });
       await SelectedModifier.sync({ alter: true });
 
+      await sequelize.query("SET FOREIGN_KEY_CHECKS = 1");
+
       // After creating all tables, add relationships
-      await sequelize.query("SET FOREIGN_KEY_CHECKS = 0");
       await Promise.all([
         Order.hasMany(OrderItem, { foreignKey: "orderId", as: "orderItems" }),
         OrderItem.belongsTo(Order, { foreignKey: "orderId" }),
