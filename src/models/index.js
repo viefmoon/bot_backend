@@ -45,6 +45,13 @@ OrderItem.hasMany(SelectedModifier, {
 });
 SelectedModifier.belongsTo(OrderItem, { foreignKey: "orderItemId" });
 
+// Añade esta nueva relación
+SelectedModifier.belongsTo(Modifier, { foreignKey: "modifierId" });
+Modifier.hasMany(SelectedModifier, {
+  foreignKey: "modifierId",
+  as: "selectedModifiers",
+});
+
 // Sync all models with the database
 const syncModels = async (retries = 5) => {
   for (let i = 0; i < retries; i++) {
