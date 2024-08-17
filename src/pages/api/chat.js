@@ -197,28 +197,29 @@ async function getOrderDetails(dailyOrderNumber, clientId) {
         orderDate: today,
       },
       include: [
-        { 
-          model: OrderItem, 
+        {
+          model: OrderItem,
           as: "orderItems",
           include: [
             { model: Product },
             { model: ProductVariant },
-            { 
+            {
               model: SelectedModifier,
-              include: [{ model: Modifier }]
+              include: [{ model: Modifier }],
             },
-            { 
+            {
               model: SelectedPizzaIngredient,
-              include: [{ model: PizzaIngredient }]
-            }
-          ]
-        }
+              include: [{ model: PizzaIngredient }],
+            },
+          ],
+        },
       ],
     });
 
     if (!order) {
       return {
-        error: "Orden no encontrada o no asociada al cliente actual para el día de hoy",
+        error:
+          "Orden no encontrada o no asociada al cliente actual para el día de hoy",
       };
     }
 
@@ -242,14 +243,16 @@ async function getOrderDetails(dailyOrderNumber, clientId) {
           second: "2-digit",
           hour12: true,
         }),
-        productos: order.orderItems.map(item => ({
+        productos: order.orderItems.map((item) => ({
           cantidad: item.quantity,
-          nombre: item.ProductVariant ? item.ProductVariant.name : item.Product.name,
-          modificadores: item.SelectedModifiers.map(sm => ({
+          nombre: item.ProductVariant
+            ? item.ProductVariant.name
+            : item.Product.name,
+          modificadores: item.SelectedModifiers.map((sm) => ({
             nombre: sm.Modifier.name,
             precio: sm.Modifier.price,
           })),
-          ingredientes_pizza: item.SelectedPizzaIngredients.map(spi => ({
+          ingredientes_pizza: item.SelectedPizzaIngredients.map((spi) => ({
             nombre: spi.PizzaIngredient.name,
             mitad: spi.half,
           })),
@@ -311,7 +314,7 @@ async function getMenuAvailability() {
   try {
     const response = await axios.get(`${process.env.BASE_URL}/api/menu`);
     const products = response.data;
-    
+
     const availability = {};
     products.forEach((product) => {
       availability[product.code] = {
@@ -319,7 +322,7 @@ async function getMenuAvailability() {
         nombre: product.name,
       };
     });
-    
+
     return { availability };
   } catch (error) {
     console.error("Error fetching menu availability:", error);
@@ -457,8 +460,10 @@ export default async function handler(req, res) {
 
       //Añadir disponibilidad del menú a los mensajes relevantes
       relevantMessages.push({
-          role: 'assistant',
-          content: `Disponibilidad actual del menú: ${JSON.stringify(menuAvailability.availability)}`
+        role: "assistant",
+        content: `Disponibilidad actual del menú: ${JSON.stringify(
+          menuAvailability.availability
+        )}`,
       });
 
       console.log("Relevant messages:", relevantMessages);
@@ -485,6 +490,7 @@ export default async function handler(req, res) {
           const toolOutputs = await Promise.all(
             toolCalls.map(async (toolCall) => {
               const clientId = conversationId.split(":")[1];
+              console.log("Client ID:", clientId);
               let result;
               switch (toolCall.function.name) {
                 case "get_customer_data":
@@ -493,10 +499,10 @@ export default async function handler(req, res) {
                     tool_call_id: toolCall.id,
                     output: JSON.stringify(customerData),
                   };
-               case "create_order":
+                case "create_order":
                   result = await createOrder(toolCall, clientId);
                   shouldDeleteConversation = true; // Activar el borrado
-                  return result; 
+                  return result;
                 case "modify_order":
                   result = await modifyOrder(toolCall, clientId);
                   shouldDeleteConversation = true; // Activar el borrado
@@ -524,13 +530,15 @@ export default async function handler(req, res) {
                     output: JSON.stringify(menu),
                   };
                 case "calculate_order_total":
-                  const { orderItems } = JSON.parse(toolCall.function.arguments);
+                  const { orderItems } = JSON.parse(
+                    toolCall.function.arguments
+                  );
                   result = await calculateOrderTotal(orderItems);
                   return {
                     tool_call_id: toolCall.id,
                     output: JSON.stringify(result),
                   };
-                  
+
                 default:
                   return {
                     tool_call_id: toolCall.id,
