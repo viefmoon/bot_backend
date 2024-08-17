@@ -35,7 +35,7 @@ const validateApiKey = (req, res) => {
 async function getCustomerData(clientId) {
   try {
     const response = await axios.get(
-      `${process.env.BASE_URL}/api/get_customer_data?client_id=${clientId}`
+      `${process.env.BASE_URL}/api/get_customer_data?clientId=${clientId}`
     );
     return response.data;
   } catch (error) {
