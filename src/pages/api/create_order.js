@@ -1,5 +1,5 @@
 const { connectDB } = require("../../lib/db");
-const Order = require("../../models/Order");
+const Order = require("../../models/order");
 const Customer = require("../../models/customer");
 const OrderItem = require("../../models/orderItem");
 const Product = require("../../models/product");
@@ -12,7 +12,7 @@ const {
 } = require("../../models/selectedPizzaIngredient");
 const { verificarHorarioAtencion } = require("../../utils/timeUtils");
 const { getNextDailyOrderNumber } = require("../../utils/orderUtils");
-const RestaurantConfig = require("../../models/RestaurantConfig");
+const RestaurantConfig = require("../../models/restaurantConfig");
 
 export default async function handler(req, res) {
   await connectDB();

@@ -336,7 +336,7 @@ const seedMenuItems = async () => {
       // Crear disponibilidad para el producto
       await Availability.create({
         id: product.id,
-        type: 'product',
+        type: "product",
         available: true,
       });
 
@@ -352,7 +352,7 @@ const seedMenuItems = async () => {
           // Crear disponibilidad para la variante
           await Availability.create({
             id: variant.id,
-            type: 'variant',
+            type: "variant",
             available: true,
           });
         }
@@ -370,7 +370,7 @@ const seedMenuItems = async () => {
           // Crear disponibilidad para el ingrediente de pizza
           await Availability.create({
             id: ingredient.id,
-            type: 'pizzaIngredient',
+            type: "pizzaIngredient",
             available: true,
           });
         }
@@ -396,7 +396,7 @@ const seedMenuItems = async () => {
             // Crear disponibilidad para el modificador
             await Availability.create({
               id: option.id,
-              type: 'modifier',
+              type: "modifier",
               available: true,
             });
           }
