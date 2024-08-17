@@ -52,6 +52,15 @@ Modifier.hasMany(SelectedModifier, {
   as: "selectedModifiers",
 });
 
+// Añade estas nuevas relaciones
+PizzaIngredient.hasMany(SelectedPizzaIngredient, {
+  foreignKey: "pizzaIngredientId",
+  as: "selectedPizzaIngredients",
+});
+SelectedPizzaIngredient.belongsTo(PizzaIngredient, {
+  foreignKey: "pizzaIngredientId",
+});
+
 // Sync all models with the database
 const syncModels = async (retries = 5) => {
   for (let i = 0; i < retries; i++) {
