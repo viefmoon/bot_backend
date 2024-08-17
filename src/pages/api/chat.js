@@ -330,8 +330,33 @@ async function getMenuAvailability() {
   }
 }
 
-// Añade esta función después de getMenuAvailability
-function getMenu() {
+async function sendWhatsAppMessage(phoneNumber, message) {
+  try {
+    const response = await axios.post(
+      `https://graph.facebook.com/v17.0/${process.env.WHATSAPP_PHONE_NUMBER_ID}/messages`,
+      {
+        messaging_product: "whatsapp",
+        to: phoneNumber,
+        type: "text",
+        text: { body: message },
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${process.env.WHATSAPP_ACCESS_TOKEN}`,
+          "Content-Type": "application/json",
+        },
+      }
+    );
+    console.log("Mensaje de WhatsApp enviado a:", phoneNumber);
+    console.log("Respuesta de WhatsApp:", response.data);
+    return true;
+  } catch (error) {
+    console.error("Error al enviar mensaje de WhatsApp:", error);
+    return false;
+  }
+}
+
+async function getMenu(clientId) {
   const menuString = `
 🍽️ ¡Este es nuestro menú! 🍽️
 
@@ -441,7 +466,18 @@ Incluyen: Pollo a la plancha o jamón, chile morrón, elote, lechuga, jitomate, 
 ¡Buen provecho! 😋
   `;
 
-  return { menu: menuString.trim() };
+  try {
+    const sent = await sendWhatsAppMessage(clientId, menuString);
+
+    if (sent) {
+      return { success: "Menú enviado con éxito por WhatsApp" };
+    } else {
+      return { error: "No se pudo enviar el menú por WhatsApp" };
+    }
+  } catch (error) {
+    console.error("Error al enviar el menú:", error);
+    return { error: "Error al enviar el menú: " + error.message };
+  }
 }
 
 export default async function handler(req, res) {
@@ -524,7 +560,7 @@ export default async function handler(req, res) {
                     output: JSON.stringify(orderDetails),
                   };
                 case "get_menu":
-                  const menu = getMenu();
+                  const menu = await getMenu(clientId);
                   return {
                     tool_call_id: toolCall.id,
                     output: JSON.stringify(menu),
