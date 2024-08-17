@@ -145,12 +145,20 @@ async function createOrder(req, res) {
     orderItems.map(async (item) => {
       // Obtener el producto base
       const product = await Product.findByPk(item.productId);
+      if (!product) {
+        throw new Error(`Producto no encontrado: ${item.productId}`);
+      }
       let itemPrice = product.price || 0;
 
       // Si hay una variante, usar su precio
       if (item.productVariantId) {
         const variant = await ProductVariant.findByPk(item.productVariantId);
-        itemPrice = variant.price;
+        if (!variant) {
+          throw new Error(
+            `Variante de producto no encontrada: ${item.productVariantId}`
+          );
+        }
+        itemPrice = variant.price || 0;
       }
 
       // Calcular precio adicional por ingredientes de pizza
@@ -390,11 +398,19 @@ async function modifyOrder(req, res) {
   const updatedItems = await Promise.all(
     orderItems.map(async (item) => {
       const product = await Product.findByPk(item.productId);
+      if (!product) {
+        throw new Error(`Producto no encontrado: ${item.productId}`);
+      }
       let itemPrice = product.price || 0;
 
       if (item.productVariantId) {
         const variant = await ProductVariant.findByPk(item.productVariantId);
-        itemPrice = variant.price;
+        if (!variant) {
+          throw new Error(
+            `Variante de producto no encontrada: ${item.productVariantId}`
+          );
+        }
+        itemPrice = variant.price || 0;
       }
 
       // Calcular precio adicional por ingredientes de pizza
@@ -611,11 +627,19 @@ async function calculateOrderItemsPrice(req, res) {
   const calculatedItems = await Promise.all(
     orderItems.map(async (item) => {
       const product = await Product.findByPk(item.productId);
+      if (!product) {
+        throw new Error(`Producto no encontrado: ${item.productId}`);
+      }
       let itemPrice = product.price || 0;
 
       if (item.productVariantId) {
         const variant = await ProductVariant.findByPk(item.productVariantId);
-        itemPrice = variant.price;
+        if (!variant) {
+          throw new Error(
+            `Variante de producto no encontrada: ${item.productVariantId}`
+          );
+        }
+        itemPrice = variant.price || 0;
       }
 
       // Calcular precio adicional por ingredientes de pizza
