@@ -28,6 +28,8 @@ export default async function handler(req, res) {
           return await modifyOrder(req, res);
         case "cancel":
           return await cancelOrder(req, res);
+        case "calculatePrice":
+          return await calculateOrderItemsPrice(req, res);
         default:
           return res.status(400).json({ error: "Acción no válida" });
       }
@@ -593,5 +595,75 @@ async function cancelOrder(req, res) {
       Id: order.dailyOrderNumber,
       estado: order.status,
     },
+  });
+}
+
+async function calculateOrderItemsPrice(req, res) {
+  const { orderItems } = req.body;
+
+  if (!Array.isArray(orderItems) || orderItems.length === 0) {
+    return res.status(400).json({ error: "Se requiere un array de orderItems" });
+  }
+
+  let totalCost = 0;
+  const calculatedItems = await Promise.all(
+    orderItems.map(async (item) => {
+      const product = await Product.findByPk(item.productId);
+      let itemPrice = product.price || 0;
+
+      if (item.productVariantId) {
+        const variant = await ProductVariant.findByPk(item.productVariantId);
+        itemPrice = variant.price;
+      }
+
+      // Calcular precio adicional por ingredientes de pizza
+      if (item.selectedPizzaIngredients && item.selectedPizzaIngredients.length > 0) {
+        let totalIngredientValue = 0;
+        let halfIngredientValue = { left: 0, right: 0 };
+
+        for (const ingredient of item.selectedPizzaIngredients) {
+          const pizzaIngredient = await PizzaIngredient.findByPk(ingredient.pizzaIngredientId);
+          if (ingredient.half === "none") {
+            totalIngredientValue += pizzaIngredient.ingredientValue;
+          } else {
+            halfIngredientValue[ingredient.half] += pizzaIngredient.ingredientValue;
+          }
+        }
+
+        if (totalIngredientValue > 4) {
+          itemPrice += (totalIngredientValue - 4) * 10;
+        }
+
+        for (const half in halfIngredientValue) {
+          if (halfIngredientValue[half] > 4) {
+            itemPrice += (halfIngredientValue[half] - 4) * 5;
+          }
+        }
+      }
+
+      // Sumar precios de modificadores
+      if (item.selectedModifiers) {
+        const modifierPrices = await Promise.all(
+          item.selectedModifiers.map(async (modifier) => {
+            const mod = await Modifier.findByPk(modifier.modifierId);
+            return mod.price;
+          })
+        );
+        itemPrice += modifierPrices.reduce((sum, price) => sum + price, 0);
+      }
+
+      const totalItemPrice = itemPrice * item.quantity;
+      totalCost += totalItemPrice;
+
+      return {
+        ...item,
+        precio_total_orderItem: totalItemPrice
+      };
+    })
+  );
+
+  res.status(200).json({
+    orderItems: calculatedItems,
+    precio_total: totalCost
   });
 }
