@@ -5,6 +5,7 @@ const ProductVariant = require("../src/models/productVariant");
 const PizzaIngredient = require("../src/models/pizzaIngredient");
 const ModifierType = require("../src/models/modifierType");
 const Modifier = require("../src/models/modifier");
+const Availability = require("../src/models/availability");
 
 const menu = [
   {
@@ -332,6 +333,13 @@ const seedMenuItems = async () => {
         price: product.price || null,
       });
 
+      // Crear disponibilidad para el producto
+      await Availability.create({
+        id: product.id,
+        type: 'product',
+        available: true,
+      });
+
       if (product.variants) {
         for (const variant of product.variants) {
           await ProductVariant.create({
@@ -339,6 +347,13 @@ const seedMenuItems = async () => {
             name: variant.name,
             price: variant.price,
             productId: createdProduct.id,
+          });
+
+          // Crear disponibilidad para la variante
+          await Availability.create({
+            id: variant.id,
+            type: 'variant',
+            available: true,
           });
         }
       }
@@ -350,6 +365,13 @@ const seedMenuItems = async () => {
             name: ingredient.name,
             ingredientValue: ingredient.ingredientValue,
             productId: createdProduct.id,
+          });
+
+          // Crear disponibilidad para el ingrediente de pizza
+          await Availability.create({
+            id: ingredient.id,
+            type: 'pizzaIngredient',
+            available: true,
           });
         }
       }
@@ -370,13 +392,20 @@ const seedMenuItems = async () => {
               price: option.price,
               modifierTypeId: createdModifierType.id,
             });
+
+            // Crear disponibilidad para el modificador
+            await Availability.create({
+              id: option.id,
+              type: 'modifier',
+              available: true,
+            });
           }
         }
       }
     }
-    console.log("Menu items have been seeded successfully.");
+    console.log("Menu items and availability have been seeded successfully.");
   } catch (error) {
-    console.error("Error seeding menu items:", error);
+    console.error("Error seeding menu items and availability:", error);
   } finally {
     await sequelize.close();
   }
