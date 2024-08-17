@@ -1,7 +1,7 @@
 const { sequelize } = require("../lib/db");
-const Customer = require("./customer");
-const Order = require("./order");
-const RestaurantConfig = require("./restaurantConfig");
+const Customer = require("@/models/customer");
+const Order = require("@/models/order");
+const RestaurantConfig = require("@/models/restaurantConfig");
 const OrderItem = require("./orderItem");
 const PizzaIngredient = require("./pizzaIngredient");
 const Product = require("./product");
