@@ -1,6 +1,6 @@
 const { connectDB } = require("../../lib/db");
 const Order = require("../../models/Order");
-const Customer = require("../../models/Customer");
+const Customer = require("../../models/customer");
 const OrderItem = require("../../models/orderItem");
 const Product = require("../../models/product");
 const ProductVariant = require("../../models/productVariant");
@@ -602,7 +602,9 @@ async function calculateOrderItemsPrice(req, res) {
   const { orderItems } = req.body;
 
   if (!Array.isArray(orderItems) || orderItems.length === 0) {
-    return res.status(400).json({ error: "Se requiere un array de orderItems" });
+    return res
+      .status(400)
+      .json({ error: "Se requiere un array de orderItems" });
   }
 
   let totalCost = 0;
@@ -617,16 +619,22 @@ async function calculateOrderItemsPrice(req, res) {
       }
 
       // Calcular precio adicional por ingredientes de pizza
-      if (item.selectedPizzaIngredients && item.selectedPizzaIngredients.length > 0) {
+      if (
+        item.selectedPizzaIngredients &&
+        item.selectedPizzaIngredients.length > 0
+      ) {
         let totalIngredientValue = 0;
         let halfIngredientValue = { left: 0, right: 0 };
 
         for (const ingredient of item.selectedPizzaIngredients) {
-          const pizzaIngredient = await PizzaIngredient.findByPk(ingredient.pizzaIngredientId);
+          const pizzaIngredient = await PizzaIngredient.findByPk(
+            ingredient.pizzaIngredientId
+          );
           if (ingredient.half === "none") {
             totalIngredientValue += pizzaIngredient.ingredientValue;
           } else {
-            halfIngredientValue[ingredient.half] += pizzaIngredient.ingredientValue;
+            halfIngredientValue[ingredient.half] +=
+              pizzaIngredient.ingredientValue;
           }
         }
 
@@ -657,13 +665,13 @@ async function calculateOrderItemsPrice(req, res) {
 
       return {
         ...item,
-        precio_total_orderItem: totalItemPrice
+        precio_total_orderItem: totalItemPrice,
       };
     })
   );
 
   res.status(200).json({
     orderItems: calculatedItems,
-    precio_total: totalCost
+    precio_total: totalCost,
   });
 }

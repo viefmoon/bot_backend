@@ -1,5 +1,5 @@
 const { connectDB } = require("../../lib/db");
-const Customer = require("../../models/Customer");
+const Customer = require("../../models/customer");
 
 export default async function handler(req, res) {
   await connectDB();

@@ -1,5 +1,5 @@
 const { connectDB } = require("../../lib/db");
-const Customer = require("../../models/Customer");
+const Customer = require("../../models/customer");
 const cors = require("cors");
 
 // Configurar CORS
