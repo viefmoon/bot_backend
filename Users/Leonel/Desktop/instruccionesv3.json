@@ -269,9 +269,9 @@
           { "id": "PZV1", "name": "Pizza Grande" },
           { "id": "PZV2", "name": "Pizza Mediana" },
           { "id": "PZV3", "name": "Pizza Chica" },
-          { "id": "PZV4", "name": "Pizza Grande C/R" },
-          { "id": "PZV5", "name": "Pizza Mediana C/R" },
-          { "id": "PZV6", "name": "Pizza Chica C/R" }
+          { "id": "PZV4", "name": "Pizza Grande Con Orilla Rellena de Queso" },
+          { "id": "PZV5", "name": "Pizza Mediana Con Orilla Rellena de Queso" },
+          { "id": "PZV6", "name": "Pizza Chica Con Orilla Rellena de Queso" }
         ],
         "pizzaIngredients": [
           {

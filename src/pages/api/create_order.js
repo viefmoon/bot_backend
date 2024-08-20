@@ -631,6 +631,8 @@ async function calculateOrderItemsPrice(req, res) {
         throw new Error(`Producto no encontrado: ${item.productId}`);
       }
       let itemPrice = product.price || 0;
+      let productName = product.name; // Obtener el nombre del producto
+      let variantName = null;
 
       if (item.productVariantId) {
         const variant = await ProductVariant.findByPk(item.productVariantId);
@@ -640,6 +642,7 @@ async function calculateOrderItemsPrice(req, res) {
           );
         }
         itemPrice = variant.price || 0;
+        variantName = variant.name; // Obtener el nombre de la variante
       }
 
       // Calcular precio adicional por ingredientes de pizza
@@ -690,6 +693,8 @@ async function calculateOrderItemsPrice(req, res) {
       return {
         ...item,
         precio_total_orderItem: totalItemPrice,
+        productName, // Incluir el nombre del producto en la respuesta
+        variantName, // Incluir el nombre de la variante en la respuesta
       };
     })
   );
