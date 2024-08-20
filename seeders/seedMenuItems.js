@@ -75,13 +75,13 @@ const menu = [
     id: "H",
     name: "Hamburguesas",
     variants: [
-      { id: "HV1", name: "H. Tradicional", price: 85 },
-      { id: "HV2", name: "H. Especial", price: 95 },
-      { id: "HV3", name: "H. Hawaiana", price: 95 },
-      { id: "HV4", name: "H. Pollo", price: 100 },
-      { id: "HV5", name: "H. BBQ", price: 100 },
-      { id: "HV6", name: "H. Lenazo", price: 110 },
-      { id: "HV7", name: "H. Cubana", price: 100 },
+      { id: "HV1", name: "Hamburgesa Tradicional", price: 85 },
+      { id: "HV2", name: "Hamburgesa Especial", price: 95 },
+      { id: "HV3", name: "Hamburgesa Hawaiana", price: 95 },
+      { id: "HV4", name: "Hamburgesa Pollo", price: 100 },
+      { id: "HV5", name: "Hamburgesa BBQ", price: 100 },
+      { id: "HV6", name: "Hamburgesa Lenazo", price: 110 },
+      { id: "HV7", name: "Hamburgesa Cubana", price: 100 },
     ],
     modifiers: [
       {
@@ -275,9 +275,21 @@ const menu = [
       { id: "PZV1", name: "Pizza Grande", price: 240 },
       { id: "PZV2", name: "Pizza Mediana", price: 190 },
       { id: "PZV3", name: "Pizza Chica", price: 140 },
-      { id: "PZV4", name: "Pizza Grande C/R", price: 270 },
-      { id: "PZV5", name: "Pizza Mediana C/R", price: 220 },
-      { id: "PZV6", name: "Pizza Chica C/R", price: 160 },
+      {
+        id: "PZV4",
+        name: "Pizza Grande Con Orilla Rellena de Queso",
+        price: 270,
+      },
+      {
+        id: "PZV5",
+        name: "Pizza Mediana Con Orilla Rellena de Queso",
+        price: 220,
+      },
+      {
+        id: "PZV6",
+        name: "Pizza Chica Con Orilla Rellena de Queso",
+        price: 160,
+      },
     ],
     pizzaIngredients: [
       { id: "PZI1", name: "Especial", ingredientValue: 4 },

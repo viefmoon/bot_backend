@@ -470,7 +470,10 @@ Incluyen: Pollo a la plancha o jamón, chile morrón, elote, lechuga, jitomate, 
     const sent = await sendWhatsAppMessage(clientId, menuString);
 
     if (sent) {
-      return { success: "Menú enviado con éxito por WhatsApp" };
+      return {
+        success:
+          "Menú enviado con éxito por WhatsApp, ya lo he enviado por chat, ya no es necesario que lo vuelvas a enviar.",
+      };
     } else {
       return { error: "No se pudo enviar el menú por WhatsApp" };
     }
@@ -526,7 +529,6 @@ export default async function handler(req, res) {
           const toolOutputs = await Promise.all(
             toolCalls.map(async (toolCall) => {
               const clientId = conversationId.split(":")[1];
-              console.log("Client ID:", clientId);
               let result;
               switch (toolCall.function.name) {
                 case "get_customer_data":

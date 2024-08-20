@@ -693,18 +693,18 @@ async function calculateOrderItemsPrice(req, res) {
       return {
         ...item,
         precio_total_orderItem: totalItemPrice,
-        productName, // Incluir el nombre del producto en la respuesta
-        variantName, // Incluir el nombre de la variante en la respuesta
+        nombre_producto: productName, // Incluir el nombre del producto en la respuesta
+        nombre_variante: variantName, // Incluir el nombre de la variante en la respuesta
       };
     })
   );
 
   const response = {
-    orderItems: calculatedItems,
+    productos: calculatedItems,
     precio_total: totalCost,
   };
 
-  console.log(response); // Imprimir en la consola
+  console.log(JSON.stringify(response, null, 2));
 
   res.status(200).json(response);
 }
