@@ -694,8 +694,12 @@ async function calculateOrderItemsPrice(req, res) {
     })
   );
 
-  res.status(200).json({
+  const response = {
     orderItems: calculatedItems,
     precio_total: totalCost,
-  });
+  };
+
+  console.log(response); // Imprimir en la consola
+
+  res.status(200).json(response);
 }
