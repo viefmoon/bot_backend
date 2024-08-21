@@ -317,10 +317,42 @@ async function getMenuAvailability() {
 
     const availability = {};
     products.forEach((product) => {
-      availability[product.code] = {
+      availability[product.id] = {
         disponible: product.available,
         nombre: product.name,
       };
+
+      // Procesar variantes si existen
+      if (product.variants) {
+        product.variants.forEach((variant) => {
+          availability[variant.id] = {
+            disponible: variant.available,
+            nombre: variant.name,
+          };
+        });
+      }
+
+      // Procesar ingredientes de pizza si existen
+      if (product.pizzaIngredients) {
+        product.pizzaIngredients.forEach((ingredient) => {
+          availability[ingredient.id] = {
+            disponible: ingredient.available,
+            nombre: ingredient.name,
+          };
+        });
+      }
+
+      // Procesar modificadores si existen
+      if (product.modifierTypes) {
+        product.modifierTypes.forEach((modifierType) => {
+          modifierType.options.forEach((option) => {
+            availability[option.id] = {
+              disponible: option.available,
+              nombre: option.name,
+            };
+          });
+        });
+      }
     });
 
     return { availability };
