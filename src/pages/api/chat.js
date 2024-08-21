@@ -471,8 +471,7 @@ Incluyen: Pollo a la plancha o jamón, chile morrón, elote, lechuga, jitomate, 
 
     if (sent) {
       return {
-        success:
-          "Menú enviado con éxito por WhatsApp, ya lo he enviado por chat, ya no es necesario que lo vuelvas a enviar.",
+        success: "Menú enviado con éxito.",
       };
     } else {
       return { error: "No se pudo enviar el menú por WhatsApp" };
@@ -495,15 +494,15 @@ export default async function handler(req, res) {
       );
       const relevantMessages = filterRelevantMessages(filteredMessages);
 
-      // const menuAvailability = await getMenuAvailability(); // Obtener disponibilidad del menú de la base de datos
+      const menuAvailability = await getMenuAvailability(); // Obtener disponibilidad del menú de la base de datos
 
-      // //Añadir disponibilidad del menú a los mensajes relevantes
-      // relevantMessages.push({
-      //   role: "assistant",
-      //   content: `Disponibilidad actual del menú: ${JSON.stringify(
-      //     menuAvailability.availability
-      //   )}`,
-      // });
+      //Añadir disponibilidad del menú a los mensajes relevantes
+      relevantMessages.push({
+        role: "assistant",
+        content: `Disponibilidad actual del menú: ${JSON.stringify(
+          menuAvailability.availability
+        )}`,
+      });
 
       console.log("Relevant messages:", relevantMessages);
       const thread = await openai.beta.threads.create({

@@ -700,7 +700,7 @@ async function calculateOrderItemsPrice(req, res) {
   );
 
   const response = {
-    productos: calculatedItems,
+    orderItems: calculatedItems,
     precio_total: totalCost,
   };
 
