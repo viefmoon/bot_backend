@@ -29,29 +29,29 @@ export default async function handler(req, res) {
   if (req.method === "GET") {
     try {
       const products = await product.findAll({
-        attributes: ['id', 'name'],
+        attributes: ["id", "name"],
         include: [
           {
             model: productVariant,
             as: "variants",
-            attributes: ['id', 'name'],
+            attributes: ["id", "name"],
           },
           {
             model: modifierType,
-            as: "modifiers",
-            attributes: ['id', 'name'],
+            as: "modifierTypes", // Changed to match the alias in index.js
+            attributes: ["id", "name"],
             include: [
               {
                 model: modifier,
-                as: "options",
-                attributes: ['id', 'name'],
+                as: "modifiers",
+                attributes: ["id", "name"],
               },
             ],
           },
           {
             model: pizzaIngredient,
             as: "pizzaIngredients",
-            attributes: ['id', 'name'],
+            attributes: ["id", "name"],
           },
         ],
       });
@@ -62,23 +62,23 @@ export default async function handler(req, res) {
         return acc;
       }, {});
 
-      const productsWithAvailability = products.map(p => {
+      const productsWithAvailability = products.map((p) => {
         const productJson = p.toJSON();
         productJson.available = availabilityMap[p.id] ?? true;
-        
+
         if (productJson.variants) {
-          productJson.variants = productJson.variants.map(v => ({
+          productJson.variants = productJson.variants.map((v) => ({
             id: v.id,
             name: v.name,
             available: availabilityMap[v.id] ?? true,
           }));
         }
 
-        if (productJson.modifiers) {
-          productJson.modifiers = productJson.modifiers.map(m => ({
+        if (productJson.modifierTypes) {
+          productJson.modifierTypes = productJson.modifierTypes.map((m) => ({
             id: m.id,
             name: m.name,
-            options: m.options.map(o => ({
+            options: m.modifiers.map((o) => ({
               id: o.id,
               name: o.name,
               available: availabilityMap[o.id] ?? true,
@@ -87,11 +87,13 @@ export default async function handler(req, res) {
         }
 
         if (productJson.pizzaIngredients) {
-          productJson.pizzaIngredients = productJson.pizzaIngredients.map(i => ({
-            id: i.id,
-            name: i.name,
-            available: availabilityMap[i.id] ?? true,
-          }));
+          productJson.pizzaIngredients = productJson.pizzaIngredients.map(
+            (i) => ({
+              id: i.id,
+              name: i.name,
+              available: availabilityMap[i.id] ?? true,
+            })
+          );
         }
 
         return productJson;
@@ -107,7 +109,9 @@ export default async function handler(req, res) {
       const { id, type, available } = req.body;
 
       if (!id || !type || available === undefined) {
-        return res.status(400).json({ error: "Id, type, and availability are required." });
+        return res
+          .status(400)
+          .json({ error: "Id, type, and availability are required." });
       }
 
       const [availability, created] = await Availability.findOrCreate({
@@ -120,10 +124,14 @@ export default async function handler(req, res) {
         await availability.save();
       }
 
-      res.status(200).json({ message: "Availability updated successfully", availability });
+      res
+        .status(200)
+        .json({ message: "Availability updated successfully", availability });
     } catch (error) {
       console.error("Error updating availability:", error);
-      res.status(500).json({ error: "Error updating availability", details: error.message });
+      res
+        .status(500)
+        .json({ error: "Error updating availability", details: error.message });
     }
   } else {
     res.setHeader("Allow", ["GET", "PUT"]);
