@@ -7,7 +7,13 @@ const Availability = sequelize.define("Availability", {
     primaryKey: true,
   },
   type: {
-    type: DataTypes.ENUM("product", "variant", "modifier", "pizzaIngredient"),
+    type: DataTypes.ENUM(
+      "product",
+      "variant",
+      "modifier",
+      "pizzaIngredient",
+      "modifierType"
+    ),
     allowNull: false,
   },
   available: {
