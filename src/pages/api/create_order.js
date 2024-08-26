@@ -641,7 +641,7 @@ async function calculateOrderItemsPrice(req, res) {
             `Variante de producto no encontrada: ${item.productVariantId}`
           );
         }
-        itemPrice = variant.price || 0;
+        itemPrice = variant.price;
         variantName = variant.name; // Obtener el nombre de la variante
       }
 
@@ -657,6 +657,11 @@ async function calculateOrderItemsPrice(req, res) {
           const pizzaIngredient = await PizzaIngredient.findByPk(
             ingredient.pizzaIngredientId
           );
+          if (!pizzaIngredient) {
+            throw new Error(
+              `Ingrediente de pizza no encontrado: ${ingredient.pizzaIngredientId}`
+            );
+          }
           if (ingredient.half === "none") {
             totalIngredientValue += pizzaIngredient.ingredientValue;
           } else {
@@ -681,6 +686,11 @@ async function calculateOrderItemsPrice(req, res) {
         const modifierPrices = await Promise.all(
           item.selectedModifiers.map(async (modifier) => {
             const mod = await Modifier.findByPk(modifier.modifierId);
+            if (!mod) {
+              throw new Error(
+                `Modificador no encontrado: ${modifier.modifierId}`
+              );
+            }
             return mod.price;
           })
         );
