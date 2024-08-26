@@ -6,6 +6,7 @@ const Product = require("../../models/product");
 const ProductVariant = require("../../models/productVariant");
 const PizzaIngredient = require("../../models/pizzaIngredient");
 const Modifier = require("../../models/modifier");
+const ModifierType = require("../../models/modifierType");
 const SelectedModifier = require("../../models/selectedModifier");
 const {
   SelectedPizzaIngredient,
