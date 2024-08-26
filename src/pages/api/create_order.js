@@ -632,7 +632,7 @@ async function calculateOrderItemsPrice(req, res) {
         throw new Error(`Producto no encontrado: ${item.productId}`);
       }
       let itemPrice = product.price || 0;
-      let productName = product.name; // Obtener el nombre del producto
+      let productName = product.name;
       let variantName = null;
 
       if (item.productVariantId) {
@@ -643,7 +643,7 @@ async function calculateOrderItemsPrice(req, res) {
           );
         }
         itemPrice = variant.price;
-        variantName = variant.name; // Obtener el nombre de la variante
+        variantName = variant.name;
       }
 
       // Calcular precio adicional por ingredientes de pizza
@@ -683,24 +683,13 @@ async function calculateOrderItemsPrice(req, res) {
       }
 
       // Sumar precios de modificadores
-      if (item.selectedModifiers) {
+      if (item.selectedModifiers && item.selectedModifiers.length > 0) {
         const modifierPrices = await Promise.all(
           item.selectedModifiers.map(async (modifier) => {
-            const modType = await ModifierType.findByPk(modifier.modifierId);
-            if (!modType) {
-              throw new Error(
-                `Tipo de modificador no encontrado: ${modifier.modifierId}`
-              );
-            }
-            const mod = await Modifier.findOne({
-              where: {
-                id: modifier.optionId,
-                modifierTypeId: modType.id,
-              },
-            });
+            const mod = await Modifier.findByPk(modifier.modifierId);
             if (!mod) {
               throw new Error(
-                `Opción de modificador no encontrada: ${modifier.optionId}`
+                `Modificador no encontrado: ${modifier.modifierId}`
               );
             }
             return mod.price;
@@ -715,8 +704,8 @@ async function calculateOrderItemsPrice(req, res) {
       return {
         ...item,
         precio_total_orderItem: totalItemPrice,
-        nombre_producto: productName, // Incluir el nombre del producto en la respuesta
-        nombre_variante: variantName, // Incluir el nombre de la variante en la respuesta
+        nombre_producto: productName,
+        nombre_variante: variantName,
       };
     })
   );
