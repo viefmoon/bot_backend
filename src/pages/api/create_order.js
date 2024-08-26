@@ -685,10 +685,21 @@ async function calculateOrderItemsPrice(req, res) {
       if (item.selectedModifiers) {
         const modifierPrices = await Promise.all(
           item.selectedModifiers.map(async (modifier) => {
-            const mod = await Modifier.findByPk(modifier.modifierId);
+            const modType = await ModifierType.findByPk(modifier.modifierId);
+            if (!modType) {
+              throw new Error(
+                `Tipo de modificador no encontrado: ${modifier.modifierId}`
+              );
+            }
+            const mod = await Modifier.findOne({
+              where: {
+                id: modifier.optionId,
+                modifierTypeId: modType.id,
+              },
+            });
             if (!mod) {
               throw new Error(
-                `Modificador no encontrado: ${modifier.modifierId}`
+                `Opción de modificador no encontrada: ${modifier.optionId}`
               );
             }
             return mod.price;
