@@ -35,6 +35,7 @@ const menu = [
       {
         id: "P-Q",
         typeName: "Queso",
+        required: true,
         acceptsMultiple: false,
         options: [
           { id: "P-Q-V1", name: "Sin queso", price: 0 },
@@ -61,6 +62,7 @@ const menu = [
       {
         id: "E-E",
         typeName: "Extras",
+        required: false,
         acceptsMultiple: true,
         options: [
           { id: "E-E-V1", name: "Con jamon", price: 10 },
@@ -87,6 +89,7 @@ const menu = [
       {
         id: "H-P",
         typeName: "Papas",
+        required: false,
         acceptsMultiple: false,
         options: [
           { id: "H-P-V1", name: "Con papas francesa", price: 10 },
@@ -97,6 +100,7 @@ const menu = [
       {
         id: "H-E",
         typeName: "Extras",
+        required: false,
         acceptsMultiple: true,
         options: [
           { id: "H-E-V1", name: "Partida", price: 0 },
@@ -392,6 +396,7 @@ const seedMenuItems = async () => {
             id: modifierType.id,
             name: modifierType.typeName,
             acceptsMultiple: modifierType.acceptsMultiple,
+            required: modifierType.required,
             productId: createdProduct.id,
           });
 

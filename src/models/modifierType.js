@@ -18,6 +18,11 @@ const ModifierType = sequelize.define(
       allowNull: false,
       defaultValue: false,
     },
+    required: {
+      type: DataTypes.BOOLEAN,
+      allowNull: false,
+      defaultValue: false,
+    },
     productId: {
       type: DataTypes.STRING,
       allowNull: false,

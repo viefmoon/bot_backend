@@ -129,6 +129,11 @@ module.exports = {
         allowNull: false,
         defaultValue: false,
       },
+      required: {
+        type: Sequelize.BOOLEAN,
+        allowNull: false,
+        defaultValue: false,
+      },
       productId: {
         type: Sequelize.STRING,
         allowNull: false,
