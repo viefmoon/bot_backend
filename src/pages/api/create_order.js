@@ -754,14 +754,15 @@ async function calculateOrderItemsPrice(req, res) {
     })
   );
 
-  let messageContent = "Resumen de tu pedido:\n\n";
+  let messageContent = "¡Aquí tienes el resumen de tu pedido! 🎉\n\n";
   calculatedItems.forEach((item) => {
-    messageContent += `${item.quantity}x ${
-      item.nombre_variante || item.nombre_producto
-    }: $${item.precio_total_orderItem}\n`;
+    const itemName = item.nombre_variante || item.nombre_producto;
+    messageContent += `🍽️ *${item.quantity}x ${itemName}*: $${item.precio_total_orderItem}\n`;
 
     if (item.modificadores.length > 0) {
-      messageContent += `  Modificadores: ${item.modificadores.join(", ")}\n`;
+      messageContent += `  🔸 Modificadores: ${item.modificadores.join(
+        ", "
+      )}\n`;
     }
 
     if (
@@ -769,7 +770,7 @@ async function calculateOrderItemsPrice(req, res) {
       item.ingredientes_pizza.left.length > 0 ||
       item.ingredientes_pizza.right.length > 0
     ) {
-      messageContent += "  Ingredientes de pizza: ";
+      messageContent += "  🔸 Ingredientes de pizza: ";
       if (item.ingredientes_pizza.full.length > 0) {
         messageContent += `${item.ingredientes_pizza.full.join(", ")}`;
       }
@@ -786,12 +787,12 @@ async function calculateOrderItemsPrice(req, res) {
     }
 
     if (item.comments) {
-      messageContent += `  Comentarios: ${item.comments}\n`;
+      messageContent += `  💬 Comentarios: ${item.comments}\n`;
     }
 
     messageContent += "\n";
   });
-  messageContent += `Total: $${totalCost}`;
+  messageContent += `💰 *Total: $${totalCost}*`;
 
   const messageSent = await sendWhatsAppMessage(phoneNumber, messageContent);
 
