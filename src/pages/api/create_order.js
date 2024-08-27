@@ -796,9 +796,7 @@ async function calculateOrderItemsPrice(req, res) {
 
   if (messageSent) {
     res.status(200).json({
-      mensaje: "Resumen del pedido enviado por WhatsApp exitosamente",
-      orderItems: calculatedItems,
-      precio_total: totalCost,
+      mensaje: "Resumen del pedido enviado exitosamente",
     });
   } else {
     res
