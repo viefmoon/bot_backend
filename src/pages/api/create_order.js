@@ -713,7 +713,7 @@ async function calculateOrderItemsPrice(req, res) {
       if (item.selectedModifiers && item.selectedModifiers.length > 0) {
         const modifierTypes = await ModifierType.findAll({
           where: { productId: item.productId },
-          include: [Modifier],
+          include: [{ model: Modifier, as: "Modifiers" }],
         });
 
         for (const modifierType of modifierTypes) {
