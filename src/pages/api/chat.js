@@ -599,14 +599,8 @@ export default async function handler(req, res) {
                     output: JSON.stringify(menu),
                   };
                 case "calculate_order_total":
-                  const { orderItems } = JSON.parse(
-                    toolCall.function.arguments
-                  );
-                  result = await calculateOrderTotal(orderItems);
-                  return {
-                    tool_call_id: toolCall.id,
-                    output: JSON.stringify(result),
-                  };
+                  result = await calculateOrderTotal(toolCall, clientId);
+                  return result;
 
                 default:
                   return {
@@ -698,18 +692,40 @@ async function deleteConversation(clientId) {
   }
 }
 
-async function calculateOrderTotal(orderItems) {
+async function calculateOrderTotal(toolCall, clientId) {
+  const { orderItems } = JSON.parse(toolCall.function.arguments);
+
+  // Obtener el número de teléfono del cliente
+  const customer = await Customer.findByPk(clientId);
+  if (!customer || !customer.phoneNumber) {
+    return {
+      tool_call_id: toolCall.id,
+      output: JSON.stringify({
+        error: "No se encontró el número de teléfono del cliente",
+      }),
+    };
+  }
+
   try {
     const response = await axios.post(
       `${process.env.BASE_URL}/api/create_order`,
       {
         action: "calculatePrice",
         orderItems: orderItems,
+        phoneNumber: customer.phoneNumber,
       }
     );
-    return response.data;
+    return {
+      tool_call_id: toolCall.id,
+      output: JSON.stringify(response.data),
+    };
   } catch (error) {
     console.error("Error al calcular el total del pedido:", error);
-    return { error: "Error al calcular el total del pedido" };
+    return {
+      tool_call_id: toolCall.id,
+      output: JSON.stringify({
+        error: "Error al calcular el total del pedido",
+      }),
+    };
   }
 }
