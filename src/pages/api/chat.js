@@ -522,15 +522,15 @@ export default async function handler(req, res) {
       );
       const relevantMessages = filterRelevantMessages(filteredMessages);
 
-      const menuAvailability = await getMenuAvailability(); // Obtener disponibilidad del menú de la base de datos
+      // const menuAvailability = await getMenuAvailability(); // Obtener disponibilidad del menú de la base de datos
 
-      //Añadir disponibilidad del menú a los mensajes relevantes
-      relevantMessages.push({
-        role: "assistant",
-        content: `Disponibilidad actual del menú: ${JSON.stringify(
-          menuAvailability.availability
-        )}`,
-      });
+      // //Añadir disponibilidad del menú a los mensajes relevantes
+      // relevantMessages.push({
+      //   role: "assistant",
+      //   content: `Disponibilidad actual del menú: ${JSON.stringify(
+      //     menuAvailability.availability
+      //   )}`,
+      // });
 
       console.log("Relevant messages:", relevantMessages);
       const thread = await openai.beta.threads.create({
