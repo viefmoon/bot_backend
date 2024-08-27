@@ -541,7 +541,7 @@ export default async function handler(req, res) {
         messages: relevantMessages,
       });
 
-      const QUEUE_TIMEOUT = 15000; // 15 segundos
+      const QUEUE_TIMEOUT = 30000; // 15 segundos
       const startTime = Date.now();
 
       let run = await openai.beta.threads.runs.create(thread.id, {
