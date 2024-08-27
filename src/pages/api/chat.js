@@ -379,8 +379,6 @@ async function sendWhatsAppMessage(phoneNumber, message) {
         },
       }
     );
-    console.log("Mensaje de WhatsApp enviado a:", phoneNumber);
-    console.log("Respuesta de WhatsApp:", response.data);
     return true;
   } catch (error) {
     console.error("Error al enviar mensaje de WhatsApp:", error);
