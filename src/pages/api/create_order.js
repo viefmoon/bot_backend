@@ -14,6 +14,7 @@ const {
 const { verificarHorarioAtencion } = require("../../utils/timeUtils");
 const { getNextDailyOrderNumber } = require("../../utils/orderUtils");
 const RestaurantConfig = require("../../models/restaurantConfig");
+const axios = require("axios");
 
 export default async function handler(req, res) {
   await connectDB();
@@ -616,12 +617,18 @@ async function cancelOrder(req, res) {
 }
 
 async function calculateOrderItemsPrice(req, res) {
-  const { orderItems } = req.body;
+  const { orderItems, phoneNumber } = req.body;
 
   if (!Array.isArray(orderItems) || orderItems.length === 0) {
     return res
       .status(400)
       .json({ error: "Se requiere un array de orderItems" });
+  }
+
+  if (!phoneNumber) {
+    return res
+      .status(400)
+      .json({ error: "Se requiere el número de teléfono del cliente" });
   }
 
   let totalCost = 0;
@@ -701,21 +708,106 @@ async function calculateOrderItemsPrice(req, res) {
       const totalItemPrice = itemPrice * item.quantity;
       totalCost += totalItemPrice;
 
+      // Obtener nombres de modificadores
+      let modifierNames = [];
+      if (item.selectedModifiers && item.selectedModifiers.length > 0) {
+        modifierNames = await Promise.all(
+          item.selectedModifiers.map(async (modifier) => {
+            const mod = await Modifier.findByPk(modifier.modifierId);
+            return mod ? mod.name : "Modificador desconocido";
+          })
+        );
+      }
+
+      // Obtener nombres de ingredientes de pizza
+      let pizzaIngredientNames = [];
+      if (
+        item.selectedPizzaIngredients &&
+        item.selectedPizzaIngredients.length > 0
+      ) {
+        pizzaIngredientNames = await Promise.all(
+          item.selectedPizzaIngredients.map(async (ingredient) => {
+            const pizzaIngredient = await PizzaIngredient.findByPk(
+              ingredient.pizzaIngredientId
+            );
+            return pizzaIngredient
+              ? `${pizzaIngredient.name} (${ingredient.half})`
+              : "Ingrediente desconocido";
+          })
+        );
+      }
+
       return {
         ...item,
         precio_total_orderItem: totalItemPrice,
         nombre_producto: productName,
         nombre_variante: variantName,
+        modificadores: modifierNames,
+        ingredientes_pizza: pizzaIngredientNames,
       };
     })
   );
 
-  const response = {
-    orderItems: calculatedItems,
-    precio_total: totalCost,
-  };
+  let messageContent = "Resumen de tu pedido:\n\n";
+  calculatedItems.forEach((item) => {
+    messageContent += `${item.quantity}x ${item.nombre_producto}${
+      item.nombre_variante ? ` (${item.nombre_variante})` : ""
+    }: $${item.precio_total_orderItem}\n`;
 
-  console.log(JSON.stringify(response, null, 2));
+    if (item.modificadores.length > 0) {
+      messageContent += `  Modificadores: ${item.modificadores.join(", ")}\n`;
+    }
 
-  res.status(200).json(response);
+    if (item.ingredientes_pizza.length > 0) {
+      messageContent += `  Ingredientes de pizza: ${item.ingredientes_pizza.join(
+        ", "
+      )}\n`;
+    }
+
+    if (item.comments) {
+      messageContent += `  Comentarios: ${item.comments}\n`;
+    }
+
+    messageContent += "\n";
+  });
+  messageContent += `Total: $${totalCost}`;
+
+  const messageSent = await sendWhatsAppMessage(phoneNumber, messageContent);
+
+  if (messageSent) {
+    res.status(200).json({
+      mensaje: "Resumen del pedido enviado por WhatsApp exitosamente",
+      orderItems: calculatedItems,
+      precio_total: totalCost,
+    });
+  } else {
+    res
+      .status(500)
+      .json({ error: "No se pudo enviar el resumen del pedido por WhatsApp" });
+  }
+}
+
+async function sendWhatsAppMessage(phoneNumber, message) {
+  try {
+    const response = await axios.post(
+      `https://graph.facebook.com/v17.0/${process.env.WHATSAPP_PHONE_NUMBER_ID}/messages`,
+      {
+        messaging_product: "whatsapp",
+        to: phoneNumber,
+        type: "text",
+        text: { body: message },
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${process.env.WHATSAPP_ACCESS_TOKEN}`,
+          "Content-Type": "application/json",
+        },
+      }
+    );
+    console.log("Mensaje de WhatsApp enviado a:", phoneNumber);
+    return true;
+  } catch (error) {
+    console.error("Error al enviar mensaje de WhatsApp:", error);
+    return false;
+  }
 }
