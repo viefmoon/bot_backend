@@ -757,7 +757,7 @@ async function calculateOrderItemsPrice(req, res) {
   let messageContent = "¡Aquí tienes el resumen de tu pedido! 🎉\n\n";
   calculatedItems.forEach((item) => {
     const itemName = item.nombre_variante || item.nombre_producto;
-    messageContent += `🍽️ *${item.quantity}x ${itemName}*: $${item.precio_total_orderItem}\n`;
+    messageContent += `- *${item.quantity}x ${itemName}*: $${item.precio_total_orderItem}\n`;
 
     if (item.modificadores.length > 0) {
       messageContent += `  🔸 Modificadores: ${item.modificadores.join(
@@ -789,10 +789,8 @@ async function calculateOrderItemsPrice(req, res) {
     if (item.comments) {
       messageContent += `  💬 Comentarios: ${item.comments}\n`;
     }
-
-    messageContent += "\n";
   });
-  messageContent += `💰 *Total: $${totalCost}*`;
+  messageContent += `\n💰 *Total: $${totalCost}*`;
 
   const messageSent = await sendWhatsAppMessage(phoneNumber, messageContent);
 
