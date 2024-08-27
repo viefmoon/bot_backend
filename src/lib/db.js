@@ -17,14 +17,7 @@ const connectDB = async () => {
     await sequelize.authenticate();
     console.log("Connection has been established successfully.");
 
-    // Sincronizar modelos con la base de datos
-    if (process.env.NODE_ENV === "development") {
-      await sequelize.sync({ alter: true }); // Usar alter en desarrollo
-    } else {
-      await sequelize.sync(); // Sin alter en producción
-    }
-
-    console.log("All models were synchronized successfully.");
+    console.log("Database connection established successfully.");
   } catch (error) {
     console.error("Unable to connect to the database:", error);
   }

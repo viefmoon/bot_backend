@@ -1,7 +1,6 @@
 const OpenAI = require("openai");
 const axios = require("axios");
 const { Order } = require("../../models");
-const { sequelize } = require("../../lib/db");
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
@@ -513,7 +512,6 @@ Incluyen: Pollo a la plancha o jamón, chile morrón, elote, lechuga, jitomate, 
 }
 
 export default async function handler(req, res) {
-  await sequelize.sync({ alter: true });
   if (req.method === "POST") {
     validateApiKey(req, res);
     const { messages, conversationId } = req.body;

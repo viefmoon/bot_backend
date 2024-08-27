@@ -58,43 +58,6 @@ SelectedPizzaIngredient.belongsTo(PizzaIngredient, {
   foreignKey: "pizzaIngredientId",
 });
 
-// Sync all models with the database
-const syncModels = async (retries = 5) => {
-  for (let i = 0; i < retries; i++) {
-    try {
-      // Sync models in order, ensuring dependencies are created first
-      await RestaurantConfig.sync({ alter: true });
-      await Customer.sync({ alter: true });
-      await Order.sync({ alter: true });
-      await Product.sync({ alter: true });
-      await ProductVariant.sync({ alter: true });
-      await ModifierType.sync({ alter: true }); // Ensure this is synced before Modifier
-      await Modifier.sync({ alter: true });
-      await PizzaIngredient.sync({ alter: true });
-      await OrderItem.sync({ alter: true });
-      await SelectedPizzaIngredient.sync({ alter: true });
-      await SelectedModifier.sync({ alter: true });
-
-      console.log("All models have been synchronized.");
-      break; // Exit the loop if synchronization is successful
-    } catch (error) {
-      if (
-        error.name === "SequelizeDatabaseError" &&
-        error.parent &&
-        error.parent.code === "ER_LOCK_DEADLOCK"
-      ) {
-        console.warn(`Deadlock detected. Retrying... (${i + 1}/${retries})`);
-        await new Promise((res) => setTimeout(res, 1000)); // Wait 1 second before retrying
-      } else {
-        console.error("Error synchronizing models:", error);
-        break; // Exit the loop if the error is not a deadlock
-      }
-    }
-  }
-};
-
-syncModels();
-
 module.exports = {
   Customer,
   Order,
@@ -108,5 +71,5 @@ module.exports = {
   ModifierType,
   SelectedModifier,
   sequelize,
-  syncModels,
+  // syncModels,
 };

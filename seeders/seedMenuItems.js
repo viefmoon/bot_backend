@@ -336,8 +336,6 @@ const menu = [
 
 const seedMenuItems = async () => {
   try {
-    await sequelize.sync({ alter: true });
-
     for (const product of menu) {
       const createdProduct = await Product.create({
         id: product.id,
