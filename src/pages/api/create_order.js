@@ -643,7 +643,9 @@ async function calculateOrderItemsPrice(req, res) {
       let variantName = null;
 
       // Verificar si el producto tiene variantes y si se seleccionó una variante
-      if (product.hasVariants && !item.productVariantId) {
+      const hasVariants =
+        (await ProductVariant.count({ where: { productId: product.id } })) > 0;
+      if (hasVariants && !item.productVariantId) {
         throw new Error(
           `El producto "${productName}" requiere la selección de una variante`
         );
