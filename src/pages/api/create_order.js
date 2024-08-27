@@ -720,19 +720,25 @@ async function calculateOrderItemsPrice(req, res) {
       }
 
       // Obtener nombres de ingredientes de pizza
-      let pizzaIngredientNames = [];
+      let pizzaIngredientNames = { left: [], right: [], full: [] };
       if (
         item.selectedPizzaIngredients &&
         item.selectedPizzaIngredients.length > 0
       ) {
-        pizzaIngredientNames = await Promise.all(
+        await Promise.all(
           item.selectedPizzaIngredients.map(async (ingredient) => {
             const pizzaIngredient = await PizzaIngredient.findByPk(
               ingredient.pizzaIngredientId
             );
-            return pizzaIngredient
-              ? `${pizzaIngredient.name} (${ingredient.half})`
-              : "Ingrediente desconocido";
+            if (pizzaIngredient) {
+              if (ingredient.half === "none") {
+                pizzaIngredientNames.full.push(pizzaIngredient.name);
+              } else {
+                pizzaIngredientNames[ingredient.half].push(
+                  pizzaIngredient.name
+                );
+              }
+            }
           })
         );
       }
@@ -750,18 +756,33 @@ async function calculateOrderItemsPrice(req, res) {
 
   let messageContent = "Resumen de tu pedido:\n\n";
   calculatedItems.forEach((item) => {
-    messageContent += `${item.quantity}x ${item.nombre_producto}${
-      item.nombre_variante ? ` (${item.nombre_variante})` : ""
+    messageContent += `${item.quantity}x ${
+      item.nombre_variante || item.nombre_producto
     }: $${item.precio_total_orderItem}\n`;
 
     if (item.modificadores.length > 0) {
       messageContent += `  Modificadores: ${item.modificadores.join(", ")}\n`;
     }
 
-    if (item.ingredientes_pizza.length > 0) {
-      messageContent += `  Ingredientes de pizza: ${item.ingredientes_pizza.join(
-        ", "
-      )}\n`;
+    if (
+      item.ingredientes_pizza.full.length > 0 ||
+      item.ingredientes_pizza.left.length > 0 ||
+      item.ingredientes_pizza.right.length > 0
+    ) {
+      messageContent += "  Ingredientes de pizza: ";
+      if (item.ingredientes_pizza.full.length > 0) {
+        messageContent += `${item.ingredientes_pizza.full.join(", ")}`;
+      }
+      if (
+        item.ingredientes_pizza.left.length > 0 ||
+        item.ingredientes_pizza.right.length > 0
+      ) {
+        if (item.ingredientes_pizza.full.length > 0) messageContent += ", ";
+        messageContent += `(${item.ingredientes_pizza.left.join(
+          ", "
+        )} / ${item.ingredientes_pizza.right.join(", ")})`;
+      }
+      messageContent += "\n";
     }
 
     if (item.comments) {
