@@ -695,24 +695,13 @@ async function deleteConversation(clientId) {
 async function calculateOrderTotal(toolCall, clientId) {
   const { orderItems } = JSON.parse(toolCall.function.arguments);
 
-  // Obtener el número de teléfono del cliente
-  const customer = await Customer.findByPk(clientId);
-  if (!customer || !customer.phoneNumber) {
-    return {
-      tool_call_id: toolCall.id,
-      output: JSON.stringify({
-        error: "No se encontró el número de teléfono del cliente",
-      }),
-    };
-  }
-
   try {
     const response = await axios.post(
       `${process.env.BASE_URL}/api/create_order`,
       {
         action: "calculatePrice",
         orderItems: orderItems,
-        phoneNumber: customer.phoneNumber,
+        phoneNumber: clientId,
       }
     );
     return {
