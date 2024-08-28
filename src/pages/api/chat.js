@@ -508,6 +508,41 @@ Incluyen: Pollo a la plancha o jamón, chile morrón, elote, lechuga, jitomate, 
   }
 }
 
+const MAX_RETRIES = 5;
+const INITIAL_DELAY = 1000;
+const MAX_DELAY = 32000;
+
+async function waitForCompletion(threadId, runId) {
+  let retries = 0;
+  let delay = INITIAL_DELAY;
+
+  while (retries < MAX_RETRIES) {
+    console.log(`Intento ${retries + 1} de ${MAX_RETRIES}`);
+
+    const run = await openai.beta.threads.runs.retrieve(threadId, runId);
+    console.log(`Estado actual: ${run.status}`);
+
+    if (run.status === "completed") {
+      console.log("Solicitud completada con éxito");
+      return run;
+    } else if (run.status === "failed") {
+      console.error("La solicitud falló:", run.last_error);
+      throw new Error(run.last_error?.message || "Error desconocido");
+    } else if (run.status === "requires_action") {
+      console.log("Se requiere acción adicional");
+      return run;
+    }
+
+    console.log(`Esperando ${delay}ms antes del próximo intento`);
+    await new Promise((resolve) => setTimeout(resolve, delay));
+
+    retries++;
+    delay = Math.min(delay * 2, MAX_DELAY);
+  }
+
+  throw new Error("Se excedió el número máximo de intentos");
+}
+
 export default async function handler(req, res) {
   if (req.method === "POST") {
     validateApiKey(req, res);
@@ -519,33 +554,20 @@ export default async function handler(req, res) {
       );
       const relevantMessages = filterRelevantMessages(filteredMessages);
 
-      // const menuAvailability = await getMenuAvailability(); // Obtener disponibilidad del menú de la base de datos
-
-      // //Añadir disponibilidad del menú a los mensajes relevantes
-      // relevantMessages.push({
-      //   role: "assistant",
-      //   content: `Disponibilidad actual del menú: ${JSON.stringify(
-      //     menuAvailability.availability
-      //   )}`,
-      // });
-
       console.log("Relevant messages:", relevantMessages);
       const thread = await openai.beta.threads.create({
         messages: relevantMessages,
       });
 
-      const QUEUE_TIMEOUT = 120000; // 2 minutos
-      const startTime = Date.now();
-
       let run = await openai.beta.threads.runs.create(thread.id, {
         assistant_id: process.env.ASSISTANT_ID,
       });
 
-      let shouldDeleteConversation = false; // Añadir esta variable
+      let shouldDeleteConversation = false;
 
-      while (
-        ["queued", "in_progress", "requires_action"].includes(run.status)
-      ) {
+      while (true) {
+        console.log(`Iniciando ciclo. Estado actual: ${run.status}`);
+
         if (run.status === "requires_action") {
           const toolCalls = run.required_action.submit_tool_outputs.tool_calls;
           console.log("Tool calls:", toolCalls);
@@ -563,15 +585,15 @@ export default async function handler(req, res) {
                   };
                 case "create_order":
                   result = await createOrder(toolCall, clientId);
-                  shouldDeleteConversation = true; // Activar el borrado
+                  shouldDeleteConversation = true;
                   return result;
                 case "modify_order":
                   result = await modifyOrder(toolCall, clientId);
-                  shouldDeleteConversation = true; // Activar el borrado
+                  shouldDeleteConversation = true;
                   return result;
                 case "cancel_order":
                   result = await cancelOrder(toolCall, clientId);
-                  shouldDeleteConversation = true; // Activar el borrado
+                  shouldDeleteConversation = true;
                   return result;
                 case "get_order_details":
                   const { daily_order_number } = JSON.parse(
@@ -610,22 +632,17 @@ export default async function handler(req, res) {
             { tool_outputs: toolOutputs }
           );
         } else {
-          await new Promise((resolve) => setTimeout(resolve, 1000));
-          run = await openai.beta.threads.runs.retrieve(thread.id, run.id);
-        }
-        console.log("Run status:", run.status);
-
-        // Verificar si se ha excedido el tiempo límite
-        if (Date.now() - startTime > QUEUE_TIMEOUT && run.status === "queued") {
-          console.log(
-            "La solicitud ha excedido el tiempo límite en estado 'queued'"
-          );
-          return res.status(504).json({
-            error:
-              "No se puede completar la solicitud en este momento. Por favor, inténtelo de nuevo más tarde.",
-          });
+          try {
+            run = await waitForCompletion(thread.id, run.id);
+            if (run.status === "completed") break;
+          } catch (error) {
+            console.error("Error durante la espera:", error);
+            return res.status(500).json({ error: error.message });
+          }
         }
       }
+
+      console.log(`Solicitud completada. Estado final: ${run.status}`);
 
       if (run.status === "completed") {
         const messages = await openai.beta.threads.messages.list(thread.id);
@@ -638,7 +655,6 @@ export default async function handler(req, res) {
 
           res.status(200).send(text);
 
-          // Mover la lógica de borrado después de enviar la respuesta
           if (shouldDeleteConversation) {
             const clientId = conversationId.split(":")[1];
             try {
@@ -659,12 +675,14 @@ export default async function handler(req, res) {
         }
       }
     } catch (error) {
-      console.error("Error:", error);
-      res.status(500).json({ error: "Failed to fetch data from OpenAI" });
+      console.error("Error general:", error);
+      res
+        .status(500)
+        .json({ error: "Error al procesar la solicitud: " + error.message });
     }
   } else {
     res.setHeader("Allow", ["POST"]);
-    res.status(405).end(`Method ${req.method} Not Allowed`);
+    res.status(405).end(`Método ${req.method} no permitido`);
   }
 }
 
