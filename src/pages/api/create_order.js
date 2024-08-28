@@ -632,226 +632,233 @@ async function calculateOrderItemsPrice(req, res) {
   }
 
   let totalCost = 0;
-  const calculatedItems = await Promise.all(
-    orderItems.map(async (item) => {
-      const product = await Product.findByPk(item.productId);
-      if (!product) {
-        throw new Error(`Producto no encontrado en el menu: ${item.productId}`);
-      }
-      let itemPrice = product.price || 0;
-      let productName = product.name;
-      let variantName = null;
-
-      // Verificar si el producto tiene variantes y si se seleccionó una variante
-      const hasVariants =
-        (await ProductVariant.count({ where: { productId: product.id } })) > 0;
-      if (hasVariants && !item.productVariantId) {
-        throw new Error(
-          `El producto "${productName}" requiere la selección de una variante`
-        );
-      }
-
-      if (item.productVariantId) {
-        const variant = await ProductVariant.findByPk(item.productVariantId);
-        if (!variant) {
+  try {
+    const calculatedItems = await Promise.all(
+      orderItems.map(async (item) => {
+        const product = await Product.findByPk(item.productId);
+        if (!product) {
           throw new Error(
-            `Variante de producto no encontrada en el menu: ${item.productVariantId}`
+            `Producto no encontrado en el menu: ${item.productId}`
           );
         }
-        itemPrice = variant.price;
-        variantName = variant.name;
-      }
+        let itemPrice = product.price || 0;
+        let productName = product.name;
+        let variantName = null;
 
-      // Verificar si el producto es una pizza y si se seleccionó al menos un ingrediente
-      if (
-        product.id === "PZ" &&
-        (!item.selectedPizzaIngredients ||
-          item.selectedPizzaIngredients.length === 0)
-      ) {
-        throw new Error(
-          `El producto "${productName}" requiere al menos un ingrediente de pizza`
-        );
-      }
-
-      // Calcular precio adicional por ingredientes de pizza
-      if (
-        item.selectedPizzaIngredients &&
-        item.selectedPizzaIngredients.length > 0
-      ) {
-        let totalIngredientValue = 0;
-        let halfIngredientValue = { left: 0, right: 0 };
-
-        for (const ingredient of item.selectedPizzaIngredients) {
-          const pizzaIngredient = await PizzaIngredient.findByPk(
-            ingredient.pizzaIngredientId
+        // Verificar si el producto tiene variantes y si se seleccionó una variante
+        const hasVariants =
+          (await ProductVariant.count({ where: { productId: product.id } })) >
+          0;
+        if (hasVariants && !item.productVariantId) {
+          throw new Error(
+            `El producto "${productName}" requiere la selección de una variante`
           );
-          if (!pizzaIngredient) {
+        }
+
+        if (item.productVariantId) {
+          const variant = await ProductVariant.findByPk(item.productVariantId);
+          if (!variant) {
             throw new Error(
-              `Ingrediente de pizza no encontrado en el menu: ${ingredient.pizzaIngredientId}`
+              `Variante de producto no encontrada en el menu: ${item.productVariantId}`
             );
           }
-          if (ingredient.half === "none") {
-            totalIngredientValue += pizzaIngredient.ingredientValue;
-          } else {
-            halfIngredientValue[ingredient.half] +=
-              pizzaIngredient.ingredientValue;
-          }
+          itemPrice = variant.price;
+          variantName = variant.name;
         }
 
-        if (totalIngredientValue > 4) {
-          itemPrice += (totalIngredientValue - 4) * 10;
-        }
-
-        for (const half in halfIngredientValue) {
-          if (halfIngredientValue[half] > 4) {
-            itemPrice += (halfIngredientValue[half] - 4) * 5;
-          }
-        }
-      }
-
-      // Validar y calcular precio de modificadores
-      if (item.selectedModifiers && item.selectedModifiers.length > 0) {
-        const modifierTypes = await ModifierType.findAll({
-          where: { productId: item.productId },
-          include: [{ model: Modifier, as: "modifiers" }],
-        });
-
-        console.log("Modifier Types:", modifierTypes);
-
-        for (const modifierType of modifierTypes) {
-          const selectedModifiers = item.selectedModifiers.filter(
-            (mod) => mod.modifierTypeId === modifierType.id
+        // Verificar si el producto es una pizza y si se seleccionó al menos un ingrediente
+        if (
+          product.id === "PZ" &&
+          (!item.selectedPizzaIngredients ||
+            item.selectedPizzaIngredients.length === 0)
+        ) {
+          throw new Error(
+            `El producto "${productName}" requiere al menos un ingrediente de pizza`
           );
-
-          console.log(
-            "Selected Modifiers for Modifier Type:",
-            modifierType.name,
-            selectedModifiers
-          );
-
-          if (modifierType.required && selectedModifiers.length === 0) {
-            throw new Error(
-              `El modificador "${modifierType.name}" es requerido para ${productName}`
-            );
-          }
-
-          if (!modifierType.acceptsMultiple && selectedModifiers.length > 1) {
-            throw new Error(
-              `El modificador "${modifierType.name}" no acepta múltiples selecciones para ${productName}`
-            );
-          }
-
-          for (const selectedMod of selectedModifiers) {
-            const modifier = modifierType.modifiers.find(
-              (mod) => mod.id === selectedMod.modifierId
-            );
-            if (!modifier) {
-              throw new Error(
-                `Modificador no encontrado en el menú: ${selectedMod.modifierId}`
-              );
-            }
-            itemPrice += modifier.price;
-          }
         }
-      }
 
-      const totalItemPrice = itemPrice * item.quantity;
-      totalCost += totalItemPrice;
+        // Calcular precio adicional por ingredientes de pizza
+        if (
+          item.selectedPizzaIngredients &&
+          item.selectedPizzaIngredients.length > 0
+        ) {
+          let totalIngredientValue = 0;
+          let halfIngredientValue = { left: 0, right: 0 };
 
-      // Obtener nombres de modificadores
-      let modifierNames = [];
-      if (item.selectedModifiers && item.selectedModifiers.length > 0) {
-        modifierNames = await Promise.all(
-          item.selectedModifiers.map(async (modifier) => {
-            const mod = await Modifier.findByPk(modifier.modifierId);
-            return mod ? mod.name : "Modificador desconocido";
-          })
-        );
-      }
-
-      // Obtener nombres de ingredientes de pizza
-      let pizzaIngredientNames = { left: [], right: [], full: [] };
-      if (
-        item.selectedPizzaIngredients &&
-        item.selectedPizzaIngredients.length > 0
-      ) {
-        await Promise.all(
-          item.selectedPizzaIngredients.map(async (ingredient) => {
+          for (const ingredient of item.selectedPizzaIngredients) {
             const pizzaIngredient = await PizzaIngredient.findByPk(
               ingredient.pizzaIngredientId
             );
-            if (pizzaIngredient) {
-              if (ingredient.half === "none") {
-                pizzaIngredientNames.full.push(pizzaIngredient.name);
-              } else {
-                pizzaIngredientNames[ingredient.half].push(
-                  pizzaIngredient.name
+            if (!pizzaIngredient) {
+              throw new Error(
+                `Ingrediente de pizza no encontrado en el menu: ${ingredient.pizzaIngredientId}`
+              );
+            }
+            if (ingredient.half === "none") {
+              totalIngredientValue += pizzaIngredient.ingredientValue;
+            } else {
+              halfIngredientValue[ingredient.half] +=
+                pizzaIngredient.ingredientValue;
+            }
+          }
+
+          if (totalIngredientValue > 4) {
+            itemPrice += (totalIngredientValue - 4) * 10;
+          }
+
+          for (const half in halfIngredientValue) {
+            if (halfIngredientValue[half] > 4) {
+              itemPrice += (halfIngredientValue[half] - 4) * 5;
+            }
+          }
+        }
+
+        // Validar y calcular precio de modificadores
+        if (item.selectedModifiers && item.selectedModifiers.length > 0) {
+          const modifierTypes = await ModifierType.findAll({
+            where: { productId: item.productId },
+            include: [{ model: Modifier, as: "modifiers" }],
+          });
+
+          console.log("Modifier Types:", modifierTypes);
+
+          for (const modifierType of modifierTypes) {
+            const selectedModifiers = item.selectedModifiers.filter(
+              (mod) => mod.modifierTypeId === modifierType.id
+            );
+
+            console.log(
+              "Selected Modifiers for Modifier Type:",
+              modifierType.name,
+              selectedModifiers
+            );
+
+            if (modifierType.required && selectedModifiers.length === 0) {
+              throw new Error(
+                `El modificador "${modifierType.name}" es requerido para ${productName}`
+              );
+            }
+
+            if (!modifierType.acceptsMultiple && selectedModifiers.length > 1) {
+              throw new Error(
+                `El modificador "${modifierType.name}" no acepta múltiples selecciones para ${productName}`
+              );
+            }
+
+            for (const selectedMod of selectedModifiers) {
+              const modifier = modifierType.modifiers.find(
+                (mod) => mod.id === selectedMod.modifierId
+              );
+              if (!modifier) {
+                throw new Error(
+                  `Modificador no encontrado en el menú: ${selectedMod.modifierId}`
                 );
               }
+              itemPrice += modifier.price;
             }
-          })
-        );
+          }
+        }
+
+        const totalItemPrice = itemPrice * item.quantity;
+        totalCost += totalItemPrice;
+
+        // Obtener nombres de modificadores
+        let modifierNames = [];
+        if (item.selectedModifiers && item.selectedModifiers.length > 0) {
+          modifierNames = await Promise.all(
+            item.selectedModifiers.map(async (modifier) => {
+              const mod = await Modifier.findByPk(modifier.modifierId);
+              return mod ? mod.name : "Modificador desconocido";
+            })
+          );
+        }
+
+        // Obtener nombres de ingredientes de pizza
+        let pizzaIngredientNames = { left: [], right: [], full: [] };
+        if (
+          item.selectedPizzaIngredients &&
+          item.selectedPizzaIngredients.length > 0
+        ) {
+          await Promise.all(
+            item.selectedPizzaIngredients.map(async (ingredient) => {
+              const pizzaIngredient = await PizzaIngredient.findByPk(
+                ingredient.pizzaIngredientId
+              );
+              if (pizzaIngredient) {
+                if (ingredient.half === "none") {
+                  pizzaIngredientNames.full.push(pizzaIngredient.name);
+                } else {
+                  pizzaIngredientNames[ingredient.half].push(
+                    pizzaIngredient.name
+                  );
+                }
+              }
+            })
+          );
+        }
+
+        return {
+          ...item,
+          precio_total_orderItem: totalItemPrice,
+          nombre_producto: productName,
+          nombre_variante: variantName,
+          modificadores: modifierNames,
+          ingredientes_pizza: pizzaIngredientNames,
+        };
+      })
+    );
+
+    let messageContent = "¡Aquí tienes el resumen de tu pedido! 🎉\n\n";
+    calculatedItems.forEach((item) => {
+      const itemName = item.nombre_variante || item.nombre_producto;
+      messageContent += `- *${item.quantity}x ${itemName}*: $${item.precio_total_orderItem}\n`;
+
+      if (item.modificadores.length > 0) {
+        messageContent += `  🔸 Modificadores: ${item.modificadores.join(
+          ", "
+        )}\n`;
       }
 
-      return {
-        ...item,
-        precio_total_orderItem: totalItemPrice,
-        nombre_producto: productName,
-        nombre_variante: variantName,
-        modificadores: modifierNames,
-        ingredientes_pizza: pizzaIngredientNames,
-      };
-    })
-  );
-
-  let messageContent = "¡Aquí tienes el resumen de tu pedido! 🎉\n\n";
-  calculatedItems.forEach((item) => {
-    const itemName = item.nombre_variante || item.nombre_producto;
-    messageContent += `- *${item.quantity}x ${itemName}*: $${item.precio_total_orderItem}\n`;
-
-    if (item.modificadores.length > 0) {
-      messageContent += `  🔸 Modificadores: ${item.modificadores.join(
-        ", "
-      )}\n`;
-    }
-
-    if (
-      item.ingredientes_pizza.full.length > 0 ||
-      item.ingredientes_pizza.left.length > 0 ||
-      item.ingredientes_pizza.right.length > 0
-    ) {
-      messageContent += "  🔸 Ingredientes de pizza: ";
-      if (item.ingredientes_pizza.full.length > 0) {
-        messageContent += `${item.ingredientes_pizza.full.join(", ")}`;
-      }
       if (
+        item.ingredientes_pizza.full.length > 0 ||
         item.ingredientes_pizza.left.length > 0 ||
         item.ingredientes_pizza.right.length > 0
       ) {
-        if (item.ingredientes_pizza.full.length > 0) messageContent += ", ";
-        messageContent += `(${item.ingredientes_pizza.left.join(
-          ", "
-        )} / ${item.ingredientes_pizza.right.join(", ")})`;
+        messageContent += "  🔸 Ingredientes de pizza: ";
+        if (item.ingredientes_pizza.full.length > 0) {
+          messageContent += `${item.ingredientes_pizza.full.join(", ")}`;
+        }
+        if (
+          item.ingredientes_pizza.left.length > 0 ||
+          item.ingredientes_pizza.right.length > 0
+        ) {
+          if (item.ingredientes_pizza.full.length > 0) messageContent += ", ";
+          messageContent += `(${item.ingredientes_pizza.left.join(
+            ", "
+          )} / ${item.ingredientes_pizza.right.join(", ")})`;
+        }
+        messageContent += "\n";
       }
-      messageContent += "\n";
-    }
 
-    if (item.comments) {
-      messageContent += `  💬 Comentarios: ${item.comments}\n`;
-    }
-  });
-  messageContent += `\n💰 *Total: $${totalCost}*`;
-
-  const messageSent = await sendWhatsAppMessage(phoneNumber, messageContent);
-
-  if (messageSent) {
-    res.status(200).json({
-      mensaje: "Resumen del pedido enviado exitosamente",
+      if (item.comments) {
+        messageContent += `  💬 Comentarios: ${item.comments}\n`;
+      }
     });
-  } else {
-    res
-      .status(500)
-      .json({ error: "No se pudo enviar el resumen del pedido por WhatsApp" });
+    messageContent += `\n💰 *Total: $${totalCost}*`;
+
+    const messageSent = await sendWhatsAppMessage(phoneNumber, messageContent);
+
+    if (messageSent) {
+      res.status(200).json({
+        mensaje: "Resumen del pedido enviado exitosamente",
+      });
+    } else {
+      res.status(500).json({
+        error: "No se pudo enviar el resumen del pedido por WhatsApp",
+      });
+    }
+  } catch (error) {
+    res.status(400).json({ error: error.message });
   }
 }
 
