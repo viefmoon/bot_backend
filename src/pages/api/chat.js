@@ -709,7 +709,7 @@ async function calculateOrderTotal(toolCall, clientId) {
     return {
       tool_call_id: toolCall.id,
       output: JSON.stringify({
-        error: "Error al calcular el total del pedido",
+        error: error.response ? error.response.data.error : error.message,
       }),
     };
   }
