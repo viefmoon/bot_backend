@@ -623,7 +623,9 @@ export default async function handler(req, res) {
                   };
                 case "calculate_order_total":
                   result = await calculateOrderTotal(toolCall, clientId);
-                  return result;
+                  // Enviar la respuesta directamente al backend
+                  res.status(200).send(result.output);
+                  return;
 
                 default:
                   return {
@@ -644,7 +646,6 @@ export default async function handler(req, res) {
             run = await waitForCompletion(thread.id, run.id, res);
             if (run.status === "completed") break;
             if (run.status === "error") {
-              return res.status(200).send(run.message);
             }
           } catch (error) {
             console.error("Error durante la espera:", error);
