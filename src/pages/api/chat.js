@@ -38,11 +38,8 @@ async function getCustomerData(clientId) {
     );
     return response.data;
   } catch (error) {
-    console.error(
-      "El cliente no existe en la base de datos, aun no ha realizado un pedido:",
-      error
-    );
-    return null;
+    console.error("Error al obtener datos del cliente:", error);
+    return { phoneNumber: clientId };
   }
 }
 
@@ -356,8 +353,8 @@ async function getMenuAvailability() {
 
     return { availability };
   } catch (error) {
-    console.error("Error fetching menu availability:", error);
-    return { error: "Failed to fetch menu availability" };
+    console.error("Error al obtener la disponibilidad del menú:", error);
+    return { error: "No se pudo obtener la disponibilidad del menú" };
   }
 }
 
@@ -705,7 +702,6 @@ async function calculateOrderTotal(toolCall, clientId) {
       output: JSON.stringify(response.data),
     };
   } catch (error) {
-    console.error("Error al calcular el total del pedido:", error);
     return {
       tool_call_id: toolCall.id,
       output: JSON.stringify({

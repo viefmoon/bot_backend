@@ -19,8 +19,6 @@ export default async function handler(req, res) {
     });
   });
 
-  await connectDB();
-
   if (req.method === "GET") {
     try {
       const config = await RestaurantConfig.findOne();

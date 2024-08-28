@@ -16,9 +16,6 @@ export default async function handler(req, res) {
     });
   });
 
-  await connectDB();
-  await syncModels(); // Asegúrate de que los modelos estén sincronizados
-
   if (req.method === "GET") {
     try {
       const { date } = req.query;

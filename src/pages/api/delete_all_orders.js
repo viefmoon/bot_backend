@@ -20,8 +20,6 @@ export default async function handler(req, res) {
     });
   });
 
-  await connectDB();
-
   if (req.method === "DELETE") {
     // Verificar el Bearer token si es necesario
     const authHeader = req.headers.authorization;

@@ -31,13 +31,13 @@ const menu = [
       { id: "PV4", name: "Media Orden de Papas Gajos", price: 60 },
       { id: "PV5", name: "Orden de Papas Mixtas francesa y gajos", price: 100 },
     ],
-    modifiers: [
+    modifierTypes: [
       {
         id: "P-Q",
-        typeName: "Queso",
+        name: "Queso",
         required: true,
         acceptsMultiple: false,
-        options: [
+        modifiers: [
           { id: "P-Q-V1", name: "Sin queso", price: 0 },
           { id: "P-Q-V2", name: "Con queso", price: 0 },
         ],
@@ -58,13 +58,13 @@ const menu = [
       { id: "ENV3", name: "Ensalada de Jamón Chica", price: 80 },
       { id: "ENV4", name: "Ensalada de Jamón Grande", price: 100 },
     ],
-    modifiers: [
+    modifierTypes: [
       {
         id: "E-E",
-        typeName: "Extras",
+        name: "Extras",
         required: false,
         acceptsMultiple: true,
-        options: [
+        modifiers: [
           { id: "E-E-V1", name: "Con jamon", price: 10 },
           { id: "E-E-V2", name: "Con queso gouda", price: 15 },
           { id: "E-E-V3", name: "Con vinagreta", price: 0 },
@@ -85,13 +85,13 @@ const menu = [
       { id: "HV6", name: "Hamburgesa Lenazo", price: 110 },
       { id: "HV7", name: "Hamburgesa Cubana", price: 100 },
     ],
-    modifiers: [
+    modifierTypes: [
       {
         id: "H-P",
-        typeName: "Papas",
+        name: "Papas",
         required: false,
         acceptsMultiple: false,
-        options: [
+        modifiers: [
           { id: "H-P-V1", name: "Con papas francesa", price: 10 },
           { id: "H-P-V2", name: "Con gajos", price: 15 },
           { id: "H-P-V3", name: "Con papas mixtas", price: 15 },
@@ -99,10 +99,10 @@ const menu = [
       },
       {
         id: "H-E",
-        typeName: "Extras",
+        name: "Extras",
         required: false,
         acceptsMultiple: true,
-        options: [
+        modifiers: [
           { id: "H-E-V1", name: "Partida", price: 0 },
           { id: "H-E-V2", name: "Queso en la papas", price: 5 },
           { id: "H-E-V3", name: "Doble carne", price: 10 },
@@ -390,11 +390,11 @@ const seedMenuItems = async () => {
         }
       }
 
-      if (product.modifiers) {
-        for (const modifierType of product.modifiers) {
+      if (product.modifierTypes) {
+        for (const modifierType of product.modifierTypes) {
           const createdModifierType = await ModifierType.create({
             id: modifierType.id,
-            name: modifierType.typeName,
+            name: modifierType.name,
             acceptsMultiple: modifierType.acceptsMultiple,
             required: modifierType.required,
             productId: createdProduct.id,
@@ -407,17 +407,17 @@ const seedMenuItems = async () => {
             available: true,
           });
 
-          for (const option of modifierType.options) {
+          for (const modifier of modifierType.modifiers) {
             await Modifier.create({
-              id: option.id,
-              name: option.name,
-              price: option.price,
+              id: modifier.id,
+              name: modifier.name,
+              price: modifier.price,
               modifierTypeId: createdModifierType.id,
             });
 
-            // Crear disponibilidad para la opción del modificador
+            // Crear disponibilidad para el modificador
             await Availability.create({
-              id: option.id,
+              id: modifier.id,
               type: "modifier",
               available: true,
             });
