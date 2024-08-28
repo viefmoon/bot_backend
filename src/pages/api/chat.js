@@ -512,7 +512,7 @@ const MAX_RETRIES = 5;
 const INITIAL_DELAY = 1000;
 const MAX_DELAY = 32000;
 
-async function waitForCompletion(threadId, runId) {
+async function waitForCompletion(threadId, runId, res) {
   let retries = 0;
   let delay = INITIAL_DELAY;
 
@@ -540,7 +540,15 @@ async function waitForCompletion(threadId, runId) {
     delay = Math.min(delay * 2, MAX_DELAY);
   }
 
-  throw new Error("Se excedió el número máximo de intentos");
+  res
+    .status(200)
+    .send(
+      "Se excedió el tiempo de espera, el servicio no está disponible en este momento."
+    );
+  return {
+    status: "error",
+    message: "Se excedió el número máximo de intentos",
+  };
 }
 
 export default async function handler(req, res) {
@@ -633,11 +641,16 @@ export default async function handler(req, res) {
           );
         } else {
           try {
-            run = await waitForCompletion(thread.id, run.id);
+            run = await waitForCompletion(thread.id, run.id, res);
             if (run.status === "completed") break;
+            if (run.status === "error") {
+              return res.status(200).send(run.message);
+            }
           } catch (error) {
             console.error("Error durante la espera:", error);
-            return res.status(500).json({ error: error.message });
+            return res
+              .status(200)
+              .json({ error: "Error durante la espera: " + error.message });
           }
         }
       }
@@ -670,19 +683,24 @@ export default async function handler(req, res) {
         } else {
           console.log("Run failed with status:", run.status);
           res
-            .status(500)
+            .status(200)
             .json({ error: "Failed to complete the conversation" });
         }
+      } else {
+        console.log("Run not completed. Final status:", run.status);
+        res
+          .status(200)
+          .json({ error: "Run not completed. Final status: " + run.status });
       }
     } catch (error) {
       console.error("Error general:", error);
       res
-        .status(500)
+        .status(200)
         .json({ error: "Error al procesar la solicitud: " + error.message });
     }
   } else {
     res.setHeader("Allow", ["POST"]);
-    res.status(405).end(`Método ${req.method} no permitido`);
+    res.status(200).end(`Método ${req.method} no permitido`);
   }
 }
 
