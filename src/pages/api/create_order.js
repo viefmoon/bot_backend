@@ -721,17 +721,9 @@ async function calculateOrderItemsPrice(req, res) {
               include: [{ model: Modifier, as: "modifiers" }],
             });
 
-            console.log("Modifier Types:", modifierTypes);
-
             for (const modifierType of modifierTypes) {
-              const selectedModifiers = item.selectedModifiers.filter(
-                (mod) => mod.modifierTypeId === modifierType.id
-              );
-
-              console.log(
-                "Selected Modifiers for Modifier Type:",
-                modifierType.name,
-                selectedModifiers
+              const selectedModifiers = item.selectedModifiers.filter((mod) =>
+                mod.modifierId.startsWith(modifierType.id)
               );
 
               if (modifierType.required && selectedModifiers.length === 0) {
