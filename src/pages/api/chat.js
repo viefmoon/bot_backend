@@ -288,7 +288,7 @@ async function filterRelevantMessages(messages) {
   const menuAvailability = await getMenuAvailability();
 
   // Añadir la disponibilidad del menú como primer mensaje del asistente
-  relevantMessages.push({
+  relevantMessages.unshift({
     role: "assistant",
     content: JSON.stringify(menuAvailability),
   });
@@ -318,9 +318,14 @@ async function filterRelevantMessages(messages) {
     if (foundKeyword) break;
   }
 
+  // Invertir el orden de los mensajes relevantes, excepto el menú
+  const menuMessage = relevantMessages.shift();
+  relevantMessages.reverse();
+  relevantMessages.unshift(menuMessage);
+
   return relevantMessages.length > 1
     ? relevantMessages
-    : [relevantMessages[0], ...messages.slice(-MAX_MESSAGES)];
+    : [menuMessage, ...messages.slice(-MAX_MESSAGES)];
 }
 
 async function getMenuAvailability() {
