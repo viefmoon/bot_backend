@@ -386,37 +386,42 @@ async function getMenuAvailability() {
         disponible: product.Availability.available,
       };
 
-      // Asegúrate de que 'productVariants' es un array antes de usar 'map'
-      const productVariants = product.productVariants || [];
-      const mappedVariants = productVariants.map((variant) => ({
-        id: variant.id,
-        name: variant.name,
-        disponible: variant.Availability.available,
-      }));
-      productData.productVariants = mappedVariants;
+      // Verifica si productVariants está definido y es un array
+      const productVariants = product.productVariants
+        ? product.productVariants.map((variant) => {
+            return {
+              id: variant.id,
+              name: variant.name,
+              disponible: variant.Availability.available,
+            };
+          })
+        : [];
+      productData.productVariants = productVariants;
 
       // Asegúrate de que 'pizzaIngredients' es un array antes de usar 'map'
-      const pizzaIngredients = product.pizzaIngredients || [];
-      const mappedIngredients = pizzaIngredients.map((ingredient) => ({
-        id: ingredient.id,
-        name: ingredient.name,
-        disponible: ingredient.Availability.available,
-      }));
-      productData.pizzaIngredients = mappedIngredients;
+      const pizzaIngredients = product.pizzaIngredients
+        ? product.pizzaIngredients.map((ingredient) => ({
+            id: ingredient.id,
+            name: ingredient.name,
+            disponible: ingredient.Availability.available,
+          }))
+        : [];
+      productData.pizzaIngredients = pizzaIngredients;
 
       // Asegúrate de que 'modifierTypes' es un array antes de usar 'map'
-      const modifierTypes = product.modifierTypes || [];
-      const mappedModifiers = modifierTypes.map((modifier) => ({
-        id: modifier.id,
-        name: modifier.name,
-        disponible: modifier.Availability.available,
-        modifiers: modifier.modifiers.map((modifier) => ({
-          id: modifier.id,
-          name: modifier.name,
-          disponible: modifier.Availability.available,
-        })),
-      }));
-      productData.modifierTypes = mappedModifiers;
+      const modifierTypes = product.modifierTypes
+        ? product.modifierTypes.map((modifier) => ({
+            id: modifier.id,
+            name: modifier.name,
+            disponible: modifier.Availability.available,
+            modifiers: modifier.modifiers.map((modifier) => ({
+              id: modifier.id,
+              name: modifier.name,
+              disponible: modifier.Availability.available,
+            })),
+          }))
+        : [];
+      productData.modifierTypes = modifierTypes;
 
       menuDisponible[product.category].push(productData);
     });
