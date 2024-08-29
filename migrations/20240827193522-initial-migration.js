@@ -70,6 +70,10 @@ module.exports = {
         type: Sequelize.FLOAT,
         allowNull: true,
       },
+      category: {
+        type: Sequelize.STRING,
+        allowNull: false,
+      },
       createdAt: {
         allowNull: false,
         type: Sequelize.DATE,
@@ -339,7 +343,7 @@ module.exports = {
           key: "id",
         },
         onUpdate: "CASCADE",
-        onDelete: "SET NULL",
+        onDelete: "CASCADE",
       },
       createdAt: {
         allowNull: false,
