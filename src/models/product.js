@@ -17,6 +17,10 @@ const Product = sequelize.define(
       type: DataTypes.FLOAT,
       allowNull: true,
     },
+    category: {
+      type: DataTypes.STRING,
+      allowNull: false,
+    },
   },
   {
     timestamps: true,

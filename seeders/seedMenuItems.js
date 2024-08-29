@@ -11,6 +11,7 @@ const menu = [
   {
     id: "A",
     name: "Orden de Alitas",
+    category: "entradas",
     variants: [
       { id: "AV1", name: "Orden de Alitas BBQ", price: 135 },
       { id: "AV2", name: "Media Orden de Alitas BBQ", price: 70 },
@@ -24,6 +25,7 @@ const menu = [
   {
     id: "P",
     name: "Ordenes de Papas",
+    category: "entradas",
     variants: [
       { id: "PV1", name: "Orden de Papas a la Francesa", price: 90 },
       { id: "PV2", name: "Media Orden de Papas a la Francesa", price: 50 },
@@ -47,11 +49,13 @@ const menu = [
   {
     id: "D",
     name: "Dedos de Queso",
+    category: "entradas",
     price: 90,
   },
   {
     id: "EN",
     name: "Ensaladas",
+    category: "comida",
     variants: [
       { id: "ENV1", name: "Ensalada de Pollo Chica", price: 90 },
       { id: "ENV2", name: "Ensalada de Pollo Grande", price: 120 },
@@ -76,6 +80,7 @@ const menu = [
   {
     id: "H",
     name: "Hamburguesas",
+    category: "comida",
     variants: [
       { id: "HV1", name: "Hamburgesa Tradicional", price: 85 },
       { id: "HV2", name: "Hamburgesa Especial", price: 95 },
@@ -122,21 +127,25 @@ const menu = [
   {
     id: "BEB1",
     name: "Agua de horchata 1 Litro",
+    category: "bebidas",
     price: 35,
   },
   {
     id: "BEB2",
     name: "Limonada 1 Litro",
+    category: "bebidas",
     price: 35,
   },
   {
     id: "BEB3",
     name: "Limonada Mineral 1 Litro",
+    category: "bebidas",
     price: 35,
   },
   {
     id: "BEB4",
     name: "Refrescos 500ml",
+    category: "bebidas",
     variants: [
       { id: "BEB4-V1", name: "Coca Cola", price: 30 },
       { id: "BEB4-V2", name: "7up", price: 30 },
@@ -149,11 +158,13 @@ const menu = [
   {
     id: "BEB5",
     name: "Sangría Preparada",
+    category: "bebidas",
     price: 35,
   },
   {
     id: "BEB6",
     name: "Micheladas",
+    category: "bebidas",
     variants: [
       { id: "BEB6-V1", name: "Michelada clara", price: 80 },
       { id: "BEB6-V2", name: "Michelada oscura", price: 80 },
@@ -162,6 +173,7 @@ const menu = [
   {
     id: "BEB7",
     name: "Café Caliente",
+    category: "bebidas",
     variants: [
       { id: "BEB7-V1", name: "Cafe Americano", price: 45 },
       { id: "BEB7-V2", name: "Capuchino", price: 45 },
@@ -174,6 +186,7 @@ const menu = [
   {
     id: "BEB8",
     name: "Frappés",
+    category: "bebidas",
     variants: [
       { id: "BEB8-V1", name: "Frappe Capuchino", price: 70 },
       { id: "BEB8-V2", name: "Frappe Coco", price: 70 },
@@ -190,91 +203,109 @@ const menu = [
   {
     id: "COC1",
     name: "Copa de vino",
+    category: "cocteleria",
     price: 90,
   },
   {
     id: "COC2",
     name: "Sangría con vino",
+    category: "cocteleria",
     price: 80,
   },
   {
     id: "COC3",
     name: "Vampiro",
+    category: "cocteleria",
     price: 80,
   },
   {
     id: "COC4",
     name: "Gin de Maracuyá",
+    category: "cocteleria",
     price: 90,
   },
   {
     id: "COC5",
     name: "Margarita",
+    category: "cocteleria",
     price: 85,
   },
   {
     id: "COC6",
     name: "Ruso Blanco",
+    category: "cocteleria",
     price: 85,
   },
   {
     id: "COC7",
     name: "Palo santo",
+    category: "cocteleria",
     price: 80,
   },
   {
     id: "COC8",
     name: "Gin de pepino",
+    category: "cocteleria",
     price: 90,
   },
   {
     id: "COC9",
     name: "Mojito",
+    category: "cocteleria",
     price: 100,
   },
   {
     id: "COC10",
     name: "Piña colada",
+    category: "cocteleria",
     price: 75,
   },
   {
     id: "COC11",
     name: "Piñada",
+    category: "cocteleria",
     price: 70,
   },
   {
     id: "COC12",
     name: "Conga",
+    category: "cocteleria",
     price: 75,
   },
   {
     id: "COC13",
     name: "Destornillador",
+    category: "cocteleria",
     price: 75,
   },
   {
     id: "COC14",
     name: "Paloma",
+    category: "cocteleria",
     price: 80,
   },
   {
     id: "COC15",
     name: "Carajillo",
+    category: "cocteleria",
     price: 90,
   },
   {
     id: "COC16",
     name: "Tinto de verano",
+    category: "cocteleria",
     price: 90,
   },
   {
     id: "COC17",
     name: "Clericot",
+    category: "cocteleria",
     price: 80,
   },
   {
     id: "PZ",
     name: "Pizza",
+    category: "comida",
     variants: [
       { id: "PZV1", name: "Pizza Grande", price: 240 },
       { id: "PZV2", name: "Pizza Mediana", price: 190 },
@@ -345,6 +376,7 @@ const seedMenuItems = async () => {
         id: product.id,
         name: product.name,
         price: product.price || null,
+        category: product.category,
       });
 
       // Crear disponibilidad para el producto

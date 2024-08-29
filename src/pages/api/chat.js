@@ -295,7 +295,7 @@ async function filterRelevantMessages(messages) {
           message.content.toLowerCase().includes(keyword)
         )
       ) {
-        relevantMessages.unshift(message);
+        relevantMessages.push(message);
         foundKeyword = true;
       } else if (
         message.role === "assistant" &&
@@ -303,7 +303,7 @@ async function filterRelevantMessages(messages) {
       ) {
         foundKeyword = true;
       } else {
-        relevantMessages.unshift(message);
+        relevantMessages.push(message);
       }
     }
 
@@ -317,50 +317,69 @@ async function filterRelevantMessages(messages) {
 
 async function getMenuAvailability() {
   try {
-    const response = await axios.get(`${process.env.BASE_URL}/api/menu`);
-    const products = response.data;
-
-    const availability = {};
-    products.forEach((product) => {
-      availability[product.id] = {
-        disponible: product.available,
-        nombre: product.name,
-      };
-
-      // Procesar variantes si existen
-      if (product.variants) {
-        product.variants.forEach((variant) => {
-          availability[variant.id] = {
-            disponible: variant.available,
-            nombre: variant.name,
-          };
-        });
-      }
-
-      // Procesar ingredientes de pizza si existen
-      if (product.pizzaIngredients) {
-        product.pizzaIngredients.forEach((ingredient) => {
-          availability[ingredient.id] = {
-            disponible: ingredient.available,
-            nombre: ingredient.name,
-          };
-        });
-      }
-
-      // Procesar modificadores si existen
-      if (product.modifierTypes) {
-        product.modifierTypes.forEach((modifierType) => {
-          modifierType.options.forEach((option) => {
-            availability[option.id] = {
-              disponible: option.available,
-              nombre: option.name,
-            };
-          });
-        });
-      }
+    const products = await Product.findAll({
+      include: [
+        { model: ProductVariant },
+        { model: PizzaIngredient },
+        {
+          model: ModifierType,
+          include: [{ model: Modifier }],
+        },
+        { model: Availability },
+      ],
     });
 
-    return { availability };
+    const menuDisponible = {
+      entradas: [],
+      comida: [],
+      bebidas: [],
+      cocteleria: [],
+    };
+
+    products.forEach((product) => {
+      const productData = {
+        id: product.id,
+        name: product.name,
+        disponible: product.Availability.available,
+      };
+
+      if (product.ProductVariants.length > 0) {
+        productData.variants = product.ProductVariants.map((variant) => ({
+          id: variant.id,
+          name: variant.name,
+          disponible: variant.Availability.available,
+        }));
+      }
+
+      if (product.PizzaIngredients.length > 0) {
+        productData.pizzaIngredients = product.PizzaIngredients.map(
+          (ingredient) => ({
+            id: ingredient.id,
+            name: ingredient.name,
+            disponible: ingredient.Availability.available,
+          })
+        );
+      }
+
+      if (product.ModifierTypes.length > 0) {
+        productData.modifierTypes = product.ModifierTypes.map(
+          (modifierType) => ({
+            id: modifierType.id,
+            name: modifierType.name,
+            disponible: modifierType.Availability.available,
+            modifiers: modifierType.Modifiers.map((modifier) => ({
+              id: modifier.id,
+              name: modifier.name,
+              disponible: modifier.Availability.available,
+            })),
+          })
+        );
+      }
+
+      menuDisponible[product.category].push(productData);
+    });
+
+    return { "Menu Disponible": menuDisponible };
   } catch (error) {
     console.error("Error al obtener la disponibilidad del menú:", error);
     return { error: "No se pudo obtener la disponibilidad del menú" };
