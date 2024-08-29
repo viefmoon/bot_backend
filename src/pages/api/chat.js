@@ -350,6 +350,7 @@ async function getMenuAvailability() {
         { model: Availability },
       ],
     });
+    console.log(JSON.stringify(products, null, 2));
 
     if (!products || products.length === 0) {
       console.error("No se encontraron productos");
