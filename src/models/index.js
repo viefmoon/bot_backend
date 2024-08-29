@@ -16,7 +16,10 @@ const Availability = require("./availability"); // Añade esta línea
 Order.hasMany(OrderItem, { foreignKey: "orderId", as: "orderItems" });
 OrderItem.belongsTo(Order, { foreignKey: "orderId" });
 
-Product.hasMany(ProductVariant, { foreignKey: "productId", as: "variants" });
+Product.hasMany(ProductVariant, {
+  foreignKey: "productId",
+  as: "ProductVariants",
+});
 ProductVariant.belongsTo(Product, { foreignKey: "productId" });
 
 Product.hasMany(PizzaIngredient, {
@@ -68,7 +71,7 @@ Product.hasOne(Availability, {
 ProductVariant.hasOne(Availability, {
   foreignKey: "id",
   constraints: false,
-  scope: { type: "variant" },
+  scope: { type: "productVariant" },
 });
 PizzaIngredient.hasOne(Availability, {
   foreignKey: "id",
