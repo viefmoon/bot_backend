@@ -726,9 +726,13 @@ export default async function handler(req, res) {
                   const resultData = JSON.parse(result.output);
 
                   if (resultData.resumen) {
-                    return res.status(200).send(resultData.resumen);
+                    res.status(200).send(resultData.resumen);
+                    return;
                   } else {
-                    return res.status(200).json(resultData);
+                    return {
+                      tool_call_id: toolCall.id,
+                      output: JSON.stringify(resultData),
+                    };
                   }
                 default:
                   return {
