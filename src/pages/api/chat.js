@@ -383,42 +383,42 @@ async function getMenuAvailability() {
       const productData = {
         id: product.id,
         name: product.name,
-        disponible: product.Availability.available,
+        disponible: product.Availability?.available || false,
       };
 
       // Verifica si productVariants está definido y es un array
-      const productVariants = product.productVariants
-        ? product.productVariants.map((variant) => {
-            return {
-              id: variant.id,
-              name: variant.name,
-              disponible: variant.Availability.available,
-            };
-          })
+      const productVariants = Array.isArray(product.productVariants)
+        ? product.productVariants.map((variant) => ({
+            id: variant.id,
+            name: variant.name,
+            disponible: variant.Availability?.available || false,
+          }))
         : [];
       productData.productVariants = productVariants;
 
       // Asegúrate de que 'pizzaIngredients' es un array antes de usar 'map'
-      const pizzaIngredients = product.pizzaIngredients
+      const pizzaIngredients = Array.isArray(product.pizzaIngredients)
         ? product.pizzaIngredients.map((ingredient) => ({
             id: ingredient.id,
             name: ingredient.name,
-            disponible: ingredient.Availability.available,
+            disponible: ingredient.Availability?.available || false,
           }))
         : [];
       productData.pizzaIngredients = pizzaIngredients;
 
       // Asegúrate de que 'modifierTypes' es un array antes de usar 'map'
-      const modifierTypes = product.modifierTypes
+      const modifierTypes = Array.isArray(product.modifierTypes)
         ? product.modifierTypes.map((modifier) => ({
             id: modifier.id,
             name: modifier.name,
-            disponible: modifier.Availability.available,
-            modifiers: modifier.modifiers.map((modifier) => ({
-              id: modifier.id,
-              name: modifier.name,
-              disponible: modifier.Availability.available,
-            })),
+            disponible: modifier.Availability?.available || false,
+            modifiers: Array.isArray(modifier.modifiers)
+              ? modifier.modifiers.map((mod) => ({
+                  id: mod.id,
+                  name: mod.name,
+                  disponible: mod.Availability?.available || false,
+                }))
+              : [],
           }))
         : [];
       productData.modifierTypes = modifierTypes;
