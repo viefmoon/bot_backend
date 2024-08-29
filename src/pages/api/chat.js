@@ -365,7 +365,6 @@ async function getMenuAvailability() {
         { model: Availability },
       ],
     });
-    console.log(JSON.stringify(products, null, 2));
 
     if (!products || products.length === 0) {
       console.error("No se encontraron productos");
@@ -386,7 +385,7 @@ async function getMenuAvailability() {
         disponible: product.Availability?.available || false,
       };
 
-      // Verifica si productVariants está definido y es un array
+      // Añadir productVariants solo si no está vacío
       const productVariants = Array.isArray(product.productVariants)
         ? product.productVariants.map((variant) => ({
             id: variant.id,
@@ -394,9 +393,11 @@ async function getMenuAvailability() {
             disponible: variant.Availability?.available || false,
           }))
         : [];
-      productData.productVariants = productVariants;
+      if (productVariants.length > 0) {
+        productData.productVariants = productVariants;
+      }
 
-      // Asegúrate de que 'pizzaIngredients' es un array antes de usar 'map'
+      // Añadir pizzaIngredients solo si no está vacío
       const pizzaIngredients = Array.isArray(product.pizzaIngredients)
         ? product.pizzaIngredients.map((ingredient) => ({
             id: ingredient.id,
@@ -404,26 +405,43 @@ async function getMenuAvailability() {
             disponible: ingredient.Availability?.available || false,
           }))
         : [];
-      productData.pizzaIngredients = pizzaIngredients;
+      if (pizzaIngredients.length > 0) {
+        productData.pizzaIngredients = pizzaIngredients;
+      }
 
-      // Asegúrate de que 'modifierTypes' es un array antes de usar 'map'
+      // Añadir modifierTypes solo si no está vacío
       const modifierTypes = Array.isArray(product.modifierTypes)
-        ? product.modifierTypes.map((modifier) => ({
-            id: modifier.id,
-            name: modifier.name,
-            disponible: modifier.Availability?.available || false,
-            modifiers: Array.isArray(modifier.modifiers)
+        ? product.modifierTypes.map((modifier) => {
+            const modifierData = {
+              id: modifier.id,
+              name: modifier.name,
+              disponible: modifier.Availability?.available || false,
+            };
+            const modifiers = Array.isArray(modifier.modifiers)
               ? modifier.modifiers.map((mod) => ({
                   id: mod.id,
                   name: mod.name,
                   disponible: mod.Availability?.available || false,
                 }))
-              : [],
-          }))
+              : [];
+            if (modifiers.length > 0) {
+              modifierData.modifiers = modifiers;
+            }
+            return modifierData;
+          })
         : [];
-      productData.modifierTypes = modifierTypes;
+      if (modifierTypes.length > 0) {
+        productData.modifierTypes = modifierTypes;
+      }
 
       menuDisponible[product.category].push(productData);
+    });
+
+    // Eliminar categorías vacías
+    Object.keys(menuDisponible).forEach((category) => {
+      if (menuDisponible[category].length === 0) {
+        delete menuDisponible[category];
+      }
     });
 
     return { "Menu Disponible": menuDisponible };
