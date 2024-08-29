@@ -10,7 +10,7 @@ module.exports = {
       type: {
         type: Sequelize.ENUM(
           "product",
-          "variant",
+          "productVariant",
           "modifier",
           "pizzaIngredient",
           "modifierType"

@@ -652,7 +652,7 @@ async function calculateOrderItemsPrice(req, res) {
           const hasProductVariants =
             (await ProductVariant.count({ where: { productId: product.id } })) >
             0;
-          if (hasVariants && !item.productVariantId) {
+          if (hasProductVariants && !item.productVariantId) {
             throw new Error(
               `El producto "${productName}" requiere la selección de una productVariant`
             );
@@ -662,7 +662,7 @@ async function calculateOrderItemsPrice(req, res) {
             const productVariant = await ProductVariant.findByPk(
               item.productVariantId
             );
-            if (!variant) {
+            if (!productVariant) {
               throw new Error(
                 `Variante de producto no encontrada en el menu: ${item.productVariantId}`
               );
