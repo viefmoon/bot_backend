@@ -26,6 +26,10 @@ const PizzaIngredient = sequelize.define(
         key: "id",
       },
     },
+    ingredients: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
   },
   {
     timestamps: true,

@@ -385,25 +385,41 @@ async function getMenuAvailability() {
         disponible: product.Availability?.available || false,
       };
 
-      // Añadir productVariants solo si no está vacío
+      if (product.ingredients) {
+        productData.ingredients = product.ingredients;
+      }
+
+      // Añadir productVariants
       const productVariants = Array.isArray(product.productVariants)
-        ? product.productVariants.map((variant) => ({
-            id: variant.id,
-            name: variant.name,
-            disponible: variant.Availability?.available || false,
-          }))
+        ? product.productVariants.map((variant) => {
+            const variantData = {
+              id: variant.id,
+              name: variant.name,
+              disponible: variant.Availability?.available || false,
+            };
+            if (variant.ingredients) {
+              variantData.ingredients = variant.ingredients;
+            }
+            return variantData;
+          })
         : [];
       if (productVariants.length > 0) {
         productData.productVariants = productVariants;
       }
 
-      // Añadir pizzaIngredients solo si no está vacío
+      // Añadir pizzaIngredients
       const pizzaIngredients = Array.isArray(product.pizzaIngredients)
-        ? product.pizzaIngredients.map((ingredient) => ({
-            id: ingredient.id,
-            name: ingredient.name,
-            disponible: ingredient.Availability?.available || false,
-          }))
+        ? product.pizzaIngredients.map((ingredient) => {
+            const ingredientData = {
+              id: ingredient.id,
+              name: ingredient.name,
+              disponible: ingredient.Availability?.available || false,
+            };
+            if (ingredient.ingredients) {
+              ingredientData.ingredients = ingredient.ingredients;
+            }
+            return ingredientData;
+          })
         : [];
       if (pizzaIngredients.length > 0) {
         productData.pizzaIngredients = pizzaIngredients;

@@ -327,23 +327,109 @@ const menu = [
       },
     ],
     pizzaIngredients: [
-      { id: "PZI1", name: "Especial", ingredientValue: 4 },
-      { id: "PZI2", name: "Carnes Frias", ingredientValue: 4 },
-      { id: "PZI3", name: "Carranza", ingredientValue: 4 },
-      { id: "PZI4", name: "Zapata", ingredientValue: 4 },
-      { id: "PZI5", name: "Villa", ingredientValue: 4 },
-      { id: "PZI6", name: "Margarita", ingredientValue: 4 },
-      { id: "PZI7", name: "Adelita", ingredientValue: 4 },
-      { id: "PZI8", name: "Hawaiana", ingredientValue: 4 },
-      { id: "PZI9", name: "Mexicana", ingredientValue: 4 },
-      { id: "PZI10", name: "Rivera", ingredientValue: 4 },
-      { id: "PZI11", name: "Kahlo", ingredientValue: 4 },
-      { id: "PZI12", name: "Lupita", ingredientValue: 4 },
-      { id: "PZI13", name: "Pepperoni", ingredientValue: 4 },
-      { id: "PZI14", name: "La Lena", ingredientValue: 6 },
-      { id: "PZI15", name: "La Maria", ingredientValue: 6 },
-      { id: "PZI16", name: "Malinche", ingredientValue: 6 },
-      { id: "PZI17", name: "Philadelphia", ingredientValue: 6 },
+      {
+        id: "PZI1",
+        name: "Especial",
+        ingredientValue: 4,
+        ingredients: "Pepperoni, Salchicha, Jamón, Salami, Chile morrón",
+      },
+      {
+        id: "PZI2",
+        name: "Carnes Frías",
+        ingredientValue: 4,
+        ingredients: "Pepperoni, Salchicha, Jamón, Salami",
+      },
+      {
+        id: "PZI3",
+        name: "Carranza",
+        ingredientValue: 4,
+        ingredients: "Chorizo, Jamón, Chile jalapeño, Jitomate",
+      },
+      {
+        id: "PZI4",
+        name: "Zapata",
+        ingredientValue: 4,
+        ingredients: "Salami, Jamón, Champiñón",
+      },
+      {
+        id: "PZI5",
+        name: "Villa",
+        ingredientValue: 4,
+        ingredients: "Chorizo, Tocino, Piña, Chile jalapeño",
+      },
+      {
+        id: "PZI6",
+        name: "Margarita",
+        ingredientValue: 4,
+        ingredients: "3 Quesos, Jitomate, Albahaca",
+      },
+      {
+        id: "PZI7",
+        name: "Adelita",
+        ingredientValue: 4,
+        ingredients: "Jamón, Piña, Arándano",
+      },
+      {
+        id: "PZI8",
+        name: "Hawaiana",
+        ingredientValue: 4,
+        ingredients: "Jamón, Piña",
+      },
+      {
+        id: "PZI9",
+        name: "Mexicana",
+        ingredientValue: 4,
+        ingredients: "Chorizo, Cebolla, Chile jalapeño, Jitomate",
+      },
+      {
+        id: "PZI10",
+        name: "Rivera",
+        ingredientValue: 4,
+        ingredients: "Elote, Champiñón, Chile morrón",
+      },
+      {
+        id: "PZI11",
+        name: "Kahlo",
+        ingredientValue: 4,
+        ingredients: "Calabaza, Elote, Champiñón, Jitomate, Chile morrón",
+      },
+      {
+        id: "PZI12",
+        name: "Lupita",
+        ingredientValue: 4,
+        ingredients: "Carne molida, Tocino, Cebolla, Chile morrón",
+      },
+      {
+        id: "PZI13",
+        name: "Pepperoni",
+        ingredientValue: 4,
+        ingredients: "Pepperoni",
+      },
+      {
+        id: "PZI14",
+        name: "La Lena",
+        ingredientValue: 6,
+        ingredients: "Tocino, Pierna, Chorizo, Carne molida",
+      },
+      {
+        id: "PZI15",
+        name: "La Maria",
+        ingredientValue: 6,
+        ingredients: "Pollo BBQ, Piña, Chile jalapeño",
+      },
+      {
+        id: "PZI16",
+        name: "Malinche",
+        ingredientValue: 6,
+        ingredients:
+          "3 Quesos, Queso de cabra, Champiñón, Jamón, Chile seco, Albahaca",
+      },
+      {
+        id: "PZI17",
+        name: "Philadelphia",
+        ingredientValue: 6,
+        ingredients: "Queso philadelphia, Chile jalapeño, Jamon, Albahaca",
+      },
       { id: "PZI18", name: "3 Quesos", ingredientValue: 2 },
       { id: "PZI19", name: "Albahaca", ingredientValue: 1 },
       { id: "PZI20", name: "Arandano", ingredientValue: 1 },
@@ -377,6 +463,7 @@ const seedMenuItems = async () => {
         name: product.name,
         price: product.price || null,
         category: product.category,
+        ingredients: product.ingredients || null,
       });
 
       // Crear disponibilidad para el producto
@@ -393,6 +480,7 @@ const seedMenuItems = async () => {
             name: productVariant.name,
             price: productVariant.price,
             productId: createdProduct.id,
+            ingredients: productVariant.ingredients || null,
           });
 
           // Crear disponibilidad para la product variant
@@ -410,6 +498,7 @@ const seedMenuItems = async () => {
             id: ingredient.id,
             name: ingredient.name,
             ingredientValue: ingredient.ingredientValue,
+            ingredients: ingredient.ingredients || null,
             productId: createdProduct.id,
           });
 

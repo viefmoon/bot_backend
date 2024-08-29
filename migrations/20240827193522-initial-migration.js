@@ -74,6 +74,10 @@ module.exports = {
         type: Sequelize.STRING,
         allowNull: false,
       },
+      ingredients: {
+        type: Sequelize.STRING,
+        allowNull: true,
+      },
       createdAt: {
         allowNull: false,
         type: Sequelize.DATE,
@@ -97,6 +101,10 @@ module.exports = {
       price: {
         type: Sequelize.FLOAT,
         allowNull: false,
+      },
+      ingredients: {
+        type: Sequelize.STRING,
+        allowNull: true,
       },
       productId: {
         type: Sequelize.STRING,
@@ -206,6 +214,10 @@ module.exports = {
         type: Sequelize.INTEGER,
         allowNull: false,
         defaultValue: 1,
+      },
+      ingredients: {
+        type: Sequelize.STRING,
+        allowNull: true,
       },
       productId: {
         type: Sequelize.STRING,

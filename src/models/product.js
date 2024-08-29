@@ -21,6 +21,10 @@ const Product = sequelize.define(
       type: DataTypes.STRING,
       allowNull: false,
     },
+    ingredients: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
   },
   {
     timestamps: true,
