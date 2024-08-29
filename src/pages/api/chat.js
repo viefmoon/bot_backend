@@ -340,12 +340,27 @@ async function getMenuAvailability() {
 
     const products = await Product.findAll({
       include: [
-        { model: ProductVariant, as: "productVariants" },
-        { model: PizzaIngredient, as: "pizzaIngredients" },
+        {
+          model: ProductVariant,
+          as: "productVariants",
+          include: [{ model: Availability }],
+        },
+        {
+          model: PizzaIngredient,
+          as: "pizzaIngredients",
+          include: [{ model: Availability }],
+        },
         {
           model: ModifierType,
           as: "modifierTypes",
-          include: [{ model: Modifier, as: "modifiers" }],
+          include: [
+            {
+              model: Modifier,
+              as: "modifiers",
+              include: [{ model: Availability }],
+            },
+          ],
+          include: [{ model: Availability }],
         },
         { model: Availability },
       ],
