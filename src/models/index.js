@@ -18,7 +18,7 @@ OrderItem.belongsTo(Order, { foreignKey: "orderId" });
 
 Product.hasMany(ProductVariant, {
   foreignKey: "productId",
-  as: "ProductVariants",
+  as: "productVariants",
 });
 ProductVariant.belongsTo(Product, { foreignKey: "productId" });
 

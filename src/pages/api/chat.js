@@ -340,12 +340,12 @@ async function getMenuAvailability() {
 
     const products = await Product.findAll({
       include: [
-        { model: ProductVariant, as: "ProductVariants" },
-        { model: PizzaIngredient, as: "PizzaIngredients" },
+        { model: ProductVariant, as: "productVariants" },
+        { model: PizzaIngredient, as: "pizzaIngredients" },
         {
           model: ModifierType,
-          as: "ModifierTypes",
-          include: [{ model: Modifier, as: "Modifiers" }],
+          as: "modifierTypes",
+          include: [{ model: Modifier, as: "modifiers" }],
         },
         { model: Availability },
       ],
@@ -370,16 +370,16 @@ async function getMenuAvailability() {
         disponible: product.Availability.available,
       };
 
-      if (product.ProductVariants.length > 0) {
-        productData.variants = product.ProductVariants.map((variant) => ({
+      if (product.productVariants.length > 0) {
+        productData.variants = product.productVariants.map((variant) => ({
           id: variant.id,
           name: variant.name,
           disponible: variant.Availability.available,
         }));
       }
 
-      if (product.PizzaIngredients.length > 0) {
-        productData.pizzaIngredients = product.PizzaIngredients.map(
+      if (product.pizzaIngredients.length > 0) {
+        productData.pizzaIngredients = product.pizzaIngredients.map(
           (ingredient) => ({
             id: ingredient.id,
             name: ingredient.name,
@@ -388,13 +388,13 @@ async function getMenuAvailability() {
         );
       }
 
-      if (product.ModifierTypes.length > 0) {
-        productData.modifierTypes = product.ModifierTypes.map(
+      if (product.modifierTypes.length > 0) {
+        productData.modifierTypes = product.modifierTypes.map(
           (modifierType) => ({
             id: modifierType.id,
             name: modifierType.name,
             disponible: modifierType.Availability.available,
-            modifiers: modifierType.Modifiers.map((modifier) => ({
+            modifiers: modifierType.modifiers.map((modifier) => ({
               id: modifier.id,
               name: modifier.name,
               disponible: modifier.Availability.available,
