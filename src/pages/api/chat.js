@@ -340,12 +340,27 @@ async function getMenuAvailability() {
 
     const products = await Product.findAll({
       include: [
-        { model: ProductVariant, as: "productVariants" },
-        { model: PizzaIngredient, as: "pizzaIngredients" },
+        {
+          model: ProductVariant,
+          as: "productVariants",
+          include: [{ model: Availability }],
+        },
+        {
+          model: PizzaIngredient,
+          as: "pizzaIngredients",
+          include: [{ model: Availability }],
+        },
         {
           model: ModifierType,
           as: "modifierTypes",
-          include: [{ model: Modifier, as: "modifiers" }],
+          include: [
+            {
+              model: Modifier,
+              as: "modifiers",
+              include: [{ model: Availability }],
+            },
+            { model: Availability },
+          ],
         },
         { model: Availability },
       ],
@@ -367,38 +382,50 @@ async function getMenuAvailability() {
       const productData = {
         id: product.id,
         name: product.name,
-        disponible: product.Availability.available,
+        disponible: product.Availability
+          ? product.Availability.available
+          : false,
       };
 
-      if (product.productVariants.length > 0) {
+      if (product.productVariants && product.productVariants.length > 0) {
         productData.variants = product.productVariants.map((variant) => ({
           id: variant.id,
           name: variant.name,
-          disponible: variant.Availability.available,
+          disponible: variant.Availability
+            ? variant.Availability.available
+            : false,
         }));
       }
 
-      if (product.pizzaIngredients.length > 0) {
+      if (product.pizzaIngredients && product.pizzaIngredients.length > 0) {
         productData.pizzaIngredients = product.pizzaIngredients.map(
           (ingredient) => ({
             id: ingredient.id,
             name: ingredient.name,
-            disponible: ingredient.Availability.available,
+            disponible: ingredient.Availability
+              ? ingredient.Availability.available
+              : false,
           })
         );
       }
 
-      if (product.modifierTypes.length > 0) {
+      if (product.modifierTypes && product.modifierTypes.length > 0) {
         productData.modifierTypes = product.modifierTypes.map(
           (modifierType) => ({
             id: modifierType.id,
             name: modifierType.name,
-            disponible: modifierType.Availability.available,
-            modifiers: modifierType.modifiers.map((modifier) => ({
-              id: modifier.id,
-              name: modifier.name,
-              disponible: modifier.Availability.available,
-            })),
+            disponible: modifierType.Availability
+              ? modifierType.Availability.available
+              : false,
+            modifiers: modifierType.modifiers
+              ? modifierType.modifiers.map((modifier) => ({
+                  id: modifier.id,
+                  name: modifier.name,
+                  disponible: modifier.Availability
+                    ? modifier.Availability.available
+                    : false,
+                }))
+              : [],
           })
         );
       }
