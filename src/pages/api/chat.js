@@ -300,9 +300,7 @@ async function filterRelevantMessages(messages) {
         foundKeyword = true;
       } else if (
         message.role === "assistant" &&
-        message.content.startsWith(
-          "¡Perfecto! Aquí tienes el resumen de tu pedido hasta ahora 🎉:"
-        )
+        message.content.startsWith("¡Aquí tienes el resumen de tu pedido! 🎉")
       ) {
         // Ignorar este mensaje
         continue;
