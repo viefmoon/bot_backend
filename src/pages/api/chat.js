@@ -723,8 +723,13 @@ export default async function handler(req, res) {
                   };
                 case "generate_pre_order":
                   result = await generatePreOrder(toolCall, clientId);
-                  return result;
+                  const resultData = JSON.parse(result.output);
 
+                  if (resultData.resumen) {
+                    return res.status(200).send(resultData.resumen);
+                  } else {
+                    return res.status(200).json(resultData);
+                  }
                 default:
                   return {
                     tool_call_id: toolCall.id,
@@ -833,10 +838,19 @@ async function generatePreOrder(toolCall, clientId) {
         phoneNumber: clientId,
       }
     );
-    return {
-      tool_call_id: toolCall.id,
-      output: JSON.stringify(response.data),
-    };
+
+    // Verificar si la respuesta contiene el resumen
+    if (response.data.resumen) {
+      return {
+        tool_call_id: toolCall.id,
+        output: JSON.stringify({ resumen: response.data.resumen }),
+      };
+    } else {
+      return {
+        tool_call_id: toolCall.id,
+        output: JSON.stringify(response.data),
+      };
+    }
   } catch (error) {
     return {
       tool_call_id: toolCall.id,

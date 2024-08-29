@@ -864,44 +864,14 @@ async function generatePreOrder(req, res) {
       }
     });
     messageContent += `\n💰 *Total: $${totalCost}*`;
+    messageContent += `\n\nTienes alguna modificación? o quieres agregar algo más? o continuar con la generación de la orden?`;
 
-    const messageSent = await sendWhatsAppMessage(phoneNumber, messageContent);
-
-    if (messageSent) {
-      res.status(200).json({
-        mensaje: "Resumen del pedido enviado exitosamente",
-      });
-    } else {
-      res.status(500).json({
-        error: "No se pudo enviar el resumen del pedido por WhatsApp",
-      });
-    }
+    // Retornar el resumen en lugar de enviarlo por WhatsApp
+    return res.status(200).json({
+      mensaje: "Resumen del pedido generado exitosamente",
+      resumen: messageContent,
+    });
   } catch (error) {
     res.status(400).json({ error: error.message });
-  }
-}
-
-async function sendWhatsAppMessage(phoneNumber, message) {
-  try {
-    const response = await axios.post(
-      `https://graph.facebook.com/v17.0/${process.env.WHATSAPP_PHONE_NUMBER_ID}/messages`,
-      {
-        messaging_product: "whatsapp",
-        to: phoneNumber,
-        type: "text",
-        text: { body: message },
-      },
-      {
-        headers: {
-          Authorization: `Bearer ${process.env.WHATSAPP_ACCESS_TOKEN}`,
-          "Content-Type": "application/json",
-        },
-      }
-    );
-    console.log("Mensaje de WhatsApp enviado a:", phoneNumber);
-    return true;
-  } catch (error) {
-    console.error("Error al enviar mensaje de WhatsApp:", error);
-    return false;
   }
 }
