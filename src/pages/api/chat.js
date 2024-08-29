@@ -298,6 +298,14 @@ async function filterRelevantMessages(messages) {
         keywordsAssistant.some((keyword) => message.content.includes(keyword))
       ) {
         foundKeyword = true;
+      } else if (
+        message.role === "assistant" &&
+        message.content.startsWith(
+          "¡Perfecto! Aquí tienes el resumen de tu pedido hasta ahora 🎉:"
+        )
+      ) {
+        // Ignorar este mensaje
+        continue;
       } else {
         relevantMessages.push(message);
       }
