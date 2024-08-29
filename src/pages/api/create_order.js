@@ -28,8 +28,8 @@ export default async function handler(req, res) {
           return await modifyOrder(req, res);
         case "cancel":
           return await cancelOrder(req, res);
-        case "calculatePrice":
-          return await calculateOrderItemsPrice(req, res);
+        case "generatePreOrder":
+          return await generatePreOrder(req, res);
         default:
           return res.status(400).json({ error: "Acción no válida" });
       }
@@ -618,7 +618,7 @@ async function cancelOrder(req, res) {
   });
 }
 
-async function calculateOrderItemsPrice(req, res) {
+async function generatePreOrder(req, res) {
   const { orderItems, phoneNumber } = req.body;
 
   if (!Array.isArray(orderItems) || orderItems.length === 0) {
@@ -635,6 +635,13 @@ async function calculateOrderItemsPrice(req, res) {
 
   let totalCost = 0;
   try {
+    // Obtener datos del cliente
+    const customerResponse = await axios.get(
+      `${process.env.BASE_URL}/api/get_customer_data`,
+      { params: { clientId: phoneNumber } }
+    );
+    const customerData = customerResponse.data;
+
     const calculatedItems = await Promise.all(
       orderItems.map(async (item) => {
         try {
@@ -812,6 +819,15 @@ async function calculateOrderItemsPrice(req, res) {
     );
 
     let messageContent = "¡Aquí tienes el resumen de tu pedido! 🎉\n\n";
+    messageContent += `📞 *Teléfono cliente*: ${customerData.phoneNumber}\n`;
+    if (customerData.lastDeliveryAddress) {
+      messageContent += `🏠 *Dirección de entrega*: ${customerData.lastDeliveryAddress}\n`;
+    }
+    if (customerData.lastPickupName) {
+      messageContent += `👤 *Nombre de recolección*: ${customerData.lastPickupName}\n`;
+    }
+    messageContent += "\n";
+
     calculatedItems.forEach((item) => {
       const itemName = item.nombre_variante || item.nombre_producto;
       messageContent += `- *${item.quantity}x ${itemName}*: $${item.precio_total_orderItem}\n`;

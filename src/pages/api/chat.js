@@ -38,18 +38,6 @@ const validateApiKey = (req, res) => {
     });
   }
 };
-// Añadir esta función después de findClientId
-async function getCustomerData(clientId) {
-  try {
-    const response = await axios.get(
-      `${process.env.BASE_URL}/api/get_customer_data?clientId=${clientId}`
-    );
-    return response.data;
-  } catch (error) {
-    console.error("Error al obtener datos del cliente:", error);
-    return { phoneNumber: clientId };
-  }
-}
 
 async function createOrder(toolCall, clientId) {
   const { orderType, orderItems, phoneNumber, deliveryAddress, pickupName } =
@@ -703,12 +691,6 @@ export default async function handler(req, res) {
               const clientId = conversationId.split(":")[1];
               let result;
               switch (toolCall.function.name) {
-                case "get_customer_data":
-                  const customerData = await getCustomerData(clientId);
-                  return {
-                    tool_call_id: toolCall.id,
-                    output: JSON.stringify(customerData),
-                  };
                 case "create_order":
                   result = await createOrder(toolCall, clientId);
                   shouldDeleteConversation = true;
@@ -739,8 +721,8 @@ export default async function handler(req, res) {
                     tool_call_id: toolCall.id,
                     output: JSON.stringify(menu),
                   };
-                case "calculate_order_total":
-                  result = await calculateOrderTotal(toolCall, clientId);
+                case "generate_pre_order":
+                  result = await generatePreOrder(toolCall, clientId);
                   return result;
 
                 default:
@@ -839,14 +821,14 @@ async function deleteConversation(clientId) {
   }
 }
 
-async function calculateOrderTotal(toolCall, clientId) {
+async function generatePreOrder(toolCall, clientId) {
   const { orderItems } = JSON.parse(toolCall.function.arguments);
 
   try {
     const response = await axios.post(
       `${process.env.BASE_URL}/api/create_order`,
       {
-        action: "calculatePrice",
+        action: "generatePreOrder",
         orderItems: orderItems,
         phoneNumber: clientId,
       }
