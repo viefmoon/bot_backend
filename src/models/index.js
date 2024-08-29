@@ -10,6 +10,7 @@ const { SelectedPizzaIngredient } = require("./selectedPizzaIngredient");
 const Modifier = require("./modifier");
 const ModifierType = require("./modifierType");
 const SelectedModifier = require("./selectedModifier");
+const Availability = require("./availability"); // Añade esta línea
 
 // Define relationships
 Order.hasMany(OrderItem, { foreignKey: "orderId", as: "orderItems" });
@@ -58,6 +59,33 @@ SelectedPizzaIngredient.belongsTo(PizzaIngredient, {
   foreignKey: "pizzaIngredientId",
 });
 
+// Añade relaciones para Availability si es necesario
+Product.hasOne(Availability, {
+  foreignKey: "id",
+  constraints: false,
+  scope: { type: "product" },
+});
+ProductVariant.hasOne(Availability, {
+  foreignKey: "id",
+  constraints: false,
+  scope: { type: "variant" },
+});
+PizzaIngredient.hasOne(Availability, {
+  foreignKey: "id",
+  constraints: false,
+  scope: { type: "pizzaIngredient" },
+});
+ModifierType.hasOne(Availability, {
+  foreignKey: "id",
+  constraints: false,
+  scope: { type: "modifierType" },
+});
+Modifier.hasOne(Availability, {
+  foreignKey: "id",
+  constraints: false,
+  scope: { type: "modifier" },
+});
+
 module.exports = {
   Customer,
   Order,
@@ -70,6 +98,6 @@ module.exports = {
   Modifier,
   ModifierType,
   SelectedModifier,
+  Availability, // Añade esta línea
   sequelize,
-  // syncModels,
 };
