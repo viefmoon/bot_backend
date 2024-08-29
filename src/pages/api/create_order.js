@@ -820,12 +820,12 @@ async function generatePreOrder(req, res) {
 
     let messageContent = "¡Aquí tienes el resumen de tu pedido! 🎉\n\n";
     messageContent += `📞 *Teléfono cliente*: ${customerData.phoneNumber}\n`;
-    if (customerData.lastDeliveryAddress) {
-      messageContent += `🏠 *Dirección de entrega*: ${customerData.lastDeliveryAddress}\n`;
-    }
-    if (customerData.lastPickupName) {
-      messageContent += `👤 *Nombre de recolección*: ${customerData.lastPickupName}\n`;
-    }
+    messageContent += `🏠 *Dirección de entrega*: ${
+      customerData.lastDeliveryAddress || "No disponible"
+    }\n`;
+    messageContent += `👤 *Nombre de recolección*: ${
+      customerData.lastPickupName || "No disponible"
+    }\n`;
     messageContent += "\n";
 
     calculatedItems.forEach((item) => {
@@ -864,7 +864,7 @@ async function generatePreOrder(req, res) {
       }
     });
     messageContent += `\n💰 *Total: $${totalCost}*`;
-    messageContent += `\n\nTienes alguna modificación? o quieres agregar algo más? o continuar con la generación de la orden?`;
+    messageContent += `\n\nHe recuperado la informacion de entrega asociada a tu numero de telefono, para generar la orden necesito una direccion de entrega o nombre de recoleccion, tienes alguna modificacion? o continuar con la generación de la orden?`;
 
     // Retornar el resumen en lugar de enviarlo por WhatsApp
     return res.status(200).json({
