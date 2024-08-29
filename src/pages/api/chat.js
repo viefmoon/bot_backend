@@ -386,7 +386,7 @@ async function getMenuAvailability() {
         disponible: product.Availability.available,
       };
 
-      if (product.productVariants.length > 0) {
+      if (product.productVariants) {
         productData.productVariants = product.productVariants.map(
           (productVariant) => ({
             id: productVariant.id,
@@ -394,9 +394,11 @@ async function getMenuAvailability() {
             disponible: productVariant.Availability.available,
           })
         );
+      } else {
+        productData.productVariants = [];
       }
 
-      if (product.pizzaIngredients.length > 0) {
+      if (product.pizzaIngredients) {
         productData.pizzaIngredients = product.pizzaIngredients.map(
           (ingredient) => ({
             id: ingredient.id,
@@ -404,9 +406,11 @@ async function getMenuAvailability() {
             disponible: ingredient.Availability.available,
           })
         );
+      } else {
+        productData.pizzaIngredients = [];
       }
 
-      if (product.modifierTypes.length > 0) {
+      if (product.modifierTypes) {
         productData.modifierTypes = product.modifierTypes.map(
           (modifierType) => ({
             id: modifierType.id,
@@ -419,6 +423,8 @@ async function getMenuAvailability() {
             })),
           })
         );
+      } else {
+        productData.modifierTypes = [];
       }
 
       menuDisponible[product.category].push(productData);
