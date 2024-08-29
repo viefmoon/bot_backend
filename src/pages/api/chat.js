@@ -1,6 +1,14 @@
 const OpenAI = require("openai");
 const axios = require("axios");
-const { Order } = require("../../models");
+const {
+  Order,
+  Product,
+  ProductVariant,
+  PizzaIngredient,
+  ModifierType,
+  Modifier,
+  Availability,
+} = require("../../models");
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
@@ -317,6 +325,19 @@ async function filterRelevantMessages(messages) {
 
 async function getMenuAvailability() {
   try {
+    // Verificar si los modelos necesarios están definidos
+    if (
+      !Product ||
+      !ProductVariant ||
+      !PizzaIngredient ||
+      !ModifierType ||
+      !Modifier ||
+      !Availability
+    ) {
+      console.error("Uno o más modelos no están definidos");
+      return { error: "Error en la configuración de los modelos" };
+    }
+
     const products = await Product.findAll({
       include: [
         { model: ProductVariant },
@@ -328,6 +349,11 @@ async function getMenuAvailability() {
         { model: Availability },
       ],
     });
+
+    if (!products || products.length === 0) {
+      console.error("No se encontraron productos");
+      return { error: "No se encontraron productos en la base de datos" };
+    }
 
     const menuDisponible = {
       entradas: [],
@@ -382,7 +408,11 @@ async function getMenuAvailability() {
     return { "Menu Disponible": menuDisponible };
   } catch (error) {
     console.error("Error al obtener la disponibilidad del menú:", error);
-    return { error: "No se pudo obtener la disponibilidad del menú" };
+    return {
+      error: "No se pudo obtener la disponibilidad del menú",
+      detalles: error.message,
+      stack: error.stack,
+    };
   }
 }
 
