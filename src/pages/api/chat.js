@@ -265,7 +265,7 @@ async function getOrderDetails(dailyOrderNumber, clientId) {
   }
 }
 
-function filterRelevantMessages(messages) {
+async function filterRelevantMessages(messages) {
   const keywordsUser = ["olvida lo anterior", "nuevo pedido"];
   const keywordsAssistant = [
     "Tu pedido ha sido generado",
@@ -275,6 +275,15 @@ function filterRelevantMessages(messages) {
 
   let relevantMessages = [];
   let foundKeyword = false;
+
+  // Obtener la disponibilidad del menú
+  const menuAvailability = await getMenuAvailability();
+
+  // Añadir la disponibilidad del menú como primer mensaje del asistente
+  relevantMessages.push({
+    role: "assistant",
+    content: JSON.stringify(menuAvailability),
+  });
 
   for (let i = messages.length - 1; i >= 0; i--) {
     const message = messages[i];
@@ -301,9 +310,9 @@ function filterRelevantMessages(messages) {
     if (foundKeyword) break;
   }
 
-  return relevantMessages.length > 0
+  return relevantMessages.length > 1
     ? relevantMessages
-    : messages.slice(-MAX_MESSAGES);
+    : [relevantMessages[0], ...messages.slice(-MAX_MESSAGES)];
 }
 
 async function getMenuAvailability() {
@@ -560,7 +569,7 @@ export default async function handler(req, res) {
       const filteredMessages = messages.filter(
         (message) => message.role !== "system" && message.content.trim() !== ""
       );
-      const relevantMessages = filterRelevantMessages(filteredMessages);
+      const relevantMessages = await filterRelevantMessages(filteredMessages);
 
       console.log("Relevant messages:", relevantMessages);
       const thread = await openai.beta.threads.create({
@@ -623,9 +632,7 @@ export default async function handler(req, res) {
                   };
                 case "calculate_order_total":
                   result = await calculateOrderTotal(toolCall, clientId);
-                  // Enviar la respuesta directamente al backend
-                  res.status(200).send(result.output);
-                  return;
+                  return result;
 
                 default:
                   return {
@@ -646,6 +653,7 @@ export default async function handler(req, res) {
             run = await waitForCompletion(thread.id, run.id, res);
             if (run.status === "completed") break;
             if (run.status === "error") {
+              return res.status(200).send(run.message);
             }
           } catch (error) {
             console.error("Error durante la espera:", error);
