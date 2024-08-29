@@ -150,15 +150,17 @@ async function createOrder(req, res) {
       }
       let itemPrice = product.price || 0;
 
-      // Si hay una variante, usar su precio
+      // Si hay una productVariant, usar su precio
       if (item.productVariantId) {
-        const variant = await ProductVariant.findByPk(item.productVariantId);
-        if (!variant) {
+        const productVariant = await ProductVariant.findByPk(
+          item.productVariantId
+        );
+        if (!productVariant) {
           throw new Error(
             `Variante de producto no encontrada: ${item.productVariantId}`
           );
         }
-        itemPrice = variant.price || 0;
+        itemPrice = productVariant.price || 0;
       }
 
       // Calcular precio adicional por ingredientes de pizza
@@ -272,7 +274,7 @@ async function createOrder(req, res) {
       productos: await Promise.all(
         createdItems.map(async (item) => {
           const product = await Product.findByPk(item.productId);
-          const variant = item.productVariantId
+          const productVariant = item.productVariantId
             ? await ProductVariant.findByPk(item.productVariantId)
             : null;
           const selectedModifiers = await SelectedModifier.findAll({
@@ -287,7 +289,7 @@ async function createOrder(req, res) {
 
           return {
             cantidad: item.quantity,
-            nombre: variant ? variant.name : product.name,
+            nombre: productVariant ? productVariant.name : product.name,
             modificadores: selectedModifiers.map((sm) => ({
               nombre: sm.Modifier.name,
               precio: sm.Modifier.price,
@@ -404,13 +406,15 @@ async function modifyOrder(req, res) {
       let itemPrice = product.price || 0;
 
       if (item.productVariantId) {
-        const variant = await ProductVariant.findByPk(item.productVariantId);
-        if (!variant) {
+        const productVariant = await ProductVariant.findByPk(
+          item.productVariantId
+        );
+        if (!productVariant) {
           throw new Error(
             `Variante de producto no encontrada: ${item.productVariantId}`
           );
         }
-        itemPrice = variant.price || 0;
+        itemPrice = productVariant.price || 0;
       }
 
       // Calcular precio adicional por ingredientes de pizza
@@ -534,7 +538,7 @@ async function modifyOrder(req, res) {
       productos: await Promise.all(
         updatedItems.map(async (item) => {
           const product = await Product.findByPk(item.productId);
-          const variant = item.productVariantId
+          const productVariant = item.productVariantId
             ? await ProductVariant.findByPk(item.productVariantId)
             : null;
           const selectedModifiers = await SelectedModifier.findAll({
@@ -549,7 +553,7 @@ async function modifyOrder(req, res) {
 
           return {
             cantidad: item.quantity,
-            nombre: variant ? variant.name : product.name,
+            nombre: productVariant ? productVariant.name : product.name,
             modificadores: selectedModifiers.map((sm) => ({
               nombre: sm.Modifier.name,
               precio: sm.Modifier.price,
@@ -642,20 +646,20 @@ async function calculateOrderItemsPrice(req, res) {
           }
           let itemPrice = product.price || 0;
           let productName = product.name;
-          let variantName = null;
+          let productVariantName = null;
 
-          // Verificar si el producto tiene variantes y si se seleccionó una variante
-          const hasVariants =
+          // Verificar si el producto tiene productVariants y si se seleccionó una productVariant
+          const hasProductVariants =
             (await ProductVariant.count({ where: { productId: product.id } })) >
             0;
           if (hasVariants && !item.productVariantId) {
             throw new Error(
-              `El producto "${productName}" requiere la selección de una variante`
+              `El producto "${productName}" requiere la selección de una productVariant`
             );
           }
 
           if (item.productVariantId) {
-            const variant = await ProductVariant.findByPk(
+            const productVariant = await ProductVariant.findByPk(
               item.productVariantId
             );
             if (!variant) {
@@ -663,8 +667,8 @@ async function calculateOrderItemsPrice(req, res) {
                 `Variante de producto no encontrada en el menu: ${item.productVariantId}`
               );
             }
-            itemPrice = variant.price;
-            variantName = variant.name;
+            itemPrice = productVariant.price;
+            productVariantName = productVariant.name;
           }
 
           // Verificar si el producto es una pizza y si se seleccionó al menos un ingrediente
@@ -797,7 +801,7 @@ async function calculateOrderItemsPrice(req, res) {
             ...item,
             precio_total_orderItem: totalItemPrice,
             nombre_producto: productName,
-            nombre_variante: variantName,
+            nombre_variante: productVariantName,
             modificadores: modifierNames,
             ingredientes_pizza: pizzaIngredientNames,
           };

@@ -12,7 +12,7 @@ const menu = [
     id: "A",
     name: "Orden de Alitas",
     category: "entradas",
-    variants: [
+    productVariants: [
       { id: "AV1", name: "Orden de Alitas BBQ", price: 135 },
       { id: "AV2", name: "Media Orden de Alitas BBQ", price: 70 },
       { id: "AV3", name: "Orden de Alitas Picosas", price: 135 },
@@ -26,7 +26,7 @@ const menu = [
     id: "P",
     name: "Ordenes de Papas",
     category: "entradas",
-    variants: [
+    productVariants: [
       { id: "PV1", name: "Orden de Papas a la Francesa", price: 90 },
       { id: "PV2", name: "Media Orden de Papas a la Francesa", price: 50 },
       { id: "PV3", name: "Orden de Papas Gajos", price: 100 },
@@ -56,7 +56,7 @@ const menu = [
     id: "EN",
     name: "Ensaladas",
     category: "comida",
-    variants: [
+    productVariants: [
       { id: "ENV1", name: "Ensalada de Pollo Chica", price: 90 },
       { id: "ENV2", name: "Ensalada de Pollo Grande", price: 120 },
       { id: "ENV3", name: "Ensalada de Jamón Chica", price: 80 },
@@ -81,7 +81,7 @@ const menu = [
     id: "H",
     name: "Hamburguesas",
     category: "comida",
-    variants: [
+    productVariants: [
       { id: "HV1", name: "Hamburgesa Tradicional", price: 85 },
       { id: "HV2", name: "Hamburgesa Especial", price: 95 },
       { id: "HV3", name: "Hamburgesa Hawaiana", price: 95 },
@@ -146,7 +146,7 @@ const menu = [
     id: "BEB4",
     name: "Refrescos 500ml",
     category: "bebidas",
-    variants: [
+    productVariants: [
       { id: "BEB4-V1", name: "Coca Cola", price: 30 },
       { id: "BEB4-V2", name: "7up", price: 30 },
       { id: "BEB4-V3", name: "Mirinda", price: 30 },
@@ -165,7 +165,7 @@ const menu = [
     id: "BEB6",
     name: "Micheladas",
     category: "bebidas",
-    variants: [
+    productVariants: [
       { id: "BEB6-V1", name: "Michelada clara", price: 80 },
       { id: "BEB6-V2", name: "Michelada oscura", price: 80 },
     ],
@@ -174,7 +174,7 @@ const menu = [
     id: "BEB7",
     name: "Café Caliente",
     category: "bebidas",
-    variants: [
+    productVariants: [
       { id: "BEB7-V1", name: "Cafe Americano", price: 45 },
       { id: "BEB7-V2", name: "Capuchino", price: 45 },
       { id: "BEB7-V3", name: "Chocolate", price: 50 },
@@ -187,7 +187,7 @@ const menu = [
     id: "BEB8",
     name: "Frappés",
     category: "bebidas",
-    variants: [
+    productVariants: [
       { id: "BEB8-V1", name: "Frappe Capuchino", price: 70 },
       { id: "BEB8-V2", name: "Frappe Coco", price: 70 },
       { id: "BEB8-V3", name: "Frappe Caramelo", price: 70 },
@@ -306,7 +306,7 @@ const menu = [
     id: "PZ",
     name: "Pizza",
     category: "comida",
-    variants: [
+    productVariants: [
       { id: "PZV1", name: "Pizza Grande", price: 240 },
       { id: "PZV2", name: "Pizza Mediana", price: 190 },
       { id: "PZV3", name: "Pizza Chica", price: 140 },
@@ -386,19 +386,19 @@ const seedMenuItems = async () => {
         available: true,
       });
 
-      if (product.variants) {
-        for (const variant of product.variants) {
+      if (product.productVariants) {
+        for (const productVariant of product.productVariants) {
           await ProductVariant.create({
-            id: variant.id,
-            name: variant.name,
-            price: variant.price,
+            id: productVariant.id,
+            name: productVariant.name,
+            price: productVariant.price,
             productId: createdProduct.id,
           });
 
-          // Crear disponibilidad para la variante
+          // Crear disponibilidad para la product variant
           await Availability.create({
-            id: variant.id,
-            type: "variant",
+            id: productVariant.id,
+            type: "productVariant",
             available: true,
           });
         }

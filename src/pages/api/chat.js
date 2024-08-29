@@ -387,11 +387,13 @@ async function getMenuAvailability() {
       };
 
       if (product.productVariants.length > 0) {
-        productData.variants = product.productVariants.map((variant) => ({
-          id: variant.id,
-          name: variant.name,
-          disponible: variant.Availability.available,
-        }));
+        productData.productVariants = product.productVariants.map(
+          (productVariant) => ({
+            id: productVariant.id,
+            name: productVariant.name,
+            disponible: productVariant.Availability.available,
+          })
+        );
       }
 
       if (product.pizzaIngredients.length > 0) {

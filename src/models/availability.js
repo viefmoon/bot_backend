@@ -9,7 +9,7 @@ const Availability = sequelize.define("Availability", {
   type: {
     type: DataTypes.ENUM(
       "product",
-      "variant",
+      "productVariant",
       "modifier",
       "pizzaIngredient",
       "modifierType"
