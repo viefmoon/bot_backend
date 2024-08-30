@@ -1,5 +1,7 @@
 const axios = require("axios");
 
+console.log("Todas las variables de entorno:", process.env);
+
 export default async function handler(req, res) {
   console.log("Webhook called with method:", req.method);
   console.log("Query parameters:", req.query);
