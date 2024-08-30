@@ -1,11 +1,19 @@
 const axios = require("axios");
 
 export default async function handler(req, res) {
+  console.log("Webhook called with method:", req.method);
+  console.log("Query parameters:", req.query);
+
   if (req.method === "GET") {
     // Verificación del webhook
     const mode = req.query["hub.mode"];
     const token = req.query["hub.verify_token"];
     const challenge = req.query["hub.challenge"];
+
+    console.log("Mode:", mode);
+    console.log("Token:", token);
+    console.log("Challenge:", challenge);
+    console.log("Expected token:", process.env.WHATSAPP_VERIFY_TOKEN);
 
     if (mode === "subscribe" && token === process.env.WHATSAPP_VERIFY_TOKEN) {
       console.log("Webhook verificado exitosamente");
