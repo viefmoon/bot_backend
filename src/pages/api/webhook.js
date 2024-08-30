@@ -1,10 +1,10 @@
 const axios = require("axios");
 
-console.log("Todas las variables de entorno:", process.env);
-
 export default async function handler(req, res) {
-  console.log("Webhook called with method:", req.method);
-  console.log("Query parameters:", req.query);
+  console.log("Solicitud recibida:", new Date().toISOString());
+  console.log("Método:", req.method);
+  console.log("URL:", req.url);
+  console.log("Headers:", req.headers);
 
   if (req.method === "GET") {
     // Verificación del webhook
