@@ -475,25 +475,18 @@ async function sendWhatsAppMessage(phoneNumber, message, buttons = []) {
       to: phoneNumber,
       type: "interactive",
       interactive: {
-        type: "list",
-        header: {
-          type: "text",
-          text: "Selecciona una opción",
-        },
+        type: "button",
         body: {
           text: message,
         },
         action: {
-          button: "Ver opciones",
-          sections: [
-            {
-              title: "Opciones",
-              rows: buttons.map((button, index) => ({
-                id: `option_${index}`,
-                title: button,
-              })),
+          buttons: buttons.map((button, index) => ({
+            type: "call_to_action",
+            reply: {
+              id: `button_${index}`,
+              title: button,
             },
-          ],
+          })),
         },
       },
     };
