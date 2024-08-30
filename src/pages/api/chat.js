@@ -40,8 +40,9 @@ const validateApiKey = (req, res) => {
 };
 
 async function createOrder(toolCall, clientId) {
-  const { orderType, orderItems, phoneNumber, deliveryAddress, pickupName } =
-    JSON.parse(toolCall.function.arguments);
+  const { orderType, orderItems, deliveryAddress, pickupName } = JSON.parse(
+    toolCall.function.arguments
+  );
 
   try {
     const response = await axios.post(
@@ -50,7 +51,6 @@ async function createOrder(toolCall, clientId) {
         action: "create",
         orderType,
         orderItems,
-        phoneNumber,
         deliveryAddress,
         customerName: pickupName,
         clientId,
@@ -86,7 +86,6 @@ async function modifyOrder(toolCall, clientId) {
     dailyOrderNumber,
     orderType,
     orderItems,
-    phoneNumber,
     deliveryAddress,
     pickupName,
   } = JSON.parse(toolCall.function.arguments);
@@ -99,7 +98,6 @@ async function modifyOrder(toolCall, clientId) {
         dailyOrderNumber,
         orderType,
         orderItems,
-        phoneNumber,
         deliveryAddress,
         customerName: pickupName,
         clientId,
@@ -845,7 +843,7 @@ async function selectProducts(toolCall, clientId) {
       {
         action: "selectProducts",
         orderItems: orderItems,
-        phoneNumber: clientId,
+        clientId: clientId,
       }
     );
 

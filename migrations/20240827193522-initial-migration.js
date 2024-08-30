@@ -265,10 +265,6 @@ module.exports = {
         allowNull: false,
         defaultValue: "created",
       },
-      phoneNumber: {
-        type: Sequelize.STRING,
-        allowNull: false,
-      },
       deliveryAddress: {
         type: Sequelize.STRING,
         allowNull: true,

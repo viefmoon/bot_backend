@@ -44,14 +44,8 @@ export default async function handler(req, res) {
 }
 
 async function createOrder(req, res) {
-  const {
-    orderType,
-    orderItems,
-    phoneNumber,
-    deliveryAddress,
-    customerName,
-    clientId,
-  } = req.body;
+  const { orderType, orderItems, deliveryAddress, customerName, clientId } =
+    req.body;
 
   // Verificar si el restaurante está aceptando pedidos y obtener la configuración
   const config = await RestaurantConfig.findOne();
@@ -130,7 +124,6 @@ async function createOrder(req, res) {
     dailyOrderNumber,
     orderType,
     status: "created",
-    phoneNumber,
     deliveryAddress: orderType === "delivery" ? deliveryAddress : null,
     customerName: orderType === "pickup" ? customerName : null,
     totalCost: 0,
@@ -257,7 +250,6 @@ async function createOrder(req, res) {
       Id: newOrder.dailyOrderNumber,
       tipo: newOrder.orderType,
       estado: newOrder.status,
-      telefono: newOrder.phoneNumber,
       direccion_entrega: newOrder.deliveryAddress,
       nombre_recogida: newOrder.customerName,
       precio_total: newOrder.totalCost,
@@ -314,7 +306,6 @@ async function modifyOrder(req, res) {
     dailyOrderNumber,
     orderType,
     orderItems,
-    phoneNumber,
     deliveryAddress,
     customerName,
     clientId,
@@ -388,7 +379,6 @@ async function modifyOrder(req, res) {
   // Actualizar la orden
   await order.update({
     orderType,
-    phoneNumber,
     deliveryAddress: orderType === "delivery" ? deliveryAddress : null,
     customerName: orderType === "pickup" ? customerName : null,
   });
@@ -531,7 +521,6 @@ async function modifyOrder(req, res) {
       id: order.dailyOrderNumber,
       tipo: order.orderType,
       estado: order.status,
-      telefono: order.phoneNumber,
       direccion_entrega: order.deliveryAddress,
       nombre_recogida: order.customerName,
       precio_total: order.totalCost,
@@ -619,7 +608,7 @@ async function cancelOrder(req, res) {
 }
 
 async function selectProducts(req, res) {
-  const { orderItems, phoneNumber } = req.body;
+  const { orderItems, clientId } = req.body;
 
   if (!Array.isArray(orderItems) || orderItems.length === 0) {
     return res
@@ -627,18 +616,11 @@ async function selectProducts(req, res) {
       .json({ error: "Se requiere un array de orderItems" });
   }
 
-  if (!phoneNumber) {
-    return res
-      .status(400)
-      .json({ error: "Se requiere el número de teléfono del cliente" });
-  }
-
   let totalCost = 0;
   try {
-    // Obtener datos del cliente
     const customerResponse = await axios.get(
       `${process.env.BASE_URL}/api/get_customer_data`,
-      { params: { clientId: phoneNumber } }
+      { params: { clientId } }
     );
     const customerData = customerResponse.data;
 
@@ -819,7 +801,6 @@ async function selectProducts(req, res) {
     );
 
     let messageContent = "¡Aquí tienes el resumen de tu pedido! 🎉\n\n";
-    messageContent += `📞 *Teléfono cliente*: ${customerData.phoneNumber}\n`;
     messageContent += `🏠 *Dirección de entrega*: ${
       customerData.lastDeliveryAddress || "No disponible"
     }\n`;

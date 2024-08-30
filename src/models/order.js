@@ -29,10 +29,6 @@ const Order = sequelize.define(
       allowNull: false,
       defaultValue: "created",
     },
-    phoneNumber: {
-      type: DataTypes.STRING,
-      allowNull: false,
-    },
     deliveryAddress: {
       type: DataTypes.STRING,
       allowNull: true,
