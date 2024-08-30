@@ -468,16 +468,32 @@ async function getMenuAvailability() {
   }
 }
 
-async function sendWhatsAppMessage(phoneNumber, message) {
+async function sendWhatsAppMessage(phoneNumber, message, buttons = []) {
   try {
+    let payload = {
+      messaging_product: "whatsapp",
+      to: phoneNumber,
+      type: "interactive",
+      interactive: {
+        type: "button",
+        body: {
+          text: message,
+        },
+        action: {
+          buttons: buttons.map((button, index) => ({
+            type: "reply",
+            reply: {
+              id: `button_${index}`,
+              title: button,
+            },
+          })),
+        },
+      },
+    };
+
     const response = await axios.post(
       `https://graph.facebook.com/v17.0/${process.env.WHATSAPP_PHONE_NUMBER_ID}/messages`,
-      {
-        messaging_product: "whatsapp",
-        to: phoneNumber,
-        type: "text",
-        text: { body: message },
-      },
+      payload,
       {
         headers: {
           Authorization: `Bearer ${process.env.WHATSAPP_ACCESS_TOKEN}`,
@@ -849,10 +865,27 @@ async function selectProducts(toolCall, clientId) {
 
     // Verificar si la respuesta contiene el resumen
     if (response.data.resumen) {
-      return {
-        tool_call_id: toolCall.id,
-        output: JSON.stringify({ resumen: response.data.resumen }),
-      };
+      const sent = await sendWhatsAppMessage(clientId, response.data.resumen, [
+        "Confirmar pedido",
+        "Modificar pedido",
+      ]);
+
+      if (sent) {
+        return {
+          tool_call_id: toolCall.id,
+          output: JSON.stringify({
+            resumen: response.data.resumen,
+            message: "Resumen enviado con botones de acción",
+          }),
+        };
+      } else {
+        return {
+          tool_call_id: toolCall.id,
+          output: JSON.stringify({
+            error: "No se pudo enviar el resumen por WhatsApp",
+          }),
+        };
+      }
     } else {
       return {
         tool_call_id: toolCall.id,
