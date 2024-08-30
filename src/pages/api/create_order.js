@@ -800,7 +800,7 @@ async function selectProducts(req, res) {
       })
     );
 
-    let messageContent = "¡Aquí tienes el resumen de tu pedido! 🎉\n\n";
+    let messageContent = "Aquí tienes el resumen de tu pedido\n\n";
     messageContent += `🏠 *Dirección de entrega*: ${
       customerData.lastDeliveryAddress || "No disponible"
     }\n`;
@@ -845,8 +845,6 @@ async function selectProducts(req, res) {
       }
     });
     messageContent += `\n💰 *Total: $${totalCost}*`;
-    messageContent += `\n\nHe recuperado la informacion de entrega asociada a tu numero de telefono, para generar la orden necesito una direccion de entrega o nombre de recoleccion, tienes alguna modificacion? o continuar con la generación de la orden?`;
-
     // Retornar el resumen en lugar de enviarlo por WhatsApp
     return res.status(200).json({
       mensaje: "Resumen del pedido generado exitosamente",
