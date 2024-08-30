@@ -475,22 +475,29 @@ async function sendWhatsAppMessage(phoneNumber, message, buttons = []) {
       to: phoneNumber,
       type: "interactive",
       interactive: {
-        type: "button",
+        type: "list",
+        header: {
+          type: "text",
+          text: "Selecciona una opción",
+        },
         body: {
           text: message,
         },
         action: {
-          buttons: buttons.map((button, index) => ({
-            type: "quick_reply",
-            action: {
-              type: "send_message",
-              payload: button,
+          button: "Ver opciones",
+          sections: [
+            {
+              title: "Opciones",
+              rows: buttons.map((button, index) => ({
+                id: `option_${index}`,
+                title: button,
+              })),
             },
-            title: button,
-          })),
+          ],
         },
       },
     };
+
     const response = await axios.post(
       `https://graph.facebook.com/v17.0/${process.env.WHATSAPP_PHONE_NUMBER_ID}/messages`,
       payload,
