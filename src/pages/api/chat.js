@@ -481,11 +481,12 @@ async function sendWhatsAppMessage(phoneNumber, message, buttons = []) {
         },
         action: {
           buttons: buttons.map((button, index) => ({
-            type: "button",
-            reply: {
-              id: `button_${index}`,
-              title: button,
+            type: "quick_reply",
+            action: {
+              type: "send_message",
+              payload: `button_${index}`,
             },
+            title: button,
           })),
         },
       },
