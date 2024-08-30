@@ -28,8 +28,8 @@ export default async function handler(req, res) {
           return await modifyOrder(req, res);
         case "cancel":
           return await cancelOrder(req, res);
-        case "generatePreOrder":
-          return await generatePreOrder(req, res);
+        case "selectProducts":
+          return await selectProducts(req, res);
         default:
           return res.status(400).json({ error: "Acción no válida" });
       }
@@ -618,7 +618,7 @@ async function cancelOrder(req, res) {
   });
 }
 
-async function generatePreOrder(req, res) {
+async function selectProducts(req, res) {
   const { orderItems, phoneNumber } = req.body;
 
   if (!Array.isArray(orderItems) || orderItems.length === 0) {

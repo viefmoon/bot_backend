@@ -727,8 +727,8 @@ export default async function handler(req, res) {
                     tool_call_id: toolCall.id,
                     output: JSON.stringify(menu),
                   };
-                case "generate_pre_order":
-                  result = await generatePreOrder(toolCall, clientId);
+                case "select_products":
+                  result = await selectProducts(toolCall, clientId);
                   const resultData = JSON.parse(result.output);
 
                   if (resultData.resumen) {
@@ -836,14 +836,14 @@ async function deleteConversation(clientId) {
   }
 }
 
-async function generatePreOrder(toolCall, clientId) {
+async function selectProducts(toolCall, clientId) {
   const { orderItems } = JSON.parse(toolCall.function.arguments);
 
   try {
     const response = await axios.post(
       `${process.env.BASE_URL}/api/create_order`,
       {
-        action: "generatePreOrder",
+        action: "selectProducts",
         orderItems: orderItems,
         phoneNumber: clientId,
       }
