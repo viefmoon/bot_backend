@@ -481,16 +481,16 @@ async function sendWhatsAppMessage(phoneNumber, message, buttons = []) {
         },
         action: {
           buttons: buttons.map((button, index) => ({
-            type: "reply",
-            reply: {
-              id: `button_${index}`,
-              title: button,
+            type: "quick_reply",
+            action: {
+              type: "send_message",
+              payload: button,
             },
+            title: button,
           })),
         },
       },
     };
-
     const response = await axios.post(
       `https://graph.facebook.com/v17.0/${process.env.WHATSAPP_PHONE_NUMBER_ID}/messages`,
       payload,
