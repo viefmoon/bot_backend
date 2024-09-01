@@ -46,6 +46,10 @@ module.exports = {
         type: Sequelize.STRING,
         allowNull: true,
       },
+      chatHistory: {
+        type: Sequelize.JSON,
+        allowNull: true,
+      },
       createdAt: {
         allowNull: false,
         type: Sequelize.DATE,

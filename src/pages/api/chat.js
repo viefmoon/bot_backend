@@ -259,67 +259,6 @@ async function getOrderDetails(dailyOrderNumber, clientId) {
   }
 }
 
-async function filterRelevantMessages(messages) {
-  const keywordsUser = ["olvida lo anterior", "nuevo pedido"];
-  const keywordsAssistant = [
-    "Tu pedido ha sido generado",
-    "Gracias por tu orden",
-  ];
-  const MAX_MESSAGES = 20;
-
-  let relevantMessages = [];
-  let foundKeyword = false;
-
-  // Obtener la disponibilidad del menú
-  const menuAvailability = await getMenuAvailability();
-
-  // Añadir la disponibilidad del menú como primer mensaje del asistente
-  relevantMessages.unshift({
-    role: "assistant",
-    content: JSON.stringify(menuAvailability),
-  });
-
-  for (let i = messages.length - 1; i >= 0; i--) {
-    const message = messages[i];
-
-    if (!foundKeyword && relevantMessages.length < MAX_MESSAGES) {
-      if (
-        message.role === "user" &&
-        keywordsUser.some((keyword) =>
-          message.content.toLowerCase().includes(keyword)
-        )
-      ) {
-        relevantMessages.push(message);
-        foundKeyword = true;
-      } else if (
-        message.role === "assistant" &&
-        keywordsAssistant.some((keyword) => message.content.includes(keyword))
-      ) {
-        foundKeyword = true;
-      } else if (
-        message.role === "assistant" &&
-        message.content.startsWith("¡Aquí tienes el resumen de tu pedido! 🎉")
-      ) {
-        // Ignorar este mensaje
-        continue;
-      } else {
-        relevantMessages.push(message);
-      }
-    }
-
-    if (foundKeyword) break;
-  }
-
-  // Invertir el orden de los mensajes relevantes, excepto el menú
-  const menuMessage = relevantMessages.shift();
-  relevantMessages.reverse();
-  relevantMessages.unshift(menuMessage);
-
-  return relevantMessages.length > 1
-    ? relevantMessages
-    : [menuMessage, ...messages.slice(-MAX_MESSAGES)];
-}
-
 async function getMenuAvailability() {
   try {
     // Verificar si los modelos necesarios están definidos
@@ -468,46 +407,6 @@ async function getMenuAvailability() {
   }
 }
 
-async function sendWhatsAppMessage(phoneNumber, message, buttons = []) {
-  try {
-    let payload = {
-      messaging_product: "whatsapp",
-      to: phoneNumber,
-      type: "interactive",
-      interactive: {
-        type: "button",
-        body: {
-          text: message,
-        },
-        action: {
-          buttons: buttons.map((button, index) => ({
-            type: "reply",
-            reply: {
-              id: `button_${index}`,
-              title: button,
-            },
-          })),
-        },
-      },
-    };
-
-    const response = await axios.post(
-      `https://graph.facebook.com/v17.0/${process.env.WHATSAPP_PHONE_NUMBER_ID}/messages`,
-      payload,
-      {
-        headers: {
-          Authorization: `Bearer ${process.env.WHATSAPP_ACCESS_TOKEN}`,
-          "Content-Type": "application/json",
-        },
-      }
-    );
-    return true;
-  } catch (error) {
-    console.error("Error al enviar mensaje de WhatsApp:", error);
-    return false;
-  }
-}
-
 async function getMenu(clientId) {
   const menuString = `
 🍽️ ¡Este es nuestro menú! 🍽️
@@ -617,21 +516,6 @@ Incluyen: Pollo a la plancha o jamón, chile morrón, elote, lechuga, jitomate, 
 
 ¡Buen provecho! 😋
   `;
-
-  try {
-    const sent = await sendWhatsAppMessage(clientId, menuString);
-
-    if (sent) {
-      return {
-        success: "Menú enviado con éxito.",
-      };
-    } else {
-      return { error: "No se pudo enviar el menú por WhatsApp" };
-    }
-  } catch (error) {
-    console.error("Error al enviar el menú:", error);
-    return { error: "Error al enviar el menú: " + error.message };
-  }
 }
 
 const MAX_RETRIES = 5;
@@ -683,14 +567,9 @@ export default async function handler(req, res) {
     const { messages, conversationId } = req.body;
 
     try {
-      const filteredMessages = messages.filter(
-        (message) => message.role !== "system" && message.content.trim() !== ""
-      );
-      const relevantMessages = await filterRelevantMessages(filteredMessages);
-
-      console.log("Relevant messages:", relevantMessages);
+      console.log("messages:", messages);
       const thread = await openai.beta.threads.create({
-        messages: relevantMessages,
+        messages: messages,
       });
 
       let run = await openai.beta.threads.runs.create(thread.id, {
@@ -833,22 +712,6 @@ export default async function handler(req, res) {
   }
 }
 
-async function deleteConversation(clientId) {
-  try {
-    const deleteResponse = await axios.delete(
-      `${process.env.BASE_URL}/api/delete_conversation`,
-      {
-        params: { clientId },
-      }
-    );
-    console.log("Conversación borrada:", deleteResponse.data);
-  } catch (error) {
-    console.error(
-      "Error al borrar la conversación:",
-      error.response ? error.response.data : error.message
-    );
-  }
-}
 
 async function selectProducts(toolCall, clientId) {
   const { orderItems } = JSON.parse(toolCall.function.arguments);
