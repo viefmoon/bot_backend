@@ -1,5 +1,6 @@
 const { handleChatRequest } = require("./chat");
 const Customer = require("../../models/customer");
+const axios = require("axios"); // Añadir esta línea al principio del archivo
 
 export default async function handler(req, res) {
   if (req.method === "GET") {
