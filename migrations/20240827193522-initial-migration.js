@@ -46,7 +46,11 @@ module.exports = {
         type: Sequelize.STRING,
         allowNull: true,
       },
-      chatHistory: {
+      fullChatHistory: {
+        type: Sequelize.JSON,
+        allowNull: true,
+      },
+      relevantChatHistory: {
         type: Sequelize.JSON,
         allowNull: true,
       },
