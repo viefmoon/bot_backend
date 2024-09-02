@@ -70,10 +70,7 @@ Incluyen: Pollo a la plancha o jamón, chile morrón, elote, lechuga, jitomate, 
 
 ➕ Extras disponibles:
    - Con vinagreta (sin costo adicional)
-   - Doble pollo (+$15)
-   - Con jamón (+$10)
-   - Con queso gouda (+$15)
-
+   
 🥤 Bebidas:
 - Agua de horchata (1 Litro) ($35)
 - Limonada (1 Litro) ($35)
@@ -102,9 +99,6 @@ Incluyen: Pollo a la plancha o jamón, chile morrón, elote, lechuga, jitomate, 
 14. Paloma ($80)
 15. Carajillo ($90)
 16. Tinto de verano ($90)
-17. Clericot ($80)
-
-¡Buen provecho! 😋
-  `;
+17. Clericot ($80)`;
 
 module.exports = menu;
