@@ -569,7 +569,7 @@ export default async function handler(req, res) {
     try {
       console.log("messages:", messages);
       const thread = await openai.beta.threads.create({
-        messages: messagse,
+        messages: messages,
       });
 
       let run = await openai.beta.threads.runs.create(thread.id, {
