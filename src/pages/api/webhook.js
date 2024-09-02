@@ -73,16 +73,16 @@ async function handleMessage(from, message) {
       return;
     }
 
+    // Enviar mensaje de bienvenida si el historial relevante está vacío
+    if (relevantChatHistory.length === 0) {
+      await sendWelcomeMessage(from);
+    }
+
     // Añadir el nuevo mensaje del usuario a ambos historiales
     const userMessage = { role: "user", content: message };
     if (message && message.trim() !== "") {
       fullChatHistory.push(userMessage);
       relevantChatHistory.push(userMessage);
-    }
-
-    // Enviar mensaje de bienvenida si el historial relevante está vacío
-    if (relevantChatHistory.length === 0) {
-      await sendWelcomeMessage(from);
     }
 
     // Llamar directamente a la función del manejador en chat.js
