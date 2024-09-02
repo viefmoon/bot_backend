@@ -59,7 +59,13 @@ async function handleMessage(from, message) {
     });
 
     // Obtener el historial de chat y parsearlo
-    let chatHistory = JSON.parse(customer.chatHistory || "[]");
+    let chatHistory;
+    try {
+      chatHistory = JSON.parse(customer.chatHistory || "[]");
+    } catch (e) {
+      console.error("Error al parsear chatHistory:", e);
+      chatHistory = [];
+    }
 
     // Añadir el nuevo mensaje del usuario
     chatHistory.push({ role: "user", content: message });
@@ -91,7 +97,7 @@ async function handleMessage(from, message) {
     }
 
     // Actualizar el historial de chat en la base de datos
-    await customer.update({ chatHistory: chatHistory });
+    await customer.update({ chatHistory: JSON.stringify(chatHistory) });
   } catch (error) {
     console.error("Error al procesar el mensaje:", error);
   }
