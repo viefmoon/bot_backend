@@ -1,11 +1,6 @@
 const axios = require("axios");
 
 export default async function handler(req, res) {
-  console.log("Solicitud recibida:", new Date().toISOString());
-  console.log("Método:", req.method);
-  console.log("URL:", req.url);
-  console.log("Headers:", req.headers);
-
   if (req.method === "GET") {
     // Verificación del webhook
     const mode = req.query["hub.mode"];
@@ -56,11 +51,10 @@ export default async function handler(req, res) {
 
 async function handleMessage(from, message) {
   try {
-    // Redirigimos el mensaje a la lógica de chat.js
     const response = await axios.post(
       `${process.env.BASE_URL}/api/chat`,
       {
-        messages: [{ role: "user", content: message }],
+        message: [{ role: "user", content: message }],
         conversationId: `${process.env.CONVERSATION_ID_PREFIX}${from}`,
       },
       {
@@ -71,7 +65,6 @@ async function handleMessage(from, message) {
       }
     );
 
-    // Enviamos la respuesta de vuelta al usuario de WhatsApp
     await sendWhatsAppMessage(from, response.data);
   } catch (error) {
     console.error("Error al procesar el mensaje:", error);

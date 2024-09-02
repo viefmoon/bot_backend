@@ -564,12 +564,12 @@ async function waitForCompletion(threadId, runId, res) {
 export default async function handler(req, res) {
   if (req.method === "POST") {
     validateApiKey(req, res);
-    const { messages, conversationId } = req.body;
+    const { message, conversationId } = req.body;
 
     try {
-      console.log("messages:", messages);
+      console.log("message:", message);
       const thread = await openai.beta.threads.create({
-        messages: messages,
+        messages: message,
       });
 
       let run = await openai.beta.threads.runs.create(thread.id, {
@@ -711,7 +711,6 @@ export default async function handler(req, res) {
     res.status(200).end(`Método ${req.method} no permitido`);
   }
 }
-
 
 async function selectProducts(toolCall, clientId) {
   const { orderItems } = JSON.parse(toolCall.function.arguments);
