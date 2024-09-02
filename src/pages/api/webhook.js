@@ -121,7 +121,7 @@ async function sendWhatsAppMessage(phoneNumber, message) {
       to: phoneNumber,
       type: "text",
       text: {
-        body: formattedMessage,
+        body: message,
       },
     };
 
