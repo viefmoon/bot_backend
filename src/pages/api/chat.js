@@ -478,7 +478,7 @@ export async function handleChatRequest(req) {
               return { text: JSON.stringify(orderDetails) }; // Retorna directamente al cliente
 
             case "send_menu":
-              return { text: JSON.stringify(menu), isRelevant: false };
+              return { text: menu, isRelevant: false };
             case "select_products":
               result = await selectProducts(toolCall, clientId);
               return { text: result.output }; // Retorna directamente al cliente
@@ -514,18 +514,21 @@ export async function handleChatRequest(req) {
         console.log("Assistant response:", text);
 
         if (shouldDeleteConversation) {
-          const clientId = conversationId.split(":")[1];
           try {
-            await deleteConversation(clientId);
-            console.log(`Conversación borrada para el cliente: ${clientId}`);
+            await Customer.update(
+              { relevantChatHistory: null },
+              { where: { clientId: conversationId } }
+            );
+            console.log(
+              `Historial de chat relevante borrado para el cliente: ${conversationId}`
+            );
           } catch (error) {
             console.error(
-              `Error al borrar la conversación para el cliente ${clientId}:`,
+              `Error al borrar la conversación o el historial de chat para el cliente ${conversationId}:`,
               error
             );
           }
         }
-
         return { text };
       } else {
         console.log("Run failed with status:", run.status);
