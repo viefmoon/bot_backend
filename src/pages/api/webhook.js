@@ -119,6 +119,11 @@ async function sendWhatsAppMessage(phoneNumber, message) {
     // Reemplazar caracteres de escape de nueva línea con saltos de línea reales
     let formattedMessage = message.replace(/\\n/g, "\n");
 
+    // Eliminar comillas iniciales y finales si existen
+    if (formattedMessage.startsWith('"') && formattedMessage.endsWith('"')) {
+      formattedMessage = formattedMessage.slice(1, -1);
+    }
+
     let payload = {
       messaging_product: "whatsapp",
       to: phoneNumber,
