@@ -1,4 +1,5 @@
 const axios = require("axios");
+const Customer = require("../models/customer");
 
 export default async function handler(req, res) {
   if (req.method === "GET") {
@@ -51,11 +52,22 @@ export default async function handler(req, res) {
 
 async function handleMessage(from, message) {
   try {
+    // Buscar o crear el cliente
+    let [customer, created] = await Customer.findOrCreate({
+      where: { clientId: from },
+      defaults: { chatHistory: [] },
+    });
+
+    // Actualizar el historial de chat del cliente
+    let chatHistory = customer.chatHistory || [];
+    chatHistory.push({ role: "user", content: message });
+
+    // Llamar a la API de chat
     const response = await axios.post(
       `${process.env.BASE_URL}/api/chat`,
       {
-        message: [{ role: "user", content: message }],
-        conversationId: `${process.env.CONVERSATION_ID_PREFIX}${from}`,
+        message: chatHistory,
+        conversationId: from,
       },
       {
         headers: {
@@ -65,7 +77,19 @@ async function handleMessage(from, message) {
       }
     );
 
-    await sendWhatsAppMessage(from, response.data);
+    // Procesar y enviar respuestas
+    if (Array.isArray(response.data)) {
+      for (const msg of response.data) {
+        await sendWhatsAppMessage(from, msg);
+        chatHistory.push({ role: "assistant", content: msg });
+      }
+    } else {
+      await sendWhatsAppMessage(from, response.data);
+      chatHistory.push({ role: "assistant", content: response.data });
+    }
+
+    // Actualizar el historial de chat en la base de datos
+    await customer.update({ chatHistory });
   } catch (error) {
     console.error("Error al procesar el mensaje:", error);
   }

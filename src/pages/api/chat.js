@@ -564,12 +564,12 @@ async function waitForCompletion(threadId, runId, res) {
 export default async function handler(req, res) {
   if (req.method === "POST") {
     validateApiKey(req, res);
-    const { message, conversationId } = req.body;
+    const { messages, conversationId } = req.body;
 
     try {
-      console.log("message:", message);
+      console.log("messages:", messages);
       const thread = await openai.beta.threads.create({
-        messages: message,
+        messages: messagse,
       });
 
       let run = await openai.beta.threads.runs.create(thread.id, {
