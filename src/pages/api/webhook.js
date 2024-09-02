@@ -63,11 +63,26 @@ async function handleMessage(from, message) {
     let fullChatHistory = JSON.parse(customer.fullChatHistory || "[]");
     let relevantChatHistory = JSON.parse(customer.relevantChatHistory || "[]");
 
+    // Verificar si el mensaje es para eliminar el historial relevante
+    if (message.toLowerCase().includes("olvida lo anterior")) {
+      relevantChatHistory = [];
+      await customer.update({
+        relevantChatHistory: JSON.stringify(relevantChatHistory),
+      });
+      console.log("Historial relevante eliminado para el cliente:", from);
+      return;
+    }
+
     // Añadir el nuevo mensaje del usuario a ambos historiales
     const userMessage = { role: "user", content: message };
     if (message && message.trim() !== "") {
       fullChatHistory.push(userMessage);
       relevantChatHistory.push(userMessage);
+    }
+
+    // Enviar mensaje de bienvenida si el historial relevante está vacío
+    if (relevantChatHistory.length === 0) {
+      await sendWelcomeMessage(from);
     }
 
     // Llamar directamente a la función del manejador en chat.js
@@ -114,15 +129,49 @@ async function handleMessage(from, message) {
   }
 }
 
-async function sendWhatsAppMessage(phoneNumber, message) {
+async function sendWelcomeMessage(phoneNumber) {
+  try {
+    const buttons = [
+      {
+        type: "reply",
+        reply: {
+          id: "view_menu",
+          title: "Ver Menú",
+        },
+      },
+      {
+        type: "reply",
+        reply: {
+          id: "order",
+          title: "Ordenar",
+        },
+      },
+    ];
+
+    const message = "¡Bienvenido a La Leña! ¿Cómo podemos ayudarte hoy?";
+    await sendWhatsAppMessage(phoneNumber, message, buttons);
+    console.log("Mensaje de bienvenida enviado exitosamente");
+    return true;
+  } catch (error) {
+    console.error("Error al enviar mensaje de bienvenida:", error);
+    return false;
+  }
+}
+
+async function sendWhatsAppMessage(phoneNumber, message, buttons = null) {
   try {
     let payload = {
       messaging_product: "whatsapp",
       to: phoneNumber,
-      type: "text",
-      text: {
-        body: message,
-      },
+      type: buttons ? "interactive" : "text",
+      text: buttons ? undefined : { body: message },
+      interactive: buttons
+        ? {
+            type: "button",
+            body: { text: message },
+            action: { buttons: buttons },
+          }
+        : undefined,
     };
 
     const response = await axios.post(
