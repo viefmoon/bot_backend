@@ -31,11 +31,23 @@ export default async function handler(req, res) {
           const { value } = change;
           if (value.messages && value.messages.length > 0) {
             for (const message of value.messages) {
-              const { from, text } = message;
-              console.log(`Mensaje recibido de ${from}: ${text.body}`);
+              const { from } = message;
+              let messageContent;
 
-              // Aquí procesamos el mensaje
-              await handleMessage(from, text.body);
+              if (message.text) {
+                messageContent = message.text.body;
+              } else if (message.interactive) {
+                if (message.interactive.button_reply) {
+                  messageContent = message.interactive.button_reply.title;
+                } else if (message.interactive.list_reply) {
+                  messageContent = message.interactive.list_reply.title;
+                }
+              }
+
+              if (messageContent) {
+                console.log(`Mensaje recibido de ${from}: ${messageContent}`);
+                await handleMessage(from, messageContent);
+              }
             }
           }
         }
