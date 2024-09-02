@@ -66,7 +66,7 @@ async function handleMessage(from, message) {
     const response = await axios.post(
       `${process.env.BASE_URL}/api/chat`,
       {
-        message: chatHistory,
+        messages: chatHistory,
         conversationId: from,
       },
       {
