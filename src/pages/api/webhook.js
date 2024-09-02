@@ -1,5 +1,5 @@
 const axios = require("axios");
-const Customer = require("../models/customer");
+const Customer = require("../../models/customer");
 
 export default async function handler(req, res) {
   if (req.method === "GET") {
