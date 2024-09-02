@@ -65,8 +65,10 @@ async function handleMessage(from, message) {
 
     // Añadir el nuevo mensaje del usuario a ambos historiales
     const userMessage = { role: "user", content: message };
-    fullChatHistory.push(userMessage);
-    relevantChatHistory.push(userMessage);
+    if (message && message.trim() !== "") {
+      fullChatHistory.push(userMessage);
+      relevantChatHistory.push(userMessage);
+    }
 
     // Llamar directamente a la función del manejador en chat.js
     const response = await handleChatRequest({
@@ -77,24 +79,28 @@ async function handleMessage(from, message) {
     // Procesar y enviar respuestas
     if (Array.isArray(response)) {
       for (const msg of response) {
-        await sendWhatsAppMessage(from, msg.text);
-        const assistantMessage = { role: "assistant", content: msg.text };
-        fullChatHistory.push(assistantMessage);
-        if (msg.isRelevant !== false) {
-          // Si no contiene isRelevant o es true
-          relevantChatHistory.push(assistantMessage);
+        if (msg.text && msg.text.trim() !== "") {
+          await sendWhatsAppMessage(from, msg.text);
+          const assistantMessage = { role: "assistant", content: msg.text };
+          fullChatHistory.push(assistantMessage);
+          if (msg.isRelevant !== false) {
+            // Si no contiene isRelevant o es true
+            relevantChatHistory.push(assistantMessage);
+          }
         }
       }
     } else {
-      await sendWhatsAppMessage(from, response.text);
-      const assistantMessage = {
-        role: "assistant",
-        content: response.text,
-      };
-      fullChatHistory.push(assistantMessage);
-      if (response.isRelevant !== false) {
-        // Si no contiene isRelevant o es true
-        relevantChatHistory.push(assistantMessage);
+      if (response.text && response.text.trim() !== "") {
+        await sendWhatsAppMessage(from, response.text);
+        const assistantMessage = {
+          role: "assistant",
+          content: response.text,
+        };
+        fullChatHistory.push(assistantMessage);
+        if (response.isRelevant !== false) {
+          // Si no contiene isRelevant o es true
+          relevantChatHistory.push(assistantMessage);
+        }
       }
     }
 
