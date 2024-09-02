@@ -18,7 +18,11 @@ const Customer = sequelize.define(
       type: DataTypes.STRING,
       allowNull: true,
     },
-    chatHistory: {
+    fullChatHistory: {
+      type: DataTypes.JSON,
+      allowNull: true,
+    },
+    relevantChatHistory: {
       type: DataTypes.JSON,
       allowNull: true,
     },

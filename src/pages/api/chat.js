@@ -9,35 +9,10 @@ const {
   Modifier,
   Availability,
 } = require("../../models");
-
+const menu = require("../../data/menu");
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
-
-const validateApiKey = (req, res) => {
-  const authorizationHeader = req.headers["authorization"];
-  if (!authorizationHeader) {
-    return res.status(401).json({
-      status: "error",
-      message: "Authorization header is missing",
-    });
-  }
-  const tokenParts = authorizationHeader.split(" ");
-
-  if (tokenParts.length !== 2 || tokenParts[0] !== "Bearer") {
-    return res.status(401).json({
-      status: "error",
-      message: "Invalid Authorization header format",
-    });
-  }
-  const apiKeyStr = tokenParts[1]; // Extract the API key from the Bearer token
-  if (apiKeyStr !== process.env.BEARER_TOKEN) {
-    return res.status(401).json({
-      status: "error",
-      message: "Incorrect Bearer token",
-    });
-  }
-};
 
 async function createOrder(toolCall, clientId) {
   const { orderType, orderItems, deliveryAddress, pickupName } = JSON.parse(
@@ -407,117 +382,6 @@ async function getMenuAvailability() {
   }
 }
 
-async function getMenu(clientId) {
-  const menuString = `
-🍽️ ¡Este es nuestro menú! 🍽️
-
-🥗 Entradas:
-1. 🍗 Alitas
-   - BBQ (orden completa $135 / media $70)
-   - Picosas (orden completa $135 / media $70)
-   - Fritas (orden completa $135 / media $70)
-   - Mixtas BBQ y picosas ($135)
-   Todas las alitas vienen acompañadas de chile de aceite.
-
-2. 🍟 Papas:
-   - A la Francesa (orden completa $90 / media $50)
-   - Gajos (orden completa $100 / media $60)
-   - Mixtas francesa y gajos ($100)
-   🧀 Opción: Con queso y sin queso sin costo.
-   Todas las papas vienen acompañadas de aderezo.
-
-3. 🧀 Dedos de Queso ($90)
-🍕 Pizzas:
-Tamaños: Grande ($240), Mediana ($190), Chica ($140)
-Opción de orilla rellena: Grande (+$30), Mediana (+$30), Chica (+$20)
-Variedades:
-1. Especial: Pepperoni, Salchicha, Jamón, Salami, Chile morrón
-2. Carnes Frías: Pepperoni, Salchicha, Jamón, Salami
-3. Carranza: Chorizo, Jamón, Chile jalapeño, Jitomate
-4. Zapata: Salami, Jamón, Champiñón
-5. Villa: Chorizo, Tocino, Piña, Chile jalapeño
-6. Margarita: 3 Quesos, Jitomate, Albahaca
-7. Adelita: Jamón, Piña, Arándano
-8. Hawaiana: Jamón, Piña
-9. Mexicana: Chorizo, Cebolla, Chile jalapeño, Jitomate
-10. Rivera: Elote, Champiñón, Chile morrón
-11. Kahlo: Calabaza, Elote, Champiñón, Jitomate, Chile morrón
-12. Lupita: Carne molida, Tocino, Cebolla, Chile morrón
-13. Pepperoni
-14. La Leña: Tocino, Pierna, Chorizo, Carne molida (+$20)
-15. La María: Pollo BBQ, Piña, Chile jalapeño (+$20)
-16. Malinche: 3 Quesos, Queso de cabra, Champiñón, Jamón, Chile seco, Albahaca (+$20)
-17. Philadelphia: Jamon, Queso philadelphia, Chile , Albahaca (+$20)
-18. Personalizada con hasta 3 ingredientes de los disponibles sin costo extra.
--Ingrediente extra (+$10)
-Opción de pizza mitad y mitad: Se puede armar una pizza mitad y mitad con dos variedades diferentes, sin costo adicional.
-Todas las pizzas vienen acompañadas de chile de aceite y aderezo.
-
-🍔 Hamburguesas:
-Todas nuestras hamburguesas incluyen: cebolla, jitomate, lechuga, chile jalapeño, catsup, aderezo, crema y mostaza.
-
-1. Tradicional: Carne de res, tocino, queso amarillo, queso asadero ($85)
-2. Especial: Carne de res, tocino, pierna, queso amarillo, queso asadero ($95)
-3. Hawaiana: Carne de res, tocino, piña, jamón, queso amarillo, queso asadero ($95)
-4. Pollo: Pechuga de pollo a la plancha, tocino, queso amarillo, queso asadero ($100)
-5. BBQ: Carne de res, salsa BBQ, tocino, queso amarillo, queso asadero, cebolla guisada ($100)
-6. Lenazo: Doble carne de sirlón, tocino, queso amarillo, queso asadero ($110)
-7. Cubana: Carne de res, tocino, pierna, salchicha, jamón, queso amarillo ($100)
-Todas nuestras hamburguesas vienen acompañadas de aderezo y salsa catsup.
-
-🥔 Opción de hamburguesas con papas: 
-   - Francesa (+$10)
-   - Gajos (+$15)
-   - Mixtas (+$15)
-
-🥗 Ensaladas:
-- De Pollo: 
-  Chica ($90) / Grande ($120)
-- De Jamón: 
-  Chica ($80) / Grande ($100)
-
-Incluyen: Pollo a la plancha o jamón, chile morrón, elote, lechuga, jitomate, zanahoria, queso parmesano, aderezo, betabel crujiente
-
-➕ Extras disponibles:
-   - Con vinagreta (sin costo adicional)
-   - Doble pollo (+$15)
-   - Con jamón (+$10)
-   - Con queso gouda (+$15)
-
-🥤 Bebidas:
-- Agua de horchata (1 Litro) ($35)
-- Limonada (1 Litro) ($35)
-- Limonada Mineral (1 Litro) ($35)
-- Refrescos 500ml: Coca Cola, 7up, Mirinda, Sangría, Agua Mineral, Squirt ($30 c/u)
-- Sangría Preparada: Con limón y sal ($35)
-- Micheladas: Clara u oscura ($80)
-- Café Caliente: Americano ($45), Capuchino ($45), Chocolate ($50), Mocachino ($45), Latte Vainilla ($45), Latte Capuchino ($45)
-- Frappés ($70): Capuchino, Coco, Caramelo, Cajeta, Mocaccino, Galleta, Bombón
-- Frappés especiales ($85): Rompope, Mazapán, Magnum
-
-🍹 Coctelería:
-1. Copa de vino tinto ($90)
-2. Sangría con vino ($80)
-3. Vampiro ($80)
-4. Gin de Maracuyá ($90)
-5. Margarita ($85)
-6. Ruso Blanco ($85)
-7. Palo santo ($80)
-8. Gin de pepino ($90)
-9. Mojito ($100)
-10. Piña colada ($75)
-11. Piñada (sin alcohol) ($70)
-12. Conga ($75)
-13. Destornillador ($75)
-14. Paloma ($80)
-15. Carajillo ($90)
-16. Tinto de verano ($90)
-17. Clericot ($80)
-
-¡Buen provecho! 😋
-  `;
-}
-
 const MAX_RETRIES = 5;
 const INITIAL_DELAY = 1000;
 const MAX_DELAY = 32000;
@@ -561,154 +425,119 @@ async function waitForCompletion(threadId, runId, res) {
   };
 }
 
-export default async function handler(req, res) {
-  if (req.method === "POST") {
-    validateApiKey(req, res);
-    const { messages, conversationId } = req.body;
+export async function handleChatRequest(req) {
+  const { messages, conversationId } = req;
 
-    try {
-      console.log("messages:", messages);
-      const thread = await openai.beta.threads.create({
-        messages: messages,
-      });
+  try {
+    console.log("Mensajes relevantes:", messages);
+    const thread = await openai.beta.threads.create({
+      messages: messages,
+    });
 
-      let run = await openai.beta.threads.runs.create(thread.id, {
-        assistant_id: process.env.ASSISTANT_ID,
-      });
+    let run = await openai.beta.threads.runs.create(thread.id, {
+      assistant_id: process.env.ASSISTANT_ID,
+    });
 
-      let shouldDeleteConversation = false;
+    let shouldDeleteConversation = false;
 
-      while (true) {
-        console.log(`Iniciando ciclo. Estado actual: ${run.status}`);
+    while (true) {
+      console.log(`Iniciando ciclo. Estado actual: ${run.status}`);
 
-        if (run.status === "requires_action") {
-          const toolCalls = run.required_action.submit_tool_outputs.tool_calls;
-          console.log("Tool calls:", toolCalls);
+      if (run.status === "requires_action") {
+        const toolCalls = run.required_action.submit_tool_outputs.tool_calls;
+        console.log("Tool calls:", toolCalls);
 
-          const toolOutputs = await Promise.all(
-            toolCalls.map(async (toolCall) => {
-              const clientId = conversationId.split(":")[1];
-              let result;
-              switch (toolCall.function.name) {
-                case "create_order":
-                  result = await createOrder(toolCall, clientId);
-                  shouldDeleteConversation = true;
-                  return result;
-                case "modify_order":
-                  result = await modifyOrder(toolCall, clientId);
-                  shouldDeleteConversation = true;
-                  return result;
-                case "cancel_order":
-                  result = await cancelOrder(toolCall, clientId);
-                  shouldDeleteConversation = true;
-                  return result;
-                case "get_order_details":
-                  const { daily_order_number } = JSON.parse(
-                    toolCall.function.arguments
-                  );
-                  const orderDetails = await getOrderDetails(
-                    daily_order_number,
-                    clientId
-                  );
-                  return {
-                    tool_call_id: toolCall.id,
-                    output: JSON.stringify(orderDetails),
-                  };
-                case "get_menu":
-                  const menu = await getMenu(clientId);
-                  return {
-                    tool_call_id: toolCall.id,
-                    output: JSON.stringify(menu),
-                  };
-                case "select_products":
-                  result = await selectProducts(toolCall, clientId);
-                  const resultData = JSON.parse(result.output);
+        for (const toolCall of toolCalls) {
+          const clientId = conversationId;
+          let result;
 
-                  if (resultData.resumen) {
-                    res.status(200).send(resultData.resumen);
-                    return;
-                  } else {
-                    return {
-                      tool_call_id: toolCall.id,
-                      output: JSON.stringify(resultData),
-                    };
-                  }
-                default:
-                  return {
-                    tool_call_id: toolCall.id,
-                    output: JSON.stringify({ error: "Unknown function" }),
-                  };
-              }
-            })
-          );
+          switch (toolCall.function.name) {
+            case "create_order":
+              result = await createOrder(toolCall, clientId);
+              shouldDeleteConversation = true;
+              return { text: result.output }; // Retorna directamente al cliente
 
-          run = await openai.beta.threads.runs.submitToolOutputs(
-            thread.id,
-            run.id,
-            { tool_outputs: toolOutputs }
-          );
-        } else {
-          try {
-            run = await waitForCompletion(thread.id, run.id, res);
-            if (run.status === "completed") break;
-            if (run.status === "error") {
-              return res.status(200).send(run.message);
-            }
-          } catch (error) {
-            console.error("Error durante la espera:", error);
-            return res
-              .status(200)
-              .json({ error: "Error durante la espera: " + error.message });
-          }
-        }
-      }
+            case "modify_order":
+              result = await modifyOrder(toolCall, clientId);
+              shouldDeleteConversation = true;
+              return { text: result.output }; // Retorna directamente al cliente
 
-      console.log(`Solicitud completada. Estado final: ${run.status}`);
+            case "cancel_order":
+              result = await cancelOrder(toolCall, clientId);
+              shouldDeleteConversation = true;
+              return { text: result.output }; // Retorna directamente al cliente
 
-      if (run.status === "completed") {
-        const messages = await openai.beta.threads.messages.list(thread.id);
-        const lastAssistantMessage = messages.data.find(
-          (message) => message.role === "assistant"
-        );
-        if (lastAssistantMessage && lastAssistantMessage.content[0].text) {
-          let text = lastAssistantMessage.content[0].text.value;
-          console.log("Assistant response:", text);
-
-          res.status(200).send(text);
-
-          if (shouldDeleteConversation) {
-            const clientId = conversationId.split(":")[1];
-            try {
-              await deleteConversation(clientId);
-              console.log(`Conversación borrada para el cliente: ${clientId}`);
-            } catch (error) {
-              console.error(
-                `Error al borrar la conversación para el cliente ${clientId}:`,
-                error
+            case "get_order_details":
+              const { daily_order_number } = JSON.parse(
+                toolCall.function.arguments
               );
-            }
+              const orderDetails = await getOrderDetails(
+                daily_order_number,
+                clientId
+              );
+              return { text: JSON.stringify(orderDetails) }; // Retorna directamente al cliente
+
+            case "send_menu":
+              return { text: JSON.stringify(menu), isRelevant: false };
+            case "select_products":
+              result = await selectProducts(toolCall, clientId);
+              return { text: result.output }; // Retorna directamente al cliente
+
+            default:
+              console.log(`Función desconocida: ${toolCall.function.name}`);
+              return { error: "Función desconocida" };
           }
-        } else {
-          console.log("Run failed with status:", run.status);
-          res
-            .status(200)
-            .json({ error: "Failed to complete the conversation" });
         }
       } else {
-        console.log("Run not completed. Final status:", run.status);
-        res
-          .status(200)
-          .json({ error: "Run not completed. Final status: " + run.status });
+        try {
+          run = await waitForCompletion(thread.id, run.id);
+          if (run.status === "completed") break;
+          if (run.status === "error") {
+            return { error: run.message };
+          }
+        } catch (error) {
+          console.error("Error durante la espera:", error);
+          return { error: "Error durante la espera: " + error.message };
+        }
       }
-    } catch (error) {
-      console.error("Error general:", error);
-      res
-        .status(200)
-        .json({ error: "Error al procesar la solicitud: " + error.message });
     }
-  } else {
-    res.setHeader("Allow", ["POST"]);
-    res.status(200).end(`Método ${req.method} no permitido`);
+
+    console.log(`Solicitud completada. Estado final: ${run.status}`);
+
+    if (run.status === "completed") {
+      const messages = await openai.beta.threads.messages.list(thread.id);
+      const lastAssistantMessage = messages.data.find(
+        (message) => message.role === "assistant"
+      );
+      if (lastAssistantMessage && lastAssistantMessage.content[0].text) {
+        let text = lastAssistantMessage.content[0].text.value;
+        console.log("Assistant response:", text);
+
+        if (shouldDeleteConversation) {
+          const clientId = conversationId.split(":")[1];
+          try {
+            await deleteConversation(clientId);
+            console.log(`Conversación borrada para el cliente: ${clientId}`);
+          } catch (error) {
+            console.error(
+              `Error al borrar la conversación para el cliente ${clientId}:`,
+              error
+            );
+          }
+        }
+
+        return { text };
+      } else {
+        console.log("Run failed with status:", run.status);
+        return { error: "Failed to complete the conversation" };
+      }
+    } else {
+      console.log("Run not completed. Final status:", run.status);
+      return { error: "Run not completed. Final status: " + run.status };
+    }
+  } catch (error) {
+    console.error("Error general:", error);
+    return { error: "Error al procesar la solicitud: " + error.message };
   }
 }
 

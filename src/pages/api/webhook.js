@@ -1,4 +1,4 @@
-const axios = require("axios");
+const { handleChatRequest } = require("./chat");
 const Customer = require("../../models/customer");
 
 export default async function handler(req, res) {
@@ -55,49 +55,53 @@ async function handleMessage(from, message) {
     // Buscar o crear el cliente
     let [customer, created] = await Customer.findOrCreate({
       where: { clientId: from },
-      defaults: { chatHistory: "[]" },
+      defaults: { fullChatHistory: "[]", relevantChatHistory: "[]" },
     });
 
-    // Obtener el historial de chat y parsearlo
-    let chatHistory;
-    try {
-      chatHistory = JSON.parse(customer.chatHistory || "[]");
-    } catch (e) {
-      console.error("Error al parsear chatHistory:", e);
-      chatHistory = [];
-    }
+    // Obtener y parsear los historiales de chat
+    let fullChatHistory = JSON.parse(customer.fullChatHistory || "[]");
+    let relevantChatHistory = JSON.parse(customer.relevantChatHistory || "[]");
 
-    // Añadir el nuevo mensaje del usuario
-    chatHistory.push({ role: "user", content: message });
+    // Añadir el nuevo mensaje del usuario a ambos historiales
+    const userMessage = { role: "user", content: message };
+    fullChatHistory.push(userMessage);
+    relevantChatHistory.push(userMessage);
 
-    // Llamar a la API de chat
-    const response = await axios.post(
-      `${process.env.BASE_URL}/api/chat`,
-      {
-        messages: chatHistory,
-        conversationId: from,
-      },
-      {
-        headers: {
-          Authorization: `Bearer ${process.env.BEARER_TOKEN}`,
-          "Content-Type": "application/json",
-        },
-      }
-    );
+    // Llamar directamente a la función del manejador en chat.js
+    const response = await handleChatRequest({
+      messages: relevantChatHistory,
+      conversationId: from,
+    });
 
     // Procesar y enviar respuestas
-    if (Array.isArray(response.data)) {
-      for (const msg of response.data) {
-        await sendWhatsAppMessage(from, msg);
-        chatHistory.push({ role: "assistant", content: msg });
+    if (Array.isArray(response)) {
+      for (const msg of response) {
+        await sendWhatsAppMessage(from, msg.text);
+        const assistantMessage = { role: "assistant", content: msg.text };
+        fullChatHistory.push(assistantMessage);
+        if (msg.isRelevant !== false) {
+          // Si no contiene isRelevant o es true
+          relevantChatHistory.push(assistantMessage);
+        }
       }
     } else {
-      await sendWhatsAppMessage(from, response.data);
-      chatHistory.push({ role: "assistant", content: response.data });
+      await sendWhatsAppMessage(from, response.text);
+      const assistantMessage = {
+        role: "assistant",
+        content: response.text,
+      };
+      fullChatHistory.push(assistantMessage);
+      if (response.isRelevant !== false) {
+        // Si no contiene isRelevant o es true
+        relevantChatHistory.push(assistantMessage);
+      }
     }
 
-    // Actualizar el historial de chat en la base de datos
-    await customer.update({ chatHistory: JSON.stringify(chatHistory) });
+    // Actualizar los historiales de chat en la base de datos
+    await customer.update({
+      fullChatHistory: JSON.stringify(fullChatHistory),
+      relevantChatHistory: JSON.stringify(relevantChatHistory),
+    });
   } catch (error) {
     console.error("Error al procesar el mensaje:", error);
   }
