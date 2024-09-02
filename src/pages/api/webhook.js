@@ -55,11 +55,11 @@ async function handleMessage(from, message) {
     // Buscar o crear el cliente
     let [customer, created] = await Customer.findOrCreate({
       where: { clientId: from },
-      defaults: { chatHistory: [] },
+      defaults: { chatHistory: "[]" },
     });
 
-    // Obtener el historial de chat actualizado
-    let chatHistory = JSON.parse(JSON.stringify(customer.chatHistory || []));
+    // Obtener el historial de chat y parsearlo
+    let chatHistory = JSON.parse(customer.chatHistory || "[]");
 
     // Añadir el nuevo mensaje del usuario
     chatHistory.push({ role: "user", content: message });
@@ -91,7 +91,7 @@ async function handleMessage(from, message) {
     }
 
     // Actualizar el historial de chat en la base de datos
-    await customer.update({ chatHistory: JSON.stringify(chatHistory) });
+    await customer.update({ chatHistory: chatHistory });
   } catch (error) {
     console.error("Error al procesar el mensaje:", error);
   }
