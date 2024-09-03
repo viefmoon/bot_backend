@@ -100,6 +100,20 @@ async function handleMessage(from, message) {
       relevantChatHistory.push(userMessage);
     }
 
+    // Imprimir todo el payload para tratar de ver el nombre o los campos disponibles
+    console.log("Payload completo del mensaje:", message);
+
+    // Obtener el nombre del remitente del payload
+    const senderName = message.context
+      ? message.context.from.name
+      : "Desconocido";
+
+    // Añadir el nombre del remitente al historial relevante
+    relevantChatHistory.push({
+      role: "user",
+      content: `Nombre del remitente: ${senderName}`,
+    });
+
     // Llamar directamente a la función del manejador en chat.js
     const response = await handleChatRequest({
       messages: relevantChatHistory,
