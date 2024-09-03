@@ -31,23 +31,11 @@ export default async function handler(req, res) {
           const { value } = change;
           if (value.messages && value.messages.length > 0) {
             for (const message of value.messages) {
-              const { from } = message;
-              let messageContent;
+              const { from, text } = message;
+              console.log(`Mensaje recibido de ${from}: ${text.body}`);
 
-              if (message.text) {
-                messageContent = message.text.body;
-              } else if (message.interactive) {
-                if (message.interactive.button_reply) {
-                  messageContent = message.interactive.button_reply.title;
-                } else if (message.interactive.list_reply) {
-                  messageContent = message.interactive.list_reply.title;
-                }
-              }
-
-              if (messageContent) {
-                console.log(`Mensaje recibido de ${from}: ${messageContent}`);
-                await handleMessage(from, messageContent);
-              }
+              // Aquí procesamos el mensaje
+              await handleMessage(from, text.body);
             }
           }
         }
@@ -161,36 +149,78 @@ async function sendWelcomeMessage(phoneNumber) {
     ];
 
     const message = "¡Bienvenido a La Leña! ¿Cómo podemos ayudarte hoy?";
-    const imageUrl = `${process.env.BASE_URL}/images/bienvenida.jpg`; // Asegúrate de tener BASE_URL en tus variables de entorno
-    await sendWhatsAppMessage(phoneNumber, message, buttons, imageUrl);
+    const imageUrl = `${process.env.BASE_URL}/images/bienvenida.jpg`;
+
+    await sendWhatsAppImageMessage(phoneNumber, imageUrl, message, buttons);
     console.log("Mensaje de bienvenida con imagen enviado exitosamente");
     return true;
   } catch (error) {
-    console.error("Error al enviar mensaje de bienvenida:", error);
+    console.error("Error al enviar mensaje de bienvenida con imagen:", error);
     return false;
   }
 }
 
-async function sendWhatsAppMessage(
+async function sendWhatsAppImageMessage(
   phoneNumber,
-  message,
-  buttons = null,
-  imageUrl = null
+  imageUrl,
+  caption,
+  buttons
 ) {
   try {
     let payload = {
       messaging_product: "whatsapp",
+      recipient_type: "individual",
       to: phoneNumber,
       type: "interactive",
+      interactive: {
+        type: "button",
+        header: {
+          type: "image",
+          image: {
+            link: imageUrl,
+          },
+        },
+        body: {
+          text: caption,
+        },
+        action: {
+          buttons: buttons,
+        },
+      },
     };
 
-    payload.interactive = {
-      type: "button",
-      header: imageUrl
-        ? { type: "image", image: { link: imageUrl } }
+    const response = await axios.post(
+      `https://graph.facebook.com/v17.0/${process.env.WHATSAPP_PHONE_NUMBER_ID}/messages`,
+      payload,
+      {
+        headers: {
+          Authorization: `Bearer ${process.env.WHATSAPP_ACCESS_TOKEN}`,
+          "Content-Type": "application/json",
+        },
+      }
+    );
+    console.log("Mensaje con imagen enviado exitosamente");
+    return true;
+  } catch (error) {
+    console.error("Error al enviar mensaje de WhatsApp con imagen:", error);
+    return false;
+  }
+}
+
+async function sendWhatsAppMessage(phoneNumber, message, buttons = null) {
+  try {
+    let payload = {
+      messaging_product: "whatsapp",
+      to: phoneNumber,
+      type: buttons ? "interactive" : "text",
+      text: buttons ? undefined : { body: message },
+      interactive: buttons
+        ? {
+            type: "button",
+            body: { text: message },
+            action: { buttons: buttons },
+          }
         : undefined,
-      body: { text: message },
-      action: { buttons: buttons },
     };
 
     const response = await axios.post(
