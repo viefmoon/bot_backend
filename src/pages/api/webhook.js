@@ -31,11 +31,25 @@ export default async function handler(req, res) {
           const { value } = change;
           if (value.messages && value.messages.length > 0) {
             for (const message of value.messages) {
-              const { from, text } = message;
-              console.log(`Mensaje recibido de ${from}: ${text.body}`);
+              const { from } = message;
+              let messageContent;
+
+              if (message.type === "text") {
+                messageContent = message.text.body;
+              } else if (
+                message.type === "interactive" &&
+                message.interactive.type === "button_reply"
+              ) {
+                messageContent = message.interactive.button_reply.title;
+              } else {
+                console.log(`Tipo de mensaje no manejado: ${message.type}`);
+                continue;
+              }
+
+              console.log(`Mensaje recibido de ${from}: ${messageContent}`);
 
               // Aquí procesamos el mensaje
-              await handleMessage(from, text.body);
+              await handleMessage(from, messageContent);
             }
           }
         }
