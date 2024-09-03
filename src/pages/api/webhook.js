@@ -28,17 +28,32 @@ export default async function handler(req, res) {
       for (const entryItem of entry) {
         const { changes } = entryItem;
         for (const change of changes) {
-          console.log("Cambio:", change);
           const { value } = change;
-          console.log("Value:", value);
-          if (value.messages && value.messages.length > 0) {
+
+          // Asegurarse de que haya mensajes y contactos
+          if (
+            value.messages &&
+            value.messages.length > 0 &&
+            value.contacts &&
+            value.contacts.length > 0
+          ) {
+            // Iterar sobre los mensajes recibidos
             for (const message of value.messages) {
               const { from } = message;
+              const contact = value.contacts.find(
+                (contact) => contact.wa_id === from
+              );
+              const displayName =
+                contact && contact.profile && contact.profile.name
+                  ? contact.profile.name
+                  : "Desconocido";
+
+              console.log("Display Name:", displayName);
 
               if (message.type === "interactive") {
-                await handleInteractiveMessage(from, message);
+                await handleInteractiveMessage(from, message, displayName);
               } else if (message.type === "text") {
-                await handleMessage(from, message.text.body);
+                await handleMessage(from, message.text.body, displayName);
               } else {
                 console.log(`Tipo de mensaje no manejado: ${message.type}`);
               }
