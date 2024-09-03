@@ -35,7 +35,7 @@ export default async function handler(req, res) {
               console.log(`Mensaje recibido de ${from}: ${text.body}`);
 
               // Aquí procesamos el mensaje
-              await handleMessage(from, text);
+              await handleMessage(from, text.body);
             }
           }
         }
@@ -51,7 +51,7 @@ export default async function handler(req, res) {
   }
 }
 
-async function handleMessage(from, messageObject) {
+async function handleMessage(from, message) {
   try {
     // Buscar o crear el cliente
     let [customer, created] = await Customer.findOrCreate({
@@ -63,26 +63,10 @@ async function handleMessage(from, messageObject) {
     let fullChatHistory = JSON.parse(customer.fullChatHistory || "[]");
     let relevantChatHistory = JSON.parse(customer.relevantChatHistory || "[]");
 
-    // Determinar el tipo de mensaje y extraer el contenido
-    let messageContent = "";
-    if (messageObject.type === "text" && messageObject.text) {
-      messageContent = messageObject.text.body;
-    } else if (messageObject.type === "interactive") {
-      if (messageObject.interactive.type === "button_reply") {
-        messageContent = messageObject.interactive.button_reply.title;
-        if (messageObject.interactive.button_reply.id === "view_menu") {
-          await sendMenu(from);
-          return;
-        }
-      } else if (messageObject.interactive.type === "list_reply") {
-        messageContent = messageObject.interactive.list_reply.title;
-      }
-    }
-
-    console.log("Contenido del mensaje:", messageContent);
+    console.log("Mensaje recibido:", message);
 
     // Verificar si el mensaje es para eliminar el historial relevante
-    if (messageContent.toLowerCase().includes("olvida lo anterior")) {
+    if (message.toLowerCase().includes("olvida lo anterior")) {
       relevantChatHistory = [];
       await customer.update({
         relevantChatHistory: JSON.stringify(relevantChatHistory),
@@ -97,10 +81,24 @@ async function handleMessage(from, messageObject) {
     }
 
     // Añadir el nuevo mensaje del usuario a ambos historiales
-    if (messageContent && messageContent.trim() !== "") {
-      const userMessage = { role: "user", content: messageContent };
+    const userMessage = { role: "user", content: message };
+    if (message && message.trim() !== "") {
       fullChatHistory.push(userMessage);
       relevantChatHistory.push(userMessage);
+    }
+
+    // Verificar si el mensaje es un botón interactivo
+    if (
+      message.type === "interactive" &&
+      message.interactive &&
+      message.interactive.type === "button_reply"
+    ) {
+      const buttonId = message.interactive.button_reply.id;
+      if (buttonId === "view_menu") {
+        // Enviar el menú
+        const menuResponse = await sendMenu(from);
+        return; // Terminar la función aquí para evitar procesamiento adicional
+      }
     }
 
     // Llamar directamente a la función del manejador en chat.js
