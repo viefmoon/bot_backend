@@ -86,19 +86,21 @@ async function handleMessage(from, message) {
       const buttonId = message.interactive.button_reply.id;
       if (buttonId === "view_menu") {
         // Enviar el menú
-        const menuResponse = await sendMenu(from);
+        await sendMenu(from);
         return; // Terminar la función aquí para evitar procesamiento adicional
       }
-    } else {
-      // Añadir el nuevo mensaje del usuario a ambos historiales solo si no es un botón interactivo
-      const userMessage = {
-        role: "user",
-        content: message.text ? message.text.body : JSON.stringify(message),
-      };
-      if (userMessage.content && userMessage.content.trim() !== "") {
-        fullChatHistory.push(userMessage);
-        relevantChatHistory.push(userMessage);
-      }
+    }
+
+    // Si no es un botón interactivo, procesar como mensaje de texto normal
+    const messageText = message.text
+      ? message.text.body
+      : message.interactive?.button_reply?.title || "";
+
+    // Añadir el nuevo mensaje del usuario a ambos historiales
+    const userMessage = { role: "user", content: messageText };
+    if (messageText && messageText.trim() !== "") {
+      fullChatHistory.push(userMessage);
+      relevantChatHistory.push(userMessage);
     }
 
     // Llamar directamente a la función del manejador en chat.js
