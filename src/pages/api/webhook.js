@@ -22,6 +22,7 @@ export default async function handler(req, res) {
       res.status(403).end();
     }
   } else if (req.method === "POST") {
+    console.log("Payload completo del mensaje:", req.body);
     const { object, entry } = req.body;
 
     if (object === "whatsapp_business_account") {
@@ -99,20 +100,6 @@ async function handleMessage(from, message) {
       fullChatHistory.push(userMessage);
       relevantChatHistory.push(userMessage);
     }
-
-    // Imprimir todo el payload para tratar de ver el nombre o los campos disponibles
-    console.log("Payload completo del mensaje:", message);
-
-    // Obtener el nombre del remitente del payload
-    const senderName = message.context
-      ? message.context.from.name
-      : "Desconocido";
-
-    // Añadir el nombre del remitente al historial relevante
-    relevantChatHistory.push({
-      role: "user",
-      content: `Nombre del remitente: ${senderName}`,
-    });
 
     // Llamar directamente a la función del manejador en chat.js
     const response = await handleChatRequest({
