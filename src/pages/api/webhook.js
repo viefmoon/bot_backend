@@ -78,13 +78,6 @@ async function handleMessage(from, message) {
       await sendWelcomeMessage(from);
     }
 
-    // Añadir el nuevo mensaje del usuario a ambos historiales
-    const userMessage = { role: "user", content: message };
-    if (message && message.trim() !== "") {
-      fullChatHistory.push(userMessage);
-      relevantChatHistory.push(userMessage);
-    }
-
     // Verificar si el mensaje es un botón interactivo
     if (
       message.type === "interactive" &&
@@ -95,6 +88,16 @@ async function handleMessage(from, message) {
         // Enviar el menú
         const menuResponse = await sendMenu(from);
         return; // Terminar la función aquí para evitar procesamiento adicional
+      }
+    } else {
+      // Añadir el nuevo mensaje del usuario a ambos historiales solo si no es un botón interactivo
+      const userMessage = {
+        role: "user",
+        content: message.text ? message.text.body : JSON.stringify(message),
+      };
+      if (userMessage.content && userMessage.content.trim() !== "") {
+        fullChatHistory.push(userMessage);
+        relevantChatHistory.push(userMessage);
       }
     }
 
