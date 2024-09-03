@@ -1,8 +1,7 @@
+import MessageLog from "@/models/messageLog";
 const { handleChatRequest } = require("./chat");
 const Customer = require("../../models/customer");
 const axios = require("axios"); // Añadir esta línea al principio del archivo
-const MessageLog = require("../../models/messageLog"); // Añadir esta línea para importar el modelo de registro de mensajes
-
 export default async function handler(req, res) {
   if (req.method === "GET") {
     // Verificación del webhook
