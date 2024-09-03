@@ -1,6 +1,7 @@
 import MessageLog from "@/models/messageLog";
 const { handleChatRequest } = require("./chat");
 const Customer = require("../../models/customer");
+const PreOrder = require("../../models/preOrder");
 const axios = require("axios"); // Añadir esta línea al principio del archivo
 export default async function handler(req, res) {
   if (req.method === "GET") {
