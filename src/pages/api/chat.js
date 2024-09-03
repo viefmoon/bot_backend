@@ -453,8 +453,11 @@ export async function handleChatRequest(req) {
               ];
             case "select_products":
               result = await selectProducts(toolCall, clientId);
-              return { text: result.output };
-
+              if (result.output) {
+                return { text: result.output };
+              } else {
+                break;
+              }
             default:
               console.log(`Función desconocida: ${toolCall.function.name}`);
               return { error: "Función desconocida" };
@@ -520,21 +523,14 @@ async function selectProducts(toolCall, clientId) {
   const { orderItems } = JSON.parse(toolCall.function.arguments);
 
   try {
-    const response = await axios.post(
-      `${process.env.BASE_URL}/api/create_order`,
-      {
-        action: "selectProducts",
-        orderItems: orderItems,
-        clientId: clientId,
-      }
-    );
-    const { resumen } = response.data;
-
-    return { output: resumen };
+    await axios.post(`${process.env.BASE_URL}/api/create_order`, {
+      action: "selectProducts",
+      orderItems: orderItems,
+      clientId: clientId,
+    });
   } catch (error) {
     console.error("Error al seleccionar los productos:", error);
 
-    // Verificar si el error es una respuesta del servidor con un mensaje de error
     if (error.response && error.response.data && error.response.data.error) {
       return { output: error.response.data.error };
     } else {

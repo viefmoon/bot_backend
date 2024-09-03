@@ -9,11 +9,6 @@ export default async function handler(req, res) {
     const token = req.query["hub.verify_token"];
     const challenge = req.query["hub.challenge"];
 
-    console.log("Mode:", mode);
-    console.log("Token:", token);
-    console.log("Challenge:", challenge);
-    console.log("Expected token:", process.env.WHATSAPP_VERIFY_TOKEN);
-
     if (mode === "subscribe" && token === process.env.WHATSAPP_VERIFY_TOKEN) {
       console.log("Webhook verificado exitosamente");
       res.status(200).send(challenge);
@@ -194,7 +189,6 @@ async function sendWelcomeMessage(phoneNumber) {
     const imageUrl = `${process.env.BASE_URL}/images/bienvenida.jpg`;
 
     await sendWhatsAppImageMessage(phoneNumber, imageUrl, message, buttons);
-    console.log("Mensaje de bienvenida con imagen enviado exitosamente");
     return true;
   } catch (error) {
     console.error("Error al enviar mensaje de bienvenida con imagen:", error);

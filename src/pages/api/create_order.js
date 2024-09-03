@@ -608,7 +608,8 @@ async function cancelOrder(req, res) {
 }
 
 async function selectProducts(req, res) {
-  const { orderItems, clientId } = req.body;
+  const { orderItems, clientId, orderType, deliveryAddress, customerName } =
+    req.body;
 
   if (!Array.isArray(orderItems) || orderItems.length === 0) {
     return res
@@ -853,12 +854,62 @@ async function selectProducts(req, res) {
       }
     });
     messageContent += `\n💰 *Total: $${totalCost}*`;
-    // Retornar el resumen en lugar de enviarlo por WhatsApp
+
+    const messageId = await sendWhatsAppMessage(clientId, messageContent);
+
+    if (!messageId) {
+      throw new Error("No se pudo enviar el mensaje de WhatsApp");
+    }
+
+    const preOrder = await PreOrder.create({
+      orderItems,
+      orderType,
+      deliveryAddress,
+      customerName,
+      messageId,
+    });
+    console.log("Preorden guardada exitosamente");
+
     return res.status(200).json({
-      mensaje: "Resumen del pedido generado exitosamente",
-      resumen: messageContent,
+      mensaje: "Preorden guardada exitosamente",
+      preOrderId: preOrder.id,
     });
   } catch (error) {
     res.status(400).json({ error: error.message });
+  }
+}
+
+async function sendWhatsAppMessage(phoneNumber, message, buttons = null) {
+  try {
+    let payload = {
+      messaging_product: "whatsapp",
+      to: phoneNumber,
+      type: buttons ? "interactive" : "text",
+      text: buttons ? undefined : { body: message },
+      interactive: buttons
+        ? {
+            type: "button",
+            body: { text: message },
+            action: { buttons: buttons },
+          }
+        : undefined,
+    };
+
+    const response = await axios.post(
+      `https://graph.facebook.com/v17.0/${process.env.WHATSAPP_PHONE_NUMBER_ID}/messages`,
+      payload,
+      {
+        headers: {
+          Authorization: `Bearer ${process.env.WHATSAPP_ACCESS_TOKEN}`,
+          "Content-Type": "application/json",
+        },
+      }
+    );
+
+    // Devolver el ID del mensaje enviado
+    return response.data.messages[0].id;
+  } catch (error) {
+    console.error("Error al enviar mensaje de WhatsApp:", error);
+    return null;
   }
 }

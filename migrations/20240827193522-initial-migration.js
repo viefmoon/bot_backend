@@ -500,6 +500,42 @@ module.exports = {
         type: Sequelize.DATE,
       },
     });
+
+    await queryInterface.createTable("PreOrders", {
+      id: {
+        type: Sequelize.INTEGER,
+        primaryKey: true,
+        autoIncrement: true,
+      },
+      orderItems: {
+        type: Sequelize.JSON,
+        allowNull: false,
+      },
+      orderType: {
+        type: Sequelize.ENUM("delivery", "pickup"),
+        allowNull: true,
+      },
+      deliveryAddress: {
+        type: Sequelize.STRING,
+        allowNull: true,
+      },
+      customerName: {
+        type: Sequelize.STRING,
+        allowNull: true,
+      },
+      messageId: {
+        type: DataTypes.STRING,
+        allowNull: false,
+      },
+      createdAt: {
+        allowNull: false,
+        type: Sequelize.DATE,
+      },
+      updatedAt: {
+        allowNull: false,
+        type: Sequelize.DATE,
+      },
+    });
   },
 
   down: async (queryInterface, Sequelize) => {
@@ -516,5 +552,6 @@ module.exports = {
     await queryInterface.dropTable("Customers");
     await queryInterface.dropTable("Availabilities");
     await queryInterface.dropTable("RestaurantConfigs");
+    await queryInterface.dropTable("PreOrders");
   },
 };
