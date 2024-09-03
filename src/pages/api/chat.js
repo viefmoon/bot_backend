@@ -528,6 +528,9 @@ async function selectProducts(toolCall, clientId) {
         clientId: clientId,
       }
     );
+    const { resumen } = response.data;
+
+    return { output: resumen };
   } catch (error) {
     console.error("Error al seleccionar los productos:", error);
     return { error: "Error al seleccionar los productos" };
