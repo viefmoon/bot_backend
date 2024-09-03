@@ -32,24 +32,14 @@ export default async function handler(req, res) {
           if (value.messages && value.messages.length > 0) {
             for (const message of value.messages) {
               const { from } = message;
-              let messageContent;
 
-              if (message.type === "text") {
-                messageContent = message.text.body;
-              } else if (
-                message.type === "interactive" &&
-                message.interactive.type === "button_reply"
-              ) {
-                messageContent = message.interactive.button_reply.title;
+              if (message.type === "interactive") {
+                await handleInteractiveMessage(from, message);
+              } else if (message.type === "text") {
+                await handleMessage(from, message.text.body);
               } else {
                 console.log(`Tipo de mensaje no manejado: ${message.type}`);
-                continue;
               }
-
-              console.log(`Mensaje recibido de ${from}: ${messageContent}`);
-
-              // Aquí procesamos el mensaje
-              await handleMessage(from, messageContent);
             }
           }
         }
@@ -62,6 +52,15 @@ export default async function handler(req, res) {
   } else {
     res.setHeader("Allow", ["GET", "POST"]);
     res.status(405).end(`Método ${req.method} no permitido`);
+  }
+}
+
+async function handleInteractiveMessage(from, message) {
+  if (message.interactive.type === "button_reply") {
+    const buttonId = message.interactive.button_reply.id;
+    if (buttonId === "view_menu") {
+      await sendMenu(from);
+    }
   }
 }
 
@@ -99,20 +98,6 @@ async function handleMessage(from, message) {
     if (message && message.trim() !== "") {
       fullChatHistory.push(userMessage);
       relevantChatHistory.push(userMessage);
-    }
-
-    // Verificar si el mensaje es un botón interactivo
-    if (
-      message.type === "interactive" &&
-      message.interactive &&
-      message.interactive.type === "button_reply"
-    ) {
-      const buttonId = message.interactive.button_reply.id;
-      if (buttonId === "view_menu") {
-        // Enviar el menú
-        const menuResponse = await sendMenu(from);
-        return; // Terminar la función aquí para evitar procesamiento adicional
-      }
     }
 
     // Llamar directamente a la función del manejador en chat.js
