@@ -513,7 +513,7 @@ module.exports = {
       },
       orderType: {
         type: Sequelize.ENUM("delivery", "pickup"),
-        allowNull: true,
+        allowNull: false,
       },
       deliveryAddress: {
         type: Sequelize.STRING,
