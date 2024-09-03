@@ -453,7 +453,16 @@ export async function handleChatRequest(req) {
               ];
             case "select_products":
               result = await selectProducts(toolCall, clientId);
-              return { text: result.output }; // Retorna directamente al cliente
+              if (result.error) {
+                // Si hay un error, lo enviamos a OpenAI
+                return {
+                  tool_call_id: toolCall.id,
+                  output: JSON.stringify({ error: result.error }),
+                };
+              } else {
+                // Si no hay error, retornamos directamente al cliente
+                return { text: result.output };
+              }
 
             default:
               console.log(`Función desconocida: ${toolCall.function.name}`);
@@ -533,6 +542,6 @@ async function selectProducts(toolCall, clientId) {
     return { output: resumen };
   } catch (error) {
     console.error("Error al seleccionar los productos:", error);
-    return { error: "Error al seleccionar los productos" };
+    return { error: "Error al seleccionar los productos: " + error.message };
   }
 }
