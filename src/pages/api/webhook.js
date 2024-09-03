@@ -85,6 +85,19 @@ async function handleMessage(from, message) {
       relevantChatHistory.push(userMessage);
     }
 
+    // Verificar si el mensaje es un botón interactivo
+    if (
+      message.type === "interactive" &&
+      message.interactive.type === "button_reply"
+    ) {
+      const buttonId = message.interactive.button_reply.id;
+      if (buttonId === "view_menu") {
+        // Enviar el menú
+        const menuResponse = await sendMenu(from);
+        return; // Terminar la función aquí para evitar procesamiento adicional
+      }
+    }
+
     // Llamar directamente a la función del manejador en chat.js
     const response = await handleChatRequest({
       messages: relevantChatHistory,
@@ -137,13 +150,6 @@ async function sendWelcomeMessage(phoneNumber) {
         reply: {
           id: "view_menu",
           title: "Ver Menú",
-        },
-      },
-      {
-        type: "reply",
-        reply: {
-          id: "order",
-          title: "Ordenar",
         },
       },
     ];
@@ -237,6 +243,47 @@ async function sendWhatsAppMessage(phoneNumber, message, buttons = null) {
     return true;
   } catch (error) {
     console.error("Error al enviar mensaje de WhatsApp:", error);
+    return false;
+  }
+}
+
+async function sendMenu(phoneNumber) {
+  try {
+    const menuText = require("../../data/menu"); // Asegúrate de que la ruta sea correcta
+
+    // Enviar el menú como no relevante
+    await sendWhatsAppMessage(phoneNumber, menuText);
+
+    // Enviar mensaje de confirmación como relevante
+    const confirmationMessage =
+      "El menú ha sido enviado, si tienes alguna duda, no dudes en preguntar";
+    await sendWhatsAppMessage(phoneNumber, confirmationMessage);
+
+    // Actualizar el historial de chat
+    let customer = await Customer.findOne({ where: { clientId: phoneNumber } });
+    if (customer) {
+      let fullChatHistory = JSON.parse(customer.fullChatHistory || "[]");
+      let relevantChatHistory = JSON.parse(
+        customer.relevantChatHistory || "[]"
+      );
+
+      fullChatHistory.push({ role: "assistant", content: menuText });
+      fullChatHistory.push({ role: "assistant", content: confirmationMessage });
+      relevantChatHistory.push({
+        role: "assistant",
+        content: confirmationMessage,
+      });
+
+      await customer.update({
+        fullChatHistory: JSON.stringify(fullChatHistory),
+        relevantChatHistory: JSON.stringify(relevantChatHistory),
+      });
+    }
+
+    console.log("Menú enviado exitosamente");
+    return true;
+  } catch (error) {
+    console.error("Error al enviar el menú:", error);
     return false;
   }
 }
