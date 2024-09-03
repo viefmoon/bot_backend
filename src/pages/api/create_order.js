@@ -757,7 +757,12 @@ async function selectProducts(req, res) {
             modifierNames = await Promise.all(
               item.selectedModifiers.map(async (modifier) => {
                 const mod = await Modifier.findByPk(modifier.modifierId);
-                return mod ? mod.name : "Modificador desconocido";
+                if (!mod) {
+                  throw new Error(
+                    `Modificador no encontrado en el menú: ${modifier.modifierId}`
+                  );
+                }
+                return mod.name;
               })
             );
           }
@@ -773,14 +778,17 @@ async function selectProducts(req, res) {
                 const pizzaIngredient = await PizzaIngredient.findByPk(
                   ingredient.pizzaIngredientId
                 );
-                if (pizzaIngredient) {
-                  if (ingredient.half === "none") {
-                    pizzaIngredientNames.full.push(pizzaIngredient.name);
-                  } else {
-                    pizzaIngredientNames[ingredient.half].push(
-                      pizzaIngredient.name
-                    );
-                  }
+                if (!pizzaIngredient) {
+                  throw new Error(
+                    `Ingrediente de pizza no encontrado en el menú: ${ingredient.pizzaIngredientId}`
+                  );
+                }
+                if (ingredient.half === "none") {
+                  pizzaIngredientNames.full.push(pizzaIngredient.name);
+                } else {
+                  pizzaIngredientNames[ingredient.half].push(
+                    pizzaIngredient.name
+                  );
                 }
               })
             );
