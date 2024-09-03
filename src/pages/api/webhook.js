@@ -22,14 +22,15 @@ export default async function handler(req, res) {
       res.status(403).end();
     }
   } else if (req.method === "POST") {
-    console.log("Payload completo del mensaje:", req.body);
     const { object, entry } = req.body;
 
     if (object === "whatsapp_business_account") {
       for (const entryItem of entry) {
         const { changes } = entryItem;
         for (const change of changes) {
+          console.log("Cambio:", change);
           const { value } = change;
+          console.log("Value:", value);
           if (value.messages && value.messages.length > 0) {
             for (const message of value.messages) {
               const { from } = message;
