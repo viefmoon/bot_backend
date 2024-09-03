@@ -48,8 +48,6 @@ export default async function handler(req, res) {
                   ? contact.profile.name
                   : "Desconocido";
 
-              console.log("Display Name:", displayName);
-
               if (message.type === "interactive") {
                 await handleInteractiveMessage(from, message, displayName);
               } else if (message.type === "text") {
@@ -81,7 +79,7 @@ async function handleInteractiveMessage(from, message) {
   }
 }
 
-async function handleMessage(from, message) {
+async function handleMessage(from, message, displayName) {
   try {
     // Buscar o crear el cliente
     let [customer, created] = await Customer.findOrCreate({
@@ -107,6 +105,12 @@ async function handleMessage(from, message) {
 
     // Enviar mensaje de bienvenida si el historial relevante está vacío
     if (relevantChatHistory.length === 0) {
+      if (displayName !== "Desconocido") {
+        relevantChatHistory.push({
+          role: "user",
+          content: `Nombre de cliente: ${displayName}`,
+        });
+      }
       await sendWelcomeMessage(from);
     }
 
