@@ -120,6 +120,8 @@ async function createOrder(req, res) {
   //     ? config.estimatedPickupTime
   //     : config.estimatedDeliveryTime;
 
+  const estimatedTime = 30;
+
   // Crear la orden
   const newOrder = await Order.create({
     dailyOrderNumber,
