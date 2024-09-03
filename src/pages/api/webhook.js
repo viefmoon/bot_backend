@@ -35,7 +35,7 @@ export default async function handler(req, res) {
               console.log(`Mensaje recibido de ${from}: ${text.body}`);
 
               // Aquí procesamos el mensaje
-              await handleMessage(from, text.body);
+              await handleMessage(from, text);
             }
           }
         }
@@ -51,7 +51,7 @@ export default async function handler(req, res) {
   }
 }
 
-async function handleMessage(from, message) {
+async function handleMessage(from, messageObject) {
   try {
     // Buscar o crear el cliente
     let [customer, created] = await Customer.findOrCreate({
@@ -63,8 +63,26 @@ async function handleMessage(from, message) {
     let fullChatHistory = JSON.parse(customer.fullChatHistory || "[]");
     let relevantChatHistory = JSON.parse(customer.relevantChatHistory || "[]");
 
+    // Determinar el tipo de mensaje y extraer el contenido
+    let messageContent = "";
+    if (messageObject.type === "text" && messageObject.text) {
+      messageContent = messageObject.text.body;
+    } else if (messageObject.type === "interactive") {
+      if (messageObject.interactive.type === "button_reply") {
+        messageContent = messageObject.interactive.button_reply.title;
+        if (messageObject.interactive.button_reply.id === "view_menu") {
+          await sendMenu(from);
+          return;
+        }
+      } else if (messageObject.interactive.type === "list_reply") {
+        messageContent = messageObject.interactive.list_reply.title;
+      }
+    }
+
+    console.log("Contenido del mensaje:", messageContent);
+
     // Verificar si el mensaje es para eliminar el historial relevante
-    if (message.toLowerCase().includes("olvida lo anterior")) {
+    if (messageContent.toLowerCase().includes("olvida lo anterior")) {
       relevantChatHistory = [];
       await customer.update({
         relevantChatHistory: JSON.stringify(relevantChatHistory),
@@ -78,27 +96,9 @@ async function handleMessage(from, message) {
       await sendWelcomeMessage(from);
     }
 
-    // Verificar si el mensaje es un botón interactivo
-    if (
-      message.type === "interactive" &&
-      message.interactive.type === "button_reply"
-    ) {
-      const buttonId = message.interactive.button_reply.id;
-      if (buttonId === "view_menu") {
-        // Enviar el menú
-        await sendMenu(from);
-        return; // Terminar la función aquí para evitar procesamiento adicional
-      }
-    }
-
-    // Si no es un botón interactivo, procesar como mensaje de texto normal
-    const messageText = message.text
-      ? message.text.body
-      : message.interactive?.button_reply?.title || "";
-
     // Añadir el nuevo mensaje del usuario a ambos historiales
-    const userMessage = { role: "user", content: messageText };
-    if (messageText && messageText.trim() !== "") {
+    if (messageContent && messageContent.trim() !== "") {
+      const userMessage = { role: "user", content: messageContent };
       fullChatHistory.push(userMessage);
       relevantChatHistory.push(userMessage);
     }
