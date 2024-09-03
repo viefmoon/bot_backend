@@ -430,8 +430,21 @@ export async function handleChatRequest(req) {
 
   try {
     console.log("Mensajes relevantes:", messages);
+
+    // Obtener la disponibilidad del menú
+    const menuAvailability = await getMenuAvailability();
+
+    // Crear un nuevo mensaje con la disponibilidad del menú
+    const menuAvailabilityMessage = {
+      role: "assistant",
+      content: JSON.stringify(menuAvailability),
+    };
+
+    // Añadir el mensaje de disponibilidad del menú al principio de los mensajes
+    const updatedMessages = [menuAvailabilityMessage, ...messages];
+
     const thread = await openai.beta.threads.create({
-      messages: messages,
+      messages: updatedMessages,
     });
 
     let run = await openai.beta.threads.runs.create(thread.id, {
