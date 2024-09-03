@@ -111,14 +111,29 @@ async function handleMessage(from, message, displayName) {
       return;
     }
 
+    // Obtener datos adicionales del cliente
+    const customerData = await getCustomerData(from);
+    const deliveryAddress = customerData.deliveryAddress || "Desconocido";
+    const pickupName = customerData.pickupName || "Desconocido";
+
+    // Crear el mensaje con la información del cliente
+    const nameMessage = `Nombre de cliente: ${displayName}\nDirección de entrega: ${deliveryAddress}\nNombre de recogida: ${pickupName}`;
+
+    // Añadir el nombre del cliente al inicio si no está presente
+    if (
+      !relevantChatHistory.some((msg) =>
+        msg.content.startsWith("Nombre de cliente:")
+      )
+    ) {
+      relevantChatHistory.unshift({
+        role: "user",
+        content: nameMessage,
+      });
+    }
+
     // Enviar mensaje de bienvenida si el historial relevante está vacío
-    if (relevantChatHistory.length === 0) {
-      if (displayName !== "Desconocido") {
-        relevantChatHistory.push({
-          role: "user",
-          content: `Nombre de cliente: ${displayName}`,
-        });
-      }
+    if (relevantChatHistory.length === 1) {
+      // Solo el mensaje con la información del cliente está presente
       await sendWelcomeMessage(from);
     }
 
@@ -178,6 +193,23 @@ async function handleMessage(from, message, displayName) {
     });
   } catch (error) {
     console.error("Error al procesar el mensaje:", error);
+  }
+}
+
+// Función para obtener datos adicionales del cliente
+async function getCustomerData(clientId) {
+  try {
+    const customer = await Customer.findOne({ where: { clientId } });
+    if (customer) {
+      return {
+        deliveryAddress: customer.deliveryAddress,
+        pickupName: customer.pickupName,
+      };
+    }
+    return {};
+  } catch (error) {
+    console.error("Error al obtener datos del cliente:", error);
+    return {};
   }
 }
 

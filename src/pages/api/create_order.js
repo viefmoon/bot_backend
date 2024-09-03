@@ -811,6 +811,8 @@ async function selectProducts(req, res) {
     );
 
     let messageContent = "Aquí tienes el resumen de tu pedido\n\n";
+
+    messageContent += "Telefono: " + customerData.phoneNumber + "\n";
     messageContent += `🏠 *Dirección de entrega*: ${
       customerData.lastDeliveryAddress || "No disponible"
     }\n`;
