@@ -519,13 +519,18 @@ export async function handleChatRequest(req) {
 }
 
 async function selectProducts(toolCall, clientId) {
-  const { orderItems } = JSON.parse(toolCall.function.arguments);
+  const { orderItems, orderType, deliveryAddress, customerName } = JSON.parse(
+    toolCall.function.arguments
+  );
 
   try {
     await axios.post(`${process.env.BASE_URL}/api/create_order`, {
       action: "selectProducts",
       orderItems: orderItems,
       clientId: clientId,
+      orderType: orderType,
+      deliveryAddress: deliveryAddress,
+      customerName: customerName,
     });
     return { text: "Preorden guardada exitosamente", sendToWhatsApp: false };
   } catch (error) {
