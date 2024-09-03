@@ -2,6 +2,26 @@
 
 module.exports = {
   up: async (queryInterface, Sequelize) => {
+    await queryInterface.createTable("MessageLogs", {
+      messageId: {
+        type: Sequelize.STRING,
+        allowNull: false,
+        unique: true,
+      },
+      from: {
+        type: Sequelize.STRING,
+        allowNull: false,
+      },
+      createdAt: {
+        allowNull: false,
+        type: Sequelize.DATE,
+      },
+      updatedAt: {
+        allowNull: false,
+        type: Sequelize.DATE,
+      },
+    });
+
     await queryInterface.createTable("Availabilities", {
       id: {
         type: Sequelize.STRING,
@@ -478,6 +498,7 @@ module.exports = {
   },
 
   down: async (queryInterface, Sequelize) => {
+    await queryInterface.dropTable("MessageLogs");
     await queryInterface.dropTable("SelectedModifiers");
     await queryInterface.dropTable("SelectedPizzaIngredients");
     await queryInterface.dropTable("OrderItems");

@@ -1,6 +1,7 @@
 const { handleChatRequest } = require("./chat");
 const Customer = require("../../models/customer");
 const axios = require("axios"); // Añadir esta línea al principio del archivo
+const MessageLog = require("../../models/messageLog"); // Añadir esta línea para importar el modelo de registro de mensajes
 
 export default async function handler(req, res) {
   if (req.method === "GET") {
@@ -39,7 +40,20 @@ export default async function handler(req, res) {
           ) {
             // Iterar sobre los mensajes recibidos
             for (const message of value.messages) {
-              const { from } = message;
+              const { from, id } = message;
+
+              // Verificar si el mensaje ya ha sido procesado
+              const existingMessage = await MessageLog.findOne({
+                where: { messageId: id },
+              });
+              if (existingMessage) {
+                console.log(`Mensaje duplicado ignorado: ${id}`);
+                continue;
+              }
+
+              // Registrar el mensaje como procesado
+              await MessageLog.create({ messageId: id, from });
+
               const contact = value.contacts.find(
                 (contact) => contact.wa_id === from
               );
@@ -262,7 +276,6 @@ async function sendWhatsAppMessage(phoneNumber, message, buttons = null) {
         },
       }
     );
-    console.log("Mensaje enviado exitosamente");
     return true;
   } catch (error) {
     console.error("Error al enviar mensaje de WhatsApp:", error);

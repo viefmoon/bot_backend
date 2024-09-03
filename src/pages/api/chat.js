@@ -14,48 +14,6 @@ const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
-async function createOrder(toolCall, clientId) {
-  const { orderType, orderItems, deliveryAddress, pickupName } = JSON.parse(
-    toolCall.function.arguments
-  );
-
-  try {
-    const response = await axios.post(
-      `${process.env.BASE_URL}/api/create_order`,
-      {
-        action: "create",
-        orderType,
-        orderItems,
-        deliveryAddress,
-        customerName: pickupName,
-        clientId,
-      }
-    );
-
-    const orderResult = response.data;
-    console.log("Order result:", orderResult);
-
-    return {
-      tool_call_id: toolCall.id,
-      output: JSON.stringify(orderResult),
-    };
-  } catch (error) {
-    console.error(
-      "Error creating order:",
-      error.response ? error.response.data : error.message
-    );
-    return {
-      tool_call_id: toolCall.id,
-      output: JSON.stringify({
-        error: error.response
-          ? error.response.data.error
-          : "Failed to create order",
-        details: error.message,
-      }),
-    };
-  }
-}
-
 async function modifyOrder(toolCall, clientId) {
   const {
     dailyOrderNumber,
@@ -465,11 +423,6 @@ export async function handleChatRequest(req) {
           let result;
 
           switch (toolCall.function.name) {
-            case "create_order":
-              result = await createOrder(toolCall, clientId);
-              shouldDeleteConversation = true;
-              return { text: result.output }; // Retorna directamente al cliente
-
             case "modify_order":
               result = await modifyOrder(toolCall, clientId);
               shouldDeleteConversation = true;
@@ -575,42 +528,8 @@ async function selectProducts(toolCall, clientId) {
         clientId: clientId,
       }
     );
-
-    // Verificar si la respuesta contiene el resumen
-    if (response.data.resumen) {
-      const sent = await sendWhatsAppMessage(clientId, response.data.resumen, [
-        "Confirmar pedido",
-        "Modificar pedido",
-      ]);
-
-      if (sent) {
-        return {
-          tool_call_id: toolCall.id,
-          output: JSON.stringify({
-            resumen: response.data.resumen,
-            message: "Resumen enviado con botones de acción",
-          }),
-        };
-      } else {
-        return {
-          tool_call_id: toolCall.id,
-          output: JSON.stringify({
-            error: "No se pudo enviar el resumen por WhatsApp",
-          }),
-        };
-      }
-    } else {
-      return {
-        tool_call_id: toolCall.id,
-        output: JSON.stringify(response.data),
-      };
-    }
   } catch (error) {
-    return {
-      tool_call_id: toolCall.id,
-      output: JSON.stringify({
-        error: error.response ? error.response.data.error : error.message,
-      }),
-    };
+    console.error("Error al seleccionar los productos:", error);
+    return { error: "Error al seleccionar los productos" };
   }
 }
