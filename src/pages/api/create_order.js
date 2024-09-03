@@ -115,10 +115,10 @@ async function createOrder(req, res) {
   const dailyOrderNumber = await getNextDailyOrderNumber();
 
   // Determinar el tiempo estimado basado en el tipo de orden
-  const estimatedTime =
-    orderType === "pickup"
-      ? config.estimatedPickupTime
-      : config.estimatedDeliveryTime;
+  // const estimatedTime =
+  //   orderType === "pickup"
+  //     ? config.estimatedPickupTime
+  //     : config.estimatedDeliveryTime;
 
   // Crear la orden
   const newOrder = await Order.create({
