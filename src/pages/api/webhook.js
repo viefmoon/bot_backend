@@ -78,12 +78,81 @@ export default async function handler(req, res) {
   }
 }
 
-async function handleInteractiveMessage(from, message) {
+async function handleInteractiveMessage(from, message, displayName) {
   if (message.interactive.type === "button_reply") {
     const buttonId = message.interactive.button_reply.id;
-    if (buttonId === "view_menu") {
+    if (buttonId === "confirm_order") {
+      await handleOrderConfirmation(from, message.context.id);
+    } else if (buttonId === "view_menu") {
       await sendMenu(from);
     }
+  }
+}
+
+async function handleOrderConfirmation(clientId, messageId) {
+  try {
+    const preOrder = await PreOrder.findOne({ where: { messageId } });
+
+    if (!preOrder) {
+      console.error(`No se encontró preorden para el messageId: ${messageId}`);
+      await sendWhatsAppMessage(
+        clientId,
+        "Lo siento, no se pudo encontrar tu orden. Por favor, intenta nuevamente."
+      );
+      return;
+    }
+
+    // Crear la orden real basada en la preorden
+    const newOrder = await createOrderFromPreOrder(preOrder, clientId);
+
+    // Enviar confirmación al cliente
+    const confirmationMessage = `Tu orden #${newOrder.dailyOrderNumber} ha sido confirmada. Gracias por tu compra.`;
+    await sendWhatsAppMessage(clientId, confirmationMessage);
+
+    // Eliminar la preorden
+    await preOrder.destroy();
+  } catch (error) {
+    console.error("Error al confirmar la orden:", error);
+    await sendWhatsAppMessage(
+      clientId,
+      "Hubo un error al procesar tu orden. Por favor, intenta nuevamente o contacta con el restaurante."
+    );
+  }
+}
+
+async function createOrderFromPreOrder(preOrder, clientId) {
+  try {
+    const { orderItems, orderType, deliveryAddress, customerName } = preOrder;
+
+    // Preparar los datos para la creación de la orden
+    const orderData = {
+      action: "create",
+      orderType,
+      orderItems,
+      deliveryAddress,
+      customerName,
+      clientId,
+    };
+
+    // Llamar a la función createOrder de create_order.js
+    const response = await axios.post(
+      `${process.env.BASE_URL}/api/create_order`,
+      orderData,
+      {
+        headers: {
+          "Content-Type": "application/json",
+        },
+      }
+    );
+
+    if (response.status === 201) {
+      return response.data.orden;
+    } else {
+      throw new Error("Error al crear la orden");
+    }
+  } catch (error) {
+    console.error("Error en createOrderFromPreOrder:", error);
+    throw error;
   }
 }
 
