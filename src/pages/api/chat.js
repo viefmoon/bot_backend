@@ -478,7 +478,13 @@ export async function handleChatRequest(req) {
               return { text: JSON.stringify(orderDetails) }; // Retorna directamente al cliente
 
             case "send_menu":
-              return { text: menu, isRelevant: false };
+              return [
+                { text: menu, isRelevant: false },
+                {
+                  text: "El menú ha sido enviado, si tienes alguna duda, no dudes en preguntar",
+                  isRelevant: true,
+                },
+              ];
             case "select_products":
               result = await selectProducts(toolCall, clientId);
               return { text: result.output }; // Retorna directamente al cliente
