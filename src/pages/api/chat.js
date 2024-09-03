@@ -453,9 +453,10 @@ export async function handleChatRequest(req) {
               ];
             case "select_products":
               result = await selectProducts(toolCall, clientId);
-              if (result.output) {
+              if (result && result.output) {
                 return { text: result.output };
               } else {
+                console.log("Productos seleccionados exitosamente");
                 break;
               }
             default:
