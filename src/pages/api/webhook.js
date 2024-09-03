@@ -138,7 +138,11 @@ async function handleMessage(from, message, displayName) {
     // Procesar y enviar respuestas
     if (Array.isArray(response)) {
       for (const msg of response) {
-        if (msg.text && msg.text.trim() !== "") {
+        if (
+          msg.text &&
+          msg.text.trim() !== "" &&
+          msg.sendToWhatsApp !== false
+        ) {
           await sendWhatsAppMessage(from, msg.text);
           const assistantMessage = { role: "assistant", content: msg.text };
           fullChatHistory.push(assistantMessage);
@@ -149,7 +153,11 @@ async function handleMessage(from, message, displayName) {
         }
       }
     } else {
-      if (response.text && response.text.trim() !== "") {
+      if (
+        response.text &&
+        response.text.trim() !== "" &&
+        response.sendToWhatsApp !== false
+      ) {
         await sendWhatsAppMessage(from, response.text);
         const assistantMessage = {
           role: "assistant",

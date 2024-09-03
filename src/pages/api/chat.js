@@ -453,12 +453,10 @@ export async function handleChatRequest(req) {
               ];
             case "select_products":
               result = await selectProducts(toolCall, clientId);
-              if (result && result.output) {
-                return { text: result.output };
-              } else {
-                console.log("Productos seleccionados exitosamente");
-                break;
-              }
+              return {
+                text: result.text,
+                sendToWhatsApp: result.sendToWhatsApp,
+              };
             default:
               console.log(`Función desconocida: ${toolCall.function.name}`);
               return { error: "Función desconocida" };
@@ -529,15 +527,16 @@ async function selectProducts(toolCall, clientId) {
       orderItems: orderItems,
       clientId: clientId,
     });
+    return { text: "Preorden guardada exitosamente", sendToWhatsApp: false };
   } catch (error) {
     console.error("Error al seleccionar los productos:", error);
 
     if (error.response && error.response.data && error.response.data.error) {
-      return { output: error.response.data.error };
+      return { text: error.response.data.error, sendToWhatsApp: true };
     } else {
       return {
-        output:
-          "Error al seleccionar los productos. Por favor, inténtalo de nuevo.",
+        text: "Error al seleccionar los productos. Por favor, inténtalo de nuevo.",
+        sendToWhatsApp: true,
       };
     }
   }
