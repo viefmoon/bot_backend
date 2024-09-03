@@ -181,25 +181,17 @@ async function sendWhatsAppMessage(
     let payload = {
       messaging_product: "whatsapp",
       to: phoneNumber,
-      type: imageUrl ? "image" : buttons ? "interactive" : "text",
+      type: "interactive",
     };
 
-    if (imageUrl) {
-      payload.image = { link: imageUrl };
-    }
-
-    if (buttons) {
-      payload.interactive = {
-        type: "button",
-        header: imageUrl
-          ? { type: "image", image: { link: imageUrl } }
-          : undefined,
-        body: { text: message },
-        action: { buttons: buttons },
-      };
-    } else if (!imageUrl) {
-      payload.text = { body: message };
-    }
+    payload.interactive = {
+      type: "button",
+      header: imageUrl
+        ? { type: "image", image: { link: imageUrl } }
+        : undefined,
+      body: { text: message },
+      action: { buttons: buttons },
+    };
 
     const response = await axios.post(
       `https://graph.facebook.com/v17.0/${process.env.WHATSAPP_PHONE_NUMBER_ID}/messages`,
