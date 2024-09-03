@@ -524,7 +524,7 @@ module.exports = {
         allowNull: true,
       },
       messageId: {
-        type: DataTypes.STRING,
+        type: Sequelize.STRING,
         allowNull: false,
       },
       createdAt: {
