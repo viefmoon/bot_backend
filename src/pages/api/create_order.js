@@ -620,12 +620,6 @@ async function selectProducts(req, res) {
 
   let totalCost = 0;
   try {
-    const customerResponse = await axios.get(
-      `${process.env.BASE_URL}/api/get_customer_data`,
-      { params: { clientId } }
-    );
-    const customerData = customerResponse.data;
-
     const calculatedItems = await Promise.all(
       orderItems.map(async (item) => {
         try {
@@ -812,12 +806,12 @@ async function selectProducts(req, res) {
 
     let messageContent = "Aquí tienes el resumen de tu pedido\n\n";
 
-    messageContent += "Telefono: " + customerData.phoneNumber + "\n";
+    messageContent += "Telefono: " + clientId + "\n";
     messageContent += `🏠 *Dirección de entrega*: ${
-      customerData.lastDeliveryAddress || "No disponible"
+      deliveryAddress || "No disponible"
     }\n`;
     messageContent += `👤 *Nombre de recolección*: ${
-      customerData.lastPickupName || "No disponible"
+      customerName || "No disponible"
     }\n`;
     messageContent += "\n";
 

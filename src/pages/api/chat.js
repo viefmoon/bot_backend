@@ -524,20 +524,26 @@ async function selectProducts(toolCall, clientId) {
   );
 
   try {
-    await axios.post(`${process.env.BASE_URL}/api/create_order`, {
-      action: "selectProducts",
-      orderItems: orderItems,
-      clientId: clientId,
-      orderType: orderType,
-      deliveryAddress: deliveryAddress,
-      customerName: customerName,
-    });
+    const response = await axios.post(
+      `${process.env.BASE_URL}/api/create_order`,
+      {
+        action: "selectProducts",
+        orderItems: orderItems,
+        clientId: clientId,
+        orderType: orderType,
+        deliveryAddress: deliveryAddress,
+        customerName: customerName,
+      }
+    );
+
     return { text: "Preorden guardada exitosamente", sendToWhatsApp: false };
   } catch (error) {
     console.error("Error al seleccionar los productos:", error);
 
-    if (error.response && error.response.data && error.response.data.error) {
-      return { text: error.response.data.error, sendToWhatsApp: true };
+    // Manejo de errores mejorado
+    if (error.response) {
+      const errorMessage = error.response.data?.error || "Error desconocido";
+      return { text: errorMessage, sendToWhatsApp: true };
     } else {
       return {
         text: "Error al seleccionar los productos. Por favor, inténtalo de nuevo.",
