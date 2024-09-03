@@ -454,10 +454,13 @@ export async function handleChatRequest(req) {
             case "select_products":
               result = await selectProducts(toolCall, clientId);
               if (result.error) {
-                // Enviamos el error a OpenAI
+                // Enviamos el error y el pedido original a OpenAI
                 const toolOutput = {
                   tool_call_id: toolCall.id,
-                  output: JSON.stringify({ error: result.error }),
+                  output: JSON.stringify({
+                    error: result.error,
+                    original_order: JSON.parse(toolCall.function.arguments),
+                  }),
                 };
 
                 // Enviamos el resultado de la herramienta a OpenAI
