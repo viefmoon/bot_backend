@@ -19,8 +19,8 @@ export default async function handler(req, res) {
       res.status(403).end();
     }
   } else if (req.method === "POST") {
-    console.log("solicitud recibida");
-    console.log(req.body);
+    console.log("Solicitud recibida");
+    console.log("Cuerpo de la solicitud:", JSON.stringify(req.body, null, 2));
     const { object, entry } = req.body;
 
     // Verificar horario de atención
@@ -36,6 +36,7 @@ export default async function handler(req, res) {
         console.error(
           "No se pudo obtener el número de teléfono del remitente."
         );
+        console.error("Estructura de entry:", JSON.stringify(entry, null, 2));
       }
     }
 
