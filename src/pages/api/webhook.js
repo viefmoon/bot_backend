@@ -59,7 +59,6 @@ export default async function handler(req, res) {
               // Registrar el mensaje como procesado
               await MessageLog.create({ messageId: id, from });
 
-
               if (message.type === "interactive") {
                 await handleInteractiveMessage(from, message);
               } else if (message.type === "text") {
@@ -190,7 +189,7 @@ async function handleMessage(from, message) {
     const pickupName = customerData.pickupName || "Desconocido";
 
     // Crear el mensaje con la información del cliente
-    const customerInfoMessage = `Dirección de entrega: ${deliveryAddress}\nNombre de recoleccion: ${pickupName}`;
+    const customerInfoMessage = `Dirección de entrega: ${deliveryAddress} - Nombre para recoleccion: ${pickupName}`;
 
     // Añadir la información del cliente al inicio si no está presente
     if (
