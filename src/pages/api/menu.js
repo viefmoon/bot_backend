@@ -1,4 +1,3 @@
-const { connectDB } = require("../../lib/db");
 const product = require("../../models/product");
 const productVariant = require("../../models/productVariant");
 const modifier = require("../../models/modifier");

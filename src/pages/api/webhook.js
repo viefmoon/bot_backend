@@ -1,9 +1,9 @@
 import MessageLog from "../../models/messageLog";
-import { verificarHorarioAtencion } from "../../utils/timeUtils"; // Importar la función de verificación de horario
+import { verificarHorarioAtencion } from "../../utils/timeUtils";
 const { handleChatRequest } = require("./chat");
 const Customer = require("../../models/customer");
 const PreOrder = require("../../models/preOrder");
-const axios = require("axios"); // Añadir esta línea al principio del archivo
+const axios = require("axios");
 export default async function handler(req, res) {
   if (req.method === "GET") {
     // Verificación del webhook
@@ -147,9 +147,13 @@ async function createOrderFromPreOrder(preOrder, clientId) {
     if (response.status === 201) {
       const newOrder = response.data.orden;
 
-      // Construir el resumen de la orden con emojis
+      const tipoOrdenTraducido =
+        orderType === "delivery"
+          ? "Entrega a domicilio"
+          : "Recolección en restaurante";
+
       let orderSummary = `🎉 *¡Tu orden #${newOrder.id} ha sido creada exitosamente!* 🎉\n\n`;
-      orderSummary += `🍽️ *Tipo:* ${newOrder.tipo}\n`;
+      orderSummary += `🍽️ *Tipo:* ${tipoOrdenTraducido}\n`;
       if (newOrder.direccion_entrega) {
         orderSummary += `🏠 *Dirección de entrega:* ${newOrder.direccion_entrega}\n`;
       }
@@ -168,11 +172,34 @@ async function createOrderFromPreOrder(preOrder, clientId) {
             orderSummary += `      • ${mod.nombre} - $${mod.precio}\n`;
           });
         }
-        if (producto.ingredientes_pizza.length > 0) {
+        if (
+          producto.ingredientes_pizza &&
+          producto.ingredientes_pizza.length > 0
+        ) {
           orderSummary += `    *Ingredientes de pizza:*\n`;
+
+          const ingredientesPorMitad = {
+            left: [],
+            right: [],
+            none: [],
+          };
+
           producto.ingredientes_pizza.forEach((ing) => {
-            orderSummary += `      • ${ing.nombre} (${ing.mitad})\n`;
+            ingredientesPorMitad[ing.mitad].push(ing.nombre);
           });
+
+          if (ingredientesPorMitad.none.length > 0) {
+            orderSummary += `      • ${ingredientesPorMitad.none.join(", ")}\n`;
+          }
+
+          if (
+            ingredientesPorMitad.left.length > 0 ||
+            ingredientesPorMitad.right.length > 0
+          ) {
+            const mitadIzquierda = ingredientesPorMitad.left.join(", ");
+            const mitadDerecha = ingredientesPorMitad.right.join(", ");
+            orderSummary += `      • ${mitadIzquierda} / ${mitadDerecha}\n`;
+          }
         }
         if (producto.comments) {
           orderSummary += `    💬 *Comentarios:* ${producto.comments}\n`;
