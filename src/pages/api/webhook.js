@@ -1,4 +1,4 @@
-import MessageLog from "@/models/messageLog";
+import MessageLog from "../../models/messageLog";
 import { verificarHorarioAtencion } from "../../utils/timeUtils"; // Importar la función de verificación de horario
 const { handleChatRequest } = require("./chat");
 const Customer = require("../../models/customer");
