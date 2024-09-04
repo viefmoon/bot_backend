@@ -19,6 +19,8 @@ export default async function handler(req, res) {
       res.status(403).end();
     }
   } else if (req.method === "POST") {
+    console.log("solicitud recibida");
+    console.log(req.body);
     const { object, entry } = req.body;
 
     // Verificar horario de atención
