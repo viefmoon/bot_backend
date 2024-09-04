@@ -1,4 +1,5 @@
 import MessageLog from "@/models/messageLog";
+import { verificarHorarioAtencion } from "../../utils/timeUtils"; // Importar la función de verificación de horario
 const { handleChatRequest } = require("./chat");
 const Customer = require("../../models/customer");
 const PreOrder = require("../../models/preOrder");
@@ -19,6 +20,15 @@ export default async function handler(req, res) {
     }
   } else if (req.method === "POST") {
     const { object, entry } = req.body;
+
+    // Verificar horario de atención
+    const estaAbierto = await verificarHorarioAtencion();
+    if (!estaAbierto) {
+      await sendWhatsAppMessage(
+        entry[0].changes[0].value.messages[0].from,
+        "Lo sentimos, solo podremos procesar tu pedido cuando el restaurante esté abierto. Horarios: Martes a sábado: 6:00 PM - 11:00 PM, Domingos: 2:00 PM - 11:00 PM."
+      );
+    }
 
     if (object === "whatsapp_business_account") {
       for (const entryItem of entry) {
