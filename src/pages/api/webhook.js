@@ -39,7 +39,6 @@ export default async function handler(req, res) {
                   from,
                   "Lo sentimos, solo podremos procesar tu pedido cuando el restaurante esté abierto. Horarios: Martes a sábado: 6:00 PM - 11:00 PM, Domingos: 2:00 PM - 11:00 PM."
                 );
-                continue; // Pasar al siguiente mensaje si está cerrado
               }
 
               // Procesar el mensaje según su tipo
