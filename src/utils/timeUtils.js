@@ -32,12 +32,12 @@ async function verificarHorarioAtencion() {
   const tiempoActual = ahora.hours() * 60 + ahora.minutes();
 
   const horarioNormal = {
-    apertura: 18 * 60, // 6:00 PM
+    apertura: 0 * 60, // 6:00 PM
     cierre: 23 * 60, // 11:00 PM
   };
 
   const horarioDomingo = {
-    apertura: 14 * 60, // 2:00 PM
+    apertura: 0 * 60, // 2:00 PM
     cierre: 23 * 60, // 11:00 PM
   };
 
