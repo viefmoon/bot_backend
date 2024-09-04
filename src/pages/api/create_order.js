@@ -1,4 +1,3 @@
-const { connectDB } = require("../../lib/db");
 const Order = require("../../models/order");
 const Customer = require("../../models/customer");
 const OrderItem = require("../../models/orderItem");
@@ -525,7 +524,7 @@ async function modifyOrder(req, res) {
       tipo: order.orderType,
       estado: order.status,
       direccion_entrega: order.deliveryAddress,
-      nombre_recogida: order.customerName,
+      nombre_recoleccion: order.customerName,
       precio_total: order.totalCost,
       productos: await Promise.all(
         updatedItems.map(async (item) => {

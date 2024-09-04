@@ -154,7 +154,7 @@ async function getOrderDetails(dailyOrderNumber, clientId) {
         estado: order.status,
         telefono: order.phoneNumber,
         direccion_entrega: order.deliveryAddress,
-        nombre_recogida: order.customerName,
+        nombre_recoleccion: order.customerName,
         precio_total: order.totalCost,
         fecha_creacion: order.createdAt.toLocaleString("es-MX", {
           timeZone: "America/Mexico_City",

@@ -49,18 +49,11 @@ export default async function handler(req, res) {
               // Registrar el mensaje como procesado
               await MessageLog.create({ messageId: id, from });
 
-              const contact = value.contacts.find(
-                (contact) => contact.wa_id === from
-              );
-              const displayName =
-                contact && contact.profile && contact.profile.name
-                  ? contact.profile.name
-                  : "Desconocido";
 
               if (message.type === "interactive") {
-                await handleInteractiveMessage(from, message, displayName);
+                await handleInteractiveMessage(from, message);
               } else if (message.type === "text") {
-                await handleMessage(from, message.text.body, displayName);
+                await handleMessage(from, message.text.body);
               } else {
                 console.log(`Tipo de mensaje no manejado: ${message.type}`);
               }
@@ -79,7 +72,7 @@ export default async function handler(req, res) {
   }
 }
 
-async function handleInteractiveMessage(from, message, displayName) {
+async function handleInteractiveMessage(from, message) {
   if (message.interactive.type === "button_reply") {
     const buttonId = message.interactive.button_reply.id;
     if (buttonId === "confirm_order") {
@@ -157,7 +150,7 @@ async function createOrderFromPreOrder(preOrder, clientId) {
   }
 }
 
-async function handleMessage(from, message, displayName) {
+async function handleMessage(from, message) {
   try {
     // Buscar o crear el cliente
     let [customer, created] = await Customer.findOrCreate({
@@ -187,17 +180,17 @@ async function handleMessage(from, message, displayName) {
     const pickupName = customerData.pickupName || "Desconocido";
 
     // Crear el mensaje con la información del cliente
-    const nameMessage = `Nombre de cliente: ${displayName}\nDirección de entrega: ${deliveryAddress}\nNombre de recogida: ${pickupName}`;
+    const customerInfoMessage = `Dirección de entrega: ${deliveryAddress}\nNombre de recoleccion: ${pickupName}`;
 
-    // Añadir el nombre del cliente al inicio si no está presente
+    // Añadir la información del cliente al inicio si no está presente
     if (
       !relevantChatHistory.some((msg) =>
-        msg.content.startsWith("Nombre de cliente:")
+        msg.content.startsWith("Dirección de entrega:")
       )
     ) {
       relevantChatHistory.unshift({
         role: "user",
-        content: nameMessage,
+        content: customerInfoMessage,
       });
     }
 
