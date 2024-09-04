@@ -26,8 +26,6 @@ export default async function handler(req, res) {
           return await createOrder(req, res);
         case "modify":
           return await modifyOrder(req, res);
-        case "cancel":
-          return await cancelOrder(req, res);
         case "selectProducts":
           return await selectProducts(req, res);
         default:
@@ -537,40 +535,6 @@ async function modifyOrder(req, res) {
         })
       ),
       tiempoEstimado: order.estimatedTime,
-    },
-  });
-}
-
-async function cancelOrder(req, res) {
-  const { dailyOrderNumber, clientId } = req.body;
-
-  // Obtener la fecha actual en la zona horaria de México
-  const mexicoTime = new Date().toLocaleString("en-US", {
-    timeZone: "America/Mexico_City",
-  });
-  const today = new Date(mexicoTime).toISOString().split("T")[0];
-
-  // Buscar la orden por dailyOrderNumber y fecha actual
-  const order = await Order.findOne({
-    where: {
-      dailyOrderNumber: dailyOrderNumber,
-      orderDate: today,
-    },
-  });
-
-  if (order.status !== "created") {
-    return res.status(400).json({
-      error: 'La orden no se puede cancelar porque su estado no es "creado".',
-    });
-  }
-
-  await order.update({ status: "canceled" });
-
-  res.status(200).json({
-    mensaje: "Orden cancelada exitosamente",
-    orden: {
-      Id: order.dailyOrderNumber,
-      estado: order.status,
     },
   });
 }

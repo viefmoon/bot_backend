@@ -84,6 +84,48 @@ async function handleInteractiveMessage(from, message) {
     } else if (buttonId === "view_menu") {
       await sendMenu(from);
     }
+  } else if (message.interactive.type === "list_reply") {
+    const listReplyId = message.interactive.list_reply.id;
+    if (listReplyId === "cancel_order") {
+      await handleOrderCancellation(from, message.context.id);
+    }
+  }
+}
+
+async function handleOrderCancellation(clientId, messageId) {
+  try {
+    // Buscar la orden por el messageId
+    const order = await Order.findOne({ where: { messageId } });
+
+    if (!order) {
+      console.error(`No se encontró orden para el messageId: ${messageId}`);
+      await sendWhatsAppMessage(
+        clientId,
+        "Lo siento, no se pudo encontrar tu orden para cancelar. Por favor, contacta con el restaurante si necesitas ayuda."
+      );
+      return;
+    }
+
+    if (order.status !== "created") {
+      await sendWhatsAppMessage(
+        clientId,
+        "Lo sentimos, pero esta orden ya no se puede cancelar porque ya fue aceptada por el restaurante."
+      );
+      return;
+    }
+
+    await order.update({ status: "canceled" });
+
+    await sendWhatsAppMessage(
+      clientId,
+      `Tu orden #${order.dailyOrderNumber} ha sido cancelada exitosamente. Si tienes alguna pregunta, por favor contacta con el restaurante.`
+    );
+  } catch (error) {
+    console.error("Error al cancelar la orden:", error);
+    await sendWhatsAppMessage(
+      clientId,
+      "Hubo un error al cancelar tu orden. Por favor, intenta nuevamente o contacta con el restaurante."
+    );
   }
 }
 
