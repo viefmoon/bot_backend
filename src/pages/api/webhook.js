@@ -643,31 +643,14 @@ async function generateOrderSummary(order) {
     orderSummary += `⏱️ *Tiempo estimado de entrega:* ${order.estimatedTime}\n\n`;
     orderSummary += `🛒 *Productos:*\n`;
 
-    let orderItems;
-    try {
-      orderItems = await OrderItem.findAll({
-        where: { orderId: order.id },
-        include: [
-          { model: Product, as: "Product" },
-          { model: ProductVariant, as: "ProductVariant" },
-          {
-            model: SelectedModifier,
-            as: "SelectedModifiers",
-            include: [{ model: Modifier, as: "Modifier" }],
-          },
-          {
-            model: SelectedPizzaIngredient,
-            as: "SelectedPizzaIngredients",
-            include: [{ model: PizzaIngredient, as: "PizzaIngredient" }],
-          },
-        ],
-      });
-    } catch (error) {
-      console.error("Error al obtener los items de la orden:", error);
-      orderSummary +=
-        "No se pudieron recuperar los detalles de los productos.\n";
-      return orderSummary;
-    }
+    // Obtener los items de la orden de forma más segura
+    const orderItems = await OrderItem.findAll({
+      where: { orderId: order.id },
+      include: [
+        { model: Product, as: "Product" },
+        { model: ProductVariant, as: "ProductVariant" },
+      ],
+    });
 
     for (const item of orderItems) {
       const productName = item.ProductVariant
@@ -677,27 +660,32 @@ async function generateOrderSummary(order) {
         : "Producto desconocido";
       orderSummary += `   *${productName}* x${item.quantity} - $${item.price}\n`;
 
-      if (item.SelectedModifiers && item.SelectedModifiers.length > 0) {
+      // Obtener modificadores
+      const selectedModifiers = await SelectedModifier.findAll({
+        where: { orderItemId: item.id },
+        include: [{ model: Modifier, as: "Modifier" }],
+      });
+
+      if (selectedModifiers.length > 0) {
         orderSummary += `     *Modificadores:*\n`;
-        item.SelectedModifiers.forEach((mod) => {
+        selectedModifiers.forEach((mod) => {
           if (mod.Modifier) {
             orderSummary += `      • ${mod.Modifier.name} - $${mod.Modifier.price}\n`;
           }
         });
       }
 
-      if (
-        item.SelectedPizzaIngredients &&
-        item.SelectedPizzaIngredients.length > 0
-      ) {
-        orderSummary += `    *Ingredientes de pizza:*\n`;
-        const ingredientesPorMitad = {
-          left: [],
-          right: [],
-          none: [],
-        };
+      // Obtener ingredientes de pizza
+      const selectedPizzaIngredients = await SelectedPizzaIngredient.findAll({
+        where: { orderItemId: item.id },
+        include: [{ model: PizzaIngredient, as: "PizzaIngredient" }],
+      });
 
-        item.SelectedPizzaIngredients.forEach((ing) => {
+      if (selectedPizzaIngredients.length > 0) {
+        orderSummary += `    *Ingredientes de pizza:*\n`;
+        const ingredientesPorMitad = { left: [], right: [], none: [] };
+
+        selectedPizzaIngredients.forEach((ing) => {
           if (ing.PizzaIngredient) {
             ingredientesPorMitad[ing.half].push(ing.PizzaIngredient.name);
           }
