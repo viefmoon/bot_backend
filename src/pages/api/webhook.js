@@ -643,7 +643,12 @@ async function generateOrderSummary(order) {
     orderSummary += `⏱️ *Tiempo estimado de entrega:* ${order.estimatedTime}\n\n`;
     orderSummary += `🛒 *Productos:*\n`;
 
-    // Obtener los items de la orden de forma más segura
+    // Verificar si OrderItem está definido y es una función
+    if (typeof OrderItem?.findAll !== "function") {
+      throw new Error("OrderItem.findAll no es una función");
+    }
+
+    // Obtener los items de la orden
     const orderItems = await OrderItem.findAll({
       where: { orderId: order.id },
       include: [
@@ -653,55 +658,60 @@ async function generateOrderSummary(order) {
     });
 
     for (const item of orderItems) {
-      const productName = item.ProductVariant
-        ? item.ProductVariant.name
-        : item.Product
-        ? item.Product.name
-        : "Producto desconocido";
+      const productName =
+        item.ProductVariant?.name ||
+        item.Product?.name ||
+        "Producto desconocido";
       orderSummary += `   *${productName}* x${item.quantity} - $${item.price}\n`;
 
-      // Obtener modificadores
-      const selectedModifiers = await SelectedModifier.findAll({
-        where: { orderItemId: item.id },
-        include: [{ model: Modifier, as: "Modifier" }],
-      });
-
-      if (selectedModifiers.length > 0) {
-        orderSummary += `     *Modificadores:*\n`;
-        selectedModifiers.forEach((mod) => {
-          if (mod.Modifier) {
-            orderSummary += `      • ${mod.Modifier.name} - $${mod.Modifier.price}\n`;
-          }
+      // Verificar si SelectedModifier está definido y es una función
+      if (typeof SelectedModifier?.findAll === "function") {
+        // Obtener modificadores
+        const selectedModifiers = await SelectedModifier.findAll({
+          where: { orderItemId: item.id },
+          include: [{ model: Modifier, as: "Modifier" }],
         });
+
+        if (selectedModifiers.length > 0) {
+          orderSummary += `     *Modificadores:*\n`;
+          selectedModifiers.forEach((mod) => {
+            if (mod.Modifier) {
+              orderSummary += `      • ${mod.Modifier.name} - $${mod.Modifier.price}\n`;
+            }
+          });
+        }
       }
 
-      // Obtener ingredientes de pizza
-      const selectedPizzaIngredients = await SelectedPizzaIngredient.findAll({
-        where: { orderItemId: item.id },
-        include: [{ model: PizzaIngredient, as: "PizzaIngredient" }],
-      });
-
-      if (selectedPizzaIngredients.length > 0) {
-        orderSummary += `    *Ingredientes de pizza:*\n`;
-        const ingredientesPorMitad = { left: [], right: [], none: [] };
-
-        selectedPizzaIngredients.forEach((ing) => {
-          if (ing.PizzaIngredient) {
-            ingredientesPorMitad[ing.half].push(ing.PizzaIngredient.name);
-          }
+      // Verificar si SelectedPizzaIngredient está definido y es una función
+      if (typeof SelectedPizzaIngredient?.findAll === "function") {
+        // Obtener ingredientes de pizza
+        const selectedPizzaIngredients = await SelectedPizzaIngredient.findAll({
+          where: { orderItemId: item.id },
+          include: [{ model: PizzaIngredient, as: "PizzaIngredient" }],
         });
 
-        if (ingredientesPorMitad.none.length > 0) {
-          orderSummary += `      • ${ingredientesPorMitad.none.join(", ")}\n`;
-        }
+        if (selectedPizzaIngredients.length > 0) {
+          orderSummary += `    *Ingredientes de pizza:*\n`;
+          const ingredientesPorMitad = { left: [], right: [], none: [] };
 
-        if (
-          ingredientesPorMitad.left.length > 0 ||
-          ingredientesPorMitad.right.length > 0
-        ) {
-          const mitadIzquierda = ingredientesPorMitad.left.join(", ");
-          const mitadDerecha = ingredientesPorMitad.right.join(", ");
-          orderSummary += `      • ${mitadIzquierda} / ${mitadDerecha}\n`;
+          selectedPizzaIngredients.forEach((ing) => {
+            if (ing.PizzaIngredient) {
+              ingredientesPorMitad[ing.half].push(ing.PizzaIngredient.name);
+            }
+          });
+
+          if (ingredientesPorMitad.none.length > 0) {
+            orderSummary += `      • ${ingredientesPorMitad.none.join(", ")}\n`;
+          }
+
+          if (
+            ingredientesPorMitad.left.length > 0 ||
+            ingredientesPorMitad.right.length > 0
+          ) {
+            const mitadIzquierda = ingredientesPorMitad.left.join(", ");
+            const mitadDerecha = ingredientesPorMitad.right.join(", ");
+            orderSummary += `      • ${mitadIzquierda} / ${mitadDerecha}\n`;
+          }
         }
       }
 
