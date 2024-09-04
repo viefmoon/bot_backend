@@ -114,13 +114,13 @@ async function handleOrderConfirmation(clientId, messageId) {
         type: "list",
         header: {
           type: "text",
-          text: "Opciones de pedido",
+          text: "Resumen del Pedido",
         },
         body: {
-          text: "Selecciona una opción:",
+          text: orderSummary,
         },
         footer: {
-          text: "Gracias por tu pedido",
+          text: "Selecciona una opción:",
         },
         action: {
           button: "Ver opciones",
