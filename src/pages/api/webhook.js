@@ -648,10 +648,18 @@ async function generateOrderSummary(order) {
       orderItems = await OrderItem.findAll({
         where: { orderId: order.id },
         include: [
-          { model: Product },
-          { model: ProductVariant },
-          { model: SelectedModifier, include: [Modifier] },
-          { model: SelectedPizzaIngredient, include: [PizzaIngredient] },
+          { model: Product, as: "Product" },
+          { model: ProductVariant, as: "ProductVariant" },
+          {
+            model: SelectedModifier,
+            as: "SelectedModifiers",
+            include: [{ model: Modifier, as: "Modifier" }],
+          },
+          {
+            model: SelectedPizzaIngredient,
+            as: "SelectedPizzaIngredients",
+            include: [{ model: PizzaIngredient, as: "PizzaIngredient" }],
+          },
         ],
       });
     } catch (error) {
