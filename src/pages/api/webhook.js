@@ -19,6 +19,7 @@ export default async function handler(req, res) {
       res.status(403).end();
     }
   } else if (req.method === "POST") {
+    res.status(200).send("EVENT_RECEIVED");
     const { object, entry } = req.body;
 
     if (object === "whatsapp_business_account") {
