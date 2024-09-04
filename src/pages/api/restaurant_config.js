@@ -1,4 +1,3 @@
-const { connectDB } = require("../../lib/db");
 import RestaurantConfig from "../../models/restaurantConfig";
 const cors = require("cors");
 

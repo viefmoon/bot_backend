@@ -4,6 +4,13 @@ const { handleChatRequest } = require("./chat");
 const Customer = require("../../models/customer");
 const PreOrder = require("../../models/preOrder");
 const Order = require("../../models/order");
+const OrderItem = require("../../models/orderItem");
+const Product = require("../../models/product");
+const ProductVariant = require("../../models/productVariant");
+const SelectedModifier = require("../../models/selectedModifier");
+const Modifier = require("../../models/modifier");
+const SelectedPizzaIngredient = require("../../models/selectedPizzaIngredient");
+const PizzaIngredient = require("../../models/pizzaIngredient");
 const axios = require("axios");
 export default async function handler(req, res) {
   if (req.method === "GET") {
@@ -88,6 +95,8 @@ async function handleInteractiveMessage(from, message) {
     const listReplyId = message.interactive.list_reply.id;
     if (listReplyId === "cancel_order") {
       await handleOrderCancellation(from, message.context.id);
+    } else if (listReplyId === "modify_order") {
+      await handleOrderModification(from, message.context.id);
     }
   }
 }
@@ -173,6 +182,10 @@ async function handleOrderConfirmation(clientId, messageId) {
                 {
                   id: "cancel_order",
                   title: "Cancelar Pedido",
+                },
+                {
+                  id: "modify_order",
+                  title: "Modificar Pedido",
                 },
               ],
             },
@@ -569,4 +582,120 @@ async function sendMenu(phoneNumber) {
     console.error("Error al enviar el menú:", error);
     return false;
   }
+}
+
+async function handleOrderModification(clientId, messageId) {
+  try {
+    // Buscar la orden por el messageId
+    const order = await Order.findOne({ where: { messageId } });
+
+    if (!order) {
+      console.error(`No se encontró orden para el messageId: ${messageId}`);
+      await sendWhatsAppMessage(
+        clientId,
+        "Lo siento, no se pudo encontrar tu orden para modificar. Por favor, contacta con el restaurante si necesitas ayuda."
+      );
+      return;
+    }
+
+    if (order.status !== "created") {
+      await sendWhatsAppMessage(
+        clientId,
+        "Lo sentimos, pero esta orden ya no se puede modificar porque ya fue aceptada por el restaurante."
+      );
+      return;
+    }
+
+    // Generar el resumen de la orden
+    const orderSummary = await generateOrderSummary(order);
+
+    // Enviar el resumen al cliente
+    await sendWhatsAppMessage(
+      clientId,
+      `Aquí está tu orden actual para modificar:\n\n${orderSummary}\n\nPor favor, indica qué cambios deseas realizar.`
+    );
+  } catch (error) {
+    console.error("Error al modificar la orden:", error);
+    await sendWhatsAppMessage(
+      clientId,
+      "Hubo un error al recuperar tu orden para modificar. Por favor, intenta nuevamente o contacta con el restaurante."
+    );
+  }
+}
+
+async function generateOrderSummary(order) {
+  const tipoOrdenTraducido =
+    order.orderType === "delivery"
+      ? "Entrega a domicilio"
+      : "Recolección en restaurante";
+  let orderSummary = `📦 *Orden recuperada para modificar*\n\n`;
+  orderSummary += `🛍️ *Orden #${order.dailyOrderNumber}*\n\n`;
+  orderSummary += `🍽️ *Tipo:* ${tipoOrdenTraducido}\n`;
+  if (order.deliveryAddress) {
+    orderSummary += `🏠 *Dirección de entrega:* ${order.deliveryAddress}\n`;
+  }
+  if (order.customerName) {
+    orderSummary += `👤 *Nombre para recolección:* ${order.customerName}\n`;
+  }
+  orderSummary += `💰 *Precio total:* $${order.totalCost}\n`;
+  orderSummary += `📅 *Fecha de creación:* ${order.createdAt.toLocaleString()}\n`;
+  orderSummary += `⏱️ *Tiempo estimado de entrega:* ${order.estimatedTime}\n\n`;
+  orderSummary += `🛒 *Productos:*\n`;
+
+  const orderItems = await OrderItem.findAll({
+    where: { orderId: order.id },
+    include: [
+      { model: Product },
+      { model: ProductVariant },
+      { model: SelectedModifier, include: [Modifier] },
+      { model: SelectedPizzaIngredient, include: [PizzaIngredient] },
+    ],
+  });
+
+  for (const item of orderItems) {
+    const productName = item.ProductVariant
+      ? item.ProductVariant.name
+      : item.Product.name;
+    orderSummary += `   *${productName}* x${item.quantity} - $${item.price}\n`;
+
+    if (item.SelectedModifiers.length > 0) {
+      orderSummary += `     *Modificadores:*\n`;
+      item.SelectedModifiers.forEach((mod) => {
+        orderSummary += `      • ${mod.Modifier.name} - $${mod.Modifier.price}\n`;
+      });
+    }
+
+    if (item.SelectedPizzaIngredients.length > 0) {
+      orderSummary += `    *Ingredientes de pizza:*\n`;
+      const ingredientesPorMitad = {
+        left: [],
+        right: [],
+        none: [],
+      };
+
+      item.SelectedPizzaIngredients.forEach((ing) => {
+        ingredientesPorMitad[ing.half].push(ing.PizzaIngredient.name);
+      });
+
+      if (ingredientesPorMitad.none.length > 0) {
+        orderSummary += `      • ${ingredientesPorMitad.none.join(", ")}\n`;
+      }
+
+      if (
+        ingredientesPorMitad.left.length > 0 ||
+        ingredientesPorMitad.right.length > 0
+      ) {
+        const mitadIzquierda = ingredientesPorMitad.left.join(", ");
+        const mitadDerecha = ingredientesPorMitad.right.join(", ");
+        orderSummary += `      • ${mitadIzquierda} / ${mitadDerecha}\n`;
+      }
+    }
+
+    if (item.comments) {
+      orderSummary += `    💬 *Comentarios:* ${item.comments}\n`;
+    }
+    orderSummary += `\n`;
+  }
+
+  return orderSummary;
 }

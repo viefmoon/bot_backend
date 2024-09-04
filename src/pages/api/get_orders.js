@@ -1,5 +1,4 @@
-const { connectDB } = require("../../lib/db");
-const { Order, syncModels } = require("../../models");
+const { Order } = require("../../models");
 const cors = require("cors");
 
 const corsMiddleware = cors({

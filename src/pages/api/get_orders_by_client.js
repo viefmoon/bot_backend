@@ -1,4 +1,3 @@
-const { connectDB } = require("../../lib/db");
 const { Order, Item } = require("../../models");
 const cors = require("cors");
 

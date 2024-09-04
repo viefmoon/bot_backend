@@ -1,4 +1,3 @@
-const { connectDB } = require("../../lib/db");
 const Order = require("../../models/order");
 const { sequelize } = require("../../lib/db");
 const cors = require("cors");
