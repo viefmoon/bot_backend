@@ -143,7 +143,45 @@ async function createOrderFromPreOrder(preOrder, clientId) {
     );
 
     if (response.status === 201) {
-      return response.data.orden;
+      const newOrder = response.data.orden;
+
+      // Construir el resumen de la orden
+      let orderSummary = `Tu orden #${newOrder.Id} ha sido confirmada.\n`;
+      orderSummary += `Tipo: ${newOrder.tipo}\n`;
+      orderSummary += `Estado: ${newOrder.estado}\n`;
+      if (newOrder.direccion_entrega) {
+        orderSummary += `Dirección de entrega: ${newOrder.direccion_entrega}\n`;
+      }
+      if (newOrder.nombre_recogida) {
+        orderSummary += `Nombre para recogida: ${newOrder.nombre_recogida}\n`;
+      }
+      orderSummary += `Precio total: ${newOrder.precio_total}\n`;
+      orderSummary += `Fecha de creación: ${newOrder.fecha_creacion}\n`;
+      orderSummary += `Tiempo estimado: ${newOrder.tiempoEstimado}\n`;
+      orderSummary += `Productos:\n`;
+      newOrder.productos.forEach((producto) => {
+        orderSummary += `- ${producto.nombre} x${producto.cantidad} - $${producto.precio}\n`;
+        if (producto.modificadores.length > 0) {
+          orderSummary += `  Modificadores:\n`;
+          producto.modificadores.forEach((mod) => {
+            orderSummary += `  - ${mod.nombre} - $${mod.precio}\n`;
+          });
+        }
+        if (producto.ingredientes_pizza.length > 0) {
+          orderSummary += `  Ingredientes de pizza:\n`;
+          producto.ingredientes_pizza.forEach((ing) => {
+            orderSummary += `  - ${ing.nombre} (${ing.mitad})\n`;
+          });
+        }
+        if (producto.comments) {
+          orderSummary += `  Comentarios: ${producto.comments}\n`;
+        }
+      });
+
+      // Enviar el resumen de la orden al cliente
+      await sendWhatsAppMessage(clientId, orderSummary);
+
+      return newOrder;
     } else {
       throw new Error("Error al crear la orden");
     }
