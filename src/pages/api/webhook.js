@@ -106,19 +106,38 @@ async function handleOrderConfirmation(clientId, messageId) {
       clientId
     );
 
-    // Enviar confirmación al cliente con botón de cancelar pedido
+    // Enviar confirmación al cliente con menú de lista
     const confirmationMessageId = await sendWhatsAppMessage(
       clientId,
       orderSummary,
-      [
-        {
-          type: "reply",
-          reply: {
-            id: "cancel_order",
-            title: "Cancelar Pedido",
-          },
+      {
+        type: "list",
+        header: {
+          type: "text",
+          text: "Opciones de pedido",
         },
-      ]
+        body: {
+          text: "Selecciona una opción:",
+        },
+        footer: {
+          text: "Gracias por tu pedido",
+        },
+        action: {
+          button: "Ver opciones",
+          sections: [
+            {
+              title: "Acciones",
+              rows: [
+                {
+                  id: "cancel_order",
+                  title: "Cancelar Pedido",
+                  description: "Cancela tu pedido actual",
+                },
+              ],
+            },
+          ],
+        },
+      }
     );
 
     // Actualizar la orden con el messageId de confirmación
@@ -436,18 +455,17 @@ async function sendWhatsAppImageMessage(
   }
 }
 
-async function sendWhatsAppMessage(phoneNumber, message, buttons = null) {
+async function sendWhatsAppMessage(phoneNumber, message, listOptions = null) {
   try {
     let payload = {
       messaging_product: "whatsapp",
       to: phoneNumber,
-      type: buttons ? "interactive" : "text",
-      text: buttons ? undefined : { body: message },
-      interactive: buttons
+      type: listOptions ? "interactive" : "text",
+      text: listOptions ? undefined : { body: message },
+      interactive: listOptions
         ? {
-            type: "button",
-            body: { text: message },
-            action: { buttons: buttons },
+            type: "list",
+            ...listOptions,
           }
         : undefined,
     };
