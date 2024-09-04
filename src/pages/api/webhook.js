@@ -99,12 +99,14 @@ async function handleOrderConfirmation(clientId, messageId) {
       return;
     }
 
-    // Crear la orden real basada en la preorden
-    const newOrder = await createOrderFromPreOrder(preOrder, clientId);
+    // Crear la orden real basada en la preorden y obtener el resumen
+    const { newOrder, orderSummary } = await createOrderFromPreOrder(
+      preOrder,
+      clientId
+    );
 
     // Enviar confirmación al cliente
-    const confirmationMessage = `Tu orden #${newOrder.dailyOrderNumber} ha sido confirmada. Gracias por tu compra.`;
-    await sendWhatsAppMessage(clientId, confirmationMessage);
+    await sendWhatsAppMessage(clientId, orderSummary);
 
     // Eliminar la preorden
     await preOrder.destroy();
@@ -146,42 +148,38 @@ async function createOrderFromPreOrder(preOrder, clientId) {
       const newOrder = response.data.orden;
 
       // Construir el resumen de la orden
-      let orderSummary = `Tu orden #${newOrder.Id} ha sido confirmada.\n`;
-      orderSummary += `Tipo: ${newOrder.tipo}\n`;
-      orderSummary += `Estado: ${newOrder.estado}\n`;
+      let orderSummary = `*Tu orden #${newOrder.dailyOrderNumber} ha sido creada exitosamente.*\n`;
+      orderSummary += `*Tipo:* ${newOrder.tipo}\n`;
       if (newOrder.direccion_entrega) {
-        orderSummary += `Dirección de entrega: ${newOrder.direccion_entrega}\n`;
+        orderSummary += `*Dirección de entrega:* ${newOrder.direccion_entrega}\n`;
       }
-      if (newOrder.nombre_recogida) {
-        orderSummary += `Nombre para recogida: ${newOrder.nombre_recogida}\n`;
+      if (newOrder.nombre_recoleccion) {
+        orderSummary += `*Nombre para recolección:* ${newOrder.nombre_recoleccion}\n`;
       }
-      orderSummary += `Precio total: ${newOrder.precio_total}\n`;
-      orderSummary += `Fecha de creación: ${newOrder.fecha_creacion}\n`;
-      orderSummary += `Tiempo estimado: ${newOrder.tiempoEstimado}\n`;
-      orderSummary += `Productos:\n`;
+      orderSummary += `*Precio total:* $${newOrder.precio_total}\n`;
+      orderSummary += `*Fecha de creación:* ${newOrder.fecha_creacion}\n`;
+      orderSummary += `*Tiempo estimado de entrega:* ${newOrder.tiempoEstimado}\n`;
+      orderSummary += `*Productos:*\n`;
       newOrder.productos.forEach((producto) => {
-        orderSummary += `- ${producto.nombre} x${producto.cantidad} - $${producto.precio}\n`;
+        orderSummary += `- *${producto.nombre}* x${producto.cantidad} - $${producto.precio}\n`;
         if (producto.modificadores.length > 0) {
-          orderSummary += `  Modificadores:\n`;
+          orderSummary += `  *Modificadores:*\n`;
           producto.modificadores.forEach((mod) => {
             orderSummary += `  - ${mod.nombre} - $${mod.precio}\n`;
           });
         }
         if (producto.ingredientes_pizza.length > 0) {
-          orderSummary += `  Ingredientes de pizza:\n`;
+          orderSummary += `  *Ingredientes de pizza:*\n`;
           producto.ingredientes_pizza.forEach((ing) => {
             orderSummary += `  - ${ing.nombre} (${ing.mitad})\n`;
           });
         }
         if (producto.comments) {
-          orderSummary += `  Comentarios: ${producto.comments}\n`;
+          orderSummary += `  *Comentarios:* ${producto.comments}\n`;
         }
       });
 
-      // Enviar el resumen de la orden al cliente
-      await sendWhatsAppMessage(clientId, orderSummary);
-
-      return newOrder;
+      return { newOrder, orderSummary };
     } else {
       throw new Error("Error al crear la orden");
     }

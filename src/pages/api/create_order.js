@@ -226,13 +226,12 @@ async function createOrder(req, res) {
   await newOrder.update({ totalCost });
 
   res.status(201).json({
-    mensaje: "Orden creada exitosamente",
     orden: {
       Id: newOrder.dailyOrderNumber,
       tipo: newOrder.orderType,
       estado: newOrder.status,
       direccion_entrega: newOrder.deliveryAddress,
-      nombre_recogida: newOrder.customerName,
+      nombre_recoleccion: newOrder.customerName,
       precio_total: newOrder.totalCost,
       fecha_creacion: newOrder.createdAt.toLocaleString("es-MX", {
         timeZone: "America/Mexico_City",
