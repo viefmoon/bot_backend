@@ -147,37 +147,39 @@ async function createOrderFromPreOrder(preOrder, clientId) {
     if (response.status === 201) {
       const newOrder = response.data.orden;
 
-      // Construir el resumen de la orden
-      let orderSummary = `*Tu orden #${newOrder.dailyOrderNumber} ha sido creada exitosamente.*\n`;
-      orderSummary += `*Tipo:* ${newOrder.tipo}\n`;
+      // Construir el resumen de la orden con emojis
+      let orderSummary = `🎉 *¡Tu orden #${newOrder.id} ha sido creada exitosamente!* 🎉\n\n`;
+      orderSummary += `🍽️ *Tipo:* ${newOrder.tipo}\n`;
       if (newOrder.direccion_entrega) {
-        orderSummary += `*Dirección de entrega:* ${newOrder.direccion_entrega}\n`;
+        orderSummary += `🏠 *Dirección de entrega:* ${newOrder.direccion_entrega}\n`;
       }
       if (newOrder.nombre_recoleccion) {
-        orderSummary += `*Nombre para recolección:* ${newOrder.nombre_recoleccion}\n`;
+        orderSummary += `👤 *Nombre para recolección:* ${newOrder.nombre_recoleccion}\n`;
       }
-      orderSummary += `*Precio total:* $${newOrder.precio_total}\n`;
-      orderSummary += `*Fecha de creación:* ${newOrder.fecha_creacion}\n`;
-      orderSummary += `*Tiempo estimado de entrega:* ${newOrder.tiempoEstimado}\n`;
-      orderSummary += `*Productos:*\n`;
+      orderSummary += `💰 *Precio total:* $${newOrder.precio_total}\n`;
+      orderSummary += `📅 *Fecha de creación:* ${newOrder.fecha_creacion}\n`;
+      orderSummary += `⏱️ *Tiempo estimado de entrega:* ${newOrder.tiempoEstimado}\n\n`;
+      orderSummary += `🛒 *Productos:*\n`;
       newOrder.productos.forEach((producto) => {
-        orderSummary += `- *${producto.nombre}* x${producto.cantidad} - $${producto.precio}\n`;
+        orderSummary += `   *${producto.nombre}* x${producto.cantidad} - $${producto.precio}\n`;
         if (producto.modificadores.length > 0) {
-          orderSummary += `  *Modificadores:*\n`;
+          orderSummary += `     *Modificadores:*\n`;
           producto.modificadores.forEach((mod) => {
-            orderSummary += `  - ${mod.nombre} - $${mod.precio}\n`;
+            orderSummary += `      • ${mod.nombre} - $${mod.precio}\n`;
           });
         }
         if (producto.ingredientes_pizza.length > 0) {
-          orderSummary += `  *Ingredientes de pizza:*\n`;
+          orderSummary += `    *Ingredientes de pizza:*\n`;
           producto.ingredientes_pizza.forEach((ing) => {
-            orderSummary += `  - ${ing.nombre} (${ing.mitad})\n`;
+            orderSummary += `      • ${ing.nombre} (${ing.mitad})\n`;
           });
         }
         if (producto.comments) {
-          orderSummary += `  *Comentarios:* ${producto.comments}\n`;
+          orderSummary += `    💬 *Comentarios:* ${producto.comments}\n`;
         }
+        orderSummary += `\n`;
       });
+      orderSummary += `\n¡Gracias por tu pedido! 😊 Esperamos que disfrutes tu comida. 🍽️`;
 
       return { newOrder, orderSummary };
     } else {

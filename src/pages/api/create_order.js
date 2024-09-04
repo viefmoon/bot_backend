@@ -227,7 +227,7 @@ async function createOrder(req, res) {
 
   res.status(201).json({
     orden: {
-      Id: newOrder.dailyOrderNumber,
+      id: newOrder.dailyOrderNumber,
       tipo: newOrder.orderType,
       estado: newOrder.status,
       direccion_entrega: newOrder.deliveryAddress,
