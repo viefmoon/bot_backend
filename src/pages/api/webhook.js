@@ -19,26 +19,7 @@ export default async function handler(req, res) {
       res.status(403).end();
     }
   } else if (req.method === "POST") {
-    console.log("Solicitud recibida");
-    console.log("Cuerpo de la solicitud:", JSON.stringify(req.body, null, 2));
     const { object, entry } = req.body;
-
-    // Verificar horario de atención
-    const estaAbierto = await verificarHorarioAtencion();
-    if (!estaAbierto) {
-      const from = entry?.[0]?.changes?.[0]?.value?.messages?.[0]?.from;
-      if (from) {
-        await sendWhatsAppMessage(
-          from,
-          "Lo sentimos, solo podremos procesar tu pedido cuando el restaurante esté abierto. Horarios: Martes a sábado: 6:00 PM - 11:00 PM, Domingos: 2:00 PM - 11:00 PM."
-        );
-      } else {
-        console.error(
-          "No se pudo obtener el número de teléfono del remitente."
-        );
-        console.error("Estructura de entry:", JSON.stringify(entry, null, 2));
-      }
-    }
 
     if (object === "whatsapp_business_account") {
       for (const entryItem of entry) {
@@ -46,41 +27,33 @@ export default async function handler(req, res) {
         for (const change of changes) {
           const { value } = change;
 
-          // Asegurarse de que haya mensajes y contactos
-          if (
-            value.messages &&
-            value.messages.length > 0 &&
-            value.contacts &&
-            value.contacts.length > 0
-          ) {
-            // Iterar sobre los mensajes recibidos
+          // Verificar si hay mensajes recibidos
+          if (value.messages && value.messages.length > 0) {
             for (const message of value.messages) {
-              const { from, id } = message;
+              const { from, type } = message;
 
-              // Verificar si el mensaje ya ha sido procesado
-              const existingMessage = await MessageLog.findOne({
-                where: { messageId: id },
-              });
-              if (existingMessage) {
-                console.log(`Mensaje duplicado ignorado: ${id}`);
-                continue;
+              // Verificar horario de atención solo para mensajes recibidos
+              const estaAbierto = await verificarHorarioAtencion();
+              if (!estaAbierto) {
+                await sendWhatsAppMessage(
+                  from,
+                  "Lo sentimos, solo podremos procesar tu pedido cuando el restaurante esté abierto. Horarios: Martes a sábado: 6:00 PM - 11:00 PM, Domingos: 2:00 PM - 11:00 PM."
+                );
+                continue; // Pasar al siguiente mensaje si está cerrado
               }
 
-              // Registrar el mensaje como procesado
-              await MessageLog.create({ messageId: id, from });
-
-              if (message.type === "interactive") {
-                await handleInteractiveMessage(from, message);
-              } else if (message.type === "text") {
+              // Procesar el mensaje según su tipo
+              if (type === "text") {
                 await handleMessage(from, message.text.body);
+              } else if (type === "interactive") {
+                await handleInteractiveMessage(from, message);
               } else {
-                console.log(`Tipo de mensaje no manejado: ${message.type}`);
+                console.log(`Tipo de mensaje no manejado: ${type}`);
               }
             }
           }
         }
       }
-
       res.status(200).send("EVENT_RECEIVED");
     } else {
       res.sendStatus(404);
