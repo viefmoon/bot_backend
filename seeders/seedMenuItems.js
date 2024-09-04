@@ -6,6 +6,7 @@ const PizzaIngredient = require("../src/models/pizzaIngredient");
 const ModifierType = require("../src/models/modifierType");
 const Modifier = require("../src/models/modifier");
 const Availability = require("../src/models/availability");
+const RestaurantConfig = require("../src/models/restaurantConfig");
 
 const menu = [
   {
@@ -612,9 +613,22 @@ const seedMenuItems = async () => {
         }
       }
     }
-    console.log("Menu items and availability have been seeded successfully.");
+
+    // Crear la configuración inicial del restaurante
+    await RestaurantConfig.create({
+      acceptingOrders: true,
+      estimatedPickupTime: 20,
+      estimatedDeliveryTime: 40,
+    });
+
+    console.log(
+      "Menu items, availability, and restaurant configuration have been seeded successfully."
+    );
   } catch (error) {
-    console.error("Error seeding menu items and availability:", error);
+    console.error(
+      "Error seeding menu items, availability, and restaurant configuration:",
+      error
+    );
   } finally {
     await sequelize.close();
   }

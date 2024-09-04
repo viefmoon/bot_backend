@@ -48,13 +48,13 @@ async function createOrder(req, res) {
     req.body;
 
   // Verificar si el restaurante está aceptando pedidos y obtener la configuración
-  // const config = await RestaurantConfig.findOne();
-  // if (!config || !config.acceptingOrders) {
-  //   return res.status(400).json({
-  //     error:
-  //       "Lo sentimos, el restaurante no está aceptando pedidos en este momento debido a saturación, puedes intentar mas tarde o llamar al restaurante.",
-  //   });
-  // }
+  const config = await RestaurantConfig.findOne();
+  if (!config || !config.acceptingOrders) {
+    return res.status(400).json({
+      error:
+        "Lo sentimos, el restaurante no está aceptando pedidos en este momento, puedes intentar mas tarde o llamar al restaurante.",
+    });
+  }
 
   const estaAbierto = await verificarHorarioAtencion();
   if (!estaAbierto) {
@@ -114,12 +114,10 @@ async function createOrder(req, res) {
   const dailyOrderNumber = await getNextDailyOrderNumber();
 
   // Determinar el tiempo estimado basado en el tipo de orden
-  // const estimatedTime =
-  //   orderType === "pickup"
-  //     ? config.estimatedPickupTime
-  //     : config.estimatedDeliveryTime;
-
-  const estimatedTime = 30;
+  const estimatedTime =
+    orderType === "pickup"
+      ? config.estimatedPickupTime
+      : config.estimatedDeliveryTime;
 
   // Crear la orden
   const newOrder = await Order.create({
