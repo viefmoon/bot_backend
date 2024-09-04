@@ -30,7 +30,18 @@ export default async function handler(req, res) {
           // Verificar si hay mensajes recibidos
           if (value.messages && value.messages.length > 0) {
             for (const message of value.messages) {
-              const { from, type } = message;
+              const { from, type, id } = message;
+
+              // Verificar si el mensaje ya ha sido procesado
+              const existingMessage = await MessageLog.findOne({
+                where: { messageId: id },
+              });
+              if (existingMessage) {
+                continue; // Saltar al siguiente mensaje
+              }
+
+              // Registrar el nuevo mensaje
+              await MessageLog.create({ messageId: id, processed: true });
 
               // Verificar horario de atención solo para mensajes recibidos
               const estaAbierto = await verificarHorarioAtencion();
