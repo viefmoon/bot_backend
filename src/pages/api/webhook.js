@@ -624,78 +624,100 @@ async function handleOrderModification(clientId, messageId) {
 }
 
 async function generateOrderSummary(order) {
-  const tipoOrdenTraducido =
-    order.orderType === "delivery"
-      ? "Entrega a domicilio"
-      : "Recolección en restaurante";
-  let orderSummary = `📦 *Orden recuperada para modificar*\n\n`;
-  orderSummary += `🛍️ *Orden #${order.dailyOrderNumber}*\n\n`;
-  orderSummary += `🍽️ *Tipo:* ${tipoOrdenTraducido}\n`;
-  if (order.deliveryAddress) {
-    orderSummary += `🏠 *Dirección de entrega:* ${order.deliveryAddress}\n`;
-  }
-  if (order.customerName) {
-    orderSummary += `👤 *Nombre para recolección:* ${order.customerName}\n`;
-  }
-  orderSummary += `💰 *Precio total:* $${order.totalCost}\n`;
-  orderSummary += `📅 *Fecha de creación:* ${order.createdAt.toLocaleString()}\n`;
-  orderSummary += `⏱️ *Tiempo estimado de entrega:* ${order.estimatedTime}\n\n`;
-  orderSummary += `🛒 *Productos:*\n`;
+  try {
+    const tipoOrdenTraducido =
+      order.orderType === "delivery"
+        ? "Entrega a domicilio"
+        : "Recolección en restaurante";
+    let orderSummary = `📦 *Orden recuperada para modificar*\n\n`;
+    orderSummary += `🛍️ *Orden #${order.dailyOrderNumber}*\n\n`;
+    orderSummary += `🍽️ *Tipo:* ${tipoOrdenTraducido}\n`;
+    if (order.deliveryAddress) {
+      orderSummary += `🏠 *Dirección de entrega:* ${order.deliveryAddress}\n`;
+    }
+    if (order.customerName) {
+      orderSummary += `👤 *Nombre para recolección:* ${order.customerName}\n`;
+    }
+    orderSummary += `💰 *Precio total:* $${order.totalCost}\n`;
+    orderSummary += `📅 *Fecha de creación:* ${order.createdAt.toLocaleString()}\n`;
+    orderSummary += `⏱️ *Tiempo estimado de entrega:* ${order.estimatedTime}\n\n`;
+    orderSummary += `🛒 *Productos:*\n`;
 
-  const orderItems = await OrderItem.findAll({
-    where: { orderId: order.id },
-    include: [
-      { model: Product },
-      { model: ProductVariant },
-      { model: SelectedModifier, include: [Modifier] },
-      { model: SelectedPizzaIngredient, include: [PizzaIngredient] },
-    ],
-  });
-
-  for (const item of orderItems) {
-    const productName = item.ProductVariant
-      ? item.ProductVariant.name
-      : item.Product.name;
-    orderSummary += `   *${productName}* x${item.quantity} - $${item.price}\n`;
-
-    if (item.SelectedModifiers.length > 0) {
-      orderSummary += `     *Modificadores:*\n`;
-      item.SelectedModifiers.forEach((mod) => {
-        orderSummary += `      • ${mod.Modifier.name} - $${mod.Modifier.price}\n`;
+    let orderItems;
+    try {
+      orderItems = await OrderItem.findAll({
+        where: { orderId: order.id },
+        include: [
+          { model: Product },
+          { model: ProductVariant },
+          { model: SelectedModifier, include: [Modifier] },
+          { model: SelectedPizzaIngredient, include: [PizzaIngredient] },
+        ],
       });
+    } catch (error) {
+      console.error("Error al obtener los items de la orden:", error);
+      orderSummary +=
+        "No se pudieron recuperar los detalles de los productos.\n";
+      return orderSummary;
     }
 
-    if (item.SelectedPizzaIngredients.length > 0) {
-      orderSummary += `    *Ingredientes de pizza:*\n`;
-      const ingredientesPorMitad = {
-        left: [],
-        right: [],
-        none: [],
-      };
+    for (const item of orderItems) {
+      const productName = item.ProductVariant
+        ? item.ProductVariant.name
+        : item.Product
+        ? item.Product.name
+        : "Producto desconocido";
+      orderSummary += `   *${productName}* x${item.quantity} - $${item.price}\n`;
 
-      item.SelectedPizzaIngredients.forEach((ing) => {
-        ingredientesPorMitad[ing.half].push(ing.PizzaIngredient.name);
-      });
-
-      if (ingredientesPorMitad.none.length > 0) {
-        orderSummary += `      • ${ingredientesPorMitad.none.join(", ")}\n`;
+      if (item.SelectedModifiers && item.SelectedModifiers.length > 0) {
+        orderSummary += `     *Modificadores:*\n`;
+        item.SelectedModifiers.forEach((mod) => {
+          if (mod.Modifier) {
+            orderSummary += `      • ${mod.Modifier.name} - $${mod.Modifier.price}\n`;
+          }
+        });
       }
 
       if (
-        ingredientesPorMitad.left.length > 0 ||
-        ingredientesPorMitad.right.length > 0
+        item.SelectedPizzaIngredients &&
+        item.SelectedPizzaIngredients.length > 0
       ) {
-        const mitadIzquierda = ingredientesPorMitad.left.join(", ");
-        const mitadDerecha = ingredientesPorMitad.right.join(", ");
-        orderSummary += `      • ${mitadIzquierda} / ${mitadDerecha}\n`;
+        orderSummary += `    *Ingredientes de pizza:*\n`;
+        const ingredientesPorMitad = {
+          left: [],
+          right: [],
+          none: [],
+        };
+
+        item.SelectedPizzaIngredients.forEach((ing) => {
+          if (ing.PizzaIngredient) {
+            ingredientesPorMitad[ing.half].push(ing.PizzaIngredient.name);
+          }
+        });
+
+        if (ingredientesPorMitad.none.length > 0) {
+          orderSummary += `      • ${ingredientesPorMitad.none.join(", ")}\n`;
+        }
+
+        if (
+          ingredientesPorMitad.left.length > 0 ||
+          ingredientesPorMitad.right.length > 0
+        ) {
+          const mitadIzquierda = ingredientesPorMitad.left.join(", ");
+          const mitadDerecha = ingredientesPorMitad.right.join(", ");
+          orderSummary += `      • ${mitadIzquierda} / ${mitadDerecha}\n`;
+        }
       }
+
+      if (item.comments) {
+        orderSummary += `    💬 *Comentarios:* ${item.comments}\n`;
+      }
+      orderSummary += `\n`;
     }
 
-    if (item.comments) {
-      orderSummary += `    💬 *Comentarios:* ${item.comments}\n`;
-    }
-    orderSummary += `\n`;
+    return orderSummary;
+  } catch (error) {
+    console.error("Error al generar el resumen de la orden:", error);
+    return "No se pudo generar el resumen de la orden debido a un error.";
   }
-
-  return orderSummary;
 }
