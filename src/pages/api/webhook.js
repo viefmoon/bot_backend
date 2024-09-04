@@ -23,20 +23,16 @@ export default async function handler(req, res) {
 
     // Verificar horario de atención
     const estaAbierto = await verificarHorarioAtencion();
-
-    // Asegúrate de que entry y sus propiedades existan antes de acceder a ellas
-    if (
-      entry &&
-      entry.length > 0 &&
-      entry[0].changes &&
-      entry[0].changes.length > 0
-    ) {
-      const from = entry[0].changes[0].value.messages[0]?.from;
-
-      if (!estaAbierto && from) {
+    if (!estaAbierto) {
+      const from = entry?.[0]?.changes?.[0]?.value?.messages?.[0]?.from;
+      if (from) {
         await sendWhatsAppMessage(
           from,
           "Lo sentimos, solo podremos procesar tu pedido cuando el restaurante esté abierto. Horarios: Martes a sábado: 6:00 PM - 11:00 PM, Domingos: 2:00 PM - 11:00 PM."
+        );
+      } else {
+        console.error(
+          "No se pudo obtener el número de teléfono del remitente."
         );
       }
     }
