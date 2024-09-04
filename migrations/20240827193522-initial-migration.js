@@ -327,6 +327,10 @@ module.exports = {
         type: Sequelize.DATE,
         allowNull: true,
       },
+      messageId: {
+        type: Sequelize.STRING,
+        allowNull: true,
+      },
       createdAt: {
         allowNull: false,
         type: Sequelize.DATE,

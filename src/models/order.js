@@ -58,6 +58,10 @@ const Order = sequelize.define(
       type: DataTypes.DATE,
       allowNull: true,
     },
+    messageId: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
   },
   {
     timestamps: true,

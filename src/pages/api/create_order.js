@@ -558,18 +558,6 @@ async function cancelOrder(req, res) {
     },
   });
 
-  if (!order) {
-    return res
-      .status(400)
-      .json({ error: "La orden no existe o no es del día actual." });
-  }
-
-  if (order.clientId !== clientId) {
-    return res
-      .status(400)
-      .json({ error: "La orden no corresponde al cliente proporcionado." });
-  }
-
   if (order.status !== "created") {
     return res.status(400).json({
       error: 'La orden no se puede cancelar porque su estado no es "creado".',

@@ -105,8 +105,13 @@ async function handleOrderConfirmation(clientId, messageId) {
       clientId
     );
 
-    // Enviar confirmación al cliente
-    await sendWhatsAppMessage(clientId, orderSummary);
+    // Enviar confirmación al cliente y obtener el messageId
+    const messageId = await sendWhatsAppMessage(clientId, orderSummary);
+
+    // Actualizar la orden con el messageId de confirmación
+    if (messageId) {
+      await newOrder.update({ messageId });
+    }
 
     // Eliminar la preorden
     await preOrder.destroy();
@@ -206,7 +211,8 @@ async function createOrderFromPreOrder(preOrder, clientId) {
         }
         orderSummary += `\n`;
       });
-      orderSummary += `\n¡Gracias por tu pedido! 😊 Esperamos que disfrutes tu comida. 🍽️`;
+      orderSummary += `\n¡Gracias por tu pedido! 😊🍽️`;
+      orderSummary += `\nEn unos momentos recibirás la confirmación de recepción por parte del restaurante.`;
 
       return { newOrder, orderSummary };
     } else {
@@ -440,10 +446,12 @@ async function sendWhatsAppMessage(phoneNumber, message, buttons = null) {
         },
       }
     );
-    return true;
+
+    const messageId = response.data.messages[0].id;
+    return messageId;
   } catch (error) {
     console.error("Error al enviar mensaje de WhatsApp:", error);
-    return false;
+    return null;
   }
 }
 
