@@ -3,7 +3,6 @@ import { verificarHorarioAtencion } from "../../utils/timeUtils";
 const { handleChatRequest } = require("./chat");
 const Customer = require("../../models/customer");
 const PreOrder = require("../../models/preOrder");
-const Order = require("../../models/order"); // Importa el modelo Order
 const axios = require("axios");
 export default async function handler(req, res) {
   if (req.method === "GET") {
@@ -106,10 +105,19 @@ async function handleOrderConfirmation(clientId, messageId) {
       clientId
     );
 
-    // Enviar confirmación al cliente y obtener el messageId
+    // Enviar confirmación al cliente con botón de cancelar pedido
     const confirmationMessageId = await sendWhatsAppMessage(
       clientId,
-      orderSummary
+      orderSummary,
+      [
+        {
+          type: "reply",
+          reply: {
+            id: "cancel_order",
+            title: "Cancelar Pedido",
+          },
+        },
+      ]
     );
 
     // Actualizar la orden con el messageId de confirmación
