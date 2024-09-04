@@ -3,6 +3,7 @@ import { verificarHorarioAtencion } from "../../utils/timeUtils";
 const { handleChatRequest } = require("./chat");
 const Customer = require("../../models/customer");
 const PreOrder = require("../../models/preOrder");
+const Order = require("../../models/order"); // Importa el modelo Order
 const axios = require("axios");
 export default async function handler(req, res) {
   if (req.method === "GET") {
@@ -113,7 +114,10 @@ async function handleOrderConfirmation(clientId, messageId) {
 
     // Actualizar la orden con el messageId de confirmación
     if (confirmationMessageId) {
-      await newOrder.update({ messageId: confirmationMessageId });
+      await Order.update(
+        { messageId: confirmationMessageId },
+        { where: { id: newOrder.id } }
+      );
     }
 
     // Eliminar la preorden
