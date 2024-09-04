@@ -106,11 +106,14 @@ async function handleOrderConfirmation(clientId, messageId) {
     );
 
     // Enviar confirmación al cliente y obtener el messageId
-    const messageId = await sendWhatsAppMessage(clientId, orderSummary);
+    const confirmationMessageId = await sendWhatsAppMessage(
+      clientId,
+      orderSummary
+    );
 
     // Actualizar la orden con el messageId de confirmación
-    if (messageId) {
-      await newOrder.update({ messageId });
+    if (confirmationMessageId) {
+      await newOrder.update({ messageId: confirmationMessageId });
     }
 
     // Eliminar la preorden
