@@ -47,7 +47,6 @@ async function createOrder(req, res) {
   const { orderType, orderItems, deliveryAddress, customerName, clientId } =
     req.body;
 
-  // Verificar si el restaurante está aceptando pedidos y obtener la configuración
   const config = await RestaurantConfig.findOne();
   if (!config || !config.acceptingOrders) {
     return res.status(400).json({
@@ -61,24 +60,6 @@ async function createOrder(req, res) {
     return res.status(400).json({
       error:
         "Lo sentimos, solo podre procesar tu pedido cuando el restaurante este abierto.",
-    });
-  }
-
-  if (!["delivery", "pickup"].includes(orderType)) {
-    return res.status(400).json({
-      error: 'Tipo de orden inválido. Debe ser "delivery" o "pickup".',
-    });
-  }
-
-  if (orderType === "delivery" && !deliveryAddress) {
-    return res.status(400).json({
-      error: "Se requiere dirección de entrega para órdenes de delivery.",
-    });
-  }
-
-  if (orderType === "pickup" && !customerName) {
-    return res.status(400).json({
-      error: "Se requiere nombre de quien recoge para órdenes de pickup.",
     });
   }
 
