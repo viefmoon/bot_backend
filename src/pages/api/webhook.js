@@ -131,7 +131,6 @@ async function handleOrderConfirmation(clientId, messageId) {
                 {
                   id: "cancel_order",
                   title: "Cancelar Pedido",
-                  description: "Cancela tu pedido actual",
                 },
               ],
             },
