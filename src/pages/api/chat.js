@@ -438,7 +438,7 @@ async function selectProducts(toolCall, clientId) {
       }
     );
 
-    return { text: "Preorden guardada exitosamente", sendToWhatsApp: false };
+    return { text: response.data.mensaje, sendToWhatsApp: false };
   } catch (error) {
     console.error("Error al seleccionar los productos:", error);
 

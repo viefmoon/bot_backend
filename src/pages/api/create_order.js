@@ -828,33 +828,6 @@ async function selectProducts(req, res) {
       throw new Error("No se pudo enviar el mensaje de WhatsApp");
     }
 
-    const customer = await Customer.findByPk(clientId);
-    if (customer) {
-      let fullChatHistory = JSON.parse(customer.fullChatHistory || "[]");
-      let relevantChatHistory = JSON.parse(
-        customer.relevantChatHistory || "[]"
-      );
-
-      // Agregar el nuevo mensaje al historial
-      fullChatHistory.push({
-        role: "assistant",
-        content: messageContent,
-      });
-
-      relevantChatHistory.push({
-        role: "assistant",
-        content: relevantMessageContent,
-      });
-
-      console.log("fullChatHistory with preorder", fullChatHistory);
-      console.log("relevantChatHistory with preorder", relevantChatHistory);
-
-      await customer.update({
-        fullChatHistory: JSON.stringify(fullChatHistory),
-        relevantChatHistory: JSON.stringify(relevantChatHistory),
-      });
-    }
-
     const preOrder = await PreOrder.create({
       orderItems,
       orderType,
@@ -865,7 +838,7 @@ async function selectProducts(req, res) {
     console.log("Preorden guardada exitosamente");
 
     return res.status(200).json({
-      mensaje: "Preorden guardada exitosamente",
+      mensaje: relevantMessageContent,
       preOrderId: preOrder.id,
     });
   } catch (error) {
