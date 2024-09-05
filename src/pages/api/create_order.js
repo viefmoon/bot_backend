@@ -828,16 +828,12 @@ async function selectProducts(req, res) {
       throw new Error("No se pudo enviar el mensaje de WhatsApp");
     }
 
-    // Actualizar el historial de chat del cliente
     const customer = await Customer.findByPk(clientId);
     if (customer) {
-      let fullChatHistory = Array.isArray(customer.fullChatHistory)
-        ? customer.fullChatHistory
-        : [];
-      let relevantChatHistory = Array.isArray(customer.relevantChatHistory)
-        ? customer.relevantChatHistory
-        : [];
+      let fullChatHistory = customer.fullChatHistory || {};
+      let relevantChatHistory = customer.relevantChatHistory || {};
 
+      // Agregar el nuevo mensaje al historial
       fullChatHistory.push({
         role: "assistant",
         content: messageContent,
