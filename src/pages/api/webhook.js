@@ -416,6 +416,9 @@ async function handleMessage(from, message) {
       }
     }
 
+    console.log("fullChatHistory", fullChatHistory);
+    console.log("relevantChatHistory", relevantChatHistory);
+
     // Actualizar los historiales de chat en la base de datos
     await customer.update({
       fullChatHistory: JSON.stringify(fullChatHistory),
