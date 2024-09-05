@@ -223,19 +223,6 @@ async function createOrder(req, res) {
   );
   await newOrder.update({ totalCost });
 
-  // Borrar relevantChatHistory del cliente
-  if (clientId) {
-    try {
-      const customer = await Customer.findByPk(clientId);
-      if (customer) {
-        await customer.update({ relevantChatHistory: "[]" });
-        console.log(`relevantChatHistory borrado para el cliente ${clientId}`);
-      }
-    } catch (error) {
-      console.error("Error al borrar relevantChatHistory del cliente:", error);
-    }
-  }
-
   res.status(201).json({
     orden: {
       id: newOrder.dailyOrderNumber,
@@ -749,22 +736,35 @@ async function selectProducts(req, res) {
     );
 
     let messageContent = "Aquí tienes el resumen de tu pedido\n\n";
+    let relevantMessageContent = "Aquí tienes el resumen de tu pedido\n\n";
 
-    messageContent += "Telefono: " + clientId + "\n";
+    messageContent += "Teléfono: " + clientId + "\n";
+    relevantMessageContent += "Teléfono: " + clientId + "\n";
     messageContent += `🏠 *Dirección de entrega*: ${
+      deliveryAddress || "No disponible"
+    }\n`;
+    relevantMessageContent += `🏠 *Dirección de entrega*: ${
       deliveryAddress || "No disponible"
     }\n`;
     messageContent += `👤 *Nombre de recolección*: ${
       customerName || "No disponible"
     }\n`;
+    relevantMessageContent += `👤 *Nombre de recolección*: ${
+      customerName || "No disponible"
+    }\n`;
     messageContent += "\n";
+    relevantMessageContent += "\n";
 
     calculatedItems.forEach((item) => {
       const itemName = item.nombre_variante || item.nombre_producto;
       messageContent += `- *${item.quantity}x ${itemName}*: $${item.precio_total_orderItem}\n`;
+      relevantMessageContent += `- *${item.quantity}x ${itemName}*\n`;
 
       if (item.modificadores.length > 0) {
         messageContent += `  🔸 Modificadores: ${item.modificadores.join(
+          ", "
+        )}\n`;
+        relevantMessageContent += `  🔸 Modificadores: ${item.modificadores.join(
           ", "
         )}\n`;
       }
@@ -775,23 +775,35 @@ async function selectProducts(req, res) {
         item.ingredientes_pizza.right.length > 0
       ) {
         messageContent += "  🔸 Ingredientes de pizza: ";
+        relevantMessageContent += "  🔸 Ingredientes de pizza: ";
         if (item.ingredientes_pizza.full.length > 0) {
           messageContent += `${item.ingredientes_pizza.full.join(", ")}`;
+          relevantMessageContent += `${item.ingredientes_pizza.full.join(
+            ", "
+          )}`;
         }
         if (
           item.ingredientes_pizza.left.length > 0 ||
           item.ingredientes_pizza.right.length > 0
         ) {
-          if (item.ingredientes_pizza.full.length > 0) messageContent += ", ";
+          if (item.ingredientes_pizza.full.length > 0) {
+            messageContent += ", ";
+            relevantMessageContent += ", ";
+          }
           messageContent += `(${item.ingredientes_pizza.left.join(
+            ", "
+          )} / ${item.ingredientes_pizza.right.join(", ")})`;
+          relevantMessageContent += `(${item.ingredientes_pizza.left.join(
             ", "
           )} / ${item.ingredientes_pizza.right.join(", ")})`;
         }
         messageContent += "\n";
+        relevantMessageContent += "\n";
       }
 
       if (item.comments) {
         messageContent += `  💬 Comentarios: ${item.comments}\n`;
+        relevantMessageContent += `  💬 Comentarios: ${item.comments}\n`;
       }
     });
     messageContent += `\n💰 *Total: $${totalCost}*`;
@@ -814,6 +826,30 @@ async function selectProducts(req, res) {
 
     if (!messageId) {
       throw new Error("No se pudo enviar el mensaje de WhatsApp");
+    }
+
+    // Actualizar el historial de chat del cliente
+    const customer = await Customer.findByPk(clientId);
+    if (customer) {
+      let fullChatHistory = customer.fullChatHistory || [];
+      let relevantChatHistory = customer.relevantChatHistory || [];
+
+      fullChatHistory.push({
+        role: "assistant",
+        content: messageContent,
+        timestamp: new Date().toISOString(),
+      });
+
+      relevantChatHistory.push({
+        role: "assistant",
+        content: relevantMessageContent,
+        timestamp: new Date().toISOString(),
+      });
+
+      await customer.update({
+        fullChatHistory,
+        relevantChatHistory,
+      });
     }
 
     const preOrder = await PreOrder.create({
