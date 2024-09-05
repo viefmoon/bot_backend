@@ -831,8 +831,12 @@ async function selectProducts(req, res) {
     // Actualizar el historial de chat del cliente
     const customer = await Customer.findByPk(clientId);
     if (customer) {
-      let fullChatHistory = customer.fullChatHistory || [];
-      let relevantChatHistory = customer.relevantChatHistory || [];
+      let fullChatHistory = Array.isArray(customer.fullChatHistory)
+        ? customer.fullChatHistory
+        : [];
+      let relevantChatHistory = Array.isArray(customer.relevantChatHistory)
+        ? customer.relevantChatHistory
+        : [];
 
       fullChatHistory.push({
         role: "assistant",
