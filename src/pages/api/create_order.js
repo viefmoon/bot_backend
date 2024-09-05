@@ -837,13 +837,11 @@ async function selectProducts(req, res) {
       fullChatHistory.push({
         role: "assistant",
         content: messageContent,
-        timestamp: new Date().toISOString(),
       });
 
       relevantChatHistory.push({
         role: "assistant",
         content: relevantMessageContent,
-        timestamp: new Date().toISOString(),
       });
 
       await customer.update({
