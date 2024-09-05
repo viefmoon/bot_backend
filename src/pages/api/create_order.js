@@ -830,8 +830,10 @@ async function selectProducts(req, res) {
 
     const customer = await Customer.findByPk(clientId);
     if (customer) {
-      let fullChatHistory = customer.fullChatHistory || {};
-      let relevantChatHistory = customer.relevantChatHistory || {};
+      let fullChatHistory = JSON.parse(customer.fullChatHistory || "[]");
+      let relevantChatHistory = JSON.parse(
+        customer.relevantChatHistory || "[]"
+      );
 
       // Agregar el nuevo mensaje al historial
       fullChatHistory.push({
@@ -845,8 +847,8 @@ async function selectProducts(req, res) {
       });
 
       await customer.update({
-        fullChatHistory,
-        relevantChatHistory,
+        fullChatHistory: JSON.stringify(fullChatHistory),
+        relevantChatHistory: JSON.stringify(relevantChatHistory),
       });
     }
 
