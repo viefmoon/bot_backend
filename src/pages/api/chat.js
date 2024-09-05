@@ -357,6 +357,7 @@ export async function handleChatRequest(req) {
               result = await selectProducts(toolCall, clientId);
               return {
                 text: result.text,
+                isRelevant: true,
                 sendToWhatsApp: result.sendToWhatsApp,
               };
             default:
@@ -438,7 +439,7 @@ async function selectProducts(toolCall, clientId) {
       }
     );
 
-    return { text: response.data.mensaje, sendToWhatsApp: true };
+    return { text: response.data.mensaje, sendToWhatsApp: false };
   } catch (error) {
     console.error("Error al seleccionar los productos:", error);
 
