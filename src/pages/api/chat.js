@@ -1,7 +1,6 @@
 const OpenAI = require("openai");
 const axios = require("axios");
 const {
-  Order,
   Product,
   ProductVariant,
   PizzaIngredient,
@@ -298,7 +297,7 @@ async function waitForCompletion(threadId, runId, res) {
 }
 
 export async function handleChatRequest(req) {
-  const { messages, conversationId } = req;
+  const { relevantMessages, conversationId } = req;
 
   try {
     // Obtener la disponibilidad del menú
@@ -311,12 +310,12 @@ export async function handleChatRequest(req) {
     };
 
     // Añadir el mensaje de disponibilidad del menú al principio de los mensajes
-    const updatedMessages = [menuAvailabilityMessage, ...messages];
+    const messagesWithMenu = [menuAvailabilityMessage, ...relevantMessages];
 
-    console.log("Updated messages:", updatedMessages);
+    console.log("Relevant messages with menu:", messagesWithMenu);
 
     const thread = await openai.beta.threads.create({
-      messages: updatedMessages,
+      messages: messagesWithMenu,
     });
 
     let run = await openai.beta.threads.runs.create(thread.id, {

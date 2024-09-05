@@ -376,7 +376,7 @@ async function handleMessage(from, message) {
 
     // Llamar directamente a la función del manejador en chat.js
     const response = await handleChatRequest({
-      messages: relevantChatHistory,
+      relevantMessages: relevantChatHistory,
       conversationId: from,
     });
 
