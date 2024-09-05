@@ -438,7 +438,7 @@ async function selectProducts(toolCall, clientId) {
       }
     );
 
-    return { text: response.data.mensaje, sendToWhatsApp: false };
+    return { text: response.data.mensaje, sendToWhatsApp: true };
   } catch (error) {
     console.error("Error al seleccionar los productos:", error);
 
