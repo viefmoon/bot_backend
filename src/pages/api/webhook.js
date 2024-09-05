@@ -187,6 +187,10 @@ async function handleOrderConfirmation(clientId, messageId) {
                   id: "modify_order",
                   title: "Modificar Pedido",
                 },
+                {
+                  id: "pay_online",
+                  title: "Pagar en linea",
+                },
               ],
             },
           ],
@@ -552,7 +556,7 @@ async function sendMenu(phoneNumber) {
 
     // Enviar mensaje de confirmación como relevante
     const confirmationMessage =
-      "El menú ha sido enviado, si tienes alguna duda, no dudes en preguntar";
+      "El menú ha sido enviado, si tienes alguna duda, no dudes en preguntarme";
     await sendWhatsAppMessage(phoneNumber, confirmationMessage);
 
     // Actualizar el historial de chat
@@ -562,6 +566,11 @@ async function sendMenu(phoneNumber) {
       let relevantChatHistory = JSON.parse(
         customer.relevantChatHistory || "[]"
       );
+
+      // Añadir mensaje de usuario indicando que solicitó ver el menú
+      const userMessage = { role: "user", content: "view_menu" };
+      fullChatHistory.push(userMessage);
+      relevantChatHistory.push(userMessage);
 
       fullChatHistory.push({ role: "assistant", content: menuText });
       fullChatHistory.push({ role: "assistant", content: confirmationMessage });
@@ -612,7 +621,7 @@ async function handleOrderModification(clientId, messageId) {
     // Enviar el resumen al cliente
     await sendWhatsAppMessage(
       clientId,
-      `Aquí está tu orden actual para modificar:\n\n${orderSummary}\n\nPor favor, indica qué cambios deseas realizar.`
+      `Aquí está tu orden actual para modificar:\n\n${orderSummary.withPrices}\n\nPor favor, indica qué cambios deseas realizar.`
     );
   } catch (error) {
     console.error("Error al modificar la orden:", error);
@@ -629,19 +638,28 @@ async function generateOrderSummary(order) {
       order.orderType === "delivery"
         ? "Entrega a domicilio"
         : "Recolección en restaurante";
-    let orderSummary = `📦 *Orden recuperada para modificar*\n\n`;
-    orderSummary += `🛍️ *Orden #${order.dailyOrderNumber}*\n\n`;
-    orderSummary += `🍽️ *Tipo:* ${tipoOrdenTraducido}\n`;
+    let orderSummaryWithPrices = `📦 *Orden recuperada para modificar*\n\n`;
+    let orderSummaryWithoutPrices = `📦 *Orden recuperada para modificar*\n\n`;
+    orderSummaryWithPrices += `🛍️ *Orden #${order.dailyOrderNumber}*\n\n`;
+    orderSummaryWithoutPrices += `🛍️ *Orden #${order.dailyOrderNumber}*\n\n`;
+    orderSummaryWithPrices += `🍽️ *Tipo:* ${tipoOrdenTraducido}\n`;
+    orderSummaryWithoutPrices += `🍽️ *Tipo:* ${tipoOrdenTraducido}\n`;
     if (order.deliveryAddress) {
-      orderSummary += `🏠 *Dirección de entrega:* ${order.deliveryAddress}\n`;
+      orderSummaryWithPrices += `🏠 *Dirección de entrega:* ${order.deliveryAddress}\n`;
+      orderSummaryWithoutPrices += `🏠 *Dirección de entrega:* ${order.deliveryAddress}\n`;
     }
     if (order.customerName) {
-      orderSummary += `👤 *Nombre para recolección:* ${order.customerName}\n`;
+      orderSummaryWithPrices += `👤 *Nombre para recolección:* ${order.customerName}\n`;
+      orderSummaryWithoutPrices += `👤 *Nombre para recolección:* ${order.customerName}\n`;
     }
-    orderSummary += `💰 *Precio total:* $${order.totalCost}\n`;
-    orderSummary += `📅 *Fecha de creación:* ${order.createdAt.toLocaleString()}\n`;
-    orderSummary += `⏱️ *Tiempo estimado de entrega:* ${order.estimatedTime}\n\n`;
-    orderSummary += `🛒 *Productos:*\n`;
+    orderSummaryWithPrices += `💰 *Precio total:* $${order.totalCost}\n`;
+    orderSummaryWithoutPrices += `💰 *Precio total:* $${order.totalCost}\n`;
+    orderSummaryWithPrices += `📅 *Fecha de creación:* ${order.createdAt.toLocaleString()}\n`;
+    orderSummaryWithoutPrices += `📅 *Fecha de creación:* ${order.createdAt.toLocaleString()}\n`;
+    orderSummaryWithPrices += `⏱️ *Tiempo estimado de entrega:* ${order.estimatedTime}\n\n`;
+    orderSummaryWithoutPrices += `⏱️ *Tiempo estimado de entrega:* ${order.estimatedTime}\n\n`;
+    orderSummaryWithPrices += `🛒 *Productos:*\n`;
+    orderSummaryWithoutPrices += `🛒 *Productos:*\n`;
 
     // Verificar si OrderItem está definido y es una función
     if (typeof OrderItem?.findAll !== "function") {
@@ -662,7 +680,8 @@ async function generateOrderSummary(order) {
         item.ProductVariant?.name ||
         item.Product?.name ||
         "Producto desconocido";
-      orderSummary += `   *${productName}* x${item.quantity} - $${item.price}\n`;
+      orderSummaryWithPrices += `   *${productName}* x${item.quantity} - $${item.price}\n`;
+      orderSummaryWithoutPrices += `   *${productName}* x${item.quantity}\n`;
 
       // Verificar si SelectedModifier está definido y es una función
       if (typeof SelectedModifier?.findAll === "function") {
@@ -673,10 +692,12 @@ async function generateOrderSummary(order) {
         });
 
         if (selectedModifiers.length > 0) {
-          orderSummary += `     *Modificadores:*\n`;
+          orderSummaryWithPrices += `     *Modificadores:*\n`;
+          orderSummaryWithoutPrices += `     *Modificadores:*\n`;
           selectedModifiers.forEach((mod) => {
             if (mod.Modifier) {
-              orderSummary += `      • ${mod.Modifier.name} - $${mod.Modifier.price}\n`;
+              orderSummaryWithPrices += `      • ${mod.Modifier.name} - $${mod.Modifier.price}\n`;
+              orderSummaryWithoutPrices += `      • ${mod.Modifier.name}\n`;
             }
           });
         }
@@ -691,7 +712,8 @@ async function generateOrderSummary(order) {
         });
 
         if (selectedPizzaIngredients.length > 0) {
-          orderSummary += `    *Ingredientes de pizza:*\n`;
+          orderSummaryWithPrices += `    *Ingredientes de pizza:*\n`;
+          orderSummaryWithoutPrices += `    *Ingredientes de pizza:*\n`;
           const ingredientesPorMitad = { left: [], right: [], none: [] };
 
           selectedPizzaIngredients.forEach((ing) => {
@@ -701,7 +723,12 @@ async function generateOrderSummary(order) {
           });
 
           if (ingredientesPorMitad.none.length > 0) {
-            orderSummary += `      • ${ingredientesPorMitad.none.join(", ")}\n`;
+            orderSummaryWithPrices += `      • ${ingredientesPorMitad.none.join(
+              ", "
+            )}\n`;
+            orderSummaryWithoutPrices += `      • ${ingredientesPorMitad.none.join(
+              ", "
+            )}\n`;
           }
 
           if (
@@ -710,20 +737,39 @@ async function generateOrderSummary(order) {
           ) {
             const mitadIzquierda = ingredientesPorMitad.left.join(", ");
             const mitadDerecha = ingredientesPorMitad.right.join(", ");
-            orderSummary += `      • ${mitadIzquierda} / ${mitadDerecha}\n`;
+            orderSummaryWithPrices += `      • ${mitadIzquierda} / ${mitadDerecha}\n`;
+            orderSummaryWithoutPrices += `      • ${mitadIzquierda} / ${mitadDerecha}\n`;
           }
         }
       }
 
       if (item.comments) {
-        orderSummary += `    💬 *Comentarios:* ${item.comments}\n`;
+        orderSummaryWithPrices += `    💬 *Comentarios:* ${item.comments}\n`;
+        orderSummaryWithoutPrices += `    💬 *Comentarios:* ${item.comments}\n`;
       }
-      orderSummary += `\n`;
+      orderSummaryWithPrices += `\n`;
+      orderSummaryWithoutPrices += `\n`;
     }
 
-    return orderSummary;
+    // Hacer push a fullChatHistory y relevantChatHistory
+    fullChatHistory.push({
+      role: "assistant",
+      content: orderSummaryWithPrices,
+    });
+
+    relevantChatHistory.push({
+      role: "assistant",
+      content: orderSummaryWithoutPrices,
+    });
+
+    return orderSummaryWithPrices;
   } catch (error) {
     console.error("Error al generar el resumen de la orden:", error);
-    return "No se pudo generar el resumen de la orden debido a un error.";
+    return {
+      withPrices:
+        "No se pudo generar el resumen de la orden debido a un error.",
+      withoutPrices:
+        "No se pudo generar el resumen de la orden debido a un error.",
+    };
   }
 }

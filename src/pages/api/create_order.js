@@ -223,6 +223,19 @@ async function createOrder(req, res) {
   );
   await newOrder.update({ totalCost });
 
+  // Borrar relevantChatHistory del cliente
+  if (clientId) {
+    try {
+      const customer = await Customer.findByPk(clientId);
+      if (customer) {
+        await customer.update({ relevantChatHistory: "[]" });
+        console.log(`relevantChatHistory borrado para el cliente ${clientId}`);
+      }
+    } catch (error) {
+      console.error("Error al borrar relevantChatHistory del cliente:", error);
+    }
+  }
+
   res.status(201).json({
     orden: {
       id: newOrder.dailyOrderNumber,

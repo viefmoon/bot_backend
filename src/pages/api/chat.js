@@ -106,92 +106,6 @@ async function cancelOrder(toolCall, clientId) {
   }
 }
 
-async function getOrderDetails(dailyOrderNumber, clientId) {
-  try {
-    const mexicoTime = new Date().toLocaleString("en-US", {
-      timeZone: "America/Mexico_City",
-    });
-    const today = new Date(mexicoTime).toISOString().split("T")[0];
-
-    const order = await Order.findOne({
-      where: {
-        dailyOrderNumber: dailyOrderNumber,
-        clientId: clientId,
-        orderDate: today,
-      },
-      include: [
-        {
-          model: OrderItem,
-          as: "orderItems",
-          include: [
-            { model: Product },
-            { model: ProductVariant },
-            {
-              model: SelectedModifier,
-              include: [{ model: Modifier }],
-            },
-            {
-              model: SelectedPizzaIngredient,
-              include: [{ model: PizzaIngredient }],
-            },
-          ],
-        },
-      ],
-    });
-
-    if (!order) {
-      return {
-        error:
-          "Orden no encontrada o no asociada al cliente actual para el día de hoy",
-      };
-    }
-
-    return {
-      mensaje: "Detalles de la orden obtenidos exitosamente",
-      orden: {
-        Id: order.dailyOrderNumber,
-        tipo: order.orderType,
-        estado: order.status,
-        telefono: order.phoneNumber,
-        direccion_entrega: order.deliveryAddress,
-        nombre_recoleccion: order.customerName,
-        precio_total: order.totalCost,
-        fecha_creacion: order.createdAt.toLocaleString("es-MX", {
-          timeZone: "America/Mexico_City",
-          year: "numeric",
-          month: "2-digit",
-          day: "2-digit",
-          hour: "2-digit",
-          minute: "2-digit",
-          second: "2-digit",
-          hour12: true,
-        }),
-        productos: order.orderItems.map((item) => ({
-          cantidad: item.quantity,
-          nombre: item.ProductVariant
-            ? item.ProductVariant.name
-            : item.Product.name,
-          modificadores: item.SelectedModifiers.map((sm) => ({
-            nombre: sm.Modifier.name,
-            precio: sm.Modifier.price,
-          })),
-          ingredientes_pizza: item.SelectedPizzaIngredients.map((spi) => ({
-            nombre: spi.PizzaIngredient.name,
-            mitad: spi.half,
-          })),
-          comments: item.comments,
-          precio: item.price,
-        })),
-        tiempoEstimado: order.estimatedTime,
-        horario_entrega_programado: order.scheduledDeliveryTime,
-      },
-    };
-  } catch (error) {
-    console.error("Error al obtener los detalles de la orden:", error);
-    return { error: "Error al obtener los detalles de la orden" };
-  }
-}
-
 async function getMenuAvailability() {
   try {
     // Verificar si los modelos necesarios están definidos
@@ -432,17 +346,6 @@ export async function handleChatRequest(req) {
               result = await cancelOrder(toolCall, clientId);
               shouldDeleteConversation = true;
               return { text: result.output }; // Retorna directamente al cliente
-
-            case "get_order_details":
-              const { daily_order_number } = JSON.parse(
-                toolCall.function.arguments
-              );
-              const orderDetails = await getOrderDetails(
-                daily_order_number,
-                clientId
-              );
-              return { text: JSON.stringify(orderDetails) }; // Retorna directamente al cliente
-
             case "send_menu":
               return [
                 { text: menu, isRelevant: false },
