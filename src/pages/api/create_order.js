@@ -846,6 +846,9 @@ async function selectProducts(req, res) {
         content: relevantMessageContent,
       });
 
+      console.log("fullChatHistory with preorder", fullChatHistory);
+      console.log("relevantChatHistory with preorder", relevantChatHistory);
+
       await customer.update({
         fullChatHistory: JSON.stringify(fullChatHistory),
         relevantChatHistory: JSON.stringify(relevantChatHistory),
