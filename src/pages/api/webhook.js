@@ -13,6 +13,7 @@ const SelectedPizzaIngredient = require("../../models/selectedPizzaIngredient");
 const PizzaIngredient = require("../../models/pizzaIngredient");
 const axios = require("axios");
 const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
+const getRawBody = require("raw-body");
 
 export default async function handler(req, res) {
   if (req.method === "GET") {
@@ -844,8 +845,9 @@ async function handleStripeWebhook(req, res) {
   let event;
 
   try {
+    const rawBody = await getRawBody(req);
     event = stripe.webhooks.constructEvent(
-      req.body,
+      rawBody,
       sig,
       process.env.STRIPE_WEBHOOK_SECRET
     );
