@@ -13,7 +13,7 @@ const SelectedPizzaIngredient = require("../../models/selectedPizzaIngredient");
 const PizzaIngredient = require("../../models/pizzaIngredient");
 const axios = require("axios");
 const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
-const getRawBody = require("raw-body");
+import { buffer } from "micro";
 
 export default async function handler(req, res) {
   if (req.method === "GET") {
@@ -845,9 +845,9 @@ async function handleStripeWebhook(req, res) {
   let event;
 
   try {
-    const rawBody = await getRawBody(req);
+    const rawBody = await buffer(req);
     event = stripe.webhooks.constructEvent(
-      rawBody,
+      rawBody.toString(), // Convertir el buffer a string
       sig,
       process.env.STRIPE_WEBHOOK_SECRET
     );
