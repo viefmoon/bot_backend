@@ -13,6 +13,7 @@ const SelectedPizzaIngredient = require("../../models/selectedPizzaIngredient");
 const PizzaIngredient = require("../../models/pizzaIngredient");
 const axios = require("axios");
 const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
+const RestaurantConfig = require("../../models/restaurantConfig");
 
 export default async function handler(req, res) {
   if (req.method === "GET") {
@@ -921,4 +922,52 @@ async function handleStripeWebhook(req, res) {
   }
 
   res.json({ received: true });
+}
+
+async function handleWaitTimes(clientId) {
+  try {
+    const config = await RestaurantConfig.findOne();
+
+    if (!config) {
+      await sendWhatsAppMessage(
+        clientId,
+        "Lo siento, no se pudo obtener la información de los tiempos de espera en este momento."
+      );
+      return;
+    }
+
+    const message =
+      `🕒 *Tiempos de espera estimados:*\n\n` +
+      `🏠 Recolección en restaurante: ${config.estimatedPickupTime} minutos\n` +
+      `🚚 Entrega a domicilio: ${config.estimatedDeliveryTime} minutos\n\n` +
+      `Estos tiempos son aproximados y pueden variar según la demanda actual.`;
+
+    await sendWhatsAppMessage(clientId, message);
+
+    // Actualizar el historial de chat
+    let customer = await Customer.findOne({ where: { clientId } });
+    if (customer) {
+      let fullChatHistory = JSON.parse(customer.fullChatHistory || "[]");
+      let relevantChatHistory = JSON.parse(
+        customer.relevantChatHistory || "[]"
+      );
+
+      const userMessage = { role: "user", content: "check_wait_times" };
+      const assistantMessage = { role: "assistant", content: message };
+
+      fullChatHistory.push(userMessage, assistantMessage);
+      relevantChatHistory.push(userMessage, assistantMessage);
+
+      await customer.update({
+        fullChatHistory: JSON.stringify(fullChatHistory),
+        relevantChatHistory: JSON.stringify(relevantChatHistory),
+      });
+    }
+  } catch (error) {
+    console.error("Error al obtener los tiempos de espera:", error);
+    await sendWhatsAppMessage(
+      clientId,
+      "Hubo un error al obtener los tiempos de espera. Por favor, intenta nuevamente más tarde."
+    );
+  }
 }
