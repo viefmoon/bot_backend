@@ -13,7 +13,6 @@ const SelectedPizzaIngredient = require("../../models/selectedPizzaIngredient");
 const PizzaIngredient = require("../../models/pizzaIngredient");
 const axios = require("axios");
 const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
-import { buffer } from "micro";
 
 export default async function handler(req, res) {
   if (req.method === "GET") {
@@ -30,9 +29,9 @@ export default async function handler(req, res) {
       res.status(403).end();
     }
   } else if (req.method === "POST") {
+    // Manejar webhooks de Stripe y WhatsApp
     if (req.headers["stripe-signature"]) {
-      const buf = await buffer(req);
-      return handleStripeWebhook(req, res, buf);
+      return handleStripeWebhook(req, res);
     }
     res.status(200).send("EVENT_RECEIVED");
     const { object, entry } = req.body;
@@ -839,75 +838,40 @@ async function handleOnlinePayment(clientId, messageId) {
   }
 }
 
-async function handleStripeWebhook(req, res, buf) {
-  console.log("Stripe webhook recibido");
+async function handleStripeWebhook(req, res) {
+  co;
+  const sig = req.headers["stripe-signature"];
+  let event;
 
   try {
-    // Imprimir los encabezados de la solicitud
-    console.log("Headers:", req.headers);
-
-    // Imprimir el cuerpo de la solicitud
-    console.log("Body:", buf.toString("utf8"));
-
-    const sig = req.headers["stripe-signature"];
-    let event;
-
-    try {
-      event = stripe.webhooks.constructEvent(
-        buf,
-        sig,
-        process.env.STRIPE_WEBHOOK_SECRET
-      );
-    } catch (err) {
-      console.error(`Error de firma de webhook: ${err.message}`);
-      return res.status(400).send(`Webhook Error: ${err.message}`);
-    }
-
-    // Manejar diferentes tipos de eventos
-    switch (event.type) {
-      case "checkout.session.completed":
-        await handleCheckoutSessionCompleted(event.data.object);
-        break;
-      // Puedes añadir más casos para otros tipos de eventos aquí
-      default:
-        console.log(`Evento no manejado: ${event.type}`);
-    }
-
-    // Responder a Stripe que hemos recibido el evento correctamente
-    res.json({ received: true });
-  } catch (error) {
-    console.error("Error en el manejo del webhook:", error);
-    res.status(500).send(`Error interno del servidor: ${error.message}`);
+    event = stripe.webhooks.constructEvent(
+      req.body,
+      sig,
+      process.env.STRIPE_WEBHOOK_SECRET
+    );
+  } catch (err) {
+    console.error(`Error de firma de webhook: ${err.message}`);
+    return res.status(400).send(`Webhook Error: ${err.message}`);
   }
-}
 
-async function handleCheckoutSessionCompleted(session) {
-  console.log(`Procesando sesión de pago completada: ${session.id}`);
-
-  const order = await Order.findOne({
-    where: { stripeSessionId: session.id },
-  });
-
-  if (order) {
-    await order.update({ paymentStatus: "paid" });
-    console.log(`Orden ${order.dailyOrderNumber} actualizada a pagada`);
-
-    const customer = await Customer.findOne({
-      where: { stripeCustomerId: session.customer },
+  if (event.type === "checkout.session.completed") {
+    const session = event.data.object;
+    const order = await Order.findOne({
+      where: { stripeSessionId: session.id },
     });
-
-    if (customer) {
-      await sendWhatsAppMessage(
-        customer.clientId,
-        `¡Tu pago para la orden #${order.dailyOrderNumber} ha sido confirmado! Gracias por tu compra.`
-      );
-      console.log(
-        `Mensaje de WhatsApp enviado al cliente ${customer.clientId}`
-      );
-    } else {
-      console.log(`No se encontró el cliente para la sesión ${session.id}`);
+    if (order) {
+      await order.update({ paymentStatus: "paid" });
+      const customer = await Customer.findOne({
+        where: { stripeCustomerId: session.customer },
+      });
+      if (customer) {
+        await sendWhatsAppMessage(
+          customer.clientId,
+          `¡Tu pago para la orden #${order.dailyOrderNumber} ha sido confirmado! Gracias por tu compra.`
+        );
+      }
     }
-  } else {
-    console.log(`No se encontró la orden para la sesión ${session.id}`);
   }
+
+  res.json({ received: true });
 }
