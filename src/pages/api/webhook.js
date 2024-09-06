@@ -451,17 +451,72 @@ async function getCustomerData(clientId) {
   }
 }
 
+async function sendWhatsAppTemplateMessage(phoneNumber, templatePayload) {
+  try {
+    let payload = {
+      messaging_product: "whatsapp",
+      recipient_type: "individual",
+      to: phoneNumber,
+      type: "template",
+      template: templatePayload,
+    };
+
+    const response = await axios.post(
+      `https://graph.facebook.com/v19.0/${process.env.WHATSAPP_PHONE_NUMBER_ID}/messages`,
+      payload,
+      {
+        headers: {
+          Authorization: `Bearer ${process.env.WHATSAPP_ACCESS_TOKEN}`,
+          "Content-Type": "application/json",
+        },
+      }
+    );
+    console.log("Mensaje de plantilla con imagen enviado exitosamente");
+    return true;
+  } catch (error) {
+    console.error(
+      "Error al enviar mensaje de plantilla de WhatsApp:",
+      error.response?.data || error.message
+    );
+    return false;
+  }
+}
+
 async function sendWelcomeMessage(phoneNumber) {
   try {
-    const listOptions = {
-      header: {
-        type: "image",
-        image: {
-          link: `${process.env.BASE_URL}/images/bienvenida.jpg`,
+    const templatePayload = {
+      name: "bienvenida_con_imagen",
+      language: { code: "es" },
+      components: [
+        {
+          type: "header",
+          parameters: [
+            {
+              type: "image",
+              image: {
+                link: `${process.env.BASE_URL}/images/bienvenida.jpg`,
+              },
+            },
+          ],
         },
-      },
+        {
+          type: "body",
+          parameters: [
+            {
+              type: "text",
+              text: "La Leña",
+            },
+          ],
+        },
+      ],
+    };
+
+    await sendWhatsAppTemplateMessage(phoneNumber, templatePayload);
+
+    // Enviar mensaje interactivo después de la imagen
+    const listOptions = {
       body: {
-        text: "¡Bienvenido a La Leña! ¿Cómo podemos ayudarte hoy?",
+        text: "¿Cómo podemos ayudarte hoy?",
       },
       footer: {
         text: "Selecciona una opción:",
