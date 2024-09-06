@@ -841,16 +841,24 @@ async function handleOnlinePayment(clientId, messageId) {
 
 async function handleStripeWebhook(req, res) {
   console.log("stripe webhook");
+
+  // Imprimir los encabezados de la solicitud
+  console.log("Headers:", req.headers);
+
+  // Imprimir el cuerpo de la solicitud
+  const rawBody = await buffer(req);
+  console.log("Body:", rawBody.toString());
+
   const sig = req.headers["stripe-signature"];
   let event;
 
   try {
-    const rawBody = await buffer(req);
     event = stripe.webhooks.constructEvent(
       rawBody.toString(), // Convertir el buffer a string
       sig,
       process.env.STRIPE_WEBHOOK_SECRET
     );
+    // ... código existente ...
   } catch (err) {
     console.error(`Error de firma de webhook: ${err.message}`);
     return res.status(400).send(`Webhook Error: ${err.message}`);
