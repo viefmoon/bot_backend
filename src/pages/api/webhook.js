@@ -409,38 +409,71 @@ async function handleMessage(from, message) {
 
     // Procesar y enviar respuestas
     if (Array.isArray(response)) {
-      console.log("Response if array:", response);
       for (const msg of response) {
-        if (
-          msg.text &&
-          msg.text.trim() !== "" &&
-          msg.sendToWhatsApp !== false
-        ) {
-          await sendWhatsAppMessage(from, msg.text);
-          const assistantMessage = { role: "assistant", content: msg.text };
-          fullChatHistory.push(assistantMessage);
-          if (msg.isRelevant !== false) {
-            // Si no contiene isRelevant o es true
-            relevantChatHistory.push(assistantMessage);
+        if (msg.text) {
+          if (Array.isArray(msg.text)) {
+            for (const textItem of msg.text) {
+              if (
+                textItem &&
+                textItem.trim() !== "" &&
+                msg.sendToWhatsApp !== false
+              ) {
+                await sendWhatsAppMessage(from, textItem);
+                const assistantMessage = {
+                  role: "assistant",
+                  content: textItem,
+                };
+                fullChatHistory.push(assistantMessage);
+                if (msg.isRelevant !== false) {
+                  relevantChatHistory.push(assistantMessage);
+                }
+              }
+            }
+          } else if (
+            typeof msg.text === "string" &&
+            msg.text.trim() !== "" &&
+            msg.sendToWhatsApp !== false
+          ) {
+            await sendWhatsAppMessage(from, msg.text);
+            const assistantMessage = { role: "assistant", content: msg.text };
+            fullChatHistory.push(assistantMessage);
+            if (msg.isRelevant !== false) {
+              relevantChatHistory.push(assistantMessage);
+            }
           }
         }
       }
     } else {
-      console.log("Response else:", response);
-      if (
-        response.text &&
-        response.text.trim() !== "" &&
-        response.sendToWhatsApp !== false
-      ) {
-        await sendWhatsAppMessage(from, response.text);
-        const assistantMessage = {
-          role: "assistant",
-          content: response.text,
-        };
-        fullChatHistory.push(assistantMessage);
-        if (response.isRelevant !== false) {
-          // Si no contiene isRelevant o es true
-          relevantChatHistory.push(assistantMessage);
+      if (response.text) {
+        if (Array.isArray(response.text)) {
+          for (const textItem of response.text) {
+            if (
+              textItem &&
+              textItem.trim() !== "" &&
+              response.sendToWhatsApp !== false
+            ) {
+              await sendWhatsAppMessage(from, textItem);
+              const assistantMessage = { role: "assistant", content: textItem };
+              fullChatHistory.push(assistantMessage);
+              if (response.isRelevant !== false) {
+                relevantChatHistory.push(assistantMessage);
+              }
+            }
+          }
+        } else if (
+          typeof response.text === "string" &&
+          response.text.trim() !== "" &&
+          response.sendToWhatsApp !== false
+        ) {
+          await sendWhatsAppMessage(from, response.text);
+          const assistantMessage = {
+            role: "assistant",
+            content: response.text,
+          };
+          fullChatHistory.push(assistantMessage);
+          if (response.isRelevant !== false) {
+            relevantChatHistory.push(assistantMessage);
+          }
         }
       }
     }
