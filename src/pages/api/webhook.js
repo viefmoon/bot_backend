@@ -453,51 +453,42 @@ async function getCustomerData(clientId) {
 
 async function sendWelcomeMessage(phoneNumber) {
   try {
-    const imageUrl = `${process.env.BASE_URL}/images/bienvenida.jpg`;
-
-    const payload = {
-      messaging_product: "whatsapp",
-      recipient_type: "individual",
-      to: phoneNumber,
-      type: "interactive",
-      interactive: {
-        type: "list",
-        header: {
-          type: "image",
-          image: {
-            link: imageUrl,
+    const listOptions = {
+      header: {
+        type: "image",
+        image: {
+          link: `${process.env.BASE_URL}/images/bienvenida.jpg`,
+        },
+      },
+      body: {
+        text: "¡Bienvenido a La Leña! ¿Cómo podemos ayudarte hoy?",
+      },
+      footer: {
+        text: "Selecciona una opción:",
+      },
+      action: {
+        button: "Ver opciones",
+        sections: [
+          {
+            title: "Acciones",
+            rows: [
+              {
+                id: "view_menu",
+                title: "Ver Menú",
+                description: "Muestra nuestro menú actual",
+              },
+              {
+                id: "wait_times",
+                title: "Tiempos de espera",
+                description: "Consulta los tiempos de espera actuales",
+              },
+            ],
           },
-        },
-        body: {
-          text: "¡Bienvenido a La Leña! ¿Cómo podemos ayudarte hoy?",
-        },
-        footer: {
-          text: "Selecciona una opción:",
-        },
-        action: {
-          button: "Ver opciones",
-          sections: [
-            {
-              title: "Acciones",
-              rows: [
-                {
-                  id: "view_menu",
-                  title: "Ver Menú",
-                  description: "Muestra nuestro menú actual",
-                },
-                {
-                  id: "wait_times",
-                  title: "Tiempos de espera",
-                  description: "Consulta los tiempos de espera actuales",
-                },
-              ],
-            },
-          ],
-        },
+        ],
       },
     };
 
-    await sendWhatsAppImageMessage(phoneNumber, payload);
+    await sendWhatsAppInteractiveMessage(phoneNumber, listOptions);
     return true;
   } catch (error) {
     console.error("Error al enviar mensaje de bienvenida con imagen:", error);
@@ -505,8 +496,19 @@ async function sendWelcomeMessage(phoneNumber) {
   }
 }
 
-async function sendWhatsAppImageMessage(phoneNumber, payload) {
+async function sendWhatsAppInteractiveMessage(phoneNumber, listOptions) {
   try {
+    let payload = {
+      messaging_product: "whatsapp",
+      recipient_type: "individual",
+      to: phoneNumber,
+      type: "interactive",
+      interactive: {
+        type: "list",
+        ...listOptions,
+      },
+    };
+
     const response = await axios.post(
       `https://graph.facebook.com/v17.0/${process.env.WHATSAPP_PHONE_NUMBER_ID}/messages`,
       payload,
@@ -517,13 +519,10 @@ async function sendWhatsAppImageMessage(phoneNumber, payload) {
         },
       }
     );
-    console.log("Mensaje con imagen y lista enviado exitosamente");
+    console.log("Mensaje interactivo con imagen enviado exitosamente");
     return true;
   } catch (error) {
-    console.error(
-      "Error al enviar mensaje de WhatsApp con imagen y lista:",
-      error
-    );
+    console.error("Error al enviar mensaje interactivo de WhatsApp:", error);
     return false;
   }
 }
