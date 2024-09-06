@@ -55,51 +55,6 @@ async function modifyOrder(toolCall, clientId) {
   }
 }
 
-async function cancelOrder(toolCall, clientId) {
-  const { daily_order_number } = JSON.parse(toolCall.function.arguments);
-
-  if (!daily_order_number) {
-    console.error("Número de orden no proporcionado");
-    return {
-      tool_call_id: toolCall.id,
-      output: JSON.stringify({ error: "Número de orden no proporcionado" }),
-    };
-  }
-
-  try {
-    const response = await axios.post(
-      `${process.env.BASE_URL}/api/create_order`,
-      {
-        action: "cancel", // Añadimos la acción
-        daily_order_number,
-        client_id: clientId,
-      }
-    );
-
-    const orderResult = response.data;
-    console.log("Resultado de la cancelación de la orden:", orderResult);
-
-    return {
-      tool_call_id: toolCall.id,
-      output: JSON.stringify(orderResult),
-    };
-  } catch (error) {
-    console.error(
-      "Error al cancelar la orden:",
-      error.response ? error.response.data : error.message
-    );
-    return {
-      tool_call_id: toolCall.id,
-      output: JSON.stringify({
-        error: error.response
-          ? error.response.data.error
-          : "No se pudo cancelar la orden",
-        details: error.message,
-      }),
-    };
-  }
-}
-
 async function getMenuAvailability() {
   try {
     // Verificar si los modelos necesarios están definidos
@@ -334,12 +289,7 @@ export async function handleChatRequest(req) {
             case "modify_order":
               result = await modifyOrder(toolCall, clientId);
               shouldDeleteConversation = true;
-              return { text: result.output }; // Retorna directamente al cliente
-
-            case "cancel_order":
-              result = await cancelOrder(toolCall, clientId);
-              shouldDeleteConversation = true;
-              return { text: result.output }; // Retorna directamente al cliente
+              return { text: result.output };
             case "send_menu":
               return [
                 { text: menu, isRelevant: false },

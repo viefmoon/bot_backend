@@ -22,6 +22,11 @@ const Customer = sequelize.define(
       type: DataTypes.JSON,
       allowNull: true,
     },
+    stripeCustomerId: {
+      type: DataTypes.STRING,
+      allowNull: true,
+      unique: true,
+    },
   },
   {
     timestamps: true,

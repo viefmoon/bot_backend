@@ -29,6 +29,11 @@ const Order = sequelize.define(
       allowNull: false,
       defaultValue: "created",
     },
+    paymentStatus: {
+      type: DataTypes.ENUM("pending", "paid", "failed"),
+      allowNull: false,
+      defaultValue: "pending",
+    },
     deliveryInfo: {
       type: DataTypes.STRING,
       allowNull: true,
@@ -55,6 +60,10 @@ const Order = sequelize.define(
       allowNull: true,
     },
     messageId: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
+    stripeSessionId: {
       type: DataTypes.STRING,
       allowNull: true,
     },

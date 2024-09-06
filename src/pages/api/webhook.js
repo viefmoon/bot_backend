@@ -12,6 +12,8 @@ const Modifier = require("../../models/modifier");
 const SelectedPizzaIngredient = require("../../models/selectedPizzaIngredient");
 const PizzaIngredient = require("../../models/pizzaIngredient");
 const axios = require("axios");
+const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
+
 export default async function handler(req, res) {
   if (req.method === "GET") {
     // Verificación del webhook
@@ -27,6 +29,10 @@ export default async function handler(req, res) {
       res.status(403).end();
     }
   } else if (req.method === "POST") {
+    // Manejar webhooks de Stripe y WhatsApp
+    if (req.headers["stripe-signature"]) {
+      return handleStripeWebhook(req, res);
+    }
     res.status(200).send("EVENT_RECEIVED");
     const { object, entry } = req.body;
 
@@ -36,7 +42,6 @@ export default async function handler(req, res) {
         for (const change of changes) {
           const { value } = change;
 
-          // Verificar si hay mensajes recibidos
           if (value.messages && value.messages.length > 0) {
             for (const message of value.messages) {
               const { from, type, id } = message;
@@ -46,19 +51,20 @@ export default async function handler(req, res) {
                 where: { messageId: id },
               });
               if (existingMessage) {
-                continue; // Saltar al siguiente mensaje
+                continue;
               }
 
               // Registrar el nuevo mensaje
               await MessageLog.create({ messageId: id, processed: true });
 
-              // Verificar horario de atención solo para mensajes recibidos
+              // Verificar horario de atención
               const estaAbierto = await verificarHorarioAtencion();
               if (!estaAbierto) {
                 await sendWhatsAppMessage(
                   from,
                   "Lo sentimos, solo podremos procesar tu pedido cuando el restaurante esté abierto. Horarios: Martes a sábado: 6:00 PM - 11:00 PM, Domingos: 2:00 PM - 11:00 PM."
                 );
+                continue;
               }
 
               // Procesar el mensaje según su tipo
@@ -97,6 +103,8 @@ async function handleInteractiveMessage(from, message) {
       await handleOrderCancellation(from, message.context.id);
     } else if (listReplyId === "modify_order") {
       await handleOrderModification(from, message.context.id);
+    } else if (listReplyId === "pay_online") {
+      await handleOnlinePayment(from, message.context.id);
     }
   }
 }
@@ -766,4 +774,103 @@ async function generateOrderSummary(order) {
         "No se pudo generar el resumen de la orden debido a un error.",
     };
   }
+}
+
+async function handleOnlinePayment(clientId, messageId) {
+  try {
+    const order = await Order.findOne({ where: { messageId } });
+    if (!order) {
+      await sendWhatsAppMessage(
+        clientId,
+        "Lo siento, no se pudo encontrar tu orden para procesar el pago."
+      );
+      return;
+    }
+
+    let customer = await Customer.findOne({ where: { clientId } });
+    let stripeCustomerId = customer.stripeCustomerId;
+
+    if (!stripeCustomerId) {
+      const stripeCustomer = await stripe.customers.create({
+        phone: clientId,
+        metadata: { whatsappId: clientId },
+      });
+      stripeCustomerId = stripeCustomer.id;
+      await customer.update({ stripeCustomerId });
+    }
+
+    const session = await stripe.checkout.sessions.create({
+      payment_method_types: ["card"],
+      customer: stripeCustomerId,
+      line_items: [
+        {
+          price_data: {
+            currency: "mxn",
+            product_data: {
+              name: `Orden #${order.dailyOrderNumber}`,
+            },
+            unit_amount: Math.round(order.totalCost * 100),
+          },
+          quantity: 1,
+        },
+      ],
+      mode: "payment",
+      success_url: `https://example.com/success`, // URL genérica
+      cancel_url: `https://example.com/cancel`, // URL genérica
+    });
+
+    await order.update({
+      stripeSessionId: session.id,
+      paymentStatus: "pending",
+    });
+
+    const paymentLink = session.url;
+    await sendWhatsAppMessage(
+      clientId,
+      `Por favor, haz clic en el siguiente enlace para proceder con el pago: ${paymentLink}`
+    );
+  } catch (error) {
+    console.error("Error al procesar el pago en línea:", error);
+    await sendWhatsAppMessage(
+      clientId,
+      "Hubo un error al procesar tu solicitud de pago. Por favor, intenta nuevamente o contacta con el restaurante."
+    );
+  }
+}
+
+async function handleStripeWebhook(req, res) {
+  const sig = req.headers["stripe-signature"];
+  let event;
+
+  try {
+    event = stripe.webhooks.constructEvent(
+      req.body,
+      sig,
+      process.env.STRIPE_WEBHOOK_SECRET
+    );
+  } catch (err) {
+    console.error(`Error de firma de webhook: ${err.message}`);
+    return res.status(400).send(`Webhook Error: ${err.message}`);
+  }
+
+  if (event.type === "checkout.session.completed") {
+    const session = event.data.object;
+    const order = await Order.findOne({
+      where: { stripeSessionId: session.id },
+    });
+    if (order) {
+      await order.update({ paymentStatus: "paid" });
+      const customer = await Customer.findOne({
+        where: { stripeCustomerId: session.customer },
+      });
+      if (customer) {
+        await sendWhatsAppMessage(
+          customer.clientId,
+          `¡Tu pago para la orden #${order.dailyOrderNumber} ha sido confirmado! Gracias por tu compra.`
+        );
+      }
+    }
+  }
+
+  res.json({ received: true });
 }
