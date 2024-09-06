@@ -459,13 +459,6 @@ async function sendWelcomeMessage(phoneNumber) {
           title: "Ver Menú",
         },
       },
-      {
-        type: "reply",
-        reply: {
-          id: "view_delivery_times",
-          title: "Consultar Tiempos de Entrega",
-        },
-      },
     ];
 
     const message = "¡Bienvenido a La Leña! ¿Cómo podemos ayudarte hoy?";
