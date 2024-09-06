@@ -332,12 +332,24 @@ async function handleMessage(from, message) {
     // Buscar o crear el cliente
     let [customer, created] = await Customer.findOrCreate({
       where: { clientId: from },
-      defaults: { fullChatHistory: "[]", relevantChatHistory: "[]" },
+      defaults: {
+        fullChatHistory: "[]",
+        relevantChatHistory: "[]",
+        lastInteraction: new Date(),
+      },
     });
 
     // Obtener y parsear los historiales de chat
     let fullChatHistory = JSON.parse(customer.fullChatHistory || "[]");
     let relevantChatHistory = JSON.parse(customer.relevantChatHistory || "[]");
+
+    // Verificar si los mensajes relevantes han expirado
+    const expirationTime = 60 * 60 * 1000; // 24 horas en milisegundos
+    const now = new Date();
+    if (now - new Date(customer.lastInteraction) > expirationTime) {
+      relevantChatHistory = [];
+      console.log("Historial relevante expirado para el cliente:", from);
+    }
 
     console.log("Mensaje recibido:", message);
 
@@ -348,12 +360,24 @@ async function handleMessage(from, message) {
         relevantChatHistory: JSON.stringify(relevantChatHistory),
       });
       console.log("Historial relevante eliminado para el cliente:", from);
-      return;
+      await sendWhatsAppMessage(
+        from,
+        "Entendido, he olvidado el contexto anterior. ¿En qué puedo ayudarte ahora?"
+      );
     }
 
     // Obtener datos adicionales del cliente
     const customerData = await getCustomerData(from);
-    const deliveryInfo = customerData.deliveryInfo || "Desconocido";
+    let deliveryInfo = customerData.deliveryInfo;
+
+    // Si no hay información de entrega, solicitar al cliente
+    if (!deliveryInfo) {
+      await sendWhatsAppMessage(
+        from,
+        "No se encontraron datos de entrega asociados a tu número de teléfono. Por favor, proporciona tu dirección completa o un nombre de recolección en el restaurante para continuar."
+      );
+      deliveryInfo = "Pendiente de proporcionar";
+    }
 
     // Crear el mensaje con la información del cliente
     const customerInfoMessage = `Información de entrega: ${deliveryInfo}`;
@@ -430,6 +454,7 @@ async function handleMessage(from, message) {
     await customer.update({
       fullChatHistory: JSON.stringify(fullChatHistory),
       relevantChatHistory: JSON.stringify(relevantChatHistory),
+      lastInteraction: now,
     });
   } catch (error) {
     console.error("Error al procesar el mensaje:", error);
