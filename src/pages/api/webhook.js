@@ -451,20 +451,42 @@ async function getCustomerData(clientId) {
 
 async function sendWelcomeMessage(phoneNumber) {
   try {
-    const buttons = [
-      {
-        type: "reply",
-        reply: {
-          id: "view_menu",
-          title: "Ver Menú",
-        },
+    const listOptions = {
+      header: {
+        type: "text",
+        text: "Opciones disponibles",
       },
-    ];
+      body: {
+        text: "¡Bienvenido a La Leña! ¿Cómo podemos ayudarte hoy?",
+      },
+      footer: {
+        text: "Selecciona una opción:",
+      },
+      action: {
+        button: "Ver opciones",
+        sections: [
+          {
+            title: "Acciones",
+            rows: [
+              {
+                id: "view_menu",
+                title: "Ver Menú",
+                description: "Muestra nuestro menú actual",
+              },
+              {
+                id: "wait_times",
+                title: "Tiempos de espera",
+                description: "Consulta los tiempos de espera actuales",
+              },
+            ],
+          },
+        ],
+      },
+    };
 
-    const message = "¡Bienvenido a La Leña! ¿Cómo podemos ayudarte hoy?";
     const imageUrl = `${process.env.BASE_URL}/images/bienvenida.jpg`;
 
-    await sendWhatsAppImageMessage(phoneNumber, imageUrl, message, buttons);
+    await sendWhatsAppImageMessage(phoneNumber, imageUrl, listOptions);
     return true;
   } catch (error) {
     console.error("Error al enviar mensaje de bienvenida con imagen:", error);
@@ -472,12 +494,7 @@ async function sendWelcomeMessage(phoneNumber) {
   }
 }
 
-async function sendWhatsAppImageMessage(
-  phoneNumber,
-  imageUrl,
-  caption,
-  buttons
-) {
+async function sendWhatsAppImageMessage(phoneNumber, imageUrl, listOptions) {
   try {
     let payload = {
       messaging_product: "whatsapp",
@@ -485,19 +502,14 @@ async function sendWhatsAppImageMessage(
       to: phoneNumber,
       type: "interactive",
       interactive: {
-        type: "button",
+        type: "list",
         header: {
           type: "image",
           image: {
             link: imageUrl,
           },
         },
-        body: {
-          text: caption,
-        },
-        action: {
-          buttons: buttons,
-        },
+        ...listOptions,
       },
     };
 
@@ -511,10 +523,13 @@ async function sendWhatsAppImageMessage(
         },
       }
     );
-    console.log("Mensaje con imagen enviado exitosamente");
+    console.log("Mensaje con imagen y lista enviado exitosamente");
     return true;
   } catch (error) {
-    console.error("Error al enviar mensaje de WhatsApp con imagen:", error);
+    console.error(
+      "Error al enviar mensaje de WhatsApp con imagen y lista:",
+      error
+    );
     return false;
   }
 }
