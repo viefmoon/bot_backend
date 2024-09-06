@@ -30,9 +30,9 @@ export default async function handler(req, res) {
       res.status(403).end();
     }
   } else if (req.method === "POST") {
-    // Manejar webhooks de Stripe y WhatsApp
     if (req.headers["stripe-signature"]) {
-      return handleStripeWebhook(req, res);
+      const buf = await buffer(req);
+      return handleStripeWebhook(req, res, buf);
     }
     res.status(200).send("EVENT_RECEIVED");
     const { object, entry } = req.body;
@@ -839,49 +839,75 @@ async function handleOnlinePayment(clientId, messageId) {
   }
 }
 
-async function handleStripeWebhook(req, res) {
-  console.log("stripe webhook");
-
-  // Imprimir los encabezados de la solicitud
-  console.log("Headers:", req.headers);
-
-  // Imprimir el cuerpo de la solicitud
-  const rawBody = await buffer(req);
-  console.log("Body:", rawBody.toString());
-
-  const sig = req.headers["stripe-signature"];
-  let event;
+async function handleStripeWebhook(req, res, buf) {
+  console.log("Stripe webhook recibido");
 
   try {
-    event = stripe.webhooks.constructEvent(
-      rawBody.toString(), // Convertir el buffer a string
-      sig,
-      process.env.STRIPE_WEBHOOK_SECRET
-    );
-    // ... código existente ...
-  } catch (err) {
-    console.error(`Error de firma de webhook: ${err.message}`);
-    return res.status(400).send(`Webhook Error: ${err.message}`);
-  }
+    // Imprimir los encabezados de la solicitud
+    console.log("Headers:", req.headers);
 
-  if (event.type === "checkout.session.completed") {
-    const session = event.data.object;
-    const order = await Order.findOne({
-      where: { stripeSessionId: session.id },
-    });
-    if (order) {
-      await order.update({ paymentStatus: "paid" });
-      const customer = await Customer.findOne({
-        where: { stripeCustomerId: session.customer },
-      });
-      if (customer) {
-        await sendWhatsAppMessage(
-          customer.clientId,
-          `¡Tu pago para la orden #${order.dailyOrderNumber} ha sido confirmado! Gracias por tu compra.`
-        );
-      }
+    // Imprimir el cuerpo de la solicitud
+    console.log("Body:", buf.toString("utf8"));
+
+    const sig = req.headers["stripe-signature"];
+    let event;
+
+    try {
+      event = stripe.webhooks.constructEvent(
+        buf,
+        sig,
+        process.env.STRIPE_WEBHOOK_SECRET
+      );
+    } catch (err) {
+      console.error(`Error de firma de webhook: ${err.message}`);
+      return res.status(400).send(`Webhook Error: ${err.message}`);
     }
-  }
 
-  res.json({ received: true });
+    // Manejar diferentes tipos de eventos
+    switch (event.type) {
+      case "checkout.session.completed":
+        await handleCheckoutSessionCompleted(event.data.object);
+        break;
+      // Puedes añadir más casos para otros tipos de eventos aquí
+      default:
+        console.log(`Evento no manejado: ${event.type}`);
+    }
+
+    // Responder a Stripe que hemos recibido el evento correctamente
+    res.json({ received: true });
+  } catch (error) {
+    console.error("Error en el manejo del webhook:", error);
+    res.status(500).send(`Error interno del servidor: ${error.message}`);
+  }
+}
+
+async function handleCheckoutSessionCompleted(session) {
+  console.log(`Procesando sesión de pago completada: ${session.id}`);
+
+  const order = await Order.findOne({
+    where: { stripeSessionId: session.id },
+  });
+
+  if (order) {
+    await order.update({ paymentStatus: "paid" });
+    console.log(`Orden ${order.dailyOrderNumber} actualizada a pagada`);
+
+    const customer = await Customer.findOne({
+      where: { stripeCustomerId: session.customer },
+    });
+
+    if (customer) {
+      await sendWhatsAppMessage(
+        customer.clientId,
+        `¡Tu pago para la orden #${order.dailyOrderNumber} ha sido confirmado! Gracias por tu compra.`
+      );
+      console.log(
+        `Mensaje de WhatsApp enviado al cliente ${customer.clientId}`
+      );
+    } else {
+      console.log(`No se encontró el cliente para la sesión ${session.id}`);
+    }
+  } else {
+    console.log(`No se encontró la orden para la sesión ${session.id}`);
+  }
 }
