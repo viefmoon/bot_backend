@@ -451,14 +451,17 @@ async function getCustomerData(clientId) {
   }
 }
 
-async function sendWhatsAppTemplateMessage(phoneNumber, templatePayload) {
+async function sendWhatsAppImageMessage(phoneNumber, imageUrl, caption) {
   try {
     let payload = {
       messaging_product: "whatsapp",
       recipient_type: "individual",
       to: phoneNumber,
-      type: "template",
-      template: templatePayload,
+      type: "image",
+      image: {
+        link: imageUrl,
+        caption: caption,
+      },
     };
 
     const response = await axios.post(
@@ -471,11 +474,11 @@ async function sendWhatsAppTemplateMessage(phoneNumber, templatePayload) {
         },
       }
     );
-    console.log("Mensaje de plantilla con imagen enviado exitosamente");
+    console.log("Mensaje con imagen enviado exitosamente");
     return true;
   } catch (error) {
     console.error(
-      "Error al enviar mensaje de plantilla de WhatsApp:",
+      "Error al enviar mensaje con imagen:",
       error.response?.data || error.message
     );
     return false;
@@ -484,36 +487,14 @@ async function sendWhatsAppTemplateMessage(phoneNumber, templatePayload) {
 
 async function sendWelcomeMessage(phoneNumber) {
   try {
-    const templatePayload = {
-      name: "bienvenida_con_imagen",
-      language: { code: "es" },
-      components: [
-        {
-          type: "header",
-          parameters: [
-            {
-              type: "image",
-              image: {
-                link: `${process.env.BASE_URL}/images/bienvenida.jpg`,
-              },
-            },
-          ],
-        },
-        {
-          type: "body",
-          parameters: [
-            {
-              type: "text",
-              text: "La Leña",
-            },
-          ],
-        },
-      ],
-    };
+    // Enviar mensaje con imagen
+    await sendWhatsAppImageMessage(
+      phoneNumber,
+      `${process.env.BASE_URL}/images/bienvenida.jpg`,
+      "¡Bienvenido a La Leña!"
+    );
 
-    await sendWhatsAppTemplateMessage(phoneNumber, templatePayload);
-
-    // Enviar mensaje interactivo después de la imagen
+    // Enviar mensaje interactivo con lista
     const listOptions = {
       body: {
         text: "¿Cómo podemos ayudarte hoy?",
@@ -546,7 +527,7 @@ async function sendWelcomeMessage(phoneNumber) {
     await sendWhatsAppInteractiveMessage(phoneNumber, listOptions);
     return true;
   } catch (error) {
-    console.error("Error al enviar mensaje de bienvenida con imagen:", error);
+    console.error("Error al enviar mensajes de bienvenida:", error);
     return false;
   }
 }
