@@ -300,13 +300,14 @@ export async function handleChatRequest(req) {
               ];
             case "select_products":
               result = await selectProducts(toolCall, clientId);
-              return {
-                text: result.text,
-                isRelevant: true,
-                sendToWhatsApp: result.sendToWhatsApp,
-              };
+              return [
+                {
+                  text: result.text,
+                  sendToWhatsApp: result.sendToWhatsApp,
+                  isRelevant: true,
+                },
+              ];
             default:
-              console.log(`Función desconocida: ${toolCall.function.name}`);
               return { error: "Función desconocida" };
           }
         }
@@ -383,18 +384,22 @@ async function selectProducts(toolCall, clientId) {
       }
     );
 
-    return { text: response.data.mensaje, sendToWhatsApp: false };
+    return {
+      text: response.data.mensaje,
+      sendToWhatsApp: false,
+      isRelevant: true,
+    };
   } catch (error) {
     console.error("Error al seleccionar los productos:", error);
 
-    // Manejo de errores mejorado
     if (error.response) {
       const errorMessage = error.response.data?.error || "Error desconocido";
-      return { text: errorMessage, sendToWhatsApp: true };
+      return { text: errorMessage, sendToWhatsApp: true, isRelevant: true };
     } else {
       return {
         text: "Error al seleccionar los productos. Por favor, inténtalo de nuevo.",
         sendToWhatsApp: true,
+        isRelevant: true,
       };
     }
   }
