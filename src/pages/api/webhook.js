@@ -675,18 +675,22 @@ async function handleDeliveryTimes(clientId) {
     }
 
     // Crear el mensaje con los tiempos de espera
-    const message = `🕒 *Tiempos de espera estimados:*\n\n` +
-                    `🏃‍♂️ *Pedidos para llevar:* ${config.estimatedPickupTime} minutos\n` +
-                    `🚚 *Pedidos a domicilio:* ${config.estimatedDeliveryTime} minutos\n\n` +
-                    `Estos tiempos son estimados y pueden variar según la demanda actual.`;
+    const message =
+      `🕒 *Tiempos de espera estimados:*\n\n` +
+      `🏃‍♂️ *Pedidos para llevar:* ${config.estimatedPickupTime} minutos\n` +
+      `🚚 *Pedidos a domicilio:* ${config.estimatedDeliveryTime} minutos\n\n` +
+      `Estos tiempos son estimados y pueden variar según la demanda actual.`;
 
     // Enviar el mensaje al cliente
     await sendWhatsAppMessage(clientId, message);
 
     // Actualizar el historial de chat
     let customer = await Customer.findOne({ where: { clientId } });
+    if (customer) {
       let fullChatHistory = JSON.parse(customer.fullChatHistory || "[]");
-      let relevantChatHistory = JSON.parse(customer.relevantChatHistory || "[]");
+      let relevantChatHistory = JSON.parse(
+        customer.relevantChatHistory || "[]"
+      );
 
       // Añadir mensaje de usuario indicando que solicitó ver los tiempos de entrega
       const userMessage = { role: "user", content: "view_delivery_times" };
@@ -707,7 +711,10 @@ async function handleDeliveryTimes(clientId) {
     console.log("Tiempos de entrega enviados exitosamente");
   } catch (error) {
     console.error("Error al enviar los tiempos de entrega:", error);
-    await sendWhatsAppMessage(clientId, "Lo siento, hubo un error al obtener los tiempos de entrega. Por favor, intenta nuevamente más tarde.");
+    await sendWhatsAppMessage(
+      clientId,
+      "Lo siento, hubo un error al obtener los tiempos de entrega. Por favor, intenta nuevamente más tarde."
+    );
   }
 }
 
