@@ -348,7 +348,6 @@ async function handleMessage(from, message) {
     const now = new Date();
     if (now - new Date(customer.lastInteraction) > expirationTime) {
       relevantChatHistory = [];
-      console.log("Historial relevante expirado para el cliente:", from);
     }
 
     console.log("Mensaje recibido:", message);
@@ -364,6 +363,7 @@ async function handleMessage(from, message) {
         from,
         "Entendido, he olvidado el contexto anterior. ¿En qué puedo ayudarte ahora?"
       );
+      return;
     }
 
     // Obtener datos adicionales del cliente
@@ -371,13 +371,6 @@ async function handleMessage(from, message) {
     let deliveryInfo = customerData.deliveryInfo;
 
     // Si no hay información de entrega, solicitar al cliente
-    if (!deliveryInfo) {
-      await sendWhatsAppMessage(
-        from,
-        "No se encontraron datos de entrega asociados a tu número de teléfono. Por favor, proporciona tu dirección completa o un nombre de recolección en el restaurante para continuar."
-      );
-      deliveryInfo = "Pendiente de proporcionar";
-    }
 
     // Crear el mensaje con la información del cliente
     const customerInfoMessage = `Información de entrega: ${deliveryInfo}`;
@@ -398,6 +391,14 @@ async function handleMessage(from, message) {
     if (relevantChatHistory.length === 1) {
       // Solo el mensaje con la información del cliente está presente
       await sendWelcomeMessage(from);
+    }
+
+    if (!deliveryInfo) {
+      await sendWhatsAppMessage(
+        from,
+        "No se encontraron datos de entrega asociados a tu número de teléfono. Por favor, proporciona tu dirección completa o un nombre de recolección en el restaurante para continuar."
+      );
+      deliveryInfo = "Pendiente de proporcionar";
     }
 
     // Añadir el nuevo mensaje del usuario a ambos historiales
