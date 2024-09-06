@@ -104,7 +104,7 @@ async function handleInteractiveMessage(from, message) {
       await handleOrderModification(from, message.context.id);
     } else if (listReplyId === "pay_online") {
       await handleOnlinePayment(from, message.context.id);
-    } else if (listReplyId === "check_wait_times") {
+    } else if (listReplyId === "wait_times") {
       await handleWaitTimes(from);
     } else if (listReplyId === "view_menu") {
       await sendMenu(from);
@@ -512,12 +512,10 @@ async function sendWelcomeMessage(phoneNumber) {
               {
                 id: "view_menu",
                 title: "Ver Menú",
-                description: "Muestra nuestro menú actual",
               },
               {
                 id: "wait_times",
                 title: "Tiempos de espera",
-                description: "Consulta los tiempos de espera actuales",
               },
             ],
           },
