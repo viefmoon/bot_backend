@@ -384,6 +384,8 @@ async function selectProducts(toolCall, clientId) {
       }
     );
 
+    console.log("Response:", response.data);
+
     return {
       text: response.data.mensaje,
       sendToWhatsApp: false,
