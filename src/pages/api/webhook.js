@@ -94,8 +94,6 @@ async function handleInteractiveMessage(from, message) {
     const buttonId = message.interactive.button_reply.id;
     if (buttonId === "confirm_order") {
       await handleOrderConfirmation(from, message.context.id);
-    } else if (buttonId === "view_menu") {
-      await sendMenu(from);
     }
   } else if (message.interactive.type === "list_reply") {
     const listReplyId = message.interactive.list_reply.id;
@@ -105,6 +103,10 @@ async function handleInteractiveMessage(from, message) {
       await handleOrderModification(from, message.context.id);
     } else if (listReplyId === "pay_online") {
       await handleOnlinePayment(from, message.context.id);
+    } else if (listReplyId === "check_wait_times") {
+      await handleWaitTimes(from);
+    } else if (listReplyId === "view_menu") {
+      await sendMenu(from);
     }
   }
 }
@@ -451,52 +453,9 @@ async function getCustomerData(clientId) {
 
 async function sendWelcomeMessage(phoneNumber) {
   try {
-    const listOptions = {
-      header: {
-        type: "text",
-        text: "Opciones disponibles",
-      },
-      body: {
-        text: "¡Bienvenido a La Leña! ¿Cómo podemos ayudarte hoy?",
-      },
-      footer: {
-        text: "Selecciona una opción:",
-      },
-      action: {
-        button: "Ver opciones",
-        sections: [
-          {
-            title: "Acciones",
-            rows: [
-              {
-                id: "view_menu",
-                title: "Ver Menú",
-                description: "Muestra nuestro menú actual",
-              },
-              {
-                id: "wait_times",
-                title: "Tiempos de espera",
-                description: "Consulta los tiempos de espera actuales",
-              },
-            ],
-          },
-        ],
-      },
-    };
-
     const imageUrl = `${process.env.BASE_URL}/images/bienvenida.jpg`;
 
-    await sendWhatsAppImageMessage(phoneNumber, imageUrl, listOptions);
-    return true;
-  } catch (error) {
-    console.error("Error al enviar mensaje de bienvenida con imagen:", error);
-    return false;
-  }
-}
-
-async function sendWhatsAppImageMessage(phoneNumber, imageUrl, listOptions) {
-  try {
-    let payload = {
+    const payload = {
       messaging_product: "whatsapp",
       recipient_type: "individual",
       to: phoneNumber,
@@ -509,10 +468,45 @@ async function sendWhatsAppImageMessage(phoneNumber, imageUrl, listOptions) {
             link: imageUrl,
           },
         },
-        ...listOptions,
+        body: {
+          text: "¡Bienvenido a La Leña! ¿Cómo podemos ayudarte hoy?",
+        },
+        footer: {
+          text: "Selecciona una opción:",
+        },
+        action: {
+          button: "Ver opciones",
+          sections: [
+            {
+              title: "Acciones",
+              rows: [
+                {
+                  id: "view_menu",
+                  title: "Ver Menú",
+                  description: "Muestra nuestro menú actual",
+                },
+                {
+                  id: "wait_times",
+                  title: "Tiempos de espera",
+                  description: "Consulta los tiempos de espera actuales",
+                },
+              ],
+            },
+          ],
+        },
       },
     };
 
+    await sendWhatsAppImageMessage(phoneNumber, payload);
+    return true;
+  } catch (error) {
+    console.error("Error al enviar mensaje de bienvenida con imagen:", error);
+    return false;
+  }
+}
+
+async function sendWhatsAppImageMessage(phoneNumber, payload) {
+  try {
     const response = await axios.post(
       `https://graph.facebook.com/v17.0/${process.env.WHATSAPP_PHONE_NUMBER_ID}/messages`,
       payload,
