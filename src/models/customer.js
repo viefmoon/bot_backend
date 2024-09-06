@@ -27,6 +27,10 @@ const Customer = sequelize.define(
       allowNull: true,
       unique: true,
     },
+    lastInteraction: {
+      type: DataTypes.DATE,
+      allowNull: true,
+    },
   },
   {
     timestamps: true,

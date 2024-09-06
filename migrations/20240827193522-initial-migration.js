@@ -80,6 +80,10 @@ module.exports = {
         allowNull: true,
         unique: true,
       },
+      lastInteraction: {
+        type: Sequelize.DATE,
+        allowNull: true,
+      },
       createdAt: {
         allowNull: false,
         type: Sequelize.DATE,
