@@ -299,6 +299,11 @@ module.exports = {
         allowNull: false,
         defaultValue: "created",
       },
+      paymentStatus: {
+        type: Sequelize.ENUM("pending", "paid", "failed"),
+        allowNull: false,
+        defaultValue: "pending",
+      },
       deliveryInfo: {
         type: Sequelize.STRING,
         allowNull: true,
@@ -325,6 +330,10 @@ module.exports = {
         allowNull: true,
       },
       messageId: {
+        type: Sequelize.STRING,
+        allowNull: true,
+      },
+      stripeSessionId: {
         type: Sequelize.STRING,
         allowNull: true,
       },
