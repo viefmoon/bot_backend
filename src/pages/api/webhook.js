@@ -409,6 +409,7 @@ async function handleMessage(from, message) {
 
     // Procesar y enviar respuestas
     if (Array.isArray(response)) {
+      console.log("Response if array:", response);
       for (const msg of response) {
         if (
           msg.text &&
@@ -425,6 +426,7 @@ async function handleMessage(from, message) {
         }
       }
     } else {
+      console.log("Response else:", response);
       if (
         response.text &&
         response.text.trim() !== "" &&
