@@ -63,11 +63,7 @@ module.exports = {
         primaryKey: true,
         unique: true,
       },
-      lastDeliveryAddress: {
-        type: Sequelize.STRING,
-        allowNull: true,
-      },
-      lastPickupName: {
+      deliveryInfo: {
         type: Sequelize.STRING,
         allowNull: true,
       },
@@ -298,11 +294,7 @@ module.exports = {
         allowNull: false,
         defaultValue: "created",
       },
-      deliveryAddress: {
-        type: Sequelize.STRING,
-        allowNull: true,
-      },
-      customerName: {
+      deliveryInfo: {
         type: Sequelize.STRING,
         allowNull: true,
       },
@@ -519,11 +511,7 @@ module.exports = {
         type: Sequelize.ENUM("delivery", "pickup"),
         allowNull: false,
       },
-      deliveryAddress: {
-        type: Sequelize.STRING,
-        allowNull: true,
-      },
-      customerName: {
+      deliveryInfo: {
         type: Sequelize.STRING,
         allowNull: true,
       },

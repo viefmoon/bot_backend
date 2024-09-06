@@ -29,11 +29,7 @@ const Order = sequelize.define(
       allowNull: false,
       defaultValue: "created",
     },
-    deliveryAddress: {
-      type: DataTypes.STRING,
-      allowNull: true,
-    },
-    customerName: {
+    deliveryInfo: {
       type: DataTypes.STRING,
       allowNull: true,
     },

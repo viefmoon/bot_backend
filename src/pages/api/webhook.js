@@ -219,15 +219,14 @@ async function handleOrderConfirmation(clientId, messageId) {
 
 async function createOrderFromPreOrder(preOrder, clientId) {
   try {
-    const { orderItems, orderType, deliveryAddress, customerName } = preOrder;
+    const { orderItems, orderType, deliveryInfo } = preOrder;
 
     // Preparar los datos para la creación de la orden
     const orderData = {
       action: "create",
       orderType,
       orderItems,
-      deliveryAddress,
-      customerName,
+      deliveryInfo,
       clientId,
     };
 
@@ -343,16 +342,15 @@ async function handleMessage(from, message) {
 
     // Obtener datos adicionales del cliente
     const customerData = await getCustomerData(from);
-    const deliveryAddress = customerData.deliveryAddress || "Desconocido";
-    const pickupName = customerData.pickupName || "Desconocido";
+    const deliveryInfo = customerData.deliveryInfo || "Desconocido";
 
     // Crear el mensaje con la información del cliente
-    const customerInfoMessage = `Dirección de entrega: ${deliveryAddress} - Nombre para recoleccion: ${pickupName}`;
+    const customerInfoMessage = `Información de entrega: ${deliveryInfo}`;
 
     // Añadir la información del cliente al inicio si no está presente
     if (
       !relevantChatHistory.some((msg) =>
-        msg.content.startsWith("Dirección de entrega:")
+        msg.content.startsWith("Información de entrega:")
       )
     ) {
       relevantChatHistory.unshift({
@@ -433,8 +431,7 @@ async function getCustomerData(clientId) {
     const customer = await Customer.findOne({ where: { clientId } });
     if (customer) {
       return {
-        deliveryAddress: customer.deliveryAddress,
-        pickupName: customer.pickupName,
+        deliveryInfo: customer.deliveryInfo,
       };
     }
     return {};
@@ -645,13 +642,9 @@ async function generateOrderSummary(order) {
     orderSummaryWithoutPrices += `🛍️ *Orden #${order.dailyOrderNumber}*\n\n`;
     orderSummaryWithPrices += `🍽️ *Tipo:* ${tipoOrdenTraducido}\n`;
     orderSummaryWithoutPrices += `🍽️ *Tipo:* ${tipoOrdenTraducido}\n`;
-    if (order.deliveryAddress) {
-      orderSummaryWithPrices += `🏠 *Dirección de entrega:* ${order.deliveryAddress}\n`;
-      orderSummaryWithoutPrices += `🏠 *Dirección de entrega:* ${order.deliveryAddress}\n`;
-    }
-    if (order.customerName) {
-      orderSummaryWithPrices += `👤 *Nombre para recolección:* ${order.customerName}\n`;
-      orderSummaryWithoutPrices += `👤 *Nombre para recolección:* ${order.customerName}\n`;
+    if (order.deliveryInfo) {
+      orderSummaryWithPrices += `🏠 *Información de entrega:* ${order.deliveryInfo}\n`;
+      orderSummaryWithoutPrices += `🏠 *Información de entrega:* ${order.deliveryInfo}\n`;
     }
     orderSummaryWithPrices += `💰 *Precio total:* $${order.totalCost}\n`;
     orderSummaryWithoutPrices += `💰 *Precio total:* $${order.totalCost}\n`;

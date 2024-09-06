@@ -14,13 +14,9 @@ const openai = new OpenAI({
 });
 
 async function modifyOrder(toolCall, clientId) {
-  const {
-    dailyOrderNumber,
-    orderType,
-    orderItems,
-    deliveryAddress,
-    pickupName,
-  } = JSON.parse(toolCall.function.arguments);
+  const { dailyOrderNumber, orderType, orderItems, deliveryInfo } = JSON.parse(
+    toolCall.function.arguments
+  );
 
   try {
     const response = await axios.post(
@@ -30,8 +26,7 @@ async function modifyOrder(toolCall, clientId) {
         dailyOrderNumber,
         orderType,
         orderItems,
-        deliveryAddress,
-        customerName: pickupName,
+        deliveryInfo,
         clientId,
       }
     );
@@ -422,7 +417,7 @@ export async function handleChatRequest(req) {
 }
 
 async function selectProducts(toolCall, clientId) {
-  const { orderItems, orderType, deliveryAddress, customerName } = JSON.parse(
+  const { orderItems, orderType, deliveryInfo } = JSON.parse(
     toolCall.function.arguments
   );
 
@@ -434,8 +429,7 @@ async function selectProducts(toolCall, clientId) {
         orderItems: orderItems,
         clientId: clientId,
         orderType: orderType,
-        deliveryAddress: deliveryAddress,
-        customerName: customerName,
+        deliveryInfo: deliveryInfo,
       }
     );
 

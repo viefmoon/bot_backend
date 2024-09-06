@@ -17,11 +17,7 @@ const PreOrder = sequelize.define(
       type: DataTypes.ENUM("delivery", "pickup"),
       allowNull: false,
     },
-    deliveryAddress: {
-      type: DataTypes.STRING,
-      allowNull: true,
-    },
-    customerName: {
+    deliveryInfo: {
       type: DataTypes.STRING,
       allowNull: true,
     },

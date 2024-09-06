@@ -42,8 +42,7 @@ export default async function handler(req, res) {
 }
 
 async function createOrder(req, res) {
-  const { orderType, orderItems, deliveryAddress, customerName, clientId } =
-    req.body;
+  const { orderType, orderItems, deliveryInfo, clientId } = req.body;
 
   const config = await RestaurantConfig.findOne();
   if (!config || !config.acceptingOrders) {
@@ -63,11 +62,7 @@ async function createOrder(req, res) {
 
   if (clientId) {
     const updateData = {};
-    if (orderType === "delivery") {
-      updateData.lastDeliveryAddress = deliveryAddress;
-    } else if (orderType === "pickup") {
-      updateData.lastPickupName = customerName;
-    }
+    updateData.deliveryInfo = deliveryInfo;
 
     try {
       let customer = await Customer.findByPk(clientId);
@@ -103,8 +98,7 @@ async function createOrder(req, res) {
     dailyOrderNumber,
     orderType,
     status: "created",
-    deliveryAddress: orderType === "delivery" ? deliveryAddress : null,
-    customerName: orderType === "pickup" ? customerName : null,
+    deliveryInfo: deliveryInfo,
     totalCost: 0,
     clientId,
     orderDate: today,
@@ -228,8 +222,7 @@ async function createOrder(req, res) {
       id: newOrder.dailyOrderNumber,
       tipo: newOrder.orderType,
       estado: newOrder.status,
-      direccion_entrega: newOrder.deliveryAddress,
-      nombre_recoleccion: newOrder.customerName,
+      informacion_entrega: newOrder.deliveryInfo,
       precio_total: newOrder.totalCost,
       fecha_creacion: newOrder.createdAt.toLocaleString("es-MX", {
         timeZone: "America/Mexico_City",
@@ -280,14 +273,8 @@ async function createOrder(req, res) {
 }
 
 async function modifyOrder(req, res) {
-  const {
-    dailyOrderNumber,
-    orderType,
-    orderItems,
-    deliveryAddress,
-    customerName,
-    clientId,
-  } = req.body;
+  const { dailyOrderNumber, orderType, orderItems, deliveryInfo, clientId } =
+    req.body;
 
   // Obtener la fecha actual en la zona horaria de México
   const mexicoTime = new Date().toLocaleString("en-US", {
@@ -335,15 +322,9 @@ async function modifyOrder(req, res) {
     });
   }
 
-  if (orderType === "delivery" && !deliveryAddress) {
+  if (!deliveryInfo) {
     return res.status(400).json({
-      error: "Se requiere dirección de entrega para órdenes de delivery.",
-    });
-  }
-
-  if (orderType === "pickup" && !customerName) {
-    return res.status(400).json({
-      error: "Se requiere nombre de quien recoge para órdenes de pickup.",
+      error: "Se requiere información de entrega para órdenes de delivery.",
     });
   }
 
@@ -357,8 +338,7 @@ async function modifyOrder(req, res) {
   // Actualizar la orden
   await order.update({
     orderType,
-    deliveryAddress: orderType === "delivery" ? deliveryAddress : null,
-    customerName: orderType === "pickup" ? customerName : null,
+    deliveryInfo: deliveryInfo,
   });
 
   // Eliminar items existentes y sus relaciones
@@ -472,11 +452,7 @@ async function modifyOrder(req, res) {
   // Actualizar cliente si es necesario
   if (clientId) {
     const updateData = {};
-    if (orderType === "delivery") {
-      updateData.lastDeliveryAddress = deliveryAddress;
-    } else if (orderType === "pickup") {
-      updateData.lastPickupName = customerName;
-    }
+    updateData.deliveryInfo = deliveryInfo;
 
     try {
       let customer = await Customer.findByPk(clientId);
@@ -499,8 +475,7 @@ async function modifyOrder(req, res) {
       id: order.dailyOrderNumber,
       tipo: order.orderType,
       estado: order.status,
-      direccion_entrega: order.deliveryAddress,
-      nombre_recoleccion: order.customerName,
+      informacion_entrega: order.deliveryInfo,
       precio_total: order.totalCost,
       productos: await Promise.all(
         updatedItems.map(async (item) => {
@@ -540,8 +515,7 @@ async function modifyOrder(req, res) {
 }
 
 async function selectProducts(req, res) {
-  const { orderItems, clientId, orderType, deliveryAddress, customerName } =
-    req.body;
+  const { orderItems, clientId, orderType, deliveryInfo } = req.body;
 
   if (!Array.isArray(orderItems) || orderItems.length === 0) {
     return res
@@ -740,17 +714,11 @@ async function selectProducts(req, res) {
 
     messageContent += "Teléfono: " + clientId + "\n";
     relevantMessageContent += "Teléfono: " + clientId + "\n";
-    messageContent += `🏠 *Dirección de entrega*: ${
-      deliveryAddress || "No disponible"
+    messageContent += `🏠 *Información de entrega*: ${
+      deliveryInfo || "No disponible"
     }\n`;
-    relevantMessageContent += `🏠 *Dirección de entrega*: ${
-      deliveryAddress || "No disponible"
-    }\n`;
-    messageContent += `👤 *Nombre de recolección*: ${
-      customerName || "No disponible"
-    }\n`;
-    relevantMessageContent += `👤 *Nombre de recolección*: ${
-      customerName || "No disponible"
+    relevantMessageContent += `🏠 *Información de entrega*: ${
+      deliveryInfo || "No disponible"
     }\n`;
     messageContent += "\n";
     relevantMessageContent += "\n";
@@ -831,8 +799,7 @@ async function selectProducts(req, res) {
     const preOrder = await PreOrder.create({
       orderItems,
       orderType,
-      deliveryAddress,
-      customerName,
+      deliveryInfo,
       messageId,
     });
     console.log("Preorden guardada exitosamente");

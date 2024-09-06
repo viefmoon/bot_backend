@@ -10,11 +10,7 @@ const Customer = sequelize.define(
       primaryKey: true,
       unique: true,
     },
-    lastDeliveryAddress: {
-      type: DataTypes.STRING,
-      allowNull: true,
-    },
-    lastPickupName: {
+    deliveryInfo: {
       type: DataTypes.STRING,
       allowNull: true,
     },
