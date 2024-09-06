@@ -546,7 +546,7 @@ async function sendWhatsAppMessage(phoneNumber, message, listOptions = null) {
     };
 
     const response = await axios.post(
-      `https://graph.facebook.com/9.0/${process.env.WHATSAPP_PHONE_NUMBER_ID}/messages`,
+      `https://graph.facebook.com/v19.0/${process.env.WHATSAPP_PHONE_NUMBER_ID}/messages`,
       payload,
       {
         headers: {
