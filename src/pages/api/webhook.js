@@ -839,6 +839,7 @@ async function handleOnlinePayment(clientId, messageId) {
 }
 
 async function handleStripeWebhook(req, res) {
+  console.log("stripe webhook");
   const sig = req.headers["stripe-signature"];
   let event;
 
