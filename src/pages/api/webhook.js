@@ -370,26 +370,10 @@ async function handleMessage(from, message) {
     const customerData = await getCustomerData(from);
     let deliveryInfo = customerData.deliveryInfo;
 
-    // Si no hay información de entrega, solicitar al cliente
-
-    // Crear el mensaje con la información del cliente
     const customerInfoMessage = `Información de entrega: ${deliveryInfo}`;
 
-    // Añadir la información del cliente al inicio si no está presente
-    if (
-      !relevantChatHistory.some((msg) =>
-        msg.content.startsWith("Información de entrega:")
-      )
-    ) {
-      relevantChatHistory.unshift({
-        role: "user",
-        content: customerInfoMessage,
-      });
-    }
-
     // Enviar mensaje de bienvenida si el historial relevante está vacío
-    if (relevantChatHistory.length === 1) {
-      // Solo el mensaje con la información del cliente está presente
+    if (relevantChatHistory.length === 0) {
       await sendWelcomeMessage(from);
     }
 
@@ -399,6 +383,18 @@ async function handleMessage(from, message) {
         "No se encontraron datos de entrega asociados a tu número de teléfono. Por favor, proporciona tu dirección completa o un nombre de recolección en el restaurante para continuar."
       );
       deliveryInfo = "Pendiente de proporcionar";
+    }
+
+    // Añadir la información del cliente al inicio si no está presente
+    if (
+      !relevantChatHistory.some((msg) =>
+        msg.content.startsWith("Información de entrega:")
+      )
+    ) {
+      relevantChatHistory.unshift({
+        role: "user",
+        content: `Información de entrega: ${deliveryInfo}`,
+      });
     }
 
     // Añadir el nuevo mensaje del usuario a ambos historiales
