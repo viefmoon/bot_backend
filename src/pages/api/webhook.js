@@ -13,6 +13,7 @@ const SelectedPizzaIngredient = require("../../models/selectedPizzaIngredient");
 const PizzaIngredient = require("../../models/pizzaIngredient");
 const axios = require("axios");
 const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
+const RestaurantConfig = require("../../models/restaurantConfig");
 
 export default async function handler(req, res) {
   if (req.method === "GET") {
@@ -94,8 +95,6 @@ async function handleInteractiveMessage(from, message) {
     const buttonId = message.interactive.button_reply.id;
     if (buttonId === "confirm_order") {
       await handleOrderConfirmation(from, message.context.id);
-    } else if (buttonId === "view_menu") {
-      await sendMenu(from);
     }
   } else if (message.interactive.type === "list_reply") {
     const listReplyId = message.interactive.list_reply.id;
@@ -105,6 +104,10 @@ async function handleInteractiveMessage(from, message) {
       await handleOrderModification(from, message.context.id);
     } else if (listReplyId === "pay_online") {
       await handleOnlinePayment(from, message.context.id);
+    } else if (listReplyId === "view_menu") {
+      await sendMenu(from);
+    } else if (listReplyId === "view_delivery_times") {
+      await handleDeliveryTimes(from);
     }
   }
 }
@@ -451,27 +454,51 @@ async function getCustomerData(clientId) {
 
 async function sendWelcomeMessage(phoneNumber) {
   try {
-    const buttons = [
-      {
-        type: "reply",
-        reply: {
-          id: "view_menu",
-          title: "Ver Menú",
-        },
-      },
-    ];
-
     const message = "¡Bienvenido a La Leña! ¿Cómo podemos ayudarte hoy?";
     const imageUrl = `${process.env.BASE_URL}/images/bienvenida.jpg`;
 
-    await sendWhatsAppImageMessage(phoneNumber, imageUrl, message, buttons);
+    const listOptions = {
+      header: {
+        type: "image",
+        image: {
+          link: imageUrl,
+        },
+      },
+      body: {
+        text: message,
+      },
+      footer: {
+        text: "Selecciona una opción:",
+      },
+      action: {
+        button: "Ver opciones",
+        sections: [
+          {
+            title: "Opciones disponibles",
+            rows: [
+              {
+                id: "view_menu",
+                title: "Ver Menú",
+                description: "Explora nuestro delicioso menú",
+              },
+              {
+                id: "view_delivery_times",
+                title: "Consultar Tiempos de Entrega",
+                description: "Información sobre nuestros tiempos de entrega",
+              },
+            ],
+          },
+        ],
+      },
+    };
+
+    await sendWhatsAppMessage(phoneNumber, message, listOptions);
     return true;
   } catch (error) {
-    console.error("Error al enviar mensaje de bienvenida con imagen:", error);
+    console.error("Error al enviar mensaje de bienvenida con lista:", error);
     return false;
   }
 }
-
 async function sendWhatsAppImageMessage(
   phoneNumber,
   imageUrl,
@@ -634,6 +661,59 @@ async function handleOrderModification(clientId, messageId) {
     await sendWhatsAppMessage(
       clientId,
       "Hubo un error al recuperar tu orden para modificar. Por favor, intenta nuevamente o contacta con el restaurante."
+    );
+  }
+}
+
+async function handleDeliveryTimes(clientId) {
+  try {
+    // Obtener la configuración actual del restaurante
+    const config = await RestaurantConfig.findOne();
+
+    if (!config) {
+      throw new Error("No se encontró la configuración del restaurante");
+    }
+
+    // Crear el mensaje con los tiempos de espera
+    const message =
+      `🕒 *Tiempos de espera estimados:*\n\n` +
+      `🏃‍♂️ *Pedidos para llevar:* ${config.estimatedPickupTime} minutos\n` +
+      `🚚 *Pedidos a domicilio:* ${config.estimatedDeliveryTime} minutos\n\n` +
+      `Estos tiempos son estimados y pueden variar según la demanda actual.`;
+
+    // Enviar el mensaje al cliente
+    await sendWhatsAppMessage(clientId, message);
+
+    // Actualizar el historial de chat
+    let customer = await Customer.findOne({ where: { clientId } });
+    if (customer) {
+      let fullChatHistory = JSON.parse(customer.fullChatHistory || "[]");
+      let relevantChatHistory = JSON.parse(
+        customer.relevantChatHistory || "[]"
+      );
+
+      // Añadir mensaje de usuario indicando que solicitó ver los tiempos de entrega
+      const userMessage = { role: "user", content: "view_delivery_times" };
+      fullChatHistory.push(userMessage);
+      relevantChatHistory.push(userMessage);
+
+      // Añadir la respuesta del asistente
+      const assistantMessage = { role: "assistant", content: message };
+      fullChatHistory.push(assistantMessage);
+      relevantChatHistory.push(assistantMessage);
+
+      await customer.update({
+        fullChatHistory: JSON.stringify(fullChatHistory),
+        relevantChatHistory: JSON.stringify(relevantChatHistory),
+      });
+    }
+
+    console.log("Tiempos de entrega enviados exitosamente");
+  } catch (error) {
+    console.error("Error al enviar los tiempos de entrega:", error);
+    await sendWhatsAppMessage(
+      clientId,
+      "Lo siento, hubo un error al obtener los tiempos de entrega. Por favor, intenta nuevamente más tarde."
     );
   }
 }
