@@ -315,13 +315,9 @@ async function createOrderFromPreOrder(preOrder, clientId) {
           : "Recolección en restaurante";
 
       let orderSummary = `🎉 *¡Tu orden #${newOrder.id} ha sido creada exitosamente!* 🎉\n\n`;
+      orderSummary += `📞 *Telefono:* ${newOrder.telefono}\n`;
       orderSummary += `🍽️ *Tipo:* ${tipoOrdenTraducido}\n`;
-      if (newOrder.direccion_entrega) {
-        orderSummary += `🏠 *Dirección de entrega:* ${newOrder.direccion_entrega}\n`;
-      }
-      if (newOrder.nombre_recoleccion) {
-        orderSummary += `👤 *Nombre para recolección:* ${newOrder.nombre_recoleccion}\n`;
-      }
+      orderSummary += `🏠 *informacion de entrega:* ${newOrder.informacion_entrega}\n`;
       orderSummary += `💰 *Precio total:* $${newOrder.precio_total}\n`;
       orderSummary += `📅 *Fecha de creación:* ${newOrder.fecha_creacion}\n`;
       orderSummary += `⏱️ *Tiempo estimado de entrega:* ${newOrder.tiempoEstimado}\n\n`;

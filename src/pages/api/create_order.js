@@ -220,6 +220,9 @@ async function createOrder(req, res) {
   res.status(201).json({
     orden: {
       id: newOrder.dailyOrderNumber,
+      telefono: newOrder.clientId.startsWith('521')
+      ? newOrder.clientId.slice(3)
+      : newOrder.clientId,
       tipo: newOrder.orderType,
       estado: newOrder.status,
       informacion_entrega: newOrder.deliveryInfo,
@@ -273,34 +276,16 @@ async function createOrder(req, res) {
 }
 
 async function modifyOrder(req, res) {
-  const { dailyOrderNumber, orderType, orderItems, deliveryInfo, clientId } =
+  const { orderId, orderType, orderItems, deliveryInfo, clientId } =
     req.body;
 
-  // Obtener la fecha actual en la zona horaria de México
-  const mexicoTime = new Date().toLocaleString("en-US", {
-    timeZone: "America/Mexico_City",
-  });
-  const today = new Date(mexicoTime).toISOString().split("T")[0];
 
-  // Buscar la orden por dailyOrderNumber y fecha actual
+  // Buscar la orden por orderId
   const order = await Order.findOne({
     where: {
-      dailyOrderNumber: dailyOrderNumber,
-      orderDate: today,
+      id: orderId,
     },
   });
-
-  if (!order) {
-    return res
-      .status(400)
-      .json({ error: "La orden no existe o no es del día actual." });
-  }
-
-  if (order.clientId !== clientId) {
-    return res
-      .status(400)
-      .json({ error: "La orden no corresponde al cliente proporcionado." });
-  }
 
   if (order.status !== "created") {
     return res.status(400).json({
@@ -473,6 +458,9 @@ async function modifyOrder(req, res) {
     mensaje: "Orden modificada exitosamente",
     orden: {
       id: order.dailyOrderNumber,
+      telefono: newOrder.clientId.startsWith('521')
+      ? newOrder.clientId.slice(3)
+      : newOrder.clientId,
       tipo: order.orderType,
       estado: order.status,
       informacion_entrega: order.deliveryInfo,
@@ -712,8 +700,6 @@ async function selectProducts(req, res) {
     let messageContent = "Aquí tienes el resumen de tu pedido\n\n";
     let relevantMessageContent = "Aquí tienes el resumen de tu pedido\n\n";
 
-    messageContent += "Teléfono: " + clientId + "\n";
-    relevantMessageContent += "Teléfono: " + clientId + "\n";
     messageContent += `🏠 *Información de entrega*: ${
       deliveryInfo || "No disponible"
     }\n`;
