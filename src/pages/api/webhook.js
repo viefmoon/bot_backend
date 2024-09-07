@@ -14,6 +14,8 @@ const PizzaIngredient = require("../../models/pizzaIngredient");
 const axios = require("axios");
 const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
 const RestaurantConfig = require("../../models/restaurantConfig");
+const fs = require("fs");
+const FormData = require("form-data");
 
 export default async function handler(req, res) {
   if (req.method === "GET") {
@@ -43,6 +45,7 @@ export default async function handler(req, res) {
         for (const change of changes) {
           const { value } = change;
 
+          // Verificar si hay mensajes recibidos
           if (value.messages && value.messages.length > 0) {
             for (const message of value.messages) {
               const { from, type, id } = message;
@@ -52,13 +55,13 @@ export default async function handler(req, res) {
                 where: { messageId: id },
               });
               if (existingMessage) {
-                continue;
+                continue; // Saltar al siguiente mensaje
               }
 
               // Registrar el nuevo mensaje
               await MessageLog.create({ messageId: id, processed: true });
 
-              // Verificar horario de atención
+              // Verificar horario de atención solo para mensajes recibidos
               const estaAbierto = await verificarHorarioAtencion();
               if (!estaAbierto) {
                 await sendWhatsAppMessage(
@@ -73,6 +76,10 @@ export default async function handler(req, res) {
                 await handleMessage(from, message.text.body);
               } else if (type === "interactive") {
                 await handleInteractiveMessage(from, message);
+              } else if (type === "audio") {
+                const audioUrl = message.audio.url;
+                const transcribedText = await transcribeAudio(audioUrl);
+                await handleMessage(from, transcribedText);
               } else {
                 console.log(`Tipo de mensaje no manejado: ${type}`);
               }
@@ -87,6 +94,45 @@ export default async function handler(req, res) {
   } else {
     res.setHeader("Allow", ["GET", "POST"]);
     res.status(405).end(`Método ${req.method} no permitido`);
+  }
+}
+
+async function transcribeAudio(audioUrl) {
+  try {
+    // Descargar el archivo de audio
+    const response = await axios.get(audioUrl, { responseType: "stream" });
+    const audioPath = `/tmp/audio.ogg`;
+    const writer = fs.createWriteStream(audioPath);
+    response.data.pipe(writer);
+
+    await new Promise((resolve, reject) => {
+      writer.on("finish", resolve);
+      writer.on("error", reject);
+    });
+
+    // Enviar el archivo de audio a la API de OpenAI Whisper
+    const formData = new FormData();
+    formData.append("file", fs.createReadStream(audioPath));
+    formData.append("model", "whisper-1");
+
+    const whisperResponse = await axios.post(
+      "https://api.openai.com/v1/audio/transcriptions",
+      formData,
+      {
+        headers: {
+          ...formData.getHeaders(),
+          Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
+        },
+      }
+    );
+
+    // Eliminar el archivo de audio temporal
+    fs.unlinkSync(audioPath);
+
+    return whisperResponse.data.text;
+  } catch (error) {
+    console.error("Error al transcribir el audio:", error);
+    return "Lo siento, no pude transcribir el mensaje de audio.";
   }
 }
 
