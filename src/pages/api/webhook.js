@@ -86,16 +86,31 @@ export default async function handler(req, res) {
               } else if (type === "audio") {
                 console.log("Audio message received");
                 console.log(message);
-                const audioId = message.audio.id;
-                if (audioId) {
-                  const audioUrl = `https://api.whatsapp.com/v1/media/${audioId}`;
-                  const transcribedText = await transcribeAudio(audioUrl);
-                  await handleMessage(from, transcribedText);
+                if (message.audio && message.audio.id) {
+                  const audioId = message.audio.id;
+                  try {
+                    const audioUrl = await getAudioUrl(audioId);
+                    if (audioUrl) {
+                      const transcribedText = await transcribeAudio(audioUrl);
+                      await handleMessage(from, transcribedText);
+                    } else {
+                      throw new Error("No se pudo obtener la URL del audio.");
+                    }
+                  } catch (error) {
+                    console.error(
+                      "Error al procesar el mensaje de audio:",
+                      error
+                    );
+                    await sendWhatsAppMessage(
+                      from,
+                      "Lo siento, hubo un problema al procesar tu mensaje de audio. Por favor, intenta nuevamente."
+                    );
+                  }
                 } else {
                   console.error("No se encontró el ID del audio.");
                   await sendWhatsAppMessage(
                     from,
-                    "Lo siento, no pude obtener el ID del mensaje de audio."
+                    "Lo siento, no pude obtener la información necesaria del mensaje de audio."
                   );
                 }
               } else {
@@ -1142,5 +1157,21 @@ async function handleWaitTimes(clientId) {
       clientId,
       "Hubo un error al obtener los tiempos de espera. Por favor, intenta nuevamente más tarde."
     );
+  }
+}
+async function getAudioUrl(audioId) {
+  try {
+    const response = await axios.get(
+      `https://graph.facebook.com/v19.0/${audioId}`,
+      {
+        headers: {
+          Authorization: `Bearer ${process.env.WHATSAPP_ACCESS_TOKEN}`,
+        },
+      }
+    );
+    return response.data.url;
+  } catch (error) {
+    console.error("Error al obtener la URL del audio:", error);
+    return null;
   }
 }
