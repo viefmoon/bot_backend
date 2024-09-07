@@ -85,8 +85,16 @@ export default async function handler(req, res) {
                 await handleInteractiveMessage(from, message);
               } else if (type === "audio") {
                 const audioUrl = message.audio.url;
-                const transcribedText = await transcribeAudio(audioUrl);
-                await handleMessage(from, transcribedText);
+                if (audioUrl) {
+                  const transcribedText = await transcribeAudio(audioUrl);
+                  await handleMessage(from, transcribedText);
+                } else {
+                  console.error("No se encontró la URL del audio.");
+                  await sendWhatsAppMessage(
+                    from,
+                    "Lo siento, no pude obtener la URL del mensaje de audio."
+                  );
+                }
               } else {
                 console.log(`Tipo de mensaje no manejado: ${type}`);
               }
