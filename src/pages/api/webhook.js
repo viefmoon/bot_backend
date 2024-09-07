@@ -86,15 +86,16 @@ export default async function handler(req, res) {
               } else if (type === "audio") {
                 console.log("Audio message received");
                 console.log(message);
-                const audioUrl = message.audio.url;
-                if (audioUrl) {
+                const audioId = message.audio.id;
+                if (audioId) {
+                  const audioUrl = `https://api.whatsapp.com/v1/media/${audioId}`;
                   const transcribedText = await transcribeAudio(audioUrl);
                   await handleMessage(from, transcribedText);
                 } else {
-                  console.error("No se encontró la URL del audio.");
+                  console.error("No se encontró el ID del audio.");
                   await sendWhatsAppMessage(
                     from,
-                    "Lo siento, no pude obtener la URL del mensaje de audio."
+                    "Lo siento, no pude obtener el ID del mensaje de audio."
                   );
                 }
               } else {
