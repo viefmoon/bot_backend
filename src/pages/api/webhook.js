@@ -174,6 +174,16 @@ async function transcribeAudio(audioUrl) {
     return whisperResponse.data.text;
   } catch (error) {
     console.error("Error al transcribir el audio:", error);
+
+    // Manejo de errores detallado
+    if (error.response) {
+      console.error("Error en la respuesta de la API:", error.response.data);
+    } else if (error.request) {
+      console.error("No se recibió respuesta de la API:", error.request);
+    } else {
+      console.error("Error al configurar la solicitud:", error.message);
+    }
+
     return "Lo siento, no pude transcribir el mensaje de audio.";
   }
 }
