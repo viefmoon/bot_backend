@@ -134,8 +134,13 @@ async function transcribeAudio(audioUrl) {
   try {
     console.log("Iniciando transcripción de audio para URL:", audioUrl);
 
-    // Descargar el archivo de audio
-    const response = await axios.get(audioUrl, { responseType: "stream" });
+    // Descargar el archivo de audio con autenticación
+    const response = await axios.get(audioUrl, {
+      responseType: "stream",
+      headers: {
+        Authorization: `Bearer ${process.env.WHATSAPP_ACCESS_TOKEN}`,
+      },
+    });
     const audioPath = `/tmp/audio.ogg`;
     const writer = fs.createWriteStream(audioPath);
     response.data.pipe(writer);
