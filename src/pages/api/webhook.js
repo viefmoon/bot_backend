@@ -162,6 +162,8 @@ async function handleInteractiveMessage(from, message) {
       await handleWaitTimes(from);
     } else if (listReplyId === "view_menu") {
       await sendMenu(from);
+    } else if (listReplyId === "restaurant_info") {
+      await handleRestaurantInfo(from);
     }
   }
 }
@@ -594,6 +596,10 @@ async function sendWelcomeMessage(phoneNumber) {
                 id: "wait_times",
                 title: "Tiempos de espera",
               },
+              {
+                id: "restaurant_info",
+                title: "Información y horarios del restaurante",
+              },
             ],
           },
         ],
@@ -771,6 +777,21 @@ async function checkBannedClient(clientId) {
 async function sendBannedMessage(clientId) {
   const message = "Lo sentimos, tu número ha sido baneado por mal uso del servicio. Si crees que esto es un error, por favor contactanos.";
   await sendWhatsAppMessage(clientId, message);
+}
+
+async function handleRestaurantInfo(clientId) {
+  const restaurantInfo = 
+    "🍕 *Información y horarios de La Leña*\n\n" +
+    "📍 *Ubicación:* C. Ogazón Sur 36, Centro, 47730 Tototlán, Jal.\n\n" +
+    "📞 *Teléfonos:*\n" +
+    "   Fijo: 3919160126\n" +
+    "   Celular: 3338423316\n\n" +
+    "🕒 *Horarios:*\n" +
+    "   Martes a sábado: 6:00 PM - 11:00 PM\n" +
+    "   Domingos: 2:00 PM - 11:00 PM\n\n" +
+    "¡Gracias por tu interés! Esperamos verte pronto.";
+
+  await sendWhatsAppMessage(clientId, restaurantInfo);
 }
 
 async function checkMessageRateLimit(clientId) {
