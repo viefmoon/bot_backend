@@ -562,14 +562,17 @@ async function sendWhatsAppImageMessage(phoneNumber, imageUrl, caption) {
 
 async function sendWelcomeMessage(phoneNumber) {
   try {
-    // Enviar mensaje con imagen
+    // Enviar mensaje con imagen primero
     await sendWhatsAppImageMessage(
       phoneNumber,
       `${process.env.BASE_URL}/images/bienvenida.jpg`,
       "¡Bienvenido a La Leña!"
     );
 
-    // Enviar mensaje interactivo con lista
+    // Esperar un breve momento para asegurar que la imagen se haya enviado
+    await new Promise(resolve => setTimeout(resolve, 1000));
+
+    // Luego enviar mensaje interactivo con lista
     const listOptions = {
       body: {
         text: "¿Cómo podemos ayudarte hoy?",
@@ -1100,4 +1103,3 @@ async function handleWaitTimes(clientId) {
     );
   }
 }
-
