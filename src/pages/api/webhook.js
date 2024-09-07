@@ -571,15 +571,10 @@ async function sendWelcomeMessage(phoneNumber) {
     );
 
     // Esperar un breve momento para asegurar que la imagen se haya enviado
-    //await new Promise((resolve) => setTimeout(resolve, 1000));
+    await new Promise((resolve) => setTimeout(resolve, 2000));
 
     // Luego enviar mensaje interactivo con lista
     const listOptions = {
-      type: "list",
-      header: {
-        type: "text",
-        text: "Menú de opciones",
-      },
       body: {
         text: "¿Cómo podemos ayudarte hoy?",
       },
@@ -602,7 +597,7 @@ async function sendWelcomeMessage(phoneNumber) {
               },
               {
                 id: "restaurant_info",
-                title: "Información del restaurante",
+                title: "Información y horarios del restaurante",
               },
             ],
           },
@@ -610,16 +605,7 @@ async function sendWelcomeMessage(phoneNumber) {
       },
     };
 
-    const success = await sendWhatsAppInteractiveMessage(
-      phoneNumber,
-      listOptions
-    );
-
-    if (!success) {
-      throw new Error("No se pudo enviar el mensaje interactivo");
-    }
-
-    console.log("Mensaje de bienvenida enviado exitosamente");
+    await sendWhatsAppInteractiveMessage(phoneNumber, listOptions);
     return true;
   } catch (error) {
     console.error("Error al enviar mensajes de bienvenida:", error);
@@ -634,7 +620,10 @@ async function sendWhatsAppInteractiveMessage(phoneNumber, listOptions) {
       recipient_type: "individual",
       to: phoneNumber,
       type: "interactive",
-      interactive: listOptions,
+      interactive: {
+        type: "list",
+        ...listOptions,
+      },
     };
 
     const response = await axios.post(
@@ -647,7 +636,7 @@ async function sendWhatsAppInteractiveMessage(phoneNumber, listOptions) {
         },
       }
     );
-    console.log("Mensaje interactivo enviado exitosamente");
+    console.log("Mensaje interactivo con imagen enviado exitosamente");
     return true;
   } catch (error) {
     console.error(
