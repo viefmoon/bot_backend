@@ -1161,8 +1161,9 @@ async function handleWaitTimes(clientId) {
 }
 async function getAudioUrl(audioId) {
   try {
+    const phoneNumberId = process.env.WHATSAPP_PHONE_NUMBER_ID; // Asegúrate de tener este valor en tus variables de entorno
     const response = await axios.get(
-      `https://graph.facebook.com/v19.0/${audioId}`,
+      `https://graph.facebook.com/v19.0/${phoneNumberId}/media/${audioId}`,
       {
         headers: {
           Authorization: `Bearer ${process.env.WHATSAPP_ACCESS_TOKEN}`,
