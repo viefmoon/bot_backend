@@ -70,13 +70,13 @@ export default async function handler(req, res) {
               await MessageLog.create({ messageId: id, processed: true });
 
               // Verificar horario de atención solo para mensajes recibidos
-              // const estaAbierto = await verificarHorarioAtencion();
-              // if (!estaAbierto) {
-              //   await sendWhatsAppMessage(
-              //     from,
-              //     "Lo sentimos, solo podremos procesar tu pedido cuando el restaurante esté abierto. Horarios: Martes a sábado: 6:00 PM - 11:00 PM, Domingos: 2:00 PM - 11:00 PM."
-              //   );
-              // }
+              const estaAbierto = await verificarHorarioAtencion();
+              if (!estaAbierto) {
+                await sendWhatsAppMessage(
+                  from,
+                  "Lo sentimos, solo podremos procesar tu pedido cuando el restaurante esté abierto. Horarios: Martes a sábado: 6:00 PM - 11:00 PM, Domingos: 2:00 PM - 11:00 PM."
+                );
+              }
 
               // Procesar el mensaje según su tipo
               if (type === "text") {
@@ -132,9 +132,6 @@ export default async function handler(req, res) {
 
 async function transcribeAudio(audioUrl) {
   try {
-    console.log("Iniciando transcripción de audio para URL:", audioUrl);
-
-    // Descargar el archivo de audio con autenticación
     const response = await axios.get(audioUrl, {
       responseType: "stream",
       headers: {
@@ -150,14 +147,9 @@ async function transcribeAudio(audioUrl) {
       writer.on("error", reject);
     });
 
-    console.log("Archivo de audio descargado en:", audioPath);
-
-    // Enviar el archivo de audio a la API de OpenAI Whisper
     const formData = new FormData();
     formData.append("file", fs.createReadStream(audioPath));
     formData.append("model", "whisper-1");
-
-    console.log("Enviando archivo de audio a la API de OpenAI Whisper");
 
     const whisperResponse = await axios.post(
       "https://api.openai.com/v1/audio/transcriptions",
@@ -170,11 +162,8 @@ async function transcribeAudio(audioUrl) {
       }
     );
 
-    console.log("Respuesta de la API de OpenAI Whisper:", whisperResponse.data);
-
     // Eliminar el archivo de audio temporal
     fs.unlinkSync(audioPath);
-    console.log("Archivo de audio temporal eliminado");
 
     return whisperResponse.data.text;
   } catch (error) {
