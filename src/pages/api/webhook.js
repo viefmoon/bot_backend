@@ -76,7 +76,6 @@ export default async function handler(req, res) {
                   from,
                   "Lo sentimos, solo podremos procesar tu pedido cuando el restaurante esté abierto. Horarios: Martes a sábado: 6:00 PM - 11:00 PM, Domingos: 2:00 PM - 11:00 PM."
                 );
-                continue;
               }
 
               // Procesar el mensaje según su tipo
@@ -572,7 +571,7 @@ async function sendWelcomeMessage(phoneNumber) {
     );
 
     // Esperar un breve momento para asegurar que la imagen se haya enviado
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    await new Promise((resolve) => setTimeout(resolve, 1000));
 
     // Luego enviar mensaje interactivo con lista
     const listOptions = {
@@ -775,12 +774,13 @@ async function checkBannedClient(clientId) {
 
 // Función para enviar un mensaje a un cliente baneado
 async function sendBannedMessage(clientId) {
-  const message = "Lo sentimos, tu número ha sido baneado por mal uso del servicio. Si crees que esto es un error, por favor contactanos.";
+  const message =
+    "Lo sentimos, tu número ha sido baneado por mal uso del servicio. Si crees que esto es un error, por favor contactanos.";
   await sendWhatsAppMessage(clientId, message);
 }
 
 async function handleRestaurantInfo(clientId) {
-  const restaurantInfo = 
+  const restaurantInfo =
     "🍕 *Información y horarios de La Leña*\n\n" +
     "📍 *Ubicación:* C. Ogazón Sur 36, Centro, 47730 Tototlán, Jal.\n\n" +
     "📞 *Teléfonos:*\n" +
@@ -795,7 +795,7 @@ async function handleRestaurantInfo(clientId) {
 }
 
 async function checkMessageRateLimit(clientId) {
-  const MAX_MESSAGES =30; // Número máximo de mensajes permitidos
+  const MAX_MESSAGES = 30; // Número máximo de mensajes permitidos
   const TIME_WINDOW = 5 * 60 * 1000; // Ventana de tiempo en milisegundos (5 minutos)
 
   try {
