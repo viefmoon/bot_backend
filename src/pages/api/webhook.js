@@ -106,6 +106,8 @@ export default async function handler(req, res) {
 
 async function transcribeAudio(audioUrl) {
   try {
+    console.log("Iniciando transcripción de audio para URL:", audioUrl);
+
     // Descargar el archivo de audio
     const response = await axios.get(audioUrl, { responseType: "stream" });
     const audioPath = `/tmp/audio.ogg`;
@@ -117,10 +119,14 @@ async function transcribeAudio(audioUrl) {
       writer.on("error", reject);
     });
 
+    console.log("Archivo de audio descargado en:", audioPath);
+
     // Enviar el archivo de audio a la API de OpenAI Whisper
     const formData = new FormData();
     formData.append("file", fs.createReadStream(audioPath));
     formData.append("model", "whisper-1");
+
+    console.log("Enviando archivo de audio a la API de OpenAI Whisper");
 
     const whisperResponse = await axios.post(
       "https://api.openai.com/v1/audio/transcriptions",
@@ -133,8 +139,11 @@ async function transcribeAudio(audioUrl) {
       }
     );
 
+    console.log("Respuesta de la API de OpenAI Whisper:", whisperResponse.data);
+
     // Eliminar el archivo de audio temporal
     fs.unlinkSync(audioPath);
+    console.log("Archivo de audio temporal eliminado");
 
     return whisperResponse.data.text;
   } catch (error) {
