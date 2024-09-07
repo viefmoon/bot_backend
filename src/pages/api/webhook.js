@@ -597,7 +597,7 @@ async function sendWelcomeMessage(phoneNumber) {
               },
               {
                 id: "restaurant_info",
-                title: "Información y horarios del restaurante",
+                title: "Información y horarios",
               },
             ],
           },
