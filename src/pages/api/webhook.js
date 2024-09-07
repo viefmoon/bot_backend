@@ -84,6 +84,8 @@ export default async function handler(req, res) {
               } else if (type === "interactive") {
                 await handleInteractiveMessage(from, message);
               } else if (type === "audio") {
+                console.log("Audio message received");
+                console.log(message);
                 const audioUrl = message.audio.url;
                 if (audioUrl) {
                   const transcribedText = await transcribeAudio(audioUrl);
