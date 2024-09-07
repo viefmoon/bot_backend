@@ -16,7 +16,8 @@ const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
 const RestaurantConfig = require("../../models/restaurantConfig");
 const fs = require("fs");
 const FormData = require("form-data");
-
+const BannedClient = require("../../models/bannedClient");
+const MessageRateLimit = require("../../models/messageRateLimit");
 export default async function handler(req, res) {
   if (req.method === "GET") {
     // Verificación del webhook
@@ -49,6 +50,13 @@ export default async function handler(req, res) {
           if (value.messages && value.messages.length > 0) {
             for (const message of value.messages) {
               const { from, type, id } = message;
+
+              // Verificar si el cliente está baneado
+              const isBanned = await checkBannedClient(from);
+              if (isBanned) {
+                await sendBannedMessage(from);
+                continue; // Saltar al siguiente mensaje
+              }
 
               // Verificar si el mensaje ya ha sido procesado
               const existingMessage = await MessageLog.findOne({
@@ -375,6 +383,16 @@ async function createOrderFromPreOrder(preOrder, clientId) {
 
 async function handleMessage(from, message) {
   try {
+    // Verificar la tasa de mensajes
+    const isRateLimited = await checkMessageRateLimit(from);
+    if (isRateLimited) {
+      await sendWhatsAppMessage(
+        from,
+        "Has enviado demasiados mensajes en un corto período de tiempo. Por favor, espera un momento antes de enviar más mensajes."
+      );
+      return;
+    }
+
     // Buscar o crear el cliente
     let [customer, created] = await Customer.findOrCreate({
       where: { clientId: from },
@@ -744,6 +762,63 @@ async function handleOrderModification(clientId, messageId) {
   }
 }
 
+// Función para verificar si un cliente está baneado
+async function checkBannedClient(clientId) {
+  const bannedClient = await BannedClient.findOne({ where: { clientId } });
+  return !!bannedClient;
+}
+
+// Función para enviar un mensaje a un cliente baneado
+async function sendBannedMessage(clientId) {
+  const message = "Lo sentimos, tu número ha sido baneado por mal uso del servicio. Si crees que esto es un error, por favor contactanos.";
+  await sendWhatsAppMessage(clientId, message);
+}
+
+async function checkMessageRateLimit(clientId) {
+  const MAX_MESSAGES =30; // Número máximo de mensajes permitidos
+  const TIME_WINDOW = 5 * 60 * 1000; // Ventana de tiempo en milisegundos (5 minutos)
+
+  try {
+    let rateLimit = await MessageRateLimit.findOne({ where: { clientId } });
+
+    if (!rateLimit) {
+      rateLimit = await MessageRateLimit.create({
+        clientId,
+        messageCount: 1,
+        lastMessageTime: new Date(),
+      });
+      return false; // No está limitado
+    }
+
+    const now = new Date();
+    const timeSinceLastMessage = now - rateLimit.lastMessageTime;
+
+    if (timeSinceLastMessage > TIME_WINDOW) {
+      // Reiniciar el contador si ha pasado el tiempo de la ventana
+      await rateLimit.update({
+        messageCount: 1,
+        lastMessageTime: now,
+      });
+      return false; // No está limitado
+    }
+
+    if (rateLimit.messageCount >= MAX_MESSAGES) {
+      return true; // Está limitado
+    }
+
+    // Incrementar el contador de mensajes
+    await rateLimit.update({
+      messageCount: rateLimit.messageCount + 1,
+      lastMessageTime: now,
+    });
+
+    return false; // No está limitado
+  } catch (error) {
+    console.error("Error al verificar la tasa de mensajes:", error);
+    return false; // En caso de error, permitimos el mensaje
+  }
+}
+
 async function generateOrderSummary(order) {
   try {
     const tipoOrdenTraducido =
@@ -1029,3 +1104,4 @@ async function handleWaitTimes(clientId) {
     );
   }
 }
+

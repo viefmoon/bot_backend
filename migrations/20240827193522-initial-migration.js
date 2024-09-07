@@ -546,6 +546,60 @@ module.exports = {
         type: Sequelize.DATE,
       },
     });
+
+    await queryInterface.createTable("BannedClients", {
+      id: {
+        type: Sequelize.INTEGER,
+        primaryKey: true,
+        autoIncrement: true,
+      },
+      clientId: {
+        type: Sequelize.STRING,
+        allowNull: false,
+      },
+      bannedAt: {
+        type: Sequelize.DATE,
+        defaultValue: Sequelize.NOW,
+      },
+      createdAt: {
+        allowNull: false,
+        type: Sequelize.DATE,
+      },
+      updatedAt: {
+        allowNull: false,
+        type: Sequelize.DATE,
+      },
+    });
+
+    await queryInterface.createTable("MessageRateLimits", {
+      id: {
+        type: Sequelize.INTEGER,
+        primaryKey: true,
+        autoIncrement: true,
+      },
+      clientId: {
+        type: Sequelize.STRING,
+        allowNull: false,
+        unique: true,
+      },
+      messageCount: {
+        type: Sequelize.INTEGER,
+        allowNull: false,
+        defaultValue: 0,
+      },
+      lastMessageTime: {
+        type: Sequelize.DATE,
+        allowNull: false,
+      },
+      createdAt: {
+        allowNull: false,
+        type: Sequelize.DATE,
+      },
+      updatedAt: {
+        allowNull: false,
+        type: Sequelize.DATE,
+      },
+    });
   },
 
   down: async (queryInterface, Sequelize) => {
@@ -563,5 +617,7 @@ module.exports = {
     await queryInterface.dropTable("Availabilities");
     await queryInterface.dropTable("RestaurantConfigs");
     await queryInterface.dropTable("PreOrders");
+    await queryInterface.dropTable("BannedClients");
+    await queryInterface.dropTable("MessageRateLimits");
   },
 };
