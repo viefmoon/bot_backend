@@ -571,7 +571,7 @@ async function sendWelcomeMessage(phoneNumber) {
     );
 
     // Esperar un breve momento para asegurar que la imagen se haya enviado
-    await new Promise((resolve) => setTimeout(resolve, 1000));
+    //await new Promise((resolve) => setTimeout(resolve, 1000));
 
     // Luego enviar mensaje interactivo con lista
     const listOptions = {
