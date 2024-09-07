@@ -70,13 +70,13 @@ export default async function handler(req, res) {
               await MessageLog.create({ messageId: id, processed: true });
 
               // Verificar horario de atención solo para mensajes recibidos
-              const estaAbierto = await verificarHorarioAtencion();
-              if (!estaAbierto) {
-                await sendWhatsAppMessage(
-                  from,
-                  "Lo sentimos, solo podremos procesar tu pedido cuando el restaurante esté abierto. Horarios: Martes a sábado: 6:00 PM - 11:00 PM, Domingos: 2:00 PM - 11:00 PM."
-                );
-              }
+              // const estaAbierto = await verificarHorarioAtencion();
+              // if (!estaAbierto) {
+              //   await sendWhatsAppMessage(
+              //     from,
+              //     "Lo sentimos, solo podremos procesar tu pedido cuando el restaurante esté abierto. Horarios: Martes a sábado: 6:00 PM - 11:00 PM, Domingos: 2:00 PM - 11:00 PM."
+              //   );
+              // }
 
               // Procesar el mensaje según su tipo
               if (type === "text") {
