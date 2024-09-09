@@ -495,7 +495,7 @@ async function handleMessage(from, message) {
           "   - Si acceptsMultiple es false, solo se puede seleccionar un modificador.",
           "   - Si requiresModifier es true, es obligatorio seleccionar al menos un modificador.",
           "2. Pizzas:",
-          "   - Si el producto es una pizza se pueden crear hasta mitades de una pizza, es obligatorio incluir selectedpizzaIngredients, mitad izquierda o derecha y acción (añadir o quitar) para cada ingrediente.",
+          "   - Si el producto es una pizza se pueden crear hasta 2 mitades de una pizza, es obligatorio incluir selectedpizzaIngredients con mitad y accion de añadir o quitar.",
           "3. Comentarios:",
           "   - Utiliza el campo comments para observaciones específicas, como quitar ingredientes del producto.",
           "4. Estructura del orderItem:",
