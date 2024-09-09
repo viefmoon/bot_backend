@@ -714,12 +714,12 @@ async function selectProducts(req, res) {
     );
 
     let messageContent = "Aquí tienes el resumen de tu pedido\n\n";
-    let relevantMessageContent = "Aquí tienes el resumen de tu pedido\n\n";
+    let relevantMessageContent = "Resumen del pedido hasta este momento\n\n";
 
     messageContent += `🏠 *Información de entrega*: ${
       deliveryInfo || "No disponible"
     }\n`;
-    relevantMessageContent += `🏠 *Información de entrega*: ${
+    relevantMessageContent += `Información de entrega: ${
       deliveryInfo || "No disponible"
     }\n`;
     messageContent += "\n";
@@ -734,7 +734,7 @@ async function selectProducts(req, res) {
         messageContent += `  🔸 Modificadores: ${item.modificadores.join(
           ", "
         )}\n`;
-        relevantMessageContent += `  🔸 Modificadores: ${item.modificadores.join(
+        relevantMessageContent += `  Modificadores: ${item.modificadores.join(
           ", "
         )}\n`;
       }
@@ -745,7 +745,7 @@ async function selectProducts(req, res) {
         item.ingredientes_pizza.right.length > 0
       ) {
         messageContent += "  🔸 Ingredientes de pizza: ";
-        relevantMessageContent += "  🔸 Ingredientes de pizza: ";
+        relevantMessageContent += "  Ingredientes de pizza: ";
         if (item.ingredientes_pizza.full.length > 0) {
           messageContent += `${item.ingredientes_pizza.full.join(", ")}`;
           relevantMessageContent += `${item.ingredientes_pizza.full.join(
@@ -773,7 +773,7 @@ async function selectProducts(req, res) {
 
       if (item.comments) {
         messageContent += `  💬 Comentarios: ${item.comments}\n`;
-        relevantMessageContent += `  💬 Comentarios: ${item.comments}\n`;
+        relevantMessageContent += `  Comentarios: ${item.comments}\n`;
       }
     });
     messageContent += `\n💰 *Total: $${totalCost}*`;
