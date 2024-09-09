@@ -441,6 +441,11 @@ module.exports = {
         onUpdate: "CASCADE",
         onDelete: "CASCADE",
       },
+      action: {
+        type: Sequelize.ENUM("add", "remove"),
+        allowNull: false,
+        defaultValue: "add",
+      },
       createdAt: {
         allowNull: false,
         type: Sequelize.DATE,

@@ -7,6 +7,11 @@ const PizzaHalf = {
   none: "none",
 };
 
+const IngredientAction = {
+  add: "add",
+  remove: "remove",
+};
+
 const SelectedPizzaIngredient = sequelize.define(
   "SelectedPizzaIngredient",
   {
@@ -31,10 +36,15 @@ const SelectedPizzaIngredient = sequelize.define(
         key: "id",
       },
     },
+    action: {
+      type: DataTypes.ENUM(...Object.values(IngredientAction)),
+      allowNull: false,
+      defaultValue: IngredientAction.add,
+    },
   },
   {
     timestamps: true,
   }
 );
 
-module.exports = { SelectedPizzaIngredient, PizzaHalf };
+module.exports = { SelectedPizzaIngredient, PizzaHalf, IngredientAction };

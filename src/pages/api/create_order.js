@@ -141,20 +141,27 @@ async function createOrder(req, res) {
           const pizzaIngredient = await PizzaIngredient.findByPk(
             ingredient.pizzaIngredientId
           );
+          if (!pizzaIngredient) {
+            throw new Error(
+              `Ingrediente de pizza no encontrado en el menu: ${ingredient.pizzaIngredientId}`
+            );
+          }
+          const ingredientValue =
+            ingredient.action === "add"
+              ? pizzaIngredient.ingredientValue
+              : -pizzaIngredient.ingredientValue;
+
           if (ingredient.half === "none") {
-            totalIngredientValue += pizzaIngredient.ingredientValue;
+            totalIngredientValue += ingredientValue;
           } else {
-            halfIngredientValue[ingredient.half] +=
-              pizzaIngredient.ingredientValue;
+            halfIngredientValue[ingredient.half] += ingredientValue;
           }
         }
 
-        // Calcular precio adicional para pizza completa
         if (totalIngredientValue > 4) {
           itemPrice += (totalIngredientValue - 4) * 10;
         }
 
-        // Calcular precio adicional para mitades
         for (const half in halfIngredientValue) {
           if (halfIngredientValue[half] > 4) {
             itemPrice += (halfIngredientValue[half] - 4) * 5;
@@ -202,6 +209,7 @@ async function createOrder(req, res) {
               orderItemId: orderItem.id,
               pizzaIngredientId: ingredient.pizzaIngredientId,
               half: ingredient.half,
+              action: ingredient.action,
             })
           )
         );
@@ -220,9 +228,9 @@ async function createOrder(req, res) {
   res.status(201).json({
     orden: {
       id: newOrder.dailyOrderNumber,
-      telefono: newOrder.clientId.startsWith('521')
-      ? newOrder.clientId.slice(3)
-      : newOrder.clientId,
+      telefono: newOrder.clientId.startsWith("521")
+        ? newOrder.clientId.slice(3)
+        : newOrder.clientId,
       tipo: newOrder.orderType,
       estado: newOrder.status,
       informacion_entrega: newOrder.deliveryInfo,
@@ -261,7 +269,10 @@ async function createOrder(req, res) {
               precio: sm.Modifier.price,
             })),
             ingredientes_pizza: selectedPizzaIngredients.map((spi) => ({
-              nombre: spi.PizzaIngredient.name,
+              nombre:
+                spi.action === "remove"
+                  ? `sin ${spi.PizzaIngredient.name}`
+                  : spi.PizzaIngredient.name,
               mitad: spi.half,
             })),
             comments: item.comments,
@@ -276,9 +287,7 @@ async function createOrder(req, res) {
 }
 
 async function modifyOrder(req, res) {
-  const { orderId, orderType, orderItems, deliveryInfo, clientId } =
-    req.body;
-
+  const { orderId, orderType, orderItems, deliveryInfo, clientId } = req.body;
 
   // Buscar la orden por orderId
   const order = await Order.findOne({
@@ -458,9 +467,9 @@ async function modifyOrder(req, res) {
     mensaje: "Orden modificada exitosamente",
     orden: {
       id: order.dailyOrderNumber,
-      telefono: newOrder.clientId.startsWith('521')
-      ? newOrder.clientId.slice(3)
-      : newOrder.clientId,
+      telefono: newOrder.clientId.startsWith("521")
+        ? newOrder.clientId.slice(3)
+        : newOrder.clientId,
       tipo: order.orderType,
       estado: order.status,
       informacion_entrega: order.deliveryInfo,
@@ -577,11 +586,15 @@ async function selectProducts(req, res) {
                   `Ingrediente de pizza no encontrado en el menu: ${ingredient.pizzaIngredientId}`
                 );
               }
+              const ingredientValue =
+                ingredient.action === "add"
+                  ? pizzaIngredient.ingredientValue
+                  : -pizzaIngredient.ingredientValue;
+
               if (ingredient.half === "none") {
-                totalIngredientValue += pizzaIngredient.ingredientValue;
+                totalIngredientValue += ingredientValue;
               } else {
-                halfIngredientValue[ingredient.half] +=
-                  pizzaIngredient.ingredientValue;
+                halfIngredientValue[ingredient.half] += ingredientValue;
               }
             }
 
@@ -672,12 +685,15 @@ async function selectProducts(req, res) {
                     `Ingrediente de pizza no encontrado en el menú: ${ingredient.pizzaIngredientId}`
                   );
                 }
+                const ingredientName =
+                  ingredient.action === "remove"
+                    ? `sin ${pizzaIngredient.name}`
+                    : pizzaIngredient.name;
+
                 if (ingredient.half === "none") {
-                  pizzaIngredientNames.full.push(pizzaIngredient.name);
+                  pizzaIngredientNames.full.push(ingredientName);
                 } else {
-                  pizzaIngredientNames[ingredient.half].push(
-                    pizzaIngredient.name
-                  );
+                  pizzaIngredientNames[ingredient.half].push(ingredientName);
                 }
               })
             );
