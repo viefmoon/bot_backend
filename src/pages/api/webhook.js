@@ -482,6 +482,37 @@ async function handleMessage(from, message) {
       }
     }
 
+    // Añadir instrucciones fijas para la creación de orderItems
+    relevantChatHistory.unshift({
+      role: "assistant",
+      content: JSON.stringify({
+        title: "Creación de OrderItems",
+        details: [
+          "Antes de crear un orderItem, realiza las siguientes verificaciones internamente:",
+          "1. Modificadores:",
+          "   - Verifica si el producto o variante tiene modificadores asociados en el menú.",
+          "   - Si acceptsMultiple es true, se pueden seleccionar varios modificadores.",
+          "   - Si acceptsMultiple es false, solo se puede seleccionar un modificador.",
+          "   - Si requiresModifier es true, es obligatorio seleccionar al menos un modificador.",
+          "2. Pizzas:",
+          "   - Si el producto es una pizza se pueden crear hasta mitades de una pizza, es obligatorio incluir selectedpizzaIngredients, mitad izquierda o derecha y acción (añadir o quitar) para cada ingrediente.",
+          "3. Comentarios:",
+          "   - Utiliza el campo comments para observaciones específicas, como quitar ingredientes del producto.",
+          "4. Estructura del orderItem:",
+          "   - productId: Obligatorio para todos los productos.",
+          "   - productVariantId: Obligatorio si el producto tiene variantes.",
+          "   - quantity: Obligatorio, indica la cantidad del producto.",
+          "   - selectedModifiers: Incluir solo si el producto tiene modificadores y se han seleccionado.",
+          "   - selectedPizzaIngredients: Obligatorio para pizzas, debe incluir al menos un ingrediente.",
+          "   - comments: Opcional, usar para observaciones o modificaciones específicas.",
+          "5. Tamaño de órdenes:",
+          "   - Para alitas y papas, asume que el cliente quiere una orden completa a menos que especifique media.",
+          "6. Cantidad:",
+          "   - Asume la cantidad en 1 de cada producto a menos que el cliente indique la cantidad.",
+        ],
+      }),
+    });
+
     // Añadir la información del cliente al inicio si no está presente
     if (
       !relevantChatHistory.some((msg) =>
