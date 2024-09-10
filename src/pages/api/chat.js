@@ -133,7 +133,6 @@ async function getMenuAvailability() {
         productoInfo.tiposModificadores = producto.modifierTypes.map((mt) => ({
           id: mt.id,
           //nombre: mt.name,
-          activo: mt.Availability?.available || false,
           modificadores: mt.modifiers?.map((m) => ({
             id: m.id,
             //nombre: m.name,

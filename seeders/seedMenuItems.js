@@ -611,20 +611,22 @@ const seedMenuItems = async () => {
             available: true,
           });
 
-          for (const modifier of modifierType.modifiers) {
-            await Modifier.create({
-              id: modifier.id,
-              name: modifier.name,
-              price: modifier.price,
-              modifierTypeId: createdModifierType.id,
-            });
+          if (modifierType.modifiers) {
+            for (const modifier of modifierType.modifiers) {
+              await Modifier.create({
+                id: modifier.id,
+                name: modifier.name,
+                price: modifier.price,
+                modifierTypeId: createdModifierType.id,
+              });
 
-            // Crear disponibilidad para el modificador
-            await Availability.create({
-              id: modifier.id,
-              type: "modifier",
-              available: true,
-            });
+              // Crear disponibilidad para el modificador
+              await Availability.create({
+                id: modifier.id,
+                type: "modifier",
+                available: true,
+              });
+            }
           }
         }
       }

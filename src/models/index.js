@@ -50,11 +50,9 @@ OrderItem.hasMany(SelectedModifier, {
 SelectedModifier.belongsTo(OrderItem, { foreignKey: "orderItemId" });
 SelectedModifier.belongsTo(Modifier, { foreignKey: "modifierId" });
 
-// Añade esta nueva relación
 Product.hasMany(ModifierType, { foreignKey: "productId", as: "modifierTypes" });
 ModifierType.belongsTo(Product, { foreignKey: "productId" });
 
-// Añade estas nuevas relaciones
 PizzaIngredient.hasMany(SelectedPizzaIngredient, {
   foreignKey: "pizzaIngredientId",
   as: "selectedPizzaIngredients",
