@@ -128,11 +128,11 @@ async function getMenuAvailability() {
 
       // Agregar modificadores
       if (producto.modifierTypes?.length > 0) {
-        productoInfo.modificadores = producto.modifierTypes.map((mt) => ({
+        productoInfo.tiposModificadores = producto.modifierTypes.map((mt) => ({
           id: mt.id,
           //nombre: mt.name,
           activo: mt.Availability?.available || false,
-          opciones: mt.modifiers?.map((m) => ({
+          modificadores: mt.modifiers?.map((m) => ({
             id: m.id,
             //nombre: m.name,
             activo: m.Availability?.available || false,
