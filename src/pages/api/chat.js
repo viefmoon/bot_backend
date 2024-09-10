@@ -128,17 +128,12 @@ async function getMenuAvailability() {
 
       // Agregar modificadores
       if (producto.modifierTypes?.length > 0) {
-        productoInfo.modificadores = producto.modifierTypes.reduce(
-          (acc, mt) => {
-            if (mt.modifiers?.length > 0) {
-              acc[mt.id] = mt.modifiers.map((m) => ({
-                id: m.id,
-                activo: m.Availability?.available || false,
-              }));
-            }
-            return acc;
-          },
-          {}
+        productoInfo.modificadores = producto.modifierTypes.flatMap(
+          (mt) =>
+            mt.modifiers?.map((m) => ({
+              id: m.id,
+              activo: m.Availability?.available || false,
+            })) || []
         );
       }
 
