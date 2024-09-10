@@ -98,8 +98,6 @@ async function getMenuAvailability() {
       ],
     });
 
-    console.log("Productos encontrados:", JSON.stringify(products));
-
     if (!products || products.length === 0) {
       console.error("No se encontraron productos");
       return { error: "No se encontraron productos en la base de datos" };
