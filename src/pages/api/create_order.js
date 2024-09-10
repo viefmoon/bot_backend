@@ -618,7 +618,7 @@ async function selectProducts(req, res) {
 
             for (const modifierType of modifierTypes) {
               const selectedModifiers = item.selectedModifiers.filter((mod) =>
-                mod.modifierId.startsWith(modifierType.id)
+                modifierType.modifiers.some((m) => m.id === mod.modifierId)
               );
 
               if (modifierType.required && selectedModifiers.length === 0) {
