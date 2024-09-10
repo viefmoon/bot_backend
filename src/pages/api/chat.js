@@ -144,7 +144,7 @@ async function getMenuAvailability() {
         ? product.pizzaIngredients.map((ingredient) => {
             const ingredientData = {
               id: ingredient.id,
-              name: ingredient.name,
+              //ame: ingredient.name,
               disponible: ingredient.Availability?.available || false,
             };
             if (ingredient.ingredients) {
