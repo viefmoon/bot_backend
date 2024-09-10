@@ -130,15 +130,18 @@ async function getMenuAvailability() {
 
       // Agregar modificadores
       if (producto.modifierTypes?.length > 0) {
-        productoInfo.tiposModificadores = producto.modifierTypes.map((mt) => ({
-          id: mt.id,
-          //nombre: mt.name,
-          modificadores: mt.modifiers?.map((m) => ({
-            id: m.id,
-            //nombre: m.name,
-            activo: m.Availability?.available || false,
-          })),
-        }));
+        productoInfo.modificadores = producto.modifierTypes.reduce(
+          (acc, mt) => {
+            if (mt.modifiers?.length > 0) {
+              acc[mt.id] = mt.modifiers.map((m) => ({
+                id: m.id,
+                activo: m.Availability?.available || false,
+              }));
+            }
+            return acc;
+          },
+          {}
+        );
       }
 
       // Agregar ingredientes de pizza
