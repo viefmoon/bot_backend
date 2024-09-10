@@ -180,9 +180,9 @@ const menu = [
         required: false,
         acceptsMultiple: false,
         modifiers: [
-          { id: "HAMB-MOD-PAP_FRAN", name: "Con papas francesa", price: 10 },
-          { id: "HAMB-MOD-PAP_GAJO", name: "Con gajos", price: 15 },
-          { id: "HAMB-MOD-PAP_MIX", name: "Con papas mixtas", price: 15 },
+          { id: "H-MOD-PAP_FRAN", name: "Con papas francesa", price: 10 },
+          { id: "H-MOD-PAP_GAJO", name: "Con gajos", price: 15 },
+          { id: "H-MOD-PAP_MIX", name: "Con papas mixtas", price: 15 },
         ],
       },
       {
