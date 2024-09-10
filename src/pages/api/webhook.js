@@ -482,37 +482,6 @@ async function handleMessage(from, message) {
       }
     }
 
-    // Añadir instrucciones fijas para la creación de orderItems
-    relevantChatHistory.unshift({
-      role: "assistant",
-      content: JSON.stringify({
-        title: "Creación de OrderItems",
-        details: [
-          "Antes de crear un orderItem, realiza las siguientes verificaciones internamente:",
-          "1. Modificadores:",
-          "   - Verifica si el producto o variante tiene modificadores asociados en el menú.",
-          "   - Si acceptsMultiple es true, se pueden seleccionar varios modificadores.",
-          "   - Si acceptsMultiple es false, solo se puede seleccionar un modificador.",
-          "   - Si requiresModifier es true, es obligatorio seleccionar al menos un modificador.",
-          "2. Pizzas:",
-          "   - Si el producto es una pizza se eligen entre las variedades con y sin relleno (orilla rellena de queso), ademas se pueden crear hasta 2 mitades de una pizza, y personalizar estas mitades quitando y agregarndo ingredientes, es obligatorio incluir selectedpizzaIngredients con mitad y accion de añadir o quitar, es de vital importancia registrar los ingredientes retirados y añadidos en selectedpizzaIngredients, no en comentarios",
-          "3. Comentarios:",
-          "   - Utiliza el campo comments para observaciones específicas.",
-          "4. Estructura del orderItem:",
-          "   - productId: Obligatorio para todos los productos.",
-          "   - productVariantId: Obligatorio si el producto tiene variantes.",
-          "   - quantity: Obligatorio, indica la cantidad del producto.",
-          "   - selectedModifiers: Incluir solo si el producto tiene modificadores y se han seleccionado.",
-          "   - selectedPizzaIngredients: Obligatorio para pizzas, debe incluir al menos un ingrediente.",
-          "   - comments: Opcional, usar para observaciones o modificaciones específicas.",
-          "5. Tamaño de órdenes:",
-          "   - Para alitas y papas, asume que el cliente quiere una orden completa a menos que especifique media.",
-          "6. Cantidad:",
-          "   - Asume la cantidad en 1 de cada producto a menos que el cliente indique la cantidad.",
-        ],
-      }),
-    });
-
     // Añadir la información del cliente al inicio si no está presente
     if (
       !relevantChatHistory.some((msg) =>
