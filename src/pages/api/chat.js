@@ -86,13 +86,13 @@ async function getMenuAvailability() {
           model: ModifierType,
           as: "modifierTypes",
           include: [
+            { model: Availability },
             {
               model: Modifier,
               as: "modifiers",
               include: [{ model: Availability }],
             },
           ],
-          include: [{ model: Availability }],
         },
         { model: Availability },
       ],
