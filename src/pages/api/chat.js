@@ -103,96 +103,63 @@ async function getMenuAvailability() {
       return { error: "No se encontraron productos en la base de datos" };
     }
 
-    const menuDisponible = {
+    const menuSimplificado = {
       entradas: [],
       comida: [],
       bebidas: [],
       cocteleria: [],
     };
 
-    products.forEach((product) => {
-      const productData = {
-        id: product.id,
-        name: product.name,
-        disponible: product.Availability?.available || false,
+    products.forEach((producto) => {
+      const productoInfo = {
+        id: producto.id,
+        nombre: producto.name,
+        activo: producto.Availability?.available || false,
       };
 
-      if (product.ingredients) {
-        productData.ingredients = product.ingredients;
+      // Agregar variantes
+      if (producto.productVariants?.length > 0) {
+        productoInfo.variantes = producto.productVariants.map((v) => ({
+          id: v.id,
+          nombre: v.name,
+          activo: v.Availability?.available || false,
+        }));
       }
 
-      // Añadir productVariants
-      const productVariants = Array.isArray(product.productVariants)
-        ? product.productVariants.map((variant) => {
-            const variantData = {
-              id: variant.id,
-              name: variant.name,
-              disponible: variant.Availability?.available || false,
-            };
-            if (variant.ingredients) {
-              variantData.ingredients = variant.ingredients;
-            }
-            return variantData;
-          })
-        : [];
-      if (productVariants.length > 0) {
-        productData.productVariants = productVariants;
+      // Agregar modificadores
+      if (producto.modifierTypes?.length > 0) {
+        productoInfo.modificadores = producto.modifierTypes.map((mt) => ({
+          id: mt.id,
+          nombre: mt.name,
+          activo: mt.Availability?.available || false,
+          opciones: mt.modifiers?.map((m) => ({
+            id: m.id,
+            nombre: m.name,
+            activo: m.Availability?.available || false,
+          })),
+        }));
       }
 
-      // Añadir pizzaIngredients
-      const pizzaIngredients = Array.isArray(product.pizzaIngredients)
-        ? product.pizzaIngredients.map((ingredient) => {
-            const ingredientData = {
-              id: ingredient.id,
-              //ame: ingredient.name,
-              disponible: ingredient.Availability?.available || false,
-            };
-            if (ingredient.ingredients) {
-              ingredientData.ingredients = ingredient.ingredients;
-            }
-            return ingredientData;
-          })
-        : [];
-      if (pizzaIngredients.length > 0) {
-        productData.pizzaIngredients = pizzaIngredients;
+      // Agregar ingredientes de pizza
+      if (producto.pizzaIngredients?.length > 0) {
+        productoInfo.ingredientesPizza = producto.pizzaIngredients.map((i) => ({
+          id: i.id,
+          nombre: i.name,
+          activo: i.Availability?.available || false,
+        }));
       }
 
-      // Añadir modifierTypes solo si no está vacío
-      const modifierTypes = Array.isArray(product.modifierTypes)
-        ? product.modifierTypes.map((modifier) => {
-            const modifierData = {
-              id: modifier.id,
-              name: modifier.name,
-              disponible: modifier.Availability?.available || false,
-            };
-            const modifiers = Array.isArray(modifier.modifiers)
-              ? modifier.modifiers.map((mod) => ({
-                  id: mod.id,
-                  name: mod.name,
-                  disponible: mod.Availability?.available || false,
-                }))
-              : [];
-            if (modifiers.length > 0) {
-              modifierData.modifiers = modifiers;
-            }
-            return modifierData;
-          })
-        : [];
-      if (modifierTypes.length > 0) {
-        productData.modifierTypes = modifierTypes;
-      }
-
-      menuDisponible[product.category].push(productData);
+      menuSimplificado[producto.category].push(productoInfo);
     });
 
     // Eliminar categorías vacías
-    Object.keys(menuDisponible).forEach((category) => {
-      if (menuDisponible[category].length === 0) {
-        delete menuDisponible[category];
+    Object.keys(menuSimplificado).forEach((categoria) => {
+      if (menuSimplificado[categoria].length === 0) {
+        delete menuSimplificado[categoria];
       }
     });
 
-    return { "Menu Disponible": menuDisponible };
+    return { "Menu Disponible": menuSimplificado };
   } catch (error) {
     console.error("Error al obtener la disponibilidad del menú:", error);
     return {
