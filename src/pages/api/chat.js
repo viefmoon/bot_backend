@@ -113,16 +113,16 @@ async function getMenuAvailability() {
     products.forEach((producto) => {
       const productoInfo = {
         id: producto.id,
-        //nombre: producto.name,
-        activo: producto.Availability?.available || false,
+        name: producto.name,
+        active: producto.Availability?.available || false,
       };
 
       // Agregar variantes
       if (producto.productVariants?.length > 0) {
         productoInfo.variantes = producto.productVariants.map((v) => ({
           id: v.id,
-          //nombre: v.name,
-          activo: v.Availability?.available || false,
+          name: v.name,
+          active: v.Availability?.available || false,
         }));
       }
 
@@ -132,7 +132,8 @@ async function getMenuAvailability() {
           (mt) =>
             mt.modifiers?.map((m) => ({
               id: m.id,
-              activo: m.Availability?.available || false,
+              name: m.name,
+              active: m.Availability?.available || false,
             })) || []
         );
       }
@@ -141,8 +142,8 @@ async function getMenuAvailability() {
       if (producto.pizzaIngredients?.length > 0) {
         productoInfo.ingredientesPizza = producto.pizzaIngredients.map((i) => ({
           id: i.id,
-          //nombre: i.name,
-          activo: i.Availability?.available || false,
+          name: i.name,
+          active: i.Availability?.available || false,
         }));
       }
 
