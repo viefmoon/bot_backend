@@ -232,7 +232,7 @@ export async function handleChatRequest(req) {
     console.log("Relevant messages with menu:", messagesWithMenu);
 
     const thread = await openai.beta.threads.create({
-      messages: relevantMessages,
+      messages: messagesWithMenu,
     });
 
     let run = await openai.beta.threads.runs.create(thread.id, {
