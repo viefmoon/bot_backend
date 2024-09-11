@@ -473,13 +473,6 @@ async function handleMessage(from, message) {
     // Enviar mensaje de bienvenida si el historial relevante está vacío
     if (relevantChatHistory.length === 0) {
       await sendWelcomeMessage(from);
-      if (!deliveryInfo) {
-        await sendWhatsAppMessage(
-          from,
-          "No se encontraron datos de entrega asociados a tu número de teléfono. Por favor, proporciona tu dirección completa o un nombre de recolección en el restaurante para continuar."
-        );
-        deliveryInfo = "Pendiente de proporcionar";
-      }
     }
 
     // Añadir la información del cliente al inicio si no está presente
