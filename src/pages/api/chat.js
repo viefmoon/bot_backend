@@ -159,8 +159,6 @@ async function getMenuAvailability() {
 
     return {
       "Menu Disponible": menuSimplificado,
-      Instrucciones:
-        "Este es el menú disponible que se usa para buscar los IDs de los productos solicitados por el cliente. Solo están disponibles estos productos, variantes, modificadores e ingredientes de pizza. Si se solicitan medias ordenes, se deben usar las variantes para las medias ordenes. Si no se encuentra el producto que solicitó el cliente, se le informará al clienteque el producto no está en el menú y se le ofrecerán alternativas.",
     };
   } catch (error) {
     console.error("Error al obtener la disponibilidad del menú:", error);
@@ -228,8 +226,18 @@ export async function handleChatRequest(req) {
       content: JSON.stringify(menuAvailability),
     };
 
+    const menuInstructions = {
+      role: "assistant",
+      content:
+        "Menú disponible para buscar los productId, variantId, pizzaIngredientId y modifierId de los productos solicitados por el cliente. Solo están disponibles estos identificadores. Si no se encuentra el producto que solicitó el cliente, se le informará al cliente en lugar de ejecutar select_products.",
+    };
+
     // Añadir el mensaje de disponibilidad del menú al final de los mensajes
-    const messagesWithMenu = [...relevantMessages, menuAvailabilityMessage];
+    const messagesWithMenu = [
+      ...relevantMessages,
+      menuAvailabilityMessage,
+      menuInstructions,
+    ];
 
     console.log("Relevant messages with menu:", messagesWithMenu);
 
