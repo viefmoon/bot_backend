@@ -473,6 +473,10 @@ async function handleMessage(from, message) {
     // Enviar mensaje de bienvenida si el historial relevante está vacío
     if (relevantChatHistory.length === 0) {
       await sendWelcomeMessage(from);
+      if (!deliveryInfo) {
+        deliveryInfo =
+          "Aun no proporcionada, solicita al usuario que la proporcione antes de continuar con la seleccion de productos";
+      }
     }
 
     // Añadir la información del cliente al inicio si no está presente
@@ -482,7 +486,7 @@ async function handleMessage(from, message) {
       )
     ) {
       relevantChatHistory.unshift({
-        role: "user",
+        role: "assistant",
         content: `Información de entrega: ${deliveryInfo}`,
       });
     }
