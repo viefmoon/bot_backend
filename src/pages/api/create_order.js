@@ -151,7 +151,7 @@ async function createOrder(req, res) {
               ? pizzaIngredient.ingredientValue
               : -pizzaIngredient.ingredientValue;
 
-          if (ingredient.half === "none") {
+          if (ingredient.half === "full") {
             totalIngredientValue += ingredientValue;
           } else {
             halfIngredientValue[ingredient.half] += ingredientValue;
@@ -371,7 +371,7 @@ async function modifyOrder(req, res) {
           const pizzaIngredient = await PizzaIngredient.findByPk(
             ingredient.pizzaIngredientId
           );
-          if (ingredient.half === "none") {
+          if (ingredient.half === "full") {
             totalIngredientValue += pizzaIngredient.ingredientValue;
           } else {
             halfIngredientValue[ingredient.half] +=
@@ -591,7 +591,7 @@ async function selectProducts(req, res) {
                   ? pizzaIngredient.ingredientValue
                   : -pizzaIngredient.ingredientValue;
 
-              if (ingredient.half === "none") {
+              if (ingredient.half === "full") {
                 totalIngredientValue += ingredientValue;
               } else {
                 halfIngredientValue[ingredient.half] += ingredientValue;
@@ -690,7 +690,7 @@ async function selectProducts(req, res) {
                     ? `sin ${pizzaIngredient.name}`
                     : pizzaIngredient.name;
 
-                if (ingredient.half === "none") {
+                if (ingredient.half === "full") {
                   pizzaIngredientNames.full.push(ingredientName);
                 } else {
                   pizzaIngredientNames[ingredient.half].push(ingredientName);

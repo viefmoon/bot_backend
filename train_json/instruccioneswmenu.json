@@ -698,7 +698,7 @@
     {
       "function": {
         "name": "select_products",
-        "arguments": "{\"orderItems\":[{\"productId\":\"PRODUCT_ID\",\"productVariantId\":\"VARIANT_ID\",\"quantity\":1,\"selectedPizzaIngredients\":[{\"pizzaIngredientId\":\"INGREDIENT_ID\",\"half\":\"none\"}],\"selectedModifiers\":[{\"modifierId\":\"MODIFIER_ID\"}],\"comments\":\"COMENTARIOS_DEL_ITEM\"}],\"orderType\":\"delivery o pickup\",\"deliveryInfo\":\"DIRECCION_DE_ENTREGA_O_NOMBRE_PICKUP\"}"
+        "arguments": "{\"orderItems\":[{\"productId\":\"PRODUCT_ID\",\"productVariantId\":\"VARIANT_ID\",\"quantity\":1,\"selectedPizzaIngredients\":[{\"pizzaIngredientId\":\"INGREDIENT_ID\",\"half\":\"full\"}],\"selectedModifiers\":[{\"modifierId\":\"MODIFIER_ID\"}],\"comments\":\"COMENTARIOS_DEL_ITEM\"}],\"orderType\":\"delivery o pickup\",\"deliveryInfo\":\"DIRECCION_DE_ENTREGA_O_NOMBRE_PICKUP\"}"
       }
     },
     {
@@ -710,7 +710,7 @@
     {
       "function": {
         "name": "select_products",
-        "arguments": "{\"orderItems\":[{\"productId\":\"PRODUCT_ID\",\"productVariantId\":\"VARIANT_ID\",\"quantity\":1,\"selectedPizzaIngredients\":[{\"pizzaIngredientId\":\"INGREDIENT_ID\",\"half\":\"none\"}],\"selectedModifiers\":[{\"modifierId\":\"MODIFIER_ID\"}],\"comments\":\"COMENTARIOS_DEL_ITEM\"},{\"productId\":\"NEW_PRODUCT_ID\",\"productVariantId\":\"NEW_VARIANT_ID\",\"quantity\":1,\"selectedPizzaIngredients\":[],\"selectedModifiers\":[],\"comments\":\"COMENTARIOS_DEL_NUEVO_ITEM\"}],\"orderType\":\"delivery o pickup\",\"deliveryInfo\":\"DIRECCION_DE_ENTREGA_O_NOMBRE_PICKUP\"}"
+        "arguments": "{\"orderItems\":[{\"productId\":\"PRODUCT_ID\",\"productVariantId\":\"VARIANT_ID\",\"quantity\":1,\"selectedPizzaIngredients\":[{\"pizzaIngredientId\":\"INGREDIENT_ID\",\"half\":\"full\"}],\"selectedModifiers\":[{\"modifierId\":\"MODIFIER_ID\"}],\"comments\":\"COMENTARIOS_DEL_ITEM\"},{\"productId\":\"NEW_PRODUCT_ID\",\"productVariantId\":\"NEW_VARIANT_ID\",\"quantity\":1,\"selectedPizzaIngredients\":[],\"selectedModifiers\":[],\"comments\":\"COMENTARIOS_DEL_NUEVO_ITEM\"}],\"orderType\":\"delivery o pickup\",\"deliveryInfo\":\"DIRECCION_DE_ENTREGA_O_NOMBRE_PICKUP\"}"
       }
     },
     {

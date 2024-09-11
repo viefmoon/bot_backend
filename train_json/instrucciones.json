@@ -6,8 +6,7 @@
         "title": "Eficiencia en la Interacción",
         "details": [
           "Mantén las interacciones rápidas y eficaces.",
-          "No ofrezcas extras o modificadores si el cliente no los ha mencionado explícitamente.",
-          "Ejecuta la funcion send_menu cuando el cliente solicite el menu y select_products cuando el cliente seleccione articulos."
+          "No ofrezcas extras o modificadores si el cliente no los ha mencionado explícitamente."
         ]
       },
       {
@@ -29,8 +28,8 @@
               "   - productVariantId: Obligatorio si el producto tiene variantes.",
               "   - quantity: Obligatorio, indica la cantidad del producto, solo numeros enteros, si el cliente solicita medias ordenes hay variantes para las medias ordenes.",
               "   - selectedModifiers: Incluir solo si el producto tiene modificadores y se han seleccionado.",
-              "   - selectedPizzaIngredients: Obligatorio para pizzas, debe incluir al menos un ingrediente.",
-              "   - comments: Opcional, usar para observaciones o modificaciones específicas.",
+              "   - selectedPizzaIngredients: Obligatorio para pizzas, debe incluir al menos un ingrediente (half(left, right, full), pizzaIngredientId, action (add, remove)).",
+              "   - comments: Opcional, usar para observaciones especificas.",
               " - orderType: (Requerido) Tipo de orden ('delivery' para entrega a domicilio, 'pickup' para recoger en restaurante)",
               " - deliveryInfo: (Requerido) Dirección de entrega para pedidos a domicilio (requerido para pedidos a domicilio, Nombre del cliente para recolección de pedidos en restaurante",
               " - scheduledTime: Hora programada para el pedido (opcional, no se ofrece a menos que el cliente solicite programar)"
@@ -40,135 +39,55 @@
       }
     ]
   },
-  "example_conversation": [
-    {
-      "user": "Quiero ordenar [lista de varios producto con modificadores]."
-    },
-    {
-      "function": {
-        "name": "select_products",
-        "arguments": "{\"orderItems\":[{\"productId\":\"PRODUCT_ID\",\"productVariantId\":\"VARIANT_ID\",\"quantity\":1,\"selectedPizzaIngredients\":[{\"pizzaIngredientId\":\"INGREDIENT_ID\",\"half\":\"none\"}],\"selectedModifiers\":[{\"modifierId\":\"MODIFIER_ID\"}],\"comments\":\"COMENTARIOS_DEL_ITEM\"}],\"orderType\":\"delivery o pickup\",\"deliveryInfo\":\"DIRECCION_DE_ENTREGA_O_NOMBRE_PICKUP\"}"
-      }
-    },
-    {
-      "assistant": "..."
-    },
-    {
-      "user": "Sí, quisiera agregar [producto adicional]."
-    },
-    {
-      "function": {
-        "name": "select_products",
-        "arguments": "{\"orderItems\":[{\"productId\":\"PRODUCT_ID\",\"productVariantId\":\"VARIANT_ID\",\"quantity\":1,\"selectedPizzaIngredients\":[{\"pizzaIngredientId\":\"INGREDIENT_ID\",\"half\":\"none\"}],\"selectedModifiers\":[{\"modifierId\":\"MODIFIER_ID\"}],\"comments\":\"COMENTARIOS_DEL_ITEM\"},{\"productId\":\"NEW_PRODUCT_ID\",\"productVariantId\":\"NEW_VARIANT_ID\",\"quantity\":1,\"selectedPizzaIngredients\":[],\"selectedModifiers\":[],\"comments\":\"COMENTARIOS_DEL_NUEVO_ITEM\"}],\"orderType\":\"delivery o pickup\",\"deliveryInfo\":\"DIRECCION_DE_ENTREGA_O_NOMBRE_PICKUP\"}"
-      }
-    },
-    {
-      "assistant": "..."
-    }
-  ]
-}
-"Menu Disponible": {
+  "Menu Disponible": {
     "entradas": [
       {
-        "productId": "A",
         "name": "Orden de Alitas",
         "variants": [
-          {
-            "variantId": "A-V-BBQ",
-            "name": "Orden de Alitas BBQ"
-          },
-          {
-            "variantId": "A-V-BBQ_MED",
-            "name": "Media Orden de Alitas BBQ"
-          },
-          {
-            "variantId": "A-V-PIC",
-            "name": "Orden de Alitas Picosas"
-          },
-          {
-            "variantId": "A-V-PIC_MED",
-            "name": "Media Orden de Alitas Picosas"
-          },
-          {
-            "variantId": "A-V-FRI",
-            "name": "Orden de Alitas Fritas"
-          },
-          {
-            "variantId": "A-V-FRI_MED",
-            "name": "Media Orden de Alitas Fritas"
-          },
-          {
-            "variantId": "A-V-MIX",
-            "name": "Orden de Alitas Mixtas BBQ y picosas"
-          }
+          { "name": "Orden de Alitas BBQ" },
+          { "name": "Media Orden de Alitas BBQ" },
+          { "name": "Orden de Alitas Picosas" },
+          { "name": "Media Orden de Alitas Picosas" },
+          { "name": "Orden de Alitas Fritas" },
+          { "name": "Media Orden de Alitas Fritas" },
+          { "name": "Orden de Alitas Mixtas BBQ y picosas" }
         ]
       },
       {
-        "productId": "P",
         "name": "Ordenes de Papas",
         "variants": [
-          {
-            "variantId": "P-V-FRAN",
-            "name": "Orden de Papas a la Francesa"
-          },
-          {
-            "variantId": "P-V-FRAN_MED",
-            "name": "Media Orden de Papas a la Francesa"
-          },
-          {
-            "variantId": "P-V-GAJO",
-            "name": "Orden de Papas Gajos"
-          },
-          {
-            "variantId": "P-V-GAJO_MED",
-            "name": "Media Orden de Papas Gajos"
-          },
-          {
-            "variantId": "P-V-MIX",
-            "name": "Orden de Papas Mixtas francesa y gajos"
-          }
+          { "name": "Orden de Papas a la Francesa" },
+          { "name": "Media Orden de Papas a la Francesa" },
+          { "name": "Orden de Papas Gajos" },
+          { "name": "Media Orden de Papas Gajos" },
+          { "name": "Orden de Papas Mixtas francesa y gajos" }
         ],
         "modifierTypes": [
           {
             "name": "Con o sin Queso",
             "requiresModifier": true,
             "acceptsMultiple": false,
-            "modifiers": [
-              { "modifierId": "P-MOD-SQ", "name": "Sin queso" },
-              { "modifierId": "P-MOD-CQ", "name": "Con queso" }
-            ]
+            "modifiers": [{ "name": "Sin queso" }, { "name": "Con queso" }]
           }
         ]
       },
       {
-        "productId": "DQ",
         "name": "Dedos de Queso"
       }
     ],
     "comida": [
       {
-        "productId": "PZ",
         "name": "Pizza",
         "variants": [
-          { "variantId": "PZ-V-GDE", "name": "Pizza Grande" },
-          { "variantId": "PZ-V-MED", "name": "Pizza Mediana" },
-          { "variantId": "PZ-V-CH", "name": "Pizza Chica" },
-          {
-            "variantId": "PZ-V-GDE_RELL",
-            "name": "Pizza Con Orilla Rellena de Queso Grande"
-          },
-          {
-            "variantId": "PZ-V-MED_RELL",
-            "name": "Pizza Con Orilla Rellena de Queso Mediana"
-          },
-          {
-            "variantId": "PZ-V-CH_RELL",
-            "name": "Pizza Con Orilla Rellena de Queso Chica"
-          }
+          { "name": "Pizza Grande" },
+          { "name": "Pizza Mediana" },
+          { "name": "Pizza Chica" },
+          { "name": "Pizza Con Orilla Rellena de Queso Grande" },
+          { "name": "Pizza Con Orilla Rellena de Queso Mediana" },
+          { "name": "Pizza Con Orilla Rellena de Queso Chica" }
         ],
         "pizzaIngredients": [
           {
-            "pizzaIngredientId": "PZ-ING-ESP",
             "name": "Especial",
             "ingredients": [
               "Pepperoni",
@@ -179,52 +98,42 @@
             ]
           },
           {
-            "pizzaIngredientId": "PZ-ING-CARN",
             "name": "Carnes Frías",
             "ingredients": ["Pepperoni", "Salchicha", "Jamón", "Salami"]
           },
           {
-            "pizzaIngredientId": "PZ-ING-CARR",
             "name": "Carranza",
             "ingredients": ["Chorizo", "Jamón", "Chile jalapeño", "Jitomate"]
           },
           {
-            "pizzaIngredientId": "PZ-ING-ZAP",
             "name": "Zapata",
             "ingredients": ["Salami", "Jamón", "Champiñón"]
           },
           {
-            "pizzaIngredientId": "PZ-ING-VILLA",
             "name": "Villa",
             "ingredients": ["Chorizo", "Tocino", "Piña", "Chile jalapeño"]
           },
           {
-            "pizzaIngredientId": "PZ-ING-MARG",
             "name": "Margarita",
             "ingredients": ["3 Quesos", "Jitomate", "Albahaca"]
           },
           {
-            "pizzaIngredientId": "PZ-ING-ADEL",
             "name": "Adelita",
             "ingredients": ["Jamón", "Piña", "Arándano"]
           },
           {
-            "pizzaIngredientId": "PZ-ING-HAW",
             "name": "Hawaiana",
             "ingredients": ["Jamón", "Piña"]
           },
           {
-            "pizzaIngredientId": "PZ-ING-MEX",
             "name": "Mexicana",
             "ingredients": ["Chorizo", "Cebolla", "Chile jalapeño", "Jitomate"]
           },
           {
-            "pizzaIngredientId": "PZ-ING-RIV",
             "name": "Rivera",
             "ingredients": ["Elote", "Champiñón", "Chile morrón"]
           },
           {
-            "pizzaIngredientId": "PZ-ING-KAH",
             "name": "Kahlo",
             "ingredients": [
               "Calabaza",
@@ -235,27 +144,22 @@
             ]
           },
           {
-            "pizzaIngredientId": "PZ-ING-LUP",
             "name": "Lupita",
             "ingredients": ["Carne molida", "Tocino", "Cebolla", "Chile morrón"]
           },
           {
-            "pizzaIngredientId": "PZ-ING-PEPP",
             "name": "Pepperoni",
             "ingredients": ["Pepperoni"]
           },
           {
-            "pizzaIngredientId": "PZ-ING-LEÑA",
             "name": "La Leña",
             "ingredients": ["Tocino", "Pierna", "Chorizo", "Carne molida"]
           },
           {
-            "pizzaIngredientId": "PZ-ING-MARIA",
             "name": "La María",
             "ingredients": ["Pollo BBQ", "Piña", "Chile jalapeño"]
           },
           {
-            "pizzaIngredientId": "PZ-ING-MALIN",
             "name": "Malinche",
             "ingredients": [
               "3 Quesos",
@@ -267,7 +171,6 @@
             ]
           },
           {
-            "pizzaIngredientId": "PZ-ING-PHILA",
             "name": "Philadelphia",
             "ingredients": [
               "Queso philadelphia",
@@ -276,35 +179,33 @@
               "Albahaca"
             ]
           },
-          { "pizzaIngredientId": "PZ-ING-3Q", "name": "3 Quesos" },
-          { "pizzaIngredientId": "PZ-ING-ALB", "name": "Albahaca" },
-          { "pizzaIngredientId": "PZ-ING-ARAN", "name": "Arándano" },
-          { "pizzaIngredientId": "PZ-ING-CAL", "name": "Calabaza" },
-          { "pizzaIngredientId": "PZ-ING-CEB", "name": "Cebolla" },
-          { "pizzaIngredientId": "PZ-ING-CHAM", "name": "Champiñón" },
-          { "pizzaIngredientId": "PZ-ING-CH_SEC", "name": "Chile Seco" },
-          { "pizzaIngredientId": "PZ-ING-CHOR", "name": "Chorizo" },
-          { "pizzaIngredientId": "PZ-ING-ELO", "name": "Elote" },
-          { "pizzaIngredientId": "PZ-ING-JAL", "name": "Chile Jalapeño" },
-          { "pizzaIngredientId": "PZ-ING-JAM", "name": "Jamón" },
-          { "pizzaIngredientId": "PZ-ING-JIT", "name": "Jitomate" },
-          { "pizzaIngredientId": "PZ-ING-MOL", "name": "Carne Molida" },
-          { "pizzaIngredientId": "PZ-ING-MOR", "name": "Chile Morrón" },
-          { "pizzaIngredientId": "PZ-ING-PIER", "name": "Pierna" },
-          { "pizzaIngredientId": "PZ-ING-PINA", "name": "Piña" },
-          { "pizzaIngredientId": "PZ-ING-POBBQ", "name": "Pollo BBQ" },
-          { "pizzaIngredientId": "PZ-ING-QCAB", "name": "Queso de cabra" },
-          { "pizzaIngredientId": "PZ-ING-SALAM", "name": "Salami" },
-          { "pizzaIngredientId": "PZ-ING-SALCH", "name": "Salchicha" },
-          { "pizzaIngredientId": "PZ-ING-TOC", "name": "Tocino" }
+          { "name": "3 Quesos" },
+          { "name": "Albahaca" },
+          { "name": "Arándano" },
+          { "name": "Calabaza" },
+          { "name": "Cebolla" },
+          { "name": "Champiñón" },
+          { "name": "Chile Seco" },
+          { "name": "Chorizo" },
+          { "name": "Elote" },
+          { "name": "Chile Jalapeño" },
+          { "name": "Jamón" },
+          { "name": "Jitomate" },
+          { "name": "Carne Molida" },
+          { "name": "Chile Morrón" },
+          { "name": "Pierna" },
+          { "name": "Piña" },
+          { "name": "Pollo BBQ" },
+          { "name": "Queso de cabra" },
+          { "name": "Salami" },
+          { "name": "Salchicha" },
+          { "name": "Tocino" }
         ]
       },
       {
-        "productId": "H",
         "name": "Hamburguesas",
         "variants": [
           {
-            "variantId": "H-V-TRAD",
             "name": "Hamburguesa Tradicional",
             "ingredients": [
               "Carne de res",
@@ -322,7 +223,6 @@
             ]
           },
           {
-            "variantId": "H-V-ESP",
             "name": "Hamburguesa Especial",
             "ingredients": [
               "Carne de res",
@@ -341,7 +241,6 @@
             ]
           },
           {
-            "variantId": "H-V-HAW",
             "name": "Hamburguesa Hawaiana",
             "ingredients": [
               "Carne de res",
@@ -361,7 +260,6 @@
             ]
           },
           {
-            "variantId": "H-V-POLL",
             "name": "Hamburguesa Pollo",
             "ingredients": [
               "Pollo a la plancha",
@@ -379,7 +277,6 @@
             ]
           },
           {
-            "variantId": "H-V-BBQ",
             "name": "Hamburguesa BBQ",
             "ingredients": [
               "Carne de res",
@@ -398,7 +295,6 @@
             ]
           },
           {
-            "variantId": "H-V-LEN",
             "name": "Hamburguesa Lenazo",
             "ingredients": [
               "Doble carne de sirlón",
@@ -416,7 +312,6 @@
             ]
           },
           {
-            "variantId": "H-V-CUB",
             "name": "Hamburguesa Cubana",
             "ingredients": [
               "Carne de res",
@@ -442,9 +337,9 @@
             "requiresModifier": false,
             "acceptsMultiple": false,
             "modifiers": [
-              { "variantId": "H-MOD-PAP_FRAN", "name": "Con papas francesa" },
-              { "variantId": "H-MOD-PAP_GAJO", "name": "Con gajos" },
-              { "variantId": "H-MOD-PAP_MIX", "name": "Con papas mixtas" }
+              { "name": "Con papas francesa" },
+              { "name": "Con gajos" },
+              { "name": "Con papas mixtas" }
             ]
           },
           {
@@ -452,28 +347,26 @@
             "requiresModifier": false,
             "acceptsMultiple": true,
             "modifiers": [
-              { "variantId": "H-MOD-PART", "name": "Partida" },
-              { "variantId": "H-MOD-QPAP", "name": "Queso en la papas" },
-              { "variantId": "H-MOD-DCARNE", "name": "Doble carne" },
-              { "variantId": "H-MOD-DPOLLO", "name": "Doble pollo" },
-              { "variantId": "H-MOD-QUESO", "name": "Extra queso" },
-              { "variantId": "H-MOD-TOC", "name": "Extra tocino" },
-              { "variantId": "H-MOD-RPOLLO", "name": "Res -> Pollo" },
-              { "variantId": "H-MOD-PIERNA", "name": "Con pierna" },
-              { "variantId": "H-MOD-PINA", "name": "Con pina" },
-              { "variantId": "H-MOD-JAM", "name": "Con jamon" },
-              { "variantId": "H-MOD-SALCH", "name": "Con salchicha" },
-              { "variantId": "H-MOD-ENSAL", "name": "Con ensalada" }
+              { "name": "Partida" },
+              { "name": "Queso en la papas" },
+              { "name": "Doble carne" },
+              { "name": "Doble pollo" },
+              { "name": "Extra queso" },
+              { "name": "Extra tocino" },
+              { "name": "Res -> Pollo" },
+              { "name": "Con pierna" },
+              { "name": "Con pina" },
+              { "name": "Con jamon" },
+              { "name": "Con salchicha" },
+              { "name": "Con ensalada" }
             ]
           }
         ]
       },
       {
-        "productId": "ENS",
         "name": "Ensaladas",
         "variants": [
           {
-            "variantId": "ENS-V-POLL_CH",
             "name": "Ensalada de Pollo Chica",
             "ingredients": [
               "Pollo a la plancha",
@@ -488,7 +381,6 @@
             ]
           },
           {
-            "variantId": "ENS-V-POLL_GR",
             "name": "Ensalada de Pollo Grande",
             "ingredients": [
               "Pollo a la plancha",
@@ -503,7 +395,6 @@
             ]
           },
           {
-            "variantId": "ENS-V-JAM_CH",
             "name": "Ensalada de Jamón Chica",
             "ingredients": [
               "Jamón",
@@ -518,7 +409,6 @@
             ]
           },
           {
-            "variantId": "ENS-V-JAM_GR",
             "name": "Ensalada de Jamón Grande",
             "ingredients": [
               "Jamón",
@@ -539,10 +429,10 @@
             "requiresModifier": false,
             "acceptsMultiple": true,
             "modifiers": [
-              { "variantId": "ENS-MOD-JAM", "name": "Con jamon" },
-              { "variantId": "ENS-MOD-QGOUDA", "name": "Con queso gouda" },
-              { "variantId": "ENS-MOD-VINAG", "name": "Con vinagreta" },
-              { "variantId": "ENS-MOD-DPOLLO", "name": "Doble pollo" }
+              { "name": "Con jamon" },
+              { "name": "Con queso gouda" },
+              { "name": "Con vinagreta" },
+              { "name": "Doble pollo" }
             ]
           }
         ]
@@ -550,139 +440,115 @@
     ],
     "bebidas": [
       {
-        "productId": "AGUA_H",
         "name": "Agua de horchata 1 Litro"
       },
       {
-        "productId": "LIM",
         "name": "Limonada 1 Litro"
       },
       {
-        "productId": "LIM_MIN",
         "name": "Limonada Mineral 1 Litro"
       },
       {
-        "productId": "REF",
         "name": "Refrescos 500ml",
         "variants": [
-          { "variantId": "REF-V-COCA", "name": "Coca Cola" },
-          { "variantId": "REF-V-7UP", "name": "7up" },
-          { "variantId": "REF-V-MIRINDA", "name": "Mirinda" },
-          { "variantId": "REF-V-SANGRIA", "name": "Refresco de Sangría" },
-          { "variantId": "REF-V-AGUA_MIN", "name": "Agua Mineral" },
-          { "variantId": "REF-V-SQUIRT", "name": "Squirt" }
+          { "name": "Coca Cola" },
+          { "name": "7up" },
+          { "name": "Mirinda" },
+          { "name": "Refresco de Sangría" },
+          { "name": "Agua Mineral" },
+          { "name": "Squirt" }
         ]
       },
       {
-        "productId": "SANG_PREP",
         "name": "Sangría Preparada",
         "ingredients": ["Sangria", "limón", "sal"]
       },
       {
-        "productId": "MICH",
         "name": "Micheladas",
         "variants": [
-          { "variantId": "MICH-V-CL", "name": "Michelada clara" },
-          { "variantId": "MICH-V-OSC", "name": "Michelada oscura" }
+          { "name": "Michelada clara" },
+          { "name": "Michelada oscura" }
         ]
       },
       {
-        "productId": "CAF_CAL",
         "name": "Café Caliente",
         "variants": [
-          { "variantId": "CAF-V-AMER", "name": "Cafe Americano" },
-          { "variantId": "CAF-V-CAP", "name": "Capuchino" },
-          { "variantId": "CAF-V-CHOCO", "name": "Chocolate" },
-          { "variantId": "CAF-V-MOCACH", "name": "Mocachino" },
-          { "variantId": "CAF-V-LATTE_VAI", "name": "Latte Vainilla" },
-          { "variantId": "CAF-V-LATTE_CAP", "name": "Latte Capuchino" }
+          { "name": "Cafe Americano" },
+          { "name": "Capuchino" },
+          { "name": "Chocolate" },
+          { "name": "Mocachino" },
+          { "name": "Latte Vainilla" },
+          { "name": "Latte Capuchino" }
         ]
       },
       {
-        "productId": "FRAPPE",
         "name": "Frappés",
         "variants": [
-          { "variantId": "FRAPPE-V-CAP", "name": "Frappe Capuchino" },
-          { "variantId": "FRAPPE-V-COCO", "name": "Frappe Coco" },
-          { "variantId": "FRAPPE-V-CARAMEL", "name": "Frappe Caramelo" },
-          { "variantId": "FRAPPE-V-CAJETA", "name": "Frappe Cajeta" },
-          { "variantId": "FRAPPE-V-MOCACH", "name": "Frappe Mocaccino" },
-          { "variantId": "FRAPPE-V-GALLET", "name": "Frappe Galleta" },
-          { "variantId": "FRAPPE-V-BOMBON", "name": "Frappe Bombon" },
-          { "variantId": "FRAPPE-V-ROMPOPE", "name": "Frappe Rompope" },
-          { "variantId": "FRAPPE-V-MAZAPAN", "name": "Frappe Mazapan" },
-          { "variantId": "FRAPPE-V-MAGNUM", "name": "Frappe Magnum" }
+          { "name": "Frappe Capuchino" },
+          { "name": "Frappe Coco" },
+          { "name": "Frappe Caramelo" },
+          { "name": "Frappe Cajeta" },
+          { "name": "Frappe Mocaccino" },
+          { "name": "Frappe Galleta" },
+          { "name": "Frappe Bombon" },
+          { "name": "Frappe Rompope" },
+          { "name": "Frappe Mazapan" },
+          { "name": "Frappe Magnum" }
         ]
       }
     ],
     "cocteleria": [
       {
-        "productId": "COP_V",
         "name": "Copa de vino"
       },
       {
-        "productId": "SANG_C_V",
         "name": "Sangría con vino"
       },
       {
-        "productId": "VAMP",
         "name": "Vampiro"
       },
       {
-        "productId": "GIN_MAR",
         "name": "Gin de Maracuyá"
       },
       {
-        "productId": "MAR",
         "name": "Margarita"
       },
       {
-        "productId": "RUSO_BL",
         "name": "Ruso Blanco"
       },
       {
-        "productId": "PAL_SAN",
         "name": "Palo santo"
       },
       {
-        "productId": "GIN_PEP",
         "name": "Gin de pepino"
       },
       {
-        "productId": "MOJ",
         "name": "Mojito"
       },
       {
-        "productId": "PINA_COL",
         "name": "Piña colada"
       },
       {
-        "productId": "PINA",
         "name": "Piñada"
       },
       {
-        "productId": "CONG",
         "name": "Conga"
       },
       {
-        "productId": "DEST",
         "name": "Destornillador"
       },
       {
-        "productId": "PAL",
         "name": "Paloma"
       },
       {
-        "productId": "CARAJ",
         "name": "Carajillo"
       },
       {
-        "productId": "TINTO_VER",
         "name": "Tinto de verano"
       },
       {
-        "productId": "CLERI",
         "name": "Clericot"
       }
     ]
   }
+}

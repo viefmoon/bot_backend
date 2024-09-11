@@ -417,9 +417,9 @@ module.exports = {
         autoIncrement: true,
       },
       half: {
-        type: Sequelize.ENUM("left", "right", "none"),
+        type: Sequelize.ENUM("left", "right", "full"),
         allowNull: false,
-        defaultValue: "none",
+        defaultValue: "full",
       },
       pizzaIngredientId: {
         type: Sequelize.STRING,

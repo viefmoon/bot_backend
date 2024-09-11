@@ -4,7 +4,7 @@ const { sequelize } = require("../lib/db");
 const PizzaHalf = {
   left: "left",
   right: "right",
-  none: "none",
+  full: "full",
 };
 
 const IngredientAction = {
@@ -18,7 +18,7 @@ const SelectedPizzaIngredient = sequelize.define(
     half: {
       type: DataTypes.ENUM(...Object.values(PizzaHalf)),
       allowNull: false,
-      defaultValue: PizzaHalf.none,
+      defaultValue: PizzaHalf.full,
     },
     pizzaIngredientId: {
       type: DataTypes.STRING,

@@ -423,15 +423,15 @@ async function createOrderFromPreOrder(preOrder, clientId) {
           const ingredientesPorMitad = {
             left: [],
             right: [],
-            none: [],
+            full: [],
           };
 
           producto.ingredientes_pizza.forEach((ing) => {
             ingredientesPorMitad[ing.mitad].push(ing.nombre);
           });
 
-          if (ingredientesPorMitad.none.length > 0) {
-            orderSummary += `      • ${ingredientesPorMitad.none.join(", ")}\n`;
+          if (ingredientesPorMitad.full.length > 0) {
+            orderSummary += `      • ${ingredientesPorMitad.full.join(", ")}\n`;
           }
 
           if (
@@ -997,7 +997,7 @@ async function generateOrderSummary(order) {
         if (selectedPizzaIngredients.length > 0) {
           orderSummaryWithPrices += `    *Ingredientes de pizza:*\n`;
           orderSummaryWithoutPrices += `    *Ingredientes de pizza:*\n`;
-          const ingredientesPorMitad = { left: [], right: [], none: [] };
+          const ingredientesPorMitad = { left: [], right: [], full: [] };
 
           selectedPizzaIngredients.forEach((ing) => {
             if (ing.PizzaIngredient) {
@@ -1005,11 +1005,11 @@ async function generateOrderSummary(order) {
             }
           });
 
-          if (ingredientesPorMitad.none.length > 0) {
-            orderSummaryWithPrices += `      • ${ingredientesPorMitad.none.join(
+          if (ingredientesPorMitad.full.length > 0) {
+            orderSummaryWithPrices += `      • ${ingredientesPorMitad.full.join(
               ", "
             )}\n`;
-            orderSummaryWithoutPrices += `      • ${ingredientesPorMitad.none.join(
+            orderSummaryWithoutPrices += `      • ${ingredientesPorMitad.full.join(
               ", "
             )}\n`;
           }

@@ -235,8 +235,8 @@ export async function handleChatRequest(req) {
     // Añadir el mensaje de disponibilidad del menú al final de los mensajes
     const messagesWithMenu = [
       ...relevantMessages,
-      menuAvailabilityMessage,
       menuInstructions,
+      menuAvailabilityMessage,
     ];
 
     console.log("Relevant messages with menu:", messagesWithMenu);
