@@ -112,7 +112,7 @@ async function getMenuAvailability() {
 
     products.forEach((producto) => {
       const productoInfo = {
-        id: producto.id,
+        productId: producto.id,
         name: producto.name,
         active: producto.Availability?.available || false,
       };
@@ -120,7 +120,7 @@ async function getMenuAvailability() {
       // Agregar variantes
       if (producto.productVariants?.length > 0) {
         productoInfo.variantes = producto.productVariants.map((v) => ({
-          id: v.id,
+          variantId: v.id,
           name: v.name,
           active: v.Availability?.available || false,
         }));
@@ -131,7 +131,7 @@ async function getMenuAvailability() {
         productoInfo.modificadores = producto.modifierTypes.flatMap(
           (mt) =>
             mt.modifiers?.map((m) => ({
-              id: m.id,
+              modifierId: m.id,
               name: m.name,
               active: m.Availability?.available || false,
             })) || []
@@ -141,7 +141,7 @@ async function getMenuAvailability() {
       // Agregar ingredientes de pizza
       if (producto.pizzaIngredients?.length > 0) {
         productoInfo.ingredientesPizza = producto.pizzaIngredients.map((i) => ({
-          id: i.id,
+          pizzaIngredientId: i.id,
           name: i.name,
           active: i.Availability?.available || false,
         }));
