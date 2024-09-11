@@ -15,21 +15,21 @@
           {
             "subtitle": "Selección de Productos",
             "steps": [
-              "Es OBLIGATORIO ejecutar la función `select_products` en estos casos:",
-              " - Cada vez que se elije un nuevo producto o varios",
-              " - Cada vez que se modifica un producto existente",
-              " - Cada vez que se elimina un producto",
-              " - Cuando el cliente solicita un resumen o el total",
+              "Es OBLIGATORIO ejecutar la función `select_products` cada vez que se elija un nuevo producto o varios, se modifique un producto existente o se elimine un producto.",
               "NUNCA selecciones productos sin ejecutar esta función.",
-              "Es importante destacar que la función `select_products` debe ser ejecutada con TODOS los productos de la orden, no solo los que han sido agregados adicionalmente.",
+              "Es importante destacar que la función `select_products` debe ser ejecutada con TODOS los productos elegidos hasta el momento de la ejecucion, no solo los que han sido agregados adicionalmente.",
               "Llama a la función `select_products` con los siguientes parámetros:",
               " - orderItems: Lista de ítems ordenes con la siguiente estructura para cada ítem:",
               "   - productId: Obligatorio para todos los productos.",
               "   - productVariantId: Obligatorio si el producto tiene variantes.",
               "   - quantity: Obligatorio, indica la cantidad del producto, solo numeros enteros, si el cliente solicita medias ordenes hay variantes para las medias ordenes.",
               "   - selectedModifiers: Incluir solo si el producto tiene modificadores y se han seleccionado.",
-              "   - selectedPizzaIngredients: Obligatorio para pizzas, debe incluir al menos un ingrediente (half(left, right, full), pizzaIngredientId, action (add, remove)).",
-              "   - comments: Opcional, usar para observaciones especificas.",
+              "   - selectedPizzaIngredients: Obligatorio para pizzas, debe incluir al menos un ingrediente. Es un array de objetos con la siguiente estructura:",
+              "     - pizzaIngredientId: ID del ingrediente o sabor de la pizza (obligatorio).",
+              "     - half: Mitad de la pizza donde se coloca el ingrediente ('full' para toda la pizza, 'left' para mitad izquierda, 'right' para mitad derecha) (obligatorio).",
+              "     - action: Acción a realizar con el ingrediente ('add' para añadir, 'remove' para quitar) (obligatorio).",
+              "     - Nota: Se pueden personalizar las dos mitades de la pizza por separado, añadiendo o quitando ingredientes en cada mitad.",
+              "   - comments: Opcional, usar para observaciones especificas que no puedan ser representadas como modificadores.",
               " - orderType: (Requerido) Tipo de orden ('delivery' para entrega a domicilio, 'pickup' para recoger en restaurante)",
               " - deliveryInfo: (Requerido) Dirección de entrega para pedidos a domicilio (requerido para pedidos a domicilio, Nombre del cliente para recolección de pedidos en restaurante",
               " - scheduledTime: Hora programada para el pedido (opcional, no se ofrece a menos que el cliente solicite programar)"
@@ -88,96 +88,55 @@
         ],
         "pizzaIngredients": [
           {
-            "name": "Especial",
-            "ingredients": [
-              "Pepperoni",
-              "Salchicha",
-              "Jamón",
-              "Salami",
-              "Chile morrón"
-            ]
+            "name": "Especial"
           },
           {
-            "name": "Carnes Frías",
-            "ingredients": ["Pepperoni", "Salchicha", "Jamón", "Salami"]
+            "name": "Carnes Frías"
           },
           {
-            "name": "Carranza",
-            "ingredients": ["Chorizo", "Jamón", "Chile jalapeño", "Jitomate"]
+            "name": "Carranza"
           },
           {
-            "name": "Zapata",
-            "ingredients": ["Salami", "Jamón", "Champiñón"]
+            "name": "Zapata"
           },
           {
-            "name": "Villa",
-            "ingredients": ["Chorizo", "Tocino", "Piña", "Chile jalapeño"]
+            "name": "Villa"
           },
           {
-            "name": "Margarita",
-            "ingredients": ["3 Quesos", "Jitomate", "Albahaca"]
+            "name": "Margarita"
           },
           {
-            "name": "Adelita",
-            "ingredients": ["Jamón", "Piña", "Arándano"]
+            "name": "Adelita"
           },
           {
-            "name": "Hawaiana",
-            "ingredients": ["Jamón", "Piña"]
+            "name": "Hawaiana"
           },
           {
-            "name": "Mexicana",
-            "ingredients": ["Chorizo", "Cebolla", "Chile jalapeño", "Jitomate"]
+            "name": "Mexicana"
           },
           {
-            "name": "Rivera",
-            "ingredients": ["Elote", "Champiñón", "Chile morrón"]
+            "name": "Rivera"
           },
           {
-            "name": "Kahlo",
-            "ingredients": [
-              "Calabaza",
-              "Elote",
-              "Champiñón",
-              "Jitomate",
-              "Chile morrón"
-            ]
+            "name": "Kahlo"
           },
           {
-            "name": "Lupita",
-            "ingredients": ["Carne molida", "Tocino", "Cebolla", "Chile morrón"]
+            "name": "Lupita"
           },
           {
-            "name": "Pepperoni",
-            "ingredients": ["Pepperoni"]
+            "name": "Pepperoni"
           },
           {
-            "name": "La Leña",
-            "ingredients": ["Tocino", "Pierna", "Chorizo", "Carne molida"]
+            "name": "La Leña"
           },
           {
-            "name": "La María",
-            "ingredients": ["Pollo BBQ", "Piña", "Chile jalapeño"]
+            "name": "La María"
           },
           {
-            "name": "Malinche",
-            "ingredients": [
-              "3 Quesos",
-              "Queso de cabra",
-              "Champiñón",
-              "Jamón",
-              "Chile seco",
-              "Albahaca"
-            ]
+            "name": "Malinche"
           },
           {
-            "name": "Philadelphia",
-            "ingredients": [
-              "Queso philadelphia",
-              "Chile jalapeño",
-              "Jamon",
-              "Albahaca"
-            ]
+            "name": "Philadelphia"
           },
           { "name": "3 Quesos" },
           { "name": "Albahaca" },
