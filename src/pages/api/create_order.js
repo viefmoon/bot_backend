@@ -785,7 +785,7 @@ async function selectProducts(req, res) {
         type: "reply",
         reply: {
           id: "discard_order",
-          title: "Descartar Ordern",
+          title: "Descartar Orden",
         },
       },
       {

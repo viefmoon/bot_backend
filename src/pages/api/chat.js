@@ -160,7 +160,7 @@ async function getMenuAvailability() {
     return {
       "Menu Disponible": menuSimplificado,
       Instrucciones:
-        "Este es el menú disponible que se usa para buscar los IDs de los productos solicitados por el cliente. Solo están disponibles estos productos, variantes, modificadores e ingredientes de pizza. Si no se encuentra el producto que solicitó el cliente, se le informará al clienteque el producto no está en el menú y se le ofrecerán alternativas.",
+        "Este es el menú disponible que se usa para buscar los IDs de los productos solicitados por el cliente. Solo están disponibles estos productos, variantes, modificadores e ingredientes de pizza. Si se solicitan medias ordenes, se deben usar las variantes para las medias ordenes. Si no se encuentra el producto que solicitó el cliente, se le informará al clienteque el producto no está en el menú y se le ofrecerán alternativas.",
     };
   } catch (error) {
     console.error("Error al obtener la disponibilidad del menú:", error);

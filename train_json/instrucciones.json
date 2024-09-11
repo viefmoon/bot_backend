@@ -38,7 +38,7 @@
               "1. Estructura del orderItem:",
               "   - productId: Obligatorio para todos los productos.",
               "   - productVariantId: Obligatorio si el producto tiene variantes.",
-              "   - quantity: Obligatorio, indica la cantidad del producto.",
+              "   - quantity: Obligatorio, indica la cantidad del producto, solo numeros enteros, si el cliente solicita medias ordenes hay variantes para las medias ordenes.",
               "   - selectedModifiers: Incluir solo si el producto tiene modificadores y se han seleccionado.",
               "   - selectedPizzaIngredients: Obligatorio para pizzas, debe incluir al menos un ingrediente.",
               "   - comments: Opcional, usar para observaciones o modificaciones específicas."
@@ -715,6 +715,45 @@
     },
     {
       "assistant": "..."
+    }
+  ],
+  "example_orderitems": [
+    {
+      "text": "Quiero ordenar 2 ordenes y media de alitas barbiqiu, media de alitas picositas un poquito mas doradas y una orden de alas mixtas con extra salsa picosita aparte. ",
+      "orderItems": [
+        {
+          "productId": "A",
+          "productVariantId": "A-V-BBQ",
+          "selectedModifiers": [],
+          "selectedPizzaIngredients": [],
+          "quantity": 2,
+          "comments": ""
+        },
+        {
+          "productId": "A",
+          "productVariantId": "A-V-BBQ_MED",
+          "selectedModifiers": [],
+          "selectedPizzaIngredients": [],
+          "quantity": 1,
+          "comments": ""
+        },
+        {
+          "productId": "A",
+          "productVariantId": "A-V-PIC_MED",
+          "selectedModifiers": [],
+          "selectedPizzaIngredients": [],
+          "quantity": 1,
+          "comments": "Un poquito más doradas"
+        },
+        {
+          "productId": "A",
+          "productVariantId": "A-V-MIX",
+          "selectedModifiers": [],
+          "selectedPizzaIngredients": [],
+          "quantity": 1,
+          "comments": "Extra salsa picosita aparte"
+        }
+      ]
     }
   ]
 }
