@@ -157,7 +157,11 @@ async function getMenuAvailability() {
       }
     });
 
-    return { "Menu Disponible": menuSimplificado };
+    return {
+      "Menu Disponible": menuSimplificado,
+      Instrucciones:
+        "Este es el menú disponible que se usa para buscar los IDs de los productos solicitados por el cliente. Solo están disponibles estos productos, variantes, modificadores e ingredientes de pizza. Si no se encuentra el producto que solicitó el cliente, se le informará al clienteque el producto no está en el menú y se le ofrecerán alternativas.",
+    };
   } catch (error) {
     console.error("Error al obtener la disponibilidad del menú:", error);
     return {
@@ -224,8 +228,8 @@ export async function handleChatRequest(req) {
       content: JSON.stringify(menuAvailability),
     };
 
-    // Añadir el mensaje de disponibilidad del menú al principio de los mensajes
-    const messagesWithMenu = [menuAvailabilityMessage, ...relevantMessages];
+    // Añadir el mensaje de disponibilidad del menú al final de los mensajes
+    const messagesWithMenu = [...relevantMessages, menuAvailabilityMessage];
 
     console.log("Relevant messages with menu:", messagesWithMenu);
 
