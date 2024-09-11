@@ -187,6 +187,8 @@ async function handleInteractiveMessage(from, message) {
     const buttonId = message.interactive.button_reply.id;
     if (buttonId === "confirm_order") {
       await handleOrderConfirmation(from, message.context.id);
+    } else if (buttonId === "discard_order") {
+      await handleOrderDiscard(from, message.context.id);
     }
   } else if (message.interactive.type === "list_reply") {
     const listReplyId = message.interactive.list_reply.id;
@@ -318,6 +320,48 @@ async function handleOrderConfirmation(clientId, messageId) {
     await sendWhatsAppMessage(
       clientId,
       "Hubo un error al procesar tu orden. Por favor, intenta nuevamente o contacta con el restaurante."
+    );
+  }
+}
+
+async function handleOrderDiscard(clientId, messageId) {
+  try {
+    // Buscar el cliente
+    const customer = await Customer.findOne({ where: { clientId } });
+
+    if (!customer) {
+      console.error(`No se encontró cliente para el ID: ${clientId}`);
+      await sendWhatsAppMessage(
+        clientId,
+        "Lo siento, hubo un problema al procesar tu solicitud. Por favor, intenta nuevamente."
+      );
+      return;
+    }
+
+    // Borrar los mensajes relevantes
+    await customer.update({ relevantChatHistory: "[]" });
+
+    // Enviar mensaje de confirmación
+    const confirmationMessage =
+      "Tu orden ha sido descartada y el historial de conversación reciente ha sido borrado. ¿En qué más puedo ayudarte?";
+    await sendWhatsAppMessage(clientId, confirmationMessage);
+
+    // Actualizar el historial completo de chat
+    let fullChatHistory = JSON.parse(customer.fullChatHistory || "[]");
+    fullChatHistory.push(
+      { role: "user", content: "Descartar orden" },
+      { role: "assistant", content: confirmationMessage }
+    );
+    await customer.update({ fullChatHistory: JSON.stringify(fullChatHistory) });
+
+    console.log(
+      `Orden descartada y historial relevante borrado para el cliente: ${clientId}`
+    );
+  } catch (error) {
+    console.error("Error al descartar la orden:", error);
+    await sendWhatsAppMessage(
+      clientId,
+      "Hubo un error al procesar tu solicitud. Por favor, intenta nuevamente o contacta con el restaurante."
     );
   }
 }

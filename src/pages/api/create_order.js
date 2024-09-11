@@ -713,8 +713,10 @@ async function selectProducts(req, res) {
       })
     );
 
-    let messageContent = "Aquí tienes el resumen de tu pedido\n\n";
-    let relevantMessageContent = "Resumen del pedido hasta este momento\n\n";
+    let messageContent =
+      "Aquí tienes el resumen de tu pedido, informame si tienes algun cambio o deseas agregar algun producto mas.\n\n";
+    let relevantMessageContent =
+      "Resumen del pedido hasta este momento, informame si tienes algun cambio o deseas agregar algun producto mas.\n\n";
 
     messageContent += `🏠 *Información de entrega*: ${
       deliveryInfo || "No disponible"
@@ -779,6 +781,13 @@ async function selectProducts(req, res) {
     messageContent += `\n💰 *Total: $${totalCost}*`;
 
     const buttons = [
+      {
+        type: "reply",
+        reply: {
+          id: "discard_order",
+          title: "Descartar Ordern",
+        },
+      },
       {
         type: "reply",
         reply: {
