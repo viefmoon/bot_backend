@@ -30,6 +30,24 @@ const menu = [
         price: 135,
       },
     ],
+    modifierTypes: [
+      {
+        id: "A-M1",
+        name: "Observaciones Alitas",
+        required: false,
+        acceptsMultiple: true,
+        modifiers: [
+          { id: "A-M1-1", name: "Alitas mas doradas", price: 0 },
+          { id: "A-M1-2", name: "Alitas menos doradas", price: 0 },
+          { id: "A-M1-3", name: "Alitas extra salsa", price: 0 },
+          { id: "A-M1-4", name: "Alitas arregladas con verdura y totopos", price: 0 },
+          { id: "A-M1-5", name: "Alitas con aderezo ranch", price: 0 }, 
+          { id: "A-M1-6", name: "Alitas con salsa picosa aparte", price: 0 },
+          { id: "A-M1-7", name: "Alitas con salsa BBQ aparte", price: 0 },
+          { id: "A-M1-8", name: "Alitas con extra chile de aceite", price: 0 }, 
+        ]
+      },
+    ],
   },
   {
     id: "P",
@@ -52,13 +70,23 @@ const menu = [
     ],
     modifierTypes: [
       {
-        id: "P-M-Q",
+        id: "P-M1",
         name: "Papas con o sin queso",
         required: true,
         acceptsMultiple: false,
         modifiers: [
-          { id: "P-MOD-1", name: "Papas sin queso", price: 0 },
-          { id: "P-MOD-2", name: "Papas con queso", price: 0 },
+          { id: "P-M1-1", name: "Papas sin queso", price: 0 },
+          { id: "P-M1-2", name: "Papas con queso", price: 0 },
+        ],
+      },
+      {
+        id: "P-M2",
+        name: "Observaciones papas ",
+        required: false,
+        acceptsMultiple: true,
+        modifiers: [
+          { id: "P-M2-1", name: "Papas extra aderezo", price: 0 },
+          { id: "P-M2-2", name: "Papas con chile de aceite", price: 0 },
         ],
       },
     ],
@@ -102,21 +130,41 @@ const menu = [
         ingredients:
           "Jamón, Lechuga, Chile morrón, Elote, Jitomate, Zanahoria, Queso parmesano, Aderezo, Betabel crujiente",
       },
+      {
+        id: "E-V-5",
+        name: "Ensalada Vegetal Chica",
+        price: 70,
+        ingredients:
+          "Lechuga, Chile morrón, Elote, Jitomate, Zanahoria, Queso parmesano, Aderezo, Betabel crujiente",
+      },
+      {
+        id: "E-V-6",
+        name: "Ensalada Vegetal Grande",
+        price: 90,
+        ingredients:
+          "Lechuga, Chile morrón, Elote, Jitomate, Zanahoria, Queso parmesano, Aderezo, Betabel crujiente",
+      },
     ],
     modifierTypes: [
       {
-        id: "E-M-EX",
+        id: "E-M1",
         name: "Extras Ensaladas",
         required: false,
         acceptsMultiple: true,
         modifiers: [
-          { id: "E-M-1", name: "Ensalada con jamon", price: 10 },
-          { id: "E-M-2", name: "Ensalada con queso gouda", price: 15 },
-          { id: "E-M-3", name: "Ensalada con vinagreta", price: 0 },
-          { id: "E-M-4", name: "Ensalada con doble pollo", price: 15 },
+          { id: "E-M1-1", name: "Ensalada con jamon", price: 10 },
+          { id: "E-M1-2", name: "Ensalada con queso gouda", price: 15 },
+          { id: "E-M1-3", name: "Ensalada con vinagreta", price: 0 },
+          { id: "E-M1-4", name: "Ensalada con doble pollo", price: 15 },
+          { id: "E-M1-5", name: "Ensalada con doble vinagreta", price: 0 },
+          { id: "E-M1-6", name: "Ensalada con aderezo aparte", price: 0 },
+
         ],
+
       },
+
     ],
+
   },
   {
     id: "H",
@@ -175,28 +223,28 @@ const menu = [
     ],
     modifierTypes: [
       {
-        id: "H-M-P",
+        id: "H-M1",
         name: "Hamburguesa con papas",
         required: false,
         acceptsMultiple: false,
         modifiers: [
-          { id: "H-M-1", name: "Hamb. con papas francesa", price: 10 },
-          { id: "H-M-2", name: "Hamb. con gajos", price: 15 },
-          { id: "H-M-3", name: "Hamb. con papas mixtas", price: 15 },
+          { id: "H-M1-1", name: "Hamb. con papas francesa", price: 10 },
+          { id: "H-M1-2", name: "Hamb. con gajos", price: 15 },
+          { id: "H-M1-3", name: "Hamb. con papas mixtas", price: 15 },
         ],
       },
       {
-        id: "H-M-EX",
-        name: "Extras",
+        id: "H-M2",
+        name: "Extras Hamburguesas",
         required: false,
         acceptsMultiple: true,
         modifiers: [
-          { id: "H-M-4", name: "Hamb. partida", price: 0 },
-          { id: "H-M-5", name: "Hamb. con queso en la papas", price: 5 },
-          { id: "H-M-6", name: "Hamb. doble carne", price: 10 },
-          { id: "H-M-7", name: "Hamb. doble pollo", price: 15 },
-          { id: "H-M-8", name: "Hamb. Pollo en lugar de carne de res", price: 15 },
-          { id: "H-M-9", name: "Hamb. Con ensalada", price: 15 },
+          { id: "H-M2-1", name: "Hamb. partida en 2 mitades", price: 0 },
+          { id: "H-M2-2", name: "Hamb. con queso en la papas", price: 5 },
+          { id: "H-M2-3", name: "Hamb. doble carne o pollo", price: 15 },
+          { id: "H-M2-5", name: "Hamb. Pollo en lugar de carne de res", price: 15 },
+          { id: "H-M2-6", name: "Hamb. Con ensalada", price: 15 },
+          { id: "H-M2-7", name: "Hamb. Carne bien dorada", price: 0 },
         ],
       },
     ],
@@ -529,6 +577,25 @@ const menu = [
       { id: "PZ-I-37", name: "Salchicha", ingredientValue: 1 },
       { id: "PZ-I-38", name: "Tocino", ingredientValue: 1 },
     ],  
+    modifierTypes: [
+      {
+        id: "PZ-M1",
+        name: "Extras de Pizza",
+        required: false,
+        acceptsMultiple: true,
+        modifiers: [
+          { id: "PZ-M1-1", name: "Partida en 16 pedazos", price: 0 },
+          { id: "PZ-M1-2", name: "Mas doradita", price: 0 },
+          { id: "PZ-M1-3", name: "Poco queso", price: 0 },
+          { id: "PZ-M1-4", name: "Sin queso", price: 0 },
+          { id: "PZ-M1-5", name: "Sin salsa de tomate", price: 0 },
+          { id: "PZ-M1-6", name: "Extra salsa de tomate", price: 0 },
+          { id: "PZ-M1-7", name: "Con catsup", price: 0 },
+          { id: "PZ-M1-10", name: "Doble aderezo", price: 0 },
+          { id: "PZ-M1-11", name: "Doble chile de aceite", price: 0 },
+        ],
+      },
+    ],
   },
 ];
 
