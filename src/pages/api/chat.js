@@ -214,10 +214,12 @@ function extractMentionedProducts(message, menu) {
       const mentionedProduct = {
         productId: product.productId,
         name: product.name,
-        productVariants: product.variantes || [],
-        modifierTypes: [],
-        pizzaIngredients: product.ingredientesPizza || [],
       };
+
+      // Agregar variantes solo si existen
+      if (product.variantes && product.variantes.length > 0) {
+        mentionedProduct.productVariants = product.variantes;
+      }
 
       // Filtrar modificadores mencionados
       if (product.modificadores) {
@@ -230,14 +232,13 @@ function extractMentionedProducts(message, menu) {
         );
 
         if (mentionedModifiers.length > 0) {
-          mentionedProduct.modifierTypes.push({
-            modifiers: mentionedModifiers,
-          });
+          mentionedProduct.modifierTypes = [{ modifiers: mentionedModifiers }];
         }
       }
+
       // Filtrar ingredientes de pizza mencionados
       if (product.ingredientesPizza) {
-        mentionedProduct.pizzaIngredients = product.ingredientesPizza.filter(
+        const mentionedIngredients = product.ingredientesPizza.filter(
           (ingredient) =>
             words.some(
               (word) =>
@@ -245,6 +246,10 @@ function extractMentionedProducts(message, menu) {
                 partial_ratio(ingredient.name.toLowerCase(), word) > 90
             )
         );
+
+        if (mentionedIngredients.length > 0) {
+          mentionedProduct.pizzaIngredients = mentionedIngredients;
+        }
       }
 
       console.log("Producto mencionado:", mentionedProduct);
