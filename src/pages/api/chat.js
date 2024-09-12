@@ -222,8 +222,9 @@ function extractMentionedProducts(message, menu) {
     for (const product of menu["Menu Disponible"][category]) {
       const productName = product.name.toLowerCase();
       for (const word of words) {
-        if (word.length > 2 && partial_ratio(productName, word) > 80) {
-          mentionedProducts.push(product);
+        if (word.length > 2 && partial_ratio(productName, word) > 90) {
+          console.log("Producto mencionado:", product);
+          mentionedProducts.push({ ...product, category });
           break;
         }
       }
@@ -247,7 +248,7 @@ async function getRelevantMenuItems(userMessage) {
     }
     relevantMenu["Menu Disponible"][product.category].push(product);
   }
-  console.log("Relevant menu:", relevantMenu);
+  console.log("Menú relevante:", relevantMenu);
   return relevantMenu;
 }
 
