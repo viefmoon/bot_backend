@@ -12,6 +12,7 @@ const menu = require("../../data/menu");
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
+const { fuzz } = require("fuzzywuzzy");
 
 async function modifyOrder(toolCall, clientId) {
   const { dailyOrderNumber, orderType, orderItems, deliveryInfo } = JSON.parse(
@@ -213,17 +214,54 @@ async function waitForCompletion(threadId, runId, res) {
   };
 }
 
+function extractMentionedProducts(message, menu) {
+  const mentionedProducts = [];
+  const words = message.toLowerCase().split(/\s+/);
+
+  for (const category in menu["Menu Disponible"]) {
+    for (const product of menu["Menu Disponible"][category]) {
+      const productName = product.name.toLowerCase();
+      for (const word of words) {
+        if (word.length > 2 && fuzz.partial_ratio(productName, word) > 80) {
+          mentionedProducts.push(product);
+          break;
+        }
+      }
+    }
+  }
+
+  return mentionedProducts;
+}
+
+async function getRelevantMenuItems(userMessage) {
+  const fullMenu = await getMenuAvailability();
+  const mentionedProducts = extractMentionedProducts(userMessage, fullMenu);
+
+  const relevantMenu = {
+    "Menu Disponible": {},
+  };
+
+  for (const product of mentionedProducts) {
+    if (!relevantMenu["Menu Disponible"][product.category]) {
+      relevantMenu["Menu Disponible"][product.category] = [];
+    }
+    relevantMenu["Menu Disponible"][product.category].push(product);
+  }
+
+  return relevantMenu;
+}
+
 export async function handleChatRequest(req) {
   const { relevantMessages, conversationId } = req;
 
   try {
-    // Obtener la disponibilidad del menú
-    const menuAvailability = await getMenuAvailability();
+    const lastUserMessage =
+      relevantMessages[relevantMessages.length - 1].content;
+    const relevantMenuItems = await getRelevantMenuItems(lastUserMessage);
 
-    // Crear un nuevo mensaje con la disponibilidad del menú
     const menuAvailabilityMessage = {
       role: "assistant",
-      content: JSON.stringify(menuAvailability),
+      content: JSON.stringify(relevantMenuItems),
     };
 
     const menuInstructions = {
@@ -232,7 +270,6 @@ export async function handleChatRequest(req) {
         "Menú disponible para buscar los productId, variantId, pizzaIngredientId y modifierId de los productos solicitados por el cliente. Solo están disponibles estos identificadores. Si no se encuentra el producto que solicitó el cliente, se le informará al cliente en lugar de ejecutar select_products.",
     };
 
-    // Añadir el mensaje de disponibilidad del menú al final de los mensajes
     const messagesWithMenu = [
       ...relevantMessages,
       menuInstructions,
