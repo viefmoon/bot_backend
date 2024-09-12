@@ -211,27 +211,29 @@ function extractMentionedProducts(message, menu) {
         (word) => word.length > 3 && partial_ratio(productName, word) > 90
       )
     ) {
-      const mentionedProduct = { ...product };
-
-      // Incluir todas las variantes
-      if (product.productVariants) {
-        mentionedProduct.productVariants = product.productVariants;
-      }
+      const mentionedProduct = {
+        productId: product.productId,
+        name: product.name,
+        productVariants: product.variantes || [],
+        modifierTypes: [],
+        pizzaIngredients: product.ingredientesPizza || [],
+      };
 
       // Filtrar modificadores mencionados
-      if (product.modifierTypes) {
-        mentionedProduct.modifierTypes = product.modifierTypes
-          .map((modifierType) => ({
-            ...modifierType,
-            modifiers: modifierType.modifiers.filter((modifier) =>
-              words.some(
-                (word) =>
-                  word.length > 3 &&
-                  partial_ratio(modifier.name.toLowerCase(), word) > 90
-              )
-            ),
-          }))
-          .filter((modifierType) => modifierType.modifiers.length > 0);
+      if (product.modificadores) {
+        const mentionedModifiers = product.modificadores.filter((modifier) =>
+          words.some(
+            (word) =>
+              word.length > 3 &&
+              partial_ratio(modifier.name.toLowerCase(), word) > 90
+          )
+        );
+
+        if (mentionedModifiers.length > 0) {
+          mentionedProduct.modifierTypes.push({
+            modifiers: mentionedModifiers,
+          });
+        }
       }
 
       console.log("Producto mencionado:", mentionedProduct);
