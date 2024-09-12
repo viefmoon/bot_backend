@@ -12,7 +12,7 @@ const menu = require("../../data/menu");
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
-const { fuzz } = require("fuzzywuzzy");
+const { fuzz } = require("fuzzball");
 
 async function modifyOrder(toolCall, clientId) {
   const { dailyOrderNumber, orderType, orderItems, deliveryInfo } = JSON.parse(
@@ -222,7 +222,7 @@ function extractMentionedProducts(message, menu) {
     for (const product of menu["Menu Disponible"][category]) {
       const productName = product.name.toLowerCase();
       for (const word of words) {
-        if (word.length > 2 && fuzz.partial_ratio(productName, word) > 80) {
+        if (word.length > 2 && partial_ratio(productName, word) > 80) {
           mentionedProducts.push(product);
           break;
         }
