@@ -112,7 +112,7 @@ async function getMenuAvailability() {
 
     products.forEach((producto) => {
       const productoInfo = {
-        id: producto.id,
+        productId: producto.id,
         name: producto.name,
         active: producto.Availability?.available || false,
       };
@@ -120,7 +120,7 @@ async function getMenuAvailability() {
       // Agregar variantes
       if (producto.productVariants?.length > 0) {
         productoInfo.variantes = producto.productVariants.map((v) => ({
-          productId: v.id,
+          Id: v.id,
           name: v.name,
           active: v.Availability?.available || false,
         }));
