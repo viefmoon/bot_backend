@@ -8,16 +8,16 @@
           "Es OBLIGATORIO ejecutar la función `select_products` cada vez que se elija un nuevo producto o varios, se modifique un producto existente o se elimine un producto.",
           "Llama a la función `select_products` con los siguientes parámetros:",
           " - orderItems: Lista de ítems ordenes con la siguiente estructura para cada ítem:",
-          "   - productId: Obligatorio para todos los productos.",
+          "   - productId: Obligatorio para todos los ordeitems.",
           "   - productVariantId: Obligatorio si el producto tiene variantes.",
-          "   - quantity: Obligatorio, indica la cantidad del producto, solo numeros enteros, si el cliente solicita medias ordenes hay variantes para las medias ordenes.",
-          "   - selectedModifiers: Incluir solo si el producto tiene modificadores y se han seleccionado sus modificadores. Es de vital importancia solo seleccionar modificadores pertenecientes al producto seleccionado.",
-          "   - selectedPizzaIngredients: Obligatorio para pizzas, debe incluir al menos un ingrediente. Es un array de objetos con la siguiente estructura:",
-          "     - pizzaIngredientId: ID del ingrediente o sabor de la pizza (obligatorio).",
+          "   - quantity: Obligatorio, indica la cantidad del producto.",
+          "   - selectedModifiers: Modificadores seleccionados para el producto.",
+          "   - selectedPizzaIngredients: Obligatorio para pizzas, debe incluir al menos un ingrediente. Es un array de ingredientes con la siguiente estructura:",
+          "     - pizzaIngredientId: Obligatorio.",
           "     - half: Mitad de la pizza donde se coloca el ingrediente ('full' para toda la pizza, 'left' para mitad izquierda, 'right' para mitad derecha) (obligatorio).",
           "     - action: Acción a realizar con el ingrediente ('add' para añadir, 'remove' para quitar) (obligatorio).",
           "     - Nota: Se pueden personalizar las dos mitades de la pizza por separado, añadiendo o quitando ingredientes en cada mitad.",
-          "   - comments: Opcional, para modificadores que no estan en el menu y observaciones.",
+          "   - comments: Opcional, se usan solo para observaciones sobre quitar ingredientes del producto.",
           " - orderType: (Requerido) Tipo de orden ('delivery' para entrega a domicilio, 'pickup' para recoger en restaurante)",
           " - deliveryInfo: (Requerido) Dirección de entrega para pedidos a domicilio (requerido para pedidos a domicilio, Nombre del cliente para recolección de pedidos en restaurante",
           " - scheduledTime: Hora programada para el pedido (opcional, no se ofrece a menos que el cliente solicite programar)"
@@ -28,7 +28,7 @@
   "Menu Disponible": {
     "entradas": [
       {
-        "name": "Orden de Alitas",
+        "name": "Alitas (ordenes y medias)",
         "variants": [
           { "name": "Orden de Alitas BBQ" },
           { "name": "Media Orden de Alitas BBQ" },
@@ -40,7 +40,7 @@
         ]
       },
       {
-        "name": "Ordenes de Papas",
+        "name": "Papas (ordenes y medias)",
         "variants": [
           { "name": "Orden de Papas a la Francesa" },
           { "name": "Media Orden de Papas a la Francesa" },
@@ -50,10 +50,22 @@
         ],
         "modifierTypes": [
           {
-            "name": "Con o sin Queso",
+            "name": "Papas con o sin queso",
             "requiresModifier": true,
             "acceptsMultiple": false,
-            "modifiers": [{ "name": "Sin queso" }, { "name": "Con queso" }]
+            "modifiers": [
+              { "name": "Papas sin queso" },
+              { "name": "Papas con queso" }
+            ]
+          },
+          {
+            "name": "Observaciones papas",
+            "requiresModifier": false,
+            "acceptsMultiple": true,
+            "modifiers": [
+              { "name": "Papas extra aderezo" },
+              { "name": "Papas con chile de aceite" }
+            ]
           }
         ]
       },
@@ -145,6 +157,24 @@
           { "name": "Salami" },
           { "name": "Salchicha" },
           { "name": "Tocino" }
+        ],
+        "modifierTypes": [
+          {
+            "name": "Observaciones pizza",
+            "requiresModifier": false,
+            "acceptsMultiple": true,
+            "modifiers": [
+              { "name": "Pizza partida en 16 pedazos" },
+              { "name": "Pizza mas doradita" },
+              { "name": "Pizza poco queso" },
+              { "name": "Pizza sin queso" },
+              { "name": "Pizza sin salsa de tomate" },
+              { "name": "Pizza extra salsa de tomate" },
+              { "name": "Pizza con catsup" },
+              { "name": "Pizza doble aderezo" },
+              { "name": "Pizza doble chile de aceite" }
+            ]
+          }
         ]
       },
       {
@@ -278,32 +308,26 @@
         ],
         "modifierTypes": [
           {
-            "name": "Papas",
+            "name": "Hamburguesa con papas",
             "requiresModifier": false,
             "acceptsMultiple": false,
             "modifiers": [
-              { "name": "Con papas francesa" },
-              { "name": "Con gajos" },
-              { "name": "Con papas mixtas" }
+              { "name": "Hamb. con papas francesa" },
+              { "name": "Hamb. con gajos" },
+              { "name": "Hamb. con papas mixtas" }
             ]
           },
           {
-            "name": "Extras",
+            "name": "Extras Hamburguesas",
             "requiresModifier": false,
             "acceptsMultiple": true,
             "modifiers": [
-              { "name": "Partida" },
-              { "name": "Queso en la papas" },
-              { "name": "Doble carne" },
-              { "name": "Doble pollo" },
-              { "name": "Extra queso" },
-              { "name": "Extra tocino" },
-              { "name": "Res -> Pollo" },
-              { "name": "Con pierna" },
-              { "name": "Con pina" },
-              { "name": "Con jamon" },
-              { "name": "Con salchicha" },
-              { "name": "Con ensalada" }
+              { "name": "Hamb. partida en 2 mitades" },
+              { "name": "Hamb. con queso en la papas" },
+              { "name": "Hamb. doble carne o pollo" },
+              { "name": "Hamb. pollo en lugar de carne de res" },
+              { "name": "Hamb. con ensalada" },
+              { "name": "Hamb. carne bien dorada" }
             ]
           }
         ]
@@ -366,18 +390,46 @@
               "Aderezo",
               "Betabel crujiente"
             ]
+          },
+          {
+            "name": "Ensalada Vegetal Chica",
+            "ingredients": [
+              "Lechuga",
+              "Chile morrón",
+              "Elote",
+              "Jitomate",
+              "Zanahoria",
+              "Queso parmesano",
+              "Aderezo",
+              "Betabel crujiente"
+            ]
+          },
+          {
+            "name": "Ensalada Vegetal Grande",
+            "ingredients": [
+              "Lechuga",
+              "Chile morrón",
+              "Elote",
+              "Jitomate",
+              "Zanahoria",
+              "Queso parmesano",
+              "Aderezo",
+              "Betabel crujiente"
+            ]
           }
         ],
         "modifierTypes": [
           {
-            "name": "Extras",
+            "name": "Extras Ensaladas",
             "requiresModifier": false,
             "acceptsMultiple": true,
             "modifiers": [
-              { "name": "Con jamon" },
-              { "name": "Con queso gouda" },
-              { "name": "Con vinagreta" },
-              { "name": "Doble pollo" }
+              { "name": "Ensalada con jamon" },
+              { "name": "Ensalada con queso gouda" },
+              { "name": "Ensalada con vinagreta" },
+              { "name": "Ensalada con doble pollo" },
+              { "name": "Ensalada con doble vinagreta" },
+              { "name": "Ensalada con aderezo aparte" }
             ]
           }
         ]

@@ -120,7 +120,7 @@ async function getMenuAvailability() {
       // Agregar variantes
       if (producto.productVariants?.length > 0) {
         productoInfo.variantes = producto.productVariants.map((v) => ({
-          id: v.id,
+          productId: v.id,
           name: v.name,
           active: v.Availability?.available || false,
         }));
