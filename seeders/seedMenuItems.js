@@ -308,8 +308,8 @@ const menu = [
     price: 30,
   },
   {
-    id: "RSAN",
-    name: "Sangría",
+    id: "SANP",
+    name: "Sangría preparada",
     category: "bebidas",
     price: 35,
   },
