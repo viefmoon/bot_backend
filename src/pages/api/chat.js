@@ -247,7 +247,7 @@ async function getRelevantMenuItems(userMessage) {
     }
     relevantMenu["Menu Disponible"][product.category].push(product);
   }
-
+  console.log("Relevant menu:", relevantMenu);
   return relevantMenu;
 }
 
@@ -270,16 +270,16 @@ export async function handleChatRequest(req) {
         "Menú disponible para buscar los productId, variantId, pizzaIngredientId y modifierId de los productos solicitados por el cliente. Solo están disponibles estos identificadores. Si no se encuentra el producto que solicitó el cliente, se le informará al cliente en lugar de ejecutar select_products.",
     };
 
-    const messagesWithMenu = [
+    const messagesWithRelevantMenu = [
       ...relevantMessages,
       menuInstructions,
       menuAvailabilityMessage,
     ];
 
-    console.log("Relevant messages with menu:", messagesWithMenu);
+    console.log("Relevant messages with menu:", messagesWithRelevantMenu);
 
     const thread = await openai.beta.threads.create({
-      messages: messagesWithMenu,
+      messages: messagesWithRelevantMenu,
     });
 
     let run = await openai.beta.threads.runs.create(thread.id, {
