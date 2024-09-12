@@ -208,7 +208,7 @@ function extractMentionedProducts(message, menu) {
     const productName = product.name.toLowerCase();
     if (
       words.some(
-        (word) => word.length >  && partial_ratio(productName, word) > 80
+        (word) => word.length > 3 && partial_ratio(productName, word) > 90
       )
     ) {
       const mentionedProduct = { ...product };
