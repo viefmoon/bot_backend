@@ -208,7 +208,7 @@ function extractMentionedProducts(message, menu) {
     const productName = product.name.toLowerCase();
     if (
       words.some(
-        (word) => word.length > 3 && partial_ratio(productName, word) > 80
+        (word) => word.length >  && partial_ratio(productName, word) > 80
       )
     ) {
       const mentionedProduct = { ...product };
@@ -219,16 +219,22 @@ function extractMentionedProducts(message, menu) {
       }
 
       // Filtrar modificadores mencionados
-      if (product.pizzaIngredients) {
-        mentionedProduct.pizzaIngredients = product.pizzaIngredients.filter(
-          (ingredient) =>
-            words.some(
-              (word) =>
-                word.length > 3 &&
-                partial_ratio(ingredient.name.toLowerCase(), word) > 90
-            )
-        );
+      if (product.modifierTypes) {
+        mentionedProduct.modifierTypes = product.modifierTypes
+          .map((modifierType) => ({
+            ...modifierType,
+            modifiers: modifierType.modifiers.filter((modifier) =>
+              words.some(
+                (word) =>
+                  word.length > 3 &&
+                  partial_ratio(modifier.name.toLowerCase(), word) > 90
+              )
+            ),
+          }))
+          .filter((modifierType) => modifierType.modifiers.length > 0);
       }
+
+      console.log("Producto mencionado:", mentionedProduct);
       mentionedProducts.push(mentionedProduct);
     }
   }
