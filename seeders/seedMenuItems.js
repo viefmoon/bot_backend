@@ -75,22 +75,13 @@ const menu = [
     modifierTypes: [
       {
         id: "P-M1",
-        name: "Papas con o sin queso",
-        required: true,
-        acceptsMultiple: false,
-        modifiers: [
-          { id: "P-M1-1", name: "Papas sin queso", price: 0 },
-          { id: "P-M1-2", name: "Papas con queso", price: 0 },
-        ],
-      },
-      {
-        id: "P-M2",
-        name: "Observaciones papas ",
+        name: "Papas observaciones",
         required: false,
         acceptsMultiple: true,
         modifiers: [
-          { id: "P-M2-1", name: "Papas extra aderezo", price: 0 },
-          { id: "P-M2-2", name: "Papas con chile de aceite", price: 0 },
+          { id: "P-M1-1", name: "Papas sin queso", price: 0 },
+          { id: "P-M1-2", name: "Papas extra aderezo", price: 0 },
+          { id: "P-M1-3", name: "Papas con chile de aceite", price: 0 },
         ],
       },
     ],
