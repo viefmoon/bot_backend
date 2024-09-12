@@ -12,7 +12,7 @@
           "   - productVariantId: Obligatorio si el producto tiene variantes.",
           "   - quantity: Obligatorio, indica la cantidad del producto.",
           "   - selectedModifiers: Modificadores seleccionados para el producto.",
-          "   - selectedPizzaIngredients: Obligatorio para pizzas, debe incluir al menos un ingrediente. Es un array de ingredientes con la siguiente estructura:",
+          "   - selectedPizzaIngredients: Obligatorio para pizzas contempla que existen variantes de pizza variantes de relleno, debes incluir al menos un ingrediente. Es un array de ingredientes con la siguiente estructura:",
           "     - pizzaIngredientId: Obligatorio.",
           "     - half: Mitad de la pizza donde se coloca el ingrediente ('full' para toda la pizza, 'left' para mitad izquierda, 'right' para mitad derecha) (obligatorio).",
           "     - action: Acción a realizar con el ingrediente ('add' para añadir, 'remove' para quitar) (obligatorio).",
