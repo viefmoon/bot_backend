@@ -235,6 +235,17 @@ function extractMentionedProducts(message, menu) {
           });
         }
       }
+      // Filtrar ingredientes de pizza mencionados
+      if (product.ingredientesPizza) {
+        mentionedProduct.pizzaIngredients = product.ingredientesPizza.filter(
+          (ingredient) =>
+            words.some(
+              (word) =>
+                word.length > 3 &&
+                partial_ratio(ingredient.name.toLowerCase(), word) > 90
+            )
+        );
+      }
 
       console.log("Producto mencionado:", mentionedProduct);
       mentionedProducts.push(mentionedProduct);
