@@ -217,24 +217,33 @@ function extractMentionedProducts(message, menu) {
   return mentionedProducts;
 }
 
-async function getRelevantMenuItems(userMessage) {
+async function getRelevantMenuItems(relevantMessages) {
   const fullMenu = await getMenuAvailability();
-  const mentionedProducts = extractMentionedProducts(userMessage, fullMenu);
+  let mentionedProducts = [];
+
+  for (const message of relevantMessages) {
+    if (message.role === "user") {
+      const productsInMessage = extractMentionedProducts(
+        message.content,
+        fullMenu
+      );
+      mentionedProducts = [...mentionedProducts, ...productsInMessage];
+    }
+  }
+
+  // Eliminar duplicados
+  mentionedProducts = Array.from(new Set(mentionedProducts));
 
   const relevantMenu = {
     "Menu Disponible": mentionedProducts,
   };
-
-  console.log("Menú relevante:", relevantMenu);
   return relevantMenu;
 }
 
 export async function handleChatRequest(req) {
   const { relevantMessages, conversationId } = req;
   try {
-    const lastUserMessage =
-      relevantMessages[relevantMessages.length - 1].content;
-    const relevantMenuItems = await getRelevantMenuItems(lastUserMessage);
+    const relevantMenuItems = await getRelevantMenuItems(relevantMessages);
 
     const menuAvailabilityMessage = {
       role: "assistant",

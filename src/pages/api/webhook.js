@@ -518,8 +518,7 @@ async function handleMessage(from, message) {
     if (relevantChatHistory.length === 0) {
       await sendWelcomeMessage(from);
       if (!deliveryInfo) {
-        deliveryInfo =
-          "Aun no proporcionada, solicita al usuario que la proporcione antes de continuar con la seleccion de productos";
+        deliveryInfo = "Aun no proporcionada";
       }
     }
 
