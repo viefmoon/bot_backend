@@ -224,8 +224,11 @@ const menu = [
         acceptsMultiple: false,
         modifiers: [
           { id: "HM1-1", name: "Con papas francesa", price: 10 },
-          { id: "HM1-2", name: "Con gajos", price: 15 },
-          { id: "HM1-3", name: "Con papas mixtas", price: 15 },
+          { id: "HM1-2", name: "Con papas francesa gratinadas", price: 15 },
+          { id: "HM1-3", name: "Con gajos", price: 15 },
+          { id: "HM1-4", name: "Con gajos gratinadas", price: 20 },
+          { id: "HM1-5", name: "Con papas mixtas", price: 15 },
+          { id: "HM1-6", name: "Con papas mixtas gratinadas", price: 20 },
         ],
       },
       {
@@ -235,15 +238,14 @@ const menu = [
         acceptsMultiple: true,
         modifiers: [
           { id: "HM2-1", name: "Partida en 2 mitades", price: 0 },
-          { id: "HM2-2", name: "Papas con queso o gratinadas", price: 5 },
           { id: "HM2-3", name: "Doble carne o pollo", price: 15 },
           {
-            id: "HM2-5",
+            id: "HM2-4",
             name: "Pollo en lugar de carne de res",
             price: 15,
           },
-          { id: "HM2-6", name: "Con ensalada", price: 15 },
-          { id: "HM2-7", name: "Carne bien dorada", price: 0 },
+          { id: "HM2-5", name: "Con ensalada", price: 15 },
+          { id: "HM2-6", name: "Carne bien dorada", price: 0 },
         ],
       },
     ],
