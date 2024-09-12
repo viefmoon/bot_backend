@@ -12,7 +12,7 @@ const menu = require("../../data/menu");
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
-const { fuzz } = require("fuzzball");
+const { partial_ratio } = require("fuzzball");
 
 async function modifyOrder(toolCall, clientId) {
   const { dailyOrderNumber, orderType, orderItems, deliveryInfo } = JSON.parse(
