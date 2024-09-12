@@ -206,11 +206,20 @@ function extractMentionedProducts(message, menu) {
 
   for (const product of menu["Menu Disponible"]) {
     const productName = product.name.toLowerCase();
-    if (
+    let isProductMentioned = words.some(
+      (word) => word.length > 3 && partial_ratio(productName, word) > 90
+    );
+
+    // Buscar en las variantes
+    const variantsMentioned = product.variantes?.some((variant) =>
       words.some(
-        (word) => word.length > 3 && partial_ratio(productName, word) > 90
+        (word) =>
+          word.length > 3 &&
+          partial_ratio(variant.name.toLowerCase(), word) > 90
       )
-    ) {
+    );
+
+    if (isProductMentioned || variantsMentioned) {
       const mentionedProduct = {
         productId: product.productId,
         name: product.name,
