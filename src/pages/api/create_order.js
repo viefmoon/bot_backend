@@ -621,20 +621,20 @@ async function selectProducts(req, res) {
                 modifierType.modifiers.some((m) => m.id === mod.modifierId)
               );
 
-              if (modifierType.required && selectedModifiers.length === 0) {
-                throw new Error(
-                  `El modificador "${modifierType.name}" es requerido para ${productName}`
-                );
-              }
+              // if (modifierType.required && selectedModifiers.length === 0) {
+              //   throw new Error(
+              //     `El modificador "${modifierType.name}" es requerido para ${productName}`
+              //   );
+              // }
 
-              if (
-                !modifierType.acceptsMultiple &&
-                selectedModifiers.length > 1
-              ) {
-                throw new Error(
-                  `El modificador "${modifierType.name}" no acepta múltiples selecciones para ${productName}`
-                );
-              }
+              // if (
+              //   !modifierType.acceptsMultiple &&
+              //   selectedModifiers.length > 1
+              // ) {
+              //   throw new Error(
+              //     `El modificador "${modifierType.name}" no acepta múltiples selecciones para ${productName}`
+              //   );
+              // }
 
               for (const selectedMod of selectedModifiers) {
                 const modifier = modifierType.modifiers.find(
