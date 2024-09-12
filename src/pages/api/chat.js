@@ -104,14 +104,7 @@ async function getMenuAvailability() {
       return { error: "No se encontraron productos en la base de datos" };
     }
 
-    const menuSimplificado = {
-      entradas: [],
-      comida: [],
-      bebidas: [],
-      cocteleria: [],
-    };
-
-    products.forEach((producto) => {
+    const menuSimplificado = products.map((producto) => {
       const productoInfo = {
         productId: producto.id,
         name: producto.name,
@@ -148,14 +141,7 @@ async function getMenuAvailability() {
         }));
       }
 
-      menuSimplificado[producto.category].push(productoInfo);
-    });
-
-    // Eliminar categorías vacías
-    Object.keys(menuSimplificado).forEach((categoria) => {
-      if (menuSimplificado[categoria].length === 0) {
-        delete menuSimplificado[categoria];
-      }
+      return productoInfo;
     });
 
     return {
@@ -218,19 +204,16 @@ function extractMentionedProducts(message, menu) {
   const mentionedProducts = [];
   const words = message.toLowerCase().split(/\s+/);
 
-  for (const category in menu["Menu Disponible"]) {
-    for (const product of menu["Menu Disponible"][category]) {
-      const productName = product.name.toLowerCase();
-      for (const word of words) {
-        if (word.length > 2 && partial_ratio(productName, word) > 90) {
-          console.log("Producto mencionado:", product);
-          mentionedProducts.push({ ...product, category });
-          break;
-        }
+  for (const product of menu["Menu Disponible"]) {
+    const productName = product.name.toLowerCase();
+    for (const word of words) {
+      if (word.length > 2 && partial_ratio(productName, word) > 90) {
+        console.log("Producto mencionado:", product);
+        mentionedProducts.push(product);
+        break;
       }
     }
   }
-
   return mentionedProducts;
 }
 
@@ -239,15 +222,9 @@ async function getRelevantMenuItems(userMessage) {
   const mentionedProducts = extractMentionedProducts(userMessage, fullMenu);
 
   const relevantMenu = {
-    "Menu Disponible": {},
+    "Menu Disponible": mentionedProducts,
   };
 
-  for (const product of mentionedProducts) {
-    if (!relevantMenu["Menu Disponible"][product.category]) {
-      relevantMenu["Menu Disponible"][product.category] = [];
-    }
-    relevantMenu["Menu Disponible"][product.category].push(product);
-  }
   console.log("Menú relevante:", relevantMenu);
   return relevantMenu;
 }
