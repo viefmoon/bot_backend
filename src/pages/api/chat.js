@@ -108,15 +108,15 @@ async function getMenuAvailability() {
       const productoInfo = {
         productId: producto.id,
         name: producto.name,
-        active: producto.Availability?.available || false,
+        //active: producto.Availability?.available || false,
       };
 
       // Agregar variantes
       if (producto.productVariants?.length > 0) {
         productoInfo.variantes = producto.productVariants.map((v) => ({
-          variantId: v.id,
+          Id: v.id,
           name: v.name,
-          active: v.Availability?.available || false,
+          //active: v.Availability?.available || false,
         }));
       }
 
@@ -125,9 +125,9 @@ async function getMenuAvailability() {
         productoInfo.modificadores = producto.modifierTypes.flatMap(
           (mt) =>
             mt.modifiers?.map((m) => ({
-              modifierId: m.id,
+              Id: m.id,
               name: m.name,
-              active: m.Availability?.available || false,
+              //active: m.Availability?.available || false,
             })) || []
         );
       }
@@ -135,9 +135,9 @@ async function getMenuAvailability() {
       // Agregar ingredientes de pizza
       if (producto.pizzaIngredients?.length > 0) {
         productoInfo.ingredientesPizza = producto.pizzaIngredients.map((i) => ({
-          pizzaIngredientId: i.id,
+          Id: i.id,
           name: i.name,
-          active: i.Availability?.available || false,
+          //active: i.Availability?.available || false,
         }));
       }
 
@@ -206,12 +206,36 @@ function extractMentionedProducts(message, menu) {
 
   for (const product of menu["Menu Disponible"]) {
     const productName = product.name.toLowerCase();
-    for (const word of words) {
-      if (word.length > 2 && partial_ratio(productName, word) > 90) {
-        console.log("Producto mencionado:", product);
-        mentionedProducts.push(product);
-        break;
+    if (
+      words.some(
+        (word) => word.length > 2 && partial_ratio(productName, word) > 90
+      )
+    ) {
+      const mentionedProduct = { ...product };
+
+      // Incluir todas las variantes
+      if (product.productVariants) {
+        mentionedProduct.productVariants = product.productVariants;
       }
+
+      // Filtrar modificadores mencionados
+      if (product.modifierTypes) {
+        mentionedProduct.modifierTypes = product.modifierTypes
+          .map((modifierType) => ({
+            ...modifierType,
+            modifiers: modifierType.modifiers.filter((modifier) =>
+              words.some(
+                (word) =>
+                  word.length > 2 &&
+                  partial_ratio(modifier.name.toLowerCase(), word) > 90
+              )
+            ),
+          }))
+          .filter((modifierType) => modifierType.modifiers.length > 0);
+      }
+
+      console.log("Producto mencionado:", mentionedProduct);
+      mentionedProducts.push(mentionedProduct);
     }
   }
   return mentionedProducts;

@@ -14,41 +14,41 @@ const menu = [
     name: "Alitas",
     category: "entradas",
     productVariants: [
-      { id: "A-V-1", name: "Orden de Alitas BBQ", price: 135 },
-      { id: "A-V-2", name: "Media Orden de Alitas BBQ", price: 70 },
-      { id: "A-V-3", name: "Orden de Alitas Picosas", price: 135 },
+      { id: "AV1", name: "Orden de Alitas BBQ", price: 135 },
+      { id: "AV2", name: "Media Orden de Alitas BBQ", price: 70 },
+      { id: "AV3", name: "Orden de Alitas Picosas", price: 135 },
       {
-        id: "A-V-4",
+        id: "AV4",
         name: "Media Orden de Alitas Picosas",
         price: 70,
       },
-      { id: "A-V-5", name: "Orden de Alitas Fritas", price: 135 },
-      { id: "A-V-6", name: "Media Orden de Alitas Fritas", price: 70 },
+      { id: "AV5", name: "Orden de Alitas Fritas", price: 135 },
+      { id: "AV6", name: "Media Orden de Alitas Fritas", price: 70 },
       {
-        id: "A-V-7",
+        id: "AV7",
         name: "Orden de Alitas Mixtas BBQ y picosas",
         price: 135,
       },
     ],
     modifierTypes: [
       {
-        id: "A-M1",
+        id: "AM1",
         name: "Observaciones Alitas",
         required: false,
         acceptsMultiple: true,
         modifiers: [
-          { id: "A-M1-1", name: "Alitas mas doradas", price: 0 },
-          { id: "A-M1-2", name: "Alitas menos doradas", price: 0 },
-          { id: "A-M1-3", name: "Alitas extra salsa", price: 0 },
+          { id: "AM1-1", name: "Mas doradas", price: 0 },
+          { id: "AM1-2", name: "Menos doradas", price: 0 },
+          { id: "AM1-3", name: "Extra salsa", price: 0 },
           {
-            id: "A-M1-4",
-            name: "Alitas arregladas con verdura y totopos",
+            id: "AM1-4",
+            name: "Arregladas con verdura y totopos",
             price: 0,
           },
-          { id: "A-M1-5", name: "Alitas con aderezo ranch", price: 0 },
-          { id: "A-M1-6", name: "Alitas con salsa picosa aparte", price: 0 },
-          { id: "A-M1-7", name: "Alitas con salsa BBQ aparte", price: 0 },
-          { id: "A-M1-8", name: "Alitas con extra chile de aceite", price: 0 },
+          { id: "AM1-5", name: "Aderezo ranch", price: 0 },
+          { id: "AM1-6", name: "Salsa picosa aparte", price: 0 },
+          { id: "AM1-7", name: "Salsa BBQ aparte", price: 0 },
+          { id: "AM1-8", name: "Extra chile de aceite", price: 0 },
         ],
       },
     ],
@@ -59,33 +59,33 @@ const menu = [
     category: "entradas",
     productVariants: [
       {
-        id: "P-V-1",
+        id: "PV1",
         name: "Orden de Papas gratinadas a la Francesa",
         price: 90,
       },
       {
-        id: "P-V-2",
+        id: "PV2",
         name: "Media Orden de Papas a la Francesa",
         price: 50,
       },
-      { id: "P-V-3", name: "Orden de Papas gratinadas Gajos", price: 100 },
-      { id: "P-V-4", name: "Media Orden de Papas gratinadas Gajos", price: 60 },
+      { id: "PV3", name: "Orden de Papas gratinadas Gajos", price: 100 },
+      { id: "PV4", name: "Media Orden de Papas gratinadas Gajos", price: 60 },
       {
-        id: "P-V-5",
+        id: "PV5",
         name: "Orden de Papas gratinadas Mixtas francesa y gajos",
         price: 100,
       },
     ],
     modifierTypes: [
       {
-        id: "P-M1",
+        id: "PM1",
         name: "Papas observaciones",
         required: false,
         acceptsMultiple: true,
         modifiers: [
-          { id: "P-M1-1", name: "Papas sin queso", price: 0 },
-          { id: "P-M1-2", name: "Papas extra aderezo", price: 0 },
-          { id: "P-M1-3", name: "Papas con chile de aceite", price: 0 },
+          { id: "PM1-1", name: "Sin queso", price: 0 },
+          { id: "PM1-2", name: "Extra aderezo", price: 0 },
+          { id: "PM1-3", name: "Con chile de aceite", price: 0 },
         ],
       },
     ],
@@ -102,42 +102,42 @@ const menu = [
     category: "comida",
     productVariants: [
       {
-        id: "E-V-1",
+        id: "EV1",
         name: "Ensalada de Pollo Chica",
         price: 90,
         ingredients:
           "Pollo a la plancha, Chile morrón, Elote, Lechuga, Jitomate, Zanahoria, Queso parmesano, Aderezo, Betabel crujiente",
       },
       {
-        id: "E-V-2",
+        id: "EV2",
         name: "Ensalada de Pollo Grande",
         price: 120,
         ingredients:
           "Pollo a la plancha, Chile morrón, Elote, Lechuga, Jitomate, Zanahoria, Queso parmesano, Aderezo, Betabel crujiente",
       },
       {
-        id: "E-V-3",
+        id: "EV3",
         name: "Ensalada de Jamón Chica",
         price: 80,
         ingredients:
           "Jamón, Lechuga, Chile morrón, Elote, Jitomate, Zanahoria, Queso parmesano, Aderezo, Betabel crujiente",
       },
       {
-        id: "E-V-4",
+        id: "EV4",
         name: "Ensalada de Jamón Grande",
         price: 100,
         ingredients:
           "Jamón, Lechuga, Chile morrón, Elote, Jitomate, Zanahoria, Queso parmesano, Aderezo, Betabel crujiente",
       },
       {
-        id: "E-V-5",
+        id: "EV5",
         name: "Ensalada Vegetal Chica",
         price: 70,
         ingredients:
           "Lechuga, Chile morrón, Elote, Jitomate, Zanahoria, Queso parmesano, Aderezo, Betabel crujiente",
       },
       {
-        id: "E-V-6",
+        id: "EV6",
         name: "Ensalada Vegetal Grande",
         price: 90,
         ingredients:
@@ -146,17 +146,17 @@ const menu = [
     ],
     modifierTypes: [
       {
-        id: "E-M1",
+        id: "EM1",
         name: "Extras Ensaladas",
         required: false,
         acceptsMultiple: true,
         modifiers: [
-          { id: "E-M1-1", name: "Ensalada con jamon", price: 10 },
-          { id: "E-M1-2", name: "Ensalada con queso gouda", price: 15 },
-          { id: "E-M1-3", name: "Ensalada con vinagreta", price: 0 },
-          { id: "E-M1-4", name: "Ensalada con doble pollo", price: 15 },
-          { id: "E-M1-5", name: "Ensalada con doble vinagreta", price: 0 },
-          { id: "E-M1-6", name: "Ensalada con aderezo aparte", price: 0 },
+          { id: "EM1-1", name: "Ensalada con jamon", price: 10 },
+          { id: "EM1-2", name: "Ensalada con queso gouda", price: 15 },
+          { id: "EM1-3", name: "Ensalada con vinagreta", price: 0 },
+          { id: "EM1-4", name: "Ensalada con doble pollo", price: 15 },
+          { id: "EM1-5", name: "Ensalada con doble vinagreta", price: 0 },
+          { id: "EM1-6", name: "Ensalada con aderezo aparte", price: 0 },
         ],
       },
     ],
@@ -167,49 +167,49 @@ const menu = [
     category: "comida",
     productVariants: [
       {
-        id: "H-V-1",
+        id: "HV1",
         name: "Hamburgesa Tradicional",
         price: 85,
         ingredients:
           "Carne de res, tocino, queso amarillo, queso asadero, cebolla, jitomate, lechuga, chile jalapeño, catsup, aderezo, crema, mostaza",
       },
       {
-        id: "H-V-2",
+        id: "HV2",
         name: "Hamburgesa Especial",
         price: 95,
         ingredients:
           "Carne de res, tocino, pierna, queso amarillo, queso asadero, cebolla, jitomate, lechuga, chile jalapeño, catsup, aderezo, crema, mostaza",
       },
       {
-        id: "H-V-3",
+        id: "HV3",
         name: "Hamburgesa Hawaiana",
         price: 95,
         ingredients:
           "Carne de res, tocino, piña, jamón, queso amarillo, queso asadero, cebolla, jitomate, lechuga, chile jalapeño, catsup, aderezo, crema, mostaza",
       },
       {
-        id: "H-V-4",
+        id: "HV4",
         name: "Hamburgesa Pollo",
         price: 100,
         ingredients:
           "Pollo a la plancha, tocino, queso amarillo, queso asadero, cebolla, jitomate, lechuga, chile jalapeño, catsup, aderezo, crema, mostaza",
       },
       {
-        id: "H-V-5",
+        id: "HV5",
         name: "Hamburgesa BBQ",
         price: 100,
         ingredients:
           "Carne de res, salsa bbq, tocino, queso amarillo, queso asadero, cebolla guisada, jitomate, lechuga, chile jalapeño, catsup, aderezo, crema, mostaza",
       },
       {
-        id: "H-V-6",
+        id: "HV6",
         name: "Hamburgesa Lenazo",
         price: 110,
         ingredients:
           "Doble carne de sirlón, tocino, queso amarillo, queso asadero, cebolla guisada, jitomate, lechuga, chile jalapeño, catsup, aderezo, crema, mostaza",
       },
       {
-        id: "H-V-7",
+        id: "HV7",
         name: "Hamburgesa Cubana",
         price: 100,
         ingredients:
@@ -218,32 +218,32 @@ const menu = [
     ],
     modifierTypes: [
       {
-        id: "H-M1",
+        id: "HM1",
         name: "Hamburguesa con papas",
         required: false,
         acceptsMultiple: false,
         modifiers: [
-          { id: "H-M1-1", name: "Hamb. con papas francesa", price: 10 },
-          { id: "H-M1-2", name: "Hamb. con gajos", price: 15 },
-          { id: "H-M1-3", name: "Hamb. con papas mixtas", price: 15 },
+          { id: "HM1-1", name: "Hamb. con papas francesa", price: 10 },
+          { id: "HM1-2", name: "Hamb. con gajos", price: 15 },
+          { id: "HM1-3", name: "Hamb. con papas mixtas", price: 15 },
         ],
       },
       {
-        id: "H-M2",
+        id: "HM2",
         name: "Extras Hamburguesas",
         required: false,
         acceptsMultiple: true,
         modifiers: [
-          { id: "H-M2-1", name: "Hamb. partida en 2 mitades", price: 0 },
-          { id: "H-M2-2", name: "Hamb. con queso en la papas", price: 5 },
-          { id: "H-M2-3", name: "Hamb. doble carne o pollo", price: 15 },
+          { id: "HM2-1", name: "Hamb. partida en 2 mitades", price: 0 },
+          { id: "HM2-2", name: "Hamb. con queso en la papas", price: 5 },
+          { id: "HM2-3", name: "Hamb. doble carne o pollo", price: 15 },
           {
-            id: "H-M2-5",
+            id: "HM2-5",
             name: "Hamb. Pollo en lugar de carne de res",
             price: 15,
           },
-          { id: "H-M2-6", name: "Hamb. Con ensalada", price: 15 },
-          { id: "H-M2-7", name: "Hamb. Carne bien dorada", price: 0 },
+          { id: "HM2-6", name: "Hamb. Con ensalada", price: 15 },
+          { id: "HM2-7", name: "Hamb. Carne bien dorada", price: 0 },
         ],
       },
     ],
@@ -313,8 +313,8 @@ const menu = [
     name: "Micheladas",
     category: "bebidas",
     productVariants: [
-      { id: "MICH-V-1", name: "Michelada clara", price: 80 },
-      { id: "MICH-V-2", name: "Michelada oscura", price: 80 },
+      { id: "MV1", name: "Michelada clara", price: 80 },
+      { id: "MV2", name: "Michelada oscura", price: 80 },
     ],
   },
   {
@@ -358,16 +358,16 @@ const menu = [
     name: "Frappés",
     category: "bebidas",
     productVariants: [
-      { id: "F-V-1", name: "Frappe Capuchino", price: 70 },
-      { id: "F-V-2", name: "Frappe Coco", price: 70 },
-      { id: "F-V-3", name: "Frappe Caramelo", price: 70 },
-      { id: "F-V-4", name: "Frappe Cajeta", price: 70 },
-      { id: "F-V-5", name: "Frappe Mocaccino", price: 70 },
-      { id: "F-V-6", name: "Frappe Galleta", price: 70 },
-      { id: "F-V-7", name: "Frappe Bombon", price: 70 },
-      { id: "F-V-8", name: "Frappe Rompope", price: 85 },
-      { id: "F-V-9", name: "Frappe Mazapan", price: 85 },
-      { id: "F-V-10", name: "Frappe Magnum", price: 85 },
+      { id: "FV1", name: "Frappe Capuchino", price: 70 },
+      { id: "FV2", name: "Frappe Coco", price: 70 },
+      { id: "FV3", name: "Frappe Caramelo", price: 70 },
+      { id: "FV4", name: "Frappe Cajeta", price: 70 },
+      { id: "FV5", name: "Frappe Mocaccino", price: 70 },
+      { id: "FV6", name: "Frappe Galleta", price: 70 },
+      { id: "FV7", name: "Frappe Bombon", price: 70 },
+      { id: "FV8", name: "Frappe Rompope", price: 85 },
+      { id: "FV9", name: "Frappe Mazapan", price: 85 },
+      { id: "FV10", name: "Frappe Magnum", price: 85 },
     ],
   },
   {
