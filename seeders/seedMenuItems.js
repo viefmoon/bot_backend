@@ -11,7 +11,7 @@ const RestaurantConfig = require("../src/models/restaurantConfig");
 const menu = [
   {
     id: "A",
-    name: "Alitas (ordenes y medias)",
+    name: "Alitas",
     category: "entradas",
     productVariants: [
       { id: "A-V-1", name: "Orden de Alitas BBQ", price: 135 },
@@ -55,7 +55,7 @@ const menu = [
   },
   {
     id: "P",
-    name: "Papas (ordenes y medias)",
+    name: "Papas",
     category: "entradas",
     productVariants: [
       { id: "P-V-1", name: "Orden de Papas a la Francesa", price: 90 },

@@ -254,7 +254,6 @@ async function getRelevantMenuItems(userMessage) {
 
 export async function handleChatRequest(req) {
   const { relevantMessages, conversationId } = req;
-
   try {
     const lastUserMessage =
       relevantMessages[relevantMessages.length - 1].content;
