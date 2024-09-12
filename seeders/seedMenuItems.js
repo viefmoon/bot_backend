@@ -55,20 +55,24 @@ const menu = [
   },
   {
     id: "P",
-    name: "Papas",
+    name: "Papas gratinadas",
     category: "entradas",
     productVariants: [
-      { id: "P-V-1", name: "Orden de Papas a la Francesa", price: 90 },
+      {
+        id: "P-V-1",
+        name: "Orden de Papas gratinadas a la Francesa",
+        price: 90,
+      },
       {
         id: "P-V-2",
         name: "Media Orden de Papas a la Francesa",
         price: 50,
       },
-      { id: "P-V-3", name: "Orden de Papas Gajos", price: 100 },
-      { id: "P-V-4", name: "Media Orden de Papas Gajos", price: 60 },
+      { id: "P-V-3", name: "Orden de Papas gratinadas Gajos", price: 100 },
+      { id: "P-V-4", name: "Media Orden de Papas gratinadas Gajos", price: 60 },
       {
         id: "P-V-5",
-        name: "Orden de Papas Mixtas francesa y gajos",
+        name: "Orden de Papas gratinadas Mixtas francesa y gajos",
         price: 100,
       },
     ],
