@@ -219,22 +219,16 @@ function extractMentionedProducts(message, menu) {
       }
 
       // Filtrar modificadores mencionados
-      if (product.modifierTypes) {
-        mentionedProduct.modifierTypes = product.modifierTypes
-          .map((modifierType) => ({
-            ...modifierType,
-            modifiers: modifierType.modifiers.filter((modifier) =>
-              words.some(
-                (word) =>
-                  word.length > 3 &&
-                  partial_ratio(modifier.name.toLowerCase(), word) > 90
-              )
-            ),
-          }))
-          .filter((modifierType) => modifierType.modifiers.length > 0);
+      if (product.pizzaIngredients) {
+        mentionedProduct.pizzaIngredients = product.pizzaIngredients.filter(
+          (ingredient) =>
+            words.some(
+              (word) =>
+                word.length > 3 &&
+                partial_ratio(ingredient.name.toLowerCase(), word) > 90
+            )
+        );
       }
-
-      console.log("Producto mencionado:", mentionedProduct);
       mentionedProducts.push(mentionedProduct);
     }
   }

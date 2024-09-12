@@ -235,7 +235,7 @@ const menu = [
         acceptsMultiple: true,
         modifiers: [
           { id: "HM2-1", name: "Partida en 2 mitades", price: 0 },
-          { id: "HM2-2", name: "Con papas", price: 5 },
+          { id: "HM2-2", name: "Papas con queso o gratinadas", price: 5 },
           { id: "HM2-3", name: "Doble carne o pollo", price: 15 },
           {
             id: "HM2-5",
