@@ -215,7 +215,7 @@ function extractMentionedProducts(message, menu) {
       words.some(
         (word) =>
           word.length > 3 &&
-          partial_ratio(variant.name.toLowerCase(), word) > 85
+          partial_ratio(variant.name.toLowerCase(), word) > 80
       )
     );
 
@@ -236,7 +236,7 @@ function extractMentionedProducts(message, menu) {
           words.some(
             (word) =>
               word.length > 3 &&
-              partial_ratio(modifier.name.toLowerCase(), word) > 90
+              partial_ratio(modifier.name.toLowerCase(), word) > 80
           )
         );
 
@@ -252,7 +252,7 @@ function extractMentionedProducts(message, menu) {
             words.some(
               (word) =>
                 word.length > 3 &&
-                partial_ratio(ingredient.name.toLowerCase(), word) > 90
+                partial_ratio(ingredient.name.toLowerCase(), word) > 80
             )
         );
 
