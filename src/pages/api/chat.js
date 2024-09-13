@@ -297,19 +297,19 @@ export async function handleChatRequest(req) {
     const relevantMenuItems = await getRelevantMenuItems(relevantMessages);
 
     const menuAvailabilityMessage = {
-      role: "assistant",
+      role: "user",
       content: JSON.stringify(relevantMenuItems),
     };
 
-    const menuInstructions = {
-      role: "assistant",
-      content:
-        "Menú disponible para buscar los productId, variantId, pizzaIngredientId y modifierId de los productos solicitados por el cliente. Solo están disponibles estos identificadores. Si no se encuentra el producto que solicitó el cliente, se le informará al cliente en lugar de ejecutar select_products.",
-    };
+    // const menuInstructions = {
+    //   role: "assistant",
+    //   content:
+    //     "Menú disponible para buscar los productId, variantId, pizzaIngredientId y modifierId de los productos solicitados por el cliente. Solo están disponibles estos identificadores. Si no se encuentra el producto que solicitó el cliente, se le informará al cliente en lugar de ejecutar select_products.",
+    // };
 
     const messagesWithRelevantMenu = [
       ...relevantMessages,
-      menuInstructions,
+      //menuInstructions,
       menuAvailabilityMessage,
     ];
 
