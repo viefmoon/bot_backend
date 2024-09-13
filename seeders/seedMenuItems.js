@@ -617,7 +617,7 @@ const menu = [
       { id: "PZ-I-30", name: "Molida", ingredientValue: 1 },
       { id: "PZ-I-31", name: "Morron", ingredientValue: 1 },
       { id: "PZ-I-32", name: "Pierna", ingredientValue: 2 },
-      { id: "PZ-I-33", name: "Pina", ingredientValue: 1 },
+      { id: "PZ-I-33", name: "Piña", ingredientValue: 1 },
       { id: "PZ-I-34", name: "Pollo BBQ", ingredientValue: 2 },
       { id: "PZ-I-35", name: "Queso de cabra", ingredientValue: 2 },
       { id: "PZ-I-36", name: "Salami", ingredientValue: 1 },
