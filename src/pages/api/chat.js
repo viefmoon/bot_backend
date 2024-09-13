@@ -207,7 +207,7 @@ function extractMentionedProducts(message, menu) {
   for (const product of menu["Menu Disponible"]) {
     const productName = product.name.toLowerCase();
     let isProductMentioned = words.some(
-      (word) => word.length > 3 && partial_ratio(productName, word) > 70
+      (word) => word.length > 3 && partial_ratio(productName, word) > 80
     );
 
     // Buscar en las variantes
@@ -215,7 +215,7 @@ function extractMentionedProducts(message, menu) {
       words.some(
         (word) =>
           word.length > 3 &&
-          partial_ratio(variant.name.toLowerCase(), word) > 70
+          partial_ratio(variant.name.toLowerCase(), word) > 85
       )
     );
 
