@@ -339,7 +339,7 @@ export async function handleChatRequest(req) {
 
     const messagesWithRelevantMenu = [
       ...relevantMessages,
-      //menuInstructions,
+      menuInstructions,
       menuAvailabilityMessage,
     ];
 
