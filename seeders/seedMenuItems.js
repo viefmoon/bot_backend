@@ -203,7 +203,7 @@ const menu = [
       },
       {
         id: "HV6",
-        name: "Hamburgesa Lenazo",
+        name: "Hamburgesa Leñazo",
         price: 110,
         ingredients:
           "Doble carne de sirlón, tocino, queso amarillo, queso asadero, cebolla guisada, jitomate, lechuga, chile jalapeño, catsup, aderezo, crema, mostaza",
@@ -579,7 +579,7 @@ const menu = [
       },
       {
         id: "PZ-I-14",
-        name: "La Lena",
+        name: "La Leña",
         ingredientValue: 6,
         ingredients: "Tocino, Pierna, Chorizo, Carne molida",
       },
