@@ -286,7 +286,8 @@ async function getRelevantMenuItems(relevantMessages) {
   mentionedProducts = Array.from(new Set(mentionedProducts));
 
   const relevantMenu = {
-    "Menu Disponible": mentionedProducts,
+    "Menú disponible para buscar los productId, variantId, pizzaIngredientId y modifierId de los productos solicitados por el cliente. Solo están disponibles estos identificadores. Si no se encuentra el producto que solicitó el cliente, se le informará al cliente en lugar de ejecutar select_products":
+      mentionedProducts,
   };
   return relevantMenu;
 }
