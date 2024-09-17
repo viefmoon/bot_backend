@@ -13,6 +13,7 @@ const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 const { partial_ratio } = require("fuzzball");
+const { preprocessMessage } = require("../../utils/preprocessMessage");
 
 async function modifyOrder(toolCall, clientId) {
   const { dailyOrderNumber, orderType, orderItems, deliveryInfo } = JSON.parse(
