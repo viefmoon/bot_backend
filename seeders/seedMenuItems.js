@@ -260,18 +260,6 @@ const menu = [
         acceptsMultiple: true,
         modifiers: [
           {
-            id: "EM1-1",
-            name: "Con jamon",
-            keywords: [["con", "agregar", "extra"], ["jamon"]],
-            price: 10,
-          },
-          {
-            id: "EM1-2",
-            name: "Con queso",
-            keywords: [["con", "agregar", "extra"], ["queso"]],
-            price: 15,
-          },
-          {
             id: "EM1-3",
             name: "Con vinagreta",
             keywords: [["con", "agregar", "extra"], ["vinagreta"]],
@@ -287,12 +275,6 @@ const menu = [
             id: "EM1-5",
             name: "Doble vinagreta",
             keywords: [["doble", "con", "extra"], ["vinagreta"]],
-            price: 0,
-          },
-          {
-            id: "EM1-6",
-            name: "Aderezo aparte",
-            keywords: [["aderezo"], ["con", "extra", "agregar"]],
             price: 0,
           },
         ],
