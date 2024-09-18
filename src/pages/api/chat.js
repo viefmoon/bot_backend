@@ -381,6 +381,53 @@ const tools = [
   },
 ];
 
+async function preprocessMessages(messages, relevantMenuItems) {
+  const systemMessageForPreprocessing = {
+    role: "system",
+    content: JSON.stringify({
+      instrucciones: [
+        "Reinterpreta y enriquece los mensajes del usuario para facilitar la selección de productos.",
+        "Estructura la información en un formato que facilite la ejecución de 'select_products'.",
+        "Incluye los siguientes elementos en tu interpretación:",
+        "1. Productos mencionados con sus IDs correspondientes del menú relevante.",
+        "2. Variantes de productos si se mencionan o aplican.",
+        "3. Modificadores seleccionados para cada producto.",
+        "4. Para pizzas, incluye los ingredientes seleccionados, especificando la mitad (izquierda, derecha o completa) y la acción (agregar o quitar).",
+        "5. Cantidades de cada producto.",
+        "6. Tipo de orden (delivery o pickup).",
+        "7. Información de entrega o recogida según corresponda.",
+        "8. Cualquier comentario o instrucción especial para los productos.",
+        "No generes nuevos pedidos o selecciones, solo interpreta y estructura la información existente.",
+        "Asegúrate de que toda la información esté alineada con los productos y opciones disponibles en el menú relevante proporcionado.",
+        "Si hay información ambigua o incompleta, señálala para que el asistente principal pueda solicitar aclaraciones.",
+      ],
+    }),
+  };
+
+  const messagesWithMenu = messages.map((msg) => ({
+    ...msg,
+    content:
+      msg.role === "user"
+        ? `${msg.content}\n\nMenú relevante: ${JSON.stringify(
+            relevantMenuItems
+          )}`
+        : msg.content,
+  }));
+
+  const preprocessingMessages = [
+    systemMessageForPreprocessing,
+    ...messagesWithMenu,
+  ];
+
+  const response = await openai.chat.completions.create({
+    model: "gpt-4o-mini",
+    messages: preprocessingMessages,
+    max_tokens: 500,
+  });
+
+  return response.choices[0].message.content;
+}
+
 export async function handleChatRequest(req) {
   const { relevantMessages, conversationId } = req;
   try {
