@@ -394,7 +394,7 @@ export async function handleChatRequest(req) {
           {
             title: "Seleccion de productos",
             detalles: [
-              "Es OBLIGATORIO ejecutar la función `select_products` cada vez que se elija un nuevo producto o varios, se modifique un producto existente o se elimine un producto.",
+              "Es OBLIGATORIO ejecutar la función `select_products` cada vez que se elija un nuevo producto o varios,no confirmes con el cliente ejecutala directamente, se modifique un producto existente o se elimine un producto.",
               "Llama a la función `select_products` con los siguientes parámetros:",
               " - orderItems: Lista de ítems ordenes con la siguiente estructura para cada ítem:",
               "   - productId: Obligatorio para todos los ordeitems.",
@@ -410,7 +410,6 @@ export async function handleChatRequest(req) {
               " - orderType: (Requerido) Tipo de orden ('delivery' para entrega a domicilio, 'pickup' para recoger en restaurante)",
               " - deliveryInfo: (Requerido) Dirección de entrega para pedidos a domicilio (requerido para pedidos a domicilio, Nombre del cliente para recolección de pedidos en restaurante",
               " - scheduledTime: Hora programada para el pedido (opcional, no se ofrece a menos que el cliente solicite programar)",
-              "Asegúrate de que cada modificador e ingrediente se asocie correctamente con su respectivo producto, sin mezclarlos entre diferentes productos.",
             ],
           },
         ],
@@ -430,7 +429,7 @@ export async function handleChatRequest(req) {
       // Anexar relevantMenuItems al último mensaje del usuario
       relevantMessages[
         lastUserMessageIndex
-      ].content += `\n\nRelevant menu items: ${JSON.stringify(
+      ].content += `\n\nRelevant menu items, solo estos son los id disponibles, si no existe el id, no lo incluyas, las observaciones que no estan registradas en el menu se registran como comentario: ${JSON.stringify(
         relevantMenuItems
       )}`;
     }
