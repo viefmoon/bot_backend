@@ -386,9 +386,17 @@ async function preprocessMessages(messages, relevantMenuItems) {
     role: "system",
     content: JSON.stringify({
       instrucciones: [
-        "Divide y enlista los productos mencionados en el mensaje del usuario.",
-        "Incluye cualquier comentario asociado a cada producto.",
-        "Extrae la dirección de entrega si se menciona.",
+        "Analiza el mensaje del usuario y crea una lista detallada de los productos mencionados en base al menu relevante.",
+        "Para cada producto, incluye:",
+        "  - Nombre completo del producto",
+        "  - Variante seleccionada (si aplica, hay variantes para ordenes y medias ordenes si son necesarias)",
+        "  - Modificadores (si se mencionan) o pizzaingredients (solo en caso de pizzas)",
+        "  - Cantidad",
+        "  - Comentarios adicionales que no estan definidos en el menu",
+        "Para pizzas, especifica los ingredientes por mitad si es necesario.",
+        "Extrae la dirección de entrega o el nombre de recoleccion y el tipo de orden (delivery/pickup) si se menciona.",
+        "Utiliza los IDs de productos, variantes, modificadores e ingredientes del menú relevante proporcionado.",
+        "Formatea la salida como una lista numerada con detalles bajo cada producto.",
       ],
     }),
   };
