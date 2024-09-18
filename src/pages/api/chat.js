@@ -387,16 +387,19 @@ async function preprocessMessages(messages, relevantMenuItems) {
     content: JSON.stringify({
       instrucciones: [
         "Analiza el mensaje del usuario y crea una lista detallada de los productos mencionados en base al menu relevante.",
-        "Para cada producto, incluye:",
-        "  - Nombre completo del producto",
-        "  - Variante seleccionada (si aplica, hay variantes para ordenes y medias ordenes si son necesarias)",
-        "  - Modificadores (si se mencionan) o pizzaingredients (solo en caso de pizzas)",
-        "  - Cantidad",
-        "  - Comentarios adicionales que no estan definidos en el menu",
-        "Para pizzas, especifica los ingredientes por mitad si es necesario.",
-        "Extrae la dirección de entrega o el nombre de recoleccion y el tipo de orden (delivery/pickup) si se menciona.",
-        "Utiliza los IDs de productos, variantes, modificadores e ingredientes del menú relevante proporcionado.",
-        "Formatea la salida como una lista numerada con detalles bajo cada producto.",
+        "Ejemplo de entrada:",
+        "Quiero una pizza grande especial especial con chorizo y jalapeño pero que no tenga queso, ademas una mediana con relleno de queso que sea mitad mexicana sin jitomate y mitad philadephia con champiñones a guadalupe victoria 77 norte",
+        "Ejemplo de salida:",
+        "1 Pizza grande especial con chorizo y jalapeño, sin queso",
+        "1 Pizza mediana con orilla rellena de queso, mitad mexicana sin jitomate, mitad philadelphia con champiñones",
+        "Entrega a: Guadalupe Victoria 77 Norte",
+        "Ejemplo de entrada:",
+        "Quiero una orden de papas gajo, media orden de alas bbq y una orden completa de alas bbq para llevar a la direccion de jose ma. ortega 19 sur",
+        "Ejemplo de salida:",
+        "1 Orden de papas gajo",
+        "1 Media orden de alas BBQ",
+        "1 Orden completa de alas BBQ",
+        "Direccion de entrega: Jose Ma. Ortega 19 sur",
       ],
     }),
   };
@@ -419,7 +422,6 @@ async function preprocessMessages(messages, relevantMenuItems) {
   const response = await openai.chat.completions.create({
     model: "gpt-4o-mini",
     messages: preprocessingMessages,
-    max_tokens: 5000,
   });
 
   return response.choices[0].message.content;
