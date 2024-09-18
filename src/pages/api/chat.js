@@ -169,18 +169,26 @@ async function waitForCompletion(threadId, runId, res) {
   while (retries < MAX_RETRIES) {
     console.log(`Intento ${retries + 1} de ${MAX_RETRIES}`);
 
-    const run = await openai.beta.threads.runs.retrieve(threadId, runId);
-    console.log(`Estado actual: ${run.status}`);
+    try {
+      const run = await openai.beta.threads.runs.retrieve(threadId, runId);
+      console.log(`Estado actual: ${run.status}`);
 
-    if (run.status === "completed") {
-      console.log("Solicitud completada con éxito");
-      return run;
-    } else if (run.status === "failed") {
-      console.error("La solicitud falló:", run.last_error);
-      throw new Error(run.last_error?.message || "Error desconocido");
-    } else if (run.status === "requires_action") {
-      console.log("Se requiere acción adicional");
-      return run;
+      if (run.status === "completed") {
+        console.log("Solicitud completada con éxito");
+        return run;
+      } else if (run.status === "failed") {
+        console.error("La solicitud falló:", run.last_error);
+        throw new Error(run.last_error?.message || "Error desconocido");
+      } else if (run.status === "requires_action") {
+        console.log("Se requiere acción adicional");
+        return run;
+      }
+    } catch (error) {
+      if (error.status === 404) {
+        console.error("Hilo o ejecución no encontrada:", error.message);
+        throw new Error("Hilo o ejecución no encontrada");
+      }
+      throw error;
     }
 
     console.log(`Esperando ${delay}ms antes del próximo intento`);
