@@ -370,7 +370,7 @@ export async function handleChatRequest(req) {
       - orderType: (Requerido) Tipo de orden ('delivery' para entrega a domicilio, 'pickup' para recoger en restaurante). 
       - deliveryInfo: (Requerido) Dirección de entrega para pedidos a domicilio (requerido para pedidos a domicilio, Nombre del cliente para recolección de pedidos en restaurante). 
       - scheduledTime: Hora programada para el pedido (opcional, no se ofrece a menos que el cliente solicite programar).
-      ${relevantMenuItems}`;
+      ${JSON.stringify(relevantMenuItems)}`;
 
     const systemMessage = {
       role: "system",
