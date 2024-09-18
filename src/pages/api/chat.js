@@ -170,7 +170,7 @@ async function waitForCompletion(threadId, runId, res) {
     console.log(`Intento ${retries + 1} de ${MAX_RETRIES}`);
 
     try {
-      const run = await openai.beta.threads.runs.retrieve(threadId, runId);
+      const run = await openai.chat.completions.retrieve(threadId, runId);
       console.log(`Estado actual: ${run.status}`);
 
       if (run.status === "completed") {
