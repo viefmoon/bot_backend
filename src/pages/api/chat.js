@@ -256,23 +256,23 @@ async function getRelevantMenuItems(relevantMessages) {
   menu = Array.from(new Set(menu.map(JSON.stringify)), JSON.parse).map(
     (product) => {
       const cleanProduct = {
-        product: `${product.name} (${product.productId})`,
+        productId: `${product.name} (${product.productId})`,
       };
 
       if (product.productVariants) {
-        cleanProduct.productVariants = product.productVariants.map(
+        cleanProduct.productVariantsIds = product.productVariants.map(
           (v) => `${v.name} (${v.variantId})`
         );
       }
 
       if (product.modifiers) {
-        cleanProduct.modifiers = product.modifiers.map(
+        cleanProduct.modifiersIds = product.modifiers.map(
           (m) => `${m.name} (${m.modifierId})`
         );
       }
 
       if (product.pizzaIngredients) {
-        cleanProduct.pizzaIngredients = product.pizzaIngredients.map(
+        cleanProduct.pizzaIngredientsIds = product.pizzaIngredients.map(
           (i) => `${i.name} (${i.pizzaIngredientId})`
         );
       }
@@ -463,7 +463,7 @@ export async function handleChatRequest(req) {
 
     const userMessageWithPreprocessedContent = {
       role: "user",
-      content: `${preprocessedContent}\n\nRelevant menu items, solo estos son los id disponibles, si no existe el id, no lo incluyas, las observaciones que no estan registradas en el menu se registran como comentario: ${JSON.stringify(
+      content: `${preprocessedContent}\n\nRelevant menu items, solo estos son los articulos disponibles con el id dentro del parentesis,si no existe el articulo en el menu no lo incluyas, las observaciones que no estan registradas en el menu se registran como comentario: ${JSON.stringify(
         relevantMenuItems
       )}`,
     };
