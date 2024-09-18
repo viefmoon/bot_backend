@@ -439,11 +439,6 @@ export async function handleChatRequest(req) {
       ].content += `\n\nRelevant menu items, solo estos son los id disponibles, si no existe el id, no lo incluyas, las observaciones que no estan registradas en el menu se registran como comentario: ${JSON.stringify(
         relevantMenuItems
       )}`;
-
-      // Añadir mensaje para reinterpretar y extraer artículos
-      relevantMessages[
-        lastUserMessageIndex
-      ].content += `\n\nPor favor, reinterpreta minuciosamente el mensaje del cliente y extrae todos los artículos mencionados, incluyendo cantidades, variantes, modificadores e ingredientes específicos si se mencionan. Asegúrate de no omitir ningún detalle relevante del pedido.`;
     }
 
     const messagesWithSystemMessage = [systemMessage, ...relevantMessages];
