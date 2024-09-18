@@ -548,7 +548,7 @@ async function handleMessage(from, message) {
     });
 
     if (Array.isArray(response)) {
-      console.log("Response is array:", response);
+      console.log("Response if array:", response);
       for (const msg of response) {
         if (msg.text && msg.text.trim() !== "") {
           if (msg.sendToWhatsApp !== false) {
@@ -561,8 +561,8 @@ async function handleMessage(from, message) {
           }
         }
       }
-    } else if (typeof response === "object" && response !== null) {
-      console.log("Response is object:", response);
+    } else {
+      console.log("Response else:", response);
       if (response.text && response.text.trim() !== "") {
         if (response.sendToWhatsApp !== false) {
           await sendWhatsAppMessage(from, response.text);
@@ -576,8 +576,6 @@ async function handleMessage(from, message) {
           relevantChatHistory.push(assistantMessage);
         }
       }
-    } else {
-      console.error("Unexpected response type:", typeof response);
     }
     console.log("relevantChatHistory", relevantChatHistory);
 
@@ -585,7 +583,7 @@ async function handleMessage(from, message) {
     await customer.update({
       fullChatHistory: JSON.stringify(fullChatHistory),
       relevantChatHistory: JSON.stringify(relevantChatHistory),
-      lastInteraction: new Date(),
+      lastInteraction: now,
     });
   } catch (error) {
     console.error("Error al procesar el mensaje:", error);
