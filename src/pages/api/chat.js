@@ -172,17 +172,24 @@ function extractMentionedProducts(message, menu) {
 
   function checkKeywords(keywords, words) {
     if (!keywords) return false;
+    const normalizedWords = words.map((word) =>
+      word
+        .toLowerCase()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+    ); // Normalizar palabras
+
     if (Array.isArray(keywords[0])) {
       return keywords.every((group) =>
         group.some((keyword) =>
-          words.some(
+          normalizedWords.some(
             (word) => word.length > 2 && partial_ratio(keyword, word) > 83
           )
         )
       );
     } else {
       return keywords.some((keyword) =>
-        words.some(
+        normalizedWords.some(
           (word) => word.length > 2 && partial_ratio(keyword, word) > 83
         )
       );
