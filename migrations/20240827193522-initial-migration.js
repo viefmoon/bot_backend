@@ -116,6 +116,10 @@ module.exports = {
         type: Sequelize.STRING,
         allowNull: true,
       },
+      keywords: {
+        type: Sequelize.JSON,
+        allowNull: true,
+      },
       createdAt: {
         allowNull: false,
         type: Sequelize.DATE,
@@ -142,6 +146,10 @@ module.exports = {
       },
       ingredients: {
         type: Sequelize.STRING,
+        allowNull: true,
+      },
+      keywords: {
+        type: Sequelize.JSON,
         allowNull: true,
       },
       productId: {
@@ -218,6 +226,10 @@ module.exports = {
         type: Sequelize.FLOAT,
         allowNull: false,
       },
+      keywords: {
+        type: Sequelize.JSON,
+        allowNull: true,
+      },
       modifierTypeId: {
         type: Sequelize.STRING,
         allowNull: false,
@@ -255,6 +267,10 @@ module.exports = {
       },
       ingredients: {
         type: Sequelize.STRING,
+        allowNull: true,
+      },
+      keywords: {
+        type: Sequelize.JSON,
         allowNull: true,
       },
       productId: {

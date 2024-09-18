@@ -25,6 +25,10 @@ const Modifier = sequelize.define(
         key: "id",
       },
     },
+    keywords: {
+      type: DataTypes.JSON,
+      allowNull: true,
+    },
   },
   {
     timestamps: true,

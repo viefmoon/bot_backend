@@ -30,6 +30,10 @@ const PizzaIngredient = sequelize.define(
       type: DataTypes.STRING,
       allowNull: true,
     },
+    keywords: {
+      type: DataTypes.JSON,
+      allowNull: true,
+    },
   },
   {
     timestamps: true,

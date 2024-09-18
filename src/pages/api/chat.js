@@ -109,6 +109,7 @@ async function getMenuAvailability() {
       const productoInfo = {
         productId: producto.id,
         name: producto.name,
+        keywords: producto.keywords || null,
         //active: producto.Availability?.available || false,
       };
 
@@ -117,6 +118,7 @@ async function getMenuAvailability() {
         productoInfo.variantes = producto.productVariants.map((v) => ({
           variantId: v.id,
           name: v.name,
+
           //active: v.Availability?.available || false,
         }));
       }
@@ -128,6 +130,7 @@ async function getMenuAvailability() {
             mt.modifiers?.map((m) => ({
               modifierId: m.id,
               name: m.name,
+              keywords: m.keywords || null,
               //active: m.Availability?.available || false,
             })) || []
         );
@@ -138,6 +141,7 @@ async function getMenuAvailability() {
         productoInfo.ingredientesPizza = producto.pizzaIngredients.map((i) => ({
           pizzaIngredientId: i.id,
           name: i.name,
+          keywords: i.keywords || null,
           //active: i.Availability?.available || false,
         }));
       }
@@ -162,61 +166,53 @@ function extractMentionedProducts(message, menu) {
   const mentionedProducts = [];
   const words = message.toLowerCase().split(/\s+/);
 
+  function checkKeywords(keywords, words) {
+    if (!keywords) return false;
+    if (Array.isArray(keywords[0])) {
+      return keywords.every((group) =>
+        group.some((keyword) =>
+          words.some(
+            (word) => word.length > 3 && partial_ratio(keyword, word) > 85
+          )
+        )
+      );
+    } else {
+      return keywords.some((keyword) =>
+        words.some(
+          (word) => word.length > 3 && partial_ratio(keyword, word) > 85
+        )
+      );
+    }
+  }
+
   for (const product of menu["Menu Disponible"]) {
-    const productName = product.name.toLowerCase();
-    let isProductMentioned = words.some(
-      (word) => word.length > 3 && partial_ratio(productName, word) > 80
-    );
+    let isProductMentioned = checkKeywords(product.keywords, words);
 
-    // Buscar en las variantes
-    const variantsMentioned = product.variantes?.some((variant) =>
-      words.some(
-        (word) =>
-          word.length > 3 &&
-          partial_ratio(variant.name.toLowerCase(), word) > 80
-      )
-    );
-
-    if (isProductMentioned || variantsMentioned) {
+    if (isProductMentioned) {
       const mentionedProduct = {
         productId: product.productId,
         name: product.name,
       };
 
-      // Agregar variantes solo si existen
-      if (product.variantes && product.variantes.length > 0) {
-        mentionedProduct.productVariants = product.variantes;
+      // Verificar variantes
+      if (product.variantes) {
+        mentionedProduct.productVariants = product.variantes.filter((variant) =>
+          checkKeywords(variant.keywords, words)
+        );
       }
 
-      // Filtrar modificadores mencionados
+      // Verificar modificadores
       if (product.modificadores) {
-        const mentionedModifiers = product.modificadores.filter((modifier) =>
-          words.some(
-            (word) =>
-              word.length > 3 &&
-              partial_ratio(modifier.name.toLowerCase(), word) > 80
-          )
+        mentionedProduct.modifiers = product.modificadores.filter((modifier) =>
+          checkKeywords(modifier.keywords, words)
         );
-
-        if (mentionedModifiers.length > 0) {
-          mentionedProduct.modifierTypes = [{ modifiers: mentionedModifiers }];
-        }
       }
 
-      // Filtrar ingredientes de pizza mencionados
+      // Verificar ingredientes de pizza
       if (product.ingredientesPizza) {
-        const mentionedIngredients = product.ingredientesPizza.filter(
-          (ingredient) =>
-            words.some(
-              (word) =>
-                word.length > 3 &&
-                partial_ratio(ingredient.name.toLowerCase(), word) > 80
-            )
+        mentionedProduct.pizzaIngredients = product.ingredientesPizza.filter(
+          (ingredient) => checkKeywords(ingredient.keywords, words)
         );
-
-        if (mentionedIngredients.length > 0) {
-          mentionedProduct.pizzaIngredients = mentionedIngredients;
-        }
       }
 
       console.log("Producto mencionado:", mentionedProduct);
@@ -224,6 +220,11 @@ function extractMentionedProducts(message, menu) {
     }
   }
   return mentionedProducts;
+}
+
+function removeKeywords(item) {
+  const { keywords, ...itemWithoutKeywords } = item;
+  return itemWithoutKeywords;
 }
 
 async function getRelevantMenuItems(relevantMessages) {
@@ -240,8 +241,27 @@ async function getRelevantMenuItems(relevantMessages) {
     }
   }
 
-  // Eliminar duplicados
-  menu = Array.from(new Set(menu));
+  menu = Array.from(new Set(menu.map(JSON.stringify)), JSON.parse).map(
+    (product) => {
+      const cleanProduct = removeKeywords(product);
+
+      if (cleanProduct.productVariants) {
+        cleanProduct.productVariants =
+          cleanProduct.productVariants.map(removeKeywords);
+      }
+
+      if (cleanProduct.modifiers) {
+        cleanProduct.modifiers = cleanProduct.modifiers.map(removeKeywords);
+      }
+
+      if (cleanProduct.pizzaIngredients) {
+        cleanProduct.pizzaIngredients =
+          cleanProduct.pizzaIngredients.map(removeKeywords);
+      }
+
+      return cleanProduct;
+    }
+  );
 
   const relevantMenu = {
     menu,
@@ -355,13 +375,13 @@ export async function handleChatRequest(req) {
     const relevantMenuItems = await getRelevantMenuItems(relevantMessages);
 
     const systemMessageContent = {
-      assistant_config: {
-        description:
+      configuracion: {
+        funcion:
           "Eres un asistente virtual del Restaurante La Leña, especializado en la seleccion de productos. Utilizas emojis en tus interacciones para crear una experiencia amigable y , mantiene las interacciones rapidas y eficaces.",
-        instructions: [
+        instrucciones: [
           {
             title: "Seleccion de productos",
-            details: [
+            detalles: [
               "Es OBLIGATORIO ejecutar la función `select_products` cada vez que se elija un nuevo producto o varios, se modifique un producto existente o se elimine un producto.",
               "Llama a la función `select_products` con los siguientes parámetros:",
               " - orderItems: Lista de ítems ordenes con la siguiente estructura para cada ítem:",
