@@ -274,7 +274,7 @@ const tools = [
                   type: "integer",
                   description: "La cantidad del producto pedido.",
                 },
-                variantId: {
+                productVariantId: {
                   type: "string",
                   description:
                     "El identificador único de la variante del producto, si aplica.",
