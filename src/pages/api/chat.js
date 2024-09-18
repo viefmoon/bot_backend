@@ -411,13 +411,6 @@ export async function handleChatRequest(req) {
               " - deliveryInfo: (Requerido) Dirección de entrega para pedidos a domicilio (requerido para pedidos a domicilio, Nombre del cliente para recolección de pedidos en restaurante",
               " - scheduledTime: Hora programada para el pedido (opcional, no se ofrece a menos que el cliente solicite programar)",
             ],
-            ejemplos: [
-              "Aquí hay algunos ejemplos de ejecución de select_products:",
-              `1. Pedido: "Quiero ordenar una orden de papas a la francesa con queso y doble aderezo y una grande mitad lupita sin cebolla y la otra mitad carranza sin jitomate a degollado 33 norte"
-          Ejecución: {"orderItems": [{"productId": "P", "productVariantId": "PV1", "selectedModifiers": [{"modifierId": "PM1-2"}], "comments": "Con queso", "quantity": 1}, {"productId": "PZ", "productVariantId": "PZ-V-G", "selectedPizzaIngredients": [{"pizzaIngredientId": "PZ-I-12", "half": "left", "action": "add"}, {"pizzaIngredientId": "PZ-I-22", "half": "left", "action": "remove"}, {"pizzaIngredientId": "PZ-I-3", "half": "right", "action": "add"}, {"pizzaIngredientId": "PZ-I-29", "half": "right", "action": "remove"}], "quantity": 1}], "orderType": "delivery", "deliveryInfo": "degollado 33 norte"}`,
-              `2. Pedido: "Me haces una orden y media de alitas bbq con extra salsa y una pizza grande con orilla rellena de mitad especial sin salchicha y la otra mitad malinche con chorizo, me lo envias a zaragoza 71 norte"
-          Ejecución: {"orderItems": [{"productId": "A", "productVariantId": "AV1", "quantity": 1, "selectedModifiers": [{"modifierId": "AM1-3"}]}, {"productId": "A", "productVariantId": "AV2", "quantity": 1, "selectedModifiers": [{"modifierId": "AM1-3"}]}, {"productId": "PZ", "productVariantId": "PZ-V-GR", "selectedPizzaIngredients": [{"pizzaIngredientId": "PZ-I-1", "half": "left", "action": "add"}, {"pizzaIngredientId": "PZ-I-37", "half": "left", "action": "remove"}, {"pizzaIngredientId": "PZ-I-16", "half": "right", "action": "add"}, {"pizzaIngredientId": "PZ-I-25", "half": "right", "action": "add"}], "quantity": 1}], "orderType": "delivery", "deliveryInfo": "zaragoza 71 norte"}`,
-            ],
           },
         ],
       },
