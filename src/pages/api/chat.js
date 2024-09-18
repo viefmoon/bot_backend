@@ -228,7 +228,7 @@ function extractMentionedProducts(message, menu) {
 
 async function getRelevantMenuItems(relevantMessages) {
   const fullMenu = await getMenuAvailability();
-  let mentionedProducts = [];
+  let menu = [];
 
   for (const message of relevantMessages) {
     if (message.role === "user") {
@@ -236,15 +236,15 @@ async function getRelevantMenuItems(relevantMessages) {
         message.content,
         fullMenu
       );
-      mentionedProducts = [...mentionedProducts, ...productsInMessage];
+      menu = [...menu, ...productsInMessage];
     }
   }
 
   // Eliminar duplicados
-  mentionedProducts = Array.from(new Set(mentionedProducts));
+  menu = Array.from(new Set(menu));
 
   const relevantMenu = {
-    mentionedProducts,
+    menu,
   };
   return relevantMenu;
 }
@@ -382,7 +382,7 @@ export async function handleChatRequest(req) {
           },
         ],
       },
-      menu: relevantMenuItems,
+      relevantMenuItems,
     };
 
     const systemMessage = {
