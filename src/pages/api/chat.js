@@ -302,9 +302,18 @@ const tools = [
                   type: "string",
                   description: "ID del producto.",
                 },
+                productName: {
+                  type: "string",
+                  description: "Nombre del producto.",
+                },
                 productVariantId: {
                   type: ["string"],
                   description: "ID de la variante del producto (si aplica).",
+                },
+                productVariantName: {
+                  type: ["string"],
+                  description:
+                    "Nombre de la variante del producto (si aplica).",
                 },
                 selectedPizzaIngredients: {
                   type: "array",
@@ -316,6 +325,10 @@ const tools = [
                       pizzaIngredientId: {
                         type: "string",
                         description: "ID del ingrediente de la pizza.",
+                      },
+                      pizzaIngredientName: {
+                        type: "string",
+                        description: "Nombre del ingrediente de la pizza.",
                       },
                       half: {
                         type: "string",
@@ -330,7 +343,12 @@ const tools = [
                           "Acción a realizar con el ingrediente: añadir o quitar.",
                       },
                     },
-                    required: ["pizzaIngredientId", "half", "action"],
+                    required: [
+                      "pizzaIngredientId",
+                      "pizzaIngredientName",
+                      "half",
+                      "action",
+                    ],
                     additionalProperties: false,
                   },
                 },
@@ -345,8 +363,12 @@ const tools = [
                         type: "string",
                         description: "ID del modificador.",
                       },
+                      modifierName: {
+                        type: "string",
+                        description: "Nombre del modificador.",
+                      },
                     },
-                    required: ["modifierId"],
+                    required: ["modifierId", "modifierName"],
                     additionalProperties: false,
                   },
                 },
@@ -359,19 +381,19 @@ const tools = [
                   description: "Cantidad del ítem.",
                 },
               },
-              required: ["productId", "quantity"],
+              required: ["productId", "productName", "quantity"],
               additionalProperties: false,
             },
           },
           orderType: {
             type: ["string"],
             enum: ["delivery", "pickup"],
-            description: "Entrega a domicilio o recoleccion en restuarante.",
+            description: "Entrega a domicilio o recolección en restaurante.",
           },
           deliveryInfo: {
             type: "string",
             description:
-              "Dirección de entrega para pedidos a domicilio o nombre de cliente para pedidos de recoleccion en el restautante.",
+              "Dirección de entrega para pedidos a domicilio o nombre de cliente para pedidos de recolección en el restaurante.",
           },
         },
         required: ["orderItems", "orderType", "deliveryInfo"],
