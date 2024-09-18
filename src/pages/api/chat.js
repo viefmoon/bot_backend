@@ -386,6 +386,12 @@ export async function handleChatRequest(req) {
   try {
     const relevantMenuItems = await getRelevantMenuItems(relevantMessages);
 
+    // Preprocesar los mensajes
+    const preprocessedContent = await preprocessMessages(
+      relevantMessages,
+      relevantMenuItems
+    );
+
     const systemMessageContent = {
       configuracion: {
         funcion:
@@ -421,20 +427,17 @@ export async function handleChatRequest(req) {
       content: JSON.stringify(systemMessageContent),
     };
 
-    const lastUserMessageIndex = relevantMessages.findLastIndex(
-      (msg) => msg.role === "user"
-    );
-
-    if (lastUserMessageIndex !== -1) {
-      // Anexar relevantMenuItems al último mensaje del usuario
-      relevantMessages[
-        lastUserMessageIndex
-      ].content += `\n\nRelevant menu items, solo estos son los id disponibles, si no existe el id, no lo incluyas, las observaciones que no estan registradas en el menu se registran como comentario: ${JSON.stringify(
+    const userMessageWithPreprocessedContent = {
+      role: "user",
+      content: `${preprocessedContent}\n\nRelevant menu items, solo estos son los id disponibles, si no existe el id, no lo incluyas, las observaciones que no estan registradas en el menu se registran como comentario: ${JSON.stringify(
         relevantMenuItems
-      )}`;
-    }
+      )}`,
+    };
 
-    const messagesWithSystemMessage = [systemMessage, ...relevantMessages];
+    const messagesWithSystemMessage = [
+      systemMessage,
+      userMessageWithPreprocessedContent,
+    ];
 
     console.log("Relevant messages:", messagesWithSystemMessage);
 
