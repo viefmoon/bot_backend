@@ -209,7 +209,7 @@ const menu = [
         keywords: [["pollo"], ["chica"]],
         price: 90,
         ingredients:
-          "Pollo a la plancha, Chile morrón, Elote, Lechuga, Jitomate, Zanahoria, Queso parmesano, Aderezo, Betabel crujiente",
+          "Pollo a la plancha, Chile morron, Elote, Lechuga, Jitomate, Zanahoria, Queso parmesano, Aderezo, Betabel crujiente",
       },
       {
         id: "EV2",
@@ -217,23 +217,23 @@ const menu = [
         keywords: [["pollo"], ["grande"]],
         price: 120,
         ingredients:
-          "Pollo a la plancha, Chile morrón, Elote, Lechuga, Jitomate, Zanahoria, Queso parmesano, Aderezo, Betabel crujiente",
+          "Pollo a la plancha, Chile morron, Elote, Lechuga, Jitomate, Zanahoria, Queso parmesano, Aderezo, Betabel crujiente",
       },
       {
         id: "EV3",
-        name: "Ensalada de Jamón Chica",
-        keywords: [["jamón"], ["chica"]],
+        name: "Ensalada de Jamon Chica",
+        keywords: [["jamon"], ["chica"]],
         price: 80,
         ingredients:
-          "Jamón, Lechuga, Chile morrón, Elote, Jitomate, Zanahoria, Queso parmesano, Aderezo, Betabel crujiente",
+          "Jamon, Lechuga, Chile morron, Elote, Jitomate, Zanahoria, Queso parmesano, Aderezo, Betabel crujiente",
       },
       {
         id: "EV4",
-        name: "Ensalada de Jamón Grande",
-        keywords: [["jamón"], ["grande"]],
+        name: "Ensalada de Jamon Grande",
+        keywords: [["jamon"], ["grande"]],
         price: 100,
         ingredients:
-          "Jamón, Lechuga, Chile morrón, Elote, Jitomate, Zanahoria, Queso parmesano, Aderezo, Betabel crujiente",
+          "Jamon, Lechuga, Chile morron, Elote, Jitomate, Zanahoria, Queso parmesano, Aderezo, Betabel crujiente",
       },
       {
         id: "EV5",
@@ -241,7 +241,7 @@ const menu = [
         keywords: [["vegetal"], ["chica"]],
         price: 70,
         ingredients:
-          "Lechuga, Chile morrón, Elote, Jitomate, Zanahoria, Queso parmesano, Aderezo, Betabel crujiente",
+          "Lechuga, Chile morron, Elote, Jitomate, Zanahoria, Queso parmesano, Aderezo, Betabel crujiente",
       },
       {
         id: "EV6",
@@ -249,7 +249,7 @@ const menu = [
         keywords: [["vegetal"], ["grande"]],
         price: 90,
         ingredients:
-          "Lechuga, Chile morrón, Elote, Jitomate, Zanahoria, Queso parmesano, Aderezo, Betabel crujiente",
+          "Lechuga, Chile morron, Elote, Jitomate, Zanahoria, Queso parmesano, Aderezo, Betabel crujiente",
       },
     ],
     modifierTypes: [
@@ -262,7 +262,7 @@ const menu = [
           {
             id: "EM1-1",
             name: "Con jamon",
-            keywords: [["con", "agregar", "extra"], ["jamón"]],
+            keywords: [["con", "agregar", "extra"], ["jamon"]],
             price: 10,
           },
           {
@@ -327,7 +327,7 @@ const menu = [
         keywords: ["hawaiana", "piña"],
         price: 95,
         ingredients:
-          "Carne de res, tocino, piña, jamón, queso amarillo, queso asadero, cebolla, jitomate, lechuga, chile jalapeño, catsup, aderezo, crema, mostaza",
+          "Carne de res, tocino, piña, jamon, queso amarillo, queso asadero, cebolla, jitomate, lechuga, chile jalapeño, catsup, aderezo, crema, mostaza",
       },
       {
         id: "HV4",
@@ -351,7 +351,7 @@ const menu = [
         keywords: ["lenazo"],
         price: 110,
         ingredients:
-          "Doble carne de sirlón, tocino, queso amarillo, queso asadero, cebolla guisada, jitomate, lechuga, chile jalapeño, catsup, aderezo, crema, mostaza",
+          "Doble carne de sirlon, tocino, queso amarillo, queso asadero, cebolla guisada, jitomate, lechuga, chile jalapeño, catsup, aderezo, crema, mostaza",
       },
       {
         id: "HV7",
@@ -359,7 +359,7 @@ const menu = [
         keywords: ["cubana"],
         price: 100,
         ingredients:
-          "Carne de res, tocino, pierna, salchicha, jamón, queso amarillo, cebolla, jitomate, lechuga, chile jalapeño, catsup, aderezo, crema, mostaza",
+          "Carne de res, tocino, pierna, salchicha, jamon, queso amarillo, cebolla, jitomate, lechuga, chile jalapeño, catsup, aderezo, crema, mostaza",
       },
     ],
     modifierTypes: [
@@ -492,8 +492,8 @@ const menu = [
   },
   {
     id: "RSAN",
-    name: "Refresco de Sangría",
-    keywords: ["sangría"],
+    name: "Refresco de Sangria",
+    keywords: ["sangria"],
     category: "bebidas",
     price: 30,
   },
@@ -513,8 +513,8 @@ const menu = [
   },
   {
     id: "SANP",
-    name: "Sangría preparada",
-    keywords: ["sangría"],
+    name: "Sangria preparada",
+    keywords: ["sangria"],
     category: "bebidas",
     price: 35,
   },
@@ -530,8 +530,8 @@ const menu = [
   },
   {
     id: "CA",
-    name: "Café Americano",
-    keywords: ["café", "americano"],
+    name: "Cafe Americano",
+    keywords: ["cafe", "americano"],
     category: "bebidas",
     price: 45,
   },
@@ -572,7 +572,7 @@ const menu = [
   },
   {
     id: "F",
-    name: "Frappés",
+    name: "Frappes",
     keywords: ["frappe"],
     category: "bebidas",
     productVariants: [
@@ -607,8 +607,8 @@ const menu = [
   },
   {
     id: "SV",
-    name: "Sangría con vino",
-    keywords: ["sangría", "vino"],
+    name: "Sangria con vino",
+    keywords: ["sangria", "vino"],
     category: "cocteleria",
     price: 80,
   },
@@ -621,8 +621,8 @@ const menu = [
   },
   {
     id: "GMAR",
-    name: "Gin de Maracuyá",
-    keywords: ["maracuyá", "gin"],
+    name: "Gin de Maracuya",
+    keywords: ["maracuya", "gin"],
     category: "cocteleria",
     price: 90,
   },
@@ -756,28 +756,28 @@ const menu = [
         name: "Especial",
         keywords: ["especial"],
         ingredientValue: 4,
-        ingredients: "Pepperoni, Salchicha, Jamón, Salami, Chile morrón",
+        ingredients: "Pepperoni, Salchicha, Jamon, Salami, Chile morron",
       },
       {
         id: "PZ-I-2",
-        name: "Carnes Frías",
-        keywords: ["carnes", "frías"],
+        name: "Carnes Frias",
+        keywords: ["carnes", "frias"],
         ingredientValue: 4,
-        ingredients: "Pepperoni, Salchicha, Jamón, Salami",
+        ingredients: "Pepperoni, Salchicha, Jamon, Salami",
       },
       {
         id: "PZ-I-3",
         name: "Carranza",
         keywords: ["carranza"],
         ingredientValue: 4,
-        ingredients: "Chorizo, Jamón, Chile jalapeño, Jitomate",
+        ingredients: "Chorizo, Jamon, Chile jalapeño, Jitomate",
       },
       {
         id: "PZ-I-4",
         name: "Zapata",
         keywords: ["zapata"],
         ingredientValue: 4,
-        ingredients: "Salami, Jamón, Champiñón",
+        ingredients: "Salami, Jamon, Champiñon",
       },
       {
         id: "PZ-I-5",
@@ -798,14 +798,14 @@ const menu = [
         name: "Adelita",
         keywords: ["adelita"],
         ingredientValue: 4,
-        ingredients: "Jamón, Piña, Arándano",
+        ingredients: "Jamon, Piña, Arandano",
       },
       {
         id: "PZ-I-8",
         name: "Hawaiana",
         keywords: ["hawaiana"],
         ingredientValue: 4,
-        ingredients: "Jamón, Piña",
+        ingredients: "Jamon, Piña",
       },
       {
         id: "PZ-I-9",
@@ -819,21 +819,21 @@ const menu = [
         name: "Rivera",
         keywords: ["rivera"],
         ingredientValue: 4,
-        ingredients: "Elote, Champiñón, Chile morrón",
+        ingredients: "Elote, Champiñon, Chile morron",
       },
       {
         id: "PZ-I-11",
         name: "Kahlo",
         keywords: ["kahlo"],
         ingredientValue: 4,
-        ingredients: "Calabaza, Elote, Champiñón, Jitomate, Chile morrón",
+        ingredients: "Calabaza, Elote, Champiñon, Jitomate, Chile morron",
       },
       {
         id: "PZ-I-12",
         name: "Lupita",
         keywords: ["lupita"],
         ingredientValue: 4,
-        ingredients: "Carne molida, Tocino, Cebolla, Chile morrón",
+        ingredients: "Carne molida, Tocino, Cebolla, Chile morron",
       },
       {
         id: "PZ-I-13",
@@ -862,7 +862,7 @@ const menu = [
         keywords: ["malinche"],
         ingredientValue: 6,
         ingredients:
-          "3 Quesos, Queso de cabra, Champiñón, Jamón, Chile seco, Albahaca",
+          "3 Quesos, Queso de cabra, Champiñon, Jamon, Chile seco, Albahaca",
       },
       {
         id: "PZ-I-17",
@@ -1133,7 +1133,7 @@ const seedMenuItems = async () => {
       }
     }
 
-    // Crear la configuración inicial del restaurante
+    // Crear la configuracion inicial del restaurante
     await RestaurantConfig.create({
       acceptingOrders: true,
       estimatedPickupTime: 20,

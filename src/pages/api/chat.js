@@ -164,7 +164,11 @@ async function getMenuAvailability() {
 
 function extractMentionedProducts(message, menu) {
   const mentionedProducts = [];
-  const words = message.toLowerCase().split(/\s+/);
+  const words = message
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .split(/\s+/);
 
   function checkKeywords(keywords, words) {
     if (!keywords) return false;
