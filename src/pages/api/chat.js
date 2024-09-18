@@ -158,57 +158,6 @@ async function getMenuAvailability() {
   }
 }
 
-const MAX_RETRIES = 5;
-const INITIAL_DELAY = 1000;
-const MAX_DELAY = 32000;
-
-async function waitForCompletion(threadId, runId, res) {
-  let retries = 0;
-  let delay = INITIAL_DELAY;
-
-  while (retries < MAX_RETRIES) {
-    console.log(`Intento ${retries + 1} de ${MAX_RETRIES}`);
-
-    try {
-      const run = await openai.chat.completions.retrieve(threadId, runId);
-      console.log(`Estado actual: ${run.status}`);
-
-      if (run.status === "completed") {
-        console.log("Solicitud completada con éxito");
-        return run;
-      } else if (run.status === "failed") {
-        console.error("La solicitud falló:", run.last_error);
-        throw new Error(run.last_error?.message || "Error desconocido");
-      } else if (run.status === "requires_action") {
-        console.log("Se requiere acción adicional");
-        return run;
-      }
-    } catch (error) {
-      if (error.status === 404) {
-        console.error("Hilo o ejecución no encontrada:", error.message);
-        throw new Error("Hilo o ejecución no encontrada");
-      }
-      throw error;
-    }
-
-    console.log(`Esperando ${delay}ms antes del próximo intento`);
-    await new Promise((resolve) => setTimeout(resolve, delay));
-
-    retries++;
-    delay = Math.min(delay * 2, MAX_DELAY);
-  }
-
-  res
-    .status(200)
-    .send(
-      "Se excedió el tiempo de espera, el servicio no está disponible en este momento."
-    );
-  return {
-    status: "error",
-    message: "Se excedió el número máximo de intentos",
-  };
-}
-
 function extractMentionedProducts(message, menu) {
   const mentionedProducts = [];
   const words = message.toLowerCase().split(/\s+/);
@@ -417,94 +366,43 @@ export async function handleChatRequest(req) {
 
     let shouldDeleteConversation = false;
 
-    while (true) {
-      console.log(`Iniciando ciclo. Estado actual: ${response.status}`);
+    // Manejar la respuesta directamente
+    if (response.choices[0].message.tool_calls) {
+      const toolCalls = response.choices[0].message.tool_calls;
+      for (const toolCall of toolCalls) {
+        const clientId = conversationId;
+        let result;
 
-      if (response.status === "requires_action") {
-        const toolCalls =
-          response.required_action.submit_tool_outputs.tool_calls;
-        console.log("Tool calls:", toolCalls);
-
-        for (const toolCall of toolCalls) {
-          const clientId = conversationId;
-          let result;
-
-          switch (toolCall.function.name) {
-            case "modify_order":
-              result = await modifyOrder(toolCall, clientId);
-              shouldDeleteConversation = true;
-              return { text: result.output };
-              messagesWithStructuredData;
-            case "send_menu":
-              return [
-                { text: menu, isRelevant: false },
-                {
-                  text: "El menú ha sido enviado, si tienes alguna duda, no dudes en preguntar",
-                  isRelevant: true,
-                },
-              ];
-            case "select_products":
-              result = await selectProducts(toolCall, clientId);
-              return [
-                {
-                  text: result.text,
-                  sendToWhatsApp: result.sendToWhatsApp,
-                  isRelevant: true,
-                },
-              ];
-            default:
-              return { error: "Función desconocida" };
-          }
+        switch (toolCall.function.name) {
+          case "modify_order":
+            result = await modifyOrder(toolCall, clientId);
+            shouldDeleteConversation = true;
+            return { text: result.output };
+          case "send_menu":
+            return [
+              { text: menu, isRelevant: false },
+              {
+                text: "El menú ha sido enviado, si tienes alguna duda, no dudes en preguntar",
+                isRelevant: true,
+              },
+            ];
+          case "select_products":
+            result = await selectProducts(toolCall, clientId);
+            return [
+              {
+                text: result.text,
+                sendToWhatsApp: result.sendToWhatsApp,
+                isRelevant: true,
+              },
+            ];
+          default:
+            return { error: "Función desconocida" };
         }
-      } else {
-        try {
-          response = await waitForCompletion(response.id, response.id);
-          if (response.status === "completed") break;
-          if (response.status === "error") {
-            return { error: response.message };
-          }
-        } catch (error) {
-          console.error("Error durante la espera:", error);
-          return { error: "Error durante la espera: " + error.message };
-        }
-      }
-    }
-
-    console.log(`Solicitud completada. Estado final: ${response.status}`);
-
-    if (response.status === "completed") {
-      const messages = await openai.chat.completions.list(response.id);
-      const lastAssistantMessage = messages.data.find(
-        (message) => message.role === "assistant"
-      );
-      if (lastAssistantMessage && lastAssistantMessage.content[0].text) {
-        let text = lastAssistantMessage.content[0].text.value;
-        console.log("Assistant response:", text);
-
-        if (shouldDeleteConversation) {
-          try {
-            await Customer.update(
-              { relevantChatHistory: null },
-              { where: { clientId: conversationId } }
-            );
-            console.log(
-              `Historial de chat relevante borrado para el cliente: ${conversationId}`
-            );
-          } catch (error) {
-            console.error(
-              `Error al borrar la conversación o el historial de chat para el cliente ${conversationId}:`,
-              error
-            );
-          }
-        }
-        return { text };
-      } else {
-        console.log("Run failed with status:", response.status);
-        return { error: "Failed to complete the conversation" };
       }
     } else {
-      console.log("Run not completed. Final status:", response.status);
-      return { error: "Run not completed. Final status: " + response.status };
+      // Si no hay llamadas a funciones, manejar la respuesta normal
+      const assistantMessage = response.choices[0].message.content;
+      return { text: assistantMessage };
     }
   } catch (error) {
     console.error("Error general:", error);
