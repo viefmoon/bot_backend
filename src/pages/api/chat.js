@@ -370,6 +370,7 @@ export async function handleChatRequest(req) {
     if (response.choices[0].message.tool_calls) {
       const toolCalls = response.choices[0].message.tool_calls;
       for (const toolCall of toolCalls) {
+        console.log("toolCall", toolCall);
         const clientId = conversationId;
         let result;
 
