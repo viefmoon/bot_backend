@@ -381,12 +381,12 @@ const tools = [
   },
 ];
 
-async function preprocessMessages(messages, relevantMenuItems) {
+async function preprocessMessages(messages) {
   const systemMessageForPreprocessing = {
     role: "system",
     content: JSON.stringify({
       instrucciones: [
-        "Analiza el mensaje del usuario y crea una lista detallada de los productos mencionados en base al menu relevante.",
+        "Analiza el mensaje del usuario y crea una lista detallada de los productos mencionados.",
         "Ejemplo de entrada:",
         "Quiero una pizza grande especial especial con chorizo y jalapeño pero que no tenga queso, ademas una mediana con relleno de queso que sea mitad mexicana sin jitomate y mitad philadephia con champiñones a guadalupe victoria 77 norte",
         "Ejemplo de salida:",
@@ -394,7 +394,7 @@ async function preprocessMessages(messages, relevantMenuItems) {
         "1 Pizza mediana con orilla rellena de queso, mitad mexicana sin jitomate, mitad philadelphia con champiñones",
         "Entrega a: Guadalupe Victoria 77 Norte",
         "Ejemplo de entrada:",
-        "Quiero una orden de papas gajo, media orden de alas bbq y una orden completa de alas bbq para llevar a la direccion de jose ma. ortega 19 sur",
+        "Quiero una orden de papas gajo orden y media de alas bbq para llevar a la direccion de jose ma. ortega 19 sur",
         "Ejemplo de salida:",
         "1 Orden de papas gajo",
         "1 Media orden de alas BBQ",
@@ -404,20 +404,7 @@ async function preprocessMessages(messages, relevantMenuItems) {
     }),
   };
 
-  const messagesWithMenu = messages.map((msg) => ({
-    ...msg,
-    content:
-      msg.role === "user"
-        ? `${msg.content}\n\nMenú relevante: ${JSON.stringify(
-            relevantMenuItems
-          )}`
-        : msg.content,
-  }));
-
-  const preprocessingMessages = [
-    systemMessageForPreprocessing,
-    ...messagesWithMenu,
-  ];
+  const preprocessingMessages = [systemMessageForPreprocessing, ...messages];
 
   const response = await openai.chat.completions.create({
     model: "gpt-4o-mini",
@@ -433,10 +420,7 @@ export async function handleChatRequest(req) {
     const relevantMenuItems = await getRelevantMenuItems(relevantMessages);
 
     // Preprocesar los mensajes
-    const preprocessedContent = await preprocessMessages(
-      relevantMessages,
-      relevantMenuItems
-    );
+    const preprocessedContent = await preprocessMessages(relevantMessages);
 
     const systemMessageContent = {
       configuracion: {
