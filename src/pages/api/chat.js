@@ -196,6 +196,12 @@ function extractMentionedProducts(message, menu) {
 
       // Verificar variantes
       if (product.variantes) {
+        console.log("product.variantes", product.variantes);
+        // Imprimir las keywords de las variantes
+        console.log(
+          "Keywords de variantes:",
+          product.variantes.map((v) => v.keywords)
+        );
         mentionedProduct.productVariants = product.variantes.filter((variant) =>
           checkKeywords(variant.keywords, words)
         );
