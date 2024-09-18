@@ -172,14 +172,14 @@ function extractMentionedProducts(message, menu) {
       return keywords.every((group) =>
         group.some((keyword) =>
           words.some(
-            (word) => word.length > 3 && partial_ratio(keyword, word) > 83
+            (word) => word.length > 2 && partial_ratio(keyword, word) > 83
           )
         )
       );
     } else {
       return keywords.some((keyword) =>
         words.some(
-          (word) => word.length > 3 && partial_ratio(keyword, word) > 83
+          (word) => word.length > 2 && partial_ratio(keyword, word) > 83
         )
       );
     }
