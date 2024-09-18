@@ -255,23 +255,29 @@ async function getRelevantMenuItems(relevantMessages) {
 
   menu = Array.from(new Set(menu.map(JSON.stringify)), JSON.parse).map(
     (product) => {
-      const cleanProduct = removeKeywords(product);
+      const formattedProduct = {
+        name: `${product.name} (${product.productId})`,
+      };
 
-      if (cleanProduct.productVariants) {
-        cleanProduct.productVariants =
-          cleanProduct.productVariants.map(removeKeywords);
+      if (product.productVariants && product.productVariants.length > 0) {
+        formattedProduct.productVariants = product.productVariants.map(
+          (variant) => `${variant.name} (${variant.variantId})`
+        );
       }
 
-      if (cleanProduct.modifiers) {
-        cleanProduct.modifiers = cleanProduct.modifiers.map(removeKeywords);
+      if (product.modifiers && product.modifiers.length > 0) {
+        formattedProduct.modifiers = product.modifiers.map(
+          (modifier) => `${modifier.name} (${modifier.modifierId})`
+        );
       }
 
-      if (cleanProduct.pizzaIngredients) {
-        cleanProduct.pizzaIngredients =
-          cleanProduct.pizzaIngredients.map(removeKeywords);
+      if (product.pizzaIngredients && product.pizzaIngredients.length > 0) {
+        formattedProduct.pizzaIngredients = product.pizzaIngredients.map(
+          (ingredient) => `${ingredient.name} (${ingredient.pizzaIngredientId})`
+        );
       }
 
-      return cleanProduct;
+      return formattedProduct;
     }
   );
 
