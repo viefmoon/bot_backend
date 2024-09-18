@@ -202,8 +202,12 @@ function extractMentionedProducts(message, menu) {
           "Keywords de variantes:",
           product.variantes.map((v) => v.keywords)
         );
-        mentionedProduct.productVariants = product.variantes.filter((variant) =>
-          checkKeywords(variant.keywords, words)
+        mentionedProduct.productVariants = product.variantes.filter(
+          (variant) => {
+            // Aplanar las keywords si es necesario
+            const flatKeywords = variant.keywords.flat();
+            return checkKeywords(flatKeywords, words);
+          }
         );
       }
 
