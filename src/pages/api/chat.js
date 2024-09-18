@@ -256,7 +256,7 @@ async function getRelevantMenuItems(relevantMessages) {
   menu = Array.from(new Set(menu.map(JSON.stringify)), JSON.parse).map(
     (product) => {
       const formattedProduct = {
-        name: `${product.name} (${product.productId})`,
+        productName: `${product.name} (${product.productId})`,
       };
 
       if (product.productVariants && product.productVariants.length > 0) {
