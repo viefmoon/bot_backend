@@ -229,6 +229,7 @@ function removeKeywords(item) {
 
 async function getRelevantMenuItems(relevantMessages) {
   const fullMenu = await getMenuAvailability();
+  console.log("fullMenu", fullMenu);
   let menu = [];
 
   for (const message of relevantMessages) {
