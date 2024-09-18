@@ -255,29 +255,23 @@ async function getRelevantMenuItems(relevantMessages) {
 
   menu = Array.from(new Set(menu.map(JSON.stringify)), JSON.parse).map(
     (product) => {
-      const formattedProduct = {
-        productName: `${product.name} (${product.productId})`,
-      };
+      const cleanProduct = removeKeywords(product);
 
-      if (product.productVariants && product.productVariants.length > 0) {
-        formattedProduct.productVariants = product.productVariants.map(
-          (variant) => `${variant.name} (${variant.variantId})`
-        );
+      if (cleanProduct.productVariants) {
+        cleanProduct.productVariants =
+          cleanProduct.productVariants.map(removeKeywords);
       }
 
-      if (product.modifiers && product.modifiers.length > 0) {
-        formattedProduct.modifiers = product.modifiers.map(
-          (modifier) => `${modifier.name} (${modifier.modifierId})`
-        );
+      if (cleanProduct.modifiers) {
+        cleanProduct.modifiers = cleanProduct.modifiers.map(removeKeywords);
       }
 
-      if (product.pizzaIngredients && product.pizzaIngredients.length > 0) {
-        formattedProduct.pizzaIngredients = product.pizzaIngredients.map(
-          (ingredient) => `${ingredient.name} (${ingredient.pizzaIngredientId})`
-        );
+      if (cleanProduct.pizzaIngredients) {
+        cleanProduct.pizzaIngredients =
+          cleanProduct.pizzaIngredients.map(removeKeywords);
       }
 
-      return formattedProduct;
+      return cleanProduct;
     }
   );
 
@@ -400,7 +394,7 @@ async function preprocessMessages(messages) {
         "1 Pizza mediana con orilla rellena de queso, mitad mexicana sin jitomate, mitad philadelphia con champiñones",
         "Entrega a: Guadalupe Victoria 77 Norte",
         "Ejemplo de entrada:",
-        "Quiero una orden de papas gajo orden y media de alas bbq para llevar a la direccion de jose ma. ortega 19 sur",
+        "Quiero una orden de papas gajo media orden de alas bbq y una orden completa de alas bbq para llevar a la direccion de jose ma. ortega 19 sur",
         "Ejemplo de salida:",
         "1 Orden de papas gajo",
         "1 Media orden de alas BBQ",
