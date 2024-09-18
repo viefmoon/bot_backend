@@ -118,7 +118,7 @@ async function getMenuAvailability() {
         productoInfo.variantes = producto.productVariants.map((v) => ({
           variantId: v.id,
           name: v.name,
-
+          keywords: v.keywords || null,
           //active: v.Availability?.available || false,
         }));
       }
@@ -196,18 +196,8 @@ function extractMentionedProducts(message, menu) {
 
       // Verificar variantes
       if (product.variantes) {
-        console.log("product.variantes", product.variantes);
-        // Imprimir las keywords de las variantes
-        console.log(
-          "Keywords de variantes:",
-          product.variantes.map((v) => v.keywords)
-        );
-        mentionedProduct.productVariants = product.variantes.filter(
-          (variant) => {
-            // Aplanar las keywords si es necesario
-            const flatKeywords = variant.keywords.flat();
-            return checkKeywords(flatKeywords, words);
-          }
+        mentionedProduct.productVariants = product.variantes.filter((variant) =>
+          checkKeywords(variant.keywords, words)
         );
       }
 
