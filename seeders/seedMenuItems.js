@@ -664,14 +664,14 @@ const menu = [
   {
     id: "PCOL",
     name: "Piña colada",
-    keywords: ["piña", "colada"],
+    keywords: ["colada"],
     category: "cocteleria",
     price: 75,
   },
   {
     id: "PINA",
     name: "Piñada",
-    keywords: ["piña"],
+    keywords: ["piñada"],
     category: "cocteleria",
     price: 70,
   },

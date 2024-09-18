@@ -172,14 +172,14 @@ function extractMentionedProducts(message, menu) {
       return keywords.every((group) =>
         group.some((keyword) =>
           words.some(
-            (word) => word.length > 3 && partial_ratio(keyword, word) > 85
+            (word) => word.length > 3 && partial_ratio(keyword, word) > 90
           )
         )
       );
     } else {
       return keywords.some((keyword) =>
         words.some(
-          (word) => word.length > 3 && partial_ratio(keyword, word) > 85
+          (word) => word.length > 3 && partial_ratio(keyword, word) > 90
         )
       );
     }
@@ -229,7 +229,6 @@ function removeKeywords(item) {
 
 async function getRelevantMenuItems(relevantMessages) {
   const fullMenu = await getMenuAvailability();
-  console.log("fullMenu", fullMenu);
   let menu = [];
 
   for (const message of relevantMessages) {
