@@ -377,7 +377,7 @@ export async function handleChatRequest(req) {
     const systemMessageContent = {
       configuracion: {
         funcion:
-          "Eres un asistente virtual del Restaurante La Leña, especializado en la seleccion de productos. Utilizas emojis en tus interacciones para crear una experiencia amigable y , mantiene las interacciones rapidas y eficaces.",
+          "Eres un asistente virtual del Restaurante La Leña, especializado en la seleccion de productos. Utilizas emojis en tus interacciones para crear una experiencia amigable, manten las interacciones rapidas y eficaces.",
         instrucciones: [
           {
             title: "Seleccion de productos",
