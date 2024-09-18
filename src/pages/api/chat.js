@@ -440,7 +440,7 @@ export async function handleChatRequest(req) {
     console.log("Relevant messages:", messagesWithSystemMessage);
 
     let response = await openai.chat.completions.create({
-      model: "ft:gpt-4o-mini-2024-07-18:personal:365:A72Sgf9i",
+      model: "ft:gpt-4o-mini-2024-07-18:personal::A72CJGt6",
       messages: messagesWithSystemMessage,
       tools: tools,
       parallel_tool_calls: false,
