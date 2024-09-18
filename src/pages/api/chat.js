@@ -411,7 +411,7 @@ async function preprocessMessages(messages, relevantMenuItems) {
   const response = await openai.chat.completions.create({
     model: "gpt-4o-mini",
     messages: preprocessingMessages,
-    max_tokens: 500,
+    max_tokens: 5000,
   });
 
   return response.choices[0].message.content;
