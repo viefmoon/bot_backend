@@ -293,38 +293,128 @@ async function getRelevantMenuItems(relevantMessages) {
   return relevantMenu;
 }
 
+const tools = [
+  {
+    type: "function",
+    function: {
+      name: "select_products",
+      description:
+        "Genera un resumen de los productos seleccionados y crea una preorden.",
+      parameters: {
+        type: "object",
+        properties: {
+          orderItems: {
+            type: "array",
+            description: "Lista de ítems pedidos.",
+            items: {
+              type: "object",
+              properties: {
+                productId: {
+                  type: "string",
+                  description: "El identificador único del producto.",
+                },
+                quantity: {
+                  type: "integer",
+                  description: "La cantidad del producto pedido.",
+                },
+                variantId: {
+                  type: "string",
+                  description:
+                    "El identificador único de la variante del producto, si aplica.",
+                },
+                modifierId: {
+                  type: "string",
+                  description:
+                    "El identificador único del modificador del producto, si aplica.",
+                },
+                pizzaIngredientId: {
+                  type: "string",
+                  description:
+                    "El identificador único del ingrediente de pizza, si aplica.",
+                },
+              },
+              required: ["productId", "quantity"],
+              additionalProperties: false,
+            },
+          },
+          orderType: {
+            type: "string",
+            enum: ["delivery", "pickup"],
+            description: "Entrega a domicilio o recoleccion en restuarante.",
+          },
+          deliveryInfo: {
+            type: "string",
+            description:
+              "Dirección de entrega para pedidos a domicilio o nombre de cliente para pedidos de recoleccion en el restautante.",
+          },
+        },
+        required: ["orderItems", "orderType", "deliveryInfo"],
+        additionalProperties: false,
+      },
+    },
+  },
+];
+
 export async function handleChatRequest(req) {
   const { relevantMessages, conversationId } = req;
   try {
-    const preprocessedData = await preprocessMessage(
-      relevantMessages.map((msg) => msg.content).join(" ")
-    );
+    const relevantMenuItems = await getRelevantMenuItems(relevantMessages);
 
-    const structuredMessage = {
-      role: "user",
-      content: JSON.stringify(preprocessedData),
+    const systemMessageContent = {
+      assistant_config: {
+        description:
+          "Eres un asistente virtual del Restaurante La Leña, especializado en la seleccion de productos. Utilizas emojis en tus interacciones para crear una experiencia amigable y , mantiene las interacciones rapidas y eficaces.",
+        instructions: [
+          {
+            title: "Seleccion de productos",
+            details: [
+              "Es OBLIGATORIO ejecutar la función `select_products` cada vez que se elija un nuevo producto o varios, se modifique un producto existente o se elimine un producto.",
+              "Llama a la función `select_products` con los siguientes parámetros:",
+              " - orderItems: Lista de ítems ordenes con la siguiente estructura para cada ítem:",
+              "   - productId: Obligatorio para todos los ordeitems.",
+              "   - productVariantId: Obligatorio si el producto tiene variantes.",
+              "   - quantity: Obligatorio, indica la cantidad del producto.",
+              "   - selectedModifiers: Modificadores seleccionados para el producto.",
+              "   - selectedPizzaIngredients: Obligatorio para pizzas contempla que existen variantes de pizza variantes de relleno, debes incluir al menos un ingrediente. Es un array de ingredientes con la siguiente estructura:",
+              "     - pizzaIngredientId: Obligatorio.",
+              "     - half: Mitad de la pizza donde se coloca el ingrediente ('full' para toda la pizza, 'left' para mitad izquierda, 'right' para mitad derecha) (obligatorio).",
+              "     - action: Acción a realizar con el ingrediente ('add' para añadir, 'remove' para quitar) (obligatorio).",
+              "     - Nota: Se pueden personalizar las dos mitades de la pizza por separado, añadiendo o quitando ingredientes en cada mitad. Si la pizza se divide en mitades, solo deben usarse 'left' o 'right', no se debe combinar con 'full'.",
+              "   - comments: Opcional, se usan solo para observaciones que no esten en modifiers y sean sobre quitar ingredientes del producto.",
+              " - orderType: (Requerido) Tipo de orden ('delivery' para entrega a domicilio, 'pickup' para recoger en restaurante)",
+              " - deliveryInfo: (Requerido) Dirección de entrega para pedidos a domicilio (requerido para pedidos a domicilio, Nombre del cliente para recolección de pedidos en restaurante",
+              " - scheduledTime: Hora programada para el pedido (opcional, no se ofrece a menos que el cliente solicite programar)",
+            ],
+          },
+        ],
+      },
+      relevant_menu_items: relevantMenuItems,
     };
-    console.log("structuredMessage", structuredMessage);
 
-    const messagesWithStructuredData = [...relevantMessages, structuredMessage];
+    const systemMessage = {
+      role: "system",
+      content: JSON.stringify(systemMessageContent),
+    };
 
-    console.log("Relevant messages with menu:", messagesWithStructuredData);
+    const messagesWithSystemMessage = [systemMessage, ...relevantMessages];
 
-    const thread = await openai.beta.threads.create({
+    console.log("Relevant messages:", messagesWithSystemMessage);
+
+    const response = await openai.chat.completions.create({
+      model: "gpt-4o-2024-08-06",
       messages: messagesWithStructuredData,
-    });
-
-    let run = await openai.beta.threads.runs.create(thread.id, {
-      assistant_id: process.env.ASSISTANT_ID,
+      tools: tools,
+      parallel_tool_calls: false,
     });
 
     let shouldDeleteConversation = false;
 
     while (true) {
-      console.log(`Iniciando ciclo. Estado actual: ${run.status}`);
+      console.log(`Iniciando ciclo. Estado actual: ${response.status}`);
 
-      if (run.status === "requires_action") {
-        const toolCalls = run.required_action.submit_tool_outputs.tool_calls;
+      if (response.status === "requires_action") {
+        const toolCalls =
+          response.required_action.submit_tool_outputs.tool_calls;
         console.log("Tool calls:", toolCalls);
 
         for (const toolCall of toolCalls) {
@@ -359,10 +449,10 @@ export async function handleChatRequest(req) {
         }
       } else {
         try {
-          run = await waitForCompletion(thread.id, run.id);
-          if (run.status === "completed") break;
-          if (run.status === "error") {
-            return { error: run.message };
+          response = await waitForCompletion(response.id, response.id);
+          if (response.status === "completed") break;
+          if (response.status === "error") {
+            return { error: response.message };
           }
         } catch (error) {
           console.error("Error durante la espera:", error);
@@ -371,10 +461,10 @@ export async function handleChatRequest(req) {
       }
     }
 
-    console.log(`Solicitud completada. Estado final: ${run.status}`);
+    console.log(`Solicitud completada. Estado final: ${response.status}`);
 
-    if (run.status === "completed") {
-      const messages = await openai.beta.threads.messages.list(thread.id);
+    if (response.status === "completed") {
+      const messages = await openai.chat.completions.list(response.id);
       const lastAssistantMessage = messages.data.find(
         (message) => message.role === "assistant"
       );
@@ -400,12 +490,12 @@ export async function handleChatRequest(req) {
         }
         return { text };
       } else {
-        console.log("Run failed with status:", run.status);
+        console.log("Run failed with status:", response.status);
         return { error: "Failed to complete the conversation" };
       }
     } else {
-      console.log("Run not completed. Final status:", run.status);
-      return { error: "Run not completed. Final status: " + run.status };
+      console.log("Run not completed. Final status:", response.status);
+      return { error: "Run not completed. Final status: " + response.status };
     }
   } catch (error) {
     console.error("Error general:", error);
