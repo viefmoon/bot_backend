@@ -415,13 +415,25 @@ export async function handleChatRequest(req) {
           },
         ],
       },
-      relevantMenuItems,
     };
 
     const systemMessage = {
       role: "system",
       content: JSON.stringify(systemMessageContent),
     };
+
+    const lastUserMessageIndex = relevantMessages.findLastIndex(
+      (msg) => msg.role === "user"
+    );
+
+    if (lastUserMessageIndex !== -1) {
+      // Anexar relevantMenuItems al último mensaje del usuario
+      relevantMessages[
+        lastUserMessageIndex
+      ].content += `\n\nRelevant menu items: ${JSON.stringify(
+        relevantMenuItems
+      )}`;
+    }
 
     const messagesWithSystemMessage = [systemMessage, ...relevantMessages];
 
