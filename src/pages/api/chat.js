@@ -400,7 +400,7 @@ export async function handleChatRequest(req) {
 
     console.log("Relevant messages:", messagesWithSystemMessage);
 
-    const response = await openai.chat.completions.create({
+    let response = await openai.chat.completions.create({
       model: "gpt-4o-2024-08-06",
       messages: messagesWithStructuredData,
       tools: tools,
