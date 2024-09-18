@@ -257,6 +257,7 @@ const tools = [
       name: "select_products",
       description:
         "Genera un resumen de los productos seleccionados y crea una preorden.",
+      strict: false,
       parameters: {
         type: "object",
         properties: {
@@ -268,26 +269,63 @@ const tools = [
               properties: {
                 productId: {
                   type: "string",
-                  description: "El identificador único del producto.",
+                  description: "ID del producto.",
+                },
+                productVariantId: {
+                  type: ["string"],
+                  description: "ID de la variante del producto (si aplica).",
+                },
+                selectedPizzaIngredients: {
+                  type: "array",
+                  description:
+                    "Lista de ingredientes seleccionados para la pizza (si aplica).",
+                  items: {
+                    type: "object",
+                    properties: {
+                      pizzaIngredientId: {
+                        type: "string",
+                        description: "ID del ingrediente de la pizza.",
+                      },
+                      half: {
+                        type: "string",
+                        enum: ["full", "left", "right"],
+                        description:
+                          "Mitad de la pizza donde se coloca el ingrediente.",
+                      },
+                      action: {
+                        type: "string",
+                        enum: ["add", "remove"],
+                        description:
+                          "Acción a realizar con el ingrediente: añadir o quitar.",
+                      },
+                    },
+                    required: ["pizzaIngredientId", "half", "action"],
+                    additionalProperties: false,
+                  },
+                },
+                selectedModifiers: {
+                  type: "array",
+                  description:
+                    "Lista de modificadores seleccionados (si aplica).",
+                  items: {
+                    type: "object",
+                    properties: {
+                      modifierId: {
+                        type: "string",
+                        description: "ID del modificador.",
+                      },
+                    },
+                    required: ["modifierId"],
+                    additionalProperties: false,
+                  },
+                },
+                comments: {
+                  type: ["string"],
+                  description: "Comentarios del producto.",
                 },
                 quantity: {
                   type: "integer",
-                  description: "La cantidad del producto pedido.",
-                },
-                productVariantId: {
-                  type: "string",
-                  description:
-                    "El identificador único de la variante del producto, si aplica.",
-                },
-                modifierId: {
-                  type: "string",
-                  description:
-                    "El identificador único del modificador del producto, si aplica.",
-                },
-                pizzaIngredientId: {
-                  type: "string",
-                  description:
-                    "El identificador único del ingrediente de pizza, si aplica.",
+                  description: "Cantidad del ítem.",
                 },
               },
               required: ["productId", "quantity"],
@@ -295,7 +333,7 @@ const tools = [
             },
           },
           orderType: {
-            type: "string",
+            type: ["string"],
             enum: ["delivery", "pickup"],
             description: "Entrega a domicilio o recoleccion en restuarante.",
           },
