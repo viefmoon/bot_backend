@@ -164,33 +164,34 @@ async function getMenuAvailability() {
 
 function extractMentionedProducts(message, menu) {
   const mentionedProducts = [];
-  const words = message
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .split(/\s+/);
+  const words = message.split(/\s+/);
+
+  function normalizeWord(word) {
+    return word
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "");
+  }
 
   function checkKeywords(keywords, words) {
     if (!keywords) return false;
-    const normalizedWords = words.map((word) =>
-      word
-        .toLowerCase()
-        .normalize("NFD")
-        .replace(/[\u0300-\u036f]/g, "")
-    ); // Normalizar palabras
+    const normalizedWords = words.map(normalizeWord);
 
     if (Array.isArray(keywords[0])) {
       return keywords.every((group) =>
         group.some((keyword) =>
           normalizedWords.some(
-            (word) => word.length > 2 && partial_ratio(keyword, word) > 83
+            (word) =>
+              word.length > 2 &&
+              partial_ratio(normalizeWord(keyword), word) > 83
           )
         )
       );
     } else {
       return keywords.some((keyword) =>
         normalizedWords.some(
-          (word) => word.length > 2 && partial_ratio(keyword, word) > 83
+          (word) =>
+            word.length > 2 && partial_ratio(normalizeWord(keyword), word) > 83
         )
       );
     }
