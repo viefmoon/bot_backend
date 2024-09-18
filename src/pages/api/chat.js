@@ -402,7 +402,7 @@ export async function handleChatRequest(req) {
 
     let response = await openai.chat.completions.create({
       model: "gpt-4o-2024-08-06",
-      messages: messagesWithStructuredData,
+      messages: messagesWithSystemMessage,
       tools: tools,
       parallel_tool_calls: false,
     });
@@ -426,6 +426,7 @@ export async function handleChatRequest(req) {
               result = await modifyOrder(toolCall, clientId);
               shouldDeleteConversation = true;
               return { text: result.output };
+              messagesWithStructuredData;
             case "send_menu":
               return [
                 { text: menu, isRelevant: false },
