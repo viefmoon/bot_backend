@@ -50,6 +50,18 @@ const selectProductsTool = [
                     required: ["pizzaIngredientId", "half", "action"],
                     additionalProperties: false,
                   },
+                  oneOf: [
+                    {
+                      properties: {
+                        position: { enum: ["full"] },
+                      },
+                    },
+                    {
+                      properties: {
+                        position: { enum: ["half1", "half2"] },
+                      },
+                    },
+                  ],
                 },
                 selectedModifiers: {
                   type: "array",
