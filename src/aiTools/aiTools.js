@@ -24,100 +24,32 @@ const selectProductsTool = [
                   description: "ID de la variante del producto (si aplica).",
                 },
                 selectedPizzaIngredients: {
-                  type: "object",
+                  type: "array",
                   description:
-                    "Lista de ingredientes seleccionados para la pizza (si aplica). Se pueden personalizar las dos mitades de la pizza por separado.",
-                  properties: {
-                    halfOne: {
-                      type: "object",
-                      description:
-                        "Ingredientes seleccionados para la mitad uno de la pizza.",
-                      properties: {
-                        addedIngredients: {
-                          type: "array",
-                          description:
-                            "Ingredientes que se añaden a la mitad uno.",
-                          items: {
-                            type: "string",
-                            description:
-                              "ID del ingrediente de la pizza añadido.",
-                          },
-                        },
-                        removedIngredients: {
-                          type: "array",
-                          description:
-                            "Ingredientes que se quitan de la mitad uno.",
-                          items: {
-                            type: "string",
-                            description:
-                              "ID del ingrediente de la pizza quitado.",
-                          },
-                        },
+                    "Lista de ingredientes seleccionados para la pizza. Debe incluir al menos un ingrediente.",
+                  items: {
+                    type: "object",
+                    properties: {
+                      pizzaIngredientId: {
+                        type: "string",
+                        description: "ID del ingrediente de la pizza.",
                       },
-                      additionalProperties: false,
-                    },
-                    halfTwo: {
-                      type: "object",
-                      description:
-                        "Ingredientes seleccionados para la mitad dos de la pizza.",
-                      properties: {
-                        addedIngredients: {
-                          type: "array",
-                          description:
-                            "Ingredientes que se añaden a la mitad dos.",
-                          items: {
-                            type: "string",
-                            description:
-                              "ID del ingrediente de la pizza añadido.",
-                          },
-                        },
-                        removedIngredients: {
-                          type: "array",
-                          description:
-                            "Ingredientes que se quitan de la mitad dos.",
-                          items: {
-                            type: "string",
-                            description:
-                              "ID del ingrediente de la pizza quitado.",
-                          },
-                        },
+                      position: {
+                        type: "string",
+                        enum: ["full", "half1", "half2"],
+                        description:
+                          "Posicion ingrediente ('full' para toda la pizza, 'half1' para mitad uno, 'half2' para mitad dos).",
                       },
-                      additionalProperties: false,
-                    },
-                    fullPizza: {
-                      type: "object",
-                      description:
-                        "Ingredientes seleccionados para la pizza completa (si aplica).",
-                      properties: {
-                        addedIngredients: {
-                          type: "array",
-                          description:
-                            "Ingredientes que se añaden a la pizza completa.",
-                          items: {
-                            type: "string",
-                            description:
-                              "ID del ingrediente de la pizza añadido.",
-                          },
-                        },
-                        removedIngredients: {
-                          type: "array",
-                          description:
-                            "Ingredientes que se quitan de la pizza completa.",
-                          items: {
-                            type: "string",
-                            description:
-                              "ID del ingrediente de la pizza quitado.",
-                          },
-                        },
+                      action: {
+                        type: "string",
+                        enum: ["add", "remove"],
+                        description:
+                          "Acción a realizar con el ingrediente: añadir o quitar de half correspondiente.",
                       },
-                      additionalProperties: false,
                     },
+                    required: ["pizzaIngredientId", "half", "action"],
+                    additionalProperties: false,
                   },
-                  oneOf: [
-                    { required: ["halfOne", "halfTwo"] },
-                    { required: ["fullPizza"] },
-                  ],
-                  additionalProperties: false,
                 },
                 selectedModifiers: {
                   type: "array",
