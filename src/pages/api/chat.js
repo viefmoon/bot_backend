@@ -490,19 +490,15 @@ export async function handleChatRequest(req) {
     let shouldDeleteConversation = false;
 
     // Manejar la respuesta directamente
-
-    if (response.choices[0].message.content) {
-      const toolCalls = response.choices[0].message.content;
-      for (const toolCall of toolCalls) {
-        console.log("toolCall", toolCall);
+    if (response.content) {
+      const toolUses = response.content;
+      for (const toolUse of toolUses) {
+        console.log("toolUse", toolUse);
         const clientId = conversationId;
         let result;
 
-        if (
-          toolCall.type === "tool_use" &&
-          toolCall.name === "select_products"
-        ) {
-          result = await selectProducts(toolCall, clientId);
+        if (toolUse.type === "tool_use" && toolUse.name === "select_products") {
+          result = await selectProducts(toolUse, clientId);
           return [
             {
               text: result.text,
