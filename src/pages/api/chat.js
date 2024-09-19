@@ -243,18 +243,13 @@ function removeKeywords(item) {
   return itemWithoutKeywords;
 }
 
-async function getRelevantMenuItems(relevantMessages) {
+async function getRelevantMenuItems(preprocessedContent) {
   const fullMenu = await getMenuAvailability();
   let menu = [];
 
-  for (const message of relevantMessages) {
-    if (message.role === "user") {
-      const productsInMessage = extractMentionedProducts(
-        message.content,
-        fullMenu
-      );
-      menu = [...menu, ...productsInMessage];
-    }
+  for (const product of preprocessedContent.products) {
+    const productsInMessage = extractMentionedProducts(product, fullMenu);
+    menu = [...menu, ...productsInMessage];
   }
 
   menu = Array.from(new Set(menu.map(JSON.stringify)), JSON.parse).map(
@@ -322,10 +317,10 @@ async function preprocessMessages(messages) {
 export async function handleChatRequest(req) {
   const { relevantMessages, conversationId } = req;
   try {
-    const relevantMenuItems = await getRelevantMenuItems(relevantMessages);
-
     // Preprocesar los mensajes
     const preprocessedContent = await preprocessMessages(relevantMessages);
+
+    const relevantMenuItems = await getRelevantMenuItems(preprocessedContent);
 
     const systemSelectProductsMessage = {
       role: "system",
