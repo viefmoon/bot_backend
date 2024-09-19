@@ -11,32 +11,40 @@ const selectProductsTool = [
         properties: {
           orderItems: {
             type: "array",
+            description: "Lista de orderItems mencionados.",
             items: {
               type: "object",
               properties: {
                 productId: {
                   type: "string",
+                  description: "ID del producto.",
                 },
                 productVariantId: {
                   type: ["string"],
+                  description: "ID de la variante del producto (si aplica).",
                 },
                 selectedPizzaIngredients: {
                   type: "array",
+                  description:
+                    "Lista de ingredientes seleccionados para la pizza (si aplica). Debe incluir al menos un ingrediente y se pueden personalizar las dos mitades de la pizza por separado.",
                   items: {
                     type: "object",
                     properties: {
                       pizzaIngredientId: {
                         type: "string",
+                        description: "ID del ingrediente de la pizza.",
                       },
                       half: {
                         type: "string",
                         enum: ["full", "left", "right"],
                         description:
-                          "Parte de la pizza donde se coloca el ingrediente.",
+                          "Parte de la pizza donde se coloca el ingrediente ('full' para toda la pizza, 'left' para mitad izquierda, 'right' para mitad derecha).",
                       },
                       action: {
                         type: "string",
                         enum: ["add", "remove"],
+                        description:
+                          "Acción a realizar con el ingrediente: añadir o quitar de half correspondiente.",
                       },
                     },
                     required: ["pizzaIngredientId", "half", "action"],
@@ -45,11 +53,14 @@ const selectProductsTool = [
                 },
                 selectedModifiers: {
                   type: "array",
+                  description:
+                    "Lista de modificadores seleccionados (si aplica).",
                   items: {
                     type: "object",
                     properties: {
                       modifierId: {
                         type: "string",
+                        description: "ID del modificador.",
                       },
                     },
                     required: ["modifierId"],
@@ -58,9 +69,12 @@ const selectProductsTool = [
                 },
                 comments: {
                   type: ["string"],
+                  description:
+                    "Observaciones que no estén definidas en los modificadores del producto.",
                 },
                 quantity: {
                   type: "integer",
+                  description: "Cantidad del ítem.",
                 },
               },
               required: ["productId", "quantity"],
@@ -70,12 +84,13 @@ const selectProductsTool = [
           orderType: {
             type: ["string"],
             enum: ["delivery", "pickup"],
-            description: "Entrega a domicilio o recoleccion en restuarante.",
+            description:
+              "Tipo de orden ('delivery' para entrega a domicilio, 'pickup' para recoger en restaurante).",
           },
           deliveryInfo: {
             type: "string",
             description:
-              "Dirección de entrega para pedidos a domicilio o nombre de cliente para pedidos de recoleccion en el restautante.",
+              "Dirección de entrega para pedidos a domicilio o Nombre del cliente para recolección en restaurante.",
           },
         },
         required: ["orderItems", "orderType", "deliveryInfo"],
