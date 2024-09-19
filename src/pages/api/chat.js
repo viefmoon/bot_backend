@@ -355,30 +355,23 @@ export async function handleChatRequest(req) {
 
     const systemSelectProductsMessage = {
       role: "system",
-      content: JSON.stringify({
-        instrucciones: [
-          {
-            title: "Selección de productos",
-            detalles: [
-              "En base al listado de productos y el menú disponible llama a la función `select_products` con los siguientes parámetros:",
-              " - orderItems: Lista de ítems ordenados con la siguiente estructura para cada ítem:",
-              "   - productId: (Requerido) para todos los orderItems.",
-              "   - productVariantId: Requerido solo si el producto tiene variantes.",
-              "   - quantity: (Requerido) indica la cantidad del producto.",
-              "   - selectedModifiers: Modificadores seleccionados para el producto.",
-              "   - selectedPizzaIngredients: Obligatorio para pizzas, debes incluir al menos un ingrediente. Es un array de ingredientes con la siguiente estructura:",
-              "     - pizzaIngredientId: (Requerido).",
-              "     - half: (Requerido) Mitad de la pizza donde se coloca el ingrediente ('full' para toda la pizza, 'left' para mitad izquierda, 'right' para mitad derecha).",
-              "     - action: (Requerido) Acción a realizar con el ingrediente ('add' para añadir, 'remove' para quitar).",
-              "     - Nota: Se pueden personalizar las dos mitades de la pizza por separado, añadiendo o quitando ingredientes en cada mitad. Si la pizza se divide en mitades, solo deben usarse 'left' o 'right', no se debe combinar con 'full'.",
-              "   - comments: Opcional, se usan solo para observaciones que no estén definidas en los modificadores del producto.",
-              " - orderType: (Requerido) Tipo de orden ('delivery' para entrega a domicilio, 'pickup' para recoger en restaurante)",
-              " - deliveryInfo: (Requerido) Dirección de entrega para pedidos a domicilio (requerido para pedidos a domicilio), Nombre del cliente para recolección de pedidos en restaurante",
-              " - scheduledTime: Hora programada para el pedido",
-            ],
-          },
-        ],
-      }),
+      content: JSON.stringify([
+        "En base al listado de productos y el menú disponible llama a la función `select_products` con los siguientes parámetros:",
+        " - orderItems: Lista de ítems ordenados con la siguiente estructura para cada ítem:",
+        "   - productId: (Requerido) para todos los orderItems.",
+        "   - productVariantId: Requerido solo si el producto tiene variantes.",
+        "   - quantity: (Requerido) indica la cantidad del producto.",
+        "   - selectedModifiers: Modificadores seleccionados para el producto.",
+        "   - selectedPizzaIngredients: Obligatorio para pizzas, debes incluir al menos un ingrediente. Es un array de ingredientes con la siguiente estructura:",
+        "     - pizzaIngredientId: (Requerido).",
+        "     - half: (Requerido) Mitad de la pizza donde se coloca el ingrediente ('full' para toda la pizza, 'left' para mitad izquierda, 'right' para mitad derecha).",
+        "     - action: (Requerido) Acción a realizar con el ingrediente ('add' para añadir, 'remove' para quitar).",
+        "     - Nota: Se pueden personalizar las dos mitades de la pizza por separado, añadiendo o quitando ingredientes en cada mitad. Si la pizza se divide en mitades, solo deben usarse 'left' o 'right', no se debe combinar con 'full'.",
+        "   - comments: Opcional, se usan solo para observaciones que no estén definidas en los modificadores del producto.",
+        " - orderType: (Requerido) Tipo de orden ('delivery' para entrega a domicilio, 'pickup' para recoger en restaurante)",
+        " - deliveryInfo: (Requerido) Dirección de entrega para pedidos a domicilio (requerido para pedidos a domicilio), Nombre del cliente para recolección de pedidos en restaurante",
+        " - scheduledTime: Hora programada para el pedido",
+      ]),
     };
 
     const userSelectProductsMessage = {
