@@ -324,8 +324,21 @@ async function preprocessMessages(messages) {
       console.log("toolCall", toolCall);
       const preprocessedContent = JSON.parse(toolCall.function.arguments);
 
-      for (const item of preprocessedContent.orderItems) {
-        item.relevantMenuItems = await getRelevantMenuItems(item);
+      if (Array.isArray(preprocessedContent.orderItems)) {
+        for (const item of preprocessedContent.orderItems) {
+          if (item && typeof item.description === "string") {
+            item.relevantMenuItems = await getRelevantMenuItems({
+              orderItems: [item.description],
+            });
+          } else {
+            console.error("Item inválido o sin descripción:", item);
+          }
+        }
+      } else {
+        console.error(
+          "orderItems no es un array:",
+          preprocessedContent.orderItems
+        );
       }
 
       return preprocessedContent;
