@@ -113,8 +113,14 @@ const preprocessOrderTool = [
             type: "array",
             description: "Lista de productos solicitados por el cliente.",
             items: {
-              type: "string",
-              description: "Cantidad y descripción detallada del producto.",
+              type: "object",
+              properties: {
+                description: {
+                  type: "string",
+                  description: "Descripción detallada del producto.",
+                },
+              },
+              required: ["description"],
             },
           },
           deliveryInfo: {
