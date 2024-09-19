@@ -498,7 +498,7 @@ export async function handleChatRequest(req) {
         let result;
 
         if (toolUse.type === "tool_use" && toolUse.name === "select_products") {
-          result = await selectProducts(toolUse.input, clientId);
+          result = await selectProducts(toolUse, clientId);
           return [
             {
               text: result.text,
@@ -548,9 +548,7 @@ export async function handleChatRequest(req) {
 }
 
 async function selectProducts(toolCall, clientId) {
-  const { orderItems, orderType, deliveryInfo } = JSON.parse(
-    toolCall.function.arguments
-  );
+  const { orderItems, orderType, deliveryInfo } = JSON.parse(toolCall.input);
 
   try {
     const response = await axios.post(
