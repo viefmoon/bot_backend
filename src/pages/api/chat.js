@@ -418,15 +418,19 @@ async function preprocessMessages(messages) {
       const preprocessedContent = JSON.parse(toolCall.function.arguments);
 
       if (Array.isArray(preprocessedContent.orderItems)) {
+        const allRelevantMenuItems = [];
         for (const item of preprocessedContent.orderItems) {
           if (item && typeof item.description === "string") {
-            item.relevantMenuItems = await getRelevantMenuItems({
+            const itemRelevantMenuItems = await getRelevantMenuItems({
               orderItems: [item.description],
             });
+            allRelevantMenuItems.push(...itemRelevantMenuItems);
           } else {
             console.error("Item inválido o sin descripción:", item);
           }
         }
+        // Añadir relevantMenuItems como un objeto separado
+        preprocessedContent.relevantMenuItems = allRelevantMenuItems;
       } else {
         console.error(
           "orderItems no es un array:",
