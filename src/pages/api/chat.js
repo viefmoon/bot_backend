@@ -14,7 +14,10 @@ const openai = new OpenAI({
 });
 const { partial_ratio } = require("fuzzball");
 const { preprocessMessage } = require("../../utils/preprocessMessage");
-const { selectProductsTool } = require("../../aiTools/aiTools");
+const {
+  selectProductsTool,
+  preprocessOrderTool,
+} = require("../../aiTools/aiTools");
 
 async function modifyOrder(toolCall, clientId) {
   const { dailyOrderNumber, orderType, orderItems, deliveryInfo } = JSON.parse(
@@ -287,20 +290,7 @@ async function preprocessMessages(messages) {
     role: "system",
     content: JSON.stringify({
       instrucciones: [
-        "Analiza el mensaje del usuario y crea una lista detallada de los productos mencionados.",
-        "Ejemplo de entrada:",
-        "Quiero una pizza grande especial especial con chorizo y jalapeño pero que no tenga queso, ademas una mediana con relleno de queso que sea mitad mexicana sin jitomate y mitad philadephia con champiñones a guadalupe victoria 77 norte",
-        "Ejemplo de salida:",
-        "1 Pizza grande especial con chorizo y jalapeño, sin queso",
-        "1 Pizza mediana con orilla rellena de queso, mitad mexicana sin jitomate, mitad philadelphia con champiñones",
-        "Entrega a: Guadalupe Victoria 77 Norte",
-        "Ejemplo de entrada:",
-        "Quiero una orden de papas gajo media orden de alas bbq y una orden completa de alas bbq para llevar a la direccion de jose ma. ortega 19 sur",
-        "Ejemplo de salida:",
-        "1 Orden de papas gajo",
-        "1 Media orden de alas BBQ",
-        "1 Orden completa de alas BBQ",
-        "Direccion de entrega: Jose Ma. Ortega 19 sur",
+        "Analiza el mensaje del usuario y utiliza la función 'preprocess_order' para crear una lista detallada de los productos mencionados y la información de entrega.",
       ],
     }),
   };
@@ -310,9 +300,17 @@ async function preprocessMessages(messages) {
   const response = await openai.chat.completions.create({
     model: "gpt-4o-mini",
     messages: preprocessingMessages,
+    tools: [preprocessOrderTool],
+    parallel_tool_calls: false,
   });
 
-  return response.choices[0].message.content;
+  if (response.choices[0].message.tool_calls) {
+    const toolCall = response.choices[0].message.tool_calls[0];
+    return JSON.parse(toolCall.function.arguments).preprocessedOrder;
+  } else {
+    console.error("No se pudo preprocesar el mensaje");
+    return "Error al preprocesar el mensaje";
+  }
 }
 
 export async function handleChatRequest(req) {
