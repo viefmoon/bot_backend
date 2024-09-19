@@ -14,6 +14,7 @@ const openai = new OpenAI({
 });
 const { partial_ratio } = require("fuzzball");
 const { preprocessMessage } = require("../../utils/preprocessMessage");
+const { selectProductsTool } = require("../../aiTools/aiTools");
 
 async function modifyOrder(toolCall, clientId) {
   const { dailyOrderNumber, orderType, orderItems, deliveryInfo } = JSON.parse(
@@ -285,106 +286,6 @@ async function getRelevantMenuItems(relevantMessages) {
   return relevantMenu;
 }
 
-const tools = [
-  {
-    type: "function",
-    function: {
-      name: "select_products",
-      description:
-        "Genera un resumen de los productos seleccionados y crea una preorden.",
-      strict: false,
-      parameters: {
-        type: "object",
-        properties: {
-          orderItems: {
-            type: "array",
-            description: "Lista de ítems pedidos.",
-            items: {
-              type: "object",
-              properties: {
-                productId: {
-                  type: "string",
-                  description: "ID del producto.",
-                },
-                productVariantId: {
-                  type: ["string"],
-                  description: "ID de la variante del producto (si aplica).",
-                },
-                selectedPizzaIngredients: {
-                  type: "array",
-                  description:
-                    "Lista de ingredientes seleccionados para la pizza (si aplica).",
-                  items: {
-                    type: "object",
-                    properties: {
-                      pizzaIngredientId: {
-                        type: "string",
-                        description: "ID del ingrediente de la pizza.",
-                      },
-                      half: {
-                        type: "string",
-                        enum: ["full", "left", "right"],
-                        description:
-                          "Mitad de la pizza donde se coloca el ingrediente.",
-                      },
-                      action: {
-                        type: "string",
-                        enum: ["add", "remove"],
-                        description:
-                          "Acción a realizar con el ingrediente: añadir o quitar.",
-                      },
-                    },
-                    required: ["pizzaIngredientId", "half", "action"],
-                    additionalProperties: false,
-                  },
-                },
-                selectedModifiers: {
-                  type: "array",
-                  description:
-                    "Lista de modificadores seleccionados (si aplica).",
-                  items: {
-                    type: "object",
-                    properties: {
-                      modifierId: {
-                        type: "string",
-                        description: "ID del modificador.",
-                      },
-                    },
-                    required: ["modifierId"],
-                    additionalProperties: false,
-                  },
-                },
-                comments: {
-                  type: ["string"],
-                  description: "Comentarios del producto.",
-                },
-                quantity: {
-                  type: "integer",
-                  description: "Cantidad del ítem.",
-                },
-              },
-              required: ["productId", "quantity"],
-              additionalProperties: false,
-            },
-          },
-          orderType: {
-            type: ["string"],
-            enum: ["delivery", "pickup"],
-            description: "Entrega a domicilio o recoleccion en restuarante.",
-          },
-          deliveryInfo: {
-            type: "string",
-            description:
-              "Dirección de entrega para pedidos a domicilio o nombre de cliente para pedidos de recoleccion en el restautante.",
-          },
-        },
-        required: ["orderItems", "orderType", "deliveryInfo"],
-        additionalProperties: false,
-      },
-    },
-  },
-];
-
 async function preprocessMessages(messages) {
   const systemMessageForPreprocessing = {
     role: "system",
@@ -426,60 +327,57 @@ export async function handleChatRequest(req) {
     // Preprocesar los mensajes
     const preprocessedContent = await preprocessMessages(relevantMessages);
 
-    const systemMessageContent = {
-      configuracion: {
-        funcion:
-          "Eres un asistente virtual del Restaurante La Leña, especializado en la seleccion de productos. Utilizas emojis en tus interacciones para crear una experiencia amigable, manten las interacciones rapidas y eficaces.",
+    const systemSelectProductsMessage = {
+      role: "system",
+      content: {
         instrucciones: [
           {
-            title: "Seleccion de productos",
+            title: "Selección de productos",
             detalles: [
-              "Es OBLIGATORIO ejecutar la función `select_products` cada vez que se elija un nuevo producto o varios,no confirmes con el cliente ejecutala directamente, se modifique un producto existente o se elimine un producto.",
-              "Llama a la función `select_products` con los siguientes parámetros:",
-              " - orderItems: Lista de ítems ordenes con la siguiente estructura para cada ítem:",
-              "   - productId: Obligatorio para todos los ordeitems.",
-              "   - productVariantId: Obligatorio si el producto tiene variantes.",
-              "   - quantity: Obligatorio, indica la cantidad del producto.",
+              "En base al listado de productos y el menú disponible llama a la función `select_products` con los siguientes parámetros:",
+              " - orderItems: Lista de ítems ordenados con la siguiente estructura para cada ítem:",
+              "   - productId: (Requerido) para todos los orderItems.",
+              "   - productVariantId: Requerido solo si el producto tiene variantes.",
+              "   - quantity: (Requerido) indica la cantidad del producto.",
               "   - selectedModifiers: Modificadores seleccionados para el producto.",
-              "   - selectedPizzaIngredients: Obligatorio para pizzas contempla que existen variantes de pizza variantes de relleno, debes incluir al menos un ingrediente. Es un array de ingredientes con la siguiente estructura:",
-              "     - pizzaIngredientId: Obligatorio.",
-              "     - half: Mitad de la pizza donde se coloca el ingrediente ('full' para toda la pizza, 'left' para mitad izquierda, 'right' para mitad derecha) (obligatorio).",
-              "     - action: Acción a realizar con el ingrediente ('add' para añadir, 'remove' para quitar) (obligatorio).",
+              "   - selectedPizzaIngredients: Obligatorio para pizzas, debes incluir al menos un ingrediente. Es un array de ingredientes con la siguiente estructura:",
+              "     - pizzaIngredientId: (Requerido).",
+              "     - half: (Requerido) Mitad de la pizza donde se coloca el ingrediente ('full' para toda la pizza, 'left' para mitad izquierda, 'right' para mitad derecha).",
+              "     - action: (Requerido) Acción a realizar con el ingrediente ('add' para añadir, 'remove' para quitar).",
               "     - Nota: Se pueden personalizar las dos mitades de la pizza por separado, añadiendo o quitando ingredientes en cada mitad. Si la pizza se divide en mitades, solo deben usarse 'left' o 'right', no se debe combinar con 'full'.",
-              "   - comments: Opcional, se usan solo para observaciones que no esten definidas en los modificadores del producto.",
+              "   - comments: Opcional, se usan solo para observaciones que no estén definidas en los modificadores del producto.",
               " - orderType: (Requerido) Tipo de orden ('delivery' para entrega a domicilio, 'pickup' para recoger en restaurante)",
-              " - deliveryInfo: (Requerido) Dirección de entrega para pedidos a domicilio (requerido para pedidos a domicilio, Nombre del cliente para recolección de pedidos en restaurante",
-              " - scheduledTime: Hora programada para el pedido (opcional, no se ofrece a menos que el cliente solicite programar)",
+              " - deliveryInfo: (Requerido) Dirección de entrega para pedidos a domicilio (requerido para pedidos a domicilio), Nombre del cliente para recolección de pedidos en restaurante",
+              " - scheduledTime: Hora programada para el pedido",
             ],
           },
         ],
       },
     };
 
-    const systemMessage = {
-      role: "system",
-      content: JSON.stringify(systemMessageContent),
-    };
-
-    const userMessageWithPreprocessedContent = {
+    const userSelectProductsMessage = {
       role: "user",
-      content: `${preprocessedContent}\n\nRelevant menu items, solo estos son los articulos disponibles con el id dentro del parentesis,si no existe el articulo en el menu no lo incluyas, las observaciones que no estan registradas en el menu se registran como comentario: ${JSON.stringify(
+      content: `${preprocessedContent}\n\nMenu disponible: NOTA: las observaciones que no estan registradas en el menu se registran como comentario: ${JSON.stringify(
         relevantMenuItems
       )}`,
     };
 
-    const messagesWithSystemMessage = [
-      systemMessage,
-      userMessageWithPreprocessedContent,
+    const selectProductsMessages = [
+      systemSelectProductsMessage,
+      userSelectProductsMessage,
     ];
 
-    console.log("Relevant messages:", messagesWithSystemMessage);
+    console.log("Select Products message:", selectProductsMessages);
 
     let response = await openai.chat.completions.create({
       model: "gpt-4o-mini",
       messages: messagesWithSystemMessage,
-      tools: tools,
+      tools: selectProductsTool,
       parallel_tool_calls: false,
+      tool_choice: {
+        type: "function",
+        function: { name: "select_products" }
+      },
     });
 
     let shouldDeleteConversation = false;
