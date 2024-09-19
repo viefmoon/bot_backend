@@ -187,7 +187,7 @@ function extractMentionedProducts(message, menu) {
           normalizedWords.some(
             (word) =>
               word.length > 2 &&
-              partial_ratio(normalizeWord(keyword), word) > 83
+              partial_ratio(normalizeWord(keyword), word) > 90
           )
         )
       );
@@ -195,7 +195,7 @@ function extractMentionedProducts(message, menu) {
       return keywords.some((keyword) =>
         normalizedWords.some(
           (word) =>
-            word.length > 2 && partial_ratio(normalizeWord(keyword), word) > 83
+            word.length > 2 && partial_ratio(normalizeWord(keyword), word) > 90
         )
       );
     }
