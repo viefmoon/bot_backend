@@ -11,28 +11,22 @@ const selectProductsTool = [
         properties: {
           orderItems: {
             type: "array",
-            description: "Lista de orderItems mencionados.",
             items: {
               type: "object",
               properties: {
                 productId: {
                   type: "string",
-                  description: "ID del producto.",
                 },
                 productVariantId: {
                   type: ["string"],
-                  description: "ID de la variante del producto (si aplica).",
                 },
                 selectedPizzaIngredients: {
                   type: "array",
-                  description:
-                    "Lista de ingredientes y sabores seleccionados para la pizza.",
                   items: {
                     type: "object",
                     properties: {
                       pizzaIngredientId: {
                         type: "string",
-                        description: "ID del ingrediente o sabor de la pizza.",
                       },
                       half: {
                         type: "string",
@@ -43,8 +37,6 @@ const selectProductsTool = [
                       action: {
                         type: "string",
                         enum: ["add", "remove"],
-                        description:
-                          "Acción a realizar con el ingrediente: añadir o quitar de half correspondiente.",
                       },
                     },
                     required: ["pizzaIngredientId", "half", "action"],
@@ -53,14 +45,11 @@ const selectProductsTool = [
                 },
                 selectedModifiers: {
                   type: "array",
-                  description:
-                    "Lista de modificadores seleccionados (si aplica).",
                   items: {
                     type: "object",
                     properties: {
                       modifierId: {
                         type: "string",
-                        description: "ID del modificador.",
                       },
                     },
                     required: ["modifierId"],
@@ -69,11 +58,9 @@ const selectProductsTool = [
                 },
                 comments: {
                   type: ["string"],
-                  description: "Comentarios del producto.",
                 },
                 quantity: {
                   type: "integer",
-                  description: "Cantidad del ítem.",
                 },
               },
               required: ["productId", "quantity"],
