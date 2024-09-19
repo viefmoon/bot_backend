@@ -383,9 +383,7 @@ export async function handleChatRequest(req) {
 
     const userSelectProductsMessage = {
       role: "user",
-      content: `Productos mencionados: ${JSON.stringify(
-        preprocessedContent
-      )}\n\n`,
+      content: `${JSON.stringify(preprocessedContent)}\n\n`,
     };
 
     const selectProductsMessages = [
