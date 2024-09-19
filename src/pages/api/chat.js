@@ -455,36 +455,23 @@ export async function handleChatRequest(req) {
     // Preprocesar los mensajes
     const preprocessedContent = await preprocessMessages(relevantMessages);
 
-    const systemSelectProductsMessage = {
-      role: "system",
-      content: JSON.stringify([
-        "Basándote en el objeto proporcionado, utiliza la función `select_products`",
-        "- Utiliza los `relevantMenuItems` proporcionados para mapear las descripciones de los productos a sus respectivos IDs.",
-        "- No es necesario usar todos los relevantMenuItems si no aplican",
-      ]),
-    };
+    const systemContent = [
+      "Basándote en el objeto proporcionado, utiliza la función `select_products`",
+      "- Utiliza los `relevantMenuItems` proporcionados para mapear las descripciones de los productos a sus respectivos IDs.",
+      "- No es necesario usar todos los relevantMenuItems si no aplican",
+    ].join("\n");
 
-    const userSelectProductsMessage = {
-      role: "user",
-      content: `${JSON.stringify(preprocessedContent)}\n\n
-      Asegúrate de colocar los ingredientes de pizza en la mitad correspondiente según lo especificado por el cliente.`,
-    };
-
-    const selectProductsMessages = [
-      systemSelectProductsMessage,
-      userSelectProductsMessage,
-    ];
-
-    console.log("Select Products message:", selectProductsMessages);
+    const userContent = `${JSON.stringify(preprocessedContent)}\n\n
+      Asegúrate de colocar los ingredientes de pizza en la mitad correspondiente según lo especificado por el cliente.`;
 
     const response = await anthropic.messages.create({
       model: "claude-3-5-sonnet-20240620",
-      messages: selectProductsMessages,
+      system: systemContent,
+      messages: [{ role: "user", content: userContent }],
       tools: selectProductsToolClaude,
     });
 
     console.log("response claude", response);
-
     const tokensUsados = response.usage.total_tokens;
     console.log("Tokens utilizados:", tokensUsados);
 
