@@ -17,7 +17,14 @@ const { preprocessMessage } = require("../../utils/preprocessMessage");
 const {
   selectProductsTool,
   preprocessOrderTool,
+  selectProductsToolClaude,
 } = require("../../aiTools/aiTools");
+const Anthropic = require("@anthropic-ai/sdk");
+
+// Inicializa el cliente de Anthropic
+const anthropic = new Anthropic({
+  apiKey: process.env.ANTHROPIC_API_KEY,
+});
 
 async function modifyOrder(toolCall, clientId) {
   const { dailyOrderNumber, orderType, orderItems, deliveryInfo } = JSON.parse(
@@ -470,16 +477,13 @@ export async function handleChatRequest(req) {
 
     console.log("Select Products message:", selectProductsMessages);
 
-    let response = await openai.chat.completions.create({
-      model: "gpt-4o",
+    const response = await anthropic.messages.create({
+      model: "claude-3-5-sonnet-20240620",
       messages: selectProductsMessages,
-      tools: selectProductsTool,
-      parallel_tool_calls: false,
-      tool_choice: {
-        type: "function",
-        function: { name: "select_products" },
-      },
+      tools: selectProductsToolClaude,
     });
+
+    console.log("response claude", response);
 
     const tokensUsados = response.usage.total_tokens;
     console.log("Tokens utilizados:", tokensUsados);
