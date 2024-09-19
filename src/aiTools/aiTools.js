@@ -47,18 +47,64 @@ const selectProductsTool = [
                           "Acción a realizar con el ingrediente: añadir o quitar de half correspondiente.",
                       },
                     },
-                    required: ["pizzaIngredientId", "half", "action"],
+                    required: ["pizzaIngredientId", "position", "action"],
                     additionalProperties: false,
                   },
                   oneOf: [
                     {
                       properties: {
                         position: { enum: ["full"] },
+                        items: {
+                          type: "object",
+                          properties: {
+                            pizzaIngredientId: {
+                              type: "string",
+                              description: "ID del ingrediente de la pizza.",
+                            },
+                            position: {
+                              type: "string",
+                              enum: ["full"],
+                              description:
+                                "Posicion ingrediente ('full' para toda la pizza).",
+                            },
+                            action: {
+                              type: "string",
+                              enum: ["add", "remove"],
+                              description:
+                                "Acción a realizar con el ingrediente: añadir o quitar.",
+                            },
+                          },
+                          required: ["pizzaIngredientId", "position", "action"],
+                          additionalProperties: false,
+                        },
                       },
                     },
                     {
                       properties: {
                         position: { enum: ["half1", "half2"] },
+                        items: {
+                          type: "object",
+                          properties: {
+                            pizzaIngredientId: {
+                              type: "string",
+                              description: "ID del ingrediente de la pizza.",
+                            },
+                            position: {
+                              type: "string",
+                              enum: ["half1", "half2"],
+                              description:
+                                "Posicion ingrediente ('half1' para mitad uno, 'half2' para mitad dos).",
+                            },
+                            action: {
+                              type: "string",
+                              enum: ["add", "remove"],
+                              description:
+                                "Acción a realizar con el ingrediente: añadir o quitar.",
+                            },
+                          },
+                          required: ["pizzaIngredientId", "position", "action"],
+                          additionalProperties: false,
+                        },
                       },
                     },
                   ],
