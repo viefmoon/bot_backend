@@ -469,7 +469,7 @@ export async function handleChatRequest(req) {
         { role: "user", content: JSON.stringify(preprocessedContent) },
       ],
       max_tokens: 4096,
-      tools: selectProductsToolClaude,
+      tools: [selectProductsToolClaude],
       tool_choice: { type: "tool", name: "select_products" },
     });
 
