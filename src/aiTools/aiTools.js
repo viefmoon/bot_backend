@@ -119,10 +119,14 @@ const preprocessOrderTool = [
               properties: {
                 description: {
                   type: "string",
-                  description: "Cantidad y Descripción detallada del producto.",
+                  description: "Descripción detallada del producto.",
+                },
+                quantity: {
+                  type: "integer",
+                  description: "Cantidad del producto.",
                 },
               },
-              required: ["description"],
+              required: ["description", "quantity"],
               additionalProperties: false,
             },
           },
