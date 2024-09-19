@@ -36,15 +36,15 @@ const selectProductsTool = [
                       },
                       position: {
                         type: "string",
-                        enum: ["full", "half1", "half2"],
+                        enum: ["full", "left", "right"],
                         description:
-                          "Posicion ingrediente ('full' para toda la pizza, 'half1' para mitad uno, 'half2' para mitad dos). No se permite mezclar 'full' con 'half1' o 'half2'.",
+                          "Posicion ingrediente ('full' para toda la pizza, 'left' para mitad izquierda, 'right' para mitad derecha). No se permite mezclar 'full' con 'left' o 'right'.",
                       },
                       action: {
                         type: "string",
                         enum: ["add", "remove"],
                         description:
-                          "Acción a realizar con el ingrediente: añadir o quitar de half correspondiente.",
+                          "Acción a realizar con el ingrediente en la posición indicada.",
                       },
                     },
                     required: ["pizzaIngredientId", "half", "action"],
