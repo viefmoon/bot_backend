@@ -3,44 +3,48 @@ const selectProductsTool = [
     type: "function",
     function: {
       name: "select_products",
+      description:
+        "Selecciona los productos y crea una preorden con los datos de entrega.",
       strict: false,
       parameters: {
         type: "object",
         properties: {
           orderItems: {
             type: "array",
+            description: "Lista de orderItems mencionados.",
             items: {
               type: "object",
               properties: {
                 productId: {
                   type: "string",
+                  description: "ID del producto.",
                 },
                 productVariantId: {
                   type: ["string"],
-                  description:
-                    "ID de la variante del producto (solo si aplica).",
+                  description: "ID de la variante del producto (si aplica).",
                 },
                 selectedPizzaIngredients: {
                   type: "array",
                   description:
-                    "Lista de ingredientes seleccionados para la pizza, posicion y accion (solo si aplica).",
+                    "Lista de ingredientes seleccionados para la pizza (si aplica). Debe incluir al menos un ingrediente y se pueden personalizar las dos mitades de la pizza por separado.",
                   items: {
                     type: "object",
                     properties: {
                       pizzaIngredientId: {
                         type: "string",
+                        description: "ID del ingrediente de la pizza.",
                       },
-                      position: {
+                      half: {
                         type: "string",
                         enum: ["full", "left", "right"],
                         description:
-                          "Posicion ingrediente ('full' para toda la pizza, 'left' para mitad izquierda, 'right' para mitad derecha). No se permite mezclar 'full' con 'left' o 'right'.",
+                          "Parte de la pizza donde se coloca el ingrediente ('full' para toda la pizza, 'left' para mitad izquierda, 'right' para mitad derecha). Está restringido fusionar 'left' o 'right' con 'full'.",
                       },
                       action: {
                         type: "string",
                         enum: ["add", "remove"],
                         description:
-                          "Acción a realizar con el ingrediente en la posición indicada.",
+                          "Acción a realizar con el ingrediente: añadir o quitar de half correspondiente.",
                       },
                     },
                     required: ["pizzaIngredientId", "half", "action"],
@@ -56,6 +60,7 @@ const selectProductsTool = [
                     properties: {
                       modifierId: {
                         type: "string",
+                        description: "ID del modificador.",
                       },
                     },
                     required: ["modifierId"],
@@ -69,6 +74,7 @@ const selectProductsTool = [
                 },
                 quantity: {
                   type: "integer",
+                  description: "Cantidad del ítem.",
                 },
               },
               required: ["productId", "quantity"],
@@ -79,12 +85,12 @@ const selectProductsTool = [
             type: ["string"],
             enum: ["delivery", "pickup"],
             description:
-              "Tipo de orden para entrega a domicilio o recolección en restaurante.",
+              "Tipo de orden ('delivery' para entrega a domicilio, 'pickup' para recoger en restaurante).",
           },
           deliveryInfo: {
             type: "string",
             description:
-              "Dirección de entrega para pedidos a domicilio o nombre del cliente para recolección en restaurante.",
+              "Dirección de entrega para pedidos a domicilio o Nombre del cliente para recolección en restaurante.",
           },
         },
         required: ["orderItems", "orderType", "deliveryInfo"],
