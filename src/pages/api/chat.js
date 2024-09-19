@@ -247,7 +247,7 @@ async function getRelevantMenuItems(preprocessedContent) {
   const fullMenu = await getMenuAvailability();
   let menu = [];
 
-  for (const product of preprocessedContent.products) {
+  for (const product of preprocessedContent.orderItems) {
     const productsInMessage = extractMentionedProducts(product, fullMenu);
     menu = [...menu, ...productsInMessage];
   }
@@ -359,10 +359,8 @@ export async function handleChatRequest(req) {
     const userSelectProductsMessage = {
       role: "user",
       content:
-        `${JSON.stringify(preprocessedContent)}\n\n` +
-        `Menu disponible: NOTA: las observaciones que no estan registradas en el menu se registran como comentario: ${JSON.stringify(
-          relevantMenuItems
-        )}`,
+        `Productos mencionados: ${JSON.stringify(preprocessedContent)}\n\n` +
+        `Menu disponible: ${JSON.stringify(relevantMenuItems)}`,
     };
 
     const selectProductsMessages = [

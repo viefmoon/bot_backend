@@ -109,7 +109,7 @@ const preprocessOrderTool = [
       parameters: {
         type: "object",
         properties: {
-          products: {
+          orderItems: {
             type: "array",
             description: "Lista de productos solicitados por el cliente.",
             items: {
@@ -129,7 +129,7 @@ const preprocessOrderTool = [
               "Tipo de orden: entrega a domicilio o recolección en restaurante.",
           },
         },
-        required: ["products", "orderType", "deliveryInfo"],
+        required: ["orderItems", "orderType", "deliveryInfo"],
         additionalProperties: false,
       },
     },
