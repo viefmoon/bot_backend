@@ -548,7 +548,6 @@ async function handleMessage(from, message) {
     });
 
     if (Array.isArray(response)) {
-      console.log("Response if array:", response);
       for (const msg of response) {
         if (msg.text && msg.text.trim() !== "") {
           if (msg.sendToWhatsApp !== false) {
