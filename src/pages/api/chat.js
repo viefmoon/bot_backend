@@ -498,7 +498,7 @@ export async function handleChatRequest(req) {
         let result;
 
         if (toolUse.type === "tool_use" && toolUse.name === "select_products") {
-          result = await selectProducts(toolUse, clientId);
+          result = await selectProducts(toolUse.input, clientId);
           return [
             {
               text: result.text,
