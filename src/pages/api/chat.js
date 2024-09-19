@@ -462,41 +462,16 @@ export async function handleChatRequest(req) {
       "- Es OBLIGATORIO usar la función `select_products` para completar esta tarea.",
     ].join("\n");
 
-    // Extraer los mensajes del usuario de relevantMessages
-    const userMessages = relevantMessages
-      .filter((message) => message.role === "user")
-      .map((message) => message.content)
-      .join("\n");
-
-    // Combinar los mensajes del usuario con preprocessedContent
-    const combinedUserContent = `${userMessages}\n\n${JSON.stringify(
-      preprocessedContent
-    )}`;
-
-    console.log("relevantMessages", relevantMessages);
+    console.log("preprocessedContent", preprocessedContent);
 
     const response = await anthropic.messages.create({
       model: "claude-3-5-sonnet-20240620",
       system: systemContent,
-      messages: [{ role: "user", content: combinedUserContent }],
+      messages: [{ role: "user", content: preprocessedContent }],
       max_tokens: 4096,
       tools: [selectProductsToolClaude],
       tool_choice: { type: "tool", name: "select_products" },
     });
-
-    console.log(
-      "response claude",
-      JSON.stringify(
-        response,
-        (key, value) => {
-          if (key === "input" && typeof value === "object") {
-            return JSON.stringify(value);
-          }
-          return value;
-        },
-        2
-      )
-    );
 
     let shouldDeleteConversation = false;
 
