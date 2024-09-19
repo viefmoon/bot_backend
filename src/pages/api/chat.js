@@ -467,7 +467,9 @@ export async function handleChatRequest(req) {
     const response = await anthropic.messages.create({
       model: "claude-3-5-sonnet-20240620",
       system: systemContent,
-      messages: [{ role: "user", content: preprocessedContent }],
+      messages: [
+        { role: "user", content: JSON.stringify(preprocessedContent) },
+      ],
       max_tokens: 4096,
       tools: [selectProductsToolClaude],
       tool_choice: { type: "tool", name: "select_products" },
