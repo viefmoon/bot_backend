@@ -358,7 +358,7 @@ export async function handleChatRequest(req) {
     const userSelectProductsMessage = {
       role: "user",
       content:
-        `Contenido preprocesado: ${JSON.stringify(preprocessedContent)}\n\n` +
+        `${JSON.stringify(preprocessedContent)}\n\n` +
         `Menu disponible: NOTA: las observaciones que no estan registradas en el menu se registran como comentario: ${JSON.stringify(
           relevantMenuItems
         )}`,
