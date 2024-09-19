@@ -401,7 +401,18 @@ async function preprocessMessages(messages) {
     }),
   };
 
-  const preprocessingMessages = [systemMessageForPreprocessing, ...messages];
+  const assistantMessageWithMenu = {
+    role: "assistant",
+    content: JSON.stringify({
+      "MENU DISPONIBLE": availableMenu,
+    }),
+  };
+
+  const preprocessingMessages = [
+    systemMessageForPreprocessing,
+    assistantMessageWithMenu,
+    ...messages,
+  ];
 
   console.log("preprocessingMessages", preprocessingMessages);
 
