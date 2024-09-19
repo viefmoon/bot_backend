@@ -11,7 +11,7 @@ const selectProductsTool = [
         properties: {
           orderItems: {
             type: "array",
-            description: "Lista de orderItems mencioados.",
+            description: "Lista de orderItems mencionados.",
             items: {
               type: "object",
               properties: {
@@ -121,6 +121,7 @@ const preprocessOrderTool = [
                 },
               },
               required: ["description"],
+              additionalProperties: false,
             },
           },
           deliveryInfo: {
