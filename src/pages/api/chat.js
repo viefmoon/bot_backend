@@ -462,6 +462,8 @@ export async function handleChatRequest(req) {
       "- Es OBLIGATORIO usar la función `select_products` para completar esta tarea.",
     ].join("\n");
 
+    console.log("relevantMessages", relevantMessages);
+
     const response = await anthropic.messages.create({
       model: "claude-3-5-sonnet-20240620",
       system: systemContent,
