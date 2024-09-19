@@ -325,7 +325,7 @@ export async function handleChatRequest(req) {
 
     const systemSelectProductsMessage = {
       role: "system",
-      content: {
+      content: JSON.stringify({
         instrucciones: [
           {
             title: "Selección de productos",
@@ -348,7 +348,7 @@ export async function handleChatRequest(req) {
             ],
           },
         ],
-      },
+      }),
     };
 
     const userSelectProductsMessage = {
