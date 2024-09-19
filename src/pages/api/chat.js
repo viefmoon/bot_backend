@@ -468,6 +468,7 @@ export async function handleChatRequest(req) {
       model: "claude-3-5-sonnet-20240620",
       system: systemContent,
       messages: [{ role: "user", content: userContent }],
+      max_tokens: 4096,
       tools: selectProductsToolClaude,
     });
 
