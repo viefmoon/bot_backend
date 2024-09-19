@@ -106,7 +106,22 @@ const preprocessOrderTool = [
     function: {
       name: "preprocess_order",
       description:
-        "Preprocesa la orden del cliente en una lista estructurada de productos y detalles de entrega.",
+        "Preprocesa la orden del cliente en una lista estructurada de productos y detalles de entrega. \
+Para mejorar la precisión, sigue las siguientes directrices:\n\
+- Mapea los productos mencionados a los nombres exactos en el menú disponible.\n\
+- Asegúrate de que las cantidades de los productos sean siempre números enteros.\n\
+- Si un producto mencionado no coincide exactamente con un nombre en el menú, elige el más cercano o similar.\n\
+- Si no estás seguro de un producto o cantidad, omítelo en lugar de hacer suposiciones.\n\
+- Para productos de tipo pizza, ten en cuenta que se pueden preparar por mitades o completa:\n\
+  - Usa 'full' para ingredientes en toda la pizza.\n\
+  - Usa 'left' para ingredientes en la mitad izquierda.\n\
+  - Usa 'right' para ingredientes en la mitad derecha.\n\
+- Lista los ingredientes de la pizza de la siguiente manera:\n\
+  - Cada ingrediente debe tener un 'pizzaIngredientId' (string), 'half' ('full', 'left', o 'right'), y 'action' ('add' o 'remove').\n\
+  - Ejemplo: { \"pizzaIngredientId\": \"123\", \"half\": \"left\", \"action\": \"add\" } para añadir un ingrediente en la mitad izquierda.\n\
+  - Si se menciona quitar un ingrediente, usa 'action': 'remove'.\n\
+- Asegúrate de que cada ingrediente mencionado para una pizza se ajuste a este formato.\n\
+- El campo 'description' para las pizzas debe contener únicamente el formato especificado sin texto adicional.",
       strict: true,
       parameters: {
         type: "object",
@@ -129,7 +144,7 @@ const preprocessOrderTool = [
           deliveryInfo: {
             type: "string",
             description:
-              "Dirección de entrega para pedidos a domicilio o nombre de cliente para recoleccion en el restautante.",
+              "Dirección de entrega para pedidos a domicilio o nombre de cliente para recolección en el restaurante.",
           },
           orderType: {
             type: "string",

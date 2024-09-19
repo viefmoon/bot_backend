@@ -383,22 +383,7 @@ async function preprocessMessages(messages) {
     content: JSON.stringify({
       instrucciones: [
         "Analiza el mensaje del usuario y utiliza la función 'preprocess_order' para crear una lista detallada de los productos mencionados y la información de entrega.",
-        "Para mejorar la precisión, mapea los productos mencionados a los nombres exactos en el menú disponible.",
-        "Asegúrate de que las cantidades de los productos sean siempre números enteros.",
-        "Si un producto mencionado no coincide exactamente con un nombre en el menú, elige el más cercano o similar.",
-        "Si no estás seguro de un producto o cantidad, omítelo en lugar de hacer suposiciones.",
-        "Para productos de tipo pizza, ten en cuenta que se pueden preparar por mitades o completa:",
-        "- Usa 'full' para ingredientes en toda la pizza.",
-        "- Usa 'left' para ingredientes en la mitad izquierda.",
-        "- Usa 'right' para ingredientes en la mitad derecha.",
-        "Lista los ingredientes de la pizza de la siguiente manera:",
-        "- Cada ingrediente debe tener un 'pizzaIngredientId' (string), 'half' ('full', 'left', o 'right'), y 'action' ('add' o 'remove').",
-        '- Ejemplo: { "pizzaIngredientId": "123", "half": "left", "action": "add" } para añadir un ingrediente en la mitad izquierda.',
-        "- Si se menciona quitar un ingrediente, usa 'action': 'remove'.",
-        "Asegúrate de que cada ingrediente mencionado para una pizza se ajuste a este formato.",
-        "El campo 'description' para las pizzas debe contener únicamente el formato especificado sin texto adicional.",
       ],
-      "MENU DISPONIBLE": availableMenu,
     }),
   };
 
