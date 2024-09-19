@@ -459,22 +459,20 @@ export async function handleChatRequest(req) {
       "Basándote en el objeto proporcionado, utiliza la función `select_products`",
       "- Utiliza los `relevantMenuItems` proporcionados para mapear las descripciones de los productos a sus respectivos IDs.",
       "- No es necesario usar todos los relevantMenuItems si no aplican",
+      "- Es OBLIGATORIO usar la función `select_products` para completar esta tarea.",
     ].join("\n");
-
-    const userContent = `${JSON.stringify(preprocessedContent)}\n\n
-      Asegúrate de colocar los ingredientes de pizza en la mitad correspondiente según lo especificado por el cliente.`;
 
     const response = await anthropic.messages.create({
       model: "claude-3-5-sonnet-20240620",
       system: systemContent,
-      messages: [{ role: "user", content: userContent }],
+      messages: [
+        { role: "user", content: JSON.stringify(preprocessedContent) },
+      ],
       max_tokens: 4096,
       tools: selectProductsToolClaude,
     });
 
     console.log("response claude", response);
-    const tokensUsados = response.usage.total_tokens;
-    console.log("Tokens utilizados:", tokensUsados);
 
     let shouldDeleteConversation = false;
 
