@@ -107,7 +107,7 @@ const preprocessOrderTool = [
       name: "preprocess_order",
       description:
         "Preprocesa la orden del cliente en una lista estructurada de productos y detalles de entrega, con descripción detallada para pizzas.",
-      strict: true,
+      strict: false,
       parameters: {
         type: "object",
         properties: {
@@ -132,6 +132,7 @@ const preprocessOrderTool = [
                         add: { type: "array", items: { type: "string" } },
                         remove: { type: "array", items: { type: "string" } },
                       },
+                      additionalProperties: false,
                     },
                     left: {
                       type: "object",
@@ -139,6 +140,7 @@ const preprocessOrderTool = [
                         add: { type: "array", items: { type: "string" } },
                         remove: { type: "array", items: { type: "string" } },
                       },
+                      additionalProperties: false,
                     },
                     right: {
                       type: "object",
@@ -146,8 +148,10 @@ const preprocessOrderTool = [
                         add: { type: "array", items: { type: "string" } },
                         remove: { type: "array", items: { type: "string" } },
                       },
+                      additionalProperties: false,
                     },
                   },
+                  additionalProperties: false,
                 },
                 quantity: {
                   type: "integer",
