@@ -415,6 +415,8 @@ async function preprocessMessages(messages) {
     parallel_tool_calls: false,
   });
 
+  console.log("response preprocessMessages", response);
+
   if (response.choices[0].message.tool_calls) {
     const toolCall = response.choices[0].message.tool_calls.find(
       (call) => call.function.name === "preprocess_order"
@@ -443,9 +445,18 @@ async function preprocessMessages(messages) {
 
       return preprocessedContent;
     }
+  } else if (response.choices[0].message.content) {
+    console.log("No se ejecutó preprocessOrderTool, retornando texto");
+    return {
+      text: response.choices[0].message.content,
+      isDirectResponse: true,
+    };
   } else {
     console.error("No se pudo preprocesar el mensaje");
-    return "Error al preprocesar el mensaje";
+    return {
+      text: "Error al preprocesar el mensaje",
+      isDirectResponse: true,
+    };
   }
 }
 
@@ -454,6 +465,17 @@ export async function handleChatRequest(req) {
   try {
     // Preprocesar los mensajes
     const preprocessedContent = await preprocessMessages(relevantMessages);
+
+    // Si preprocessMessages retorna una respuesta directa
+    if (preprocessedContent.isDirectResponse) {
+      return [
+        {
+          text: preprocessedContent.text,
+          sendToWhatsApp: true,
+          isRelevant: true,
+        },
+      ];
+    }
 
     const systemContent = [
       "Basándote en el objeto proporcionado, utiliza la función `select_products`",
@@ -531,7 +553,13 @@ export async function handleChatRequest(req) {
     // }
   } catch (error) {
     console.error("Error general:", error);
-    return { error: "Error al procesar la solicitud: " + error.message };
+    return [
+      {
+        text: "Error al procesar la solicitud: " + error.message,
+        sendToWhatsApp: true,
+        isRelevant: true,
+      },
+    ];
   }
 }
 
