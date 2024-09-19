@@ -366,7 +366,7 @@ export async function handleChatRequest(req) {
     let response = await openai.chat.completions.create({
       model: "gpt-4o-mini",
       messages: selectProductsMessages,
-      tools: selectProductsTool,
+      tools: [selectProductsTool],
       parallel_tool_calls: false,
       tool_choice: {
         type: "function",
