@@ -255,45 +255,43 @@ function removeKeywords(item) {
 
 async function getRelevantMenuItems(preprocessedContent) {
   const fullMenu = await getMenuAvailability();
-  let menu = [];
+  let productos = [];
 
   for (const product of preprocessedContent.orderItems) {
     const productsInMessage = extractMentionedProducts(product, fullMenu);
-    menu = [...menu, ...productsInMessage];
+    productos = [...productos, ...productsInMessage];
   }
 
-  menu = Array.from(new Set(menu.map(JSON.stringify)), JSON.parse).map(
-    (product) => {
-      const cleanProduct = removeKeywords(product);
+  productos = Array.from(
+    new Set(productos.map(JSON.stringify)),
+    JSON.parse
+  ).map((producto) => {
+    const productoLimpio = removeKeywords(producto);
 
-      if (cleanProduct.productVariants?.length) {
-        cleanProduct.productVariants =
-          cleanProduct.productVariants.map(removeKeywords);
-      } else {
-        delete cleanProduct.productVariants;
-      }
-
-      if (cleanProduct.modifiers?.length) {
-        cleanProduct.modifiers = cleanProduct.modifiers.map(removeKeywords);
-      } else {
-        delete cleanProduct.modifiers;
-      }
-
-      if (cleanProduct.pizzaIngredients?.length) {
-        cleanProduct.pizzaIngredients =
-          cleanProduct.pizzaIngredients.map(removeKeywords);
-      } else {
-        delete cleanProduct.pizzaIngredients;
-      }
-
-      return cleanProduct;
+    if (productoLimpio.productVariants?.length) {
+      productoLimpio.productVariants =
+        productoLimpio.productVariants.map(removeKeywords);
+    } else {
+      delete productoLimpio.productVariants;
     }
-  );
 
-  const relevantMenu = {
-    menu,
-  };
-  return relevantMenu;
+    if (productoLimpio.modifiers?.length) {
+      productoLimpio.modifiers = productoLimpio.modifiers.map(removeKeywords);
+    } else {
+      delete productoLimpio.modifiers;
+    }
+
+    if (productoLimpio.pizzaIngredients?.length) {
+      productoLimpio.pizzaIngredients =
+        productoLimpio.pizzaIngredients.map(removeKeywords);
+    } else {
+      delete productoLimpio.pizzaIngredients;
+    }
+
+    return productoLimpio;
+  });
+
+  return productos;
 }
 
 async function preprocessMessages(messages) {
