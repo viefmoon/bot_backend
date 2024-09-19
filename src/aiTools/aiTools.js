@@ -144,7 +144,7 @@ const preprocessOrderTool = [
           conversationSummary: {
             type: "string",
             description:
-              "Resumen extenso del contenido de la conversación entre el usuario y el asistente.",
+              "Transcripción completa de la conversación entre el cliente y el asistente.",
           },
         },
         required: [
