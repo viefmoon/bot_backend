@@ -305,8 +305,14 @@ async function preprocessMessages(messages) {
   });
 
   if (response.choices[0].message.tool_calls) {
-    const toolCall = response.choices[0].message.tool_calls[0];
-    return JSON.parse(toolCall.function.arguments).preprocessedOrder;
+    const toolCall = response.choices[0].message.tool_calls.find(
+      (call) => call.function.name === "preprocess_order"
+    );
+
+    if (toolCall) {
+      console.log("toolCall", toolCall);
+      return JSON.parse(toolCall.function.arguments);
+    }
   } else {
     console.error("No se pudo preprocesar el mensaje");
     return "Error al preprocesar el mensaje";
