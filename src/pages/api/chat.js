@@ -548,7 +548,7 @@ export async function handleChatRequest(req) {
 }
 
 async function selectProducts(toolCall, clientId) {
-  const { orderItems, orderType, deliveryInfo } = JSON.parse(toolCall.input);
+  const { orderItems, orderType, deliveryInfo } = toolCall.input;
 
   try {
     const response = await axios.post(
