@@ -4,7 +4,7 @@ const selectProductsTool = [
     function: {
       name: "select_products",
       description:
-        "Selecciona los productos y crea una preorden con los datos de entrega.",
+        "Crea los orderItems uno a unoy la preorden con los datos de entrega.",
       strict: false,
       parameters: {
         type: "object",
@@ -70,7 +70,7 @@ const selectProductsTool = [
                 comments: {
                   type: ["string"],
                   description:
-                    "Observaciones que no estén definidas en los modificadores del producto.",
+                    "Añadir las observaciones que no pudieron ser definidas en los modificadores del producto.",
                 },
                 quantity: {
                   type: "integer",
