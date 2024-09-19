@@ -256,18 +256,24 @@ async function getRelevantMenuItems(preprocessedContent) {
     (product) => {
       const cleanProduct = removeKeywords(product);
 
-      if (cleanProduct.productVariants) {
+      if (cleanProduct.productVariants?.length) {
         cleanProduct.productVariants =
           cleanProduct.productVariants.map(removeKeywords);
+      } else {
+        delete cleanProduct.productVariants;
       }
 
-      if (cleanProduct.modifiers) {
+      if (cleanProduct.modifiers?.length) {
         cleanProduct.modifiers = cleanProduct.modifiers.map(removeKeywords);
+      } else {
+        delete cleanProduct.modifiers;
       }
 
-      if (cleanProduct.pizzaIngredients) {
+      if (cleanProduct.pizzaIngredients?.length) {
         cleanProduct.pizzaIngredients =
           cleanProduct.pizzaIngredients.map(removeKeywords);
+      } else {
+        delete cleanProduct.pizzaIngredients;
       }
 
       return cleanProduct;
