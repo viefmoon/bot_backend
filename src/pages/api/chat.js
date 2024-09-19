@@ -256,33 +256,29 @@ async function getRelevantMenuItems(relevantMessages) {
 
   menu = Array.from(new Set(menu.map(JSON.stringify)), JSON.parse).map(
     (product) => {
-      const cleanProduct = {
-        productId: `${product.name} (${product.productId})`,
-      };
+      const cleanProduct = removeKeywords(product);
 
-      if (product.productVariants) {
-        cleanProduct.productVariantsIds = product.productVariants.map(
-          (v) => `${v.name} (${v.variantId})`
-        );
+      if (cleanProduct.productVariants) {
+        cleanProduct.productVariants =
+          cleanProduct.productVariants.map(removeKeywords);
       }
 
-      if (product.modifiers) {
-        cleanProduct.modifiersIds = product.modifiers.map(
-          (m) => `${m.name} (${m.modifierId})`
-        );
+      if (cleanProduct.modifiers) {
+        cleanProduct.modifiers = cleanProduct.modifiers.map(removeKeywords);
       }
 
-      if (product.pizzaIngredients) {
-        cleanProduct.pizzaIngredientsIds = product.pizzaIngredients.map(
-          (i) => `${i.name} (${i.pizzaIngredientId})`
-        );
+      if (cleanProduct.pizzaIngredients) {
+        cleanProduct.pizzaIngredients =
+          cleanProduct.pizzaIngredients.map(removeKeywords);
       }
 
       return cleanProduct;
     }
   );
 
-  const relevantMenu = { menu };
+  const relevantMenu = {
+    menu,
+  };
   return relevantMenu;
 }
 
@@ -376,7 +372,7 @@ export async function handleChatRequest(req) {
       parallel_tool_calls: false,
       tool_choice: {
         type: "function",
-        function: { name: "select_products" }
+        function: { name: "select_products" },
       },
     });
 
