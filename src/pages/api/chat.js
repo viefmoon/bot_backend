@@ -322,7 +322,13 @@ async function preprocessMessages(messages) {
 
     if (toolCall) {
       console.log("toolCall", toolCall);
-      return JSON.parse(toolCall.function.arguments);
+      const preprocessedContent = JSON.parse(toolCall.function.arguments);
+
+      for (const item of preprocessedContent.orderItems) {
+        item.relevantMenuItems = await getRelevantMenuItems(item);
+      }
+
+      return preprocessedContent;
     }
   } else {
     console.error("No se pudo preprocesar el mensaje");
@@ -335,8 +341,6 @@ export async function handleChatRequest(req) {
   try {
     // Preprocesar los mensajes
     const preprocessedContent = await preprocessMessages(relevantMessages);
-
-    const relevantMenuItems = await getRelevantMenuItems(preprocessedContent);
 
     const systemSelectProductsMessage = {
       role: "system",
@@ -368,9 +372,9 @@ export async function handleChatRequest(req) {
 
     const userSelectProductsMessage = {
       role: "user",
-      content:
-        `Productos mencionados: ${JSON.stringify(preprocessedContent)}\n\n` +
-        `Menu disponible: ${JSON.stringify(relevantMenuItems)}`,
+      content: `Productos mencionados: ${JSON.stringify(
+        preprocessedContent
+      )}\n\n`,
     };
 
     const selectProductsMessages = [
