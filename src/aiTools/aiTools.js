@@ -106,7 +106,7 @@ const preprocessOrderTool = [
     function: {
       name: "preprocess_order",
       description:
-        "Preprocesa la orden del cliente en una lista estructurada de productos y detalles de entrega.",
+        "Preprocesa la orden del cliente en una lista estructurada de productos y detalles de entrega, incluyendo un resumen de la conversación.",
       strict: true,
       parameters: {
         type: "object",
@@ -141,8 +141,18 @@ const preprocessOrderTool = [
             description:
               "Tipo de orden: entrega a domicilio o recolección en restaurante.",
           },
+          conversationSummary: {
+            type: "string",
+            description:
+              "Resumen extenso del contenido de la conversación entre el usuario y el asistente.",
+          },
         },
-        required: ["orderItems", "orderType", "deliveryInfo"],
+        required: [
+          "orderItems",
+          "orderType",
+          "deliveryInfo",
+          "conversationSummary",
+        ],
         additionalProperties: false,
       },
     },

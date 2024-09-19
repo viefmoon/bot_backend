@@ -388,7 +388,7 @@ async function preprocessMessages(messages) {
     role: "system",
     content: JSON.stringify({
       instrucciones: [
-        "Analiza el mensaje del usuario y utiliza la función 'preprocess_order' para crear una lista detallada de los productos mencionados con sus detalles y la información de entrega.",
+        "Analiza los mensajes del usuario y asistente y utiliza la función 'preprocess_order' para crear una lista detallada de los productos mencionados con sus detalles, la información de entrega y un resumen extenso de la conversación.",
       ],
     }),
   };
