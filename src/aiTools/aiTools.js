@@ -26,7 +26,7 @@ const selectProductsTool = [
                 selectedPizzaIngredients: {
                   type: "array",
                   description:
-                    "Lista de ingredientes seleccionados para la pizza. Debe incluir al menos un ingrediente.",
+                    "Lista de ingredientes seleccionados para la pizza y posicion.",
                   items: {
                     type: "object",
                     properties: {
@@ -38,7 +38,7 @@ const selectProductsTool = [
                         type: "string",
                         enum: ["full", "half1", "half2"],
                         description:
-                          "Posicion ingrediente ('full' para toda la pizza, 'half1' para mitad uno, 'half2' para mitad dos).",
+                          "Posicion ingrediente ('full' para toda la pizza, 'half1' para mitad uno, 'half2' para mitad dos). No se permite mezclar 'full' con 'half1' o 'half2'.",
                       },
                       action: {
                         type: "string",
@@ -47,67 +47,9 @@ const selectProductsTool = [
                           "Acción a realizar con el ingrediente: añadir o quitar de half correspondiente.",
                       },
                     },
-                    required: ["pizzaIngredientId", "position", "action"],
+                    required: ["pizzaIngredientId", "half", "action"],
                     additionalProperties: false,
                   },
-                  oneOf: [
-                    {
-                      properties: {
-                        position: { enum: ["full"] },
-                        items: {
-                          type: "object",
-                          properties: {
-                            pizzaIngredientId: {
-                              type: "string",
-                              description: "ID del ingrediente de la pizza.",
-                            },
-                            position: {
-                              type: "string",
-                              enum: ["full"],
-                              description:
-                                "Posicion ingrediente ('full' para toda la pizza).",
-                            },
-                            action: {
-                              type: "string",
-                              enum: ["add", "remove"],
-                              description:
-                                "Acción a realizar con el ingrediente: añadir o quitar.",
-                            },
-                          },
-                          required: ["pizzaIngredientId", "position", "action"],
-                          additionalProperties: false,
-                        },
-                      },
-                    },
-                    {
-                      properties: {
-                        position: { enum: ["half1", "half2"] },
-                        items: {
-                          type: "object",
-                          properties: {
-                            pizzaIngredientId: {
-                              type: "string",
-                              description: "ID del ingrediente de la pizza.",
-                            },
-                            position: {
-                              type: "string",
-                              enum: ["half1", "half2"],
-                              description:
-                                "Posicion ingrediente ('half1' para mitad uno, 'half2' para mitad dos).",
-                            },
-                            action: {
-                              type: "string",
-                              enum: ["add", "remove"],
-                              description:
-                                "Acción a realizar con el ingrediente: añadir o quitar.",
-                            },
-                          },
-                          required: ["pizzaIngredientId", "position", "action"],
-                          additionalProperties: false,
-                        },
-                      },
-                    },
-                  ],
                 },
                 selectedModifiers: {
                   type: "array",
