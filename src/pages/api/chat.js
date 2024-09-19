@@ -466,6 +466,7 @@ export async function handleChatRequest(req) {
       model: "claude-3-5-sonnet-20240620",
       system: systemContent,
       messages: [
+        ...relevantMessages,
         { role: "user", content: JSON.stringify(preprocessedContent) },
       ],
       max_tokens: 4096,
