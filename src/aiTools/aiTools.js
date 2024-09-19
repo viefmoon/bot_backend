@@ -250,4 +250,8 @@ const selectProductsToolClaude = [
   },
 ];
 
-module.exports = { selectProductsTool, preprocessOrderTool };
+module.exports = {
+  selectProductsTool,
+  preprocessOrderTool,
+  selectProductsToolClaude,
+};
