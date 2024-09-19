@@ -324,8 +324,18 @@ async function preprocessMessages(messages) {
       console.log("toolCall", toolCall);
       const preprocessedContent = JSON.parse(toolCall.function.arguments);
 
+      // Asegurarse de que orderItems sea un array
+      if (typeof preprocessedContent.orderItems === "string") {
+        preprocessedContent.orderItems = [preprocessedContent.orderItems];
+      } else if (!Array.isArray(preprocessedContent.orderItems)) {
+        throw new Error("orderItems debe ser un array o una cadena de texto");
+      }
+
       for (const item of preprocessedContent.orderItems) {
-        item.relevantMenuItems = await getRelevantMenuItems(item);
+        const relevantMenuItems = await getRelevantMenuItems({
+          orderItems: [item],
+        });
+        item.relevantMenuItems = relevantMenuItems;
       }
 
       return preprocessedContent;
