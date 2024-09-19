@@ -135,7 +135,7 @@ const menu = [
       },
       {
         id: "PV2",
-        name: "Media Orden de Papas a la Francesa",
+        name: "Media Orden de Papas gratinadas a la Francesa",
         keywords: [["francesa"], ["media"]],
         price: 50,
       },
