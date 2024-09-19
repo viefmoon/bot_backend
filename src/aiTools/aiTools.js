@@ -26,7 +26,7 @@ const selectProductsTool = [
                 selectedPizzaIngredients: {
                   type: "array",
                   description:
-                    "Lista de ingredientes seleccionados para la pizza (si aplica). Debe incluir al menos un ingrediente y se pueden personalizar las dos mitades de la pizza por separado.",
+                    "Lista de ingredientes seleccionados para la pizza. Incluye los ingredientes base de la pizza entera o cada mitad y cualquier ingrediente adicional especificado para una mitad en particular o la pizza entera. IMPORTANTE: Los ingredientes adicionales SIEMPRE deben asignarse a la mitad correspondiente ('left' o 'right'), NUNCA a 'full' cuando se trata de una pizza con mitades diferentes.",
                   items: {
                     type: "object",
                     properties: {
