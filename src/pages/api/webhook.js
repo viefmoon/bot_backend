@@ -522,18 +522,6 @@ async function handleMessage(from, message) {
       }
     }
 
-    // Añadir la información del cliente al inicio si no está presente
-    if (
-      !relevantChatHistory.some((msg) =>
-        msg.content.startsWith("Información de entrega:")
-      )
-    ) {
-      relevantChatHistory.unshift({
-        role: "assistant",
-        content: `Información de entrega: ${deliveryInfo}`,
-      });
-    }
-
     // Añadir el nuevo mensaje del usuario a ambos historiales
     const userMessage = { role: "user", content: message };
     if (message && message.trim() !== "") {
