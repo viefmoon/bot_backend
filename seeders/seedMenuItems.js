@@ -262,7 +262,7 @@ const menu = [
           {
             id: "EM1-3",
             name: "Con vinagreta",
-            keywords: [["con", "agregar", "extra"], ["vinagreta"]],
+            keywords: ["vinagreta"],
             price: 0,
           },
           {

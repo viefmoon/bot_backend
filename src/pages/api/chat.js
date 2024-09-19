@@ -250,7 +250,6 @@ async function getMenuAvailability() {
 function extractMentionedProducts(message, menu) {
   const mentionedProducts = [];
   const wordsToFilter = [
-    "con",
     "del",
     "los",
     "las",
