@@ -473,7 +473,7 @@ export async function handleChatRequest(req) {
     console.log("Select Products message:", selectProductsMessages);
 
     let response = await openai.chat.completions.create({
-      model: "gpt-4o-mini",
+      model: "gpt-4o",
       messages: selectProductsMessages,
       tools: selectProductsTool,
       parallel_tool_calls: false,
@@ -482,6 +482,9 @@ export async function handleChatRequest(req) {
         function: { name: "select_products" },
       },
     });
+
+    const tokensUsados = response.usage.total_tokens;
+    console.log("Tokens utilizados:", tokensUsados);
 
     let shouldDeleteConversation = false;
 
