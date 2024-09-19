@@ -106,8 +106,8 @@ const preprocessOrderTool = [
     function: {
       name: "preprocess_order",
       description:
-        "Preprocesa la orden del cliente en una lista estructurada de productos y detalles de entrega, con descripción detallada para pizzas.",
-      strict: false,
+        "Preprocesa la orden del cliente en una lista estructurada de productos y detalles de entrega.",
+      strict: true,
       parameters: {
         type: "object",
         properties: {
@@ -119,39 +119,7 @@ const preprocessOrderTool = [
               properties: {
                 description: {
                   type: "string",
-                  description: "Descripción general del producto.",
-                },
-                pizzaDescription: {
-                  type: "object",
-                  description:
-                    "Descripción detallada de ingredientes para pizzas, separada por mitades.",
-                  properties: {
-                    full: {
-                      type: "object",
-                      properties: {
-                        add: { type: "array", items: { type: "string" } },
-                        remove: { type: "array", items: { type: "string" } },
-                      },
-                      additionalProperties: false,
-                    },
-                    left: {
-                      type: "object",
-                      properties: {
-                        add: { type: "array", items: { type: "string" } },
-                        remove: { type: "array", items: { type: "string" } },
-                      },
-                      additionalProperties: false,
-                    },
-                    right: {
-                      type: "object",
-                      properties: {
-                        add: { type: "array", items: { type: "string" } },
-                        remove: { type: "array", items: { type: "string" } },
-                      },
-                      additionalProperties: false,
-                    },
-                  },
-                  additionalProperties: false,
+                  description: "Descripción detallada del producto.",
                 },
                 quantity: {
                   type: "integer",
