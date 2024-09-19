@@ -168,8 +168,17 @@ async function getMenuAvailability() {
 
 function extractMentionedProducts(message, menu) {
   const mentionedProducts = [];
-  const words = message.split(/\s+/);
-
+  const wordsToFilter = [
+    "con",
+    "del",
+    "los",
+    "las",
+    "una",
+    "unos",
+    "unas",
+    "pero",
+    "para",
+  ];
   function normalizeWord(word) {
     return word
       .toLowerCase()
@@ -177,25 +186,26 @@ function extractMentionedProducts(message, menu) {
       .replace(/[\u0300-\u036f]/g, "");
   }
 
-  function checkKeywords(keywords, words) {
+  const words = message
+    .split(/\s+/)
+    .map(normalizeWord)
+    .filter((word) => word.length >= 3 && !wordsToFilter.includes(word));
+
+  function checkKeywords(keywords, filteredWords) {
     if (!keywords) return false;
-    const normalizedWords = words.map(normalizeWord);
 
     if (Array.isArray(keywords[0])) {
       return keywords.every((group) =>
         group.some((keyword) =>
-          normalizedWords.some(
-            (word) =>
-              word.length > 2 &&
-              partial_ratio(normalizeWord(keyword), word) > 90
+          filteredWords.some(
+            (word) => partial_ratio(normalizeWord(keyword), word) > 90
           )
         )
       );
     } else {
       return keywords.some((keyword) =>
-        normalizedWords.some(
-          (word) =>
-            word.length > 2 && partial_ratio(normalizeWord(keyword), word) > 90
+        filteredWords.some(
+          (word) => partial_ratio(normalizeWord(keyword), word) > 90
         )
       );
     }
