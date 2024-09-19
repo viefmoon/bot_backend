@@ -382,9 +382,7 @@ async function preprocessMessages(messages) {
     role: "system",
     content: JSON.stringify({
       instrucciones: [
-        "Analiza el mensaje del usuario y utiliza la función 'preprocess_order' para crear una lista detallada de los productos mencionados y la información de entrega.",
-        "Asegúrate de que cada mitad de la pizza esté precedida por 'mitad con' seguido del nombre de la pizza y los ingredientes adicionales.",
-        "Ejemplo de salida: 'mitad con especial sin salchicha, mitad con malinche con chorizo'.",
+        "Analiza el mensaje del usuario y utiliza la función 'preprocess_order' para crear una lista detallada de los productos mencionados con sus detalles y la información de entrega.",
       ],
     }),
   };
