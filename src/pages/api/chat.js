@@ -473,7 +473,19 @@ export async function handleChatRequest(req) {
       tool_choice: { type: "tool", name: "select_products" },
     });
 
-    console.log("response claude", response);
+    console.log(
+      "response claude",
+      JSON.stringify(
+        response,
+        (key, value) => {
+          if (key === "input" && typeof value === "object") {
+            return JSON.stringify(value);
+          }
+          return value;
+        },
+        2
+      )
+    );
 
     let shouldDeleteConversation = false;
 
