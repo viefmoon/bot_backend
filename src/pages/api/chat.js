@@ -462,15 +462,23 @@ export async function handleChatRequest(req) {
       "- Es OBLIGATORIO usar la función `select_products` para completar esta tarea.",
     ].join("\n");
 
+    // Extraer los mensajes del usuario de relevantMessages
+    const userMessages = relevantMessages
+      .filter((message) => message.role === "user")
+      .map((message) => message.content)
+      .join("\n");
+
+    // Combinar los mensajes del usuario con preprocessedContent
+    const combinedUserContent = `${userMessages}\n\n${JSON.stringify(
+      preprocessedContent
+    )}`;
+
     console.log("relevantMessages", relevantMessages);
 
     const response = await anthropic.messages.create({
       model: "claude-3-5-sonnet-20240620",
       system: systemContent,
-      messages: [
-        ...relevantMessages,
-        { role: "user", content: JSON.stringify(preprocessedContent) },
-      ],
+      messages: [{ role: "user", content: combinedUserContent }],
       max_tokens: 4096,
       tools: [selectProductsToolClaude],
       tool_choice: { type: "tool", name: "select_products" },
