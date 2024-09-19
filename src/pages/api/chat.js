@@ -478,44 +478,61 @@ export async function handleChatRequest(req) {
     let shouldDeleteConversation = false;
 
     // Manejar la respuesta directamente
-    if (response.choices[0].message.tool_calls) {
-      const toolCalls = response.choices[0].message.tool_calls;
+
+    if (response.choices[0].message.content) {
+      const toolCalls = response.choices[0].message.content;
       for (const toolCall of toolCalls) {
         console.log("toolCall", toolCall);
         const clientId = conversationId;
         let result;
 
-        switch (toolCall.function.name) {
-          case "modify_order":
-            result = await modifyOrder(toolCall, clientId);
-            shouldDeleteConversation = true;
-            return { text: result.output };
-          case "send_menu":
-            return [
-              { text: menu, isRelevant: false },
-              {
-                text: "El menú ha sido enviado, si tienes alguna duda, no dudes en preguntar",
-                isRelevant: true,
-              },
-            ];
-          case "select_products":
-            result = await selectProducts(toolCall, clientId);
-            return [
-              {
-                text: result.text,
-                sendToWhatsApp: result.sendToWhatsApp,
-                isRelevant: true,
-              },
-            ];
-          default:
-            return { error: "Función desconocida" };
+        if (
+          toolCall.type === "tool_use" &&
+          toolCall.name === "select_products"
+        ) {
+          result = await selectProducts(toolCall, clientId);
+          return [
+            {
+              text: result.text,
+              sendToWhatsApp: result.sendToWhatsApp,
+              isRelevant: true,
+            },
+          ];
         }
       }
-    } else {
-      // Si no hay llamadas a funciones, manejar la respuesta normal
-      const assistantMessage = response.choices[0].message.content;
-      return { text: assistantMessage };
     }
+
+    // switch (toolCall.function.name) {
+    //   case "modify_order":
+    //     result = await modifyOrder(toolCall, clientId);
+    //     shouldDeleteConversation = true;
+    //     return { text: result.output };
+    //   case "send_menu":
+    //     return [
+    //       { text: menu, isRelevant: false },
+    //       {
+    //         text: "El menú ha sido enviado, si tienes alguna duda, no dudes en preguntar",
+    //         isRelevant: true,
+    //       },
+    //     ];
+    //   case "select_products":
+    //     result = await selectProducts(toolCall, clientId);
+    //     return [
+    //       {
+    //         text: result.text,
+    //         sendToWhatsApp: result.sendToWhatsApp,
+    //         isRelevant: true,
+    //       },
+    //     ];
+    //   default:
+    //     return { error: "Función desconocida" };
+    // }
+    //   }
+    // } else {
+    //   // Si no hay llamadas a funciones, manejar la respuesta normal
+    //   const assistantMessage = response.choices[0].message.content;
+    //   return { text: assistantMessage };
+    // }
   } catch (error) {
     console.error("Error general:", error);
     return { error: "Error al procesar la solicitud: " + error.message };
