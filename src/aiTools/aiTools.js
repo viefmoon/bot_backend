@@ -26,13 +26,13 @@ const selectProductsTool = [
                 selectedPizzaIngredients: {
                   type: "array",
                   description:
-                    "Lista de ingredientes seleccionados para la pizza (si aplica).",
+                    "Lista de ingredientes y sabores seleccionados para la pizza.",
                   items: {
                     type: "object",
                     properties: {
                       pizzaIngredientId: {
                         type: "string",
-                        description: "ID del ingrediente de la pizza.",
+                        description: "ID del ingrediente o sabor de la pizza.",
                       },
                       half: {
                         type: "string",
