@@ -60,6 +60,87 @@ async function modifyOrder(toolCall, clientId) {
     };
   }
 }
+async function getAvailableMenu() {
+  try {
+    if (
+      !Product ||
+      !ProductVariant ||
+      !PizzaIngredient ||
+      !ModifierType ||
+      !Modifier ||
+      !Availability
+    ) {
+      console.error("Uno o más modelos no están definidos");
+      return { error: "Error en la configuración de los modelos" };
+    }
+
+    const products = await Product.findAll({
+      include: [
+        {
+          model: ProductVariant,
+          as: "productVariants",
+          include: [{ model: Availability, where: { available: true } }],
+        },
+        {
+          model: PizzaIngredient,
+          as: "pizzaIngredients",
+          include: [{ model: Availability, where: { available: true } }],
+        },
+        {
+          model: ModifierType,
+          as: "modifierTypes",
+          include: [
+            { model: Availability, where: { available: true } },
+            {
+              model: Modifier,
+              as: "modifiers",
+              include: [{ model: Availability, where: { available: true } }],
+            },
+          ],
+        },
+        { model: Availability, where: { available: true } },
+      ],
+    });
+
+    if (!products || products.length === 0) {
+      console.error("No se encontraron productos disponibles");
+      return {
+        error: "No se encontraron productos disponibles en la base de datos",
+      };
+    }
+
+    return products.map((producto) => {
+      const productoInfo = {
+        name: producto.name,
+      };
+
+      if (producto.productVariants?.length > 0) {
+        productoInfo.variantes = producto.productVariants.map((v) => v.name);
+      }
+
+      if (producto.modifierTypes?.length > 0) {
+        productoInfo.modificadores = producto.modifierTypes.flatMap(
+          (mt) => mt.modifiers?.map((m) => m.name) || []
+        );
+      }
+
+      if (producto.pizzaIngredients?.length > 0) {
+        productoInfo.ingredientesPizza = producto.pizzaIngredients.map(
+          (i) => i.name
+        );
+      }
+
+      return productoInfo;
+    });
+  } catch (error) {
+    console.error("Error al obtener el menú disponible:", error);
+    return {
+      error: "No se pudo obtener el menú disponible",
+      detalles: error.message,
+      stack: error.stack,
+    };
+  }
+}
 
 async function getMenuAvailability() {
   try {
@@ -295,16 +376,25 @@ async function getRelevantMenuItems(preprocessedContent) {
 }
 
 async function preprocessMessages(messages) {
+  const availableMenu = await getAvailableMenu();
+
   const systemMessageForPreprocessing = {
     role: "system",
     content: JSON.stringify({
       instrucciones: [
         "Analiza el mensaje del usuario y utiliza la función 'preprocess_order' para crear una lista detallada de los productos mencionados y la información de entrega.",
+        "Para mejorar la precisión, mapea los productos mencionados a los nombres exactos en el menú disponible.",
+        "Asegúrate de que las cantidades de los productos sean siempre números enteros.",
+        "Si un producto mencionado no coincide exactamente con un nombre en el menú, elige el más cercano o similar.",
+        "Si no estás seguro de un producto o cantidad, omítelo en lugar de hacer suposiciones.",
       ],
+      "MENU DISPONIBLE": availableMenu,
     }),
   };
 
   const preprocessingMessages = [systemMessageForPreprocessing, ...messages];
+
+  console.log("preprocessingMessages", preprocessingMessages);
 
   const response = await openai.chat.completions.create({
     model: "gpt-4o-mini",
