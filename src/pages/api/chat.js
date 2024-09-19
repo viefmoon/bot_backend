@@ -470,6 +470,7 @@ export async function handleChatRequest(req) {
       ],
       max_tokens: 4096,
       tools: selectProductsToolClaude,
+      tool_choice: { type: "tool", name: "select_products" },
     });
 
     console.log("response claude", response);
