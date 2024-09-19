@@ -3,36 +3,32 @@ const selectProductsTool = [
     type: "function",
     function: {
       name: "select_products",
-      description:
-        "Selecciona los productos y crea una preorden con los datos de entrega.",
       strict: false,
       parameters: {
         type: "object",
         properties: {
           orderItems: {
             type: "array",
-            description: "Lista de orderItems mencionados.",
             items: {
               type: "object",
               properties: {
                 productId: {
                   type: "string",
-                  description: "ID del producto.",
                 },
                 productVariantId: {
                   type: ["string"],
-                  description: "ID de la variante del producto (si aplica).",
+                  description:
+                    "ID de la variante del producto (solo si aplica).",
                 },
                 selectedPizzaIngredients: {
                   type: "array",
                   description:
-                    "Lista de ingredientes seleccionados para la pizza y posicion.",
+                    "Lista de ingredientes seleccionados para la pizza, posicion y accion (solo si aplica).",
                   items: {
                     type: "object",
                     properties: {
                       pizzaIngredientId: {
                         type: "string",
-                        description: "ID del ingrediente de la pizza.",
                       },
                       position: {
                         type: "string",
@@ -60,7 +56,6 @@ const selectProductsTool = [
                     properties: {
                       modifierId: {
                         type: "string",
-                        description: "ID del modificador.",
                       },
                     },
                     required: ["modifierId"],
@@ -74,7 +69,6 @@ const selectProductsTool = [
                 },
                 quantity: {
                   type: "integer",
-                  description: "Cantidad del ítem.",
                 },
               },
               required: ["productId", "quantity"],
@@ -85,12 +79,12 @@ const selectProductsTool = [
             type: ["string"],
             enum: ["delivery", "pickup"],
             description:
-              "Tipo de orden ('delivery' para entrega a domicilio, 'pickup' para recoger en restaurante).",
+              "Tipo de orden para entrega a domicilio o recolección en restaurante.",
           },
           deliveryInfo: {
             type: "string",
             description:
-              "Dirección de entrega para pedidos a domicilio o Nombre del cliente para recolección en restaurante.",
+              "Dirección de entrega para pedidos a domicilio o nombre del cliente para recolección en restaurante.",
           },
         },
         required: ["orderItems", "orderType", "deliveryInfo"],
