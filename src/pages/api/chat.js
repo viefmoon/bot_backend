@@ -507,7 +507,19 @@ export async function handleChatRequest(req) {
       "- Es OBLIGATORIO usar la función `select_products` para completar esta tarea.",
     ].join("\n");
 
-    console.log("preprocessedContent", preprocessedContent);
+    console.log(
+      "preprocessedContent",
+      JSON.stringify(
+        preprocessedContent,
+        (key, value) => {
+          if (key === "relevantMenuItems") {
+            return JSON.parse(JSON.stringify(value));
+          }
+          return value;
+        },
+        2
+      )
+    );
 
     const response = await anthropic.messages.create({
       model: "claude-3-5-sonnet-20240620",
