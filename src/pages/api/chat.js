@@ -323,7 +323,9 @@ function extractMentionedProducts(productMessage, menu) {
         // Renombrar variantId a productId para las variantes coincidentes
         mentionedProduct = matchedVariants.map((variant) => ({
           productId: variant.variantId,
-          name: `${product.name} - ${variant.name}`,
+          name: `${variant.name}`,
+          modifiers: [],
+          pizzaIngredients: [],
         }));
       } else {
         // Si el producto no tiene variantes, lo incluimos como antes
@@ -331,26 +333,34 @@ function extractMentionedProducts(productMessage, menu) {
           {
             productId: product.productId,
             name: product.name,
+            modifiers: [],
+            pizzaIngredients: [],
           },
         ];
       }
 
       // Verificar modificadores
       if (product.modificadores) {
-        mentionedProduct.modifiers = product.modificadores.filter((modifier) =>
+        const matchedModifiers = product.modificadores.filter((modifier) =>
           checkKeywords(modifier.keywords, words)
         );
+        mentionedProduct.forEach((prod) => {
+          prod.modifiers = matchedModifiers;
+        });
       }
 
       // Verificar ingredientes de pizza
       if (product.ingredientesPizza) {
-        mentionedProduct.pizzaIngredients = product.ingredientesPizza.filter(
+        const matchedIngredients = product.ingredientesPizza.filter(
           (ingredient) => checkKeywords(ingredient.keywords, words)
         );
+        mentionedProduct.forEach((prod) => {
+          prod.pizzaIngredients = matchedIngredients;
+        });
       }
 
       console.log("Producto mencionado:", mentionedProduct);
-      mentionedProducts.push(mentionedProduct);
+      mentionedProducts.push(...mentionedProduct);
     }
   }
   return mentionedProducts;
