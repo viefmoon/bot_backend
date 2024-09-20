@@ -121,7 +121,6 @@ async function getAvailableMenu() {
         ingredients: producto.ingredients || null,
       };
 
-
       if (producto.productVariants?.length > 0) {
         productoInfo.variantes = producto.productVariants.map((v) => ({
           name: v.name,
@@ -136,14 +135,11 @@ async function getAvailableMenu() {
       }
 
       if (producto.pizzaIngredients?.length > 0) {
-        productoInfo.ingredientesPizza = producto.pizzaIngredients.map(
-          (i) => ({
-            name: i.name,
-            ingredients: i.ingredients || null,
-          })
-        );
+        productoInfo.ingredientesPizza = producto.pizzaIngredients.map((i) => ({
+          name: i.name,
+          ingredients: i.ingredients || null,
+        }));
       }
-
 
       return productoInfo;
     });
@@ -318,23 +314,25 @@ function extractMentionedProducts(productMessage, menu) {
         const matchedVariants = product.variantes.filter((variant) =>
           checkKeywords(variant.keywords, words)
         );
-        
+
         // Si el producto tiene variantes pero no se encontraron coincidencias, no lo incluimos
         if (matchedVariants.length === 0) {
           continue;
         }
 
         // Renombrar variantId a productId para las variantes coincidentes
-        mentionedProduct = matchedVariants.map(variant => ({
+        mentionedProduct = matchedVariants.map((variant) => ({
           productId: variant.variantId,
-          name: `${product.name} - ${variant.name}`
+          name: `${product.name} - ${variant.name}`,
         }));
       } else {
         // Si el producto no tiene variantes, lo incluimos como antes
-        mentionedProduct = [{
-          productId: product.productId,
-          name: product.name
-        }];
+        mentionedProduct = [
+          {
+            productId: product.productId,
+            name: product.name,
+          },
+        ];
       }
 
       // Verificar modificadores
@@ -441,8 +439,6 @@ async function preprocessMessages(messages) {
     tools: preprocessOrderTool,
     parallel_tool_calls: false,
   });
-
-  console.log("response preprocessMessages", response);
 
   if (response.choices[0].message.tool_calls) {
     const toolCall = response.choices[0].message.tool_calls.find(
