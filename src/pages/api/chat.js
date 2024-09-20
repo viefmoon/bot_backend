@@ -137,7 +137,7 @@ async function getAvailableMenu() {
       if (producto.pizzaIngredients?.length > 0) {
         productoInfo.ingredientesPizza = producto.pizzaIngredients.map((i) => ({
           name: i.name,
-          ingredients: i.ingredients || null,
+          //ingredients: i.ingredients || null,
         }));
       }
 
