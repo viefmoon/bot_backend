@@ -525,37 +525,27 @@ async function selectProducts(req, res) {
     const calculatedItems = await Promise.all(
       orderItems.map(async (item) => {
         try {
-          const product = await Product.findByPk(item.productId);
+          let product, productVariant;
+          let itemPrice, productName;
+
+          // Intentar encontrar primero como producto
+          product = await Product.findByPk(item.productId);
+
           if (!product) {
-            throw new Error(
-              `Producto no encontrado en el menu: ${item.productId}`
-            );
-          }
-          let itemPrice = product.price || 0;
-          let productName = product.name;
-          let productVariantName = null;
-
-          // Verificar si el producto tiene productVariants y si se seleccionó una productVariant
-          const hasProductVariants =
-            (await ProductVariant.count({ where: { productId: product.id } })) >
-            0;
-          if (hasProductVariants && !item.productVariantId) {
-            throw new Error(
-              `El producto "${productName}" requiere la selección de una productVariant`
-            );
-          }
-
-          if (item.productVariantId) {
-            const productVariant = await ProductVariant.findByPk(
-              item.productVariantId
-            );
+            // Si no se encuentra como producto, buscar como variante
+            productVariant = await ProductVariant.findByPk(item.productId);
             if (!productVariant) {
               throw new Error(
-                `Variante de producto no encontrada en el menu: ${item.productVariantId}`
+                `Producto o variante no encontrado en el menú: ${item.productId}`
               );
             }
-            itemPrice = productVariant.price;
-            productVariantName = productVariant.name;
+            // Si es una variante, obtener el producto asociado
+            product = await Product.findByPk(productVariant.productId);
+            itemPrice = productVariant.price || 0;
+            productName = productVariant.name;
+          } else {
+            itemPrice = product.price || 0;
+            productName = product.name;
           }
 
           // Verificar si el producto es una pizza y si se seleccionó al menos un ingrediente
@@ -703,7 +693,6 @@ async function selectProducts(req, res) {
             ...item,
             precio_total_orderItem: totalItemPrice,
             nombre_producto: productName,
-            nombre_variante: productVariantName,
             modificadores: modifierNames,
             ingredientes_pizza: pizzaIngredientNames,
           };
@@ -728,7 +717,7 @@ async function selectProducts(req, res) {
     relevantMessageContent += "\n";
 
     calculatedItems.forEach((item) => {
-      const itemName = item.nombre_variante || item.nombre_producto;
+      const itemName = item.nombre_producto;
       messageContent += `- *${item.quantity}x ${itemName}*: $${item.precio_total_orderItem}\n`;
       relevantMessageContent += `- *${item.quantity}x ${itemName}*\n`;
 

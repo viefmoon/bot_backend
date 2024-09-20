@@ -13,7 +13,6 @@ const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 const { partial_ratio } = require("fuzzball");
-const { preprocessMessage } = require("../../utils/preprocessMessage");
 const {
   selectProductsTool,
   preprocessOrderTool,
@@ -119,10 +118,15 @@ async function getAvailableMenu() {
     return products.map((producto) => {
       const productoInfo = {
         name: producto.name,
+        ingredients: producto.ingredients || null,
       };
 
+
       if (producto.productVariants?.length > 0) {
-        productoInfo.variantes = producto.productVariants.map((v) => v.name);
+        productoInfo.variantes = producto.productVariants.map((v) => ({
+          name: v.name,
+          ingredients: v.ingredients || null,
+        }));
       }
 
       if (producto.modifierTypes?.length > 0) {
@@ -133,9 +137,13 @@ async function getAvailableMenu() {
 
       if (producto.pizzaIngredients?.length > 0) {
         productoInfo.ingredientesPizza = producto.pizzaIngredients.map(
-          (i) => i.name
+          (i) => ({
+            name: i.name,
+            ingredients: i.ingredients || null,
+          })
         );
       }
+
 
       return productoInfo;
     });
@@ -254,7 +262,7 @@ async function getMenuAvailability() {
   }
 }
 
-function extractMentionedProducts(message, menu) {
+function extractMentionedProducts(productMessage, menu) {
   const mentionedProducts = [];
   const wordsToFilter = [
     "del",
@@ -273,8 +281,9 @@ function extractMentionedProducts(message, menu) {
       .replace(/[\u0300-\u036f]/g, "");
   }
 
-  const words = message
+  const words = productMessage
     .split(/\s+/)
+
     .map(normalizeWord)
     .filter((word) => word.length >= 3 && !wordsToFilter.includes(word));
 
@@ -302,16 +311,30 @@ function extractMentionedProducts(message, menu) {
     let isProductMentioned = checkKeywords(product.keywords, words);
 
     if (isProductMentioned) {
-      const mentionedProduct = {
-        productId: product.productId,
-        name: product.name,
-      };
+      let mentionedProduct = {};
 
       // Verificar variantes
       if (product.variantes) {
-        mentionedProduct.productVariants = product.variantes.filter((variant) =>
+        const matchedVariants = product.variantes.filter((variant) =>
           checkKeywords(variant.keywords, words)
         );
+        
+        // Si el producto tiene variantes pero no se encontraron coincidencias, no lo incluimos
+        if (matchedVariants.length === 0) {
+          continue;
+        }
+
+        // Renombrar variantId a productId para las variantes coincidentes
+        mentionedProduct = matchedVariants.map(variant => ({
+          productId: variant.variantId,
+          name: `${product.name} - ${variant.name}`
+        }));
+      } else {
+        // Si el producto no tiene variantes, lo incluimos como antes
+        mentionedProduct = [{
+          productId: product.productId,
+          name: product.name
+        }];
       }
 
       // Verificar modificadores
@@ -388,7 +411,11 @@ async function preprocessMessages(messages) {
     role: "system",
     content: JSON.stringify({
       instrucciones: [
-        "Analiza los mensajes del usuario y asistente y utiliza la función 'preprocess_order' para crear una lista detallada de los productos mencionados con sus detalles, la información de entrega y un resumen extenso de la conversación.",
+        "Eres un asistente virtual del Restaurante La Leña, especializado en la selección de productos. Utilizas emojis en tus interacciones para crear una experiencia amigable y cercana.",
+        "Analiza los mensajes entre usuario y asistente, utiliza la función 'preprocess_order' para crear una lista detallada de los productos mencionados con sus detalles, la información de entrega y un resumen extenso de la conversación.",
+        "Mantén las interacciones rápidas y eficaces.",
+        "No ofrezcas extras o modificadores si el cliente no los ha mencionado explícitamente.",
+        "La función `send_menu` debe ejecutarse única y exclusivamente cuando el cliente solicite explícitamente ver el menú.",
       ],
     }),
   };

@@ -4,7 +4,7 @@ const selectProductsTool = [
     function: {
       name: "select_products",
       description:
-        "Crea los orderItems uno a unoy la preorden con los datos de entrega.",
+        "Crea los orderItems uno a uno y la preorden con los datos de entrega.",
       strict: false,
       parameters: {
         type: "object",
@@ -18,10 +18,6 @@ const selectProductsTool = [
                 productId: {
                   type: "string",
                   description: "ID del producto.",
-                },
-                productVariantId: {
-                  type: ["string"],
-                  description: "ID de la variante del producto (si aplica).",
                 },
                 selectedPizzaIngredients: {
                   type: "array",
@@ -175,10 +171,6 @@ const selectProductsToolClaude = {
             productId: {
               type: "string",
               description: "ID del producto.",
-            },
-            productVariantId: {
-              type: "string",
-              description: "ID de la variante del producto (si aplica).",
             },
             selectedPizzaIngredients: {
               type: "array",
