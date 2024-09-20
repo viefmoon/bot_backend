@@ -307,13 +307,7 @@ function extractMentionedProducts(productMessage, menu) {
     let isProductMentioned = checkKeywords(product.keywords, words);
 
     if (isProductMentioned) {
-      let mentionedProduct = {
-        productId: product.productId,
-        name: product.name,
-        variants: [],
-        modifiers: [],
-        pizzaIngredients: [],
-      };
+      let mentionedProduct = {};
 
       // Verificar variantes
       if (product.variantes) {
@@ -329,6 +323,10 @@ function extractMentionedProducts(productMessage, menu) {
         } else {
           continue; // Si no hay variantes coincidentes, saltamos este producto
         }
+      } else {
+        // Si no hay variantes, incluimos el productId y name del producto principal
+        mentionedProduct.productId = product.productId;
+        mentionedProduct.name = product.name;
       }
 
       // Verificar modificadores
