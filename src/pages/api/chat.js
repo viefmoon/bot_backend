@@ -307,7 +307,13 @@ function extractMentionedProducts(productMessage, menu) {
     let isProductMentioned = checkKeywords(product.keywords, words);
 
     if (isProductMentioned) {
-      let mentionedProduct = {};
+      let mentionedProduct = {
+        productId: product.productId,
+        name: product.name,
+        variants: [],
+        modifiers: [],
+        pizzaIngredients: [],
+      };
 
       // Verificar variantes
       if (product.variantes) {
@@ -315,52 +321,32 @@ function extractMentionedProducts(productMessage, menu) {
           checkKeywords(variant.keywords, words)
         );
 
-        // Si el producto tiene variantes pero no se encontraron coincidencias, no lo incluimos
-        if (matchedVariants.length === 0) {
-          continue;
+        if (matchedVariants.length > 0) {
+          mentionedProduct.variants = matchedVariants.map((variant) => ({
+            productId: variant.variantId,
+            name: variant.name,
+          }));
+        } else {
+          continue; // Si no hay variantes coincidentes, saltamos este producto
         }
-
-        // Renombrar variantId a productId para las variantes coincidentes
-        mentionedProduct = matchedVariants.map((variant) => ({
-          productId: variant.variantId,
-          name: `${variant.name}`,
-          modifiers: [],
-          pizzaIngredients: [],
-        }));
-      } else {
-        // Si el producto no tiene variantes, lo incluimos como antes
-        mentionedProduct = [
-          {
-            productId: product.productId,
-            name: product.name,
-            modifiers: [],
-            pizzaIngredients: [],
-          },
-        ];
       }
 
       // Verificar modificadores
       if (product.modificadores) {
-        const matchedModifiers = product.modificadores.filter((modifier) =>
+        mentionedProduct.modifiers = product.modificadores.filter((modifier) =>
           checkKeywords(modifier.keywords, words)
         );
-        mentionedProduct.forEach((prod) => {
-          prod.modifiers = matchedModifiers;
-        });
       }
 
       // Verificar ingredientes de pizza
       if (product.ingredientesPizza) {
-        const matchedIngredients = product.ingredientesPizza.filter(
+        mentionedProduct.pizzaIngredients = product.ingredientesPizza.filter(
           (ingredient) => checkKeywords(ingredient.keywords, words)
         );
-        mentionedProduct.forEach((prod) => {
-          prod.pizzaIngredients = matchedIngredients;
-        });
       }
 
       console.log("Producto mencionado:", mentionedProduct);
-      mentionedProducts.push(...mentionedProduct);
+      mentionedProducts.push(mentionedProduct);
     }
   }
   return mentionedProducts;
