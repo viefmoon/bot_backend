@@ -498,6 +498,7 @@ export async function handleChatRequest(req) {
           text: preprocessedContent.text,
           sendToWhatsApp: true,
           isRelevant: preprocessedContent.isRelevant,
+          confirmationMessage: preprocessedContent.confirmationMessage,
         },
       ];
     }
