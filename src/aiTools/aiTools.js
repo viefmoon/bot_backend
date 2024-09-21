@@ -241,9 +241,25 @@ const selectProductsToolClaude = {
     required: ["orderItems", "orderType", "deliveryInfo"],
   },
 };
+const sendMenuTool = [
+  {
+    type: "function",
+    function: {
+      name: "send_menu",
+      description:
+        "Envía el menú completo al cliente cuando lo solicita explícitamente.",
+      parameters: {
+        type: "object",
+        properties: {},
+        required: [],
+      },
+    },
+  },
+];
 
 module.exports = {
   selectProductsTool,
   preprocessOrderTool,
   selectProductsToolClaude,
+  sendMenuTool,
 };

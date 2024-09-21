@@ -17,6 +17,7 @@ const {
   selectProductsTool,
   preprocessOrderTool,
   selectProductsToolClaude,
+  sendMenuTool,
 } = require("../../aiTools/aiTools");
 const Anthropic = require("@anthropic-ai/sdk");
 
@@ -316,7 +317,7 @@ function extractMentionedProducts(productMessage, menu) {
         );
 
         if (matchedVariants.length > 0) {
-          mentionedProduct.variants = matchedVariants.map((variant) => ({
+          mentionedProduct.products = matchedVariants.map((variant) => ({
             productId: variant.variantId,
             name: variant.name,
           }));
@@ -430,16 +431,13 @@ async function preprocessMessages(messages) {
   const response = await openai.chat.completions.create({
     model: "gpt-4o-mini",
     messages: preprocessingMessages,
-    tools: preprocessOrderTool,
+    tools: [...preprocessOrderTool, ...sendMenuTool],
     parallel_tool_calls: false,
   });
 
   if (response.choices[0].message.tool_calls) {
-    const toolCall = response.choices[0].message.tool_calls.find(
-      (call) => call.function.name === "preprocess_order"
-    );
-
-    if (toolCall) {
+    const toolCall = response.choices[0].message.tool_calls[0];
+    if (toolCall.function.name === "preprocess_order") {
       console.log("toolCall", toolCall);
       const preprocessedContent = JSON.parse(toolCall.function.arguments);
 
@@ -461,18 +459,26 @@ async function preprocessMessages(messages) {
       }
 
       return preprocessedContent;
+    } else if (toolCall.function.name === "send_menu") {
+      return {
+        text: menu,
+        isDirectResponse: true,
+        isRelevant: false,
+      };
     }
   } else if (response.choices[0].message.content) {
     console.log("No se ejecutó preprocessOrderTool, retornando texto");
     return {
       text: response.choices[0].message.content,
       isDirectResponse: true,
+      isRelevant: true,
     };
   } else {
     console.error("No se pudo preprocesar el mensaje");
     return {
       text: "Error al preprocesar el mensaje",
       isDirectResponse: true,
+      isRelevant: true,
     };
   }
 }
@@ -489,7 +495,7 @@ export async function handleChatRequest(req) {
         {
           text: preprocessedContent.text,
           sendToWhatsApp: true,
-          isRelevant: true,
+          isRelevant: preprocessedContent.isRelevant,
         },
       ];
     }
