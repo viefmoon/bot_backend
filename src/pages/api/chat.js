@@ -464,6 +464,8 @@ async function preprocessMessages(messages) {
         text: menu,
         isDirectResponse: true,
         isRelevant: false,
+        confirmationMessage:
+          "El menú ha sido enviado. ¿Hay algo más en lo que pueda ayudarte?",
       };
     }
   } else if (response.choices[0].message.content) {
