@@ -109,7 +109,8 @@ const preprocessOrderTool = [
         properties: {
           orderItems: {
             type: "array",
-            description: "Lista de productos solicitados por el cliente.",
+            description:
+              "Lista de productos y cantidades solicitados por el cliente.",
             items: {
               type: "object",
               properties: {
