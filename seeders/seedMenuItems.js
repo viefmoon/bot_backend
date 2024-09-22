@@ -99,13 +99,13 @@ const menu = [
             id: "AM1-1",
             name: "Mas doradas",
             price: 0,
-            keywords: ["doradas"],
+            keywords: ["doradas", "doraditas"],
           },
           {
             id: "AM1-2",
             name: "Menos doradas",
             price: 0,
-            keywords: ["doradas"],
+            keywords: ["doradas", "doraditas"],
           },
           {
             id: "AM1-3",
@@ -449,7 +449,7 @@ const menu = [
           {
             id: "HM2-6",
             name: "Carne bien dorada",
-            keywords: [["carne"], ["cocida", "dorada"]],
+            keywords: [["carne"], ["cocida", "dorada", "doraditas"]],
             price: 0,
           },
         ],
@@ -1029,7 +1029,7 @@ const menu = [
           {
             id: "PZ-M1-2",
             name: "mas doradita",
-            keywords: [["extra", "mas"], ["doradita"]],
+            keywords: ["doradita", "dorada"],
             price: 0,
           },
           {
@@ -1058,6 +1058,12 @@ const menu = [
               ["doble", "mas", "extra"],
               ["aceite", "chile"],
             ],
+            price: 0,
+          },
+          {
+            id: "PZ-M1-8",
+            name: "menos doradita",
+            keywords: ["doradita", "dorada"],
             price: 0,
           },
         ],
