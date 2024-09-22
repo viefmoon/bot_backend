@@ -419,7 +419,7 @@ async function preprocessMessages(messages) {
         "Mantén las interacciones rápidas y eficaces.",
         "No ofrezcas extras o modificadores si el cliente no los ha mencionado explícitamente.",
         "La función `send_menu` debe ejecutarse única y exclusivamente cuando el cliente solicite explícitamente ver el menú.",
-        "La función `preprocess_order` se ejecuta cuando el cliente menciona productos, la informacion de entrega debe ser proporcionada por el cliente, si no se proporciona, se debe solicitar antes de ejecutar la funcion.",
+        "La función `preprocess_order` se ejecuta cuando el cliente menciona productos, esta contiene cantidad y descripcion de cada producto, la informacion de entrega debe ser proporcionada por el cliente, si no se proporciona, se debe solicitar antes de ejecutar la funcion.",
       ],
     }),
   };
