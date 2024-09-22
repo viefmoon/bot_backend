@@ -290,14 +290,14 @@ function extractMentionedProducts(productMessage, menu) {
     function compareWords(keyword, word) {
       const similarity = ratio(normalizeWord(keyword), word);
       const lengthDifference = Math.abs(keyword.length - word.length);
-      
+
       // Ajustamos los umbrales según la longitud de las palabras
       if (keyword.length <= 3) {
         return similarity === 100 && lengthDifference === 0;
       } else if (keyword.length <= 5) {
-        return similarity >= 80 && lengthDifference <= 1;
+        return similarity >= 90 && lengthDifference <= 1;
       } else {
-        return similarity >= 75 && lengthDifference <= 2;
+        return similarity >= 85 && lengthDifference <= 2;
       }
     }
 
