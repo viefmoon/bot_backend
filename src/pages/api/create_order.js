@@ -680,8 +680,9 @@ async function selectProducts(req, res) {
                 const ingredientName =
                   ingredient.action === "remove"
                     ? `sin ${pizzaIngredient.name}`
+                    : ingredient.action === "add"
+                    ? `con ${pizzaIngredient.name}`
                     : pizzaIngredient.name;
-
                 if (ingredient.half === "full") {
                   pizzaIngredientNames.full.push(ingredientName);
                 } else {
