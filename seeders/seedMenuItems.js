@@ -25,7 +25,10 @@ const menu = [
         id: "AV2",
         name: "Media Orden de Alitas BBQ",
         price: 70,
-        keywords: [["bbq", "barbecue"], ["media", "mitad"]],
+        keywords: [
+          ["bbq", "barbecue"],
+          ["media", "mitad"],
+        ],
       },
       {
         id: "AV3",
@@ -37,7 +40,10 @@ const menu = [
         id: "AV4",
         name: "Media Orden de Alitas Picosas",
         price: 70,
-        keywords: [["picosas", "picosa", "picositas", "buffalo"], ["media", "mitad"]],
+        keywords: [
+          ["picosas", "picosa", "picositas", "buffalo"],
+          ["media", "mitad"],
+        ],
       },
       {
         id: "AV5",
@@ -51,14 +57,11 @@ const menu = [
         price: 70,
         keywords: [["fritas"], ["media", "mitad"]],
       },
-      { 
+      {
         id: "AV7",
         name: "Orden de Alitas Mango Habanero",
         price: 140,
-        keywords: [
-          "mango",
-          "habanero",
-        ],
+        keywords: ["mango", "habanero"],
       },
       {
         id: "AV8",
@@ -67,7 +70,7 @@ const menu = [
         keywords: [
           ["mango", "habanero"],
           ["media", "mitad"],
-        ],  
+        ],
       },
       {
         id: "AV9",
@@ -116,7 +119,12 @@ const menu = [
             price: 0,
             keywords: ["verdura", "totopos", "arregladas"],
           },
-          { id: "AM1-5", name: "Aderezo ranch", price: 0, keywords: ["ranch","Aderezo"] },
+          {
+            id: "AM1-5",
+            name: "Aderezo ranch",
+            price: 0,
+            keywords: ["ranch", "Aderezo"],
+          },
           {
             id: "AM1-6",
             name: "Salsa picosa aparte",
@@ -417,13 +425,19 @@ const menu = [
           {
             id: "HM2-3",
             name: "Doble carne o pollo",
-            keywords: [["doble", "extra"], ["carne", "pollo"]],
+            keywords: [
+              ["doble", "extra"],
+              ["carne", "pollo"],
+            ],
             price: 15,
           },
           {
             id: "HM2-4",
             name: "Pollo en lugar de carne de res",
-            keywords: [["cambiar", "lugar"], ["pollo", "res"]],
+            keywords: [
+              ["cambiar", "lugar"],
+              ["pollo", "res"],
+            ],
             price: 15,
           },
           {
@@ -508,7 +522,7 @@ const menu = [
   {
     id: "SANP",
     name: "Sangria preparada",
-    keywords: [["sangria"], ["preparada","arreglada"]],
+    keywords: [["sangria"], ["preparada", "arreglada"]],
     category: "bebidas",
     price: 35,
   },
@@ -518,8 +532,18 @@ const menu = [
     keywords: ["michelada"],
     category: "bebidas",
     productVariants: [
-      { id: "MV1", name: "Michelada clara", price: 80, keywords: ["michelada", "clara"] },
-      { id: "MV2", name: "Michelada oscura", price: 80, keywords: ["michelada", "oscura"] },
+      {
+        id: "MV1",
+        name: "Michelada clara",
+        price: 80,
+        keywords: ["michelada", "clara"],
+      },
+      {
+        id: "MV2",
+        name: "Michelada oscura",
+        price: 80,
+        keywords: ["michelada", "oscura"],
+      },
     ],
   },
   {
@@ -978,10 +1002,16 @@ const menu = [
       },
       {
         id: "PZ-I-39",
-        name: "Solo Queso",
+        name: "Queso",
         keywords: ["queso"],
         ingredientValue: 0,
-      }
+      },
+      {
+        id: "PZ-I-40",
+        name: "Salsa de tomate",
+        keywords: [["salsa"], ["tomate"]],
+        ingredientValue: 0,
+      },
     ],
     modifierTypes: [
       {
@@ -1002,31 +1032,32 @@ const menu = [
             keywords: [["extra", "mas"], ["doradita"]],
             price: 0,
           },
-          { id: "PZ-M1-3", name: "poco queso", keywords: [["poco", "menos"], ["queso"]], price: 0 },
-          { id: "PZ-M1-4", name: "sin queso", keywords: [["sin","quitar"], ["queso"]], price: 0 },
           {
-            id: "PZ-M1-5",
-            name: "sin salsa de tomate",
-            keywords: [["sin", "quitar"], ["salsa"]],
+            id: "PZ-M1-3",
+            name: "pizza con poco queso",
+            keywords: [["poco", "menos"], ["queso"]],
             price: 0,
           },
           {
-            id: "PZ-M1-6",
+            id: "PZ-M1-4",
             name: "extra salsa de tomate",
             keywords: [["extra", "mas"], ["salsa"]],
             price: 0,
           },
-          { id: "PZ-M1-7", name: "con catsup", keywords: ["catsup"], price: 0 },
+          { id: "PZ-M1-5", name: "con catsup", keywords: ["catsup"], price: 0 },
           {
-            id: "PZ-M1-8",
+            id: "PZ-M1-6",
             name: "doble aderezo",
             keywords: [["doble", "mas", "extra"], ["aderezo"]],
             price: 0,
           },
           {
-            id: "PZ-M1-9",
+            id: "PZ-M1-7",
             name: "doble chile de aceite",
-            keywords: [["doble", "mas", "extra"], ["aceite", "chile"]],
+            keywords: [
+              ["doble", "mas", "extra"],
+              ["aceite", "chile"],
+            ],
             price: 0,
           },
         ],
