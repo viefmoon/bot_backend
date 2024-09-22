@@ -272,6 +272,8 @@ async function createOrder(req, res) {
               nombre:
                 spi.action === "remove"
                   ? `sin ${spi.PizzaIngredient.name}`
+                  : spi.action === "add"
+                  ? `con ${spi.PizzaIngredient.name}`
                   : spi.PizzaIngredient.name,
               mitad: spi.half,
             })),
