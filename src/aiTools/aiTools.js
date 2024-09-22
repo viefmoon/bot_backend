@@ -114,12 +114,16 @@ const preprocessOrderTool = [
             items: {
               type: "object",
               properties: {
+                quantity: {
+                  type: "integer",
+                  description: "Cantidad del producto (minimo 1).",
+                },
                 description: {
                   type: "string",
-                  description: "Descripción detallada y cantidad del producto.",
+                  description: "Descripción detallada del producto.",
                 },
               },
-              required: ["description"],
+              required: ["description", "quantity"],
               additionalProperties: false,
             },
           },
