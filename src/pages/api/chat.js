@@ -17,6 +17,7 @@ const {
   selectProductsTool,
   preprocessOrderTool,
   selectProductsToolClaude,
+  sendMenuTool,
 } = require("../../aiTools/aiTools");
 const Anthropic = require("@anthropic-ai/sdk");
 
@@ -121,7 +122,6 @@ async function getAvailableMenu() {
         ingredients: producto.ingredients || null,
       };
 
-
       if (producto.productVariants?.length > 0) {
         productoInfo.variantes = producto.productVariants.map((v) => ({
           name: v.name,
@@ -136,14 +136,11 @@ async function getAvailableMenu() {
       }
 
       if (producto.pizzaIngredients?.length > 0) {
-        productoInfo.ingredientesPizza = producto.pizzaIngredients.map(
-          (i) => ({
-            name: i.name,
-            ingredients: i.ingredients || null,
-          })
-        );
+        productoInfo.ingredientesPizza = producto.pizzaIngredients.map((i) => ({
+          name: i.name,
+          //ingredients: i.ingredients || null,
+        }));
       }
-
 
       return productoInfo;
     });
@@ -328,23 +325,19 @@ function extractMentionedProducts(productMessage, menu) {
         const matchedVariants = product.variantes.filter((variant) =>
           checkKeywords(variant.keywords, words)
         );
-        
-        // Si el producto tiene variantes pero no se encontraron coincidencias, no lo incluimos
-        if (matchedVariants.length === 0) {
-          continue;
-        }
 
-        // Renombrar variantId a productId para las variantes coincidentes
-        mentionedProduct = matchedVariants.map(variant => ({
-          productId: variant.variantId,
-          name: `${product.name} - ${variant.name}`
-        }));
+        if (matchedVariants.length > 0) {
+          mentionedProduct.products = matchedVariants.map((variant) => ({
+            productId: variant.variantId,
+            name: variant.name,
+          }));
+        } else {
+          continue; // Si no hay variantes coincidentes, saltamos este producto
+        }
       } else {
-        // Si el producto no tiene variantes, lo incluimos como antes
-        mentionedProduct = [{
-          productId: product.productId,
-          name: product.name
-        }];
+        // Si no hay variantes, incluimos el productId y name del producto principal
+        mentionedProduct.productId = product.productId;
+        mentionedProduct.name = product.name;
       }
 
       // Verificar modificadores
@@ -426,6 +419,7 @@ async function preprocessMessages(messages) {
         "Mantén las interacciones rápidas y eficaces.",
         "No ofrezcas extras o modificadores si el cliente no los ha mencionado explícitamente.",
         "La función `send_menu` debe ejecutarse única y exclusivamente cuando el cliente solicite explícitamente ver el menú.",
+        "La función `preprocess_order` se ejecuta cuando el cliente menciona productos, la informacion de entrega debe ser proporcionada por el cliente, si no se proporciona, se debe solicitar antes de ejecutar la funcion.",
       ],
     }),
   };
@@ -448,18 +442,13 @@ async function preprocessMessages(messages) {
   const response = await openai.chat.completions.create({
     model: "gpt-4o-mini",
     messages: preprocessingMessages,
-    tools: preprocessOrderTool,
+    tools: [...preprocessOrderTool, ...sendMenuTool],
     parallel_tool_calls: false,
   });
 
-  console.log("response preprocessMessages", response);
-
   if (response.choices[0].message.tool_calls) {
-    const toolCall = response.choices[0].message.tool_calls.find(
-      (call) => call.function.name === "preprocess_order"
-    );
-
-    if (toolCall) {
+    const toolCall = response.choices[0].message.tool_calls[0];
+    if (toolCall.function.name === "preprocess_order") {
       console.log("toolCall", toolCall);
       const preprocessedContent = JSON.parse(toolCall.function.arguments);
 
@@ -481,18 +470,28 @@ async function preprocessMessages(messages) {
       }
 
       return preprocessedContent;
+    } else if (toolCall.function.name === "send_menu") {
+      return {
+        text: menu,
+        isDirectResponse: true,
+        isRelevant: false,
+        confirmationMessage:
+          "El menú ha sido enviado. ¿Hay algo más en lo que pueda ayudarte?",
+      };
     }
   } else if (response.choices[0].message.content) {
     console.log("No se ejecutó preprocessOrderTool, retornando texto");
     return {
       text: response.choices[0].message.content,
       isDirectResponse: true,
+      isRelevant: true,
     };
   } else {
     console.error("No se pudo preprocesar el mensaje");
     return {
       text: "Error al preprocesar el mensaje",
       isDirectResponse: true,
+      isRelevant: true,
     };
   }
 }
@@ -509,7 +508,8 @@ export async function handleChatRequest(req) {
         {
           text: preprocessedContent.text,
           sendToWhatsApp: true,
-          isRelevant: true,
+          isRelevant: preprocessedContent.isRelevant,
+          confirmationMessage: preprocessedContent.confirmationMessage,
         },
       ];
     }
@@ -521,7 +521,19 @@ export async function handleChatRequest(req) {
       "- Es OBLIGATORIO usar la función `select_products` para completar esta tarea.",
     ].join("\n");
 
-    console.log("preprocessedContent", preprocessedContent);
+    console.log(
+      "preprocessedContent",
+      JSON.stringify(
+        preprocessedContent,
+        (key, value) => {
+          if (key === "relevantMenuItems") {
+            return JSON.parse(JSON.stringify(value));
+          }
+          return value;
+        },
+        2
+      )
+    );
 
     const response = await anthropic.messages.create({
       model: "claude-3-5-sonnet-20240620",

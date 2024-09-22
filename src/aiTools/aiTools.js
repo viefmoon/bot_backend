@@ -102,7 +102,7 @@ const preprocessOrderTool = [
     function: {
       name: "preprocess_order",
       description:
-        "Preprocesa la orden del cliente en una lista estructurada de productos y detalles de entrega, incluyendo un resumen de la conversación.",
+        "Preprocesa la orden del cliente en una lista estructurada de productos y detalles de entrega, incluyendo un resumen de la conversación. Si la información de entrega es desconocida, se debe solicitar antes de procesar la orden.",
       strict: true,
       parameters: {
         type: "object",
@@ -241,9 +241,25 @@ const selectProductsToolClaude = {
     required: ["orderItems", "orderType", "deliveryInfo"],
   },
 };
+const sendMenuTool = [
+  {
+    type: "function",
+    function: {
+      name: "send_menu",
+      description:
+        "Envía el menú completo al cliente cuando lo solicita explícitamente.",
+      parameters: {
+        type: "object",
+        properties: {},
+        required: [],
+      },
+    },
+  },
+];
 
 module.exports = {
   selectProductsTool,
   preprocessOrderTool,
   selectProductsToolClaude,
+  sendMenuTool,
 };

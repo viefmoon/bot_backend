@@ -558,6 +558,16 @@ async function handleMessage(from, message) {
           if (msg.isRelevant !== false) {
             relevantChatHistory.push(assistantMessage);
           }
+          // Enviar mensaje de confirmación si existe
+          if (msg.confirmationMessage) {
+            await sendWhatsAppMessage(from, msg.confirmationMessage);
+            const confirmationAssistantMessage = {
+              role: "assistant",
+              content: msg.confirmationMessage,
+            };
+            fullChatHistory.push(confirmationAssistantMessage);
+            relevantChatHistory.push(confirmationAssistantMessage);
+          }
         }
       }
     } else {
@@ -573,6 +583,16 @@ async function handleMessage(from, message) {
         fullChatHistory.push(assistantMessage);
         if (response.isRelevant !== false) {
           relevantChatHistory.push(assistantMessage);
+        }
+        // Enviar mensaje de confirmación si existe
+        if (response.confirmationMessage) {
+          await sendWhatsAppMessage(from, response.confirmationMessage);
+          const confirmationAssistantMessage = {
+            role: "assistant",
+            content: response.confirmationMessage,
+          };
+          fullChatHistory.push(confirmationAssistantMessage);
+          relevantChatHistory.push(confirmationAssistantMessage);
         }
       }
     }
