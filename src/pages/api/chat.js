@@ -12,7 +12,7 @@ const menu = require("../../data/menu");
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
-const { partial_ratio } = require("fuzzball");
+const { ratio } = require("fuzzball");
 const {
   selectProductsTool,
   preprocessOrderTool,
@@ -290,19 +290,29 @@ function extractMentionedProducts(productMessage, menu) {
   function checkKeywords(keywords, filteredWords) {
     if (!keywords) return false;
 
+    function compareWords(keyword, word) {
+      const similarity = ratio(normalizeWord(keyword), word);
+      const lengthDifference = Math.abs(keyword.length - word.length);
+      
+      // Ajustamos los umbrales según la longitud de las palabras
+      if (keyword.length <= 3) {
+        return similarity === 100 && lengthDifference === 0;
+      } else if (keyword.length <= 5) {
+        return similarity >= 80 && lengthDifference <= 1;
+      } else {
+        return similarity >= 75 && lengthDifference <= 2;
+      }
+    }
+
     if (Array.isArray(keywords[0])) {
       return keywords.every((group) =>
         group.some((keyword) =>
-          filteredWords.some(
-            (word) => partial_ratio(normalizeWord(keyword), word) > 90
-          )
+          filteredWords.some((word) => compareWords(keyword, word))
         )
       );
     } else {
       return keywords.some((keyword) =>
-        filteredWords.some(
-          (word) => partial_ratio(normalizeWord(keyword), word) > 90
-        )
+        filteredWords.some((word) => compareWords(keyword, word))
       );
     }
   }

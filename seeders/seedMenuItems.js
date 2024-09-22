@@ -25,7 +25,7 @@ const menu = [
         id: "AV2",
         name: "Media Orden de Alitas BBQ",
         price: 70,
-        keywords: [["bbq", "barbecue"], ["media"]],
+        keywords: [["bbq", "barbecue"], ["media", "mitad"]],
       },
       {
         id: "AV3",
@@ -37,7 +37,7 @@ const menu = [
         id: "AV4",
         name: "Media Orden de Alitas Picosas",
         price: 70,
-        keywords: [["picosas", "picosa", "picositas", "buffalo"], ["media"]],
+        keywords: [["picosas", "picosa", "picositas", "buffalo"], ["media", "mitad"]],
       },
       {
         id: "AV5",
@@ -49,10 +49,28 @@ const menu = [
         id: "AV6",
         name: "Media Orden de Alitas Fritas",
         price: 70,
-        keywords: [["fritas"], ["media"]],
+        keywords: [["fritas"], ["media", "mitad"]],
+      },
+      { 
+        id: "AV7",
+        name: "Orden de Alitas Mango Habanero",
+        price: 140,
+        keywords: [
+          "mango",
+          "habanero",
+        ],
       },
       {
-        id: "AV7",
+        id: "AV8",
+        name: "Media Orden de Alitas Mango Habanero",
+        price: 75,
+        keywords: [
+          ["mango", "habanero"],
+          ["media", "mitad"],
+        ],  
+      },
+      {
+        id: "AV9",
         name: "Orden de Alitas Mixtas BBQ y picosas",
         price: 135,
         keywords: [
@@ -90,7 +108,7 @@ const menu = [
             id: "AM1-3",
             name: "Extra salsa",
             price: 0,
-            keywords: ["salsa", "mas"],
+            keywords: [["extra", "mas"], ["salsa"]],
           },
           {
             id: "AM1-4",
@@ -98,18 +116,18 @@ const menu = [
             price: 0,
             keywords: ["verdura", "totopos", "arregladas"],
           },
-          { id: "AM1-5", name: "Aderezo ranch", price: 0, keywords: ["ranch"] },
+          { id: "AM1-5", name: "Aderezo ranch", price: 0, keywords: ["ranch","Aderezo"] },
           {
             id: "AM1-6",
             name: "Salsa picosa aparte",
             price: 0,
-            keywords: ["aparte"],
+            keywords: [["aparte"], ["salsa", "picosa"]],
           },
           {
             id: "AM1-7",
             name: "Salsa BBQ aparte",
             price: 0,
-            keywords: ["aparte"],
+            keywords: [["aparte"], ["salsa", "BBQ"]],
           },
           {
             id: "AM1-8",
@@ -130,32 +148,32 @@ const menu = [
       {
         id: "PV1",
         name: "Orden de Papas gratinadas a la Francesa",
-        keywords: ["francesa"],
+        keywords: ["francesa", "papas"],
         price: 90,
       },
       {
         id: "PV2",
         name: "Media Orden de Papas gratinadas a la Francesa",
-        keywords: [["francesa"], ["media"]],
+        keywords: [["francesa", "papas"], ["media"]],
         price: 50,
       },
       {
         id: "PV3",
         name: "Orden de Papas gratinadas Gajos",
-        keywords: ["gajo"],
-        price: 100,
+        keywords: ["gajos", "gajo"],
+        price: 105,
       },
       {
         id: "PV4",
         name: "Media Orden de Papas gratinadas Gajos",
-        keywords: [["gajo"], ["media"]],
-        price: 60,
+        keywords: [["gajos", "gajo"], ["media"]],
+        price: 65,
       },
       {
         id: "PV5",
         name: "Orden de Papas gratinadas Mixtas francesa y gajos",
-        keywords: ["mixtas", "mixta", "francesa", "gajo"],
-        price: 100,
+        keywords: ["mixtas", "mixta", "francesa", "gajos"],
+        price: 105,
       },
     ],
     modifierTypes: [
@@ -178,12 +196,6 @@ const menu = [
             id: "PM1-2",
             name: "Extra aderezo",
             keywords: ["aderezo"],
-            price: 0,
-          },
-          {
-            id: "PM1-3",
-            name: "Con chile de aceite",
-            keywords: ["aceite", "chile"],
             price: 0,
           },
         ],
@@ -238,7 +250,7 @@ const menu = [
       {
         id: "EV5",
         name: "Ensalada Vegetal Chica",
-        keywords: [["vegetal"], ["chica"]],
+        keywords: [["vegetal", "verdura", "vegetariana"], ["chica"]],
         price: 70,
         ingredients:
           "Lechuga, Chile morron, Elote, Jitomate, Zanahoria, Queso parmesano, Aderezo, Betabel crujiente",
@@ -246,7 +258,7 @@ const menu = [
       {
         id: "EV6",
         name: "Ensalada Vegetal Grande",
-        keywords: [["vegetal"], ["grande"]],
+        keywords: [["vegetal", "verdura", "vegetariana"], ["grande"]],
         price: 90,
         ingredients:
           "Lechuga, Chile morron, Elote, Jitomate, Zanahoria, Queso parmesano, Aderezo, Betabel crujiente",
@@ -268,13 +280,13 @@ const menu = [
           {
             id: "EM1-4",
             name: "Doble pollo",
-            keywords: [["doble", "con", "extra"], ["pollo"]],
+            keywords: [["doble", "extra"], ["pollo"]],
             price: 15,
           },
           {
             id: "EM1-5",
             name: "Doble vinagreta",
-            keywords: [["doble", "con", "extra"], ["vinagreta"]],
+            keywords: [["doble", "extra"], ["vinagreta"]],
             price: 0,
           },
         ],
@@ -330,7 +342,7 @@ const menu = [
       {
         id: "HV6",
         name: "Hamburgesa Leñazo",
-        keywords: ["lenazo"],
+        keywords: ["leñazo"],
         price: 110,
         ingredients:
           "Doble carne de sirlon, tocino, queso amarillo, queso asadero, cebolla guisada, jitomate, lechuga, chile jalapeño, catsup, aderezo, crema, mostaza",
@@ -376,7 +388,7 @@ const menu = [
           {
             id: "HM1-5",
             name: "Con papas mixtas",
-            keywords: ["mixtas", "combinadas", "mixta", "francesa", "gajos"],
+            keywords: ["mixtas", "combinadas", "mixta"],
             price: 15,
           },
           {
@@ -384,7 +396,7 @@ const menu = [
             name: "Con papas mixtas gratinadas",
             keywords: [
               ["gratinadas", "queso"],
-              ["mixtas", "combinadas", "mixta", "francesa", "gajos"],
+              ["mixtas", "combinadas", "mixta"],
             ],
             price: 20,
           },
@@ -405,13 +417,13 @@ const menu = [
           {
             id: "HM2-3",
             name: "Doble carne o pollo",
-            keywords: ["doble", "carne", "pollo"],
+            keywords: [["doble", "extra"], ["carne", "pollo"]],
             price: 15,
           },
           {
             id: "HM2-4",
             name: "Pollo en lugar de carne de res",
-            keywords: ["pollo", "res"],
+            keywords: [["cambiar", "lugar"], ["pollo", "res"]],
             price: 15,
           },
           {
@@ -423,7 +435,7 @@ const menu = [
           {
             id: "HM2-6",
             name: "Carne bien dorada",
-            keywords: ["dorada", "carne"],
+            keywords: [["carne"], ["cocida", "dorada"]],
             price: 0,
           },
         ],
@@ -432,22 +444,22 @@ const menu = [
   },
   {
     id: "AH",
-    name: "Agua fresca de horchata 1 Litro",
+    name: "Agua fresca de horchata (1 Litro)",
     keywords: ["Agua", "horchata", "Fresca"],
     category: "bebidas",
     price: 35,
   },
   {
     id: "LIM",
-    name: "Limonada 1 Litro",
+    name: "Limonada (1 Litro)",
     keywords: ["limonada"],
     category: "bebidas",
     price: 35,
   },
   {
     id: "LIMM",
-    name: "Limonada Mineral 1 Litro",
-    keywords: ["mineral"],
+    name: "Limonada Mineral (1 Litro)",
+    keywords: [["limonada"], ["mineral"]],
     category: "bebidas",
     price: 35,
   },
@@ -496,7 +508,7 @@ const menu = [
   {
     id: "SANP",
     name: "Sangria preparada",
-    keywords: ["sangria"],
+    keywords: [["sangria"], ["preparada","arreglada"]],
     category: "bebidas",
     price: 35,
   },
@@ -506,8 +518,8 @@ const menu = [
     keywords: ["michelada"],
     category: "bebidas",
     productVariants: [
-      { id: "MV1", name: "Michelada clara", price: 80, keywords: ["clara"] },
-      { id: "MV2", name: "Michelada oscura", price: 80, keywords: ["oscura"] },
+      { id: "MV1", name: "Michelada clara", price: 80, keywords: ["michelada", "clara"] },
+      { id: "MV2", name: "Michelada oscura", price: 80, keywords: ["michelada", "oscura"] },
     ],
   },
   {
@@ -520,7 +532,7 @@ const menu = [
   {
     id: "CP",
     name: "Capuchino",
-    keywords: ["capuchino"],
+    keywords: ["capuchino", "capuccino"],
     category: "bebidas",
     price: 45,
   },
@@ -534,21 +546,21 @@ const menu = [
   {
     id: "MC",
     name: "Mocachino",
-    keywords: ["mocachino"],
+    keywords: ["mocachino", "mocaccino"],
     category: "bebidas",
     price: 45,
   },
   {
     id: "LV",
     name: "Latte Vainilla",
-    keywords: ["latte", "vainilla"],
+    keywords: [["latte, late"], ["vainilla"]],
     category: "bebidas",
     price: 45,
   },
   {
     id: "LC",
     name: "Latte Capuchino",
-    keywords: ["latte", "capuchino"],
+    keywords: [["latte, late"], ["capuchino", "capuccino"]],
     category: "bebidas",
     price: 45,
   },
@@ -562,7 +574,7 @@ const menu = [
         id: "FV1",
         name: "Frappe Capuchino",
         price: 70,
-        keywords: ["capuchino"],
+        keywords: ["capuchino", "capuccino"],
       },
       { id: "FV2", name: "Frappe Coco", price: 70, keywords: ["coco"] },
       { id: "FV3", name: "Frappe Caramelo", price: 70, keywords: ["caramelo"] },
@@ -571,7 +583,7 @@ const menu = [
         id: "FV5",
         name: "Frappe Mocaccino",
         price: 70,
-        keywords: ["mocaccino"],
+        keywords: ["mocaccino", "mocachino"],
       },
       { id: "FV6", name: "Frappe Galleta", price: 70, keywords: ["galleta"] },
       { id: "FV7", name: "Frappe Bombon", price: 70, keywords: ["bombon"] },
@@ -590,7 +602,7 @@ const menu = [
   {
     id: "SV",
     name: "Sangria con vino",
-    keywords: ["sangria", "vino"],
+    keywords: [["sangria"], ["vino"]],
     category: "cocteleria",
     price: 80,
   },
@@ -618,14 +630,14 @@ const menu = [
   {
     id: "RBL",
     name: "Ruso Blanco",
-    keywords: ["ruso", "blanco"],
+    keywords: ["ruso"],
     category: "cocteleria",
     price: 85,
   },
   {
     id: "PSAN",
     name: "Palo santo",
-    keywords: ["palo", "santo"],
+    keywords: [["palo"], ["santo"]],
     category: "cocteleria",
     price: 80,
   },
@@ -646,7 +658,7 @@ const menu = [
   {
     id: "PCOL",
     name: "Piña colada",
-    keywords: ["colada"],
+    keywords: [["colada"], ["piña"]],
     category: "cocteleria",
     price: 75,
   },
@@ -688,7 +700,7 @@ const menu = [
   {
     id: "TV",
     name: "Tinto de verano",
-    keywords: ["tinto", "verano"],
+    keywords: [["tinto"], ["verano"]],
     category: "cocteleria",
     price: 90,
   },
@@ -743,7 +755,7 @@ const menu = [
       {
         id: "PZ-I-2",
         name: "Carnes Frias",
-        keywords: ["carnes", "frias"],
+        keywords: [["carnes"], ["frias"]],
         ingredientValue: 4,
         ingredients: "Pepperoni, Salchicha, Jamon, Salami",
       },
@@ -964,6 +976,12 @@ const menu = [
         keywords: ["tocino"],
         ingredientValue: 1,
       },
+      {
+        id: "PZ-I-39",
+        name: "Solo Queso",
+        keywords: ["queso"],
+        ingredientValue: 0,
+      }
     ],
     modifierTypes: [
       {
@@ -975,40 +993,40 @@ const menu = [
           {
             id: "PZ-M1-1",
             name: "Partida en 16 pedazos",
-            keywords: ["pedazos"],
+            keywords: ["pedazos", "partida"],
             price: 0,
           },
           {
             id: "PZ-M1-2",
             name: "mas doradita",
-            keywords: ["doradita"],
+            keywords: [["extra", "mas"], ["doradita"]],
             price: 0,
           },
-          { id: "PZ-M1-3", name: "poco queso", keywords: ["queso"], price: 0 },
-          { id: "PZ-M1-4", name: "sin queso", keywords: ["queso"], price: 0 },
+          { id: "PZ-M1-3", name: "poco queso", keywords: [["poco", "menos"], ["queso"]], price: 0 },
+          { id: "PZ-M1-4", name: "sin queso", keywords: [["sin","quitar"], ["queso"]], price: 0 },
           {
             id: "PZ-M1-5",
             name: "sin salsa de tomate",
-            keywords: ["salsa"],
+            keywords: [["sin", "quitar"], ["salsa"]],
             price: 0,
           },
           {
             id: "PZ-M1-6",
             name: "extra salsa de tomate",
-            keywords: ["salsa"],
+            keywords: [["extra", "mas"], ["salsa"]],
             price: 0,
           },
           { id: "PZ-M1-7", name: "con catsup", keywords: ["catsup"], price: 0 },
           {
             id: "PZ-M1-8",
             name: "doble aderezo",
-            keywords: ["aderezo"],
+            keywords: [["doble", "mas", "extra"], ["aderezo"]],
             price: 0,
           },
           {
             id: "PZ-M1-9",
             name: "doble chile de aceite",
-            keywords: ["aceite"],
+            keywords: [["doble", "mas", "extra"], ["aceite", "chile"]],
             price: 0,
           },
         ],
