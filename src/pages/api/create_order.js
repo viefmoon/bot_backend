@@ -721,6 +721,42 @@ async function selectProducts(req, res) {
       messageContent += `- *${item.quantity}x ${itemName}*: $${item.precio_total_orderItem}\n`;
       relevantMessageContent += `- *${item.quantity}x ${itemName}*\n`;
 
+      if (
+        item.ingredientes_pizza.full.length > 0 ||
+        item.ingredientes_pizza.left.length > 0 ||
+        item.ingredientes_pizza.right.length > 0
+      ) {
+        messageContent += "  🔸 Ingredientes de pizza:\n";
+        relevantMessageContent += "  Ingredientes de pizza:\n";
+
+        if (item.ingredientes_pizza.full.length > 0) {
+          messageContent += `    Completa: ${item.ingredientes_pizza.full.join(
+            ", "
+          )}\n`;
+          relevantMessageContent += `    Completa: ${item.ingredientes_pizza.full.join(
+            ", "
+          )}\n`;
+        }
+
+        if (item.ingredientes_pizza.left.length > 0) {
+          messageContent += `    Mitad izquierda: ${item.ingredientes_pizza.left.join(
+            ", "
+          )}\n`;
+          relevantMessageContent += `    Mitad izquierda: ${item.ingredientes_pizza.left.join(
+            ", "
+          )}\n`;
+        }
+
+        if (item.ingredientes_pizza.right.length > 0) {
+          messageContent += `    Mitad derecha: ${item.ingredientes_pizza.right.join(
+            ", "
+          )}\n`;
+          relevantMessageContent += `    Mitad derecha: ${item.ingredientes_pizza.right.join(
+            ", "
+          )}\n`;
+        }
+      }
+
       if (item.modificadores.length > 0) {
         messageContent += `  🔸 Modificadores: ${item.modificadores.join(
           ", "
@@ -728,38 +764,6 @@ async function selectProducts(req, res) {
         relevantMessageContent += `  Modificadores: ${item.modificadores.join(
           ", "
         )}\n`;
-      }
-
-      if (
-        item.ingredientes_pizza.full.length > 0 ||
-        item.ingredientes_pizza.left.length > 0 ||
-        item.ingredientes_pizza.right.length > 0
-      ) {
-        messageContent += "  🔸 Ingredientes de pizza: ";
-        relevantMessageContent += "  Ingredientes de pizza: ";
-        if (item.ingredientes_pizza.full.length > 0) {
-          messageContent += `${item.ingredientes_pizza.full.join(", ")}`;
-          relevantMessageContent += `${item.ingredientes_pizza.full.join(
-            ", "
-          )}`;
-        }
-        if (
-          item.ingredientes_pizza.left.length > 0 ||
-          item.ingredientes_pizza.right.length > 0
-        ) {
-          if (item.ingredientes_pizza.full.length > 0) {
-            messageContent += ", ";
-            relevantMessageContent += ", ";
-          }
-          messageContent += `(${item.ingredientes_pizza.left.join(
-            ", "
-          )} / ${item.ingredientes_pizza.right.join(", ")})`;
-          relevantMessageContent += `(${item.ingredientes_pizza.left.join(
-            ", "
-          )} / ${item.ingredientes_pizza.right.join(", ")})`;
-        }
-        messageContent += "\n";
-        relevantMessageContent += "\n";
       }
 
       if (item.comments) {
