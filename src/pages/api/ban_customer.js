@@ -36,13 +36,19 @@ export default async function handler(req, res) {
       // Verificar si el cliente ya está baneado
       const existingBan = await BannedCustomer.findOne({ where: { clientId } });
       if (existingBan) {
-        return res.status(409).json({ error: "El cliente ya está baneado" });
+        // Cambiar el código de estado a 200 y devolver un mensaje informativo
+        return res
+          .status(200)
+          .json({ message: "El cliente ya está baneado", alreadyBanned: true });
       }
 
       // Crear un nuevo registro de cliente baneado
       await BannedCustomer.create({ clientId });
 
-      res.status(200).json({ message: "Cliente baneado exitosamente" });
+      res.status(200).json({
+        message: "Cliente baneado exitosamente",
+        alreadyBanned: false,
+      });
     } catch (error) {
       console.error("Error al banear al cliente:", error);
       res.status(500).json({ error: "Error al banear al cliente" });
