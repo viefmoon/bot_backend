@@ -94,7 +94,7 @@ export default async function handler(req, res) {
       // Enviar mensaje de WhatsApp si hay un mensaje predefinido para el nuevo estado
       if (statusMessages[newStatus]) {
         const message = statusMessages[newStatus].replace("{orderId}", orderId);
-        await sendWhatsAppMessage(order.phone_number, message);
+        await sendWhatsAppMessage(order.clientId, message);
       }
 
       res
