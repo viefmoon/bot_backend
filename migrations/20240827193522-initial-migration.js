@@ -310,6 +310,7 @@ module.exports = {
       status: {
         type: Sequelize.ENUM(
           "created",
+          "accepted",
           "in_preparation",
           "prepared",
           "in_delivery",

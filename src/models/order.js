@@ -20,6 +20,7 @@ const Order = sequelize.define(
     status: {
       type: DataTypes.ENUM(
         "created",
+        "accepted",
         "in_preparation",
         "prepared",
         "in_delivery",
