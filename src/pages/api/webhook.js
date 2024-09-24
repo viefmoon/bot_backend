@@ -16,7 +16,7 @@ const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
 const RestaurantConfig = require("../../models/restaurantConfig");
 const fs = require("fs");
 const FormData = require("form-data");
-const BannedClient = require("../../models/bannedClient");
+const BannedCustomer = require("../../models/bannedCustomer");
 const MessageRateLimit = require("../../models/messageRateLimit");
 export default async function handler(req, res) {
   if (req.method === "GET") {
@@ -52,7 +52,7 @@ export default async function handler(req, res) {
               const { from, type, id } = message;
 
               // Verificar si el cliente está baneado
-              const isBanned = await checkBannedClient(from);
+              const isBanned = await checkBannedCustomer(from);
               if (isBanned) {
                 await sendBannedMessage(from);
                 continue; // Saltar al siguiente mensaje
@@ -865,9 +865,9 @@ async function handleOrderModification(clientId, messageId) {
 }
 
 // Función para verificar si un cliente está baneado
-async function checkBannedClient(clientId) {
-  const bannedClient = await BannedClient.findOne({ where: { clientId } });
-  return !!bannedClient;
+async function checkBannedCustomer(clientId) {
+  const bannedCustomer = await BannedCustomer.findOne({ where: { clientId } });
+  return !!bannedCustomer;
 }
 
 // Función para enviar un mensaje a un cliente baneado

@@ -1,7 +1,7 @@
 const { DataTypes } = require("sequelize");
 const { sequelize } = require("../lib/db");
 
-const BannedClient = sequelize.define('BannedClient', {
+const BannedCustomer = sequelize.define("BannedCustomer", {
   clientId: {
     type: DataTypes.STRING,
     allowNull: false,
@@ -13,4 +13,4 @@ const BannedClient = sequelize.define('BannedClient', {
   },
 });
 
-module.exports = BannedClient;
+module.exports = BannedCustomer;

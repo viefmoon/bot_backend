@@ -569,7 +569,7 @@ module.exports = {
       },
     });
 
-    await queryInterface.createTable("BannedClients", {
+    await queryInterface.createTable("BannedCustomers", {
       id: {
         type: Sequelize.INTEGER,
         primaryKey: true,
@@ -639,7 +639,7 @@ module.exports = {
     await queryInterface.dropTable("Availabilities");
     await queryInterface.dropTable("RestaurantConfigs");
     await queryInterface.dropTable("PreOrders");
-    await queryInterface.dropTable("BannedClients");
+    await queryInterface.dropTable("BannedCustomers");
     await queryInterface.dropTable("MessageRateLimits");
   },
 };
