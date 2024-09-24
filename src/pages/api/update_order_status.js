@@ -44,7 +44,7 @@ async function sendWhatsAppMessage(phoneNumber, message) {
 
 // Configurar CORS
 const corsMiddleware = cors({
-  origin: "*", // Permite todas las origenes en desarrollo. Ajusta esto en producción.
+  origin: true,
   methods: ["PUT"],
 });
 
