@@ -78,6 +78,8 @@ export default async function handler(req, res) {
           "orderDate",
           "estimatedTime",
           "scheduledDeliveryTime",
+          "createdAt",
+          "updatedAt",
         ],
       });
 
