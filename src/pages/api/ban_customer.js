@@ -21,10 +21,12 @@ export default async function handler(req, res) {
 
   if (req.method === "POST") {
     try {
-      const { clientId } = req.body;
+      const { clientId, action } = req.body;
 
-      if (!clientId) {
-        return res.status(400).json({ error: "Se requiere el ID del cliente" });
+      if (!clientId || !action) {
+        return res.status(400).json({
+          error: "Se requiere el ID del cliente y la acción (ban o unban)",
+        });
       }
 
       // Verificar si el cliente existe
@@ -33,25 +35,54 @@ export default async function handler(req, res) {
         return res.status(404).json({ error: "Cliente no encontrado" });
       }
 
-      // Verificar si el cliente ya está baneado
-      const existingBan = await BannedCustomer.findOne({ where: { clientId } });
-      if (existingBan) {
-        // Cambiar el código de estado a 200 y devolver un mensaje informativo
+      if (action === "ban") {
+        // Verificar si el cliente ya está baneado
+        const existingBan = await BannedCustomer.findOne({
+          where: { clientId },
+        });
+        if (existingBan) {
+          return res.status(200).json({
+            message: "El cliente ya está baneado",
+            alreadyBanned: true,
+          });
+        }
+
+        // Crear un nuevo registro de cliente baneado
+        await BannedCustomer.create({ clientId });
+
+        res.status(200).json({
+          message: "Cliente baneado exitosamente",
+          alreadyBanned: false,
+        });
+      } else if (action === "unban") {
+        // Verificar si el cliente está baneado
+        const existingBan = await BannedCustomer.findOne({
+          where: { clientId },
+        });
+        if (!existingBan) {
+          return res.status(200).json({
+            message: "El cliente no está baneado",
+            alreadyBanned: false,
+          });
+        }
+
+        // Eliminar el registro de cliente baneado
+        await BannedCustomer.destroy({ where: { clientId } });
+
+        res.status(200).json({
+          message: "Cliente desbaneado exitosamente",
+          alreadyBanned: false,
+        });
+      } else {
         return res
-          .status(200)
-          .json({ message: "El cliente ya está baneado", alreadyBanned: true });
+          .status(400)
+          .json({ error: "Acción no válida. Use 'ban' o 'unban'" });
       }
-
-      // Crear un nuevo registro de cliente baneado
-      await BannedCustomer.create({ clientId });
-
-      res.status(200).json({
-        message: "Cliente baneado exitosamente",
-        alreadyBanned: false,
-      });
     } catch (error) {
-      console.error("Error al banear al cliente:", error);
-      res.status(500).json({ error: "Error al banear al cliente" });
+      console.error("Error al procesar la acción del cliente:", error);
+      res
+        .status(500)
+        .json({ error: "Error al procesar la acción del cliente" });
     }
   } else {
     res.setHeader("Allow", ["POST"]);

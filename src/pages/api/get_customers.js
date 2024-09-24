@@ -1,4 +1,5 @@
 const Customer = require("../../models/customer");
+const BannedCustomer = require("../../models/bannedCustomer");
 const cors = require("cors");
 
 // Configurar CORS
@@ -31,7 +32,20 @@ export default async function handler(req, res) {
         ],
       });
 
-      res.status(200).json(customers);
+      // Verificar el estado de baneo para cada cliente
+      const customersWithBanStatus = await Promise.all(
+        customers.map(async (customer) => {
+          const bannedCustomer = await BannedCustomer.findOne({
+            where: { clientId: customer.clientId },
+          });
+          return {
+            ...customer.toJSON(),
+            isBanned: !!bannedCustomer,
+          };
+        })
+      );
+
+      res.status(200).json(customersWithBanStatus);
     } catch (error) {
       console.error("Error al obtener los clientes:", error);
       res.status(500).json({ error: "Error al obtener los clientes" });
