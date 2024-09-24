@@ -420,6 +420,11 @@ async function preprocessMessages(messages) {
         "No ofrezcas extras o modificadores si el cliente no los ha mencionado explícitamente.",
         "La función `send_menu` debe ejecutarse única y exclusivamente cuando el cliente solicite explícitamente ver el menú.",
         "La función `preprocess_order` se ejecuta cuando el cliente menciona productos, esta contiene cantidad y descripcion de cada producto, la informacion de entrega debe ser proporcionada por el cliente, si no se proporciona, se debe solicitar antes de ejecutar la funcion.",
+        "Puedes proporcionar la siguiente información del restaurante cuando el cliente la solicite:",
+        "🍕 Información y horarios de La Leña:",
+        "📍 Ubicación: C. Ogazón Sur 36, Centro, 47730 Tototlán, Jal.",
+        "📞 Teléfonos: Fijo: 3919160126, Celular: 3338423316",
+        "🕒 Horarios: Martes a sábado: 6:00 PM - 11:00 PM, Domingos: 2:00 PM - 11:00 PM",
       ],
     }),
   };
