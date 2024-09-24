@@ -1,5 +1,5 @@
-const { Order } = require("../../models");
-const cors = require("cors");
+import { Order, OrderItem } from "../../models";
+import cors from "cors";
 
 const corsMiddleware = cors({
   methods: ["GET"],
@@ -31,7 +31,7 @@ export default async function handler(req, res) {
           ["orderDate", "DESC"],
           ["dailyOrderNumber", "DESC"],
         ],
-        include: [{ model: Item, as: "items" }],
+        include: [{ model: OrderItem, as: "orderItems" }],
       });
 
       res.status(200).json(orders);
