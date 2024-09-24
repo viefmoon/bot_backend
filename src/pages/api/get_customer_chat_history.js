@@ -19,22 +19,34 @@ export default async function handler(req, res) {
   });
 
   if (req.method === "GET") {
+    const { clientId } = req.query;
+
+    if (!clientId) {
+      return res
+        .status(400)
+        .json({ error: "Se requiere el parámetro clientId" });
+    }
+
     try {
-      // Obtener clientes con campos específicos
-      const customers = await Customer.findAll({
-        attributes: [
-          "clientId",
-          "deliveryInfo",
-          "stripeCustomerId",
-          "lastInteraction",
-          "createdAt",
-        ],
+      // Obtener el fullChatHistory del cliente específico
+      const customer = await Customer.findOne({
+        where: { clientId },
+        attributes: ["fullChatHistory"],
       });
 
-      res.status(200).json(customers);
+      if (!customer) {
+        return res.status(404).json({ error: "Cliente no encontrado" });
+      }
+
+      res.status(200).json(customer.fullChatHistory);
     } catch (error) {
-      console.error("Error al obtener los clientes:", error);
-      res.status(500).json({ error: "Error al obtener los clientes" });
+      console.error(
+        "Error al obtener el historial de chat del cliente:",
+        error
+      );
+      res
+        .status(500)
+        .json({ error: "Error al obtener el historial de chat del cliente" });
     }
   } else {
     res.setHeader("Allow", ["GET"]);
