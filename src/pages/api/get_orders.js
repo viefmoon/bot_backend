@@ -49,6 +49,7 @@ export default async function handler(req, res) {
               { model: ProductVariant },
               {
                 model: SelectedPizzaIngredient,
+                as: "selectedPizzaIngredients",
                 include: { model: PizzaIngredient },
               },
               {

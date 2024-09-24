@@ -30,7 +30,7 @@ PizzaIngredient.belongsTo(Product, { foreignKey: "productId" });
 
 OrderItem.hasMany(SelectedPizzaIngredient, {
   foreignKey: "orderItemId",
-  as: "selectedIngredients",
+  as: "selectedPizzaIngredients",
 });
 SelectedPizzaIngredient.belongsTo(OrderItem, { foreignKey: "orderItemId" });
 
