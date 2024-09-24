@@ -57,8 +57,11 @@ export default async function handler(req, res) {
               {
                 model: SelectedModifier,
                 as: "selectedModifiers",
-                attributes: ["quantity"],
-                include: { model: Modifier, attributes: ["name", "price"] },
+                attributes: [],
+                include: {
+                  model: Modifier,
+                  attributes: ["name", "price"],
+                },
               },
             ],
           },
