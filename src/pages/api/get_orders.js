@@ -3,6 +3,7 @@ const cors = require("cors");
 
 const corsMiddleware = cors({
   methods: ["GET"],
+  origin: true, // Permite cualquier origen
 });
 
 export default async function handler(req, res) {
