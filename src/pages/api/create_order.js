@@ -545,13 +545,12 @@ async function selectProducts(req, res) {
             product = await Product.findByPk(productVariant.productId);
             itemPrice = productVariant.price || 0;
             productName = productVariant.name;
-            productId = product.id;
-            productVariantId = productVariant.id;
+            item.productVariantId = item.productId;
+            item.productId = product.id;
           } else {
             itemPrice = product.price || 0;
             productName = product.name;
-            productId = product.id;
-            productVariantId = null;
+            item.productVariantId = null;
           }
 
           // Verificar si el producto es una pizza y si se seleccionó al menos un ingrediente
@@ -698,8 +697,6 @@ async function selectProducts(req, res) {
 
           return {
             ...item,
-            productId,
-            productVariantId,
             precio_total_orderItem: totalItemPrice,
             nombre_producto: productName,
             modificadores: modifierNames,
