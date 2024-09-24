@@ -44,21 +44,37 @@ export default async function handler(req, res) {
           {
             model: OrderItem,
             as: "orderItems",
+            attributes: ["quantity", "price", "comments"],
             include: [
-              { model: Product },
-              { model: ProductVariant },
+              { model: Product, attributes: ["name", "price"] },
+              { model: ProductVariant, attributes: ["name", "price"] },
               {
                 model: SelectedPizzaIngredient,
                 as: "selectedPizzaIngredients",
-                include: { model: PizzaIngredient },
+                attributes: ["half", "action"],
+                include: { model: PizzaIngredient, attributes: ["name"] },
               },
               {
                 model: SelectedModifier,
                 as: "selectedModifiers",
-                include: { model: Modifier },
+                attributes: ["quantity"],
+                include: { model: Modifier, attributes: ["name", "price"] },
               },
             ],
           },
+        ],
+        attributes: [
+          "id",
+          "dailyOrderNumber",
+          "orderType",
+          "status",
+          "paymentStatus",
+          "deliveryInfo",
+          "totalCost",
+          "clientId",
+          "orderDate",
+          "estimatedTime",
+          "scheduledDeliveryTime",
         ],
       });
 
