@@ -31,7 +31,24 @@ export default async function handler(req, res) {
           ["orderDate", "DESC"],
           ["dailyOrderNumber", "DESC"],
         ],
-        include: [{ model: OrderItem, as: "orderItems" }],
+        include: [
+          {
+            model: OrderItem,
+            as: "orderItems",
+            include: [
+              { model: Product },
+              { model: ProductVariant },
+              {
+                model: SelectedPizzaIngredient,
+                include: { model: PizzaIngredient },
+              },
+              {
+                model: SelectedModifier,
+                include: { model: Modifier },
+              },
+            ],
+          },
+        ],
       });
 
       res.status(200).json(orders);
