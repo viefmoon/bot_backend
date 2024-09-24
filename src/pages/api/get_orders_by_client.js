@@ -1,4 +1,4 @@
-const { Order, Item } = require("../../models");
+const { Order, OrderItem } = require("../../models");
 const cors = require("cors");
 
 // Configurar CORS
@@ -34,7 +34,7 @@ export default async function handler(req, res) {
           ["orderDate", "DESC"],
           ["dailyOrderNumber", "DESC"],
         ],
-        include: [{ model: Item, as: "items" }],
+        include: [{ model: OrderItem, as: "orderItems" }],
       });
 
       res.status(200).json(orders);
