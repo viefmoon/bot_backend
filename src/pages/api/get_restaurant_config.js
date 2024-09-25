@@ -4,7 +4,7 @@ const cors = require("cors");
 // Configurar CORS
 const corsMiddleware = cors({
   origin: "*", // Permitir todos los orígenes en desarrollo. Ajustar esto en producción.
-  methods: ["GET", "POST"],
+  methods: ["GET"],
 });
 
 export default async function handler(req, res) {
@@ -37,42 +37,8 @@ export default async function handler(req, res) {
       console.error("Error al obtener la configuración:", error);
       res.status(500).json({ error: "Error al obtener la configuración" });
     }
-  } else if (req.method === "POST") {
-    try {
-      const { acceptingOrders, estimatedPickupTime, estimatedDeliveryTime } =
-        req.body;
-
-      let config = await RestaurantConfig.findOne();
-      if (!config) {
-        config = await RestaurantConfig.create({
-          acceptingOrders,
-          estimatedPickupTime,
-          estimatedDeliveryTime,
-        });
-        console.log("Nueva configuración creada:", config);
-      } else {
-        await config.update({
-          acceptingOrders,
-          estimatedPickupTime,
-          estimatedDeliveryTime,
-        });
-        console.log("Configuración actualizada:", config);
-      }
-
-      res.status(200).json({
-        mensaje: "Configuración actualizada exitosamente",
-        config: {
-          acceptingOrders: config.acceptingOrders,
-          estimatedPickupTime: config.estimatedPickupTime,
-          estimatedDeliveryTime: config.estimatedDeliveryTime,
-        },
-      });
-    } catch (error) {
-      console.error("Error al actualizar la configuración:", error);
-      res.status(500).json({ error: "Error al actualizar la configuración" });
-    }
   } else {
-    res.setHeader("Allow", ["GET", "POST"]);
+    res.setHeader("Allow", ["GET"]);
     res.status(405).end(`Method ${req.method} Not Allowed`);
   }
 }
