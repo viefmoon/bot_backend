@@ -1,5 +1,11 @@
 import Availability from "../../models/availability";
+import Product from "../../models/product";
+import ProductVariant from "../../models/productVariant";
+import Modifier from "../../models/modifier";
+import ModifierType from "../../models/modifierType";
+import PizzaIngredient from "../../models/pizzaIngredient";
 const cors = require("cors");
+const { Op } = require("sequelize");
 
 const corsMiddleware = cors({
   origin: "*",
@@ -30,6 +36,49 @@ export default async function handler(req, res) {
 
       availability.available = !availability.available;
       await availability.save();
+
+      // Si es un producto, actualizar la disponibilidad de sus relaciones
+      if (type === "product") {
+        const product = await Product.findByPk(id);
+        if (product) {
+          // Obtener IDs de todas las relaciones
+          const productVariantIds = await ProductVariant.findAll({
+            where: { productId: id },
+            attributes: ["id"],
+          }).map((pv) => pv.id);
+
+          const pizzaIngredientIds = await PizzaIngredient.findAll({
+            where: { productId: id },
+            attributes: ["id"],
+          }).map((pi) => pi.id);
+
+          const modifierTypeIds = await ModifierType.findAll({
+            where: { productId: id },
+            attributes: ["id"],
+          }).map((mt) => mt.id);
+
+          const modifierIds = await Modifier.findAll({
+            where: { modifierTypeId: modifierTypeIds },
+            attributes: ["id"],
+          }).map((m) => m.id);
+
+          // Actualizar Availability para todas las relaciones
+          await Availability.update(
+            { available: availability.available },
+            {
+              where: {
+                id: {
+                  [Op.or]: [
+                    ...productVariantIds,
+                    ...pizzaIngredientIds,
+                    ...modifierIds,
+                  ],
+                },
+              },
+            }
+          );
+        }
+      }
 
       res.status(200).json({
         id: availability.id,
