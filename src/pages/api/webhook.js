@@ -510,28 +510,12 @@ async function handleMessage(from, message) {
       return;
     }
 
-    // Obtener datos adicionales del cliente
-    const customerData = await getCustomerData(from);
-    let deliveryInfo = customerData.deliveryInfo;
-
     // Enviar mensaje de bienvenida si el historial relevante está vacío
     if (relevantChatHistory.length === 0) {
       await sendWelcomeMessage(from);
       if (!deliveryInfo) {
         deliveryInfo = "Aun no proporcionada";
       }
-    }
-
-    // Añadir la información del cliente al inicio si no está presente
-    if (
-      !relevantChatHistory.some((msg) =>
-        msg.content.startsWith("Información de entrega:")
-      )
-    ) {
-      relevantChatHistory.unshift({
-        role: "assistant",
-        content: `Información de entrega: ${deliveryInfo}`,
-      });
     }
 
     // Añadir el nuevo mensaje del usuario a ambos historiales
@@ -606,22 +590,6 @@ async function handleMessage(from, message) {
     });
   } catch (error) {
     console.error("Error al procesar el mensaje:", error);
-  }
-}
-
-// Función para obtener datos adicionales del cliente
-async function getCustomerData(clientId) {
-  try {
-    const customer = await Customer.findOne({ where: { clientId } });
-    if (customer) {
-      return {
-        deliveryInfo: customer.deliveryInfo,
-      };
-    }
-    return {};
-  } catch (error) {
-    console.error("Error al obtener datos del cliente:", error);
-    return {};
   }
 }
 
