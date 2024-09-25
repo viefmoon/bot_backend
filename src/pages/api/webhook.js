@@ -625,56 +625,15 @@ async function getCustomerData(clientId) {
   }
 }
 
-async function sendWhatsAppImageMessage(phoneNumber, imageUrl, caption) {
-  try {
-    let payload = {
-      messaging_product: "whatsapp",
-      recipient_type: "individual",
-      to: phoneNumber,
-      type: "image",
-      image: {
-        link: imageUrl,
-        caption: caption,
-      },
-    };
-
-    const response = await axios.post(
-      `https://graph.facebook.com/v19.0/${process.env.WHATSAPP_PHONE_NUMBER_ID}/messages`,
-      payload,
-      {
-        headers: {
-          Authorization: `Bearer ${process.env.WHATSAPP_ACCESS_TOKEN}`,
-          "Content-Type": "application/json",
-        },
-      }
-    );
-    console.log("Mensaje con imagen enviado exitosamente");
-    return true;
-  } catch (error) {
-    console.error(
-      "Error al enviar mensaje con imagen:",
-      error.response?.data || error.message
-    );
-    return false;
-  }
-}
-
 async function sendWelcomeMessage(phoneNumber) {
   try {
-    // Enviar mensaje con imagen primero
-    await sendWhatsAppImageMessage(
-      phoneNumber,
-      `${process.env.BASE_URL}/images/bienvenida.jpg`,
-      "¡Bienvenido a La Leña!"
-    );
-
     // Esperar un breve momento para asegurar que la imagen se haya enviado
     await new Promise((resolve) => setTimeout(resolve, 2000));
 
     // Luego enviar mensaje interactivo con lista
     const listOptions = {
       body: {
-        text: "¿Cómo podemos ayudarte hoy?",
+        text: "¡Bienvenido a La Leña! ¿Cómo podemos ayudarte hoy?",
       },
       footer: {
         text: "Selecciona una opción:",
