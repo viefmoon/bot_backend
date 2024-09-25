@@ -615,7 +615,7 @@ async function sendWelcomeMessage(phoneNumber) {
               },
               {
                 id: "wait_times",
-                title: "Tiempos de espera actuales",
+                title: "Tiempos de espera",
               },
               {
                 id: "restaurant_info",
