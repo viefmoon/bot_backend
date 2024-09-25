@@ -13,7 +13,7 @@ import {
   Customer,
 } from "../models";
 
-import { sendWhatsAppMessage } from "../services/whatsappService";
+import { sendWhatsAppMessage } from "../utils/whatsAppUtils";
 
 async function generateOrderSummary(order) {
   try {
