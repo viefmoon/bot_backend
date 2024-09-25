@@ -1,4 +1,5 @@
-require("dotenv").config();
+import dotenv from "dotenv";
+dotenv.config();
 const { sequelize } = require("../src/lib/db");
 const Product = require("../src/models/product");
 const ProductVariant = require("../src/models/productVariant");
