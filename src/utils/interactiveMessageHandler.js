@@ -7,7 +7,7 @@ import {
 } from "../handlers/orderHandlers";
 
 import { Order, Customer, RestaurantConfig } from "../models";
-import { sendWhatsAppMessage } from "../services/whatsappService";
+import { sendWhatsAppMessage } from "../utils/whatsAppUtils";
 import stripe from "stripe";
 import menuText from "../data/menu";
 
