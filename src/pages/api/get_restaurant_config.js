@@ -27,11 +27,9 @@ export default async function handler(req, res) {
       }
       console.log("Configuración obtenida:", config);
       res.status(200).json({
-        config: {
-          acceptingOrders: config.acceptingOrders,
-          estimatedPickupTime: config.estimatedPickupTime,
-          estimatedDeliveryTime: config.estimatedDeliveryTime,
-        },
+        acceptingOrders: config.acceptingOrders,
+        estimatedPickupTime: config.estimatedPickupTime,
+        estimatedDeliveryTime: config.estimatedDeliveryTime,
       });
     } catch (error) {
       console.error("Error al obtener la configuración:", error);
