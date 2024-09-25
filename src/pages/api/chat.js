@@ -87,7 +87,6 @@ async function getAvailableMenu() {
           model: ModifierType,
           as: "modifierTypes",
           include: [
-            { model: Availability, where: { available: true } },
             {
               model: Modifier,
               as: "modifiers",
@@ -106,45 +105,27 @@ async function getAvailableMenu() {
       };
     }
 
-    return products
-      .map((producto) => {
-        const productoInfo = {
-          name: producto.name,
-          ingredients: producto.ingredients || undefined,
-        };
-
-        if (producto.productVariants?.length > 0) {
-          productoInfo.variantes = producto.productVariants
-            .map((v) => ({
-              name: v.name,
-              ingredients: v.ingredients || undefined,
-            }))
-            .filter((v) => v.ingredients !== undefined);
-        }
-
-        if (producto.modifierTypes?.length > 0) {
-          productoInfo.modificadores = producto.modifierTypes.flatMap(
+    return products.map((producto) => {
+      const productoInfo = {
+        name: producto.name,
+        ingredients: producto.ingredients || undefined,
+        variantes:
+          producto.productVariants?.map((v) => ({
+            name: v.name,
+            ingredients: v.ingredients || undefined,
+          })) || [],
+        modificadores:
+          producto.modifierTypes?.flatMap(
             (mt) => mt.modifiers?.map((m) => m.name) || []
-          );
-        }
+          ) || [],
+        ingredientesPizza:
+          producto.pizzaIngredients?.map((i) => ({
+            name: i.name,
+          })) || [],
+      };
 
-        if (producto.pizzaIngredients?.length > 0) {
-          productoInfo.ingredientesPizza = producto.pizzaIngredients.map(
-            (i) => ({
-              name: i.name,
-            })
-          );
-        }
-
-        return productoInfo;
-      })
-      .filter(
-        (p) =>
-          p.ingredients !== undefined ||
-          p.variantes?.length > 0 ||
-          p.modificadores?.length > 0 ||
-          p.ingredientesPizza?.length > 0
-      );
+      return productoInfo;
+    });
   } catch (error) {
     console.error("Error al obtener el menú disponible:", error);
     return {
