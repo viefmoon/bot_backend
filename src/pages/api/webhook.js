@@ -1,7 +1,7 @@
 import { handleWebhookVerification } from "../../handlers/webhookVerificationHandler";
 import { handleStripeWebhook } from "../../handlers/stripeWebhookHandler";
 import { handleWhatsAppWebhook } from "../../handlers/whatsAppWebhookHandler";
-
+import dotenv from "dotenv";
 dotenv.config();
 
 export default async function handler(req, res) {

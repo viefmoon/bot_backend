@@ -1,5 +1,5 @@
+import dotenv from "dotenv";
 dotenv.config();
-
 import axios from "axios";
 import { createWriteStream, createReadStream, unlink } from "fs";
 import { promisify } from "util";

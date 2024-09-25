@@ -1,7 +1,9 @@
-dotenv.config();
 import stripe from "stripe";
 import { Order, Customer } from "../models";
 import { sendWhatsAppMessage } from "../utils/whatsAppUtils";
+
+import dotenv from "dotenv";
+dotenv.config();
 
 const stripeClient = stripe(process.env.STRIPE_SECRET_KEY);
 

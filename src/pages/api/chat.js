@@ -1,5 +1,5 @@
+import dotenv from "dotenv";
 dotenv.config();
-
 const OpenAI = require("openai");
 const axios = require("axios");
 const {

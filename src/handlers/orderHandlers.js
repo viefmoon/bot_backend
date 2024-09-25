@@ -1,4 +1,3 @@
-dotenv.config();
 import axios from "axios";
 import {
   OrderItem,
@@ -14,6 +13,9 @@ import {
 } from "../models";
 
 import { sendWhatsAppMessage } from "../utils/whatsAppUtils";
+
+import dotenv from "dotenv";
+dotenv.config();
 
 async function generateOrderSummary(order) {
   try {

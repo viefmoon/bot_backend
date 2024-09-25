@@ -1,3 +1,4 @@
+import dotenv from "dotenv";
 dotenv.config();
 const Order = require("../../models/order");
 const { sequelize } = require("../../lib/db");

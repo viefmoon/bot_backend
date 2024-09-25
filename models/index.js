@@ -1,5 +1,4 @@
 "use strict";
-dotenv.config();
 
 const fs = require("fs");
 const path = require("path");
@@ -21,6 +20,9 @@ if (config.use_env_variable) {
     config
   );
 }
+
+import dotenv from "dotenv";
+dotenv.config();
 
 fs.readdirSync(__dirname)
   .filter((file) => {
