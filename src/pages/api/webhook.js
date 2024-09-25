@@ -2,6 +2,8 @@ import { handleWebhookVerification } from "../../handlers/webhookVerificationHan
 import { handleStripeWebhook } from "../../handlers/stripeWebhookHandler";
 import { handleWhatsAppWebhook } from "../../handlers/whatsAppWebhookHandler";
 
+dotenv.config();
+
 export default async function handler(req, res) {
   if (req.method === "GET") {
     handleWebhookVerification(req, res);
