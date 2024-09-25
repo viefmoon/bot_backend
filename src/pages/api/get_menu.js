@@ -1,9 +1,3 @@
-import Product from "../../models/product";
-import ProductVariant from "../../models/productVariant";
-import PizzaIngredient from "../../models/pizzaIngredient";
-import ModifierType from "../../models/modifierType";
-import Modifier from "../../models/modifier";
-import Availability from "../../models/availability";
 const cors = require("cors");
 
 const corsMiddleware = cors({
@@ -34,26 +28,49 @@ export default async function handler(req, res) {
       } = require("../../models");
 
       const menu = await Product.findAll({
+        attributes: { exclude: ["createdAt", "updatedAt"] },
         include: [
           {
             model: ProductVariant,
             as: "productVariants",
-            include: [{ model: Availability }],
+            attributes: { exclude: ["createdAt", "updatedAt"] },
+            include: [
+              {
+                model: Availability,
+                attributes: { exclude: ["createdAt", "updatedAt"] },
+              },
+            ],
           },
-          { model: Availability },
+          {
+            model: Availability,
+            attributes: { exclude: ["createdAt", "updatedAt"] },
+          },
           {
             model: PizzaIngredient,
             as: "pizzaIngredients",
-            include: [{ model: Availability }],
+            attributes: { exclude: ["createdAt", "updatedAt"] },
+            include: [
+              {
+                model: Availability,
+                attributes: { exclude: ["createdAt", "updatedAt"] },
+              },
+            ],
           },
           {
             model: ModifierType,
             as: "modifierTypes",
+            attributes: { exclude: ["createdAt", "updatedAt"] },
             include: [
               {
                 model: Modifier,
                 as: "modifiers",
-                include: [{ model: Availability }],
+                attributes: { exclude: ["createdAt", "updatedAt"] },
+                include: [
+                  {
+                    model: Availability,
+                    attributes: { exclude: ["createdAt", "updatedAt"] },
+                  },
+                ],
               },
             ],
           },
