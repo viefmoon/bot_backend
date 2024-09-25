@@ -70,21 +70,28 @@ export default async function handler(req, res) {
             })
           ).map((m) => m.id);
 
-          // Actualizar Availability para todas las relaciones
-          await Availability.update(
-            { available: availability.available },
-            {
-              where: {
-                id: {
-                  [Op.or]: [
-                    ...productVariantIds,
-                    ...pizzaIngredientIds,
-                    ...modifierIds,
-                  ],
+          // Verificar si el producto tiene relaciones
+          if (
+            productVariantIds.length > 0 ||
+            pizzaIngredientIds.length > 0 ||
+            modifierIds.length > 0
+          ) {
+            // Actualizar Availability solo para las relaciones existentes
+            await Availability.update(
+              { available: availability.available },
+              {
+                where: {
+                  id: {
+                    [Op.or]: [
+                      ...productVariantIds,
+                      ...pizzaIngredientIds,
+                      ...modifierIds,
+                    ],
+                  },
                 },
-              },
-            }
-          );
+              }
+            );
+          }
         }
       }
 
