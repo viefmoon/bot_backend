@@ -1,4 +1,4 @@
-import { DataTypes } from "sequelize";
+const { DataTypes } = require("sequelize");
 const { sequelize } = require("../lib/db");
 
 const MessageLog = sequelize.define("MessageLog", {
@@ -13,4 +13,4 @@ const MessageLog = sequelize.define("MessageLog", {
   },
 });
 
-export default MessageLog;
+module.exports = MessageLog;

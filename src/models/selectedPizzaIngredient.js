@@ -47,4 +47,4 @@ const SelectedPizzaIngredient = sequelize.define(
   }
 );
 
-module.exports = { SelectedPizzaIngredient, PizzaHalf, IngredientAction };
+module.exports = SelectedPizzaIngredient;
