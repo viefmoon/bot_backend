@@ -274,9 +274,9 @@ async function createOrder(req, res) {
             ingredientes_pizza: selectedPizzaIngredients.map((spi) => ({
               nombre:
                 spi.action === "remove"
-                  ? `sin ${spi.PizzaIngredient.name}`
+                  ? `Sin ${spi.PizzaIngredient.name}`
                   : spi.action === "add"
-                  ? `con ${spi.PizzaIngredient.name}`
+                  ? `Con ${spi.PizzaIngredient.name}`
                   : spi.PizzaIngredient.name,
               mitad: spi.half,
             })),
@@ -685,9 +685,9 @@ async function selectProducts(req, res) {
                 }
                 const ingredientName =
                   ingredient.action === "remove"
-                    ? `sin ${pizzaIngredient.name}`
+                    ? `Sin ${pizzaIngredient.name}`
                     : ingredient.action === "add"
-                    ? `con ${pizzaIngredient.name}`
+                    ? `Con ${pizzaIngredient.name}`
                     : pizzaIngredient.name;
                 if (ingredient.half === "full") {
                   pizzaIngredientNames.full.push(ingredientName);
