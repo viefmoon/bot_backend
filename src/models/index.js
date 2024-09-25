@@ -1,4 +1,6 @@
 const { sequelize } = require("../lib/db");
+
+// Importaciones individuales
 const Customer = require("./customer");
 const Order = require("./order");
 const RestaurantConfig = require("./restaurantConfig");
@@ -10,10 +12,11 @@ const { SelectedPizzaIngredient } = require("./selectedPizzaIngredient");
 const Modifier = require("./modifier");
 const ModifierType = require("./modifierType");
 const SelectedModifier = require("./selectedModifier");
-const Availability = require("./availability"); // Añade esta línea
+const Availability = require("./availability");
 const MessageRateLimit = require("./messageRateLimit");
 const BannedCustomer = require("./bannedCustomer");
 const MessageLog = require("./messageLog");
+
 // Define relationships
 Order.hasMany(OrderItem, { foreignKey: "orderId", as: "orderItems" });
 OrderItem.belongsTo(Order, { foreignKey: "orderId" });
@@ -90,7 +93,9 @@ Modifier.hasOne(Availability, {
   scope: { type: "modifier" },
 });
 
+// Exportar todos los modelos y relaciones
 module.exports = {
+  sequelize,
   Customer,
   Order,
   RestaurantConfig,
@@ -106,5 +111,4 @@ module.exports = {
   MessageRateLimit,
   BannedCustomer,
   MessageLog,
-  sequelize,
 };
