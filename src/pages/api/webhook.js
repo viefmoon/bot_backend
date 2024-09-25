@@ -513,9 +513,6 @@ async function handleMessage(from, message) {
     // Enviar mensaje de bienvenida si el historial relevante está vacío
     if (relevantChatHistory.length === 0) {
       await sendWelcomeMessage(from);
-      if (!deliveryInfo) {
-        deliveryInfo = "Aun no proporcionada";
-      }
     }
 
     // Añadir el nuevo mensaje del usuario a ambos historiales
