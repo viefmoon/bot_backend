@@ -69,18 +69,6 @@ async function modifyOrder(toolCall, clientId) {
 }
 async function getAvailableMenu() {
   try {
-    if (
-      !Product ||
-      !ProductVariant ||
-      !PizzaIngredient ||
-      !ModifierType ||
-      !Modifier ||
-      !Availability
-    ) {
-      console.error("Uno o más modelos no están definidos");
-      return { error: "Error en la configuración de los modelos" };
-    }
-
     const products = await Product.findAll({
       include: [
         {
@@ -156,19 +144,6 @@ async function getAvailableMenu() {
 
 async function getMenuAvailability() {
   try {
-    // Verificar si los modelos necesarios están definidos
-    if (
-      !Product ||
-      !ProductVariant ||
-      !PizzaIngredient ||
-      !ModifierType ||
-      !Modifier ||
-      !Availability
-    ) {
-      console.error("Uno o más modelos no están definidos");
-      return { error: "Error en la configuración de los modelos" };
-    }
-
     const products = await Product.findAll({
       include: [
         {

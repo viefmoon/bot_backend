@@ -1141,13 +1141,6 @@ const seedMenuItems = async () => {
             productId: createdProduct.id,
           });
 
-          // Crear disponibilidad para el tipo de modificador
-          await Availability.create({
-            id: modifierType.id,
-            type: "modifierType",
-            available: true,
-          });
-
           if (modifierType.modifiers) {
             for (const modifier of modifierType.modifiers) {
               await Modifier.create({

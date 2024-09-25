@@ -6,12 +6,13 @@ const menu = `
    - BBQ (orden completa $135 / media $70)
    - Picosas (orden completa $135 / media $70)
    - Fritas (orden completa $135 / media $70)
+   - Mango habanero (orden completa $140 / media $75)
    - Mixtas BBQ y picosas ($135)
    Todas las alitas vienen acompañadas de chile de aceite.
 
 2. 🍟 Papas:
    - A la Francesa (orden completa $90 / media $50)
-   - Gajos (orden completa $100 / media $60)
+   - Gajos (orden completa $105 / media $65)
    - Mixtas francesa y gajos ($100)
    🧀 Opción: Con queso y sin queso sin costo.
    Todas las papas vienen acompañadas de aderezo.

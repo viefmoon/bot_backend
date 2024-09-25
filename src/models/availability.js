@@ -11,8 +11,7 @@ const Availability = sequelize.define("Availability", {
       "product",
       "productVariant",
       "modifier",
-      "pizzaIngredient",
-      "modifierType"
+      "pizzaIngredient"
     ),
     allowNull: false,
   },
