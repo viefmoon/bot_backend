@@ -25,31 +25,19 @@ export default async function handler(req, res) {
     try {
       const menu = await Product.findAll({
         include: [
-          {
-            model: ProductVariant,
-            include: [{ model: Availability }],
-          },
-          {
-            model: PizzaIngredient,
-            include: [{ model: Availability }],
-          },
+          { model: ProductVariant, include: [{ model: Availability }] },
+          { model: Availability },
+          { model: PizzaIngredient, include: [{ model: Availability }] },
           {
             model: ModifierType,
-            include: [
-              {
-                model: Modifier,
-                include: [{ model: Availability }],
-              },
-            ],
+            include: [{ model: Modifier, include: [{ model: Availability }] }],
           },
-          { model: Availability },
         ],
       });
-
       res.status(200).json(menu);
     } catch (error) {
-      console.error("Error retrieving menu:", error);
-      res.status(500).json({ error: "Error retrieving menu" });
+      console.error("Error al recuperar el menú:", error);
+      res.status(500).json({ error: "Error al recuperar el menú" });
     }
   } else {
     res.setHeader("Allow", ["GET"]);
