@@ -650,7 +650,7 @@ async function sendWelcomeMessage(phoneNumber) {
               },
               {
                 id: "wait_times",
-                title: "Tiempos de espera",
+                title: "Tiempos de espera actuales",
               },
               {
                 id: "restaurant_info",
