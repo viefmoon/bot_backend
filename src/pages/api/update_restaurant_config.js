@@ -36,12 +36,9 @@ export default async function handler(req, res) {
       console.log("Configuración actualizada:", config);
 
       res.status(200).json({
-        mensaje: "Configuración actualizada exitosamente",
-        config: {
-          acceptingOrders: config.acceptingOrders,
-          estimatedPickupTime: config.estimatedPickupTime,
-          estimatedDeliveryTime: config.estimatedDeliveryTime,
-        },
+        acceptingOrders: config.acceptingOrders,
+        estimatedPickupTime: config.estimatedPickupTime,
+        estimatedDeliveryTime: config.estimatedDeliveryTime,
       });
     } catch (error) {
       console.error("Error al actualizar la configuración:", error);
