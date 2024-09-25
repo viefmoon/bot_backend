@@ -187,9 +187,12 @@ async function getAvailableMenu() {
         }
 
         if (producto.modifierTypes?.length > 0) {
-          productoInfo.modificadores = producto.modifierTypes.flatMap(
+          const modificadores = producto.modifierTypes.flatMap(
             (mt) => mt.modifiers?.map((m) => m.name) || []
           );
+          if (modificadores.length > 0) {
+            productoInfo.modificadores = modificadores;
+          }
         }
 
         if (producto.pizzaIngredients?.length > 0) {
@@ -205,9 +208,9 @@ async function getAvailableMenu() {
       .filter(
         (p) =>
           p.ingredients !== undefined ||
-          p.variantes?.length > 0 ||
-          p.modificadores?.length > 0 ||
-          p.ingredientesPizza?.length > 0
+          p.variantes !== undefined ||
+          p.modificadores !== undefined ||
+          p.ingredientesPizza !== undefined
       );
   } catch (error) {
     console.error("Error al obtener el menú disponible:", error);
