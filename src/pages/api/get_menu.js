@@ -28,12 +28,12 @@ export default async function handler(req, res) {
       } = require("../../models");
 
       const menu = await Product.findAll({
-        attributes: { exclude: ["createdAt", "updatedAt"] },
+        attributes: { exclude: ["createdAt", "updatedAt", "keywords"] },
         include: [
           {
             model: ProductVariant,
             as: "productVariants",
-            attributes: { exclude: ["createdAt", "updatedAt"] },
+            attributes: { exclude: ["createdAt", "updatedAt", "keywords"] },
             include: [
               {
                 model: Availability,
@@ -48,7 +48,7 @@ export default async function handler(req, res) {
           {
             model: PizzaIngredient,
             as: "pizzaIngredients",
-            attributes: { exclude: ["createdAt", "updatedAt"] },
+            attributes: { exclude: ["createdAt", "updatedAt", "keywords"] },
             include: [
               {
                 model: Availability,
@@ -64,7 +64,7 @@ export default async function handler(req, res) {
               {
                 model: Modifier,
                 as: "modifiers",
-                attributes: { exclude: ["createdAt", "updatedAt"] },
+                attributes: { exclude: ["createdAt", "updatedAt", "keywords"] },
                 include: [
                   {
                     model: Availability,
