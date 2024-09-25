@@ -42,25 +42,33 @@ export default async function handler(req, res) {
         const product = await Product.findByPk(id);
         if (product) {
           // Obtener IDs de todas las relaciones
-          const productVariantIds = await ProductVariant.findAll({
-            where: { productId: id },
-            attributes: ["id"],
-          }).map((pv) => pv.id);
+          const productVariantIds = (
+            await ProductVariant.findAll({
+              where: { productId: id },
+              attributes: ["id"],
+            })
+          ).map((pv) => pv.id);
 
-          const pizzaIngredientIds = await PizzaIngredient.findAll({
-            where: { productId: id },
-            attributes: ["id"],
-          }).map((pi) => pi.id);
+          const pizzaIngredientIds = (
+            await PizzaIngredient.findAll({
+              where: { productId: id },
+              attributes: ["id"],
+            })
+          ).map((pi) => pi.id);
 
-          const modifierTypeIds = await ModifierType.findAll({
-            where: { productId: id },
-            attributes: ["id"],
-          }).map((mt) => mt.id);
+          const modifierTypeIds = (
+            await ModifierType.findAll({
+              where: { productId: id },
+              attributes: ["id"],
+            })
+          ).map((mt) => mt.id);
 
-          const modifierIds = await Modifier.findAll({
-            where: { modifierTypeId: modifierTypeIds },
-            attributes: ["id"],
-          }).map((m) => m.id);
+          const modifierIds = (
+            await Modifier.findAll({
+              where: { modifierTypeId: modifierTypeIds },
+              attributes: ["id"],
+            })
+          ).map((m) => m.id);
 
           // Actualizar Availability para todas las relaciones
           await Availability.update(
