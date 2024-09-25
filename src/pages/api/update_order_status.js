@@ -1,3 +1,4 @@
+dotenv.config();
 const Order = require("../../models/order");
 const axios = require("axios");
 const cors = require("cors");

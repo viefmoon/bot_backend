@@ -11,7 +11,9 @@ const Modifier = require("./modifier");
 const ModifierType = require("./modifierType");
 const SelectedModifier = require("./selectedModifier");
 const Availability = require("./availability"); // Añade esta línea
-
+const MessageRateLimit = require("./messageRateLimit");
+const BannedCustomer = require("./bannedCustomer");
+const MessageLog = require("./messageLog");
 // Define relationships
 Order.hasMany(OrderItem, { foreignKey: "orderId", as: "orderItems" });
 OrderItem.belongsTo(Order, { foreignKey: "orderId" });
@@ -100,6 +102,9 @@ module.exports = {
   Modifier,
   ModifierType,
   SelectedModifier,
-  Availability, // Añade esta línea
+  Availability,
+  MessageRateLimit,
+  BannedCustomer,
+  MessageLog,
   sequelize,
 };

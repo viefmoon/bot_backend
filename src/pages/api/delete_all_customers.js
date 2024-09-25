@@ -1,7 +1,8 @@
+dotenv.config();
+
 const Customer = require("../../models/customer");
 const { sequelize } = require("../../lib/db");
 const cors = require("cors");
-
 // Configurar CORS
 const corsMiddleware = cors({
   origin: "*", // Permite todas las origenes en desarrollo. Ajusta esto en producción.
