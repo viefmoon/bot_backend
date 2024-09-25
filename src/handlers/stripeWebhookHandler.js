@@ -43,7 +43,3 @@ export async function handleStripeWebhook(req, res) {
 
   res.json({ received: true });
 }
-
-module.exports = {
-  handleStripeWebhook,
-};

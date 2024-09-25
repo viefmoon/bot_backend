@@ -2,7 +2,11 @@ import dotenv from "dotenv";
 dotenv.config();
 import axios from "axios";
 
-async function sendWhatsAppMessage(phoneNumber, message, listOptions = null) {
+export async function sendWhatsAppMessage(
+  phoneNumber,
+  message,
+  listOptions = null
+) {
   try {
     let payload = {
       messaging_product: "whatsapp",
@@ -36,7 +40,7 @@ async function sendWhatsAppMessage(phoneNumber, message, listOptions = null) {
   }
 }
 
-async function sendWhatsAppInteractiveMessage(phoneNumber, listOptions) {
+export async function sendWhatsAppInteractiveMessage(phoneNumber, listOptions) {
   try {
     let payload = {
       messaging_product: "whatsapp",
@@ -69,5 +73,3 @@ async function sendWhatsAppInteractiveMessage(phoneNumber, listOptions) {
     return false;
   }
 }
-
-export { sendWhatsAppMessage, sendWhatsAppInteractiveMessage };

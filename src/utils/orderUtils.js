@@ -1,6 +1,6 @@
 const { Order } = require("@/models");
 
-async function getNextDailyOrderNumber() {
+export async function getNextDailyOrderNumber() {
   const mexicoTime = new Date().toLocaleString("en-US", {
     timeZone: "America/Mexico_City",
   });
@@ -15,5 +15,3 @@ async function getNextDailyOrderNumber() {
 
   return lastOrder ? lastOrder.dailyOrderNumber + 1 : 1;
 }
-
-module.exports = { getNextDailyOrderNumber };
