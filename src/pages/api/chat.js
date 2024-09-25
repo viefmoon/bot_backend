@@ -136,92 +136,83 @@ async function getAvailableMenu() {
   }
 }
 
-async function getMenuAvailability() {
+async function getAvailableMenu() {
   try {
     const products = await Product.findAll({
       include: [
         {
           model: ProductVariant,
           as: "productVariants",
-          include: [{ model: Availability }],
+          include: [{ model: Availability, where: { available: true } }],
         },
         {
           model: PizzaIngredient,
           as: "pizzaIngredients",
-          include: [{ model: Availability }],
+          include: [{ model: Availability, where: { available: true } }],
         },
         {
           model: ModifierType,
           as: "modifierTypes",
           include: [
-            { model: Availability },
             {
               model: Modifier,
               as: "modifiers",
-              include: [{ model: Availability }],
+              include: [{ model: Availability, where: { available: true } }],
             },
           ],
         },
-        { model: Availability },
+        { model: Availability, where: { available: true } },
       ],
     });
 
     if (!products || products.length === 0) {
-      console.error("No se encontraron productos");
-      return { error: "No se encontraron productos en la base de datos" };
+      console.error("No se encontraron productos disponibles");
+      return {
+        error: "No se encontraron productos disponibles en la base de datos",
+      };
     }
 
-    const menuSimplificado = products.map((producto) => {
-      const productoInfo = {
-        productId: producto.id,
-        name: producto.name,
-        keywords: producto.keywords || null,
-        //active: producto.Availability?.available || false,
-      };
+    return products
+      .map((producto) => {
+        const productoInfo = {
+          name: producto.name,
+          ingredients: producto.ingredients || undefined,
+        };
 
-      // Agregar variantes
-      if (producto.productVariants?.length > 0) {
-        productoInfo.variantes = producto.productVariants.map((v) => ({
-          variantId: v.id,
-          name: v.name,
-          keywords: v.keywords || null,
-          //active: v.Availability?.available || false,
-        }));
-      }
+        if (producto.productVariants?.length > 0) {
+          productoInfo.variantes = producto.productVariants.map((v) => ({
+            name: v.name,
+            ingredients: v.ingredients || undefined,
+          }));
+        }
 
-      // Agregar modificadores
-      if (producto.modifierTypes?.length > 0) {
-        productoInfo.modificadores = producto.modifierTypes.flatMap(
-          (mt) =>
-            mt.modifiers?.map((m) => ({
-              modifierId: m.id,
-              name: m.name,
-              keywords: m.keywords || null,
-              //active: m.Availability?.available || false,
-            })) || []
-        );
-      }
+        if (producto.modifierTypes?.length > 0) {
+          productoInfo.modificadores = producto.modifierTypes.flatMap(
+            (mt) => mt.modifiers?.map((m) => m.name) || []
+          );
+        }
 
-      // Agregar ingredientes de pizza
-      if (producto.pizzaIngredients?.length > 0) {
-        productoInfo.ingredientesPizza = producto.pizzaIngredients.map((i) => ({
-          pizzaIngredientId: i.id,
-          name: i.name,
-          keywords: i.keywords || null,
-          //active: i.Availability?.available || false,
-        }));
-      }
+        if (producto.pizzaIngredients?.length > 0) {
+          productoInfo.ingredientesPizza = producto.pizzaIngredients.map(
+            (i) => ({
+              name: i.name,
+            })
+          );
+        }
 
-      return productoInfo;
-    });
-
-    return {
-      "Menu Disponible": menuSimplificado,
-    };
+        return productoInfo;
+      })
+      .filter(
+        (p) =>
+          p.ingredients !== undefined ||
+          p.variantes?.length > 0 ||
+          p.modificadores?.length > 0 ||
+          p.ingredientesPizza?.length > 0
+      );
   } catch (error) {
-    console.error("Error al obtener la disponibilidad del menú:", error);
+    console.error("Error al obtener el menú disponible:", error);
     return {
-      error: "No se pudo obtener la disponibilidad del menú",
+      error: "No se pudo obtener el menú disponible",
       detalles: error.message,
       stack: error.stack,
     };
