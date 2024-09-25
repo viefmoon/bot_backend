@@ -106,46 +106,42 @@ async function getAvailableMenu() {
       };
     }
 
-    return products
-      .map((producto) => {
-        const productoInfo = {
-          name: producto.name,
-          ingredients: producto.ingredients || undefined,
-        };
+    return products.map((producto) => {
+      const productoInfo = {
+        name: producto.name,
+      };
 
-        if (producto.productVariants?.length > 0) {
-          productoInfo.variantes = producto.productVariants.map((v) => ({
-            name: v.name,
-            ingredients: v.ingredients || undefined,
-          }));
-        }
+      if (producto.ingredients) {
+        productoInfo.ingredients = producto.ingredients;
+      }
 
-        if (producto.modifierTypes?.length > 0) {
-          const modificadores = producto.modifierTypes.flatMap(
-            (mt) => mt.modifiers?.map((m) => m.name) || []
-          );
-          if (modificadores.length > 0) {
-            productoInfo.modificadores = modificadores;
+      if (producto.productVariants && producto.productVariants.length > 0) {
+        productoInfo.variantes = producto.productVariants.map((v) => {
+          const variante = { name: v.name };
+          if (v.ingredients) {
+            variante.ingredients = v.ingredients;
           }
-        }
+          return variante;
+        });
+      }
 
-        if (producto.pizzaIngredients?.length > 0) {
-          productoInfo.ingredientesPizza = producto.pizzaIngredients.map(
-            (i) => ({
-              name: i.name,
-            })
-          );
+      if (producto.modifierTypes && producto.modifierTypes.length > 0) {
+        const modificadores = producto.modifierTypes.flatMap(
+          (mt) => mt.modifiers?.map((m) => m.name) || []
+        );
+        if (modificadores.length > 0) {
+          productoInfo.modificadores = modificadores;
         }
+      }
 
-        return productoInfo;
-      })
-      .filter(
-        (p) =>
-          p.ingredients !== undefined ||
-          p.variantes !== undefined ||
-          p.modificadores !== undefined ||
-          p.ingredientesPizza !== undefined
-      );
+      if (producto.pizzaIngredients && producto.pizzaIngredients.length > 0) {
+        productoInfo.ingredientesPizza = producto.pizzaIngredients.map((i) => ({
+          name: i.name,
+        }));
+      }
+
+      return productoInfo;
+    });
   } catch (error) {
     console.error("Error al obtener el menú disponible:", error);
     return {
