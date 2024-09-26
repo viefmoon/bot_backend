@@ -45,7 +45,7 @@ async function sendWelcomeMessage(phoneNumber) {
 }
 async function checkMessageRateLimit(clientId) {
   const MAX_MESSAGES = 30;
-  const TIME_WINDOW = 5 * 60 * 1000;
+  const TIME_WINDOW = 5 * 60 * 1000; // 5 minutos en milisegundos
 
   let rateLimit = await MessageRateLimit.findOne({ where: { clientId } });
 
@@ -55,7 +55,7 @@ async function checkMessageRateLimit(clientId) {
       messageCount: 1,
       lastMessageTime: new Date(),
     });
-    return false;
+    return { limited: false };
   }
 
   const now = new Date();
@@ -63,25 +63,38 @@ async function checkMessageRateLimit(clientId) {
 
   if (timeSinceLastMessage > TIME_WINDOW) {
     await rateLimit.update({ messageCount: 1, lastMessageTime: now });
-    return false;
+    return { limited: false };
   }
 
   if (rateLimit.messageCount >= MAX_MESSAGES) {
-    return true;
+    const timeRemaining = Math.ceil(
+      (TIME_WINDOW - timeSinceLastMessage) / 1000
+    );
+    return { limited: true, timeRemaining };
   }
 
   await rateLimit.update({
     messageCount: rateLimit.messageCount + 1,
     lastMessageTime: now,
   });
-  return false;
+  return { limited: false };
 }
 
 export async function handleTextMessage(from, text) {
-  if (await checkMessageRateLimit(from)) {
+  const rateLimitResult = await checkMessageRateLimit(from);
+  if (rateLimitResult.limited) {
+    const minutes = Math.floor(rateLimitResult.timeRemaining / 60);
+    const seconds = rateLimitResult.timeRemaining % 60;
+    const timeMessage =
+      minutes > 0
+        ? `${minutes} minuto${minutes > 1 ? "s" : ""} y ${seconds} segundo${
+            seconds !== 1 ? "s" : ""
+          }`
+        : `${seconds} segundo${seconds !== 1 ? "s" : ""}`;
+
     await sendWhatsAppMessage(
       from,
-      "Has enviado demasiados mensajes. Por favor, espera un momento."
+      `Por motivos de seguridad, has alcanzado el límite de mensajes permitidos. Por favor, espera ${timeMessage} antes de enviar más mensajes. Agradecemos tu comprensión.`
     );
     return;
   }
