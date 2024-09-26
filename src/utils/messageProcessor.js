@@ -12,7 +12,11 @@ async function checkBannedCustomer(clientId) {
 async function sendBannedMessage(clientId) {
   await sendWhatsAppMessage(
     clientId,
-    "Lo sentimos, tu número ha sido baneado. Contacta con el restaurante si crees que es un error."
+    "Lo sentimos, tu número ha sido baneado debido a la detección de un uso inadecuado de nuestro servicio. " +
+      "Si crees que es un error, por favor contacta directamente con el restaurante:\n\n" +
+      "📞 Teléfono fijo: 3919160126\n" +
+      "📱 Celular: 3338423316\n\n" +
+      "Agradecemos tu comprensión y esperamos resolver cualquier malentendido."
   );
 }
 
