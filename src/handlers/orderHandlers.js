@@ -160,6 +160,12 @@ async function createOrderFromPreOrder(preOrder, clientId) {
       clientId,
     };
 
+    // Agregar registro de depuración
+    console.log(
+      "Datos de la orden a enviar:",
+      JSON.stringify(orderData, null, 2)
+    );
+
     const response = await axios.post(
       `${process.env.BASE_URL}/api/create_order`,
       orderData,
@@ -169,6 +175,9 @@ async function createOrderFromPreOrder(preOrder, clientId) {
         },
       }
     );
+
+    // Agregar registro de depuración
+    console.log("Respuesta del servidor:", response.data);
 
     if (response.status === 201) {
       const newOrder = response.data.orden;
@@ -236,7 +245,10 @@ async function createOrderFromPreOrder(preOrder, clientId) {
       throw new Error("Error al crear la orden");
     }
   } catch (error) {
-    console.error("Error en createOrderFromPreOrder:", error);
+    console.error(
+      "Error detallado en createOrderFromPreOrder:",
+      error.response?.data || error.message
+    );
     throw error;
   }
 }
