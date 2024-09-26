@@ -12,7 +12,10 @@ import {
   Customer,
 } from "../models";
 
-import { sendWhatsAppMessage } from "../utils/whatsAppUtils";
+import {
+  sendWhatsAppMessage,
+  sendWhatsAppInteractiveMessage,
+} from "../utils/whatsAppUtils";
 
 import dotenv from "dotenv";
 dotenv.config();
@@ -271,44 +274,45 @@ export async function handleOrderConfirmation(clientId, messageId) {
       clientId
     );
 
-    const confirmationMessageId = await sendWhatsAppMessage(
+    const interactiveOptions = {
+      type: "list",
+      header: {
+        type: "text",
+        text: "Resumen del Pedido",
+      },
+      body: {
+        text: orderSummary,
+      },
+      footer: {
+        text: "Selecciona una opción:",
+      },
+      action: {
+        button: "Ver opciones",
+        sections: [
+          {
+            title: "Acciones",
+            rows: [
+              {
+                id: "cancel_order",
+                title: "Cancelar Pedido",
+              },
+              {
+                id: "modify_order",
+                title: "Modificar Pedido",
+              },
+              {
+                id: "pay_online",
+                title: "Pagar en línea",
+              },
+            ],
+          },
+        ],
+      },
+    };
+
+    const confirmationMessageId = await sendWhatsAppInteractiveMessage(
       clientId,
-      orderSummary,
-      {
-        type: "list",
-        header: {
-          type: "text",
-          text: "Resumen del Pedido",
-        },
-        body: {
-          text: orderSummary,
-        },
-        footer: {
-          text: "Selecciona una opción:",
-        },
-        action: {
-          button: "Ver opciones",
-          sections: [
-            {
-              title: "Acciones",
-              rows: [
-                {
-                  id: "cancel_order",
-                  title: "Cancelar Pedido",
-                },
-                {
-                  id: "modify_order",
-                  title: "Modificar Pedido",
-                },
-                {
-                  id: "pay_online",
-                  title: "Pagar en linea",
-                },
-              ],
-            },
-          ],
-        },
-      }
+      interactiveOptions
     );
 
     if (confirmationMessageId) {
