@@ -33,6 +33,8 @@ export async function sendWhatsAppInteractiveMessage(
   phoneNumber,
   interactiveOptions
 ) {
+  console.log("phoneNumber", phoneNumber);
+  console.log("interactiveOptions", interactiveOptions);
   try {
     let payload = {
       messaging_product: "whatsapp",
