@@ -85,38 +85,6 @@ export async function handleChatRequest(req) {
         }
       }
     }
-
-    // switch (toolCall.function.name) {
-    //   case "modify_order":
-    //     result = await modifyOrder(toolCall, clientId);
-    //     shouldDeleteConversation = true;
-    //     return { text: result.output };
-    //   case "send_menu":
-    //     return [
-    //       { text: menu, isRelevant: false },
-    //       {
-    //         text: "El menú ha sido enviado, si tienes alguna duda, no dudes en preguntar",
-    //         isRelevant: true,
-    //       },
-    //     ];
-    //   case "select_products":
-    //     result = await selectProducts(toolCall, clientId);
-    //     return [
-    //       {
-    //         text: result.text,
-    //         sendToWhatsApp: result.sendToWhatsApp,
-    //         isRelevant: true,
-    //       },
-    //     ];
-    //   default:
-    //     return { error: "Función desconocida" };
-    // }
-    //   }
-    // } else {
-    //   // Si no hay llamadas a funciones, manejar la respuesta normal
-    //   const assistantMessage = response.choices[0].message.content;
-    //   return { text: assistantMessage };
-    // }
   } catch (error) {
     console.error("Error general:", error);
     return [

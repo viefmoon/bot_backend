@@ -516,6 +516,7 @@ async function modifyOrder(req, res) {
 }
 
 async function selectProducts(req, res) {
+  console.log("selectProducts", req.body);
   const { orderItems, clientId, orderType, deliveryInfo } = req.body;
 
   if (!Array.isArray(orderItems) || orderItems.length === 0) {
