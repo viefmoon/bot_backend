@@ -782,6 +782,8 @@ async function selectProducts(req, res) {
     });
     messageContent += `\n💰 *Total: $${totalCost}*`;
 
+    console.log("messageContent", messageContent);
+
     const messageId = await sendWhatsAppInteractiveMessage(clientId, {
       type: "button",
       header: {
