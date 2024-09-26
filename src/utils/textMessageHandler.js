@@ -3,7 +3,7 @@ import {
   sendWhatsAppInteractiveMessage,
 } from "./whatsAppUtils";
 import { Customer, MessageRateLimit } from "../models";
-import { handleChatRequest } from "../pages/api/chat";
+import { handleChatRequest } from "../pages/api/handleChatRequest";
 
 async function resetChatHistory(customer) {
   await customer.update({ relevantChatHistory: "[]" });
