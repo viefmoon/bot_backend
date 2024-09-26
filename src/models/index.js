@@ -8,6 +8,7 @@ const OrderItem = require("./orderItem");
 const PizzaIngredient = require("./pizzaIngredient");
 const Product = require("./product");
 const ProductVariant = require("./productVariant");
+const PreOrder = require("./preOrder");
 const SelectedPizzaIngredient = require("./selectedPizzaIngredient");
 const Modifier = require("./modifier");
 const ModifierType = require("./modifierType");
@@ -111,4 +112,5 @@ module.exports = {
   MessageRateLimit,
   BannedCustomer,
   MessageLog,
+  PreOrder,
 };
