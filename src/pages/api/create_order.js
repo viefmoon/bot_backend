@@ -1,3 +1,4 @@
+dotenv.config();
 const Order = require("../../models/order");
 const Customer = require("../../models/customer");
 const OrderItem = require("../../models/orderItem");
@@ -15,9 +16,6 @@ const { getNextDailyOrderNumber } = require("../../utils/orderUtils");
 const RestaurantConfig = require("../../models/restaurantConfig");
 const PreOrder = require("../../models/preOrder");
 const axios = require("axios");
-
-import dotenv from "dotenv";
-dotenv.config();
 
 export default async function handler(req, res) {
   if (req.method === "POST") {
