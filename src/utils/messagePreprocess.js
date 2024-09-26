@@ -9,6 +9,7 @@ import {
 const OpenAI = require("openai");
 import { menu } from "../data/menu";
 const { ratio } = require("fuzzball");
+import { preprocessOrderTool, sendMenuTool } from "../aiTools/aiTools";
 
 import dotenv from "dotenv";
 dotenv.config();
