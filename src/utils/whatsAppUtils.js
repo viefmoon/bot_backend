@@ -2,23 +2,13 @@ import dotenv from "dotenv";
 dotenv.config();
 import axios from "axios";
 
-export async function sendWhatsAppMessage(
-  phoneNumber,
-  message,
-  listOptions = null
-) {
+export async function sendWhatsAppMessage(phoneNumber, message) {
   try {
-    let payload = {
+    const payload = {
       messaging_product: "whatsapp",
       to: phoneNumber,
-      type: listOptions ? "interactive" : "text",
-      text: listOptions ? undefined : { body: message },
-      interactive: listOptions
-        ? {
-            type: "list",
-            ...listOptions,
-          }
-        : undefined,
+      type: "text",
+      text: { body: message },
     };
 
     const response = await axios.post(
@@ -32,15 +22,17 @@ export async function sendWhatsAppMessage(
       }
     );
 
-    const messageId = response.data.messages[0].id;
-    return messageId;
+    return response.data.messages[0].id;
   } catch (error) {
     console.error("Error al enviar mensaje de WhatsApp:", error);
     return null;
   }
 }
 
-export async function sendWhatsAppInteractiveMessage(phoneNumber, listOptions) {
+export async function sendWhatsAppInteractiveMessage(
+  phoneNumber,
+  interactiveOptions
+) {
   try {
     let payload = {
       messaging_product: "whatsapp",
@@ -48,8 +40,8 @@ export async function sendWhatsAppInteractiveMessage(phoneNumber, listOptions) {
       to: phoneNumber,
       type: "interactive",
       interactive: {
-        type: "list",
-        ...listOptions,
+        type: interactiveOptions.type,
+        ...interactiveOptions,
       },
     };
 
@@ -63,13 +55,16 @@ export async function sendWhatsAppInteractiveMessage(phoneNumber, listOptions) {
         },
       }
     );
-    console.log("Mensaje interactivo con imagen enviado exitosamente");
-    return true;
+
+    console.log("Respuesta de WhatsApp API:", response.data);
+
+    const messageId = response.data.messages[0].id;
+    return messageId;
   } catch (error) {
     console.error(
       "Error al enviar mensaje interactivo de WhatsApp:",
       error.response?.data || error.message
     );
-    return false;
+    return null;
   }
 }

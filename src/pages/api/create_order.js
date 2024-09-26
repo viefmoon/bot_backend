@@ -16,7 +16,7 @@ const {
 } = require("../../models");
 const { verificarHorarioAtencion } = require("../../utils/timeUtils");
 const { getNextDailyOrderNumber } = require("../../utils/orderUtils");
-const { sendWhatsAppMessage } = require("../../utils/whatsAppUtils");
+const { sendWhatsAppInteractiveMessage } = require("../../utils/whatsAppUtils");
 
 export default async function handler(req, res) {
   if (req.method === "POST") {
@@ -781,9 +781,15 @@ async function selectProducts(req, res) {
     });
     messageContent += `\n💰 *Total: $${totalCost}*`;
 
-    const messageId = await sendWhatsAppMessage(clientId, messageContent, {
+    const messageId = await sendWhatsAppInteractiveMessage(clientId, {
       type: "button",
-      body: { text: messageContent },
+      header: {
+        type: "text",
+        text: "Resumen del Pedido",
+      },
+      body: {
+        text: messageContent,
+      },
       action: {
         buttons: [
           {
@@ -803,7 +809,6 @@ async function selectProducts(req, res) {
         ],
       },
     });
-
     if (!messageId) {
       throw new Error("No se pudo enviar el mensaje de WhatsApp");
     }
