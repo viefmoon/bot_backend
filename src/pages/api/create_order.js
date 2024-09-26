@@ -1,21 +1,21 @@
 import dotenv from "dotenv";
 dotenv.config();
-const Order = require("../../models/order");
-const Customer = require("../../models/customer");
-const OrderItem = require("../../models/orderItem");
-const Product = require("../../models/product");
-const ProductVariant = require("../../models/productVariant");
-const PizzaIngredient = require("../../models/pizzaIngredient");
-const Modifier = require("../../models/modifier");
-const ModifierType = require("../../models/modifierType");
-const SelectedModifier = require("../../models/selectedModifier");
 const {
+  Order,
+  Customer,
+  OrderItem,
+  Product,
+  ProductVariant,
+  PizzaIngredient,
+  Modifier,
+  ModifierType,
+  SelectedModifier,
   SelectedPizzaIngredient,
-} = require("../../models/selectedPizzaIngredient");
+  RestaurantConfig,
+  PreOrder,
+} = require("../../models");
 const { verificarHorarioAtencion } = require("../../utils/timeUtils");
 const { getNextDailyOrderNumber } = require("../../utils/orderUtils");
-const RestaurantConfig = require("../../models/restaurantConfig");
-const PreOrder = require("../../models/preOrder");
 const axios = require("axios");
 
 export default async function handler(req, res) {
