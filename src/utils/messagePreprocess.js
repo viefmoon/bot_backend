@@ -8,7 +8,6 @@ import {
 } from "../models";
 const OpenAI = require("openai");
 import { menu } from "../data/menu";
-import { getMenuAvailability } from "./menuAvailability";
 const { ratio } = require("fuzzball");
 
 import dotenv from "dotenv";
@@ -17,6 +16,111 @@ dotenv.config();
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
+
+async function getMenuAvailability() {
+  try {
+    // Verificar si los modelos necesarios están definidos
+    if (
+      !Product ||
+      !ProductVariant ||
+      !PizzaIngredient ||
+      !ModifierType ||
+      !Modifier ||
+      !Availability
+    ) {
+      console.error("Uno o más modelos no están definidos");
+      return { error: "Error en la configuración de los modelos" };
+    }
+
+    const products = await Product.findAll({
+      include: [
+        {
+          model: ProductVariant,
+          as: "productVariants",
+          include: [{ model: Availability }],
+        },
+        {
+          model: PizzaIngredient,
+          as: "pizzaIngredients",
+          include: [{ model: Availability }],
+        },
+        {
+          model: ModifierType,
+          as: "modifierTypes",
+          include: [
+            { model: Availability },
+            {
+              model: Modifier,
+              as: "modifiers",
+              include: [{ model: Availability }],
+            },
+          ],
+        },
+        { model: Availability },
+      ],
+    });
+
+    if (!products || products.length === 0) {
+      console.error("No se encontraron productos");
+      return { error: "No se encontraron productos en la base de datos" };
+    }
+
+    const menuSimplificado = products.map((producto) => {
+      const productoInfo = {
+        productId: producto.id,
+        name: producto.name,
+        keywords: producto.keywords || null,
+        //active: producto.Availability?.available || false,
+      };
+
+      // Agregar variantes
+      if (producto.productVariants?.length > 0) {
+        productoInfo.variantes = producto.productVariants.map((v) => ({
+          variantId: v.id,
+          name: v.name,
+          keywords: v.keywords || null,
+          //active: v.Availability?.available || false,
+        }));
+      }
+
+      // Agregar modificadores
+      if (producto.modifierTypes?.length > 0) {
+        productoInfo.modificadores = producto.modifierTypes.flatMap(
+          (mt) =>
+            mt.modifiers?.map((m) => ({
+              modifierId: m.id,
+              name: m.name,
+              keywords: m.keywords || null,
+              //active: m.Availability?.available || false,
+            })) || []
+        );
+      }
+
+      // Agregar ingredientes de pizza
+      if (producto.pizzaIngredients?.length > 0) {
+        productoInfo.ingredientesPizza = producto.pizzaIngredients.map((i) => ({
+          pizzaIngredientId: i.id,
+          name: i.name,
+          keywords: i.keywords || null,
+          //active: i.Availability?.available || false,
+        }));
+      }
+
+      return productoInfo;
+    });
+
+    return {
+      "Menu Disponible": menuSimplificado,
+    };
+  } catch (error) {
+    console.error("Error al obtener la disponibilidad del menú:", error);
+    return {
+      error: "No se pudo obtener la disponibilidad del menú",
+      detalles: error.message,
+      stack: error.stack,
+    };
+  }
+}
 
 async function getAvailableMenu() {
   try {
