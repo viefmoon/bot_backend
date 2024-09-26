@@ -1,4 +1,4 @@
-const { Order } = require("@/models");
+const { Order } = require("../models");
 
 export async function getNextDailyOrderNumber() {
   const mexicoTime = new Date().toLocaleString("en-US", {
