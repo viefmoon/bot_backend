@@ -16,7 +16,7 @@ const {
 } = require("../../models");
 const { verificarHorarioAtencion } = require("../../utils/timeUtils");
 const { getNextDailyOrderNumber } = require("../../utils/orderUtils");
-const axios = require("axios");
+const { sendWhatsAppMessage } = require("../../utils/whatsAppUtils");
 
 export default async function handler(req, res) {
   if (req.method === "POST") {
@@ -781,28 +781,28 @@ async function selectProducts(req, res) {
     });
     messageContent += `\n💰 *Total: $${totalCost}*`;
 
-    const buttons = [
-      {
-        type: "reply",
-        reply: {
-          id: "discard_order",
-          title: "Descartar Orden",
-        },
+    const messageId = await sendWhatsAppMessage(clientId, messageContent, {
+      type: "button",
+      body: { text: messageContent },
+      action: {
+        buttons: [
+          {
+            type: "reply",
+            reply: {
+              id: "discard_order",
+              title: "Descartar Orden",
+            },
+          },
+          {
+            type: "reply",
+            reply: {
+              id: "confirm_order",
+              title: "Confirmar Orden",
+            },
+          },
+        ],
       },
-      {
-        type: "reply",
-        reply: {
-          id: "confirm_order",
-          title: "Confirmar Orden",
-        },
-      },
-    ];
-
-    const messageId = await sendWhatsAppMessage(
-      clientId,
-      messageContent,
-      buttons
-    );
+    });
 
     if (!messageId) {
       throw new Error("No se pudo enviar el mensaje de WhatsApp");
@@ -822,40 +822,5 @@ async function selectProducts(req, res) {
     });
   } catch (error) {
     res.status(400).json({ error: error.message });
-  }
-}
-
-async function sendWhatsAppMessage(phoneNumber, message, buttons = null) {
-  try {
-    let payload = {
-      messaging_product: "whatsapp",
-      to: phoneNumber,
-      type: buttons ? "interactive" : "text",
-      text: buttons ? undefined : { body: message },
-      interactive: buttons
-        ? {
-            type: "button",
-            body: { text: message },
-            action: { buttons: buttons },
-          }
-        : undefined,
-    };
-
-    const response = await axios.post(
-      `https://graph.facebook.com/v19.0/${process.env.WHATSAPP_PHONE_NUMBER_ID}/messages`,
-      payload,
-      {
-        headers: {
-          Authorization: `Bearer ${process.env.WHATSAPP_ACCESS_TOKEN}`,
-          "Content-Type": "application/json",
-        },
-      }
-    );
-
-    // Devolver el ID del mensaje enviado
-    return response.data.messages[0].id;
-  } catch (error) {
-    console.error("Error al enviar mensaje de WhatsApp:", error);
-    return null;
   }
 }
