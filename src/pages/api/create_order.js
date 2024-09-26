@@ -16,7 +16,7 @@ const {
 } = require("../../models");
 const { verificarHorarioAtencion } = require("../../utils/timeUtils");
 const { getNextDailyOrderNumber } = require("../../utils/orderUtils");
-const { sendWhatsAppInteractiveMessage } = require("../../utils/whatsAppUtils");
+import { sendWhatsAppInteractiveMessage } from "../../utils/whatsAppUtils";
 
 export default async function handler(req, res) {
   if (req.method === "POST") {
