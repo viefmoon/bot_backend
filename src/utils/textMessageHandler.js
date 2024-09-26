@@ -15,8 +15,17 @@ async function resetChatHistory(customer) {
 
 async function sendWelcomeMessage(phoneNumber) {
   const listOptions = {
-    body: { text: "¡Bienvenido a La Leña! ¿Cómo podemos ayudarte hoy?" },
-    footer: { text: "Selecciona una opción:" },
+    type: "list",
+    header: {
+      type: "text",
+      text: "Bienvenido a La Leña",
+    },
+    body: {
+      text: "¿Cómo podemos ayudarte hoy?",
+    },
+    footer: {
+      text: "Selecciona una opción:",
+    },
     action: {
       button: "Ver opciones",
       sections: [
@@ -34,7 +43,6 @@ async function sendWelcomeMessage(phoneNumber) {
 
   await sendWhatsAppInteractiveMessage(phoneNumber, listOptions);
 }
-
 async function checkMessageRateLimit(clientId) {
   const MAX_MESSAGES = 30;
   const TIME_WINDOW = 5 * 60 * 1000;

@@ -39,10 +39,7 @@ export async function sendWhatsAppInteractiveMessage(
       recipient_type: "individual",
       to: phoneNumber,
       type: "interactive",
-      interactive: {
-        type: interactiveOptions.type,
-        ...interactiveOptions,
-      },
+      interactive: interactiveOptions,
     };
 
     const response = await axios.post(
