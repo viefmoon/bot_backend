@@ -90,7 +90,6 @@ const selectProductsTool = [
           },
           scheduledDeliveryTime: {
             type: "string",
-            format: "date-time",
             description:
               "Hora programada para el pedido (opcional, en formato ISO 8601 sin zona horaria).",
           },
@@ -151,7 +150,6 @@ const preprocessOrderTool = [
           },
           scheduledDeliveryTime: {
             type: ["string", "null"],
-            format: "date-time",
             description:
               "Hora programada para el pedido (opcional, en formato ISO 8601 sin zona horaria). Puede ser null si no se especifica.",
           },
@@ -252,7 +250,6 @@ const selectProductsToolClaude = {
       },
       scheduledDeliveryTime: {
         type: "string",
-        format: "date-time",
         description:
           "Hora programada para el pedido (opcional, en formato ISO 8601 sin zona horaria).",
       },
