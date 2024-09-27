@@ -264,7 +264,10 @@ export async function handleOrderCancellation(clientId, messageId) {
 
 export async function handleOrderModification(clientId, messageId) {
   try {
-    const order = await Order.findOne({ where: { messageId } });
+    const order = await Order.findOne({
+      where: { messageId },
+      include: [{ model: OrderItem, as: "orderItems" }],
+    });
 
     if (!order) {
       console.error(`No se encontró orden para el messageId: ${messageId}`);
@@ -296,6 +299,8 @@ export async function handleOrderModification(clientId, messageId) {
         mensaje =
           "Lo sentimos, pero no podemos procesar tu solicitud de modificación en este momento. Por favor, contacta directamente con el restaurante para obtener ayuda.";
     }
+
+    await sendWhatsAppMessage(clientId, mensaje);
 
     if (!canModify) {
       return;
