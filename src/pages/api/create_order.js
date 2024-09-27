@@ -711,6 +711,16 @@ async function selectProducts(req, res) {
       })
     );
 
+    const config = await RestaurantConfig.findOne();
+    if (!config) {
+      throw new Error("No se encontró la configuración del restaurante");
+    }
+
+    const estimatedTime =
+      orderType === "pickup"
+        ? config.estimatedPickupTime
+        : config.estimatedDeliveryTime;
+
     let messageContent =
       "Aquí tienes el resumen de tu pedido, informame si tienes algun cambio o deseas agregar algun producto mas.\n\n";
     let relevantMessageContent =
@@ -722,6 +732,9 @@ async function selectProducts(req, res) {
     relevantMessageContent += `Información de entrega: ${
       deliveryInfo || "No disponible"
     }\n`;
+    messageContent += `⏱️ *Tiempo estimado de ${
+      orderType === "pickup" ? "recoleccion en el restaurante" : "entrega a domicilio"
+    }: ${estimatedTime} minutos*\n`;
     messageContent += "\n";
     relevantMessageContent += "\n";
 
