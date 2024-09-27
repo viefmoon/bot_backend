@@ -266,7 +266,26 @@ export async function handleOrderModification(clientId, messageId) {
   try {
     const order = await Order.findOne({
       where: { messageId },
-      include: [{ model: OrderItem, as: "orderItems" }],
+      include: [
+        {
+          model: OrderItem,
+          as: "orderItems",
+          include: [
+            { model: Product },
+            { model: ProductVariant },
+            {
+              model: SelectedPizzaIngredient,
+              as: "selectedPizzaIngredients",
+              include: [{ model: PizzaIngredient }],
+            },
+            {
+              model: SelectedModifier,
+              as: "selectedModifiers",
+              include: [{ model: Modifier }],
+            },
+          ],
+        },
+      ],
     });
 
     if (!order) {
