@@ -16,8 +16,6 @@ export default async function handler(req, res) {
     return res.status(405).end(`Method ${req.method} Not Allowed`);
   }
 
-  console.log("req.body", req.body);
-
   const {
     orderItems,
     clientId,

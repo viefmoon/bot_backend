@@ -342,6 +342,36 @@ export async function handleOrderModification(clientId, messageId) {
     const { orderItems, orderType, deliveryInfo, scheduledDeliveryTime } =
       order;
 
+    const formattedScheduledDeliveryTime = new Date(
+      scheduledDeliveryTime
+    ).toLocaleString("es-MX", {
+      timeZone: "America/Mexico_City",
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: false,
+    });
+
+    const filteredOrderItems = order.orderItems.map((item) => {
+      const filteredItem = {
+        quantity: item.quantity,
+        productId: item.productId,
+        productVariantId: item.productVariantId,
+      };
+
+      if (item.comments) filteredItem.comments = item.comments;
+      if (
+        item.selectedPizzaIngredients &&
+        item.selectedPizzaIngredients.length > 0
+      ) {
+        filteredItem.selectedPizzaIngredients = item.selectedPizzaIngredients;
+      }
+      if (item.selectedModifiers && item.selectedModifiers.length > 0) {
+        filteredItem.selectedModifiers = item.selectedModifiers;
+      }
+
+      return filteredItem;
+    });
+
     // Verificar que orderItems sea un array válido
     if (!Array.isArray(orderItems)) {
       throw new Error("orderItems no es un array válido");
@@ -352,11 +382,11 @@ export async function handleOrderModification(clientId, messageId) {
       const selectProductsResponse = await axios.post(
         `${process.env.BASE_URL}/api/orders/select_products`,
         {
-          orderItems,
+          orderItems: filteredOrderItems,
           clientId,
           orderType,
           deliveryInfo,
-          scheduledDeliveryTime,
+          scheduledDeliveryTime: formattedScheduledDeliveryTime,
         }
       );
 
