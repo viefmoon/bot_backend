@@ -26,7 +26,6 @@ async function createOrderFromPreOrder(preOrder, clientId) {
       preOrder;
 
     const orderData = {
-      action: "create",
       orderType,
       orderItems,
       deliveryInfo,

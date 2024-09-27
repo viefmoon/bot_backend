@@ -58,14 +58,14 @@ export default async function handler(req, res) {
         let product, productVariant;
         let itemPrice, productName;
 
-        if (item.productId && item.variantId) {
+        if (item.productId && item.productVariantId) {
           // Si ambos están presentes, buscar producto y variante
           product = await Product.findByPk(item.productId);
-          productVariant = await ProductVariant.findByPk(item.variantId);
+          productVariant = await ProductVariant.findByPk(item.productVariantId);
 
           if (!product || !productVariant) {
             throw new Error(
-              `Producto o variante no encontrado en el menú: Producto ${item.productId}, Variante ${item.variantId}`
+              `Producto o variante no encontrado en el menú: Producto ${item.productId}, Variante ${item.productVariantId}`
             );
           }
 
