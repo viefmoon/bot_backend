@@ -24,12 +24,6 @@ export default async function handler(req, res) {
     scheduledDeliveryTime,
   } = req.body;
 
-  if (!Array.isArray(orderItems) || orderItems.length === 0) {
-    return res
-      .status(400)
-      .json({ error: "Se requiere un array de orderItems" });
-  }
-
   let totalCost = 0;
   let fullScheduledDeliveryTime = null;
 
@@ -40,13 +34,6 @@ export default async function handler(req, res) {
     fullScheduledDeliveryTime = new Date(
       `${today}T${scheduledDeliveryTime}:00-06:00`
     );
-
-    const config = await RestaurantConfig.findOne();
-    if (!config) {
-      return res
-        .status(400)
-        .json({ error: "No se encontró la configuración del restaurante" });
-    }
 
     const minTimeRequired =
       orderType === "pickup"
@@ -224,9 +211,6 @@ export default async function handler(req, res) {
     );
 
     const config = await RestaurantConfig.findOne();
-    if (!config) {
-      throw new Error("No se encontró la configuración del restaurante");
-    }
 
     const estimatedTime = fullScheduledDeliveryTime
       ? fullScheduledDeliveryTime.toLocaleString("es-MX", {
@@ -344,11 +328,7 @@ export default async function handler(req, res) {
       },
     });
 
-    if (!messageId) {
-      throw new Error("No se pudo enviar el mensaje de WhatsApp");
-    }
-
-    const preOrder = await PreOrder.create({
+    await PreOrder.create({
       orderItems,
       orderType,
       deliveryInfo,
@@ -358,7 +338,6 @@ export default async function handler(req, res) {
 
     return res.status(200).json({
       mensaje: relevantMessageContent,
-      preOrderId: preOrder.id,
     });
   } catch (error) {
     return res.status(400).json({ error: error.message });

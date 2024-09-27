@@ -71,7 +71,6 @@ export async function handleChatRequest(req) {
       for (const toolUse of toolUses) {
         console.log("toolUse", toolUse);
         const clientId = conversationId;
-        let result;
 
         if (toolUse.type === "tool_use" && toolUse.name === "select_products") {
           try {
@@ -96,28 +95,18 @@ export async function handleChatRequest(req) {
             return [
               {
                 text: selectProductsResponse.data.mensaje,
-                sendToWhatsApp: false,
+                sendToWhatsApp: true,
                 isRelevant: true,
               },
             ];
           } catch (error) {
             console.error("Error al seleccionar los productos:", error);
-
-            if (error.response) {
-              const errorMessage =
-                error.response.data?.error || "Error desconocido";
-              return [
-                { text: errorMessage, sendToWhatsApp: true, isRelevant: true },
-              ];
-            } else {
-              return [
-                {
-                  text: "Error al seleccionar los productos. Por favor, inténtalo de nuevo.",
-                  sendToWhatsApp: true,
-                  isRelevant: true,
-                },
-              ];
-            }
+            const errorMessage =
+              error.response?.data?.error ||
+              "Error al procesar tu pedido. Por favor, inténtalo de nuevo.";
+            return [
+              { text: errorMessage, sendToWhatsApp: true, isRelevant: true },
+            ];
           }
         }
       }
