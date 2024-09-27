@@ -95,7 +95,7 @@ export async function handleChatRequest(req) {
             return [
               {
                 text: selectProductsResponse.data.mensaje,
-                sendToWhatsApp: true,
+                sendToWhatsApp: false,
                 isRelevant: true,
               },
             ];
