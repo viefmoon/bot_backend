@@ -297,8 +297,6 @@ export async function handleOrderModification(clientId, messageId) {
           "Lo sentimos, pero no podemos procesar tu solicitud de modificación en este momento. Por favor, contacta directamente con el restaurante para obtener ayuda.";
     }
 
-    await sendWhatsAppMessage(clientId, mensaje);
-
     if (!canModify) {
       return;
     }
@@ -309,6 +307,11 @@ export async function handleOrderModification(clientId, messageId) {
     // Extraer los campos necesarios para crear una nueva preorden
     const { orderItems, orderType, deliveryInfo, scheduledDeliveryTime } =
       order;
+
+    // Verificar que orderItems sea un array válido
+    if (!Array.isArray(orderItems)) {
+      throw new Error("orderItems no es un array válido");
+    }
 
     // Crear una nueva preorden utilizando select_products
     try {
@@ -323,8 +326,23 @@ export async function handleOrderModification(clientId, messageId) {
         }
       );
 
+      if (
+        !selectProductsResponse.data ||
+        !selectProductsResponse.data.mensaje
+      ) {
+        throw new Error(
+          "La respuesta de select_products no tiene el formato esperado"
+        );
+      }
+
+      await sendWhatsAppMessage(clientId, selectProductsResponse.data.mensaje);
+
       // Actualizar el relevantChatHistory
       const customer = await Customer.findOne({ where: { clientId } });
+      if (!customer) {
+        throw new Error("No se pudo encontrar el cliente");
+      }
+
       let relevantChatHistory = JSON.parse(
         customer.relevantChatHistory || "[]"
       );
