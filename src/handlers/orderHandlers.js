@@ -1,5 +1,5 @@
 import axios from "axios";
-import { PreOrder, Order, Customer } from "../models";
+import { PreOrder, Order, Customer, OrderItem } from "../models";
 
 import {
   sendWhatsAppMessage,
