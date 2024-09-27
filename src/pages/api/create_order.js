@@ -296,7 +296,26 @@ async function createOrder(req, res) {
 
 async function selectProducts(req, res) {
   console.log("selectProducts", req.body);
-  const { orderItems, clientId, orderType, deliveryInfo } = req.body;
+  const {
+    orderItems,
+    clientId,
+    orderType,
+    deliveryInfo,
+    scheduledDeliveryTime,
+  } = req.body;
+
+  let fullScheduledDeliveryTime = null;
+  if (scheduledDeliveryTime) {
+    const mexicoTime = new Date().toLocaleString("en-US", {
+      timeZone: "America/Mexico_City",
+    });
+    const today = new Date(mexicoTime).toISOString().split("T")[0];
+    fullScheduledDeliveryTime = new Date(
+      `${today}T${scheduledDeliveryTime}:00`
+    );
+  }
+
+  console.log("fullScheduledDeliveryTime", fullScheduledDeliveryTime);
 
   if (!Array.isArray(orderItems) || orderItems.length === 0) {
     return res
@@ -310,7 +329,7 @@ async function selectProducts(req, res) {
       orderItems.map(async (item) => {
         try {
           let product, productVariant;
-          let itemPrice, productName, productId, productVariantId;
+          let itemPrice, productName;
 
           // Intentar encontrar primero como producto
           product = await Product.findByPk(item.productId);
@@ -614,6 +633,7 @@ async function selectProducts(req, res) {
       orderItems,
       orderType,
       deliveryInfo,
+      scheduledDeliveryTime: fullScheduledDeliveryTime,
       messageId,
     });
     console.log("Preorden guardada exitosamente");
