@@ -83,7 +83,7 @@ export default async function handler(req, res) {
     );
     const scheduledTime = new Date(scheduledTimeMexico);
     const diffInMinutes = Math.round((scheduledTime - now) / (1000 * 60));
-    estimatedTime = Math.max(diffInMinutes, 0); // Asegurarse de que no sea negativo
+    estimatedTime = Math.max(diffInMinutes, 0);
   } else {
     estimatedTime =
       orderType === "pickup"
@@ -282,7 +282,18 @@ export default async function handler(req, res) {
       ),
       tiempoEstimado: newOrder.estimatedTime,
       ...(newOrder.scheduledDeliveryTime && {
-        horario_entrega_programado: newOrder.scheduledDeliveryTime,
+        horario_entrega_programado: new Date(
+          newOrder.scheduledDeliveryTime
+        ).toLocaleString("es-MX", {
+          timeZone: "America/Mexico_City",
+          year: "numeric",
+          month: "2-digit",
+          day: "2-digit",
+          hour: "2-digit",
+          minute: "2-digit",
+          second: "2-digit",
+          hour12: true,
+        }),
       }),
     },
   });
