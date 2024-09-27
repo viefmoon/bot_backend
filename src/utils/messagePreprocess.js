@@ -7,7 +7,7 @@ import {
   Modifier,
 } from "../models";
 const OpenAI = require("openai");
-import { menu } from "../data/menu";
+const menu = require("../data/menu");
 const { ratio } = require("fuzzball");
 import { preprocessOrderTool, sendMenuTool } from "../aiTools/aiTools";
 
