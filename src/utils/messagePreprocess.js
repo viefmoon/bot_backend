@@ -396,6 +396,8 @@ export async function preprocessMessages(messages) {
     parallel_tool_calls: false,
   });
 
+  console.log("response", response);
+
   if (response.choices[0].message.tool_calls) {
     const toolCall = response.choices[0].message.tool_calls[0];
     if (toolCall.function.name === "preprocess_order") {
