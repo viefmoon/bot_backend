@@ -89,18 +89,13 @@ const selectProductsTool = [
               "Dirección de entrega para pedidos a domicilio o Nombre del cliente para recolección en restaurante.",
           },
           scheduledDeliveryTime: {
-            type: ["string", "null"],
+            type: "string",
             format: "date-time",
             description:
-              "Hora programada para el pedido (opcional, en formato ISO 8601 sin zona horaria). Puede ser null si no se especifica.",
+              "Hora programada para el pedido (opcional, en formato ISO 8601 sin zona horaria).",
           },
         },
-        required: [
-          "orderItems",
-          "orderType",
-          "deliveryInfo",
-          "scheduledDeliveryTime",
-        ],
+        required: ["orderItems", "orderType", "deliveryInfo"],
         additionalProperties: false,
       },
     },
@@ -155,10 +150,10 @@ const preprocessOrderTool = [
               "Transcripción completa de la conversación entre el cliente y el asistente.",
           },
           scheduledDeliveryTime: {
-            type: "string",
+            type: ["string", "null"],
             format: "date-time",
             description:
-              "Hora programada para el pedido (opcional, en formato ISO 8601 sin zona horaria).",
+              "Hora programada para el pedido (opcional, en formato ISO 8601 sin zona horaria). Puede ser null si no se especifica.",
           },
         },
         required: [
@@ -166,6 +161,7 @@ const preprocessOrderTool = [
           "orderType",
           "deliveryInfo",
           "conversationSummary",
+          "scheduledDeliveryTime",
         ],
         additionalProperties: false,
       },
@@ -239,12 +235,6 @@ const selectProductsToolClaude = {
               type: "integer",
               description: "Cantidad del ítem.",
             },
-            scheduledDeliveryTime: {
-              type: "string",
-              format: "date-time",
-              description:
-                "Hora programada para el pedido (opcional, en formato ISO 8601 sin zona horaria).",
-            },
           },
           required: ["productId", "quantity"],
         },
@@ -259,6 +249,12 @@ const selectProductsToolClaude = {
         type: "string",
         description:
           "Dirección de entrega para pedidos a domicilio o Nombre del cliente para recolección en restaurante.",
+      },
+      scheduledDeliveryTime: {
+        type: "string",
+        format: "date-time",
+        description:
+          "Hora programada para el pedido (opcional, en formato ISO 8601 sin zona horaria).",
       },
     },
     required: ["orderItems", "orderType", "deliveryInfo"],
