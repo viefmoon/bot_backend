@@ -74,7 +74,14 @@ export default async function handler(req, res) {
   let estimatedTime;
   if (scheduledDeliveryTime) {
     const now = new Date(mexicoTime);
-    const scheduledTime = new Date(scheduledDeliveryTime);
+    // Convertir scheduledDeliveryTime a la zona horaria de México
+    const scheduledTimeMexico = new Date(scheduledDeliveryTime).toLocaleString(
+      "en-US",
+      {
+        timeZone: "America/Mexico_City",
+      }
+    );
+    const scheduledTime = new Date(scheduledTimeMexico);
     const diffInMinutes = Math.round((scheduledTime - now) / (1000 * 60));
     estimatedTime = Math.max(diffInMinutes, 0); // Asegurarse de que no sea negativo
   } else {
