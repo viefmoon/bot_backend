@@ -2,8 +2,8 @@ const { NotificationPhone } = require("../../models");
 const cors = require("cors");
 
 const corsMiddleware = cors({
-  origin: "*",
-  methods: ["GET", "POST", "DELETE"],
+  origin: true,
+  methods: ["GET", "POST", "DELETE", "PUT"],
 });
 
 export default async function handler(req, res) {
@@ -73,8 +73,38 @@ export default async function handler(req, res) {
         .status(500)
         .json({ error: "Error al eliminar el número de teléfono" });
     }
+  } else if (req.method === "PUT") {
+    try {
+      const { id } = req.query;
+      const { phoneNumber, isActive } = req.body;
+
+      if (!id) {
+        return res
+          .status(400)
+          .json({ error: "Se requiere el ID del número de teléfono" });
+      }
+
+      const [updatedCount] = await NotificationPhone.update(
+        { phoneNumber, isActive },
+        { where: { id } }
+      );
+
+      if (updatedCount === 0) {
+        return res
+          .status(404)
+          .json({ error: "Número de teléfono no encontrado" });
+      }
+
+      const updatedPhone = await NotificationPhone.findByPk(id);
+      res.status(200).json(updatedPhone);
+    } catch (error) {
+      console.error("Error al actualizar el número de teléfono:", error);
+      res
+        .status(500)
+        .json({ error: "Error al actualizar el número de teléfono" });
+    }
   } else {
-    res.setHeader("Allow", ["GET", "POST", "DELETE"]);
+    res.setHeader("Allow", ["GET", "POST", "PUT", "DELETE"]);
     res.status(405).end(`Method ${req.method} Not Allowed`);
   }
 }

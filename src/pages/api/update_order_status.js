@@ -1,8 +1,8 @@
 import dotenv from "dotenv";
 dotenv.config();
 const Order = require("../../models/order");
-const axios = require("axios");
 const cors = require("cors");
+import { sendWhatsAppMessage } from "../../utils/whatsAppUtils";
 
 // Definir mensajes predeterminados
 const statusMessages = {
@@ -18,31 +18,6 @@ const statusMessages = {
   canceled:
     "Lo sentimos, tu pedido #{orderId} ha sido cancelado. Por favor, contáctanos si tienes alguna pregunta.",
 };
-
-// Función para enviar mensaje de WhatsApp
-async function sendWhatsAppMessage(phoneNumber, message) {
-  try {
-    const response = await axios.post(
-      `https://graph.facebook.com/v19.0/${process.env.WHATSAPP_PHONE_NUMBER_ID}/messages`,
-      {
-        messaging_product: "whatsapp",
-        to: phoneNumber,
-        type: "text",
-        text: { body: message },
-      },
-      {
-        headers: {
-          Authorization: `Bearer ${process.env.WHATSAPP_ACCESS_TOKEN}`,
-          "Content-Type": "application/json",
-        },
-      }
-    );
-    console.log("Mensaje de WhatsApp enviado a:", phoneNumber);
-    console.log("Respuesta de WhatsApp:", response.data);
-  } catch (error) {
-    console.error("Error al enviar mensaje de WhatsApp:", error);
-  }
-}
 
 // Configurar CORS
 const corsMiddleware = cors({
