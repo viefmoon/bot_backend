@@ -6,9 +6,8 @@ export async function selectProducts(toolCall, clientId) {
 
   try {
     const response = await axios.post(
-      `${process.env.BASE_URL}/api/create_order`,
+      `${process.env.BASE_URL}/api/orders/select_products`,
       {
-        action: "selectProducts",
         orderItems: orderItems,
         clientId: clientId,
         orderType: orderType,
