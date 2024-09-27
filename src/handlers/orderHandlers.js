@@ -1,16 +1,5 @@
 import axios from "axios";
-import {
-  OrderItem,
-  Product,
-  ProductVariant,
-  SelectedModifier,
-  Modifier,
-  SelectedPizzaIngredient,
-  PizzaIngredient,
-  PreOrder,
-  Order,
-  Customer,
-} from "../models";
+import { PreOrder, Order, Customer } from "../models";
 
 import {
   sendWhatsAppMessage,
@@ -19,137 +8,6 @@ import {
 
 import dotenv from "dotenv";
 dotenv.config();
-
-async function generateOrderSummary(order) {
-  try {
-    const tipoOrdenTraducido =
-      order.orderType === "delivery"
-        ? "Entrega a domicilio"
-        : "Recolección en restaurante";
-    let orderSummaryWithPrices = `📦 *Orden recuperada para modificar*\n\n`;
-    let orderSummaryWithoutPrices = `📦 *Orden recuperada para modificar*\n\n`;
-    orderSummaryWithPrices += `🛍️ *Orden #${order.dailyOrderNumber}*\n\n`;
-    orderSummaryWithoutPrices += `🛍️ *Orden #${order.dailyOrderNumber}*\n\n`;
-    orderSummaryWithPrices += `🍽️ *Tipo:* ${tipoOrdenTraducido}\n`;
-    orderSummaryWithoutPrices += `🍽️ *Tipo:* ${tipoOrdenTraducido}\n`;
-    if (order.deliveryInfo) {
-      orderSummaryWithPrices += `🏠 *Información de entrega:* ${order.deliveryInfo}\n`;
-      orderSummaryWithoutPrices += `🏠 *Información de entrega:* ${order.deliveryInfo}\n`;
-    }
-    orderSummaryWithPrices += `💰 *Precio total:* $${order.totalCost}\n`;
-    orderSummaryWithoutPrices += `💰 *Precio total:* $${order.totalCost}\n`;
-    orderSummaryWithPrices += `📅 *Fecha de creación:* ${order.createdAt.toLocaleString()}\n`;
-    orderSummaryWithoutPrices += `📅 *Fecha de creación:* ${order.createdAt.toLocaleString()}\n`;
-    orderSummaryWithPrices += `⏱️ *Tiempo estimado de entrega:* ${order.estimatedTime}\n\n`;
-    orderSummaryWithoutPrices += `⏱️ *Tiempo estimado de entrega:* ${order.estimatedTime}\n\n`;
-    orderSummaryWithPrices += `🛒 *Productos:*\n`;
-    orderSummaryWithoutPrices += `🛒 *Productos:*\n`;
-
-    if (typeof OrderItem?.findAll !== "function") {
-      throw new Error("OrderItem.findAll no es una función");
-    }
-
-    const orderItems = await OrderItem.findAll({
-      where: { orderId: order.id },
-      include: [
-        { model: Product, as: "Product" },
-        { model: ProductVariant, as: "ProductVariant" },
-      ],
-    });
-
-    for (const item of orderItems) {
-      const productName =
-        item.ProductVariant?.name ||
-        item.Product?.name ||
-        "Producto desconocido";
-      orderSummaryWithPrices += `   *${productName}* x${item.quantity} - $${item.price}\n`;
-      orderSummaryWithoutPrices += `   *${productName}* x${item.quantity}\n`;
-
-      if (typeof SelectedModifier?.findAll === "function") {
-        const selectedModifiers = await SelectedModifier.findAll({
-          where: { orderItemId: item.id },
-          include: [{ model: Modifier, as: "Modifier" }],
-        });
-
-        if (selectedModifiers.length > 0) {
-          orderSummaryWithPrices += `     *Modificadores:*\n`;
-          orderSummaryWithoutPrices += `     *Modificadores:*\n`;
-          selectedModifiers.forEach((mod) => {
-            if (mod.Modifier) {
-              orderSummaryWithPrices += `      • ${mod.Modifier.name} - $${mod.Modifier.price}\n`;
-              orderSummaryWithoutPrices += `      • ${mod.Modifier.name}\n`;
-            }
-          });
-        }
-      }
-
-      if (typeof SelectedPizzaIngredient?.findAll === "function") {
-        const selectedPizzaIngredients = await SelectedPizzaIngredient.findAll({
-          where: { orderItemId: item.id },
-          include: [{ model: PizzaIngredient, as: "PizzaIngredient" }],
-        });
-
-        if (selectedPizzaIngredients.length > 0) {
-          orderSummaryWithPrices += `    *Ingredientes de pizza:*\n`;
-          orderSummaryWithoutPrices += `    *Ingredientes de pizza:*\n`;
-          const ingredientesPorMitad = { left: [], right: [], full: [] };
-
-          selectedPizzaIngredients.forEach((ing) => {
-            if (ing.PizzaIngredient) {
-              ingredientesPorMitad[ing.half].push(ing.PizzaIngredient.name);
-            }
-          });
-
-          if (ingredientesPorMitad.full.length > 0) {
-            orderSummaryWithPrices += `      • ${ingredientesPorMitad.full.join(
-              ", "
-            )}\n`;
-            orderSummaryWithoutPrices += `      • ${ingredientesPorMitad.full.join(
-              ", "
-            )}\n`;
-          }
-
-          if (
-            ingredientesPorMitad.left.length > 0 ||
-            ingredientesPorMitad.right.length > 0
-          ) {
-            const mitadIzquierda = ingredientesPorMitad.left.join(", ");
-            const mitadDerecha = ingredientesPorMitad.right.join(", ");
-            orderSummaryWithPrices += `      • ${mitadIzquierda} / ${mitadDerecha}\n`;
-            orderSummaryWithoutPrices += `      • ${mitadIzquierda} / ${mitadDerecha}\n`;
-          }
-        }
-      }
-
-      if (item.comments) {
-        orderSummaryWithPrices += `    💬 *Comentarios:* ${item.comments}\n`;
-        orderSummaryWithoutPrices += `    💬 *Comentarios:* ${item.comments}\n`;
-      }
-      orderSummaryWithPrices += `\n`;
-      orderSummaryWithoutPrices += `\n`;
-    }
-
-    fullChatHistory.push({
-      role: "assistant",
-      content: orderSummaryWithPrices,
-    });
-
-    relevantChatHistory.push({
-      role: "assistant",
-      content: orderSummaryWithoutPrices,
-    });
-
-    return orderSummaryWithPrices;
-  } catch (error) {
-    console.error("Error al generar el resumen de la orden:", error);
-    return {
-      withPrices:
-        "No se pudo generar el resumen de la orden debido a un error.",
-      withoutPrices:
-        "No se pudo generar el resumen de la orden debido a un error.",
-    };
-  }
-}
 
 async function createOrderFromPreOrder(preOrder, clientId) {
   try {
@@ -165,14 +23,8 @@ async function createOrderFromPreOrder(preOrder, clientId) {
       clientId,
     };
 
-    // Agregar registro de depuración
-    console.log(
-      "Datos de la orden a enviar:",
-      JSON.stringify(orderData, null, 2)
-    );
-
     const response = await axios.post(
-      `${process.env.BASE_URL}/api/create_order`,
+      `${process.env.BASE_URL}/api/orders/create_order`,
       orderData,
       {
         headers: {
@@ -180,9 +32,6 @@ async function createOrderFromPreOrder(preOrder, clientId) {
         },
       }
     );
-
-    // Agregar registro de depuración
-    console.log("Respuesta del servidor:", response.data);
 
     if (response.status === 201) {
       const newOrder = response.data.orden;
@@ -198,6 +47,9 @@ async function createOrderFromPreOrder(preOrder, clientId) {
       orderSummary += `🏠 *informacion de entrega:* ${newOrder.informacion_entrega}\n`;
       orderSummary += `💰 *Precio total:* $${newOrder.precio_total}\n`;
       orderSummary += `📅 *Fecha de creación:* ${newOrder.fecha_creacion}\n`;
+      if (newOrder.horario_entrega_programado) {
+        orderSummary += `📅 *Fecha de entrega programada:* ${newOrder.horario_entrega_programado}\n`;
+      }
       orderSummary += `⏱️ *Tiempo estimado de entrega:* ${newOrder.tiempoEstimado}\n\n`;
       orderSummary += `🛒 *Productos:*\n`;
       newOrder.productos.forEach((producto) => {
@@ -261,15 +113,6 @@ async function createOrderFromPreOrder(preOrder, clientId) {
 export async function handleOrderConfirmation(clientId, messageId) {
   try {
     const preOrder = await PreOrder.findOne({ where: { messageId } });
-
-    if (!preOrder) {
-      console.error(`No se encontró preorden para el messageId: ${messageId}`);
-      await sendWhatsAppMessage(
-        clientId,
-        "Lo siento, no se pudo encontrar tu orden. Por favor, intenta nuevamente."
-      );
-      return;
-    }
 
     const { newOrder, orderSummary } = await createOrderFromPreOrder(
       preOrder,
@@ -408,38 +251,4 @@ export async function handleOrderCancellation(clientId, messageId) {
   }
 }
 
-export async function handleOrderModification(clientId, messageId) {
-  try {
-    const order = await Order.findOne({ where: { messageId } });
-
-    if (!order) {
-      console.error(`No se encontró orden para el messageId: ${messageId}`);
-      await sendWhatsAppMessage(
-        clientId,
-        "Lo siento, no se pudo encontrar tu orden para modificar. Por favor, contacta con el restaurante si necesitas ayuda."
-      );
-      return;
-    }
-
-    if (order.status !== "created") {
-      await sendWhatsAppMessage(
-        clientId,
-        "Lo sentimos, pero esta orden ya no se puede modificar porque ya fue aceptada por el restaurante."
-      );
-      return;
-    }
-
-    const orderSummary = await generateOrderSummary(order);
-
-    await sendWhatsAppMessage(
-      clientId,
-      `Aquí está tu orden actual para modificar:\n\n${orderSummary.withPrices}\n\nPor favor, indica qué cambios deseas realizar.`
-    );
-  } catch (error) {
-    console.error("Error al modificar la orden:", error);
-    await sendWhatsAppMessage(
-      clientId,
-      "Hubo un error al recuperar tu orden para modificar. Por favor, intenta nuevamente o contacta con el restaurante."
-    );
-  }
-}
+export async function handleOrderModification(clientId, messageId) {}

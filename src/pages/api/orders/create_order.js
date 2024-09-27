@@ -71,11 +71,18 @@ export default async function handler(req, res) {
   const today = new Date(mexicoTime).toISOString().split("T")[0];
   const dailyOrderNumber = await getNextDailyOrderNumber();
 
-  // Determinar el tiempo estimado basado en el tipo de orden
-  const estimatedTime =
-    orderType === "pickup"
-      ? config.estimatedPickupTime
-      : config.estimatedDeliveryTime;
+  let estimatedTime;
+  if (scheduledDeliveryTime) {
+    const now = new Date(mexicoTime);
+    const scheduledTime = new Date(scheduledDeliveryTime);
+    const diffInMinutes = Math.round((scheduledTime - now) / (1000 * 60));
+    estimatedTime = Math.max(diffInMinutes, 0); // Asegurarse de que no sea negativo
+  } else {
+    estimatedTime =
+      orderType === "pickup"
+        ? config.estimatedPickupTime
+        : config.estimatedDeliveryTime;
+  }
 
   // Crear la orden
   const newOrder = await Order.create({
@@ -87,7 +94,7 @@ export default async function handler(req, res) {
     clientId,
     orderDate: today,
     estimatedTime,
-    scheduledDeliveryTime: null,
+    scheduledDeliveryTime,
   });
 
   // Crear los items asociados a la orden
@@ -267,7 +274,9 @@ export default async function handler(req, res) {
         })
       ),
       tiempoEstimado: newOrder.estimatedTime,
-      horario_entrega_programado: newOrder.scheduledDeliveryTime,
+      ...(newOrder.scheduledDeliveryTime && {
+        horario_entrega_programado: newOrder.scheduledDeliveryTime,
+      }),
     },
   });
 }
