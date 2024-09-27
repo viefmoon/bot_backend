@@ -301,9 +301,10 @@ async function selectProducts(req, res) {
     clientId,
     orderType,
     deliveryInfo,
-    scheduledDeliveryTime,
+    scheduledDeliveryTime, // Hora en formato 24 horas
   } = req.body;
 
+  // Convertir scheduledDeliveryTime a un objeto Date completo
   let fullScheduledDeliveryTime = null;
   if (scheduledDeliveryTime) {
     const mexicoTime = new Date().toLocaleString("en-US", {
@@ -514,10 +515,21 @@ async function selectProducts(req, res) {
       throw new Error("No se encontró la configuración del restaurante");
     }
 
-    const estimatedTime =
-      orderType === "pickup"
-        ? config.estimatedPickupTime
-        : config.estimatedDeliveryTime;
+    // Determinar el tiempo estimado basado en el tipo de orden o usar la hora programada
+    const estimatedTime = fullScheduledDeliveryTime
+      ? fullScheduledDeliveryTime.toLocaleString("es-MX", {
+          timeZone: "America/Mexico_City",
+          year: "numeric",
+          month: "2-digit",
+          day: "2-digit",
+          hour: "2-digit",
+          minute: "2-digit",
+          second: "2-digit",
+          hour12: true,
+        })
+      : orderType === "pickup"
+      ? config.estimatedPickupTime
+      : config.estimatedDeliveryTime;
 
     let messageContent =
       "Aquí tienes el resumen de tu pedido, informame si tienes algun cambio o deseas agregar algun producto mas.\n\n";
@@ -532,9 +544,9 @@ async function selectProducts(req, res) {
     }\n`;
     messageContent += `⏱️ *Tiempo estimado de ${
       orderType === "pickup"
-        ? "recoleccion en el restaurante"
+        ? "recolección en el restaurante"
         : "entrega a domicilio"
-    }: ${estimatedTime} minutos*\n`;
+    }: ${estimatedTime}*\n`;
     messageContent += "\n";
     relevantMessageContent += "\n";
 
@@ -633,7 +645,7 @@ async function selectProducts(req, res) {
       orderItems,
       orderType,
       deliveryInfo,
-      scheduledDeliveryTime: fullScheduledDeliveryTime,
+      scheduledDeliveryTime: fullScheduledDeliveryTime, // Usar la fecha completa aquí
       messageId,
     });
     console.log("Preorden guardada exitosamente");
