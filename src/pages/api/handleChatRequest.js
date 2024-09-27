@@ -1,7 +1,6 @@
 import dotenv from "dotenv";
 dotenv.config();
 import { preprocessMessages } from "../../utils/messagePreprocess";
-import { selectProducts } from "./orderOperations";
 // const { selectProductsTool } = require("../../aiTools/aiTools");
 // const OpenAI = require("openai");
 // const openai = new OpenAI({
@@ -74,14 +73,51 @@ export async function handleChatRequest(req) {
         let result;
 
         if (toolUse.type === "tool_use" && toolUse.name === "select_products") {
-          result = await selectProducts(toolUse, clientId);
-          return [
-            {
-              text: result.text,
-              sendToWhatsApp: result.sendToWhatsApp,
-              isRelevant: true,
-            },
-          ];
+          try {
+            const {
+              orderItems,
+              orderType,
+              deliveryInfo,
+              scheduledDeliveryTime,
+            } = toolUse.input;
+
+            const selectProductsResponse = await axios.post(
+              `${process.env.BASE_URL}/api/orders/select_products`,
+              {
+                orderItems,
+                clientId,
+                orderType,
+                deliveryInfo,
+                scheduledDeliveryTime,
+              }
+            );
+
+            return [
+              {
+                text: selectProductsResponse.data.mensaje,
+                sendToWhatsApp: false,
+                isRelevant: true,
+              },
+            ];
+          } catch (error) {
+            console.error("Error al seleccionar los productos:", error);
+
+            if (error.response) {
+              const errorMessage =
+                error.response.data?.error || "Error desconocido";
+              return [
+                { text: errorMessage, sendToWhatsApp: true, isRelevant: true },
+              ];
+            } else {
+              return [
+                {
+                  text: "Error al seleccionar los productos. Por favor, inténtalo de nuevo.",
+                  sendToWhatsApp: true,
+                  isRelevant: true,
+                },
+              ];
+            }
+          }
         }
       }
     }
