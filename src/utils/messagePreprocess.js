@@ -396,10 +396,10 @@ export async function preprocessMessages(messages) {
     parallel_tool_calls: false,
   });
 
-  console.log("response", response);
-
   if (response.choices[0].message.tool_calls) {
     const toolCall = response.choices[0].message.tool_calls[0];
+
+    console.log("toolCall", toolCall);
     if (toolCall.function.name === "preprocess_order") {
       console.log("toolCall", toolCall);
       const preprocessedContent = JSON.parse(toolCall.function.arguments);
