@@ -1,7 +1,7 @@
 import dotenv from "dotenv";
 dotenv.config();
 import { preprocessMessages } from "../../utils/messagePreprocess";
-import { selectProducts, modifyOrder } from "./orderOperations";
+import { selectProducts } from "./orderOperations";
 // const { selectProductsTool } = require("../../aiTools/aiTools");
 // const OpenAI = require("openai");
 // const openai = new OpenAI({
