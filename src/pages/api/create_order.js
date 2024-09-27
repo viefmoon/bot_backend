@@ -307,12 +307,10 @@ async function selectProducts(req, res) {
   // Convertir scheduledDeliveryTime a un objeto Date completo
   let fullScheduledDeliveryTime = null;
   if (scheduledDeliveryTime) {
-    const mexicoTime = new Date().toLocaleString("en-US", {
-      timeZone: "America/Mexico_City",
-    });
-    const today = new Date(mexicoTime).toISOString().split("T")[0];
+    const today = new Date().toISOString().split("T")[0];
+
     fullScheduledDeliveryTime = new Date(
-      `${today}T${scheduledDeliveryTime}:00`
+      `${today}T${scheduledDeliveryTime}:00Z`
     );
   }
 
