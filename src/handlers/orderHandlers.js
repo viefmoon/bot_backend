@@ -298,15 +298,6 @@ export async function handleOrderModification(clientId, messageId) {
       ],
     });
 
-    if (!order) {
-      console.error(`No se encontró orden para el messageId: ${messageId}`);
-      await sendWhatsAppMessage(
-        clientId,
-        "Lo siento, no se pudo encontrar tu orden para modificar. Por favor, contacta con el restaurante si necesitas ayuda."
-      );
-      return;
-    }
-
     let mensaje;
     let canModify = false;
 
@@ -390,18 +381,6 @@ export async function handleOrderModification(clientId, messageId) {
         }
       );
 
-      if (
-        !selectProductsResponse.data ||
-        !selectProductsResponse.data.mensaje
-      ) {
-        throw new Error(
-          "La respuesta de select_products no tiene el formato esperado"
-        );
-      }
-
-      await sendWhatsAppMessage(clientId, selectProductsResponse.data.mensaje);
-
-      // Actualizar el relevantChatHistory
       const customer = await Customer.findOne({ where: { clientId } });
       if (!customer) {
         throw new Error("No se pudo encontrar el cliente");
