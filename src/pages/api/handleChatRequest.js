@@ -19,6 +19,11 @@ export async function handleChatRequest(req) {
     // Preprocesar los mensajes
     const preprocessedContent = await preprocessMessages(relevantMessages);
 
+    console.log(
+      "preprocessedContent:",
+      JSON.stringify(preprocessedContent, null, 2)
+    );
+
     // Si preprocessMessages retorna una respuesta directa
     if (preprocessedContent.isDirectResponse) {
       return [
