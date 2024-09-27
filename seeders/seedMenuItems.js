@@ -1171,6 +1171,12 @@ const seedMenuItems = async () => {
       estimatedDeliveryTime: 40,
     });
 
+    // Añadir el número de teléfono de notificación por defecto
+    await NotificationPhone.create({
+      phoneNumber: "5213320407035",
+      isActive: true,
+    });
+
     console.log(
       "Menu items, availability, and restaurant configuration have been seeded successfully."
     );

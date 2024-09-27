@@ -17,6 +17,7 @@ const Availability = require("./availability");
 const MessageRateLimit = require("./messageRateLimit");
 const BannedCustomer = require("./bannedCustomer");
 const MessageLog = require("./messageLog");
+const NotificationPhone = require("./notificationPhone");
 
 // Define relationships
 Order.hasMany(OrderItem, { foreignKey: "orderId", as: "orderItems" });
@@ -113,4 +114,5 @@ module.exports = {
   BannedCustomer,
   MessageLog,
   PreOrder,
+  NotificationPhone,
 };

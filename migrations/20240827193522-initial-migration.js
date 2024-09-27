@@ -626,6 +626,30 @@ module.exports = {
         type: Sequelize.DATE,
       },
     });
+
+    await queryInterface.createTable("NotificationPhones", {
+      id: {
+        type: Sequelize.INTEGER,
+        primaryKey: true,
+        autoIncrement: true,
+      },
+      phoneNumber: {
+        type: Sequelize.STRING,
+        allowNull: false,
+      },
+      isActive: {
+        type: Sequelize.BOOLEAN,
+        defaultValue: true,
+      },
+      createdAt: {
+        allowNull: false,
+        type: Sequelize.DATE,
+      },
+      updatedAt: {
+        allowNull: false,
+        type: Sequelize.DATE,
+      },
+    });
   },
 
   down: async (queryInterface, Sequelize) => {
@@ -645,5 +669,6 @@ module.exports = {
     await queryInterface.dropTable("PreOrders");
     await queryInterface.dropTable("BannedCustomers");
     await queryInterface.dropTable("MessageRateLimits");
+    await queryInterface.dropTable("NotificationPhones");
   },
 };
