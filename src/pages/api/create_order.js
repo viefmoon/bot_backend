@@ -309,14 +309,34 @@ async function selectProducts(req, res) {
 
   if (scheduledDeliveryTime) {
     const today = new Date().toISOString().split("T")[0];
+    const now = new Date();
 
     // Ajustar la fecha para la zona horaria de Ciudad de México (UTC-6)
     fullScheduledDeliveryTime = new Date(
       `${today}T${scheduledDeliveryTime}:00-06:00`
     );
-  }
 
-  console.log("fullScheduledDeliveryTime", fullScheduledDeliveryTime);
+    // Obtener la configuración del restaurante
+    const config = await RestaurantConfig.findOne();
+    if (!config) {
+      throw new Error("No se encontró la configuración del restaurante");
+    }
+
+    // Calcular el tiempo mínimo requerido en minutos
+    const minTimeRequired =
+      orderType === "pickup"
+        ? config.estimatedPickupTime
+        : config.estimatedDeliveryTime;
+
+    // Calcular la diferencia en minutos entre la hora programada y la hora actual
+    const timeDifference = (fullScheduledDeliveryTime - now) / (1000 * 60);
+
+    if (timeDifference < minTimeRequired) {
+      throw new Error(
+        `La hora programada debe ser al menos ${minTimeRequired} minutos después de la hora actual.`
+      );
+    }
+  }
 
   if (!Array.isArray(orderItems) || orderItems.length === 0) {
     return res
@@ -528,8 +548,8 @@ async function selectProducts(req, res) {
           hour12: true,
         })
       : orderType === "pickup"
-      ? config.estimatedPickupTime
-      : config.estimatedDeliveryTime;
+      ? `${config.estimatedPickupTime} minutos`
+      : `${config.estimatedDeliveryTime} minutos`;
 
     let messageContent =
       "Aquí tienes el resumen de tu pedido, informame si tienes algun cambio o deseas agregar algun producto mas.\n\n";
@@ -645,7 +665,7 @@ async function selectProducts(req, res) {
       orderItems,
       orderType,
       deliveryInfo,
-      scheduledDeliveryTime: fullScheduledDeliveryTime, // Usar la fecha completa aquí
+      scheduledDeliveryTime: fullScheduledDeliveryTime,
       messageId,
     });
     console.log("Preorden guardada exitosamente");

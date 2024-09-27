@@ -153,13 +153,15 @@ async function generateOrderSummary(order) {
 
 async function createOrderFromPreOrder(preOrder, clientId) {
   try {
-    const { orderItems, orderType, deliveryInfo } = preOrder;
+    const { orderItems, orderType, deliveryInfo, scheduledDeliveryTime } =
+      preOrder;
 
     const orderData = {
       action: "create",
       orderType,
       orderItems,
       deliveryInfo,
+      scheduledDeliveryTime,
       clientId,
     };
 
