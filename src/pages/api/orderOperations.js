@@ -1,47 +1,5 @@
 const axios = require("axios");
 
-export async function modifyOrder(toolCall, clientId) {
-  const { dailyOrderNumber, orderType, orderItems, deliveryInfo } = JSON.parse(
-    toolCall.function.arguments
-  );
-
-  try {
-    const response = await axios.post(
-      `${process.env.BASE_URL}/api/create_order`,
-      {
-        action: "modify",
-        dailyOrderNumber,
-        orderType,
-        orderItems,
-        deliveryInfo,
-        clientId,
-      }
-    );
-
-    const orderResult = response.data;
-    console.log("Order modification result:", orderResult);
-
-    return {
-      tool_call_id: toolCall.id,
-      output: JSON.stringify(orderResult),
-    };
-  } catch (error) {
-    console.error(
-      "Error modifying order:",
-      error.response ? error.response.data : error.message
-    );
-    return {
-      tool_call_id: toolCall.id,
-      output: JSON.stringify({
-        error: error.response
-          ? error.response.data.error
-          : "Failed to modify order",
-        details: error.message,
-      }),
-    };
-  }
-}
-
 export async function selectProducts(toolCall, clientId) {
   const { orderItems, orderType, deliveryInfo } = toolCall.input;
 

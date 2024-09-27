@@ -36,6 +36,10 @@ export async function handleInteractiveMessage(from, message) {
       await sendMenu(from);
     } else if (listReplyId === "restaurant_info") {
       await handleRestaurantInfo(from);
+    } else if (listReplyId === "reorder") {
+      await handleReorder(from);
+    } else if (listReplyId === "chatbot_help") {
+      await handleChatbotHelp(from);
     }
   }
 }
@@ -202,4 +206,41 @@ async function handleRestaurantInfo(clientId) {
     "¡Gracias por tu interés! Esperamos verte pronto.";
 
   await sendWhatsAppMessage(clientId, restaurantInfo);
+}
+
+async function handleReorder(clientId) {
+  await sendWhatsAppMessage(clientId, "Reorder");
+}
+
+async function handleChatbotHelp(clientId) {
+  const chatbotHelp =
+    "🤖💬 *¡Bienvenido al Chatbot de La Leña!*\n\n" +
+    "Este asistente virtual está potenciado por inteligencia artificial para brindarte una experiencia fluida y natural. Aquí te explicamos cómo usarlo:\n\n" +
+    "🚀 *Iniciar una conversación:*\n" +
+    "Envía cualquier mensaje para comenzar. Recibirás opciones para:\n" +
+    "   📜 Consultar el menú\n" +
+    "   ⏱️ Ver tiempos de espera\n" +
+    "   🔄 Reordenar\n" +
+    "   ℹ️ Información del restaurante\n\n" +
+    "🍕 *Realizar un pedido:*\n" +
+    "Escribe o envía un audio con tu pedido. Opciones:\n" +
+    "   🏠 Entrega a domicilio: Incluye la dirección completa\n" +
+    "   🏃 Recolección en restaurante: Indica el nombre para recoger\n" +
+    "Ejemplos:\n" +
+    "   '2 pizzas grandes especiales y una coca-cola para entrega a Morelos 66 poniente'\n" +
+    "   'Pizza mediana hawaiana y ensalada grande de pollo para recoger, nombre: Juan Pérez'\n\n" +
+    "Una vez generado tu pedido, recibirás un mensaje de confirmación cuando el restaurante lo acepte o un mensaje de rechazo en caso de que no puedan procesarlo.\n\n" +
+    "✏️ *Modificar un pedido:*\n" +
+    "Usa la opción en el mensaje de confirmación, solo si el restaurante aún no lo ha aceptado.\n\n" +
+    "❌ *Cancelar un pedido:*\n" +
+    "Disponible en las opciones del mensaje de confirmación, solo se puede cancelar si el restaurante aún no ha aceptado el pedido.\n\n" +
+    "💳 *Pagar:*\n" +
+    "Genera un enlace de pago desde las opciones del mensaje de confirmación.\n\n" +
+    "🔁 *Reordenar:*\n" +
+    "Selecciona 'Reordenar' en el mensaje de bienvenida para ver tus últimas 3 órdenes y poder reordenar con solo un click.\n\n" +
+    "⚠️ *IMPORTANTE:*\n" +
+    "Envía un mensaje a la vez y espera la respuesta antes del siguiente para evitar confusiones.\n\n" +
+    "¡Disfruta tu experiencia con nuestro chatbot! 🍽️🤖";
+
+  await sendWhatsAppMessage(clientId, chatbotHelp);
 }
