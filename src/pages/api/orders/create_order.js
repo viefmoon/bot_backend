@@ -20,6 +20,8 @@ export default async function handler(req, res) {
     return res.status(405).end(`Method ${req.method} Not Allowed`);
   }
 
+  console.log("req.body en create_order   ", req.body);
+
   const {
     orderType,
     orderItems,
