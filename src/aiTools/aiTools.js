@@ -94,7 +94,6 @@ const selectProductsTool = [
             description:
               "Dirección de entrega para pedidos a domicilio o Nombre del cliente para recolección en restaurante.",
           },
-          s,
         },
         required: ["orderItems", "orderType", "deliveryInfo"],
         additionalProperties: false,
