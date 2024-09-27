@@ -555,6 +555,10 @@ module.exports = {
         type: Sequelize.STRING,
         allowNull: true,
       },
+      scheduledDeliveryTime: {
+        type: Sequelize.DATE,
+        allowNull: true,
+      },
       messageId: {
         type: Sequelize.STRING,
         allowNull: false,
