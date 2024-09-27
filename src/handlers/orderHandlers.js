@@ -50,7 +50,7 @@ async function createOrderFromPreOrder(preOrder, clientId) {
       if (newOrder.horario_entrega_programado) {
         orderSummary += `📅 *Fecha de entrega programada:* ${newOrder.horario_entrega_programado}\n`;
       }
-      orderSummary += `⏱️ *Tiempo estimado de entrega:* ${newOrder.tiempoEstimado}\n\n`;
+      orderSummary += `⏱️ *Tiempo estimado de entrega:* ${newOrder.tiempoEstimado} minutos\n\n`;
       orderSummary += `🛒 *Productos:*\n`;
       newOrder.productos.forEach((producto) => {
         orderSummary += `   *${producto.nombre}* x${producto.cantidad} - $${producto.precio}\n`;
