@@ -8,6 +8,7 @@ const ModifierType = require("../src/models/modifierType");
 const Modifier = require("../src/models/modifier");
 const Availability = require("../src/models/availability");
 const RestaurantConfig = require("../src/models/restaurantConfig");
+const NotificationPhone = require("../src/models/notificationPhone");
 
 const menu = [
   {
