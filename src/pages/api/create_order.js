@@ -306,11 +306,13 @@ async function selectProducts(req, res) {
 
   // Convertir scheduledDeliveryTime a un objeto Date completo
   let fullScheduledDeliveryTime = null;
+
   if (scheduledDeliveryTime) {
     const today = new Date().toISOString().split("T")[0];
 
+    // Ajustar la fecha para la zona horaria de Ciudad de México (UTC-6)
     fullScheduledDeliveryTime = new Date(
-      `${today}T${scheduledDeliveryTime}:00Z`
+      `${today}T${scheduledDeliveryTime}:00-06:00`
     );
   }
 
