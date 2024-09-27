@@ -86,6 +86,8 @@ export default async function handler(req, res) {
             }
 
             // Si es una variante, obtener el producto asociado
+
+            console.log("es una variante", productVariant);
             product = await Product.findByPk(productVariant.productId);
             itemPrice = productVariant.price || 0;
             productName = productVariant.name;
