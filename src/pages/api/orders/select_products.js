@@ -72,32 +72,30 @@ export default async function handler(req, res) {
           itemPrice = productVariant.price || 0;
           productName = productVariant.name;
         } else if (item.productId) {
-          // Si solo hay productId, buscar el producto
+          // Primero, intentar buscar el producto
           product = await Product.findByPk(item.productId);
 
           if (!product) {
-            throw new Error(
-              `Producto no encontrado en el menú: ${item.productId}`
-            );
+            // Si no se encuentra el producto, verificar si es una variante
+            productVariant = await ProductVariant.findByPk(item.productId);
+
+            if (!productVariant) {
+              throw new Error(
+                `Producto o variante no encontrado en el menú: ${item.productId}`
+              );
+            }
+
+            // Si es una variante, obtener el producto asociado
+            product = await Product.findByPk(productVariant.productId);
+            itemPrice = productVariant.price || 0;
+            productName = productVariant.name;
+            item.variantId = item.productId;
+            item.productId = product.id;
+          } else {
+            itemPrice = product.price || 0;
+            productName = product.name;
+            item.productVariantId = null;
           }
-
-          itemPrice = product.price || 0;
-          productName = product.name;
-          item.productVariantId = null;
-        } else {
-          // Si no hay productId, asumir que es una variante
-          productVariant = await ProductVariant.findByPk(item.variantId);
-
-          if (!productVariant) {
-            throw new Error(
-              `Variante no encontrada en el menú: ${item.variantId}`
-            );
-          }
-
-          product = await Product.findByPk(productVariant.productId);
-          itemPrice = productVariant.price || 0;
-          productName = productVariant.name;
-          item.productId = product.id;
         }
 
         if (
