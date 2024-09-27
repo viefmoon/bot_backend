@@ -27,6 +27,8 @@ export default async function handler(req, res) {
   let totalCost = 0;
   let fullScheduledDeliveryTime = null;
 
+  const config = await RestaurantConfig.findOne();
+
   if (scheduledDeliveryTime) {
     const today = new Date().toISOString().split("T")[0];
     const now = new Date();
@@ -209,8 +211,6 @@ export default async function handler(req, res) {
         };
       })
     );
-
-    const config = await RestaurantConfig.findOne();
 
     const estimatedTime = fullScheduledDeliveryTime
       ? fullScheduledDeliveryTime.toLocaleString("es-MX", {
