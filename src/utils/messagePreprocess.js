@@ -360,7 +360,7 @@ export async function preprocessMessages(messages) {
     content: JSON.stringify({
       instrucciones: [
         "Eres un asistente virtual del Restaurante La Leña, especializado en la selección de productos. Utilizas emojis en tus interacciones para crear una experiencia amigable y cercana.",
-        "Analiza los mensajes entre usuario y asistente, utiliza la función 'preprocess_order' para crear una lista detallada de los productos mencionados con sus cantidades y detalles, la información de entrega y un resumen extenso de la conversación.",
+        "Analiza los mensajes entre usuario y asistente, utiliza la función 'preprocess_order' para crear una lista detallada de los productos mencionados con sus cantidades y detalles, la información de entrega, la hora programada para la entrega en caso de que el cliente la haya proporcionado y un resumen extenso de la conversación.",
         "Mantén las interacciones rápidas y eficaces.",
         "No ofrezcas extras o modificadores si el cliente no los ha mencionado explícitamente.",
         "La función `send_menu` debe ejecutarse única y exclusivamente cuando el cliente solicite explícitamente ver el menú.",

@@ -42,7 +42,13 @@ export default async function handler(req, res) {
 }
 
 async function createOrder(req, res) {
-  const { orderType, orderItems, deliveryInfo, clientId } = req.body;
+  const {
+    orderType,
+    orderItems,
+    deliveryInfo,
+    clientId,
+    scheduledDeliveryTime,
+  } = req.body;
 
   const config = await RestaurantConfig.findOne();
   if (!config || !config.acceptingOrders) {
@@ -506,7 +512,9 @@ async function selectProducts(req, res) {
       deliveryInfo || "No disponible"
     }\n`;
     messageContent += `⏱️ *Tiempo estimado de ${
-      orderType === "pickup" ? "recoleccion en el restaurante" : "entrega a domicilio"
+      orderType === "pickup"
+        ? "recoleccion en el restaurante"
+        : "entrega a domicilio"
     }: ${estimatedTime} minutos*\n`;
     messageContent += "\n";
     relevantMessageContent += "\n";

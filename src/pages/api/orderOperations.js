@@ -1,7 +1,8 @@
 const axios = require("axios");
 
 export async function selectProducts(toolCall, clientId) {
-  const { orderItems, orderType, deliveryInfo } = toolCall.input;
+  const { orderItems, orderType, deliveryInfo, scheduledDeliveryTime } =
+    toolCall.input;
 
   try {
     const response = await axios.post(
@@ -12,6 +13,7 @@ export async function selectProducts(toolCall, clientId) {
         clientId: clientId,
         orderType: orderType,
         deliveryInfo: deliveryInfo,
+        scheduledDeliveryTime: scheduledDeliveryTime,
       }
     );
 

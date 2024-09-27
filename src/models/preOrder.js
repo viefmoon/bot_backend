@@ -21,6 +21,10 @@ const PreOrder = sequelize.define(
       type: DataTypes.STRING,
       allowNull: true,
     },
+    scheduledDeliveryTime: {
+      type: DataTypes.DATE,
+      allowNull: true,
+    },
     messageId: {
       type: DataTypes.STRING,
       allowNull: false,

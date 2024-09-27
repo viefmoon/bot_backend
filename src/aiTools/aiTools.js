@@ -72,6 +72,12 @@ const selectProductsTool = [
                   type: "integer",
                   description: "Cantidad del ítem.",
                 },
+                scheduledDeliveryTime: {
+                  type: "string",
+                  format: "date-time",
+                  description:
+                    "Hora programada para el pedido (opcional, en formato ISO 8601 sin zona horaria).",
+                },
               },
               required: ["productId", "quantity"],
               additionalProperties: false,
@@ -88,6 +94,7 @@ const selectProductsTool = [
             description:
               "Dirección de entrega para pedidos a domicilio o Nombre del cliente para recolección en restaurante.",
           },
+          s,
         },
         required: ["orderItems", "orderType", "deliveryInfo"],
         additionalProperties: false,
@@ -142,6 +149,12 @@ const preprocessOrderTool = [
             type: "string",
             description:
               "Transcripción completa de la conversación entre el cliente y el asistente.",
+          },
+          scheduledDeliveryTime: {
+            type: "string",
+            format: "date-time",
+            description:
+              "Hora programada para el pedido (opcional, en formato ISO 8601 sin zona horaria).",
           },
         },
         required: [
@@ -221,6 +234,12 @@ const selectProductsToolClaude = {
             quantity: {
               type: "integer",
               description: "Cantidad del ítem.",
+            },
+            scheduledDeliveryTime: {
+              type: "string",
+              format: "date-time",
+              description:
+                "Hora programada para el pedido (opcional, en formato ISO 8601 sin zona horaria).",
             },
           },
           required: ["productId", "quantity"],
