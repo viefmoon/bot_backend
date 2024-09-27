@@ -2,7 +2,7 @@ import dotenv from "dotenv";
 dotenv.config();
 import {
   handleOrderConfirmation,
-  handleOrderDiscard,
+  handlePreOrderDiscard,
   handleOrderCancellation,
   handleOrderModification,
 } from "../handlers/orderHandlers";
@@ -20,7 +20,7 @@ export async function handleInteractiveMessage(from, message) {
     if (buttonId === "confirm_order") {
       await handleOrderConfirmation(from, message.context.id);
     } else if (buttonId === "discard_order") {
-      await handleOrderDiscard(from, message.context.id);
+      await handlePreOrderDiscard(from, message.context.id);
     }
   } else if (message.interactive.type === "list_reply") {
     const listReplyId = message.interactive.list_reply.id;
