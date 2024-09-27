@@ -58,24 +58,46 @@ export default async function handler(req, res) {
         let product, productVariant;
         let itemPrice, productName;
 
-        product = await Product.findByPk(item.productId);
+        if (item.productId && item.variantId) {
+          // Si ambos están presentes, buscar producto y variante
+          product = await Product.findByPk(item.productId);
+          productVariant = await ProductVariant.findByPk(item.variantId);
 
-        if (!product) {
-          productVariant = await ProductVariant.findByPk(item.productId);
-          if (!productVariant) {
+          if (!product || !productVariant) {
             throw new Error(
-              `Producto o variante no encontrado en el menú: ${item.productId}`
+              `Producto o variante no encontrado en el menú: Producto ${item.productId}, Variante ${item.variantId}`
             );
           }
-          product = await Product.findByPk(productVariant.productId);
+
           itemPrice = productVariant.price || 0;
           productName = productVariant.name;
-          item.productVariantId = item.productId;
-          item.productId = product.id;
-        } else {
+        } else if (item.productId) {
+          // Si solo hay productId, buscar el producto
+          product = await Product.findByPk(item.productId);
+
+          if (!product) {
+            throw new Error(
+              `Producto no encontrado en el menú: ${item.productId}`
+            );
+          }
+
           itemPrice = product.price || 0;
           productName = product.name;
           item.productVariantId = null;
+        } else {
+          // Si no hay productId, asumir que es una variante
+          productVariant = await ProductVariant.findByPk(item.variantId);
+
+          if (!productVariant) {
+            throw new Error(
+              `Variante no encontrada en el menú: ${item.variantId}`
+            );
+          }
+
+          product = await Product.findByPk(productVariant.productId);
+          itemPrice = productVariant.price || 0;
+          productName = productVariant.name;
+          item.productId = product.id;
         }
 
         if (
