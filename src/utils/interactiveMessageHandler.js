@@ -1,9 +1,9 @@
 import dotenv from "dotenv";
 dotenv.config();
 import {
-  handleOrderConfirmation,
+  handlePreOrderConfirmation,
   handlePreOrderDiscard,
-  handleOrderCancellation,
+  handleOrderCancellation, 
   handleOrderModification,
 } from "../handlers/orderHandlers";
 
@@ -18,7 +18,7 @@ export async function handleInteractiveMessage(from, message) {
   if (message.interactive.type === "button_reply") {
     const buttonId = message.interactive.button_reply.id;
     if (buttonId === "confirm_order") {
-      await handleOrderConfirmation(from, message.context.id);
+      await handlePreOrderConfirmation(from, message.context.id);
     } else if (buttonId === "discard_order") {
       await handlePreOrderDiscard(from, message.context.id);
     }
@@ -109,39 +109,8 @@ async function handleOnlinePayment(clientId, messageId) {
 async function sendMenu(phoneNumber) {
   try {
     await sendWhatsAppMessage(phoneNumber, menuText);
-
-    const confirmationMessage =
-      "El menú ha sido enviado, si tienes alguna duda, no dudes en preguntarme";
-    await sendWhatsAppMessage(phoneNumber, confirmationMessage);
-
-    let customer = await Customer.findOne({ where: { clientId: phoneNumber } });
-    if (customer) {
-      let fullChatHistory = JSON.parse(customer.fullChatHistory || "[]");
-      let relevantChatHistory = JSON.parse(
-        customer.relevantChatHistory || "[]"
-      );
-
-      const userMessage = { role: "user", content: "view_menu" };
-      fullChatHistory.push(userMessage);
-      relevantChatHistory.push(userMessage);
-
-      fullChatHistory.push({ role: "assistant", content: menuText });
-      fullChatHistory.push({ role: "assistant", content: confirmationMessage });
-      relevantChatHistory.push({
-        role: "assistant",
-        content: confirmationMessage,
-      });
-
-      await customer.update({
-        fullChatHistory: JSON.stringify(fullChatHistory),
-        relevantChatHistory: JSON.stringify(relevantChatHistory),
-      });
-    }
-
-    console.log("Menú enviado exitosamente");
     return true;
   } catch (error) {
-    console.error("Error al enviar el menú:", error);
     return false;
   }
 }
@@ -149,13 +118,8 @@ async function sendMenu(phoneNumber) {
 async function handleWaitTimes(clientId) {
   try {
     const config = await RestaurantConfig.findOne();
-
     if (!config) {
-      await sendWhatsAppMessage(
-        clientId,
-        "Lo siento, no se pudo obtener la información de los tiempos de espera en este momento."
-      );
-      return;
+      throw new Error("No se encontró la configuración del restaurante");
     }
 
     const message =
@@ -165,31 +129,10 @@ async function handleWaitTimes(clientId) {
       `Estos tiempos son aproximados y pueden variar según la demanda actual.`;
 
     await sendWhatsAppMessage(clientId, message);
-
-    let customer = await Customer.findOne({ where: { clientId } });
-    if (customer) {
-      let fullChatHistory = JSON.parse(customer.fullChatHistory || "[]");
-      let relevantChatHistory = JSON.parse(
-        customer.relevantChatHistory || "[]"
-      );
-
-      const userMessage = { role: "user", content: "check_wait_times" };
-      const assistantMessage = { role: "assistant", content: message };
-
-      fullChatHistory.push(userMessage, assistantMessage);
-      relevantChatHistory.push(userMessage, assistantMessage);
-
-      await customer.update({
-        fullChatHistory: JSON.stringify(fullChatHistory),
-        relevantChatHistory: JSON.stringify(relevantChatHistory),
-      });
-    }
   } catch (error) {
-    console.error("Error al obtener los tiempos de espera:", error);
-    await sendWhatsAppMessage(
-      clientId,
-      "Hubo un error al obtener los tiempos de espera. Por favor, intenta nuevamente más tarde."
-    );
+    
+    const errorMessage = "Hubo un error al obtener los tiempos de espera. Por favor, intenta nuevamente más tarde.";
+    await sendWhatsAppMessage(clientId, errorMessage);
   }
 }
 

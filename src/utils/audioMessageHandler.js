@@ -11,7 +11,7 @@ const unlinkAsync = promisify(unlink);
 
 async function getAudioUrl(audioId) {
   try {
-    const response = await axios.get(
+    const { data } = await axios.get(
       `https://graph.facebook.com/v19.0/${audioId}`,
       {
         headers: {
@@ -19,7 +19,7 @@ async function getAudioUrl(audioId) {
         },
       }
     );
-    return response.data.url;
+    return data.url;
   } catch (error) {
     console.error("Error al obtener la URL del audio:", error);
     return null;
@@ -27,18 +27,18 @@ async function getAudioUrl(audioId) {
 }
 
 async function transcribeAudio(audioUrl) {
+  const audioPath = `/tmp/audio.ogg`;
   try {
-    const response = await axios.get(audioUrl, {
+    const { data } = await axios.get(audioUrl, {
       responseType: "stream",
       headers: {
         Authorization: `Bearer ${process.env.WHATSAPP_ACCESS_TOKEN}`,
       },
     });
-    const audioPath = `/tmp/audio.ogg`;
-    const writer = createWriteStream(audioPath);
-    response.data.pipe(writer);
 
     await new Promise((resolve, reject) => {
+      const writer = createWriteStream(audioPath);
+      data.pipe(writer);
       writer.on("finish", resolve);
       writer.on("error", reject);
     });
@@ -47,7 +47,7 @@ async function transcribeAudio(audioUrl) {
     formData.append("file", createReadStream(audioPath));
     formData.append("model", "whisper-1");
 
-    const whisperResponse = await axios.post(
+    const { data: whisperData } = await axios.post(
       "https://api.openai.com/v1/audio/transcriptions",
       formData,
       {
@@ -58,46 +58,27 @@ async function transcribeAudio(audioUrl) {
       }
     );
 
-    await unlinkAsync(audioPath);
-
-    return whisperResponse.data.text;
+    return whisperData.text;
   } catch (error) {
     console.error("Error al transcribir el audio:", error);
-
-    if (error.response) {
-      console.error("Error en la respuesta de la API:", error.response.data);
-    } else if (error.request) {
-      console.error("No se recibió respuesta de la API:", error.request);
-    } else {
-      console.error("Error al configurar la solicitud:", error.message);
-    }
-
     return "Lo siento, no pude transcribir el mensaje de audio.";
+  } finally {
+    await unlinkAsync(audioPath).catch(console.error);
   }
 }
 
 export async function handleAudioMessage(from, message) {
-  if (message.audio && message.audio.id) {
-    try {
-      const audioUrl = await getAudioUrl(message.audio.id);
-      if (audioUrl) {
-        const transcribedText = await transcribeAudio(audioUrl);
-        await handleTextMessage(from, transcribedText);
-      } else {
-        throw new Error("No se pudo obtener la URL del audio.");
-      }
-    } catch (error) {
-      console.error("Error al procesar el mensaje de audio:", error);
-      await sendWhatsAppMessage(
-        from,
-        "Hubo un problema al procesar tu mensaje de audio. Por favor, intenta nuevamente."
-      );
-    }
-  } else {
-    console.error("No se encontró el ID del audio.");
+  try {
+    const audioUrl = await getAudioUrl(message.audio.id);
+    if (!audioUrl) throw new Error("No se pudo obtener la URL del audio.");
+
+    const transcribedText = await transcribeAudio(audioUrl);
+    await handleTextMessage(from, transcribedText);
+  } catch (error) {
+    console.error("Error al procesar el mensaje de audio:", error);
     await sendWhatsAppMessage(
       from,
-      "No pude obtener la información necesaria del mensaje de audio."
+      "Hubo un problema al procesar tu mensaje de audio. Por favor, intenta nuevamente o envia un mensaje de texto."
     );
   }
 }

@@ -559,6 +559,10 @@ module.exports = {
         type: Sequelize.DATE,
         allowNull: true,
       },
+      clientId: {
+        type: Sequelize.STRING,
+        allowNull: false,
+      },
       messageId: {
         type: Sequelize.STRING,
         allowNull: false,

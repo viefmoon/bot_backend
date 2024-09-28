@@ -2,8 +2,18 @@ import {
   sendWhatsAppMessage,
   sendWhatsAppInteractiveMessage,
 } from "./whatsAppUtils";
-import { Customer, MessageRateLimit } from "../models";
-import { handleChatRequest } from "../pages/api/handleChatRequest";
+import { Customer } from "../models";
+import dotenv from "dotenv";
+import { preprocessMessages } from "./messagePreprocess";
+import axios from "axios";
+import { Anthropic } from "@anthropic-ai/sdk";
+
+dotenv.config();
+
+const { selectProductsToolClaude } = require("../aiTools/aiTools");
+const anthropic = new Anthropic({
+  apiKey: process.env.ANTHROPIC_API_KEY,
+});
 
 async function resetChatHistory(customer) {
   await customer.update({ relevantChatHistory: "[]" });
@@ -45,63 +55,10 @@ async function sendWelcomeMessage(phoneNumber) {
 
   await sendWhatsAppInteractiveMessage(phoneNumber, listOptions);
 }
-async function checkMessageRateLimit(clientId) {
-  const MAX_MESSAGES = 30;
-  const TIME_WINDOW = 5 * 60 * 1000; // 5 minutos en milisegundos
-
-  let rateLimit = await MessageRateLimit.findOne({ where: { clientId } });
-
-  if (!rateLimit) {
-    await MessageRateLimit.create({
-      clientId,
-      messageCount: 1,
-      lastMessageTime: new Date(),
-    });
-    return { limited: false };
-  }
-
-  const now = new Date();
-  const timeSinceLastMessage = now - rateLimit.lastMessageTime;
-
-  if (timeSinceLastMessage > TIME_WINDOW) {
-    await rateLimit.update({ messageCount: 1, lastMessageTime: now });
-    return { limited: false };
-  }
-
-  if (rateLimit.messageCount >= MAX_MESSAGES) {
-    const timeRemaining = Math.ceil(
-      (TIME_WINDOW - timeSinceLastMessage) / 1000
-    );
-    return { limited: true, timeRemaining };
-  }
-
-  await rateLimit.update({
-    messageCount: rateLimit.messageCount + 1,
-    lastMessageTime: now,
-  });
-  return { limited: false };
-}
 
 export async function handleTextMessage(from, text) {
-  const rateLimitResult = await checkMessageRateLimit(from);
-  if (rateLimitResult.limited) {
-    const minutes = Math.floor(rateLimitResult.timeRemaining / 60);
-    const seconds = rateLimitResult.timeRemaining % 60;
-    const timeMessage =
-      minutes > 0
-        ? `${minutes} minuto${minutes > 1 ? "s" : ""} y ${seconds} segundo${
-            seconds !== 1 ? "s" : ""
-          }`
-        : `${seconds} segundo${seconds !== 1 ? "s" : ""}`;
 
-    await sendWhatsAppMessage(
-      from,
-      `Por motivos de seguridad, has alcanzado el límite de mensajes permitidos. Por favor, espera ${timeMessage} antes de enviar más mensajes. Agradecemos tu comprensión.`
-    );
-    return;
-  }
-
-  const [customer, created] = await Customer.findOrCreate({
+  const [customer] = await Customer.findOrCreate({
     where: { clientId: from },
     defaults: {
       fullChatHistory: "[]",
@@ -113,75 +70,41 @@ export async function handleTextMessage(from, text) {
   let fullChatHistory = JSON.parse(customer.fullChatHistory || "[]");
   let relevantChatHistory = JSON.parse(customer.relevantChatHistory || "[]");
 
-  if (new Date() - new Date(customer.lastInteraction) > 60 * 60 * 1000) {
-    relevantChatHistory = [];
-  }
-  console.log("Mensaje recibido:", text);
-
+  // Manejar casos especiales
   if (text.toLowerCase().includes("olvida lo anterior")) {
     await resetChatHistory(customer);
     return;
   }
 
-  if (relevantChatHistory.length === 0) {
+  if (new Date() - new Date(customer.lastInteraction) > 60 * 60 * 1000) {
+    relevantChatHistory = [];
     await sendWelcomeMessage(from);
   }
 
-  const userMessage = { role: "user", content: text };
-  fullChatHistory.push(userMessage);
-  relevantChatHistory.push(userMessage);
+  console.log("Mensaje recibido:", text);
 
-  const response = await handleChatRequest({
+  // Función para actualizar el historial de chat
+  const updateChatHistory = (message, isRelevant = true) => {
+    fullChatHistory.push(message);
+    if (isRelevant) relevantChatHistory.push(message);
+  };
+
+  updateChatHistory({ role: "user", content: text });
+
+  const response = await processAndGenerateAIResponse({
     relevantMessages: relevantChatHistory,
     conversationId: from,
   });
 
-  if (Array.isArray(response)) {
-    for (const msg of response) {
-      if (msg.text && msg.text.trim() !== "") {
-        if (msg.sendToWhatsApp !== false) {
-          await sendWhatsAppMessage(from, msg.text);
-        }
-        const assistantMessage = { role: "assistant", content: msg.text };
-        fullChatHistory.push(assistantMessage);
-        if (msg.isRelevant !== false) {
-          relevantChatHistory.push(assistantMessage);
-        }
-        // Enviar mensaje de confirmación si existe
-        if (msg.confirmationMessage) {
-          await sendWhatsAppMessage(from, msg.confirmationMessage);
-          const confirmationAssistantMessage = {
-            role: "assistant",
-            content: msg.confirmationMessage,
-          };
-          fullChatHistory.push(confirmationAssistantMessage);
-          relevantChatHistory.push(confirmationAssistantMessage);
-        }
-      }
+  if (response.text && response.text.trim() !== "") {
+    if (response.sendToWhatsApp !== false) {
+      await sendWhatsAppMessage(from, response.text);
     }
-  } else {
-    if (response.text && response.text.trim() !== "") {
-      if (response.sendToWhatsApp !== false) {
-        await sendWhatsAppMessage(from, response.text);
-      }
-      const assistantMessage = {
-        role: "assistant",
-        content: response.text,
-      };
-      fullChatHistory.push(assistantMessage);
-      if (response.isRelevant !== false) {
-        relevantChatHistory.push(assistantMessage);
-      }
-      // Enviar mensaje de confirmación si existe
-      if (response.confirmationMessage) {
-        await sendWhatsAppMessage(from, response.confirmationMessage);
-        const confirmationAssistantMessage = {
-          role: "assistant",
-          content: response.confirmationMessage,
-        };
-        fullChatHistory.push(confirmationAssistantMessage);
-        relevantChatHistory.push(confirmationAssistantMessage);
-      }
+    updateChatHistory({ role: "assistant", content: response.text }, response.isRelevant !== false);
+
+    if (response.confirmationMessage) {
+      await sendWhatsAppMessage(from, response.confirmationMessage);
+      updateChatHistory({ role: "assistant", content: response.confirmationMessage });
     }
   }
 
@@ -192,4 +115,63 @@ export async function handleTextMessage(from, text) {
     relevantChatHistory: JSON.stringify(relevantChatHistory),
     lastInteraction: new Date(),
   });
+}
+
+async function processAndGenerateAIResponse(req) {
+  const { relevantMessages, conversationId } = req;
+  try {
+    const preprocessedContent = await preprocessMessages(relevantMessages);
+
+    if (preprocessedContent.isDirectResponse) {
+      return [{
+        text: preprocessedContent.text,
+        sendToWhatsApp: true,
+        isRelevant: preprocessedContent.isRelevant,
+        confirmationMessage: preprocessedContent.confirmationMessage,
+      }];
+    }
+
+    const systemContent = [
+      "Basándote en el objeto proporcionado, utiliza la función `select_products`",
+      "- Utiliza los `relevantMenuItems` proporcionados para mapear las descripciones de los productos a sus respectivos IDs.",
+      "- No es necesario usar todos los relevantMenuItems si no aplican",
+      "- Es OBLIGATORIO usar la función `select_products` para completar esta tarea.",
+    ].join("\n");
+
+    const response = await anthropic.messages.create({
+      model: "claude-3-5-sonnet-20240620",
+      system: systemContent,
+      messages: [{ role: "user", content: JSON.stringify(preprocessedContent) }],
+      max_tokens: 4096,
+      tools: [selectProductsToolClaude],
+      tool_choice: { type: "tool", name: "select_products" },
+    });
+
+    if (response.content && response.content[0]?.type === "tool_use" && response.content[0]?.name === "select_products") {
+      const { orderItems, orderType, deliveryInfo, scheduledDeliveryTime } = response.content[0].input;
+      
+      try {
+        const selectProductsResponse = await axios.post(
+          `${process.env.BASE_URL}/api/orders/select_products`,
+          { orderItems, clientId: conversationId, orderType, deliveryInfo, scheduledDeliveryTime }
+        );
+
+        return [{ text: selectProductsResponse.data.mensaje, sendToWhatsApp: false, isRelevant: true }];
+      } catch (error) {
+        console.error("Error al seleccionar los productos:", error);
+        const errorMessage = error.response?.data?.error || "Error al procesar tu pedido. Por favor, inténtalo de nuevo.";
+        return [{ text: errorMessage, sendToWhatsApp: true, isRelevant: true }];
+      }
+    }
+
+    return [{ text: "No se pudo procesar la solicitud correctamente.", sendToWhatsApp: true, isRelevant: true }];
+
+  } catch (error) {
+    console.error("Error general:", error);
+    return [{
+      text: "Error al procesar la solicitud: " + error.message,
+      sendToWhatsApp: true,
+      isRelevant: true,
+    }];
+  }
 }

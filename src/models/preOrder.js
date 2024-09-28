@@ -25,6 +25,10 @@ const PreOrder = sequelize.define(
       type: DataTypes.DATE,
       allowNull: true,
     },
+    clientId: {
+      type: DataTypes.STRING,
+      allowNull: false,
+    },
     messageId: {
       type: DataTypes.STRING,
       allowNull: false,

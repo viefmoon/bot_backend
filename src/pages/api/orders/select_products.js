@@ -350,11 +350,15 @@ export default async function handler(req, res) {
       },
     });
 
+    // Borrar todas las preórdenes asociadas al cliente
+    await PreOrder.destroy({ where: { clientId } });
+
     await PreOrder.create({
       orderItems,
       orderType,
       deliveryInfo,
       scheduledDeliveryTime: fullScheduledDeliveryTime,
+      clientId,
       messageId,
     });
 

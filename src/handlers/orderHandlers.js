@@ -120,9 +120,17 @@ async function createOrderFromPreOrder(preOrder, clientId) {
   }
 }
 
-export async function handleOrderConfirmation(clientId, messageId) {
+export async function handlePreOrderConfirmation(clientId, messageId) {
   try {
     const preOrder = await PreOrder.findOne({ where: { messageId } });
+
+    if (!preOrder) {
+      await sendWhatsAppMessage(
+        clientId,
+        "Lo siento, esa preorden ya no se encuentra disponible. Solo puede haber una preorden activa por cliente."
+      );
+      return;
+    } 
 
     const { newOrder, orderSummary } = await createOrderFromPreOrder(
       preOrder,
@@ -178,6 +186,10 @@ export async function handleOrderConfirmation(clientId, messageId) {
     }
 
     await preOrder.destroy();
+
+    const customer = await Customer.findOne({ where: { clientId } });
+
+    await customer.update({ relevantChatHistory: "[]" });
   } catch (error) {
     console.error("Error al confirmar la orden:", error);
     await sendWhatsAppMessage(
@@ -200,12 +212,6 @@ export async function handlePreOrderDiscard(clientId, messageId) {
       "Tu preorden ha sido descartada y el historial de conversación reciente ha sido borrado. ¿En qué más puedo ayudarte?";
     await sendWhatsAppMessage(clientId, confirmationMessage);
 
-    let fullChatHistory = JSON.parse(customer.fullChatHistory || "[]");
-    fullChatHistory.push(
-      { role: "user", content: "Descartar preorden" },
-      { role: "assistant", content: confirmationMessage }
-    );
-    await customer.update({ fullChatHistory: JSON.stringify(fullChatHistory) });
   } catch (error) {
     console.error("Error al descartar la preorden:", error);
     await sendWhatsAppMessage(
@@ -251,7 +257,7 @@ export async function handleOrderCancellation(clientId, messageId) {
         break;
       case "finished":
         mensaje =
-          "Esta orden ya ha sido entregada y no se puede cancelar. Si tienes algún problema con tu pedido, por favor contacta directamente con el restaurante.";
+          "Esta orden ya ha sido finalizada y no se puede cancelar. Si tienes algún problema con tu pedido, por favor contacta directamente con el restaurante.";
         break;
       case "canceled":
         mensaje =
@@ -304,16 +310,31 @@ export async function handleOrderModification(clientId, messageId) {
     switch (order.status) {
       case "created":
         canModify = true;
-        mensaje = `Tu orden #${order.dailyOrderNumber} será modificada. Por favor, espera mientras procesamos los cambios.`;
+        mensaje = `Tu orden #${order.dailyOrderNumber} sera cancelada y se generara una nueva preorden que podras modificar. Por favor, espera mientras procesamos los cambios...`;
         break;
       case "accepted":
+        mensaje =
+          "Lo sentimos, pero esta orden ya no se puede modificar debido a que ya fue aceptada. Por favor, contacta directamente con el restaurante si necesitas hacer cambios.";
+        break;
       case "in_preparation":
+        mensaje =
+          "Lo sentimos, pero esta orden ya no se puede modificar debido a que ya esta en preparación. Por favor, contacta directamente con el restaurante si necesitas hacer cambios.";
+        break;
       case "prepared":
+        mensaje =
+          "Lo sentimos, pero esta orden ya no se puede modificar debido a que ya esta preparada. Por favor, contacta directamente con el restaurante si necesitas hacer cambios.";
+        break;
       case "in_delivery":
+        mensaje =
+          "Lo sentimos, pero esta orden ya no se puede modificar debido a que ya esta en camino. Por favor, contacta directamente con el restaurante o el repartidor si necesitas hacer cambios.";
+        break;
       case "finished":
+        mensaje =
+          "Lo sentimos, pero esta orden ya no se puede modificar debido a que ya fue finalizada. Por favor, contacta directamente con el restaurante si necesitas hacer cambios.";
+        break;
       case "canceled":
         mensaje =
-          "Lo sentimos, pero esta orden ya no se puede modificar debido a su estado actual. Por favor, contacta directamente con el restaurante si necesitas hacer cambios.";
+          "Lo sentimos, pero esta orden ya no se puede modificar debido a que ya fue cancelada. Por favor, contacta directamente con el restaurante si necesitas hacer cambios.";
         break;
       default:
         mensaje =
@@ -362,11 +383,6 @@ export async function handleOrderModification(clientId, messageId) {
 
       return filteredItem;
     });
-
-    // Verificar que orderItems sea un array válido
-    if (!Array.isArray(orderItems)) {
-      throw new Error("orderItems no es un array válido");
-    }
 
     // Crear una nueva preorden utilizando select_products
     try {

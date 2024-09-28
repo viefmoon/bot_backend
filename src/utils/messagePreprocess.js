@@ -110,9 +110,7 @@ async function getMenuAvailability() {
       return productoInfo;
     });
 
-    return {
-      "Menu Disponible": menuSimplificado,
-    };
+    return menuSimplificado;
   } catch (error) {
     console.error("Error al obtener la disponibilidad del menú:", error);
     return {
@@ -305,7 +303,7 @@ function extractMentionedProducts(productMessage, menu) {
     }
   }
 
-  for (const product of menu["Menu Disponible"]) {
+  for (const product of menu) {
     let isProductMentioned = checkKeywords(product.keywords, words);
 
     if (isProductMentioned) {
@@ -387,8 +385,6 @@ export async function preprocessMessages(messages) {
     ...messages,
   ];
 
-  console.log("preprocessingMessages", preprocessingMessages);
-
   const response = await openai.chat.completions.create({
     model: "gpt-4o-mini",
     messages: preprocessingMessages,
@@ -432,7 +428,6 @@ export async function preprocessMessages(messages) {
       };
     }
   } else if (response.choices[0].message.content) {
-    console.log("No se ejecutó preprocessOrderTool, retornando texto");
     return {
       text: response.choices[0].message.content,
       isDirectResponse: true,
