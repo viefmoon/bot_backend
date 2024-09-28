@@ -33,8 +33,6 @@ export async function sendWhatsAppInteractiveMessage(
   phoneNumber,
   interactiveOptions
 ) {
-  console.log("phoneNumber", phoneNumber);
-  console.log("interactiveOptions", interactiveOptions);
   try {
     let payload = {
       messaging_product: "whatsapp",
@@ -54,8 +52,6 @@ export async function sendWhatsAppInteractiveMessage(
         },
       }
     );
-
-    console.log("Respuesta de WhatsApp API:", response.data);
 
     const messageId = response.data.messages[0].id;
     return messageId;

@@ -202,6 +202,11 @@ export async function handlePreOrderConfirmation(clientId, messageId) {
 export async function handlePreOrderDiscard(clientId, messageId) {
   try {
     const preOrder = await PreOrder.findOne({ where: { messageId } });
+
+    if (!preOrder) {
+      await sendWhatsAppMessage(clientId, "Esta preorden ya fue descartada.");
+      return;
+    }
     await preOrder.destroy();
 
     const customer = await Customer.findOne({ where: { clientId } });
