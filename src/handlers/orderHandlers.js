@@ -130,7 +130,7 @@ export async function handlePreOrderConfirmation(clientId, messageId) {
         "Lo siento, esa preorden ya no se encuentra disponible. Solo puede haber una preorden activa por cliente."
       );
       return;
-    } 
+    }
 
     const { newOrder, orderSummary } = await createOrderFromPreOrder(
       preOrder,
@@ -205,13 +205,11 @@ export async function handlePreOrderDiscard(clientId, messageId) {
     await preOrder.destroy();
 
     const customer = await Customer.findOne({ where: { clientId } });
-
     await customer.update({ relevantChatHistory: "[]" });
 
     const confirmationMessage =
       "Tu preorden ha sido descartada y el historial de conversación reciente ha sido borrado. ¿En qué más puedo ayudarte?";
     await sendWhatsAppMessage(clientId, confirmationMessage);
-
   } catch (error) {
     console.error("Error al descartar la preorden:", error);
     await sendWhatsAppMessage(
@@ -224,6 +222,9 @@ export async function handlePreOrderDiscard(clientId, messageId) {
 export async function handleOrderCancellation(clientId, messageId) {
   try {
     const order = await Order.findOne({ where: { messageId } });
+
+    const customer = await Customer.findOne({ where: { clientId } });
+    await customer.update({ relevantChatHistory: "[]" });
 
     if (!order) {
       console.error(`No se encontró orden para el messageId: ${messageId}`);
@@ -279,6 +280,9 @@ export async function handleOrderCancellation(clientId, messageId) {
 }
 
 export async function handleOrderModification(clientId, messageId) {
+  const customer = await Customer.findOne({ where: { clientId } });
+  await customer.update({ relevantChatHistory: "[]" });
+
   try {
     const order = await Order.findOne({
       where: { messageId },
@@ -351,8 +355,7 @@ export async function handleOrderModification(clientId, messageId) {
     await order.update({ status: "canceled" });
 
     // Extraer los campos necesarios para crear una nueva preorden
-    const { orderItems, orderType, deliveryInfo, scheduledDeliveryTime } =
-      order;
+    const { orderType, deliveryInfo, scheduledDeliveryTime } = order;
 
     const formattedScheduledDeliveryTime = new Date(
       scheduledDeliveryTime

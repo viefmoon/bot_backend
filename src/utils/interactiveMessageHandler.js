@@ -3,7 +3,7 @@ dotenv.config();
 import {
   handlePreOrderConfirmation,
   handlePreOrderDiscard,
-  handleOrderCancellation, 
+  handleOrderCancellation,
   handleOrderModification,
 } from "../handlers/orderHandlers";
 
@@ -130,8 +130,8 @@ async function handleWaitTimes(clientId) {
 
     await sendWhatsAppMessage(clientId, message);
   } catch (error) {
-    
-    const errorMessage = "Hubo un error al obtener los tiempos de espera. Por favor, intenta nuevamente más tarde.";
+    const errorMessage =
+      "Hubo un error al obtener los tiempos de espera. Por favor, intenta nuevamente más tarde.";
     await sendWhatsAppMessage(clientId, errorMessage);
   }
 }
@@ -152,7 +152,10 @@ async function handleRestaurantInfo(clientId) {
 }
 
 async function handleReorder(clientId) {
-  await sendWhatsAppMessage(clientId, "Reorder");
+  await sendWhatsAppMessage(
+    clientId,
+    "Función no disponible en este momento, pronto estará disponible"
+  );
 }
 
 async function handleChatbotHelp(clientId) {
