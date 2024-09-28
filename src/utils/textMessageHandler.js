@@ -95,6 +95,8 @@ export async function handleTextMessage(from, text) {
     conversationId: from,
   });
 
+  console.log("response", response);
+
   if (response.text && response.text.trim() !== "") {
     if (response.sendToWhatsApp !== false) {
       await sendWhatsAppMessage(from, response.text);
@@ -128,10 +130,6 @@ async function processAndGenerateAIResponse(req) {
     const preprocessedContent = await preprocessMessages(relevantMessages);
 
     if (preprocessedContent.isDirectResponse) {
-      console.log(
-        "preprocessedContent is direct response",
-        preprocessedContent
-      );
       return [
         {
           text: preprocessedContent.text,
