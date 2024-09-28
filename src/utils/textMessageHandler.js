@@ -99,6 +99,7 @@ export async function handleTextMessage(from, text) {
 
   if (response.text) {
     if (response.sendToWhatsApp !== false) {
+      console.log("sending message to whatsapp");
       await sendWhatsAppMessage(from, response.text);
     }
     updateChatHistory(
