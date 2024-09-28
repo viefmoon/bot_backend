@@ -396,6 +396,9 @@ export async function preprocessMessages(messages) {
 
   console.log("response", response);
 
+  const message = response.choices[0].message;
+  console.log("message", message);
+
   if (response.choices[0].message.tool_calls) {
     const toolCall = response.choices[0].message.tool_calls[0];
 
