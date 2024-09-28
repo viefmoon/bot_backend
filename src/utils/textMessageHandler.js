@@ -113,8 +113,6 @@ export async function handleTextMessage(from, text) {
     }
   }
 
-  console.log("relevantChatHistory", relevantChatHistory);
-
   await customer.update({
     fullChatHistory: JSON.stringify(fullChatHistory),
     relevantChatHistory: JSON.stringify(relevantChatHistory),
