@@ -55,6 +55,43 @@ async function handleOnlinePayment(clientId, messageId) {
       return;
     }
 
+    // Verificar el estado de la orden
+    let mensaje;
+    switch (order.status) {
+      case "created":
+      case "accepted":
+        // Continuar con el proceso de pago
+        break;
+      case "in_preparation":
+        mensaje =
+          "Esta orden ya está en preparación. Por favor, contacta con el restaurante para opciones de pago.";
+        break;
+      case "prepared":
+        mensaje =
+          "Esta orden ya está preparada. Por favor, contacta con el restaurante para opciones de pago.";
+        break;
+      case "in_delivery":
+        mensaje =
+          "Esta orden ya está en camino. Por favor, paga al repartidor o contacta con el restaurante.";
+        break;
+      case "canceled":
+        mensaje =
+          "Esta orden ya ha sido cancelada y no se puede procesar el pago.";
+        break;
+      case "finished":
+        mensaje =
+          "Esta orden ya ha sido finalizada y no se puede procesar el pago.";
+        break;
+      default:
+        mensaje =
+          "Lo sentimos, pero no se puede procesar el pago en este momento debido al estado actual de la orden.";
+    }
+
+    if (mensaje) {
+      await sendWhatsAppMessage(clientId, mensaje);
+      return;
+    }
+
     let customer = await Customer.findOne({ where: { clientId } });
     let stripeCustomerId = customer.stripeCustomerId;
 

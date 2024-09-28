@@ -69,18 +69,21 @@ export async function handleTextMessage(from, text) {
   let fullChatHistory = JSON.parse(customer.fullChatHistory || "[]");
   let relevantChatHistory = JSON.parse(customer.relevantChatHistory || "[]");
 
-  // Manejar casos especiales
+  console.log("Mensaje recibido de:", from);
+  console.log("Mensaje:", text);
+
   if (text.toLowerCase().includes("olvida lo anterior")) {
     await resetChatHistory(customer);
     return;
   }
 
-  if (new Date() - new Date(customer.lastInteraction) > 60 * 60 * 1000) {
+  if (
+    new Date() - new Date(customer.lastInteraction) > 60 * 60 * 1000 ||
+    relevantChatHistory.length === 0
+  ) {
     relevantChatHistory = [];
     await sendWelcomeMessage(from);
   }
-
-  console.log("Mensaje recibido:", text);
 
   // Función para actualizar el historial de chat
   const updateChatHistory = (message, isRelevant = true) => {
