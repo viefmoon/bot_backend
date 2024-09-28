@@ -1,7 +1,7 @@
 import { MessageRateLimit } from "../models";
 import { sendWhatsAppMessage } from "./whatsAppUtils";
 
-export async function checkAndHandleMessageRateLimit(clientId) {
+export async function checkMessageRateLimit(clientId) {
   const MAX_MESSAGES = 30;
   const TIME_WINDOW = 5 * 60 * 1000; // 5 minutos en milisegundos
 
