@@ -97,6 +97,7 @@ export async function handleTextMessage(from, text) {
 
   for (const item of response) {
     if (item.text) {
+      if (item.sendToWhatsApp !== false) {
         await sendWhatsAppMessage(from, item.text);
       }
       updateChatHistory(
