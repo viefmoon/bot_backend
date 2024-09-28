@@ -57,7 +57,6 @@ async function sendWelcomeMessage(phoneNumber) {
 }
 
 export async function handleTextMessage(from, text) {
-
   const [customer] = await Customer.findOrCreate({
     where: { clientId: from },
     defaults: {
@@ -100,11 +99,17 @@ export async function handleTextMessage(from, text) {
     if (response.sendToWhatsApp !== false) {
       await sendWhatsAppMessage(from, response.text);
     }
-    updateChatHistory({ role: "assistant", content: response.text }, response.isRelevant !== false);
+    updateChatHistory(
+      { role: "assistant", content: response.text },
+      response.isRelevant !== false
+    );
 
     if (response.confirmationMessage) {
       await sendWhatsAppMessage(from, response.confirmationMessage);
-      updateChatHistory({ role: "assistant", content: response.confirmationMessage });
+      updateChatHistory({
+        role: "assistant",
+        content: response.confirmationMessage,
+      });
     }
   }
 
@@ -119,16 +124,20 @@ export async function handleTextMessage(from, text) {
 
 async function processAndGenerateAIResponse(req) {
   const { relevantMessages, conversationId } = req;
+
+  console.log("relevantMessages", relevantMessages);
   try {
     const preprocessedContent = await preprocessMessages(relevantMessages);
 
     if (preprocessedContent.isDirectResponse) {
-      return [{
-        text: preprocessedContent.text,
-        sendToWhatsApp: true,
-        isRelevant: preprocessedContent.isRelevant,
-        confirmationMessage: preprocessedContent.confirmationMessage,
-      }];
+      return [
+        {
+          text: preprocessedContent.text,
+          sendToWhatsApp: true,
+          isRelevant: preprocessedContent.isRelevant,
+          confirmationMessage: preprocessedContent.confirmationMessage,
+        },
+      ];
     }
 
     const systemContent = [
@@ -141,37 +150,65 @@ async function processAndGenerateAIResponse(req) {
     const response = await anthropic.messages.create({
       model: "claude-3-5-sonnet-20240620",
       system: systemContent,
-      messages: [{ role: "user", content: JSON.stringify(preprocessedContent) }],
+      messages: [
+        { role: "user", content: JSON.stringify(preprocessedContent) },
+      ],
       max_tokens: 4096,
       tools: [selectProductsToolClaude],
       tool_choice: { type: "tool", name: "select_products" },
     });
 
-    if (response.content && response.content[0]?.type === "tool_use" && response.content[0]?.name === "select_products") {
-      const { orderItems, orderType, deliveryInfo, scheduledDeliveryTime } = response.content[0].input;
-      
+    if (
+      response.content &&
+      response.content[0]?.type === "tool_use" &&
+      response.content[0]?.name === "select_products"
+    ) {
+      const { orderItems, orderType, deliveryInfo, scheduledDeliveryTime } =
+        response.content[0].input;
+
       try {
         const selectProductsResponse = await axios.post(
           `${process.env.BASE_URL}/api/orders/select_products`,
-          { orderItems, clientId: conversationId, orderType, deliveryInfo, scheduledDeliveryTime }
+          {
+            orderItems,
+            clientId: conversationId,
+            orderType,
+            deliveryInfo,
+            scheduledDeliveryTime,
+          }
         );
 
-        return [{ text: selectProductsResponse.data.mensaje, sendToWhatsApp: false, isRelevant: true }];
+        return [
+          {
+            text: selectProductsResponse.data.mensaje,
+            sendToWhatsApp: false,
+            isRelevant: true,
+          },
+        ];
       } catch (error) {
         console.error("Error al seleccionar los productos:", error);
-        const errorMessage = error.response?.data?.error || "Error al procesar tu pedido. Por favor, inténtalo de nuevo.";
+        const errorMessage =
+          error.response?.data?.error ||
+          "Error al procesar tu pedido. Por favor, inténtalo de nuevo.";
         return [{ text: errorMessage, sendToWhatsApp: true, isRelevant: true }];
       }
     }
 
-    return [{ text: "No se pudo procesar la solicitud correctamente.", sendToWhatsApp: true, isRelevant: true }];
-
+    return [
+      {
+        text: "No se pudo procesar la solicitud correctamente.",
+        sendToWhatsApp: true,
+        isRelevant: true,
+      },
+    ];
   } catch (error) {
     console.error("Error general:", error);
-    return [{
-      text: "Error al procesar la solicitud: " + error.message,
-      sendToWhatsApp: true,
-      isRelevant: true,
-    }];
+    return [
+      {
+        text: "Error al procesar la solicitud: " + error.message,
+        sendToWhatsApp: true,
+        isRelevant: true,
+      },
+    ];
   }
 }
