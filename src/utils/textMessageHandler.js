@@ -95,17 +95,15 @@ export async function handleTextMessage(from, text) {
     conversationId: from,
   });
 
-  console.log("response", response);
-
-  if (response.text) {
-    if (response.sendToWhatsApp !== false) {
-      console.log("sending message to whatsapp");
-      await sendWhatsAppMessage(from, response.text);
+  for (const item of response) {
+    if (item.text) {
+        await sendWhatsAppMessage(from, item.text);
+      }
+      updateChatHistory(
+        { role: "assistant", content: item.text },
+        item.isRelevant !== false
+      );
     }
-    updateChatHistory(
-      { role: "assistant", content: response.text },
-      response.isRelevant !== false
-    );
 
     if (response.confirmationMessage) {
       await sendWhatsAppMessage(from, response.confirmationMessage);
