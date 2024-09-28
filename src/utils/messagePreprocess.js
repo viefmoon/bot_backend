@@ -385,6 +385,8 @@ export async function preprocessMessages(messages) {
     ...messages,
   ];
 
+  console.log("preprocessingMessages", preprocessingMessages);
+
   const response = await openai.chat.completions.create({
     model: "gpt-4o-mini",
     messages: preprocessingMessages,
