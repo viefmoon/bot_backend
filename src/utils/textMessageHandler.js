@@ -97,7 +97,7 @@ export async function handleTextMessage(from, text) {
 
   console.log("response", response);
 
-  if (response.text && response.text.trim() !== "") {
+  if (response.text) {
     if (response.sendToWhatsApp !== false) {
       await sendWhatsAppMessage(from, response.text);
     }
