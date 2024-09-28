@@ -128,6 +128,10 @@ async function processAndGenerateAIResponse(req) {
     const preprocessedContent = await preprocessMessages(relevantMessages);
 
     if (preprocessedContent.isDirectResponse) {
+      console.log(
+        "preprocessedContent is direct response",
+        preprocessedContent
+      );
       return [
         {
           text: preprocessedContent.text,

@@ -427,10 +427,6 @@ export async function preprocessMessages(messages) {
       };
     }
   } else if (response.choices[0].message.content) {
-    console.log(
-      "response.choices[0].message.content",
-      response.choices[0].message.content
-    );
     return {
       text: response.choices[0].message.content,
       isDirectResponse: true,
