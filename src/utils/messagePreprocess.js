@@ -402,26 +402,18 @@ export async function preprocessMessages(messages) {
   if (response.choices[0].message.tool_calls) {
     const toolCall = response.choices[0].message.tool_calls[0];
 
-    console.log("toolCall", toolCall);
     if (toolCall.function.name === "preprocess_order") {
       console.log("toolCall", toolCall);
       const preprocessedContent = JSON.parse(toolCall.function.arguments);
 
-      if (Array.isArray(preprocessedContent.orderItems)) {
-        for (const item of preprocessedContent.orderItems) {
-          if (item && typeof item.description === "string") {
-            item.relevantMenuItems = await getRelevantMenuItems({
-              orderItems: [item.description],
-            });
-          } else {
-            console.error("Item inválido o sin descripción:", item);
-          }
+      for (const item of preprocessedContent.orderItems) {
+        if (item && typeof item.description === "string") {
+          item.relevantMenuItems = await getRelevantMenuItems({
+            orderItems: [item.description],
+          });
+        } else {
+          console.error("Item inválido o sin descripción:", item);
         }
-      } else {
-        console.error(
-          "orderItems no es un array:",
-          preprocessedContent.orderItems
-        );
       }
 
       return preprocessedContent;
@@ -435,6 +427,10 @@ export async function preprocessMessages(messages) {
       };
     }
   } else if (response.choices[0].message.content) {
+    console.log(
+      "response.choices[0].message.content",
+      response.choices[0].message.content
+    );
     return {
       text: response.choices[0].message.content,
       isDirectResponse: true,
