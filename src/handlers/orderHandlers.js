@@ -10,6 +10,7 @@ import {
   PizzaIngredient,
   SelectedModifier,
   Modifier,
+  OrderDeliveryInfo,
 } from "../models";
 
 import {
@@ -22,15 +23,15 @@ dotenv.config();
 
 async function createOrderFromPreOrder(preOrder, clientId) {
   try {
-    const { orderItems, orderType, deliveryInfo, scheduledDeliveryTime } =
+    const { orderItems, orderType, scheduledDeliveryTime, orderDeliveryInfo } =
       preOrder;
 
     const orderData = {
       orderType,
       orderItems,
-      deliveryInfo,
       scheduledDeliveryTime,
       clientId,
+      orderDeliveryInfo,
     };
 
     const response = await axios.post(
@@ -122,7 +123,10 @@ async function createOrderFromPreOrder(preOrder, clientId) {
 
 export async function handlePreOrderConfirmation(clientId, messageId) {
   try {
-    const preOrder = await PreOrder.findOne({ where: { messageId } });
+    const preOrder = await PreOrder.findOne({
+      where: { messageId },
+      include: [{ model: OrderDeliveryInfo, as: "orderDeliveryInfo" }],
+    });
 
     if (!preOrder) {
       await sendWhatsAppMessage(
@@ -360,7 +364,7 @@ export async function handleOrderModification(clientId, messageId) {
     await order.update({ status: "canceled" });
 
     // Extraer los campos necesarios para crear una nueva preorden
-    const { orderType, deliveryInfo, scheduledDeliveryTime } = order;
+    const { orderType, scheduledDeliveryTime } = order;
 
     const formattedScheduledDeliveryTime = new Date(
       scheduledDeliveryTime
@@ -400,7 +404,6 @@ export async function handleOrderModification(clientId, messageId) {
           orderItems: filteredOrderItems,
           clientId,
           orderType,
-          deliveryInfo,
           scheduledDeliveryTime: formattedScheduledDeliveryTime,
         }
       );

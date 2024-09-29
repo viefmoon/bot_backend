@@ -104,6 +104,9 @@ CustomerDeliveryInfo.belongsTo(Customer, { foreignKey: 'customerId' });
 Order.hasOne(OrderDeliveryInfo, { foreignKey: 'orderId', as: 'orderDeliveryInfo' });
 OrderDeliveryInfo.belongsTo(Order, { foreignKey: 'orderId' });
 
+PreOrder.hasOne(OrderDeliveryInfo, { foreignKey: 'preOrderId', as: 'orderDeliveryInfo' });
+OrderDeliveryInfo.belongsTo(PreOrder, { foreignKey: 'preOrderId' });
+
 // Exportar todos los modelos y relaciones
 module.exports = {
   sequelize,

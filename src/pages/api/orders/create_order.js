@@ -2,7 +2,6 @@ import dotenv from "dotenv";
 dotenv.config();
 const {
   Order,
-  Customer,
   OrderItem,
   Product,
   ProductVariant,
@@ -11,6 +10,7 @@ const {
   SelectedModifier,
   SelectedPizzaIngredient,
   RestaurantConfig,
+  OrderDeliveryInfo, // Añadimos esta importación
 } = require("../../../models");
 const { verificarHorarioAtencion } = require("../../../utils/timeUtils");
 const { getNextDailyOrderNumber } = require("../../../utils/orderUtils");
@@ -23,7 +23,7 @@ export default async function handler(req, res) {
   const {
     orderType,
     orderItems,
-    deliveryInfo,
+    orderDeliveryInfo,
     clientId,
     scheduledDeliveryTime,
   } = req.body;
@@ -43,28 +43,7 @@ export default async function handler(req, res) {
         "Lo sentimos, solo podre procesar tu pedido cuando el restaurante este abierto.",
     });
   }
-
-  if (clientId) {
-    const updateData = {};
-    updateData.deliveryInfo = deliveryInfo;
-
-    try {
-      let customer = await Customer.findByPk(clientId);
-      if (customer) {
-        await customer.update(updateData);
-      } else {
-        customer = await Customer.create({
-          clientId: clientId,
-          ...updateData,
-        });
-      }
-    } catch (error) {
-      console.error("Error al crear o actualizar el cliente:", error);
-    }
-  } else {
-    console.warn("clientId no proporcionado o inválido:", clientId);
-  }
-
+  
   const mexicoTime = new Date().toLocaleString("en-US", {
     timeZone: "America/Mexico_City",
   });
@@ -96,13 +75,20 @@ export default async function handler(req, res) {
     dailyOrderNumber,
     orderType,
     status: "created",
-    deliveryInfo: deliveryInfo,
     totalCost: 0,
     clientId,
     orderDate: today,
     estimatedTime,
     scheduledDeliveryTime,
   });
+
+  // Crear y asociar OrderDeliveryInfo
+  if (orderDeliveryInfo) {
+    await OrderDeliveryInfo.create({
+      ...orderDeliveryInfo,
+      orderId: newOrder.id
+    });
+  }
 
   // Crear los items asociados a la orden
   const createdItems = await Promise.all(
@@ -231,7 +217,9 @@ export default async function handler(req, res) {
         : newOrder.clientId,
       tipo: newOrder.orderType,
       estado: newOrder.status,
-      informacion_entrega: newOrder.deliveryInfo,
+      informacion_entrega: orderType === "delivery" 
+      ? orderDeliveryInfo.streetAddress 
+      : orderDeliveryInfo.pickupName,
       precio_total: newOrder.totalCost,
       fecha_creacion: newOrder.createdAt.toLocaleString("es-MX", {
         timeZone: "America/Mexico_City",

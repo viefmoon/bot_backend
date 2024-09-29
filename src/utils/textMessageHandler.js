@@ -166,7 +166,7 @@ async function processAndGenerateAIResponse(req) {
       response.content[0]?.type === "tool_use" &&
       response.content[0]?.name === "select_products"
     ) {
-      const { orderItems, orderType, deliveryInfo, scheduledDeliveryTime } =
+      const { orderItems, orderType,scheduledDeliveryTime } =
         response.content[0].input;
 
       try {
@@ -176,7 +176,6 @@ async function processAndGenerateAIResponse(req) {
             orderItems,
             clientId: conversationId,
             orderType,
-            deliveryInfo,
             scheduledDeliveryTime,
           }
         );

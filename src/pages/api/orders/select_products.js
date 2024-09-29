@@ -8,6 +8,8 @@ const {
   ModifierType,
   RestaurantConfig,
   PreOrder,
+  CustomerDeliveryInfo,
+  OrderDeliveryInfo,
 } = require("../../../models");
 import { sendWhatsAppInteractiveMessage } from "../../../utils/whatsAppUtils";
 
@@ -20,7 +22,6 @@ export default async function handler(req, res) {
     orderItems,
     clientId,
     orderType,
-    deliveryInfo,
     scheduledDeliveryTime,
   } = req.body;
 
@@ -51,6 +52,39 @@ export default async function handler(req, res) {
   }
 
   try {
+    const customerDeliveryInfo = await CustomerDeliveryInfo.findOne({
+      where: { clientId },
+    });
+
+    if (!customerDeliveryInfo) {
+      return res.status(400).json({
+        error: "Información de entrega del cliente no encontrada.",
+      });
+    }
+
+    let deliveryInfoData = {};
+
+    if (orderType === "delivery") {
+      deliveryInfoData = {
+        streetAddress: customerDeliveryInfo.streetAddress,
+        neighborhood: customerDeliveryInfo.neighborhood,
+        postalCode: customerDeliveryInfo.postalCode,
+        city: customerDeliveryInfo.city,
+        state: customerDeliveryInfo.state,
+        country: customerDeliveryInfo.country,
+        latitude: customerDeliveryInfo.latitude,
+        longitude: customerDeliveryInfo.longitude,
+        geocodedAddress: customerDeliveryInfo.geocodedAddress,
+        additionalDetails: customerDeliveryInfo.additionalDetails,
+      };
+    } else if (orderType === "pickup") {
+      deliveryInfoData = {
+        pickupName: customerDeliveryInfo.pickupName,
+      };
+    }
+
+    const orderDeliveryInfo = await OrderDeliveryInfo.create(deliveryInfoData);
+
     const calculatedItems = await Promise.all(
       orderItems.map(async (item) => {
         let product, productVariant;
@@ -254,10 +288,17 @@ export default async function handler(req, res) {
     let relevantMessageContent =
       "Resumen del pedido hasta este momento, informame si tienes algun cambio o deseas agregar algun producto mas.\n\n";
 
-    messageContent += `🏠 *Información de entrega*: ${
-      deliveryInfo || "No disponible"
-    }\n`;
-    relevantMessageContent += `Información de entrega: ${
+    let deliveryInfo;
+    if (orderType === "delivery") {
+      deliveryInfo = orderDeliveryInfo.streetAddress;
+    } else if (orderType === "pickup") {
+      deliveryInfo = orderDeliveryInfo.pickupName;
+    }
+
+    messageContent += `🏠 *Información de ${
+      orderType === "delivery" ? "entrega" : "recolección"
+    }*: ${deliveryInfo || "No disponible"}\n`;
+    relevantMessageContent += `Información de ${orderType === "delivery" ? "entrega" : "recolección"}: ${
       deliveryInfo || "No disponible"
     }\n`;
     messageContent += `⏱️ *Tiempo estimado de ${
@@ -273,7 +314,7 @@ export default async function handler(req, res) {
       if (
         item.ingredientes_pizza.full.length > 0 ||
         item.ingredientes_pizza.left.length > 0 ||
-        item.ingredientes_pizza.right.length > 0
+        item.ingredientes_pizza.right.length > 0    
       ) {
         messageContent += "  🔸 Ingredientes de pizza:\n";
         relevantMessageContent += "  Ingredientes de pizza:\n";
@@ -353,14 +394,15 @@ export default async function handler(req, res) {
     // Borrar todas las preórdenes asociadas al cliente
     await PreOrder.destroy({ where: { clientId } });
 
-    await PreOrder.create({
+    const preOrder = await PreOrder.create({
       orderItems,
       orderType,
-      deliveryInfo,
       scheduledDeliveryTime: fullScheduledDeliveryTime,
       clientId,
       messageId,
     });
+
+    await orderDeliveryInfo.update({ preOrderId: preOrder.id });
 
     return res.status(200).json({
       mensaje: relevantMessageContent,

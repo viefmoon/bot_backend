@@ -7,6 +7,7 @@ const {
   PizzaIngredient,
   SelectedModifier,
   Modifier,
+  OrderDeliveryInfo,
 } = require("../../models");
 const cors = require("cors");
 
@@ -68,6 +69,11 @@ export default async function handler(req, res) {
               },
             ],
           },
+          {
+            model: OrderDeliveryInfo,
+            as: "orderDeliveryInfo",
+            attributes: ["streetAddress", "pickupName"],
+          },
         ],
         attributes: [
           "id",
@@ -75,7 +81,6 @@ export default async function handler(req, res) {
           "orderType",
           "status",
           "paymentStatus",
-          "deliveryInfo",
           "totalCost",
           "clientId",
           "orderDate",

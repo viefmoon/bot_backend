@@ -1,4 +1,5 @@
 const Customer = require("../../models/customer");
+const CustomerDeliveryInfo = require("../../models/customerDeliveryInfo");
 const BannedCustomer = require("../../models/bannedCustomer");
 const cors = require("cors");
 
@@ -25,10 +26,16 @@ export default async function handler(req, res) {
       const customers = await Customer.findAll({
         attributes: [
           "clientId",
-          "deliveryInfo",
           "stripeCustomerId",
           "lastInteraction",
           "createdAt",
+        ],
+        include: [
+          {
+            model: CustomerDeliveryInfo,
+            as: 'customerDeliveryInfo',
+            attributes: ["streetAddress", "pickupName"],
+          },
         ],
       });
 
