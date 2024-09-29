@@ -650,7 +650,7 @@ module.exports = {
         autoIncrement: true,
       },
       streetAddress: {
-        type: Sequelizeq.STRING,
+        type: Sequelize.STRING,
         allowNull: false,
       },
       neighborhood: {
