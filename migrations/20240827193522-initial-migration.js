@@ -650,47 +650,47 @@ module.exports = {
         autoIncrement: true,
       },
       streetAddress: {
-        type: DataTypes.STRING,
+        type: Sequelizeq.STRING,
         allowNull: false,
       },
       neighborhood: {
-       type: DataTypes.STRING,
+        type: Sequelize.STRING,
         allowNull: false,
       },
       postalCode: {
-          type: DataTypes.STRING,
-          allowNull: false,
-        },
+        type: Sequelize.STRING,
+        allowNull: false,
+      },
       city: {
-        type: DataTypes.STRING,
+        type: Sequelize.STRING,
         allowNull: false,
       },
       state: {
-        type: DataTypes.STRING,
+        type: Sequelize.STRING,
         allowNull: false,
       },
       country: {
-        type: DataTypes.STRING,
+        type: Sequelize.STRING,
         allowNull: false,
       },
       latitude: {
-        type: DataTypes.FLOAT,
+        type: Sequelize.FLOAT,
         allowNull: false,
       },
       longitude: {
-        type: DataTypes.FLOAT,
+        type: Sequelize.FLOAT,
         allowNull: false,
       },
       pickupName: {
-        type: DataTypes.STRING,
+        type: Sequelize.STRING,
         allowNull: true,
       },
       geocodedAddress: {
-        type: DataTypes.STRING,
+        type: Sequelize.STRING,
         allowNull: true,
       },
       additionalDetails: {
-        type: DataTypes.TEXT,
+        type: Sequelize.TEXT,
         allowNull: true,
       },
       createdAt: {
@@ -710,47 +710,47 @@ module.exports = {
         autoIncrement: true,
       },
       streetAddress: {
-        type: DataTypes.STRING,
+        type: Sequelize.STRING,
         allowNull: true,
       },
       neighborhood: {
-       type: DataTypes.STRING,
+        type: Sequelize.STRING,
         allowNull: true,
       },
       postalCode: {
-          type: DataTypes.STRING,
-          allowNull: true,
-        },
+        type: Sequelize.STRING,
+        allowNull: true,
+      },
       city: {
-        type: DataTypes.STRING,
+        type: Sequelize.STRING,
         allowNull: true,
       },
       state: {
-        type: DataTypes.STRING,
+        type: Sequelize.STRING,
         allowNull: true,
       },
       country: {
-        type: DataTypes.STRING,
+        type: Sequelize.STRING,
         allowNull: true,
       },
       latitude: {
-        type: DataTypes.FLOAT,
+        type: Sequelize.FLOAT,
         allowNull: true,
       },
       longitude: {
-        type: DataTypes.FLOAT,
+        type: Sequelize.FLOAT,
         allowNull: true,
       },
       pickupName: {
-        type: DataTypes.STRING,
+        type: Sequelize.STRING,
         allowNull: true,
       },
       geocodedAddress: {
-        type: DataTypes.STRING,
+        type: Sequelize.STRING,
         allowNull: true,
       },
       additionalDetails: {
-        type: DataTypes.TEXT,
+        type: Sequelize.TEXT,
         allowNull: true,
       },
       createdAt: {
