@@ -9,8 +9,12 @@ export default function AddressSelection() {
   const [address, setAddress] = useState("");
 
   const handleLocationSelect = (location, address) => {
-    setSelectedLocation(location);
-    setAddress(address);
+    try {
+      setSelectedLocation(location);
+      setAddress(address);
+    } catch (error) {
+      console.error("Error al seleccionar la ubicación:", error);
+    }
   };
 
   return (
@@ -23,10 +27,14 @@ export default function AddressSelection() {
       <main className="container mx-auto p-4">
         <h1 className="text-2xl font-bold mb-4">Selecciona tu dirección</h1>
         <AddressSearch onSelect={handleLocationSelect} />
-        <Map
-          selectedLocation={selectedLocation}
-          onLocationChange={handleLocationSelect}
-        />
+        {selectedLocation ? (
+          <Map
+            selectedLocation={selectedLocation}
+            onLocationChange={handleLocationSelect}
+          />
+        ) : (
+          <p>Selecciona una ubicación para mostrar el mapa</p>
+        )}
         <AddressForm selectedLocation={selectedLocation} address={address} />
       </main>
     </div>

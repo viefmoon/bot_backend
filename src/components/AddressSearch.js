@@ -1,10 +1,19 @@
 import React, { useState } from "react";
-import { GoogleMap, LoadScript, Autocomplete } from "@react-google-maps/api";
+import {
+  GoogleMap,
+  useJsApiLoader,
+  Autocomplete,
+} from "@react-google-maps/api";
 
 const libraries = ["places"];
 
 export default function AddressSearch({ onSelect }) {
   const [autocomplete, setAutocomplete] = useState(null);
+
+  const { isLoaded } = useJsApiLoader({
+    googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY,
+    libraries: libraries,
+  });
 
   const onLoad = (autocomplete) => {
     setAutocomplete(autocomplete);
@@ -25,18 +34,15 @@ export default function AddressSearch({ onSelect }) {
     }
   };
 
+  if (!isLoaded) return <div>Cargando...</div>;
+
   return (
-    <LoadScript
-      googleMapsApiKey={process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}
-      libraries={libraries}
-    >
-      <Autocomplete onLoad={onLoad} onPlaceChanged={onPlaceChanged}>
-        <input
-          type="text"
-          placeholder="Busca tu dirección"
-          className="w-full p-2 border border-gray-300 rounded"
-        />
-      </Autocomplete>
-    </LoadScript>
+    <Autocomplete onLoad={onLoad} onPlaceChanged={onPlaceChanged}>
+      <input
+        type="text"
+        placeholder="Busca tu dirección"
+        className="w-full p-2 border border-gray-300 rounded"
+      />
+    </Autocomplete>
   );
 }
