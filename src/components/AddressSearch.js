@@ -1,11 +1,7 @@
 import React, { useState } from "react";
-import {
-  GoogleMap,
-  useJsApiLoader,
-  Autocomplete,
-} from "@react-google-maps/api";
+import { useJsApiLoader, Autocomplete } from "@react-google-maps/api";
 
-const libraries = ["places"];
+const libraries = ["places", "maps"];
 
 export default function AddressSearch({ onSelect }) {
   const [autocomplete, setAutocomplete] = useState(null);
