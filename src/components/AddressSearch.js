@@ -1,12 +1,12 @@
 import React, { useState } from "react";
 import { useJsApiLoader, Autocomplete } from "@react-google-maps/api";
 
-const libraries = ["places", "maps"];
+const libraries = ["places"];
 
 export default function AddressSearch({ onSelect }) {
   const [autocomplete, setAutocomplete] = useState(null);
 
-  const { isLoaded } = useJsApiLoader({
+  const { isLoaded, loadError } = useJsApiLoader({
     googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY,
     libraries: libraries,
   });
@@ -41,6 +41,10 @@ export default function AddressSearch({ onSelect }) {
       console.log("Autocomplete es nulo");
     }
   };
+
+  if (loadError) {
+    return <div>Error al cargar Google Maps API</div>;
+  }
 
   if (!isLoaded) return <div>Cargando...</div>;
 
