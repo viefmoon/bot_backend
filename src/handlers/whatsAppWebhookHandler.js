@@ -23,7 +23,6 @@ async function sendBannedMessage(clientId) {
 
 async function handleIncomingWhatsAppMessage(message) {
   const { from, type, id } = message;
-
   //ver si ya se procesó
   if (await MessageLog.findOne({ where: { messageId: id } })) {
     return;
@@ -44,6 +43,23 @@ async function handleIncomingWhatsAppMessage(message) {
     await sendWhatsAppMessage(
       from,
       "Lo sentimos, el restaurante está cerrado en este momento."
+    );
+    return;
+  }
+
+  let customer = await Customer.findOne({
+    where: { clientId: from },
+    include: CustomerDeliveryInfo
+  });
+  if (!customer) {
+    customer = await Customer.create({ clientId: from });
+  }
+
+  // Verificar si el cliente tiene información de entrega
+  if (!customer.CustomerDeliveryInfo) {
+    await sendWhatsAppMessage(
+      from,
+      "Antes de continuar, necesitamos que registres tu información de entrega. Por favor, proporciona tu dirección completa, podras cambiarla en cualquier momento."
     );
     return;
   }

@@ -35,10 +35,6 @@ const Order = sequelize.define(
       allowNull: false,
       defaultValue: "pending",
     },
-    deliveryInfo: {
-      type: DataTypes.STRING,
-      allowNull: true,
-    },
     totalCost: {
       type: DataTypes.FLOAT,
       allowNull: false,

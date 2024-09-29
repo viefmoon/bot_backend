@@ -18,6 +18,8 @@ const MessageRateLimit = require("./messageRateLimit");
 const BannedCustomer = require("./bannedCustomer");
 const MessageLog = require("./messageLog");
 const NotificationPhone = require("./notificationPhone");
+const CustomerDeliveryInfo = require("./customerDeliveryInfo");
+const OrderDeliveryInfo = require("./orderDeliveryInfo");
 
 // Define relationships
 Order.hasMany(OrderItem, { foreignKey: "orderId", as: "orderItems" });
@@ -95,6 +97,13 @@ Modifier.hasOne(Availability, {
   scope: { type: "modifier" },
 });
 
+// Definir relaciones one-to-one
+Customer.hasOne(CustomerDeliveryInfo, { foreignKey: 'customerId', as: 'customerDeliveryInfo' });
+CustomerDeliveryInfo.belongsTo(Customer, { foreignKey: 'customerId' });
+
+Order.hasOne(OrderDeliveryInfo, { foreignKey: 'orderId', as: 'orderDeliveryInfo' });
+OrderDeliveryInfo.belongsTo(Order, { foreignKey: 'orderId' });
+
 // Exportar todos los modelos y relaciones
 module.exports = {
   sequelize,
@@ -115,4 +124,6 @@ module.exports = {
   MessageLog,
   PreOrder,
   NotificationPhone,
+  CustomerDeliveryInfo,
+  OrderDeliveryInfo,
 };

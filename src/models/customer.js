@@ -10,10 +10,6 @@ const Customer = sequelize.define(
       primaryKey: true,
       unique: true,
     },
-    deliveryInfo: {
-      type: DataTypes.STRING,
-      allowNull: true,
-    },
     fullChatHistory: {
       type: DataTypes.JSON,
       allowNull: true,

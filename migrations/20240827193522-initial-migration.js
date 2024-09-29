@@ -63,10 +63,6 @@ module.exports = {
         primaryKey: true,
         unique: true,
       },
-      deliveryInfo: {
-        type: Sequelize.STRING,
-        allowNull: true,
-      },
       fullChatHistory: {
         type: Sequelize.JSON,
         allowNull: true,
@@ -325,10 +321,6 @@ module.exports = {
         allowNull: false,
         defaultValue: "pending",
       },
-      deliveryInfo: {
-        type: Sequelize.STRING,
-        allowNull: true,
-      },
       totalCost: {
         type: Sequelize.FLOAT,
         allowNull: false,
@@ -551,10 +543,6 @@ module.exports = {
         type: Sequelize.ENUM("delivery", "pickup"),
         allowNull: false,
       },
-      deliveryInfo: {
-        type: Sequelize.STRING,
-        allowNull: true,
-      },
       scheduledDeliveryTime: {
         type: Sequelize.DATE,
         allowNull: true,
@@ -654,6 +642,126 @@ module.exports = {
         type: Sequelize.DATE,
       },
     });
+
+    await queryInterface.createTable("CustomerDeliveryInfos", {
+      id: {
+        type: Sequelize.INTEGER,
+        primaryKey: true,
+        autoIncrement: true,
+      },
+      streetAddress: {
+        type: DataTypes.STRING,
+        allowNull: false,
+      },
+      neighborhood: {
+       type: DataTypes.STRING,
+        allowNull: false,
+      },
+      postalCode: {
+          type: DataTypes.STRING,
+          allowNull: false,
+        },
+      city: {
+        type: DataTypes.STRING,
+        allowNull: false,
+      },
+      state: {
+        type: DataTypes.STRING,
+        allowNull: false,
+      },
+      country: {
+        type: DataTypes.STRING,
+        allowNull: false,
+      },
+      latitude: {
+        type: DataTypes.FLOAT,
+        allowNull: false,
+      },
+      longitude: {
+        type: DataTypes.FLOAT,
+        allowNull: false,
+      },
+      pickupName: {
+        type: DataTypes.STRING,
+        allowNull: true,
+      },
+      geocodedAddress: {
+        type: DataTypes.STRING,
+        allowNull: true,
+      },
+      additionalDetails: {
+        type: DataTypes.TEXT,
+        allowNull: true,
+      },
+      createdAt: {
+        allowNull: false,
+        type: Sequelize.DATE,
+      },
+      updatedAt: {
+        allowNull: false,
+        type: Sequelize.DATE,
+      },
+    });
+
+    await queryInterface.createTable("OrderDeliveryInfos", {
+      id: {
+        type: Sequelize.INTEGER,
+        primaryKey: true,
+        autoIncrement: true,
+      },
+      streetAddress: {
+        type: DataTypes.STRING,
+        allowNull: true,
+      },
+      neighborhood: {
+       type: DataTypes.STRING,
+        allowNull: true,
+      },
+      postalCode: {
+          type: DataTypes.STRING,
+          allowNull: true,
+        },
+      city: {
+        type: DataTypes.STRING,
+        allowNull: true,
+      },
+      state: {
+        type: DataTypes.STRING,
+        allowNull: true,
+      },
+      country: {
+        type: DataTypes.STRING,
+        allowNull: true,
+      },
+      latitude: {
+        type: DataTypes.FLOAT,
+        allowNull: true,
+      },
+      longitude: {
+        type: DataTypes.FLOAT,
+        allowNull: true,
+      },
+      pickupName: {
+        type: DataTypes.STRING,
+        allowNull: true,
+      },
+      geocodedAddress: {
+        type: DataTypes.STRING,
+        allowNull: true,
+      },
+      additionalDetails: {
+        type: DataTypes.TEXT,
+        allowNull: true,
+      },
+      createdAt: {
+        allowNull: false,
+        type: Sequelize.DATE,
+      },
+      updatedAt: {
+        allowNull: false,
+        type: Sequelize.DATE,
+      },
+    });
   },
 
   down: async (queryInterface, Sequelize) => {
@@ -674,5 +782,7 @@ module.exports = {
     await queryInterface.dropTable("BannedCustomers");
     await queryInterface.dropTable("MessageRateLimits");
     await queryInterface.dropTable("NotificationPhones");
+    await queryInterface.dropTable("CustomerDeliveryInfo");
+    await queryInterface.dropTable("OrderDeliveryInfo");
   },
 };

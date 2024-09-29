@@ -83,18 +83,13 @@ const selectProductsTool = [
             description:
               "Tipo de orden ('delivery' para entrega a domicilio, 'pickup' para recoger en restaurante).",
           },
-          deliveryInfo: {
-            type: "string",
-            description:
-              "Dirección de entrega para pedidos a domicilio o Nombre del cliente para recolección en restaurante.",
-          },
           scheduledDeliveryTime: {
             type: "string",
             description:
               "Hora programada para el pedido (opcional, en formato de 24 horas).",
           },
         },
-        required: ["orderItems", "orderType", "deliveryInfo"],
+        required: ["orderItems", "orderType"],
         additionalProperties: false,
       },
     },
@@ -132,11 +127,6 @@ const preprocessOrderTool = [
               additionalProperties: false,
             },
           },
-          deliveryInfo: {
-            type: "string",
-            description:
-              "Dirección de entrega para pedidos a domicilio o nombre de cliente para recolección en el restaurante.",
-          },
           orderType: {
             type: "string",
             enum: ["delivery", "pickup"],
@@ -157,7 +147,6 @@ const preprocessOrderTool = [
         required: [
           "orderItems",
           "orderType",
-          "deliveryInfo",
           "conversationSummary",
           "scheduledDeliveryTime",
         ],
@@ -243,18 +232,13 @@ const selectProductsToolClaude = {
         description:
           "Tipo de orden ('delivery' para entrega a domicilio, 'pickup' para recoger en restaurante).",
       },
-      deliveryInfo: {
-        type: "string",
-        description:
-          "Dirección de entrega para pedidos a domicilio o Nombre del cliente para recolección en restaurante.",
-      },
       scheduledDeliveryTime: {
         type: "string",
         description:
           "Hora programada para el pedido (opcional, en formato de 24 horas).",
       },
     },
-    required: ["orderItems", "orderType", "deliveryInfo"],
+    required: ["orderItems", "orderType"],
   },
 };
 const sendMenuTool = [
