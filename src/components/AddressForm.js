@@ -60,7 +60,88 @@ export default function AddressForm({ selectedLocation, address }) {
           required
         />
       </div>
-      {/* Agrega campos similares para neighborhood, postalCode, city, state, country, additionalDetails */}
+      <div className="mb-4">
+        <label htmlFor="neighborhood" className="block mb-2">
+          Barrio
+        </label>
+        <input
+          type="text"
+          id="neighborhood"
+          name="neighborhood"
+          value={formData.neighborhood}
+          onChange={handleChange}
+          className="w-full p-2 border border-gray-300 rounded"
+        />
+      </div>
+      <div className="mb-4">
+        <label htmlFor="postalCode" className="block mb-2">
+          Código Postal
+        </label>
+        <input
+          type="text"
+          id="postalCode"
+          name="postalCode"
+          value={formData.postalCode}
+          onChange={handleChange}
+          className="w-full p-2 border border-gray-300 rounded"
+          required
+        />
+      </div>
+      <div className="mb-4">
+        <label htmlFor="city" className="block mb-2">
+          Ciudad
+        </label>
+        <input
+          type="text"
+          id="city"
+          name="city"
+          value={formData.city}
+          onChange={handleChange}
+          className="w-full p-2 border border-gray-300 rounded"
+          required
+        />
+      </div>
+      <div className="mb-4">
+        <label htmlFor="state" className="block mb-2">
+          Estado/Provincia
+        </label>
+        <input
+          type="text"
+          id="state"
+          name="state"
+          value={formData.state}
+          onChange={handleChange}
+          className="w-full p-2 border border-gray-300 rounded"
+          required
+        />
+      </div>
+      <div className="mb-4">
+        <label htmlFor="country" className="block mb-2">
+          País
+        </label>
+        <input
+          type="text"
+          id="country"
+          name="country"
+          value={formData.country}
+          onChange={handleChange}
+          className="w-full p-2 border border-gray-300 rounded"
+          required
+        />
+      </div>
+      <div className="mb-4">
+        <label htmlFor="additionalDetails" className="block mb-2">
+          Detalles Adicionales
+        </label>
+        <textarea
+          id="additionalDetails"
+          name="additionalDetails"
+          value={formData.additionalDetails}
+          onChange={handleChange}
+          className="w-full p-2 border border-gray-300 rounded"
+          rows="3"
+        ></textarea>
+      </div>
       <button
         type="submit"
         className="bg-blue-500 text-white px-4 py-2 rounded"
