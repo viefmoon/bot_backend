@@ -20,17 +20,29 @@ export default function AddressSearch({ onSelect }) {
   };
 
   const onPlaceChanged = () => {
+    console.log("onPlaceChanged llamado");
     if (autocomplete !== null) {
+      console.log("Autocomplete no es nulo");
       const place = autocomplete.getPlace();
+      console.log("Lugar obtenido:", place);
       if (place.geometry) {
-        onSelect(
-          {
+        console.log("Geometría encontrada");
+        try {
+          const selectedLocation = {
             lat: place.geometry.location.lat(),
             lng: place.geometry.location.lng(),
-          },
-          place.formatted_address
-        );
+          };
+          console.log("Ubicación seleccionada:", selectedLocation);
+          console.log("Dirección formateada:", place.formatted_address);
+          onSelect(selectedLocation, place.formatted_address);
+        } catch (error) {
+          console.error("Error al procesar la ubicación:", error);
+        }
+      } else {
+        console.log("No se encontró geometría para este lugar");
       }
+    } else {
+      console.log("Autocomplete es nulo");
     }
   };
 
