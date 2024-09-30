@@ -3,7 +3,7 @@ const cors = require("cors");
 
 const corsMiddleware = cors({
   origin: true,
-  methods: ["GET", "POST", "DELETE", "PUT"],
+  methods: ["GET", "POST"],
 });
 
 export default async function handler(req, res) {
@@ -50,65 +50,8 @@ export default async function handler(req, res) {
       console.error("Error al agregar el número de teléfono:", error);
       res.status(500).json({ error: "Error al agregar el número de teléfono" });
     }
-  } else if (req.method === "DELETE") {
-    try {
-      const { id } = req.query; // Asegúrate de que el id se obtiene de req.query
-      console.log("ID recibido para eliminación:", id); // Log para verificar el ID recibido
-
-      if (!id) {
-        return res
-          .status(400)
-          .json({ error: "Se requiere el ID del número de teléfono" });
-      }
-      const deletedCount = await NotificationPhone.destroy({ where: { id } });
-      console.log("Cantidad eliminada:", deletedCount); // Log para verificar la cantidad eliminada
-
-      if (deletedCount === 0) {
-        return res
-          .status(404)
-          .json({ error: "Número de teléfono no encontrado" });
-      }
-      res
-        .status(200)
-        .json({ message: "Número de teléfono eliminado con éxito" });
-    } catch (error) {
-      console.error("Error al eliminar el número de teléfono:", error);
-      res
-        .status(500)
-        .json({ error: "Error al eliminar el número de teléfono" });
-    }
-  } else if (req.method === "PUT") {
-    try {
-      const { id } = req.query;
-      const { phoneNumber, isActive } = req.body;
-
-      if (!id) {
-        return res
-          .status(400)
-          .json({ error: "Se requiere el ID del número de teléfono" });
-      }
-
-      const [updatedCount] = await NotificationPhone.update(
-        { phoneNumber, isActive },
-        { where: { id } }
-      );
-
-      if (updatedCount === 0) {
-        return res
-          .status(404)
-          .json({ error: "Número de teléfono no encontrado" });
-      }
-
-      const updatedPhone = await NotificationPhone.findByPk(id);
-      res.status(200).json(updatedPhone);
-    } catch (error) {
-      console.error("Error al actualizar el número de teléfono:", error);
-      res
-        .status(500)
-        .json({ error: "Error al actualizar el número de teléfono" });
-    }
   } else {
-    res.setHeader("Allow", ["GET", "POST", "PUT", "DELETE"]);
+    res.setHeader("Allow", ["GET", "POST"]);
     res.status(405).end(`Method ${req.method} Not Allowed`);
   }
 }
