@@ -16,9 +16,6 @@ export default async function handler(req, res) {
     });
   });
 
-  // Extraer el ID de la URL
-  const { id } = req.query;
-
   if (req.method === "GET") {
     try {
       const phones = await NotificationPhone.findAll({
@@ -55,13 +52,14 @@ export default async function handler(req, res) {
     }
   } else if (req.method === "DELETE") {
     try {
+      const id = req.query.id || req.url.split("/").pop();
+      console.log("ID recibido para eliminación:", id);
+
       if (!id) {
         return res
           .status(400)
           .json({ error: "Se requiere el ID del número de teléfono" });
       }
-      console.log("ID recibido para eliminación:", id);
-
       const deletedCount = await NotificationPhone.destroy({ where: { id } });
       console.log("Cantidad eliminada:", deletedCount);
 
