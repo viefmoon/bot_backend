@@ -5,6 +5,7 @@ import { sendWhatsAppMessage } from "../utils/whatsAppUtils";
 import { BannedCustomer, MessageLog } from "../models";
 import { verificarHorarioAtencion } from "../utils/timeUtils";
 import { checkMessageRateLimit } from "../utils/messageRateLimit";
+import { Customer, CustomerDeliveryInfo } from "../models";
 
 async function checkBannedCustomer(clientId) {
   return !!(await BannedCustomer.findOne({ where: { clientId } }));
