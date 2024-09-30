@@ -29,6 +29,14 @@ async function handleIncomingWhatsAppMessage(message) {
   }
   await MessageLog.create({ messageId: id, processed: true });
 
+  let customer = await Customer.findOne({
+    where: { clientId: from },
+    include: CustomerDeliveryInfo,
+  });
+  if (!customer) {
+    customer = await Customer.create({ clientId: from });
+  }
+
   //verificar si está baneado
   if (await checkBannedCustomer(from)) {
     await sendBannedMessage(from);
@@ -46,15 +54,6 @@ async function handleIncomingWhatsAppMessage(message) {
     );
     return;
   }
-
-  let customer = await Customer.findOne({
-    where: { clientId: from },
-    include: CustomerDeliveryInfo
-  });
-  if (!customer) {
-    customer = await Customer.create({ clientId: from });
-  }
-
   // Verificar si el cliente tiene información de entrega
   if (!customer.CustomerDeliveryInfo) {
     await sendWhatsAppMessage(
