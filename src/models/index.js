@@ -98,14 +98,23 @@ Modifier.hasOne(Availability, {
 });
 
 // Definir relaciones one-to-one
-Customer.hasOne(CustomerDeliveryInfo, { foreignKey: 'customerId', as: 'customerDeliveryInfo' });
-CustomerDeliveryInfo.belongsTo(Customer, { foreignKey: 'customerId' });
+Customer.hasOne(CustomerDeliveryInfo, {
+  foreignKey: "clientId",
+  as: "customerDeliveryInfo",
+});
+CustomerDeliveryInfo.belongsTo(Customer, { foreignKey: "clientId" });
 
-Order.hasOne(OrderDeliveryInfo, { foreignKey: 'orderId', as: 'orderDeliveryInfo' });
-OrderDeliveryInfo.belongsTo(Order, { foreignKey: 'orderId' });
+Order.hasOne(OrderDeliveryInfo, {
+  foreignKey: "orderId",
+  as: "orderDeliveryInfo",
+});
+OrderDeliveryInfo.belongsTo(Order, { foreignKey: "orderId" });
 
-PreOrder.hasOne(OrderDeliveryInfo, { foreignKey: 'preOrderId', as: 'orderDeliveryInfo' });
-OrderDeliveryInfo.belongsTo(PreOrder, { foreignKey: 'preOrderId' });
+PreOrder.hasOne(OrderDeliveryInfo, {
+  foreignKey: "preOrderId",
+  as: "orderDeliveryInfo",
+});
+OrderDeliveryInfo.belongsTo(PreOrder, { foreignKey: "preOrderId" });
 
 // Exportar todos los modelos y relaciones
 module.exports = {

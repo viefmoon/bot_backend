@@ -31,7 +31,7 @@ async function handleIncomingWhatsAppMessage(message) {
   await MessageLog.create({ messageId: id, processed: true });
 
   let customer = await Customer.findOne({
-    where: { customerId: from },
+    where: { clientId: from },
     include: [{ model: CustomerDeliveryInfo, as: "customerDeliveryInfo" }],
   });
   if (!customer) {
