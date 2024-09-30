@@ -1,8 +1,7 @@
 {
-  "name": "ai-assistant-chat-data-integration",
+  "name": "rest_ai",
   "version": "0.1.0",
   "private": true,
-  "deploymentUrl": "https://openai-assistant-demo.chat-data.com/",
   "scripts": {
     "dev": "cross-env PORT=3001 next dev",
     "build": "next build",

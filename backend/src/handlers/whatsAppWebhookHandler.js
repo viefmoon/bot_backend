@@ -18,12 +18,14 @@ async function sendBannedMessage(clientId) {
       "Si crees que es un error, por favor contacta directamente con el restaurante:\n\n" +
       "📞 Teléfono fijo: 3919160126\n" +
       "📱 Celular: 3338423316\n\n" +
-      "Agradecemos tu comprensión y esperamos resolver cualquier malentendido."
+      "Agradecemos tu comprensión y esperamos resolver cualquier malentendido.",
   );
 }
 
 async function handleIncomingWhatsAppMessage(message) {
   const { from, type, id } = message;
+
+  console.log("Mensaje recibido de:", from);
   //ver si ya se procesó
   if (await MessageLog.findOne({ where: { messageId: id } })) {
     return;
@@ -51,18 +53,18 @@ async function handleIncomingWhatsAppMessage(message) {
   if (!(await verificarHorarioAtencion())) {
     await sendWhatsAppMessage(
       from,
-      "Lo sentimos, el restaurante está cerrado en este momento."
+      "Lo sentimos, el restaurante está cerrado en este momento.",
     );
     return;
   }
   // Verificar si el cliente tiene información de entrega
-  if (!customer.CustomerDeliveryInfo) {
-    await sendWhatsAppMessage(
-      from,
-      "Antes de continuar, necesitamos que registres tu información de entrega. Por favor, proporciona tu dirección completa, podras cambiarla en cualquier momento."
-    );
-    return;
-  }
+  // if (!customer.CustomerDeliveryInfo) {
+  //   await sendWhatsAppMessage(
+  //     from,
+  //     "Antes de continuar, necesitamos que registres tu información de entrega. Por favor, proporciona tu dirección completa, podras cambiarla en cualquier momento.",
+  //   );
+  //   return;
+  // }
 
   //manejar el mensaje dependiendo del tipo
   switch (type) {
