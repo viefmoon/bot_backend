@@ -1,4 +1,4 @@
-const { NotificationPhone } = require("../../models");
+const { NotificationPhone } = require("../../../models");
 const cors = require("cors");
 
 const corsMiddleware = cors({
@@ -52,8 +52,8 @@ export default async function handler(req, res) {
     }
   } else if (req.method === "DELETE") {
     try {
-      const id = req.query.id || req.url.split("/").pop();
-      console.log("ID recibido para eliminación:", id);
+      const { id } = req.query; // Asegúrate de que el id se obtiene de req.query
+      console.log("ID recibido para eliminación:", id); // Log para verificar el ID recibido
 
       if (!id) {
         return res
@@ -61,7 +61,7 @@ export default async function handler(req, res) {
           .json({ error: "Se requiere el ID del número de teléfono" });
       }
       const deletedCount = await NotificationPhone.destroy({ where: { id } });
-      console.log("Cantidad eliminada:", deletedCount);
+      console.log("Cantidad eliminada:", deletedCount); // Log para verificar la cantidad eliminada
 
       if (deletedCount === 0) {
         return res
