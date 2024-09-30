@@ -649,6 +649,10 @@ module.exports = {
         primaryKey: true,
         autoIncrement: true,
       },
+      clientId: {
+        type: Sequelize.STRING,
+        allowNull: false,
+      },
       streetAddress: {
         type: Sequelize.STRING,
         allowNull: false,

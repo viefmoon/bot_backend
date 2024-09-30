@@ -4,18 +4,22 @@ const { sequelize } = require("../lib/db");
 const CustomerDeliveryInfo = sequelize.define(
   "CustomerDeliveryInfo",
   {
+    clientId: {
+      type: DataTypes.STRING,
+      allowNull: false,
+    },
     streetAddress: {
       type: DataTypes.STRING,
       allowNull: false,
     },
     neighborhood: {
-     type: DataTypes.STRING,
+      type: DataTypes.STRING,
       allowNull: false,
     },
     postalCode: {
-        type: DataTypes.STRING,
-        allowNull: false,
-      },
+      type: DataTypes.STRING,
+      allowNull: false,
+    },
     city: {
       type: DataTypes.STRING,
       allowNull: false,
