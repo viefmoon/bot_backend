@@ -48,7 +48,7 @@ async function verificarHorarioAtencion() {
         tiempoActual < horarioDomingo.cierre
       );
     case 1: // Lunes
-      return false; // Cerrado los lunes
+    //return false; // Cerrado los lunes
     case 2: // Martes
     case 3: // Miércoles
     case 4: // Jueves
