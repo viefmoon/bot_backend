@@ -7,6 +7,8 @@ const corsMiddleware = cors({
 });
 
 export default async function handler(req, res) {
+  console.log("Solicitud recibida en /api/notification_phones");
+
   await new Promise((resolve, reject) => {
     corsMiddleware(req, res, (result) => {
       if (result instanceof Error) {
@@ -15,6 +17,8 @@ export default async function handler(req, res) {
       return resolve(result);
     });
   });
+
+  console.log("Método de la solicitud:", req.method);
 
   if (req.method === "GET") {
     try {
