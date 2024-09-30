@@ -10,6 +10,17 @@ const Availability = require("../src/models/availability");
 const RestaurantConfig = require("../src/models/restaurantConfig");
 const NotificationPhone = require("../src/models/notificationPhone");
 
+const testConnection = async () => {
+  try {
+    await sequelize.authenticate();
+    console.log("Connection has been established successfully.");
+  } catch (error) {
+    console.error("Unable to connect to the database:", error);
+  }
+};
+
+testConnection();
+
 const menu = [
   {
     id: "A",
@@ -1179,12 +1190,12 @@ const seedMenuItems = async () => {
     });
 
     console.log(
-      "Menu items, availability, and restaurant configuration have been seeded successfully."
+      "Menu items, availability, and restaurant configuration have been seeded successfully.",
     );
   } catch (error) {
     console.error(
       "Error seeding menu items, availability, and restaurant configuration:",
-      error
+      error,
     );
   } finally {
     await sequelize.close();

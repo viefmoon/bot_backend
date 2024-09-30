@@ -3,20 +3,27 @@ const dotenv = require("dotenv");
 dotenv.config();
 
 const sequelize = new Sequelize(
-  process.env.MYSQL_DATABASE,
-  process.env.MYSQL_USER,
-  process.env.MYSQL_PASSWORD,
+  process.env.PGDATABASE,
+  process.env.PGUSER,
+  process.env.PGPASSWORD,
   {
-    host: process.env.MYSQL_HOST,
-    dialect: "mysql",
-    logging: false, // Desactivar logging en producción
+    host: process.env.PGHOST,
+    port: process.env.PGPORT,
+    dialect: "postgres",
+    logging: false,
+    dialectOptions: {
+      ssl: {
+        require: true,
+        rejectUnauthorized: false, // Importante para asegurar la conexión con SSL
+      },
+    },
     pool: {
       max: 5,
       min: 0,
       acquire: 30000,
       idle: 10000,
     },
-  }
+  },
 );
 
 const connectDB = async () => {
