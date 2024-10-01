@@ -18,12 +18,6 @@ interface WhisperResponse {
   text: string;
 }
 
-interface AudioMessage {
-  audio: {
-    id: string;
-  };
-}
-
 async function getAudioUrl(audioId: string): Promise<string | null> {
   try {
     const { data } = await axios.get<AudioData>(
@@ -88,7 +82,7 @@ async function transcribeAudio(audioUrl: string): Promise<string> {
 
 export async function handleAudioMessage(
   from: string,
-  message: AudioMessage
+  message: any
 ): Promise<void> {
   try {
     const audioUrl = await getAudioUrl(message.audio.id);

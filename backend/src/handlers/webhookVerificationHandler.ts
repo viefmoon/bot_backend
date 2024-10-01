@@ -1,12 +1,14 @@
 import * as dotenv from "dotenv";
+import { Request, Response } from "express";
+
 dotenv.config();
 
-export function handleWebhookVerification(req, res) {
+export function handleWebhookVerification(req: Request, res: Response): void {
   const {
     "hub.mode": mode,
     "hub.verify_token": token,
     "hub.challenge": challenge,
-  } = req.query;
+  } = req.query as { [key: string]: string };
 
   // Log the values for debugging
   console.log("Received mode:", mode);

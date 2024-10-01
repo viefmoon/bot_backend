@@ -1,5 +1,6 @@
 import { DataTypes, Model, Optional } from "sequelize";
 import { sequelize } from "../lib/db";
+import OrderDeliveryInfo from "./orderDeliveryInfo";
 
 interface PreOrderAttributes {
   id: number;
@@ -28,6 +29,9 @@ class PreOrder
 
   public readonly createdAt!: Date;
   public readonly updatedAt!: Date;
+
+  //asociaciones
+  public orderDeliveryInfo?: OrderDeliveryInfo;
 }
 
 PreOrder.init(

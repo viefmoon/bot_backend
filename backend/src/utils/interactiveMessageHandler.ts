@@ -16,24 +16,9 @@ const stripeClient = new Stripe(process.env.STRIPE_SECRET_KEY!, {
   apiVersion: "2024-06-20",
 });
 
-interface InteractiveMessage {
-  interactive: {
-    type: string;
-    button_reply?: {
-      id: string;
-    };
-    list_reply?: {
-      id: string;
-    };
-  };
-  context: {
-    id: string;
-  };
-}
-
 export async function handleInteractiveMessage(
   from: string,
-  message: InteractiveMessage
+  message: any
 ): Promise<void> {
   if (message.interactive.type === "button_reply") {
     const buttonId = message.interactive.button_reply!.id;

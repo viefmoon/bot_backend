@@ -2,27 +2,54 @@ import { handleTextMessage } from "../utils/textMessageHandler";
 import { handleInteractiveMessage } from "../utils/interactiveMessageHandler";
 import { handleAudioMessage } from "../utils/audioMessageHandler";
 import { sendWhatsAppMessage } from "../utils/whatsAppUtils";
-import { BannedCustomer, MessageLog } from "../models";
+import {
+  BannedCustomer,
+  MessageLog,
+  Customer,
+  CustomerDeliveryInfo,
+} from "../models";
 import { verificarHorarioAtencion } from "../utils/timeUtils";
 import { checkMessageRateLimit } from "../utils/messageRateLimit";
-import { Customer, CustomerDeliveryInfo } from "../models";
+import { Request, Response } from "express";
 
-async function checkBannedCustomer(clientId) {
+interface WhatsAppMessage {
+  from: string;
+  type: string;
+  id: string;
+  text?: { body: string };
+}
+
+interface WebhookEntry {
+  changes: Array<{
+    value: {
+      messages?: WhatsAppMessage[];
+    };
+  }>;
+}
+
+interface WebhookBody {
+  object: string;
+  entry: WebhookEntry[];
+}
+
+async function checkBannedCustomer(clientId: string): Promise<boolean> {
   return !!(await BannedCustomer.findOne({ where: { clientId } }));
 }
 
-async function sendBannedMessage(clientId) {
+async function sendBannedMessage(clientId: string): Promise<void> {
   await sendWhatsAppMessage(
     clientId,
     "Lo sentimos, tu número ha sido baneado debido a la detección de un uso inadecuado de nuestro servicio. " +
       "Si crees que es un error, por favor contacta directamente con el restaurante:\n\n" +
       "📞 Teléfono fijo: 3919160126\n" +
       "📱 Celular: 3338423316\n\n" +
-      "Agradecemos tu comprensión y esperamos resolver cualquier malentendido.",
+      "Agradecemos tu comprensión y esperamos resolver cualquier malentendido."
   );
 }
 
-async function handleIncomingWhatsAppMessage(message) {
+async function handleIncomingWhatsAppMessage(
+  message: WhatsAppMessage
+): Promise<void> {
   const { from, type, id } = message;
 
   console.log("Mensaje recibido de:", from);
@@ -53,7 +80,7 @@ async function handleIncomingWhatsAppMessage(message) {
   if (!(await verificarHorarioAtencion())) {
     await sendWhatsAppMessage(
       from,
-      "Lo sentimos, el restaurante está cerrado en este momento.",
+      "Lo sentimos, el restaurante está cerrado en este momento."
     );
     return;
   }
@@ -83,9 +110,12 @@ async function handleIncomingWhatsAppMessage(message) {
 }
 
 // Manejo de mensajes de WhatsApp
-export async function handleWhatsAppWebhook(req, res) {
+export async function handleWhatsAppWebhook(
+  req: Request,
+  res: Response
+): Promise<void> {
   res.status(200).send("EVENT_RECEIVED");
-  const { object, entry } = req.body;
+  const { object, entry } = req.body as WebhookBody;
 
   if (object === "whatsapp_business_account") {
     for (const entryItem of entry) {

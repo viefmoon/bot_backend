@@ -1,5 +1,10 @@
 import { DataTypes, Model, Optional } from "sequelize";
 import { sequelize } from "../lib/db";
+import Product from "./product";
+import ProductVariant from "./productVariant";
+import Order from "./order";
+import SelectedModifier from "./selectedModifier";
+import SelectedPizzaIngredient from "./selectedPizzaIngredient";
 
 interface OrderItemAttributes {
   id: number;
@@ -31,6 +36,13 @@ class OrderItem
   // Timestamps
   public readonly createdAt!: Date;
   public readonly updatedAt!: Date;
+
+  // Associations
+  public order?: Order;
+  public product?: Product;
+  public productVariant?: ProductVariant;
+  public selectedModifiers?: SelectedModifier[];
+  public selectedPizzaIngredients?: SelectedPizzaIngredient[];
 }
 
 OrderItem.init(

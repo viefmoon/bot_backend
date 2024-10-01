@@ -1,36 +1,43 @@
-import stripe from "stripe";
+import Stripe from "stripe";
 import { Order, Customer } from "../models";
 import { sendWhatsAppMessage } from "../utils/whatsAppUtils";
+import { Request, Response } from "express";
 
 import * as dotenv from "dotenv";
 dotenv.config();
 
-const stripeClient = stripe(process.env.STRIPE_SECRET_KEY);
+const stripeClient = new Stripe(process.env.STRIPE_SECRET_KEY!, {
+  apiVersion: "2024-06-20", // Actualizada a la versión más reciente
+});
 
-export async function handleStripeWebhook(req, res) {
-  const sig = req.headers["stripe-signature"];
-  let event;
+export async function handleStripeWebhook(
+  req: Request,
+  res: Response
+): Promise<void> {
+  const sig = req.headers["stripe-signature"] as string;
+  let event: Stripe.Event;
 
   try {
     event = stripeClient.webhooks.constructEvent(
       req.body,
       sig,
-      process.env.STRIPE_WEBHOOK_SECRET
+      process.env.STRIPE_WEBHOOK_SECRET!
     );
   } catch (err) {
-    console.error(`Error de firma de webhook: ${err.message}`);
-    return res.status(400).send(`Webhook Error: ${err.message}`);
+    console.error(`Error de firma de webhook: ${(err as Error).message}`);
+    res.status(400).send(`Webhook Error: ${(err as Error).message}`);
+    return;
   }
 
   if (event.type === "checkout.session.completed") {
-    const session = event.data.object;
+    const session = event.data.object as Stripe.Checkout.Session;
     const order = await Order.findOne({
       where: { stripeSessionId: session.id },
     });
     if (order) {
       await order.update({ paymentStatus: "paid" });
       const customer = await Customer.findOne({
-        where: { stripeCustomerId: session.customer },
+        where: { stripeCustomerId: session.customer as string },
       });
       if (customer) {
         await sendWhatsAppMessage(

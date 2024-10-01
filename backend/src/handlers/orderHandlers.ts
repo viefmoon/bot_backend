@@ -21,20 +21,54 @@ import {
 import * as dotenv from "dotenv";
 dotenv.config();
 
-async function createOrderFromPreOrder(preOrder, clientId) {
+interface OrderData {
+  orderType: string;
+  orderItems: any[];
+  scheduledDeliveryTime: string | null;
+  clientId: string;
+  orderDeliveryInfo: any;
+}
+
+interface NewOrder {
+  id: number;
+  telefono: string;
+  informacion_entrega: string;
+  precio_total: number;
+  fecha_creacion: string;
+  horario_entrega_programado: string | null;
+  tiempoEstimado: number;
+  productos: {
+    nombre: string;
+    cantidad: number;
+    precio: number;
+    modificadores: { nombre: string; precio: number }[];
+    ingredientes_pizza?: { mitad: string; nombre: string }[];
+    comments?: string;
+  }[];
+}
+
+interface OrderSummaryResult {
+  newOrder: NewOrder;
+  orderSummary: string;
+}
+
+async function createOrderFromPreOrder(
+  preOrder: PreOrder,
+  clientId: string
+): Promise<OrderSummaryResult> {
   try {
     const { orderItems, orderType, scheduledDeliveryTime, orderDeliveryInfo } =
       preOrder;
 
-    const orderData = {
+    const orderData: OrderData = {
       orderType,
       orderItems,
-      scheduledDeliveryTime,
+      scheduledDeliveryTime: scheduledDeliveryTime.toISOString(),
       clientId,
       orderDeliveryInfo,
     };
 
-    const response = await axios.post(
+    const response = await axios.post<{ orden: NewOrder }>(
       `${process.env.BASE_URL}/api/orders/create_order`,
       orderData,
       {
@@ -77,14 +111,20 @@ async function createOrderFromPreOrder(preOrder, clientId) {
         ) {
           orderSummary += `    *Ingredientes de pizza:*\n`;
 
-          const ingredientesPorMitad = {
+          const ingredientesPorMitad: {
+            left: string[];
+            right: string[];
+            full: string[];
+          } = {
             left: [],
             right: [],
             full: [],
           };
 
           producto.ingredientes_pizza.forEach((ing) => {
-            ingredientesPorMitad[ing.mitad].push(ing.nombre);
+            ingredientesPorMitad[
+              ing.mitad as keyof typeof ingredientesPorMitad
+            ].push(ing.nombre);
           });
 
           if (ingredientesPorMitad.full.length > 0) {
@@ -115,13 +155,16 @@ async function createOrderFromPreOrder(preOrder, clientId) {
   } catch (error) {
     console.error(
       "Error detallado en createOrderFromPreOrder:",
-      error.response?.data || error.message
+      (error as any).response?.data || (error as Error).message
     );
     throw error;
   }
 }
 
-export async function handlePreOrderConfirmation(clientId, messageId) {
+export async function handlePreOrderConfirmation(
+  clientId: string,
+  messageId: string
+): Promise<void> {
   try {
     const preOrder = await PreOrder.findOne({
       where: { messageId },
@@ -193,7 +236,7 @@ export async function handlePreOrderConfirmation(clientId, messageId) {
 
     const customer = await Customer.findOne({ where: { clientId } });
 
-    await customer.update({ relevantChatHistory: "[]" });
+    await customer?.update({ relevantChatHistory: [] });
   } catch (error) {
     console.error("Error al confirmar la orden:", error);
     await sendWhatsAppMessage(
@@ -203,7 +246,10 @@ export async function handlePreOrderConfirmation(clientId, messageId) {
   }
 }
 
-export async function handlePreOrderDiscard(clientId, messageId) {
+export async function handlePreOrderDiscard(
+  clientId: string,
+  messageId: string
+): Promise<void> {
   try {
     const preOrder = await PreOrder.findOne({ where: { messageId } });
 
@@ -214,7 +260,7 @@ export async function handlePreOrderDiscard(clientId, messageId) {
     await preOrder.destroy();
 
     const customer = await Customer.findOne({ where: { clientId } });
-    await customer.update({ relevantChatHistory: "[]" });
+    await customer?.update({ relevantChatHistory: [] });
 
     const confirmationMessage =
       "Tu preorden ha sido descartada y el historial de conversación reciente ha sido borrado. ¿En qué más puedo ayudarte?";
@@ -228,12 +274,15 @@ export async function handlePreOrderDiscard(clientId, messageId) {
   }
 }
 
-export async function handleOrderCancellation(clientId, messageId) {
+export async function handleOrderCancellation(
+  clientId: string,
+  messageId: string
+): Promise<void> {
   try {
     const order = await Order.findOne({ where: { messageId } });
 
     const customer = await Customer.findOne({ where: { clientId } });
-    await customer.update({ relevantChatHistory: "[]" });
+    await customer?.update({ relevantChatHistory: [] });
 
     if (!order) {
       console.error(`No se encontró orden para el messageId: ${messageId}`);
@@ -243,7 +292,7 @@ export async function handleOrderCancellation(clientId, messageId) {
       );
       return;
     }
-    let mensaje;
+    let mensaje: string;
     switch (order.status) {
       case "created":
         await order.update({ status: "canceled" });
@@ -288,9 +337,12 @@ export async function handleOrderCancellation(clientId, messageId) {
   }
 }
 
-export async function handleOrderModification(clientId, messageId) {
+export async function handleOrderModification(
+  clientId: string,
+  messageId: string
+): Promise<void> {
   const customer = await Customer.findOne({ where: { clientId } });
-  await customer.update({ relevantChatHistory: "[]" });
+  await customer?.update({ relevantChatHistory: [] });
 
   try {
     const order = await Order.findOne({
@@ -317,7 +369,11 @@ export async function handleOrderModification(clientId, messageId) {
       ],
     });
 
-    let mensaje;
+    if (!order) {
+      throw new Error("Orden no encontrada");
+    }
+
+    let mensaje: string;
     let canModify = false;
 
     switch (order.status) {
@@ -376,7 +432,7 @@ export async function handleOrderModification(clientId, messageId) {
     });
 
     const filteredOrderItems = order.orderItems.map((item) => {
-      const filteredItem = {
+      const filteredItem: any = {
         quantity: item.quantity,
         productId: item.productId,
         productVariantId: item.productVariantId,
@@ -398,15 +454,14 @@ export async function handleOrderModification(clientId, messageId) {
 
     // Crear una nueva preorden utilizando select_products
     try {
-      const selectProductsResponse = await axios.post(
-        `${process.env.BASE_URL}/api/orders/select_products`,
-        {
-          orderItems: filteredOrderItems,
-          clientId,
-          orderType,
-          scheduledDeliveryTime: formattedScheduledDeliveryTime,
-        }
-      );
+      const selectProductsResponse = await axios.post<{
+        mensaje: string;
+      }>(`${process.env.BASE_URL}/api/orders/select_products`, {
+        orderItems: filteredOrderItems,
+        clientId,
+        orderType,
+        scheduledDeliveryTime: formattedScheduledDeliveryTime,
+      });
 
       const customer = await Customer.findOne({ where: { clientId } });
       if (!customer) {
@@ -414,9 +469,15 @@ export async function handleOrderModification(clientId, messageId) {
       }
 
       let relevantChatHistory = JSON.parse(
-        customer.relevantChatHistory || "[]"
+        typeof customer.relevantChatHistory === "string"
+          ? customer.relevantChatHistory
+          : "[]"
       );
-      let fullChatHistory = JSON.parse(customer.fullChatHistory || "[]");
+      let fullChatHistory = JSON.parse(
+        typeof customer.fullChatHistory === "string"
+          ? customer.fullChatHistory
+          : "[]"
+      );
 
       const assistantMessage = {
         role: "assistant",
@@ -427,14 +488,14 @@ export async function handleOrderModification(clientId, messageId) {
       fullChatHistory.push(assistantMessage);
 
       await customer.update({
-        relevantChatHistory: JSON.stringify(relevantChatHistory),
-        fullChatHistory: JSON.stringify(fullChatHistory),
+        relevantChatHistory: relevantChatHistory,
+        fullChatHistory: fullChatHistory,
         lastInteraction: new Date(),
       });
     } catch (error) {
       console.error("Error al crear la nueva preorden:", error);
       const errorMessage =
-        error.response?.data?.error ||
+        (error as any).response?.data?.error ||
         "Error al procesar tu solicitud de modificación. Por favor, inténtalo de nuevo o contacta con el restaurante.";
       await sendWhatsAppMessage(clientId, errorMessage);
     }

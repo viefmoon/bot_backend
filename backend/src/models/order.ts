@@ -1,5 +1,6 @@
 import { DataTypes, Model, Optional } from "sequelize";
 import { sequelize } from "../lib/db";
+import OrderItem from "./orderItem";
 
 interface OrderAttributes {
   id: number;
@@ -52,6 +53,9 @@ class Order
   // Timestamps
   public readonly createdAt!: Date;
   public readonly updatedAt!: Date;
+
+  //associations
+  public orderItems?: OrderItem[];
 }
 
 Order.init(
