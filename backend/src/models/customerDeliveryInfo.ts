@@ -1,6 +1,5 @@
 import { DataTypes, Model, Optional } from "sequelize";
 import { sequelize } from "../lib/db";
-import Customer from "./customer";
 
 interface CustomerDeliveryInfoAttributes {
   id: number;
@@ -47,9 +46,6 @@ class CustomerDeliveryInfo
   // Timestamps
   public readonly createdAt!: Date;
   public readonly updatedAt!: Date;
-
-  // Asociaciones
-  public readonly customer?: Customer;
 }
 
 CustomerDeliveryInfo.init(
@@ -114,8 +110,5 @@ CustomerDeliveryInfo.init(
     timestamps: true,
   }
 );
-
-// Definir la relación
-CustomerDeliveryInfo.belongsTo(Customer, { foreignKey: "clientId" });
 
 export default CustomerDeliveryInfo;

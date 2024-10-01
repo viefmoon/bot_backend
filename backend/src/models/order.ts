@@ -1,7 +1,5 @@
 import { DataTypes, Model, Optional } from "sequelize";
 import { sequelize } from "../lib/db";
-import OrderItem from "./orderItem";
-import OrderDeliveryInfo from "./orderDeliveryInfo";
 
 interface OrderAttributes {
   id: number;
@@ -54,10 +52,6 @@ class Order
   // Timestamps
   public readonly createdAt!: Date;
   public readonly updatedAt!: Date;
-
-  // Asociaciones
-  public readonly orderItems?: OrderItem[];
-  public readonly orderDeliveryInfo?: OrderDeliveryInfo;
 }
 
 Order.init(
@@ -129,12 +123,5 @@ Order.init(
     timestamps: true,
   }
 );
-
-Order.hasMany(OrderItem, { foreignKey: "orderId", as: "orderItems" });
-
-Order.hasOne(OrderDeliveryInfo, {
-  foreignKey: "orderId",
-  as: "orderDeliveryInfo",
-});
 
 export default Order;

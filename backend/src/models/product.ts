@@ -1,8 +1,8 @@
 import { DataTypes, Model, Optional } from "sequelize";
 import { sequelize } from "../lib/db";
 import ProductVariant from "./productVariant";
-import PizzaIngredient from "./pizzaIngredient";
 import ModifierType from "./modifierType";
+import PizzaIngredient from "./pizzaIngredient";
 
 interface ProductAttributes {
   id: string;
@@ -26,14 +26,14 @@ class Product
   public ingredients?: string;
   public keywords?: object;
 
-  // Relaciones
-  public readonly productVariants?: ProductVariant[];
-  public readonly pizzaIngredients?: PizzaIngredient[];
-  public readonly modifierTypes?: ModifierType[];
-
   // Timestamps
   public readonly createdAt!: Date;
   public readonly updatedAt!: Date;
+
+  //associations
+  public productVariants?: ProductVariant[];
+  public modifierTypes?: ModifierType[];
+  public pizzaIngredients?: PizzaIngredient[];
 }
 
 Product.init(
@@ -70,18 +70,5 @@ Product.init(
     timestamps: true,
   }
 );
-
-// Definición de relaciones
-Product.hasMany(ProductVariant, {
-  foreignKey: "productId",
-  as: "productVariants",
-});
-
-Product.hasMany(PizzaIngredient, {
-  foreignKey: "productId",
-  as: "pizzaIngredients",
-});
-
-Product.hasMany(ModifierType, { foreignKey: "productId", as: "modifierTypes" });
 
 export default Product;

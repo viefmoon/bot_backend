@@ -1,6 +1,5 @@
 import { DataTypes, Model, Optional } from "sequelize";
 import { sequelize } from "../lib/db";
-import OrderDeliveryInfo from "./orderDeliveryInfo";
 
 interface PreOrderAttributes {
   id: number;
@@ -29,9 +28,6 @@ class PreOrder
 
   public readonly createdAt!: Date;
   public readonly updatedAt!: Date;
-
-  // Definir la relación
-  public orderDeliveryInfo?: OrderDeliveryInfo;
 }
 
 PreOrder.init(
@@ -68,11 +64,5 @@ PreOrder.init(
     timestamps: true,
   }
 );
-
-// Definir las relaciones al final del archivo
-PreOrder.hasOne(OrderDeliveryInfo, {
-  foreignKey: "preOrderId",
-  as: "orderDeliveryInfo",
-});
 
 export default PreOrder;

@@ -27,8 +27,8 @@ class Modifier
   public readonly createdAt!: Date;
   public readonly updatedAt!: Date;
 
-  // Asociaciones
-  public readonly modifierType?: ModifierType;
+  // Associations
+  public modifierType?: ModifierType;
 }
 
 Modifier.init(
@@ -65,8 +65,5 @@ Modifier.init(
     timestamps: true,
   }
 );
-
-// Definir relaciones
-Modifier.belongsTo(ModifierType, { foreignKey: "modifierTypeId" });
 
 export default Modifier;

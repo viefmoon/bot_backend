@@ -1,7 +1,5 @@
 import { DataTypes, Model, Optional } from "sequelize";
 import { sequelize } from "../lib/db";
-import Product from "./product";
-import SelectedPizzaIngredient from "./selectedPizzaIngredient";
 
 interface PizzaIngredientAttributes {
   id: string;
@@ -29,10 +27,6 @@ class PizzaIngredient
   // Timestamps
   public readonly createdAt!: Date;
   public readonly updatedAt!: Date;
-
-  // Asociaciones
-  public readonly product?: Product;
-  public readonly selectedPizzaIngredients?: SelectedPizzaIngredient[];
 }
 
 PizzaIngredient.init(
@@ -74,12 +68,5 @@ PizzaIngredient.init(
     timestamps: true,
   }
 );
-
-// Definir relaciones
-PizzaIngredient.belongsTo(Product, { foreignKey: "productId" });
-PizzaIngredient.hasMany(SelectedPizzaIngredient, {
-  foreignKey: "pizzaIngredientId",
-  as: "selectedPizzaIngredients",
-});
 
 export default PizzaIngredient;

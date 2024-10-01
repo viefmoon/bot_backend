@@ -21,6 +21,9 @@ import NotificationPhone from "./notificationPhone";
 import CustomerDeliveryInfo from "./customerDeliveryInfo";
 import OrderDeliveryInfo from "./orderDeliveryInfo";
 
+// Importar las asociaciones
+import "./modelAssociations";
+
 // Exportar todos los modelos y relaciones
 export {
   sequelize,

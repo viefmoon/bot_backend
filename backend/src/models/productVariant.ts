@@ -1,7 +1,5 @@
 import { DataTypes, Model, Optional } from "sequelize";
 import { sequelize } from "../lib/db";
-import Product from "./product";
-
 interface ProductVariantAttributes {
   id: string;
   name: string;
@@ -29,9 +27,6 @@ class ProductVariant
 
   public readonly createdAt!: Date;
   public readonly updatedAt!: Date;
-
-  // Asociaciones
-  public readonly product?: Product;
 }
 
 ProductVariant.init(
@@ -72,7 +67,5 @@ ProductVariant.init(
     timestamps: true,
   }
 );
-
-ProductVariant.belongsTo(Product, { foreignKey: "productId" });
 
 export default ProductVariant;
