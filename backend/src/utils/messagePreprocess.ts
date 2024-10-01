@@ -9,7 +9,7 @@ import {
 import OpenAI from "openai";
 import { ratio } from "fuzzball";
 import { preprocessOrderTool, sendMenuTool } from "../aiTools/aiTools";
-import dotenv from "dotenv";
+import * as dotenv from "dotenv";
 
 dotenv.config();
 

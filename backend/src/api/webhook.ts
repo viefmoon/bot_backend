@@ -2,7 +2,7 @@ import { NextApiRequest, NextApiResponse } from "next";
 import { handleWebhookVerification } from "../handlers/webhookVerificationHandler";
 import { handleStripeWebhook } from "../handlers/stripeWebhookHandler";
 import { handleWhatsAppWebhook } from "../handlers/whatsAppWebhookHandler";
-import dotenv from "dotenv";
+import * as dotenv from "dotenv";
 
 dotenv.config();
 

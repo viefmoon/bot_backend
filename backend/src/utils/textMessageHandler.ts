@@ -3,7 +3,7 @@ import {
   sendWhatsAppInteractiveMessage,
 } from "./whatsAppUtils";
 import { Customer } from "../models";
-import dotenv from "dotenv";
+import * as dotenv from "dotenv";
 import { preprocessMessages } from "./messagePreprocess";
 import axios from "axios";
 import { Anthropic } from "@anthropic-ai/sdk";

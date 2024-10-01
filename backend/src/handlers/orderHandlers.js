@@ -18,7 +18,7 @@ import {
   sendWhatsAppInteractiveMessage,
 } from "../utils/whatsAppUtils";
 
-import dotenv from "dotenv";
+import * as dotenv from "dotenv";
 dotenv.config();
 
 async function createOrderFromPreOrder(preOrder, clientId) {
