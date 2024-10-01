@@ -8,7 +8,7 @@ const {
   SelectedModifier,
   Modifier,
   OrderDeliveryInfo,
-} = require("../../models");
+} = require("../models");
 const cors = require("cors");
 
 // Configurar CORS

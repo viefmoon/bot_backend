@@ -1,4 +1,4 @@
-const { NotificationPhone } = require("../../../models");
+const { NotificationPhone } = require("../../models");
 const cors = require("cors");
 
 const corsMiddleware = cors({

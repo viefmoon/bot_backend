@@ -11,9 +11,9 @@ const {
   SelectedPizzaIngredient,
   RestaurantConfig,
   OrderDeliveryInfo, // Añadimos esta importación
-} = require("../../../models");
-const { verificarHorarioAtencion } = require("../../../utils/timeUtils");
-const { getNextDailyOrderNumber } = require("../../../utils/orderUtils");
+} = require("../../models");
+const { verificarHorarioAtencion } = require("../../utils/timeUtils");
+const { getNextDailyOrderNumber } = require("../../utils/orderUtils");
 
 export default async function handler(req, res) {
   if (req.method !== "POST") {
@@ -43,7 +43,7 @@ export default async function handler(req, res) {
         "Lo sentimos, solo podre procesar tu pedido cuando el restaurante este abierto.",
     });
   }
-  
+
   const mexicoTime = new Date().toLocaleString("en-US", {
     timeZone: "America/Mexico_City",
   });
@@ -86,7 +86,7 @@ export default async function handler(req, res) {
   if (orderDeliveryInfo) {
     await OrderDeliveryInfo.create({
       ...orderDeliveryInfo,
-      orderId: newOrder.id
+      orderId: newOrder.id,
     });
   }
 
@@ -217,9 +217,10 @@ export default async function handler(req, res) {
         : newOrder.clientId,
       tipo: newOrder.orderType,
       estado: newOrder.status,
-      informacion_entrega: orderType === "delivery" 
-      ? orderDeliveryInfo.streetAddress 
-      : orderDeliveryInfo.pickupName,
+      informacion_entrega:
+        orderType === "delivery"
+          ? orderDeliveryInfo.streetAddress
+          : orderDeliveryInfo.pickupName,
       precio_total: newOrder.totalCost,
       fecha_creacion: newOrder.createdAt.toLocaleString("es-MX", {
         timeZone: "America/Mexico_City",

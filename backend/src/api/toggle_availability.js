@@ -1,9 +1,9 @@
-import Availability from "../../models/availability";
-import Product from "../../models/product";
-import ProductVariant from "../../models/productVariant";
-import Modifier from "../../models/modifier";
-import ModifierType from "../../models/modifierType";
-import PizzaIngredient from "../../models/pizzaIngredient";
+import Availability from "../models/availability";
+import Product from "../models/product";
+import ProductVariant from "../models/productVariant";
+import Modifier from "../models/modifier";
+import ModifierType from "../models/modifierType";
+import PizzaIngredient from "../models/pizzaIngredient";
 const cors = require("cors");
 const { Op } = require("sequelize");
 

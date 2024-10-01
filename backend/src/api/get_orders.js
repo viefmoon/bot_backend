@@ -7,8 +7,8 @@ import {
   PizzaIngredient,
   SelectedModifier,
   Modifier,
-  OrderDeliveryInfo, 
-} from "../../models";
+  OrderDeliveryInfo,
+} from "../models";
 import cors from "cors";
 
 const corsMiddleware = cors({

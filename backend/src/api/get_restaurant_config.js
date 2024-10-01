@@ -1,4 +1,4 @@
-import RestaurantConfig from "../../models/restaurantConfig";
+import RestaurantConfig from "../models/restaurantConfig";
 const cors = require("cors");
 
 // Configurar CORS

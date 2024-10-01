@@ -1,4 +1,4 @@
-import { Customer, CustomerDeliveryInfo } from "../../models";
+import { Customer, CustomerDeliveryInfo } from "../models";
 
 export default async function handler(req, res) {
   if (req.method === "POST") {

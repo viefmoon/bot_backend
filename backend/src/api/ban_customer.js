@@ -1,5 +1,5 @@
-const BannedCustomer = require("../../models/bannedCustomer");
-const Customer = require("../../models/customer");
+const BannedCustomer = require("../models/bannedCustomer");
+const Customer = require("../models/customer");
 const cors = require("cors");
 
 // Configurar CORS

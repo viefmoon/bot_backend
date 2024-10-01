@@ -10,20 +10,15 @@ const {
   PreOrder,
   CustomerDeliveryInfo,
   OrderDeliveryInfo,
-} = require("../../../models");
-import { sendWhatsAppInteractiveMessage } from "../../../utils/whatsAppUtils";
+} = require("../../models");
+import { sendWhatsAppInteractiveMessage } from "../../utils/whatsAppUtils";
 
 export default async function handler(req, res) {
   if (req.method !== "POST") {
     return res.status(405).end(`Method ${req.method} Not Allowed`);
   }
 
-  const {
-    orderItems,
-    clientId,
-    orderType,
-    scheduledDeliveryTime,
-  } = req.body;
+  const { orderItems, clientId, orderType, scheduledDeliveryTime } = req.body;
 
   let totalCost = 0;
   let fullScheduledDeliveryTime = null;
@@ -298,9 +293,9 @@ export default async function handler(req, res) {
     messageContent += `🏠 *Información de ${
       orderType === "delivery" ? "entrega" : "recolección"
     }*: ${deliveryInfo || "No disponible"}\n`;
-    relevantMessageContent += `Información de ${orderType === "delivery" ? "entrega" : "recolección"}: ${
-      deliveryInfo || "No disponible"
-    }\n`;
+    relevantMessageContent += `Información de ${
+      orderType === "delivery" ? "entrega" : "recolección"
+    }: ${deliveryInfo || "No disponible"}\n`;
     messageContent += `⏱️ *Tiempo estimado de ${
       orderType === "pickup"
         ? "recolección en el restaurante"
@@ -314,7 +309,7 @@ export default async function handler(req, res) {
       if (
         item.ingredientes_pizza.full.length > 0 ||
         item.ingredientes_pizza.left.length > 0 ||
-        item.ingredientes_pizza.right.length > 0    
+        item.ingredientes_pizza.right.length > 0
       ) {
         messageContent += "  🔸 Ingredientes de pizza:\n";
         relevantMessageContent += "  Ingredientes de pizza:\n";

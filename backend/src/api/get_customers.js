@@ -1,6 +1,6 @@
-const Customer = require("../../models/customer");
-const CustomerDeliveryInfo = require("../../models/customerDeliveryInfo");
-const BannedCustomer = require("../../models/bannedCustomer");
+const Customer = require("../models/customer");
+const CustomerDeliveryInfo = require("../models/customerDeliveryInfo");
+const BannedCustomer = require("../models/bannedCustomer");
 const cors = require("cors");
 
 // Configurar CORS
@@ -33,7 +33,7 @@ export default async function handler(req, res) {
         include: [
           {
             model: CustomerDeliveryInfo,
-            as: 'customerDeliveryInfo',
+            as: "customerDeliveryInfo",
             attributes: ["streetAddress", "pickupName"],
           },
         ],

@@ -1,8 +1,8 @@
 import dotenv from "dotenv";
 dotenv.config();
-const Order = require("../../models/order");
+const Order = require("../models/order");
 const cors = require("cors");
-import { sendWhatsAppMessage } from "../../utils/whatsAppUtils";
+import { sendWhatsAppMessage } from "../utils/whatsAppUtils";
 
 // Definir mensajes predeterminados
 const statusMessages = {
