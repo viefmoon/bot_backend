@@ -1,14 +1,14 @@
-const { Sequelize } = require("sequelize");
-const dotenv = require("dotenv");
+import { Sequelize } from "sequelize";
+import dotenv from "dotenv";
 dotenv.config();
 
 const sequelize = new Sequelize(
-  process.env.PGDATABASE,
-  process.env.PGUSER,
-  process.env.PGPASSWORD,
+  process.env.PGDATABASE!,
+  process.env.PGUSER!,
+  process.env.PGPASSWORD!,
   {
     host: process.env.PGHOST,
-    port: process.env.PGPORT,
+    port: parseInt(process.env.PGPORT!),
     dialect: "postgres",
     logging: false,
     dialectOptions: {
@@ -23,10 +23,10 @@ const sequelize = new Sequelize(
       acquire: 30000,
       idle: 10000,
     },
-  },
+  }
 );
 
-const connectDB = async () => {
+const connectDB = async (): Promise<void> => {
   try {
     await sequelize.authenticate();
     console.log("Conexión a la base de datos establecida con éxito.");
@@ -39,4 +39,4 @@ const connectDB = async () => {
 // Ejecuta la conexión inmediatamente
 connectDB();
 
-module.exports = { sequelize };
+export { sequelize };
