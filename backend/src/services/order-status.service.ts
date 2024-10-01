@@ -49,7 +49,14 @@ export class OrderStatusService {
       throw new NotFoundException("Orden no encontrada.");
     }
 
-    order.status = newStatus;
+    order.status = newStatus as
+      | "created"
+      | "accepted"
+      | "in_preparation"
+      | "prepared"
+      | "in_delivery"
+      | "finished"
+      | "canceled";
     await order.save();
 
     if (this.statusMessages[newStatus]) {

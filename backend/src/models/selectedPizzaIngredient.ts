@@ -1,13 +1,13 @@
 import { DataTypes, Model, UUIDV4 } from "sequelize";
 import { sequelize } from "../lib/db";
 
-enum PizzaHalf {
+export enum PizzaHalf {
   left = "left",
   right = "right",
   full = "full",
 }
 
-enum IngredientAction {
+export enum IngredientAction {
   add = "add",
   remove = "remove",
 }

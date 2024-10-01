@@ -13,8 +13,8 @@ export class CustomerDeliveryService {
 
     const [customerDeliveryInfo, created] =
       await CustomerDeliveryInfo.findOrCreate({
-        where: { customerId: customer.clientId },
-        defaults: { ...info, customerId: customer.clientId },
+        where: { clientId: customer.clientId },
+        defaults: { ...info, clientId: customer.clientId },
       });
 
     if (!created) {

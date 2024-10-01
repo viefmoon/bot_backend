@@ -14,6 +14,8 @@ import {
 import { verificarHorarioAtencion } from "../utils/timeUtils";
 import { getNextDailyOrderNumber } from "../utils/orderUtils";
 import { CreateOrderDto } from "../dto/create-order.dto";
+import { PizzaHalf, IngredientAction } from "../models/selectedPizzaIngredient";
+import { OrderDeliveryInfoCreationAttributes } from "../models/orderDeliveryInfo";
 
 @Injectable()
 export class OrderService {
@@ -38,16 +40,13 @@ export class OrderService {
               model: SelectedPizzaIngredient,
               as: "selectedPizzaIngredients",
               attributes: ["half", "action"],
-              include: { model: PizzaIngredient, attributes: ["name"] },
+              include: [{ model: PizzaIngredient, attributes: ["name"] }],
             },
             {
               model: SelectedModifier,
               as: "selectedModifiers",
               attributes: ["id"],
-              include: {
-                model: Modifier,
-                attributes: ["name", "price"],
-              },
+              include: [{ model: Modifier, attributes: ["name", "price"] }],
             },
           ],
         },
@@ -131,20 +130,22 @@ export class OrderService {
 
     const newOrder = await Order.create({
       dailyOrderNumber,
-      orderType,
+      orderType: orderType as "delivery" | "pickup",
       status: "created",
       totalCost: 0,
       clientId,
-      orderDate: today,
+      orderDate: new Date(today),
       estimatedTime,
-      scheduledDeliveryTime,
+      scheduledDeliveryTime: scheduledDeliveryTime
+        ? new Date(scheduledDeliveryTime)
+        : null,
     });
 
     if (orderDeliveryInfo) {
       await OrderDeliveryInfo.create({
         ...orderDeliveryInfo,
         orderId: newOrder.id,
-      });
+      } as OrderDeliveryInfoCreationAttributes);
     }
 
     const createdItems = await Promise.all(
@@ -242,8 +243,8 @@ export class OrderService {
               SelectedPizzaIngredient.create({
                 orderItemId: orderItem.id,
                 pizzaIngredientId: ingredient.pizzaIngredientId,
-                half: ingredient.half,
-                action: ingredient.action,
+                half: ingredient.half as PizzaHalf,
+                action: ingredient.action as IngredientAction,
               })
             )
           );

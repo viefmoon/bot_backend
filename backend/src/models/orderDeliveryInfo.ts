@@ -1,7 +1,7 @@
 import { DataTypes, Model, Optional } from "sequelize";
 import { sequelize } from "../lib/db";
 
-interface OrderDeliveryInfoAttributes {
+export interface OrderDeliveryInfoAttributes {
   id: number;
   streetAddress?: string;
   neighborhood?: string;
@@ -18,7 +18,7 @@ interface OrderDeliveryInfoAttributes {
   updatedAt?: Date;
 }
 
-interface OrderDeliveryInfoCreationAttributes
+export interface OrderDeliveryInfoCreationAttributes
   extends Optional<OrderDeliveryInfoAttributes, "id"> {}
 
 class OrderDeliveryInfo
