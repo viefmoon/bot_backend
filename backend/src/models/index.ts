@@ -1,25 +1,25 @@
-const { sequelize } = require("../lib/db");
+import { sequelize } from "../lib/db";
 
 // Importaciones individuales
-const Customer = require("./customer");
-const Order = require("./order");
-const RestaurantConfig = require("./restaurantConfig");
-const OrderItem = require("./orderItem");
-const PizzaIngredient = require("./pizzaIngredient");
-const Product = require("./product");
-const ProductVariant = require("./productVariant");
-const PreOrder = require("./preOrder");
-const SelectedPizzaIngredient = require("./selectedPizzaIngredient");
-const Modifier = require("./modifier");
-const ModifierType = require("./modifierType");
-const SelectedModifier = require("./selectedModifier");
-const Availability = require("./availability");
-const MessageRateLimit = require("./messageRateLimit");
-const BannedCustomer = require("./bannedCustomer");
-const MessageLog = require("./messageLog");
-const NotificationPhone = require("./notificationPhone");
-const CustomerDeliveryInfo = require("./customerDeliveryInfo");
-const OrderDeliveryInfo = require("./orderDeliveryInfo");
+import Customer from "./customer";
+import Order from "./order";
+import RestaurantConfig from "./restaurantConfig";
+import OrderItem from "./orderItem";
+import PizzaIngredient from "./pizzaIngredient";
+import Product from "./product";
+import ProductVariant from "./productVariant";
+import PreOrder from "./preOrder";
+import SelectedPizzaIngredient from "./selectedPizzaIngredient";
+import Modifier from "./modifier";
+import ModifierType from "./modifierType";
+import SelectedModifier from "./selectedModifier";
+import Availability from "./availability";
+import MessageRateLimit from "./messageRateLimit";
+import BannedCustomer from "./bannedCustomer";
+import MessageLog from "./messageLog";
+import NotificationPhone from "./notificationPhone";
+import CustomerDeliveryInfo from "./customerDeliveryInfo";
+import OrderDeliveryInfo from "./orderDeliveryInfo";
 
 // Define relationships
 Order.hasMany(OrderItem, { foreignKey: "orderId", as: "orderItems" });
@@ -117,7 +117,7 @@ PreOrder.hasOne(OrderDeliveryInfo, {
 OrderDeliveryInfo.belongsTo(PreOrder, { foreignKey: "preOrderId" });
 
 // Exportar todos los modelos y relaciones
-module.exports = {
+export {
   sequelize,
   Customer,
   Order,
