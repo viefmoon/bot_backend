@@ -1,16 +1,16 @@
-const dotenv = require("dotenv");
+import dotenv from "dotenv";
 dotenv.config();
-const { sequelize } = require("../src/lib/db");
-const Product = require("../src/models/product");
-const ProductVariant = require("../src/models/productVariant");
-const PizzaIngredient = require("../src/models/pizzaIngredient");
-const ModifierType = require("../src/models/modifierType");
-const Modifier = require("../src/models/modifier");
-const Availability = require("../src/models/availability");
-const RestaurantConfig = require("../src/models/restaurantConfig");
-const NotificationPhone = require("../src/models/notificationPhone");
+import { sequelize } from "../src/lib/db";
+import Product from "../src/models/product";
+import ProductVariant from "../src/models/productVariant";
+import PizzaIngredient from "../src/models/pizzaIngredient";
+import ModifierType from "../src/models/modifierType";
+import Modifier from "../src/models/modifier";
+import Availability from "../src/models/availability";
+import RestaurantConfig from "../src/models/restaurantConfig";
+import NotificationPhone from "../src/models/notificationPhone";
 
-const testConnection = async () => {
+const testConnection = async (): Promise<void> => {
   try {
     await sequelize.authenticate();
     console.log("Connection has been established successfully.");
@@ -21,7 +21,7 @@ const testConnection = async () => {
 
 testConnection();
 
-const menu = [
+const menu: any[] = [
   {
     id: "A",
     name: "Alitas",
@@ -1085,7 +1085,7 @@ const menu = [
   },
 ];
 
-const seedMenuItems = async () => {
+const seedMenuItems = async (): Promise<void> => {
   try {
     for (const product of menu) {
       const createdProduct = await Product.create({
