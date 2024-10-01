@@ -24,6 +24,7 @@ interface ResponseItem {
   text: string;
   sendToWhatsApp?: boolean;
   isRelevant?: boolean;
+  confirmationMessage?: string;
 }
 
 interface PreprocessedContent {
@@ -92,12 +93,15 @@ export async function handleTextMessage(
     },
   });
 
-  let fullChatHistory: ChatMessage[] = JSON.parse(
-    customer.fullChatHistory ?? "[]"
-  );
-  let relevantChatHistory: ChatMessage[] = JSON.parse(
-    customer.relevantChatHistory || "[]"
-  );
+  let fullChatHistory: ChatMessage[] =
+    typeof customer.fullChatHistory === "string"
+      ? JSON.parse(customer.fullChatHistory)
+      : [];
+
+  let relevantChatHistory: ChatMessage[] =
+    typeof customer.relevantChatHistory === "string"
+      ? JSON.parse(customer.relevantChatHistory)
+      : [];
 
   console.log("Mensaje recibido de:", from);
   console.log("Mensaje:", text);
@@ -143,18 +147,18 @@ export async function handleTextMessage(
       );
     }
 
-    if (response.confirmationMessage) {
-      await sendWhatsAppMessage(from, response.confirmationMessage);
+    if (item.confirmationMessage) {
+      await sendWhatsAppMessage(from, item.confirmationMessage);
       updateChatHistory({
         role: "assistant",
-        content: response.confirmationMessage,
+        content: item.confirmationMessage,
       });
     }
   }
 
   await customer.update({
-    fullChatHistory: JSON.stringify(fullChatHistory),
-    relevantChatHistory: JSON.stringify(relevantChatHistory),
+    fullChatHistory: fullChatHistory,
+    relevantChatHistory: relevantChatHistory,
     lastInteraction: new Date(),
   });
 }
@@ -166,9 +170,9 @@ async function processAndGenerateAIResponse(
 
   console.log("relevantMessages", relevantMessages);
   try {
-    const preprocessedContent: PreprocessedContent = await preprocessMessages(
+    const preprocessedContent: PreprocessedContent = (await preprocessMessages(
       relevantMessages
-    );
+    )) as any;
 
     if (preprocessedContent.isDirectResponse) {
       return [
@@ -204,11 +208,11 @@ async function processAndGenerateAIResponse(
       response.content[0]?.type === "tool_use" &&
       response.content[0]?.name === "select_products"
     ) {
-      const { orderItems, orderType, scheduledDeliveryTime } =
-        response.content[0].input;
+      const { orderItems, orderType, scheduledDeliveryTime } = response
+        .content[0].input as any;
 
       try {
-        const selectProductsResponse = await axios.post(
+        const selectProductsResponse = (await axios.post(
           `${process.env.BASE_URL}/api/orders/select_products`,
           {
             orderItems,
@@ -216,7 +220,7 @@ async function processAndGenerateAIResponse(
             orderType,
             scheduledDeliveryTime,
           }
-        );
+        )) as any;
 
         return [
           {

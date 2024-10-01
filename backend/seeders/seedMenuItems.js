@@ -1190,12 +1190,12 @@ const seedMenuItems = async () => {
     });
 
     console.log(
-      "Menu items, availability, and restaurant configuration have been seeded successfully.",
+      "Menu items, availability, and restaurant configuration have been seeded successfully."
     );
   } catch (error) {
     console.error(
       "Error seeding menu items, availability, and restaurant configuration:",
-      error,
+      error
     );
   } finally {
     await sequelize.close();

@@ -20,12 +20,12 @@ const openai = new OpenAI({
 });
 
 interface MenuItem {
-  productId?: number;
+  productId?: string;
   name: string;
-  keywords?: string[] | string[][];
-  variantes?: MenuItem[];
-  modificadores?: MenuItem[];
-  ingredientesPizza?: MenuItem[];
+  keywords?: object;
+  productVariants?: ProductVariant[];
+  modifiers?: Modifier[];
+  pizzaIngredients?: PizzaIngredient[];
 }
 
 interface PreprocessedContent {
@@ -39,15 +39,34 @@ interface ProductoInfo {
   productId: string;
   name: string;
   keywords: object;
-  variantes?: Array<{ variantId: string; name: string }>;
-  modificadores?: Array<{
-    /* tipo de modificador */
+  productVariants?: Array<{
+    variantId: string;
+    name: string;
+    keywords: object;
+  }>;
+  modifiers?: Array<{
+    modifierId: string;
+    name: string;
+    keywords: object;
+  }>;
+  pizzaIngredients?: Array<{
+    pizzaIngredientId: string;
+    name: string;
+    keywords: object;
   }>;
 }
 
-async function getMenuAvailability(): Promise<
-  MenuItem[] | { error: string; detalles?: string; stack?: string }
-> {
+interface MentionedProduct {
+  productId: string;
+  name: string;
+  products?: Array<{ productId: string; name: string }>;
+  variants?: Array<{ variantId: string; name: string }>;
+  modifiers?: Array<{ modifierId: string; name: string }>;
+  pizzaIngredients?: Array<{ pizzaIngredientId: string; name: string }>;
+  ingredients?: string[];
+}
+
+async function getMenuAvailability(): Promise<any> {
   try {
     // Verificar si los modelos necesarios están definidos
     if (
@@ -97,21 +116,24 @@ async function getMenuAvailability(): Promise<
 
     const menuSimplificado = products.map((producto) => {
       const productoInfo: ProductoInfo = {
-        productId: producto.id,
+        productId: producto.id.toString(),
         name: producto.name,
         keywords: producto.keywords,
+        //active: m.Availability?.available || false,
       };
 
       if (producto.productVariants?.length > 0) {
-        productoInfo.variantes = producto.productVariants.map((v) => ({
+        productoInfo.productVariants = producto.productVariants.map((v) => ({
           variantId: v.id,
           name: v.name,
+          keywords: v.keywords,
+          //active: m.Availability?.available || false,
         }));
       }
 
       // Agregar modificadores
       if (producto.modifierTypes?.length > 0) {
-        productoInfo.modificadores = producto.modifierTypes.flatMap(
+        productoInfo.modifiers = producto.modifierTypes.flatMap(
           (mt) =>
             mt.modifiers?.map((m) => ({
               modifierId: m.id,
@@ -124,7 +146,7 @@ async function getMenuAvailability(): Promise<
 
       // Agregar ingredientes de pizza
       if (producto.pizzaIngredients?.length > 0) {
-        productoInfo.ingredientesPizza = producto.pizzaIngredients.map((i) => ({
+        productoInfo.pizzaIngredients = producto.pizzaIngredients.map((i) => ({
           pizzaIngredientId: i.id,
           name: i.name,
           keywords: i.keywords || null,
@@ -135,7 +157,7 @@ async function getMenuAvailability(): Promise<
       return productoInfo;
     });
 
-    return menuSimplificado;
+    return menuSimplificado as ProductoInfo[];
   } catch (error: any) {
     console.error("Error al obtener la disponibilidad del menú:", error);
     return {
@@ -185,7 +207,7 @@ async function getAvailableMenu(): Promise<
     }
 
     return products.map((producto) => {
-      const productoInfo = {
+      const productoInfo: any = {
         name: producto.name,
       };
 
@@ -193,17 +215,14 @@ async function getAvailableMenu(): Promise<
         productoInfo.ingredients = producto.ingredients;
       }
 
-      if (producto.productVariants && producto.productVariants.length > 0) {
-        productoInfo.variantes = producto.productVariants.map((v) => {
-          const variante = { name: v.name };
-          if (v.ingredients) {
-            variante.ingredients = v.ingredients;
-          }
-          return variante;
-        });
+      if (producto.productVariants?.length > 0) {
+        productoInfo.variantes = producto.productVariants.map((v) => ({
+          name: v.name,
+          ...(v.ingredients && { ingredients: v.ingredients }),
+        }));
       }
 
-      if (producto.modifierTypes && producto.modifierTypes.length > 0) {
+      if (producto.modifierTypes?.length > 0) {
         const modificadores = producto.modifierTypes.flatMap(
           (mt) => mt.modifiers?.map((m) => m.name) || []
         );
@@ -212,7 +231,7 @@ async function getAvailableMenu(): Promise<
         }
       }
 
-      if (producto.pizzaIngredients && producto.pizzaIngredients.length > 0) {
+      if (producto.pizzaIngredients?.length > 0) {
         productoInfo.ingredientesPizza = producto.pizzaIngredients.map((i) => ({
           name: i.name,
         }));
@@ -249,46 +268,55 @@ async function getRelevantMenuItems(
     productos = [...productos, ...productsInMessage];
   }
 
-  productos = Array.from(
-    new Set(productos.map(JSON.stringify)),
-    JSON.parse
-  ).map((producto) => {
-    const productoLimpio = removeKeywords(producto);
+  productos = Array.from(new Set(productos.map((p) => JSON.stringify(p)))).map(
+    (p) => {
+      const producto = JSON.parse(p);
 
-    if (productoLimpio.productVariants?.length) {
-      productoLimpio.productVariants =
-        productoLimpio.productVariants.map(removeKeywords);
-    } else {
-      delete productoLimpio.productVariants;
+      // Eliminar el campo keywords
+      delete producto.keywords;
+
+      // Procesar productVariants
+      if (producto.productVariants?.length) {
+        producto.productVariants = producto.productVariants.map((variant) => {
+          delete variant.keywords;
+          return variant;
+        });
+      } else {
+        delete producto.productVariants;
+      }
+
+      // Procesar modifiers
+      if (producto.modifiers?.length) {
+        producto.modifiers = producto.modifiers.map((modifier) => {
+          delete modifier.keywords;
+          return modifier;
+        });
+      } else {
+        delete producto.modifiers;
+      }
+
+      // Procesar pizzaIngredients
+      if (producto.pizzaIngredients?.length) {
+        producto.pizzaIngredients = producto.pizzaIngredients.map(
+          (ingredient) => {
+            delete ingredient.keywords;
+            return ingredient;
+          }
+        );
+      } else {
+        delete producto.pizzaIngredients;
+      }
+
+      return producto;
     }
-
-    if (productoLimpio.modifiers?.length) {
-      productoLimpio.modifiers = productoLimpio.modifiers.map(removeKeywords);
-    } else {
-      delete productoLimpio.modifiers;
-    }
-
-    if (productoLimpio.pizzaIngredients?.length) {
-      productoLimpio.pizzaIngredients =
-        productoLimpio.pizzaIngredients.map(removeKeywords);
-    } else {
-      delete productoLimpio.pizzaIngredients;
-    }
-
-    return productoLimpio;
-  });
+  );
 
   return productos;
 }
 
-function removeKeywords(item: MenuItem): Omit<MenuItem, "keywords"> {
-  const { keywords, ...itemWithoutKeywords } = item;
-  return itemWithoutKeywords;
-}
-
 function extractMentionedProducts(
   productMessage: string,
-  menu: MenuItem[]
+  menu: ProductoInfo[]
 ): MenuItem[] {
   const mentionedProducts = [];
   const wordsToFilter = [
@@ -348,11 +376,11 @@ function extractMentionedProducts(
     let isProductMentioned = checkKeywords(product.keywords, words);
 
     if (isProductMentioned) {
-      let mentionedProduct = {};
+      let mentionedProduct: Partial<MentionedProduct> = {};
 
       // Verificar variantes
-      if (product.variantes) {
-        const matchedVariants = product.variantes.filter((variant) =>
+      if (product.productVariants) {
+        const matchedVariants = product.productVariants.filter((variant) =>
           checkKeywords(variant.keywords, words)
         );
 
@@ -371,15 +399,15 @@ function extractMentionedProducts(
       }
 
       // Verificar modificadores
-      if (product.modificadores) {
-        mentionedProduct.modifiers = product.modificadores.filter((modifier) =>
+      if (product.modifiers) {
+        mentionedProduct.modifiers = product.modifiers.filter((modifier) =>
           checkKeywords(modifier.keywords, words)
         );
       }
 
       // Verificar ingredientes de pizza
-      if (product.ingredientesPizza) {
-        mentionedProduct.pizzaIngredients = product.ingredientesPizza.filter(
+      if (product.pizzaIngredients) {
+        mentionedProduct.pizzaIngredients = product.pizzaIngredients.filter(
           (ingredient) => checkKeywords(ingredient.keywords, words)
         );
       }
@@ -440,7 +468,7 @@ export async function preprocessMessages(messages: any[]): Promise<
   const response = await openai.chat.completions.create({
     model: "gpt-4o-mini",
     messages: preprocessingMessages,
-    tools: [...preprocessOrderTool, ...sendMenuTool],
+    tools: [...preprocessOrderTool, ...sendMenuTool] as any,
     parallel_tool_calls: false,
   });
 

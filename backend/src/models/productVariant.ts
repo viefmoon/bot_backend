@@ -8,7 +8,7 @@ interface ProductVariantAttributes {
   price: number;
   productId: string;
   ingredients?: string;
-  keywords?: string[];
+  keywords?: object;
   createdAt?: Date;
   updatedAt?: Date;
 }
@@ -25,7 +25,7 @@ class ProductVariant
   public price!: number;
   public productId!: string;
   public ingredients?: string;
-  public keywords?: string[];
+  public keywords?: object;
 
   public readonly createdAt!: Date;
   public readonly updatedAt!: Date;
