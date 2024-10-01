@@ -1,4 +1,4 @@
-import dotenv from "dotenv";
+import * as dotenv from "dotenv";
 dotenv.config();
 import { sequelize } from "../src/lib/db";
 import Product from "../src/models/product";
