@@ -1,0 +1,1 @@
+{"version":3,"file":"toggle-availability.dto.js","sourceRoot":"","sources":["../../src/dto/toggle-availability.dto.ts"],"names":[],"mappings":";;;;;;;;;;;;AAAA,qDAA+D;AAE/D,MAAa,qBAAqB;CAcjC;AAdD,sDAcC;AAXC;IAFC,IAAA,4BAAU,GAAE;IACZ,IAAA,0BAAQ,GAAE;;iDACA;AAUX;IARC,IAAA,4BAAU,GAAE;IACZ,IAAA,wBAAM,EAAC;QACN,SAAS;QACT,gBAAgB;QAChB,UAAU;QACV,cAAc;QACd,iBAAiB;KAClB,CAAC;;mDACW"}
