@@ -10,7 +10,7 @@ const {
   SelectedModifier,
   SelectedPizzaIngredient,
   RestaurantConfig,
-  OrderDeliveryInfo, // Añadimos esta importación
+  OrderDeliveryInfo,
 } = require("../../models");
 const { verificarHorarioAtencion } = require("../../utils/timeUtils");
 const { getNextDailyOrderNumber } = require("../../utils/orderUtils");
