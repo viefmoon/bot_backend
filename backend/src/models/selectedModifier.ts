@@ -1,5 +1,7 @@
 import { DataTypes, Model } from "sequelize";
 import { sequelize } from "../lib/db";
+import OrderItem from "./orderItem";
+import Modifier from "./modifier";
 
 interface SelectedModifierAttributes {
   orderItemId: number;
@@ -12,6 +14,14 @@ class SelectedModifier
 {
   public orderItemId!: number;
   public modifierId!: string;
+
+  // Timestamps
+  public readonly createdAt!: Date;
+  public readonly updatedAt!: Date;
+
+  // Asociaciones
+  public readonly orderItem?: OrderItem;
+  public readonly modifier?: Modifier;
 }
 
 SelectedModifier.init(
@@ -39,5 +49,9 @@ SelectedModifier.init(
     timestamps: true,
   }
 );
+
+// Definir las relaciones al final del archivo
+SelectedModifier.belongsTo(OrderItem, { foreignKey: "orderItemId" });
+SelectedModifier.belongsTo(Modifier, { foreignKey: "modifierId" });
 
 export default SelectedModifier;

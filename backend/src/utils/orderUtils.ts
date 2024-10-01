@@ -1,6 +1,6 @@
-const { Order } = require("../models");
+import { Order } from "../models";
 
-export async function getNextDailyOrderNumber() {
+export async function getNextDailyOrderNumber(): Promise<number> {
   const mexicoTime = new Date().toLocaleString("en-US", {
     timeZone: "America/Mexico_City",
   });

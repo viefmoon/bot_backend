@@ -1,5 +1,7 @@
 import { DataTypes, Model, Optional } from "sequelize";
 import { sequelize } from "../lib/db";
+import Product from "./product";
+import Modifier from "./modifier";
 
 interface ModifierTypeAttributes {
   id: string;
@@ -25,6 +27,10 @@ class ModifierType
   // Timestamps
   public readonly createdAt!: Date;
   public readonly updatedAt!: Date;
+
+  // Asociaciones
+  public readonly modifiers?: Modifier[];
+  public readonly product?: Product;
 }
 
 ModifierType.init(
@@ -63,5 +69,12 @@ ModifierType.init(
     timestamps: true,
   }
 );
+
+// Definir relaciones
+ModifierType.hasMany(Modifier, {
+  foreignKey: "modifierTypeId",
+  as: "modifiers",
+});
+ModifierType.belongsTo(Product, { foreignKey: "productId" });
 
 export default ModifierType;

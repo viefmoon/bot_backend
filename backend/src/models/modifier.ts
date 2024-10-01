@@ -1,5 +1,6 @@
 import { DataTypes, Model, Optional } from "sequelize";
 import { sequelize } from "../lib/db";
+import ModifierType from "./modifierType";
 
 interface ModifierAttributes {
   id: string;
@@ -25,6 +26,9 @@ class Modifier
   // Timestamps
   public readonly createdAt!: Date;
   public readonly updatedAt!: Date;
+
+  // Asociaciones
+  public readonly modifierType?: ModifierType;
 }
 
 Modifier.init(
@@ -61,5 +65,8 @@ Modifier.init(
     timestamps: true,
   }
 );
+
+// Definir relaciones
+Modifier.belongsTo(ModifierType, { foreignKey: "modifierTypeId" });
 
 export default Modifier;

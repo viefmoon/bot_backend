@@ -9,21 +9,41 @@ import {
 
 import { Order, Customer, RestaurantConfig } from "../models";
 import { sendWhatsAppMessage } from "../utils/whatsAppUtils";
-import stripe from "stripe";
+import Stripe from "stripe";
 import menuText from "../data/menu";
 
-const stripeClient = stripe(process.env.STRIPE_SECRET_KEY);
+const stripeClient = new Stripe(process.env.STRIPE_SECRET_KEY!, {
+  apiVersion: "2024-06-20",
+});
 
-export async function handleInteractiveMessage(from, message) {
+interface InteractiveMessage {
+  interactive: {
+    type: string;
+    button_reply?: {
+      id: string;
+    };
+    list_reply?: {
+      id: string;
+    };
+  };
+  context: {
+    id: string;
+  };
+}
+
+export async function handleInteractiveMessage(
+  from: string,
+  message: InteractiveMessage
+): Promise<void> {
   if (message.interactive.type === "button_reply") {
-    const buttonId = message.interactive.button_reply.id;
+    const buttonId = message.interactive.button_reply!.id;
     if (buttonId === "confirm_order") {
       await handlePreOrderConfirmation(from, message.context.id);
     } else if (buttonId === "discard_order") {
       await handlePreOrderDiscard(from, message.context.id);
     }
   } else if (message.interactive.type === "list_reply") {
-    const listReplyId = message.interactive.list_reply.id;
+    const listReplyId = message.interactive.list_reply!.id;
     if (listReplyId === "cancel_order") {
       await handleOrderCancellation(from, message.context.id);
     } else if (listReplyId === "modify_order") {
@@ -44,7 +64,10 @@ export async function handleInteractiveMessage(from, message) {
   }
 }
 
-async function handleOnlinePayment(clientId, messageId) {
+async function handleOnlinePayment(
+  clientId: string,
+  messageId: string
+): Promise<void> {
   try {
     const order = await Order.findOne({ where: { messageId } });
     if (!order) {
@@ -143,7 +166,7 @@ async function handleOnlinePayment(clientId, messageId) {
   }
 }
 
-async function sendMenu(phoneNumber) {
+async function sendMenu(phoneNumber: string): Promise<boolean> {
   try {
     await sendWhatsAppMessage(phoneNumber, menuText);
     return true;
@@ -152,7 +175,7 @@ async function sendMenu(phoneNumber) {
   }
 }
 
-async function handleWaitTimes(clientId) {
+async function handleWaitTimes(clientId: string): Promise<void> {
   try {
     const config = await RestaurantConfig.findOne();
     if (!config) {
@@ -173,7 +196,7 @@ async function handleWaitTimes(clientId) {
   }
 }
 
-async function handleRestaurantInfo(clientId) {
+async function handleRestaurantInfo(clientId: string): Promise<void> {
   const restaurantInfo =
     "🍕 *Información y horarios de La Leña*\n\n" +
     "📍 *Ubicación:* C. Ogazón Sur 36, Centro, 47730 Tototlán, Jal.\n\n" +
@@ -188,14 +211,14 @@ async function handleRestaurantInfo(clientId) {
   await sendWhatsAppMessage(clientId, restaurantInfo);
 }
 
-async function handleReorder(clientId) {
+async function handleReorder(clientId: string): Promise<void> {
   await sendWhatsAppMessage(
     clientId,
     "Función no disponible en este momento, pronto estará disponible"
   );
 }
 
-async function handleChatbotHelp(clientId) {
+async function handleChatbotHelp(clientId: string): Promise<void> {
   const chatbotHelp =
     "🤖💬 *¡Bienvenido al Chatbot de La Leña!*\n\n" +
     "Este asistente virtual está potenciado por inteligencia artificial para brindarte una experiencia fluida y natural. Aquí te explicamos cómo usarlo:\n\n" +

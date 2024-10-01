@@ -1,5 +1,10 @@
 import { DataTypes, Model, Optional } from "sequelize";
 import { sequelize } from "../lib/db";
+import Order from "./order";
+import Product from "./product";
+import ProductVariant from "./productVariant";
+import SelectedPizzaIngredient from "./selectedPizzaIngredient";
+import SelectedModifier from "./selectedModifier";
 
 interface OrderItemAttributes {
   id: number;
@@ -27,8 +32,17 @@ class OrderItem
   public orderId!: number;
   public productId!: string;
   public productVariantId!: string | undefined;
+
+  // Timestamps
   public readonly createdAt!: Date;
   public readonly updatedAt!: Date;
+
+  // Asociaciones
+  public readonly order?: Order;
+  public readonly product?: Product;
+  public readonly productVariant?: ProductVariant;
+  public readonly selectedPizzaIngredients?: SelectedPizzaIngredient[];
+  public readonly selectedModifiers?: SelectedModifier[];
 }
 
 OrderItem.init(
@@ -90,5 +104,20 @@ OrderItem.init(
     timestamps: true,
   }
 );
+
+// Definición de relaciones
+OrderItem.belongsTo(Order, { foreignKey: "orderId" });
+OrderItem.belongsTo(Product, { foreignKey: "productId" });
+OrderItem.belongsTo(ProductVariant, { foreignKey: "productVariantId" });
+
+OrderItem.hasMany(SelectedPizzaIngredient, {
+  foreignKey: "orderItemId",
+  as: "selectedPizzaIngredients",
+});
+
+OrderItem.hasMany(SelectedModifier, {
+  foreignKey: "orderItemId",
+  as: "selectedModifiers",
+});
 
 export default OrderItem;

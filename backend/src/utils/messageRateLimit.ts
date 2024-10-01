@@ -1,7 +1,9 @@
 import { MessageRateLimit } from "../models";
 import { sendWhatsAppMessage } from "./whatsAppUtils";
 
-export async function checkMessageRateLimit(clientId) {
+export async function checkMessageRateLimit(
+  clientId: string
+): Promise<boolean> {
   const MAX_MESSAGES = 30;
   const TIME_WINDOW = 5 * 60 * 1000; // 5 minutos en milisegundos
 
@@ -17,7 +19,8 @@ export async function checkMessageRateLimit(clientId) {
   }
 
   const now = new Date();
-  const timeSinceLastMessage = now - rateLimit.lastMessageTime;
+  const timeSinceLastMessage =
+    now.getTime() - rateLimit.lastMessageTime.getTime();
 
   if (timeSinceLastMessage > TIME_WINDOW) {
     await rateLimit.update({ messageCount: 1, lastMessageTime: now });
@@ -39,7 +42,10 @@ export async function checkMessageRateLimit(clientId) {
   return false; // No limitado
 }
 
-async function sendRateLimitMessage(clientId, timeRemaining) {
+async function sendRateLimitMessage(
+  clientId: string,
+  timeRemaining: number
+): Promise<void> {
   const minutes = Math.floor(timeRemaining / 60);
   const seconds = timeRemaining % 60;
   const timeMessage =

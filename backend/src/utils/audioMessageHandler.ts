@@ -6,12 +6,27 @@ import { promisify } from "util";
 import FormData from "form-data";
 import { sendWhatsAppMessage } from "./whatsAppUtils";
 import { handleTextMessage } from "./textMessageHandler";
+import { Readable } from "stream";
 
 const unlinkAsync = promisify(unlink);
 
-async function getAudioUrl(audioId) {
+interface AudioData {
+  url: string;
+}
+
+interface WhisperResponse {
+  text: string;
+}
+
+interface AudioMessage {
+  audio: {
+    id: string;
+  };
+}
+
+async function getAudioUrl(audioId: string): Promise<string | null> {
   try {
-    const { data } = await axios.get(
+    const { data } = await axios.get<AudioData>(
       `https://graph.facebook.com/v19.0/${audioId}`,
       {
         headers: {
@@ -26,7 +41,7 @@ async function getAudioUrl(audioId) {
   }
 }
 
-async function transcribeAudio(audioUrl) {
+async function transcribeAudio(audioUrl: string): Promise<string> {
   const audioPath = `/tmp/audio.ogg`;
   try {
     const { data } = await axios.get(audioUrl, {
@@ -36,18 +51,22 @@ async function transcribeAudio(audioUrl) {
       },
     });
 
-    await new Promise((resolve, reject) => {
+    await new Promise<void>((resolve, reject) => {
       const writer = createWriteStream(audioPath);
-      data.pipe(writer);
-      writer.on("finish", resolve);
-      writer.on("error", reject);
+      if (data instanceof Readable) {
+        data.pipe(writer);
+        writer.on("finish", resolve);
+        writer.on("error", reject);
+      } else {
+        reject(new Error("data no es un Readable stream"));
+      }
     });
 
     const formData = new FormData();
     formData.append("file", createReadStream(audioPath));
     formData.append("model", "whisper-1");
 
-    const { data: whisperData } = await axios.post(
+    const { data: whisperData } = await axios.post<WhisperResponse>(
       "https://api.openai.com/v1/audio/transcriptions",
       formData,
       {
@@ -67,7 +86,10 @@ async function transcribeAudio(audioUrl) {
   }
 }
 
-export async function handleAudioMessage(from, message) {
+export async function handleAudioMessage(
+  from: string,
+  message: AudioMessage
+): Promise<void> {
   try {
     const audioUrl = await getAudioUrl(message.audio.id);
     if (!audioUrl) throw new Error("No se pudo obtener la URL del audio.");

@@ -1,4 +1,4 @@
-const menu = `
+const menu: string = `
 🍽️ ¡Este es nuestro menú! 🍽️
 
 🥗 Entradas:
@@ -102,4 +102,4 @@ Incluyen: Pollo a la plancha o jamón, chile morrón, elote, lechuga, jitomate, 
 16. Tinto de verano ($90)
 17. Clericot ($80)`;
 
-module.exports = menu;
+export default menu;

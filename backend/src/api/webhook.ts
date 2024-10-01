@@ -1,10 +1,15 @@
+import { NextApiRequest, NextApiResponse } from "next";
 import { handleWebhookVerification } from "../handlers/webhookVerificationHandler";
 import { handleStripeWebhook } from "../handlers/stripeWebhookHandler";
 import { handleWhatsAppWebhook } from "../handlers/whatsAppWebhookHandler";
 import dotenv from "dotenv";
+
 dotenv.config();
 
-export default async function handler(req, res) {
+export default async function handler(
+  req: NextApiRequest,
+  res: NextApiResponse
+): Promise<void> {
   if (req.method === "GET") {
     handleWebhookVerification(req, res);
   } else if (req.method === "POST") {

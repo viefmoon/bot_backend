@@ -15,6 +15,29 @@ const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY,
 });
 
+interface ChatMessage {
+  role: string;
+  content: string;
+}
+
+interface ResponseItem {
+  text: string;
+  sendToWhatsApp?: boolean;
+  isRelevant?: boolean;
+}
+
+interface PreprocessedContent {
+  isDirectResponse: boolean;
+  text: string;
+  isRelevant: boolean;
+  confirmationMessage?: string;
+}
+
+interface ProcessRequest {
+  relevantMessages: ChatMessage[];
+  conversationId: string;
+}
+
 async function resetChatHistory(customer) {
   await customer.update({ relevantChatHistory: "[]" });
   await sendWhatsAppMessage(
@@ -56,18 +79,25 @@ async function sendWelcomeMessage(phoneNumber) {
   await sendWhatsAppInteractiveMessage(phoneNumber, listOptions);
 }
 
-export async function handleTextMessage(from, text) {
+export async function handleTextMessage(
+  from: string,
+  text: string
+): Promise<void> {
   const [customer] = await Customer.findOrCreate({
     where: { clientId: from },
     defaults: {
-      fullChatHistory: "[]",
-      relevantChatHistory: "[]",
+      fullChatHistory: [],
+      relevantChatHistory: [],
       lastInteraction: new Date(),
     },
   });
 
-  let fullChatHistory = JSON.parse(customer.fullChatHistory || "[]");
-  let relevantChatHistory = JSON.parse(customer.relevantChatHistory || "[]");
+  let fullChatHistory: ChatMessage[] = JSON.parse(
+    customer.fullChatHistory ?? "[]"
+  );
+  let relevantChatHistory: ChatMessage[] = JSON.parse(
+    customer.relevantChatHistory || "[]"
+  );
 
   console.log("Mensaje recibido de:", from);
   console.log("Mensaje:", text);
@@ -78,7 +108,8 @@ export async function handleTextMessage(from, text) {
   }
 
   if (
-    new Date() - new Date(customer.lastInteraction) > 60 * 60 * 1000 ||
+    new Date().getTime() - new Date(customer.lastInteraction).getTime() >
+      60 * 60 * 1000 ||
     relevantChatHistory.length === 0
   ) {
     relevantChatHistory = [];
@@ -86,7 +117,10 @@ export async function handleTextMessage(from, text) {
   }
 
   // Función para actualizar el historial de chat
-  const updateChatHistory = (message, isRelevant = true) => {
+  const updateChatHistory = (
+    message: ChatMessage,
+    isRelevant: boolean = true
+  ): void => {
     fullChatHistory.push(message);
     if (isRelevant) relevantChatHistory.push(message);
   };
@@ -125,12 +159,16 @@ export async function handleTextMessage(from, text) {
   });
 }
 
-async function processAndGenerateAIResponse(req) {
+async function processAndGenerateAIResponse(
+  req: ProcessRequest
+): Promise<ResponseItem[]> {
   const { relevantMessages, conversationId } = req;
 
   console.log("relevantMessages", relevantMessages);
   try {
-    const preprocessedContent = await preprocessMessages(relevantMessages);
+    const preprocessedContent: PreprocessedContent = await preprocessMessages(
+      relevantMessages
+    );
 
     if (preprocessedContent.isDirectResponse) {
       return [
@@ -166,7 +204,7 @@ async function processAndGenerateAIResponse(req) {
       response.content[0]?.type === "tool_use" &&
       response.content[0]?.name === "select_products"
     ) {
-      const { orderItems, orderType,scheduledDeliveryTime } =
+      const { orderItems, orderType, scheduledDeliveryTime } =
         response.content[0].input;
 
       try {
@@ -190,7 +228,7 @@ async function processAndGenerateAIResponse(req) {
       } catch (error) {
         console.error("Error al seleccionar los productos:", error);
         const errorMessage =
-          error.response?.data?.error ||
+          (error as any).response?.data?.error ||
           "Error al procesar tu pedido. Por favor, inténtalo de nuevo.";
         return [{ text: errorMessage, sendToWhatsApp: true, isRelevant: true }];
       }
@@ -207,7 +245,7 @@ async function processAndGenerateAIResponse(req) {
     console.error("Error general:", error);
     return [
       {
-        text: "Error al procesar la solicitud: " + error.message,
+        text: "Error al procesar la solicitud: " + (error as Error).message,
         sendToWhatsApp: true,
         isRelevant: true,
       },

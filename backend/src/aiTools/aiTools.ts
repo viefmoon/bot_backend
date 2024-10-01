@@ -257,7 +257,7 @@ const sendMenuTool = [
   },
 ];
 
-module.exports = {
+export {
   selectProductsTool,
   preprocessOrderTool,
   selectProductsToolClaude,

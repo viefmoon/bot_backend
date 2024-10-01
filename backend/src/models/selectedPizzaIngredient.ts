@@ -1,5 +1,7 @@
 import { DataTypes, Model, UUIDV4 } from "sequelize";
 import { sequelize } from "../lib/db";
+import OrderItem from "./orderItem";
+import PizzaIngredient from "./pizzaIngredient";
 
 export enum PizzaHalf {
   left = "left",
@@ -31,6 +33,12 @@ class SelectedPizzaIngredient
   public pizzaIngredientId!: string;
   public orderItemId!: number;
   public action!: IngredientAction;
+
+  // Asociaciones
+  public readonly orderItem?: OrderItem;
+  public readonly pizzaIngredient?: PizzaIngredient;
+
+  // Timestamps
   public readonly createdAt!: Date;
   public readonly updatedAt!: Date;
 }
@@ -83,5 +91,10 @@ SelectedPizzaIngredient.init(
     timestamps: true,
   }
 );
+
+SelectedPizzaIngredient.belongsTo(OrderItem, { foreignKey: "orderItemId" });
+SelectedPizzaIngredient.belongsTo(PizzaIngredient, {
+  foreignKey: "pizzaIngredientId",
+});
 
 export default SelectedPizzaIngredient;

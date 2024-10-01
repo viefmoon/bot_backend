@@ -1,10 +1,10 @@
-const moment = require("moment-timezone");
-const axios = require("axios");
+import moment from "moment-timezone";
+import axios from "axios";
 
-let mexicoCityTime = null;
-let lastFetch = null;
+let mexicoCityTime: moment.Moment | null = null;
+let lastFetch: number | null = null;
 
-async function getMexicoCityTime() {
+async function getMexicoCityTime(): Promise<moment.Moment> {
   const now = Date.now();
   if (!mexicoCityTime || !lastFetch || now - lastFetch > 3600000) {
     // Actualizar cada hora
@@ -12,7 +12,14 @@ async function getMexicoCityTime() {
       const response = await axios.get(
         "http://worldtimeapi.org/api/timezone/America/Mexico_City"
       );
-      mexicoCityTime = moment.tz(response.data.datetime, "America/Mexico_City");
+      // Definir el tipo de respuesta
+      interface WorldTimeResponse {
+        datetime: string;
+      }
+      mexicoCityTime = moment.tz(
+        (response.data as WorldTimeResponse).datetime,
+        "America/Mexico_City"
+      );
       lastFetch = now;
     } catch (error) {
       console.error("Error al obtener la hora de México:", error);
@@ -26,7 +33,7 @@ async function getMexicoCityTime() {
   return mexicoCityTime;
 }
 
-async function verificarHorarioAtencion() {
+async function verificarHorarioAtencion(): Promise<boolean> {
   const ahora = await getMexicoCityTime();
   const diaSemana = ahora.day(); // 0 es domingo, 1 es lunes, etc.
   const tiempoActual = ahora.hours() * 60 + ahora.minutes();
@@ -63,4 +70,4 @@ async function verificarHorarioAtencion() {
   }
 }
 
-module.exports = { verificarHorarioAtencion };
+export { verificarHorarioAtencion };

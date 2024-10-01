@@ -6,19 +6,48 @@ import {
   ModifierType,
   Modifier,
 } from "../models";
-const OpenAI = require("openai");
-const menu = require("../data/menu");
-const { ratio } = require("fuzzball");
+import OpenAI from "openai";
+import { ratio } from "fuzzball";
 import { preprocessOrderTool, sendMenuTool } from "../aiTools/aiTools";
-
 import dotenv from "dotenv";
+
 dotenv.config();
+
+const menu = require("../data/menu");
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
-async function getMenuAvailability() {
+interface MenuItem {
+  productId?: number;
+  name: string;
+  keywords?: string[] | string[][];
+  variantes?: MenuItem[];
+  modificadores?: MenuItem[];
+  ingredientesPizza?: MenuItem[];
+}
+
+interface PreprocessedContent {
+  orderItems: {
+    description: string;
+    relevantMenuItems?: MenuItem[];
+  }[];
+}
+
+interface ProductoInfo {
+  productId: string;
+  name: string;
+  keywords: object;
+  variantes?: Array<{ variantId: string; name: string }>;
+  modificadores?: Array<{
+    /* tipo de modificador */
+  }>;
+}
+
+async function getMenuAvailability(): Promise<
+  MenuItem[] | { error: string; detalles?: string; stack?: string }
+> {
   try {
     // Verificar si los modelos necesarios están definidos
     if (
@@ -67,20 +96,16 @@ async function getMenuAvailability() {
     }
 
     const menuSimplificado = products.map((producto) => {
-      const productoInfo = {
+      const productoInfo: ProductoInfo = {
         productId: producto.id,
         name: producto.name,
-        keywords: producto.keywords || null,
-        //active: producto.Availability?.available || false,
+        keywords: producto.keywords,
       };
 
-      // Agregar variantes
       if (producto.productVariants?.length > 0) {
         productoInfo.variantes = producto.productVariants.map((v) => ({
           variantId: v.id,
           name: v.name,
-          keywords: v.keywords || null,
-          //active: v.Availability?.available || false,
         }));
       }
 
@@ -111,7 +136,7 @@ async function getMenuAvailability() {
     });
 
     return menuSimplificado;
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error al obtener la disponibilidad del menú:", error);
     return {
       error: "No se pudo obtener la disponibilidad del menú",
@@ -121,7 +146,9 @@ async function getMenuAvailability() {
   }
 }
 
-async function getAvailableMenu() {
+async function getAvailableMenu(): Promise<
+  MenuItem[] | { error: string; detalles?: string; stack?: string }
+> {
   try {
     const products = await Product.findAll({
       include: [
@@ -193,7 +220,7 @@ async function getAvailableMenu() {
 
       return productoInfo;
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error al obtener el menú disponible:", error);
     return {
       error: "No se pudo obtener el menú disponible",
@@ -202,12 +229,23 @@ async function getAvailableMenu() {
     };
   }
 }
-async function getRelevantMenuItems(preprocessedContent) {
+
+async function getRelevantMenuItems(
+  preprocessedContent: PreprocessedContent
+): Promise<MenuItem[]> {
   const fullMenu = await getMenuAvailability();
-  let productos = [];
+  if ("error" in fullMenu) {
+    console.error("Error al obtener el menú completo:", fullMenu.error);
+    return [];
+  }
+
+  let productos: MenuItem[] = [];
 
   for (const product of preprocessedContent.orderItems) {
-    const productsInMessage = extractMentionedProducts(product, fullMenu);
+    const productsInMessage = extractMentionedProducts(
+      product.description,
+      fullMenu
+    );
     productos = [...productos, ...productsInMessage];
   }
 
@@ -243,12 +281,15 @@ async function getRelevantMenuItems(preprocessedContent) {
   return productos;
 }
 
-function removeKeywords(item) {
+function removeKeywords(item: MenuItem): Omit<MenuItem, "keywords"> {
   const { keywords, ...itemWithoutKeywords } = item;
   return itemWithoutKeywords;
 }
 
-function extractMentionedProducts(productMessage, menu) {
+function extractMentionedProducts(
+  productMessage: string,
+  menu: MenuItem[]
+): MenuItem[] {
   const mentionedProducts = [];
   const wordsToFilter = [
     "del",
@@ -350,7 +391,15 @@ function extractMentionedProducts(productMessage, menu) {
   return mentionedProducts;
 }
 
-export async function preprocessMessages(messages) {
+export async function preprocessMessages(messages: any[]): Promise<
+  | PreprocessedContent
+  | {
+      text: string;
+      isDirectResponse: boolean;
+      isRelevant: boolean;
+      confirmationMessage?: string;
+    }
+> {
   const availableMenu = await getAvailableMenu();
 
   const systemMessageForPreprocessing = {
@@ -400,12 +449,14 @@ export async function preprocessMessages(messages) {
 
     if (toolCall.function.name === "preprocess_order") {
       console.log("toolCall", toolCall);
-      const preprocessedContent = JSON.parse(toolCall.function.arguments);
+      const preprocessedContent: PreprocessedContent = JSON.parse(
+        toolCall.function.arguments
+      );
 
       for (const item of preprocessedContent.orderItems) {
         if (item && typeof item.description === "string") {
           item.relevantMenuItems = await getRelevantMenuItems({
-            orderItems: [item.description],
+            orderItems: [{ description: item.description }],
           });
         } else {
           console.error("Item inválido o sin descripción:", item);
@@ -436,4 +487,6 @@ export async function preprocessMessages(messages) {
       isRelevant: true,
     };
   }
+
+  throw new Error("No se pudo procesar la respuesta");
 }
