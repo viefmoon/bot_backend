@@ -1,8 +1,8 @@
 import React, { useState } from "react";
 import Head from "next/head";
-import AddressSearch from "../src/frontend/components/AddressSearch";
-import Map from "../src/frontend/components/Map";
-import AddressForm from "../src/frontend/components/AddressForm";
+import AddressSearch from "../frontend/components/AddressSearch";
+import Map from "../frontend/components/Map";
+import AddressForm from "../frontend/components/AddressForm";
 
 export default function AddressSelection() {
   const [selectedLocation, setSelectedLocation] = useState(null);
