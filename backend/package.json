@@ -6,7 +6,7 @@
     "dev": "nest start --watch",
     "build": "nest build",
     "start": "nest start",
-    "seed:menu": "node seeders/seedMenuItems.js",
+    "seed:menu": "node seeders/seedMenuItems.ts",
     "migrate": "sequelize-cli db:migrate --config sequelize.config.js"
   },
   "dependencies": {
