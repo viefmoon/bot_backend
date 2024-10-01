@@ -14,7 +14,7 @@ const sequelize = new Sequelize(
     dialectOptions: {
       ssl: {
         require: true,
-        rejectUnauthorized: false, // Importante para asegurar la conexión con SSL
+        rejectUnauthorized: false,
       },
     },
     pool: {
