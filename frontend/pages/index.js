@@ -1,25 +1,32 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
 import OrderCard from "../components/OrderCard";
-import ClientCard from "../components/ClientCard";
+import CustomerCard from "../components/CustomerCard";
+import DatePicker from "react-datepicker";
+import "react-datepicker/dist/react-datepicker.css";
+import { format } from "date-fns";
 
 export default function Home() {
   const [orders, setOrders] = useState([]);
   const [clients, setClients] = useState([]);
   const [error, setError] = useState(null);
+  const [selectedDate, setSelectedDate] = useState(new Date()); // Por defecto a la fecha actual
 
   useEffect(() => {
-    fetchOrders();
+    fetchOrders(selectedDate); // Llamar con la fecha seleccionada o la actual
     fetchClients();
-    const interval = setInterval(fetchOrders, 30000);
+    const interval = setInterval(() => {
+      fetchOrders(selectedDate); // Asegurarse de usar siempre la fecha seleccionada
+    }, 30000);
     return () => clearInterval(interval);
-  }, []);
+  }, [selectedDate]); // Actualiza el intervalo si la fecha seleccionada cambia
 
-  const fetchOrders = async (date = null) => {
+  const fetchOrders = async (date) => {
     try {
       let url = "/api/orders";
       if (date) {
-        url += `?date=${date}`;
+        const formattedDate = format(date, "yyyy-MM-dd"); // Formato de la fecha
+        url += `?date=${formattedDate}`;
       }
       const response = await axios.get(url);
       setOrders(response.data);
@@ -33,7 +40,7 @@ export default function Home() {
 
   const fetchClients = async () => {
     try {
-      const response = await axios.get("/api/clients");
+      const response = await axios.get("/api/customers");
       setClients(response.data);
     } catch (error) {
       console.error("Error al obtener clientes:", error);
@@ -43,14 +50,32 @@ export default function Home() {
     }
   };
 
+  const handleDateChange = (date) => {
+    setSelectedDate(date);
+  };
+
   return (
     <div>
-      <button id="refreshOrdersButton" onClick={fetchOrders}>
+      <button
+        id="refreshOrdersButton"
+        onClick={() => fetchOrders(selectedDate)}
+      >
         Refrescar Pedidos
       </button>
       <button id="refreshClientsButton" onClick={fetchClients}>
         Refrescar Clientes
       </button>
+
+      <div>
+        <label>Selecciona una fecha: </label>
+        <DatePicker
+          selected={selectedDate}
+          onChange={handleDateChange}
+          dateFormat="yyyy-MM-dd"
+          placeholderText="Selecciona una fecha"
+        />
+      </div>
+
       {error && <div className="alert alert-danger">{error}</div>}
       <div id="order-list">
         {orders.length === 0 ? (
@@ -64,7 +89,7 @@ export default function Home() {
           <p className="text-center">No se encontraron clientes.</p>
         ) : (
           clients.map((client) => (
-            <ClientCard key={client.clientId} client={client} />
+            <CustomerCard key={client.clientId} client={client} />
           ))
         )}
       </div>

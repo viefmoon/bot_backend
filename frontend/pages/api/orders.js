@@ -6,7 +6,7 @@ dotenv.config();
 export default async function handler(req, res) {
     const { method, query } = req;
     const { date } = query;
-    let url = `${process.env.NEXT_PUBLIC_BASE_URL}/get_orders`;
+    let url = `${process.env.NEXT_PUBLIC_BASE_URL}/orders`;
     if (date) {
         url += `?date=${date}`;
     }

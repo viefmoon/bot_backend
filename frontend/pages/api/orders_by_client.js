@@ -12,7 +12,7 @@ export default async function handler(req, res) {
             .json({ error: "Se requiere el parámetro clientId" });
     }
 
-    const url = `${process.env.NEXT_PUBLIC_BASE_URL}/get_orders_by_client?clientId=${clientId}`;
+    const url = `${process.env.NEXT_PUBLIC_BASE_URL}/orders/${clientId}`;
 
     try {
         const response = await axios.get(url);

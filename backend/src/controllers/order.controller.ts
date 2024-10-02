@@ -11,7 +11,7 @@ export class OrderController {
     return this.orderService.getOrders(date);
   }
 
-  @Get("client/:clientId")
+  @Get("orders/:clientId")
   async getOrdersByClient(@Param("clientId") clientId: string) {
     return this.orderService.getOrdersByClient(clientId);
   }

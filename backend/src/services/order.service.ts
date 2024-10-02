@@ -50,11 +50,11 @@ export class OrderService {
             },
           ],
         },
-        {
-          model: OrderDeliveryInfo,
-          as: "orderDeliveryInfo",
-          attributes: ["streetAddress", "pickupName"],
-        },
+        // {
+        //   model: OrderDeliveryInfo,
+        //   as: "orderDeliveryInfo",
+        //   attributes: ["streetAddress", "pickupName"],
+        // },
       ],
       attributes: [
         "id",
@@ -75,7 +75,7 @@ export class OrderService {
 
   async getOrdersByClient(clientId: string) {
     return this.getOrders().then((orders) =>
-      orders.filter((order) => order.clientId === clientId)
+      orders.filter((order) => order.clientId === clientId),
     );
   }
 
@@ -91,14 +91,14 @@ export class OrderService {
     const config = await RestaurantConfig.findOne();
     if (!config || !config.acceptingOrders) {
       throw new BadRequestException(
-        "El restaurante no está aceptando pedidos en este momento"
+        "El restaurante no está aceptando pedidos en este momento",
       );
     }
 
     const estaAbierto = await verificarHorarioAtencion();
     if (!estaAbierto) {
       throw new BadRequestException(
-        "El restaurante está cerrado en este momento"
+        "El restaurante está cerrado en este momento",
       );
     }
 
@@ -112,13 +112,13 @@ export class OrderService {
     if (scheduledDeliveryTime) {
       const now = new Date(mexicoTime);
       const scheduledTimeMexico = new Date(
-        scheduledDeliveryTime
+        scheduledDeliveryTime,
       ).toLocaleString("en-US", {
         timeZone: "America/Mexico_City",
       });
       const scheduledTime = new Date(scheduledTimeMexico);
       const diffInMinutes = Math.round(
-        (scheduledTime.getTime() - now.getTime()) / (1000 * 60)
+        (scheduledTime.getTime() - now.getTime()) / (1000 * 60),
       );
       estimatedTime = Math.max(diffInMinutes, 0);
     } else {
@@ -158,11 +158,11 @@ export class OrderService {
 
         if (item.productVariantId) {
           const productVariant = await ProductVariant.findByPk(
-            item.productVariantId
+            item.productVariantId,
           );
           if (!productVariant) {
             throw new Error(
-              `Variante de producto no encontrada: ${item.productVariantId}`
+              `Variante de producto no encontrada: ${item.productVariantId}`,
             );
           }
           itemPrice = productVariant.price || 0;
@@ -177,11 +177,11 @@ export class OrderService {
 
           for (const ingredient of item.selectedPizzaIngredients) {
             const pizzaIngredient = await PizzaIngredient.findByPk(
-              ingredient.pizzaIngredientId
+              ingredient.pizzaIngredientId,
             );
             if (!pizzaIngredient) {
               throw new Error(
-                `Ingrediente de pizza no encontrado en el menu: ${ingredient.pizzaIngredientId}`
+                `Ingrediente de pizza no encontrado en el menu: ${ingredient.pizzaIngredientId}`,
               );
             }
             const ingredientValue =
@@ -212,7 +212,7 @@ export class OrderService {
             item.selectedModifiers.map(async (modifier) => {
               const mod = await Modifier.findByPk(modifier.modifierId);
               return mod.price;
-            })
+            }),
           );
           itemPrice += modifierPrices.reduce((sum, price) => sum + price, 0);
         }
@@ -232,8 +232,8 @@ export class OrderService {
               SelectedModifier.create({
                 orderItemId: orderItem.id,
                 modifierId: modifier.modifierId,
-              })
-            )
+              }),
+            ),
           );
         }
 
@@ -245,18 +245,18 @@ export class OrderService {
                 pizzaIngredientId: ingredient.pizzaIngredientId,
                 half: ingredient.half as PizzaHalf,
                 action: ingredient.action as IngredientAction,
-              })
-            )
+              }),
+            ),
           );
         }
 
         return orderItem;
-      })
+      }),
     );
 
     const totalCost = createdItems.reduce(
       (sum, item) => sum + item.price * item.quantity,
-      0
+      0,
     );
     await newOrder.update({ totalCost });
 
