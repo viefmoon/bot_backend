@@ -196,49 +196,6 @@ export default function Home() {
     return groupedItems;
   };
 
-  const createCompactIngredients = (ingredients) => {
-    if (!ingredients || ingredients.length === 0) return "";
-    const ingredientsByHalf = { left: [], right: [], full: [] };
-    ingredients.forEach((ing) => {
-      ingredientsByHalf[ing.half].push(
-        `${ing.action === "add" ? "Con" : "Sin"} ${ing.PizzaIngredient.name}`
-      );
-    });
-    let result = "<small><strong>Ingredientes:</strong> ";
-    for (const [half, ings] of Object.entries(ingredientsByHalf)) {
-      if (ings.length > 0) {
-        result += `${translateHalf(half)}: ${ings.join(", ")}; `;
-      }
-    }
-    return result.slice(0, -2) + "</small>";
-  };
-
-  const createCompactModifiers = (modifiers) => {
-    if (!modifiers || modifiers.length === 0) return "";
-    return (
-      "<small><strong>Modificadores:</strong> " +
-      modifiers
-        .map(
-          (mod) => `${mod.Modifier.name} (+$${mod.Modifier.price.toFixed(2)})`
-        )
-        .join(", ") +
-      "</small>"
-    );
-  };
-
-  const translateHalf = (half) => {
-    switch (half) {
-      case "left":
-        return "Izquierda";
-      case "right":
-        return "Derecha";
-      case "full":
-        return "Completa";
-      default:
-        return half;
-    }
-  };
-
   const renderMenuItemCard = (item) => (
     <div key={item.id} className="col-md-4 mb-3">
       <div className="card h-100">
