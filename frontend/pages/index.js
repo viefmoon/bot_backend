@@ -242,6 +242,96 @@ export default function Home() {
     }
   };
 
+  function createMenuItemCard(item) {
+    const col = document.createElement("div");
+    col.className = "col-md-4 mb-3";
+
+    const card = document.createElement("div");
+    card.className = "card h-100";
+
+    const cardBody = document.createElement("div");
+    cardBody.className = "card-body";
+
+    cardBody.innerHTML = `
+      <h5 class="card-title">${item.name}</h5>
+      <p class="card-text">Categoría: ${item.category}</p>
+      <p class="card-text">Precio: $
+        ${item.price ? `$${item.price.toFixed(2)}` : "Varía según la variante"}
+      </p>
+      <p class="card-text">Disponible: <span class="badge bg-${
+        item.Availability.available ? "success" : "danger"
+      }">${item.Availability.available ? "Sí" : "No"}</span></p>
+    `;
+
+    if (item.ProductVariants && item.ProductVariants.length > 0) {
+      const variantsSection = document.createElement("div");
+      variantsSection.className = "mt-3";
+      variantsSection.innerHTML = "<h6>Variantes:</h6>";
+      const variantsList = document.createElement("ul");
+      variantsList.className = "list-group";
+      item.ProductVariants.forEach((variant) => {
+        const listItem = document.createElement("li");
+        listItem.className =
+          "list-group-item d-flex justify-content-between align-items-center";
+        listItem.innerHTML = `
+          ${variant.name}
+          <span>$${variant.price.toFixed(2)}</span>
+        `;
+        variantsList.appendChild(listItem);
+      });
+      variantsSection.appendChild(variantsList);
+      cardBody.appendChild(variantsSection);
+    }
+
+    if (item.ModifierTypes && item.ModifierTypes.length > 0) {
+      const modifiersSection = document.createElement("div");
+      modifiersSection.className = "mt-3";
+      modifiersSection.innerHTML = "<h6>Modificadores:</h6>";
+      item.ModifierTypes.forEach((modifierType) => {
+        const modifiersList = document.createElement("ul");
+        modifiersList.className = "list-group";
+        modifierType.Modifiers.forEach((modifier) => {
+          const listItem = document.createElement("li");
+          listItem.className =
+            "list-group-item d-flex justify-content-between align-items-center";
+          listItem.innerHTML = `
+            ${modifier.name}
+            <span>$${modifier.price.toFixed(2)}</span>
+          `;
+          modifiersList.appendChild(listItem);
+        });
+        modifiersSection.appendChild(modifiersList);
+      });
+      cardBody.appendChild(modifiersSection);
+    }
+
+    if (item.PizzaIngredients && item.PizzaIngredients.length > 0) {
+      const ingredientsSection = document.createElement("div");
+      ingredientsSection.className = "mt-3";
+      ingredientsSection.innerHTML = "<h6>Ingredientes de Pizza:</h6>";
+      const ingredientsList = document.createElement("ul");
+      ingredientsList.className = "list-group";
+      item.PizzaIngredients.forEach((ingredient) => {
+        const listItem = document.createElement("li");
+        listItem.className = "list-group-item";
+        listItem.textContent = ingredient.name;
+        ingredientsList.appendChild(listItem);
+      });
+      ingredientsSection.appendChild(ingredientsList);
+      cardBody.appendChild(ingredientsSection);
+    }
+
+    const toggleButton = createToggleButton(item.Availability.available, () =>
+      toggleItemAvailability(item.id, "product")
+    );
+    cardBody.appendChild(toggleButton);
+
+    card.appendChild(cardBody);
+    col.appendChild(card);
+
+    return col;
+  }
+
   return (
     <div>
       <div className="view-selector">
@@ -463,72 +553,64 @@ export default function Home() {
                               </span>
                             </p>
 
-                            {/* Mostrar variantes */}
-                            {item.Variants && item.Variants.length > 0 && (
-                              <div>
-                                <h6>Variantes:</h6>
-                                <ul>
-                                  {item.Variants.map((variant) => (
-                                    <li key={variant.id}>
-                                      {variant.name} - $
-                                      {variant.price.toFixed(2)}
-                                      <span
-                                        className={`badge bg-${
-                                          variant.Availability.available
-                                            ? "success"
-                                            : "danger"
-                                        } ms-2`}
+                            {/* Variantes */}
+                            {item.ProductVariants &&
+                              item.ProductVariants.length > 0 && (
+                                <div className="mt-3">
+                                  <h6>Variantes:</h6>
+                                  <ul className="list-group">
+                                    {item.ProductVariants.map((variant) => (
+                                      <li
+                                        key={variant.id}
+                                        className="list-group-item d-flex justify-content-between align-items-center"
                                       >
-                                        {variant.Availability.available
-                                          ? "Disponible"
-                                          : "No disponible"}
-                                      </span>
-                                      <button
-                                        onClick={() =>
-                                          toggleItemAvailability(
-                                            variant.id,
-                                            "variant"
+                                        {variant.name}
+                                        <span>${variant.price.toFixed(2)}</span>
+                                      </li>
+                                    ))}
+                                  </ul>
+                                </div>
+                              )}
+
+                            {/* Modificadores */}
+                            {item.ModifierTypes &&
+                              item.ModifierTypes.length > 0 && (
+                                <div className="mt-3">
+                                  <h6>Modificadores:</h6>
+                                  {item.ModifierTypes.map((modifierType) => (
+                                    <div key={modifierType.id}>
+                                      <h7>{modifierType.name}</h7>
+                                      <ul className="list-group">
+                                        {modifierType.Modifiers.map(
+                                          (modifier) => (
+                                            <li
+                                              key={modifier.id}
+                                              className="list-group-item d-flex justify-content-between align-items-center"
+                                            >
+                                              {modifier.name}
+                                              <span>
+                                                ${modifier.price.toFixed(2)}
+                                              </span>
+                                            </li>
                                           )
-                                        }
-                                        className={`btn btn-${
-                                          variant.Availability.available
-                                            ? "danger"
-                                            : "success"
-                                        } btn-sm ms-2`}
+                                        )}
+                                      </ul>
+                                    </div>
+                                  ))}
+                                </div>
+                              )}
+
+                            {/* Ingredientes de Pizza */}
+                            {item.PizzaIngredients &&
+                              item.PizzaIngredients.length > 0 && (
+                                <div className="mt-3">
+                                  <h6>Ingredientes de Pizza:</h6>
+                                  <ul className="list-group">
+                                    {item.PizzaIngredients.map((ingredient) => (
+                                      <li
+                                        key={ingredient.id}
+                                        className="list-group-item"
                                       >
-                                        {variant.Availability.available
-                                          ? "Deshabilitar"
-                                          : "Habilitar"}
-                                      </button>
-                                    </li>
-                                  ))}
-                                </ul>
-                              </div>
-                            )}
-
-                            {/* Mostrar modificadores */}
-                            {item.Modifiers && item.Modifiers.length > 0 && (
-                              <div>
-                                <h6>Modificadores:</h6>
-                                <ul>
-                                  {item.Modifiers.map((modifier) => (
-                                    <li key={modifier.id}>
-                                      {modifier.name} - $
-                                      {modifier.price.toFixed(2)}
-                                    </li>
-                                  ))}
-                                </ul>
-                              </div>
-                            )}
-
-                            {/* Mostrar ingredientes */}
-                            {item.Ingredients &&
-                              item.Ingredients.length > 0 && (
-                                <div>
-                                  <h6>Ingredientes:</h6>
-                                  <ul>
-                                    {item.Ingredients.map((ingredient) => (
-                                      <li key={ingredient.id}>
                                         {ingredient.name}
                                       </li>
                                     ))}
