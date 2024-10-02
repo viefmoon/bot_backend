@@ -6,6 +6,7 @@ import CustomerOrdersModal from "./CustomerOrdersModal";
 const CustomerCard = ({ client, onToggleBan }) => {
   const [showChatHistory, setShowChatHistory] = useState(false);
   const [showCustomerOrders, setShowCustomerOrders] = useState(false);
+  const [isBanned, setIsBanned] = useState(client.isBanned);
 
   const toggleChatHistoryModal = () => {
     setShowChatHistory(!showChatHistory);
@@ -17,7 +18,7 @@ const CustomerCard = ({ client, onToggleBan }) => {
 
   const handleToggleBan = async () => {
     try {
-      const action = client.isBanned ? "unban" : "ban";
+      const action = isBanned ? "unban" : "ban";
       const response = await fetch("/api/toggle_customer_ban", {
         method: "POST",
         headers: {
@@ -30,7 +31,8 @@ const CustomerCard = ({ client, onToggleBan }) => {
         throw new Error("Error al cambiar el estado de ban del cliente");
       }
 
-      onToggleBan(client.clientId, !client.isBanned);
+      setIsBanned(!isBanned);
+      onToggleBan(client.clientId, !isBanned);
     } catch (error) {
       console.error("Error:", error);
     }
@@ -57,10 +59,8 @@ const CustomerCard = ({ client, onToggleBan }) => {
           </p>
           <p className="card-text">
             Estado:{" "}
-            <span
-              className={`badge bg-${client.isBanned ? "danger" : "success"}`}
-            >
-              {client.isBanned ? "Baneado" : "Activo"}
+            <span className={`badge bg-${isBanned ? "danger" : "success"}`}>
+              {isBanned ? "Baneado" : "Activo"}
             </span>
           </p>
           <div className="mt-3">
@@ -77,12 +77,10 @@ const CustomerCard = ({ client, onToggleBan }) => {
               Ver pedidos
             </button>
             <button
-              className={`btn btn-${
-                client.isBanned ? "success" : "warning"
-              } btn-sm`}
+              className={`btn btn-${isBanned ? "success" : "warning"} btn-sm`}
               onClick={handleToggleBan}
             >
-              {client.isBanned ? "Desbanear" : "Banear"}
+              {isBanned ? "Desbanear" : "Banear"}
             </button>
           </div>
         </div>
