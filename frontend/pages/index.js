@@ -11,6 +11,7 @@ export default function Home() {
   const [clients, setClients] = useState([]);
   const [error, setError] = useState(null);
   const [selectedDate, setSelectedDate] = useState(new Date()); // Por defecto a la fecha actual
+  const [activeView, setActiveView] = useState("orders"); // Nueva estado para controlar la vista activa
 
   useEffect(() => {
     fetchOrders(selectedDate); // Llamar con la fecha seleccionada o la actual
@@ -55,33 +56,40 @@ export default function Home() {
   };
 
   return (
-    <div className="container">
-      <div className="controls">
+    <div>
+      <div className="view-selector">
         <button
-          id="refreshOrdersButton"
-          onClick={() => fetchOrders(selectedDate)}
+          onClick={() => setActiveView("orders")}
+          className={activeView === "orders" ? "active" : ""}
         >
-          Refrescar Pedidos
+          Ver Pedidos
         </button>
-        <button id="refreshClientsButton" onClick={fetchClients}>
-          Refrescar Clientes
+        <button
+          onClick={() => setActiveView("clients")}
+          className={activeView === "clients" ? "active" : ""}
+        >
+          Ver Clientes
         </button>
-        <div>
-          <label>Selecciona una fecha: </label>
-          <DatePicker
-            selected={selectedDate}
-            onChange={handleDateChange}
-            dateFormat="yyyy-MM-dd"
-            placeholderText="Selecciona una fecha"
-          />
-        </div>
       </div>
 
-      {error && <div className="alert alert-danger">{error}</div>}
-
-      <div className="content-wrapper">
-        <div className="column orders-column">
-          <h2>Pedidos</h2>
+      {activeView === "orders" && (
+        <div>
+          <button
+            id="refreshOrdersButton"
+            onClick={() => fetchOrders(selectedDate)}
+          >
+            Refrescar Pedidos
+          </button>
+          <div>
+            <label>Selecciona una fecha: </label>
+            <DatePicker
+              selected={selectedDate}
+              onChange={handleDateChange}
+              dateFormat="yyyy-MM-dd"
+              placeholderText="Selecciona una fecha"
+            />
+          </div>
+          {error && <div className="alert alert-danger">{error}</div>}
           <div id="order-list">
             {orders.length === 0 ? (
               <p className="text-center">No se encontraron pedidos.</p>
@@ -90,9 +98,14 @@ export default function Home() {
             )}
           </div>
         </div>
+      )}
 
-        <div className="column clients-column">
-          <h2>Clientes</h2>
+      {activeView === "clients" && (
+        <div>
+          <button id="refreshClientsButton" onClick={fetchClients}>
+            Refrescar Clientes
+          </button>
+          {error && <div className="alert alert-danger">{error}</div>}
           <div id="client-list">
             {clients.length === 0 ? (
               <p className="text-center">No se encontraron clientes.</p>
@@ -103,7 +116,7 @@ export default function Home() {
             )}
           </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }
