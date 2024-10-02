@@ -12,6 +12,8 @@ export default function Home() {
   const [error, setError] = useState(null);
   const [selectedDate, setSelectedDate] = useState(new Date()); // Por defecto a la fecha actual
   const [activeView, setActiveView] = useState("orders"); // Nueva estado para controlar la vista activa
+  const [notificationPhones, setNotificationPhones] = useState([]);
+  const [newPhoneNumber, setNewPhoneNumber] = useState("");
 
   useEffect(() => {
     fetchOrders(selectedDate); // Llamar con la fecha seleccionada o la actual
@@ -21,6 +23,10 @@ export default function Home() {
     }, 30000);
     return () => clearInterval(interval);
   }, [selectedDate]); // Actualiza el intervalo si la fecha seleccionada cambia
+
+  useEffect(() => {
+    fetchNotificationPhones();
+  }, []);
 
   const fetchOrders = async (date) => {
     try {
@@ -51,8 +57,63 @@ export default function Home() {
     }
   };
 
+  const fetchNotificationPhones = async () => {
+    try {
+      const response = await axios.get("/api/notification_phones");
+      setNotificationPhones(response.data);
+    } catch (error) {
+      console.error("Error al obtener teléfonos de notificación:", error);
+      setError(
+        "No se pudieron obtener los teléfonos de notificación. Por favor, inténtelo de nuevo más tarde."
+      );
+    }
+  };
+
   const handleDateChange = (date) => {
     setSelectedDate(date);
+  };
+
+  const addNotificationPhone = async (e) => {
+    e.preventDefault();
+    try {
+      await axios.post("/api/notification_phones", {
+        phoneNumber: newPhoneNumber,
+        isActive: true,
+      });
+      setNewPhoneNumber("");
+      fetchNotificationPhones();
+    } catch (error) {
+      console.error("Error al agregar teléfono de notificación:", error);
+      setError(
+        "No se pudo agregar el teléfono de notificación. Por favor, inténtelo de nuevo."
+      );
+    }
+  };
+
+  const deleteNotificationPhone = async (phoneId) => {
+    try {
+      await axios.delete(`/api/notification_phones/${phoneId}`);
+      fetchNotificationPhones();
+    } catch (error) {
+      console.error("Error al eliminar teléfono de notificación:", error);
+      setError(
+        "No se pudo eliminar el teléfono de notificación. Por favor, inténtelo de nuevo."
+      );
+    }
+  };
+
+  const togglePhoneStatus = async (phoneId, currentStatus) => {
+    try {
+      await axios.put(`/api/notification_phones/${phoneId}`, {
+        isActive: !currentStatus,
+      });
+      fetchNotificationPhones();
+    } catch (error) {
+      console.error("Error al actualizar teléfono de notificación:", error);
+      setError(
+        "No se pudo actualizar el teléfono de notificación. Por favor, inténtelo de nuevo."
+      );
+    }
   };
 
   return (
@@ -69,6 +130,12 @@ export default function Home() {
           className={activeView === "clients" ? "active" : ""}
         >
           Ver Clientes
+        </button>
+        <button
+          onClick={() => setActiveView("notificationPhones")}
+          className={activeView === "notificationPhones" ? "active" : ""}
+        >
+          Ver Teléfonos de Notificación
         </button>
       </div>
 
@@ -136,6 +203,37 @@ export default function Home() {
               ))
             )}
           </div>
+        </div>
+      )}
+
+      {activeView === "notificationPhones" && (
+        <div>
+          <h2>Teléfonos de Notificación</h2>
+          <form onSubmit={addNotificationPhone}>
+            <input
+              type="text"
+              value={newPhoneNumber}
+              onChange={(e) => setNewPhoneNumber(e.target.value)}
+              placeholder="Nuevo número de teléfono"
+              required
+            />
+            <button type="submit">Agregar Teléfono</button>
+          </form>
+          <ul>
+            {notificationPhones.map((phone) => (
+              <li key={phone.id}>
+                {phone.phoneNumber}
+                <button
+                  onClick={() => togglePhoneStatus(phone.id, phone.isActive)}
+                >
+                  {phone.isActive ? "Desactivar" : "Activar"}
+                </button>
+                <button onClick={() => deleteNotificationPhone(phone.id)}>
+                  Eliminar
+                </button>
+              </li>
+            ))}
+          </ul>
         </div>
       )}
     </div>
