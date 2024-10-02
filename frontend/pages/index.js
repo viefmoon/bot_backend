@@ -14,6 +14,11 @@ export default function Home() {
   const [activeView, setActiveView] = useState("orders"); // Nueva estado para controlar la vista activa
   const [notificationPhones, setNotificationPhones] = useState([]);
   const [newPhoneNumber, setNewPhoneNumber] = useState("");
+  const [restaurantConfig, setRestaurantConfig] = useState({
+    acceptingOrders: false,
+    estimatedPickupTime: 0,
+    estimatedDeliveryTime: 0,
+  });
 
   useEffect(() => {
     fetchOrders(selectedDate); // Llamar con la fecha seleccionada o la actual
@@ -26,6 +31,7 @@ export default function Home() {
 
   useEffect(() => {
     fetchNotificationPhones();
+    fetchRestaurantConfig();
   }, []);
 
   const fetchOrders = async (date) => {
@@ -116,6 +122,45 @@ export default function Home() {
     }
   };
 
+  const fetchRestaurantConfig = async () => {
+    try {
+      const response = await axios.get("/api/restaurant_config");
+      setRestaurantConfig(response.data);
+    } catch (error) {
+      console.error(
+        "Error al obtener la configuración del restaurante:",
+        error
+      );
+      setError(
+        "No se pudo obtener la configuración del restaurante. Por favor, inténtelo de nuevo más tarde."
+      );
+    }
+  };
+
+  const updateRestaurantConfig = async (event) => {
+    event.preventDefault();
+    const formData = new FormData(event.target);
+    const config = {
+      acceptingOrders: formData.get("acceptingOrders") === "true",
+      estimatedPickupTime: parseInt(formData.get("estimatedPickupTime")),
+      estimatedDeliveryTime: parseInt(formData.get("estimatedDeliveryTime")),
+    };
+
+    try {
+      const response = await axios.put("/api/restaurant_config", config);
+      setRestaurantConfig(response.data.config);
+      alert("Configuración actualizada exitosamente");
+    } catch (error) {
+      console.error(
+        "Error al actualizar la configuración del restaurante:",
+        error
+      );
+      setError(
+        "No se pudo actualizar la configuración del restaurante. Por favor, inténtelo de nuevo."
+      );
+    }
+  };
+
   return (
     <div>
       <div className="view-selector">
@@ -136,6 +181,12 @@ export default function Home() {
           className={activeView === "notificationPhones" ? "active" : ""}
         >
           Ver Teléfonos de Notificación
+        </button>
+        <button
+          onClick={() => setActiveView("restaurantConfig")}
+          className={activeView === "restaurantConfig" ? "active" : ""}
+        >
+          Configuración del Restaurante
         </button>
       </div>
 
@@ -234,6 +285,48 @@ export default function Home() {
               </li>
             ))}
           </ul>
+        </div>
+      )}
+
+      {activeView === "restaurantConfig" && (
+        <div>
+          <h2>Configuración del Restaurante</h2>
+          <form onSubmit={updateRestaurantConfig}>
+            <div>
+              <label htmlFor="acceptingOrders">Aceptando Pedidos:</label>
+              <select
+                id="acceptingOrders"
+                name="acceptingOrders"
+                defaultValue={restaurantConfig.acceptingOrders.toString()}
+              >
+                <option value="true">Sí</option>
+                <option value="false">No</option>
+              </select>
+            </div>
+            <div>
+              <label htmlFor="estimatedPickupTime">
+                Tiempo estimado de recogida (minutos):
+              </label>
+              <input
+                type="number"
+                id="estimatedPickupTime"
+                name="estimatedPickupTime"
+                defaultValue={restaurantConfig.estimatedPickupTime}
+              />
+            </div>
+            <div>
+              <label htmlFor="estimatedDeliveryTime">
+                Tiempo estimado de entrega (minutos):
+              </label>
+              <input
+                type="number"
+                id="estimatedDeliveryTime"
+                name="estimatedDeliveryTime"
+                defaultValue={restaurantConfig.estimatedDeliveryTime}
+              />
+            </div>
+            <button type="submit">Actualizar Configuración</button>
+          </form>
         </div>
       )}
     </div>
