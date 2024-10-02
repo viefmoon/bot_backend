@@ -4,7 +4,7 @@ import dotenv from "dotenv";
 dotenv.config();
 
 export default async function handler(req, res) {
-  const baseUrl = process.env.NEXT_PUBLIC_API_URL;
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL;
 
   if (req.method === "GET") {
     try {
@@ -17,7 +17,7 @@ export default async function handler(req, res) {
     try {
       const response = await axios.post(
         `${baseUrl}/notification-phones`,
-        req.body
+        req.body,
       );
       res.status(201).json(response.data);
     } catch (error) {
