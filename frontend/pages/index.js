@@ -291,42 +291,46 @@ export default function Home() {
       {activeView === "restaurantConfig" && (
         <div>
           <h2>Configuración del Restaurante</h2>
-          <form onSubmit={updateRestaurantConfig}>
-            <div>
-              <label htmlFor="acceptingOrders">Aceptando Pedidos:</label>
-              <select
-                id="acceptingOrders"
-                name="acceptingOrders"
-                defaultValue={restaurantConfig.acceptingOrders.toString()}
-              >
-                <option value="true">Sí</option>
-                <option value="false">No</option>
-              </select>
-            </div>
-            <div>
-              <label htmlFor="estimatedPickupTime">
-                Tiempo estimado de recogida (minutos):
-              </label>
-              <input
-                type="number"
-                id="estimatedPickupTime"
-                name="estimatedPickupTime"
-                defaultValue={restaurantConfig.estimatedPickupTime}
-              />
-            </div>
-            <div>
-              <label htmlFor="estimatedDeliveryTime">
-                Tiempo estimado de entrega (minutos):
-              </label>
-              <input
-                type="number"
-                id="estimatedDeliveryTime"
-                name="estimatedDeliveryTime"
-                defaultValue={restaurantConfig.estimatedDeliveryTime}
-              />
-            </div>
-            <button type="submit">Actualizar Configuración</button>
-          </form>
+          {restaurantConfig ? (
+            <form onSubmit={updateRestaurantConfig}>
+              <div>
+                <label htmlFor="acceptingOrders">Aceptando Pedidos:</label>
+                <select
+                  id="acceptingOrders"
+                  name="acceptingOrders"
+                  defaultValue={restaurantConfig.acceptingOrders?.toString()}
+                >
+                  <option value="true">Sí</option>
+                  <option value="false">No</option>
+                </select>
+              </div>
+              <div>
+                <label htmlFor="estimatedPickupTime">
+                  Tiempo estimado de recogida (minutos):
+                </label>
+                <input
+                  type="number"
+                  id="estimatedPickupTime"
+                  name="estimatedPickupTime"
+                  defaultValue={restaurantConfig.estimatedPickupTime}
+                />
+              </div>
+              <div>
+                <label htmlFor="estimatedDeliveryTime">
+                  Tiempo estimado de entrega (minutos):
+                </label>
+                <input
+                  type="number"
+                  id="estimatedDeliveryTime"
+                  name="estimatedDeliveryTime"
+                  defaultValue={restaurantConfig.estimatedDeliveryTime}
+                />
+              </div>
+              <button type="submit">Actualizar Configuración</button>
+            </form>
+          ) : (
+            <p>Cargando configuración...</p>
+          )}
         </div>
       )}
     </div>
