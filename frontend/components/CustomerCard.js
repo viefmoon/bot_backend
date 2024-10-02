@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { formatDateToMexicoTime } from "../utils/dateUtils"; // Asegúrate de crear este archivo de utilidades
+import { formatDateToMexicoTime } from "../utils/dateUtils";
 import ChatHistoryModal from "./ChatHistoryModal";
 import CustomerOrdersModal from "./CustomerOrdersModal";
 
@@ -13,6 +13,27 @@ const CustomerCard = ({ client, onToggleBan }) => {
 
   const toggleCustomerOrdersModal = () => {
     setShowCustomerOrders(!showCustomerOrders);
+  };
+
+  const handleToggleBan = async () => {
+    try {
+      const action = client.isBanned ? "unban" : "ban";
+      const response = await fetch("/api/toggle_customer_ban", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ clientId: client.clientId, action }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Error al cambiar el estado de ban del cliente");
+      }
+
+      onToggleBan(client.clientId, !client.isBanned);
+    } catch (error) {
+      console.error("Error:", error);
+    }
   };
 
   return (
@@ -59,7 +80,7 @@ const CustomerCard = ({ client, onToggleBan }) => {
               className={`btn btn-${
                 client.isBanned ? "success" : "warning"
               } btn-sm`}
-              onClick={() => onToggleBan(client.clientId, client.isBanned)}
+              onClick={handleToggleBan}
             >
               {client.isBanned ? "Desbanear" : "Banear"}
             </button>
