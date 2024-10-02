@@ -1,18 +1,18 @@
 import React, { useState } from "react";
 import { formatDateToMexicoTime } from "../utils/dateUtils"; // Asegúrate de crear este archivo de utilidades
-import { useRouter } from "next/router";
 import ChatHistoryModal from "./ChatHistoryModal";
+import CustomerOrdersModal from "./CustomerOrdersModal";
 
 const CustomerCard = ({ client, onToggleBan }) => {
-  const router = useRouter();
   const [showChatHistory, setShowChatHistory] = useState(false);
-
-  const showClientOrders = (clientId) => {
-    router.push(`/client-orders/${clientId}`);
-  };
+  const [showCustomerOrders, setShowCustomerOrders] = useState(false);
 
   const toggleChatHistoryModal = () => {
     setShowChatHistory(!showChatHistory);
+  };
+
+  const toggleCustomerOrdersModal = () => {
+    setShowCustomerOrders(!showCustomerOrders);
   };
 
   return (
@@ -51,7 +51,7 @@ const CustomerCard = ({ client, onToggleBan }) => {
             </button>
             <button
               className="btn btn-info btn-sm me-2"
-              onClick={() => showClientOrders(client.clientId)}
+              onClick={toggleCustomerOrdersModal}
             >
               Ver pedidos
             </button>
@@ -70,6 +70,12 @@ const CustomerCard = ({ client, onToggleBan }) => {
         <ChatHistoryModal
           clientId={client.clientId}
           onClose={toggleChatHistoryModal}
+        />
+      )}
+      {showCustomerOrders && (
+        <CustomerOrdersModal
+          clientId={client.clientId}
+          onClose={toggleCustomerOrdersModal}
         />
       )}
     </div>
