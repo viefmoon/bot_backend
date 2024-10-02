@@ -22,19 +22,16 @@ export default function Home() {
   const [menuItems, setMenuItems] = useState([]);
 
   useEffect(() => {
-    fetchOrders(selectedDate); // Llamar con la fecha seleccionada o la actual
+    fetchOrders(selectedDate);
     fetchClients();
     fetchMenu();
+    fetchRestaurantConfig();
+    fetchNotificationPhones();
     const interval = setInterval(() => {
-      fetchOrders(selectedDate); // Asegurarse de usar siempre la fecha seleccionada
+      fetchOrders(selectedDate);
     }, 30000);
     return () => clearInterval(interval);
-  }, [selectedDate]); // Actualiza el intervalo si la fecha seleccionada cambia
-
-  useEffect(() => {
-    fetchNotificationPhones();
-    fetchRestaurantConfig();
-  }, []);
+  }, [selectedDate]);
 
   const fetchOrders = async (date) => {
     try {
@@ -242,95 +239,154 @@ export default function Home() {
     }
   };
 
-  function createMenuItemCard(item) {
-    const col = document.createElement("div");
-    col.className = "col-md-4 mb-3";
+  const renderMenuItemCard = (item) => (
+    <div key={item.id} className="col-md-4 mb-3">
+      <div className="card h-100">
+        <div className="card-body">
+          <h5 className="card-title">{item.name}</h5>
+          <p className="card-text">Categoría: {item.category}</p>
+          <p className="card-text">
+            Precio:{" "}
+            {item.price
+              ? `$${item.price.toFixed(2)}`
+              : "Varía según la variante"}
+          </p>
+          <p className="card-text">
+            Disponible:{" "}
+            <span
+              className={`badge bg-${
+                item.Availability.available ? "success" : "danger"
+              }`}
+            >
+              {item.Availability.available ? "Sí" : "No"}
+            </span>
+          </p>
 
-    const card = document.createElement("div");
-    card.className = "card h-100";
+          {item.productVariants && item.productVariants.length > 0 && (
+            <div className="mt-3">
+              <h6>Variantes:</h6>
+              <ul className="list-group">
+                {item.productVariants.map((variant) => (
+                  <li
+                    key={variant.id}
+                    className="list-group-item d-flex justify-content-between align-items-center"
+                  >
+                    {variant.name}
+                    <span
+                      className={`badge bg-${
+                        variant.Availability.available ? "success" : "danger"
+                      } rounded-pill`}
+                    >
+                      {variant.Availability.available
+                        ? "Disponible"
+                        : "No disponible"}
+                    </span>
+                    <button
+                      onClick={() =>
+                        toggleItemAvailability(variant.id, "productVariant")
+                      }
+                      className={`btn btn-${
+                        variant.Availability.available ? "danger" : "success"
+                      } btn-sm ms-2`}
+                    >
+                      {variant.Availability.available
+                        ? "Deshabilitar"
+                        : "Habilitar"}
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
 
-    const cardBody = document.createElement("div");
-    cardBody.className = "card-body";
+          {item.modifierTypes && item.modifierTypes.length > 0 && (
+            <div className="mt-3">
+              <h6>Modificadores:</h6>
+              {item.modifierTypes.map((modifierType) => (
+                <ul key={modifierType.id} className="list-group">
+                  {modifierType.modifiers.map((modifier) => (
+                    <li
+                      key={modifier.id}
+                      className="list-group-item d-flex justify-content-between align-items-center"
+                    >
+                      {modifier.name}
+                      <span
+                        className={`badge bg-${
+                          modifier.Availability.available ? "success" : "danger"
+                        } rounded-pill`}
+                      >
+                        {modifier.Availability.available
+                          ? "Disponible"
+                          : "No disponible"}
+                      </span>
+                      <button
+                        onClick={() =>
+                          toggleItemAvailability(modifier.id, "modifier")
+                        }
+                        className={`btn btn-${
+                          modifier.Availability.available ? "danger" : "success"
+                        } btn-sm ms-2`}
+                      >
+                        {modifier.Availability.available
+                          ? "Deshabilitar"
+                          : "Habilitar"}
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              ))}
+            </div>
+          )}
 
-    cardBody.innerHTML = `
-      <h5 class="card-title">${item.name}</h5>
-      <p class="card-text">Categoría: ${item.category}</p>
-      <p class="card-text">Precio: $
-        ${item.price ? `$${item.price.toFixed(2)}` : "Varía según la variante"}
-      </p>
-      <p class="card-text">Disponible: <span class="badge bg-${
-        item.Availability.available ? "success" : "danger"
-      }">${item.Availability.available ? "Sí" : "No"}</span></p>
-    `;
+          {item.pizzaIngredients && item.pizzaIngredients.length > 0 && (
+            <div className="mt-3">
+              <h6>Ingredientes de Pizza:</h6>
+              <ul className="list-group">
+                {item.pizzaIngredients.map((ingredient) => (
+                  <li
+                    key={ingredient.id}
+                    className="list-group-item d-flex justify-content-between align-items-center"
+                  >
+                    {ingredient.name}
+                    <span
+                      className={`badge bg-${
+                        ingredient.Availability.available ? "success" : "danger"
+                      } rounded-pill`}
+                    >
+                      {ingredient.Availability.available
+                        ? "Disponible"
+                        : "No disponible"}
+                    </span>
+                    <button
+                      onClick={() =>
+                        toggleItemAvailability(ingredient.id, "pizzaIngredient")
+                      }
+                      className={`btn btn-${
+                        ingredient.Availability.available ? "danger" : "success"
+                      } btn-sm ms-2`}
+                    >
+                      {ingredient.Availability.available
+                        ? "Deshabilitar"
+                        : "Habilitar"}
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
 
-    if (item.ProductVariants && item.ProductVariants.length > 0) {
-      const variantsSection = document.createElement("div");
-      variantsSection.className = "mt-3";
-      variantsSection.innerHTML = "<h6>Variantes:</h6>";
-      const variantsList = document.createElement("ul");
-      variantsList.className = "list-group";
-      item.ProductVariants.forEach((variant) => {
-        const listItem = document.createElement("li");
-        listItem.className =
-          "list-group-item d-flex justify-content-between align-items-center";
-        listItem.innerHTML = `
-          ${variant.name}
-          <span>$${variant.price.toFixed(2)}</span>
-        `;
-        variantsList.appendChild(listItem);
-      });
-      variantsSection.appendChild(variantsList);
-      cardBody.appendChild(variantsSection);
-    }
-
-    if (item.ModifierTypes && item.ModifierTypes.length > 0) {
-      const modifiersSection = document.createElement("div");
-      modifiersSection.className = "mt-3";
-      modifiersSection.innerHTML = "<h6>Modificadores:</h6>";
-      item.ModifierTypes.forEach((modifierType) => {
-        const modifiersList = document.createElement("ul");
-        modifiersList.className = "list-group";
-        modifierType.Modifiers.forEach((modifier) => {
-          const listItem = document.createElement("li");
-          listItem.className =
-            "list-group-item d-flex justify-content-between align-items-center";
-          listItem.innerHTML = `
-            ${modifier.name}
-            <span>$${modifier.price.toFixed(2)}</span>
-          `;
-          modifiersList.appendChild(listItem);
-        });
-        modifiersSection.appendChild(modifiersList);
-      });
-      cardBody.appendChild(modifiersSection);
-    }
-
-    if (item.PizzaIngredients && item.PizzaIngredients.length > 0) {
-      const ingredientsSection = document.createElement("div");
-      ingredientsSection.className = "mt-3";
-      ingredientsSection.innerHTML = "<h6>Ingredientes de Pizza:</h6>";
-      const ingredientsList = document.createElement("ul");
-      ingredientsList.className = "list-group";
-      item.PizzaIngredients.forEach((ingredient) => {
-        const listItem = document.createElement("li");
-        listItem.className = "list-group-item";
-        listItem.textContent = ingredient.name;
-        ingredientsList.appendChild(listItem);
-      });
-      ingredientsSection.appendChild(ingredientsList);
-      cardBody.appendChild(ingredientsSection);
-    }
-
-    const toggleButton = createToggleButton(item.Availability.available, () =>
-      toggleItemAvailability(item.id, "product")
-    );
-    cardBody.appendChild(toggleButton);
-
-    card.appendChild(cardBody);
-    col.appendChild(card);
-
-    return col;
-  }
+          <button
+            onClick={() => toggleItemAvailability(item.id, "product")}
+            className={`btn btn-${
+              item.Availability.available ? "danger" : "success"
+            } btn-sm mt-2`}
+          >
+            {item.Availability.available ? "Deshabilitar" : "Habilitar"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
 
   return (
     <div>
@@ -526,116 +582,7 @@ export default function Home() {
                     {category.charAt(0).toUpperCase() + category.slice(1)}
                   </h3>
                   <div className="row">
-                    {items.map((item) => (
-                      <div key={item.id} className="col-md-4 mb-3">
-                        <div className="card h-100">
-                          <div className="card-body">
-                            <h5 className="card-title">{item.name}</h5>
-                            <p className="card-text">
-                              Categoría: {item.category}
-                            </p>
-                            <p className="card-text">
-                              Precio:{" "}
-                              {item.price
-                                ? `$${item.price.toFixed(2)}`
-                                : "Varía según la variante"}
-                            </p>
-                            <p className="card-text">
-                              Disponible:{" "}
-                              <span
-                                className={`badge bg-${
-                                  item.Availability.available
-                                    ? "success"
-                                    : "danger"
-                                }`}
-                              >
-                                {item.Availability.available ? "Sí" : "No"}
-                              </span>
-                            </p>
-
-                            {/* Variantes */}
-                            {item.ProductVariants &&
-                              item.ProductVariants.length > 0 && (
-                                <div className="mt-3">
-                                  <h6>Variantes:</h6>
-                                  <ul className="list-group">
-                                    {item.ProductVariants.map((variant) => (
-                                      <li
-                                        key={variant.id}
-                                        className="list-group-item d-flex justify-content-between align-items-center"
-                                      >
-                                        {variant.name}
-                                        <span>${variant.price.toFixed(2)}</span>
-                                      </li>
-                                    ))}
-                                  </ul>
-                                </div>
-                              )}
-
-                            {/* Modificadores */}
-                            {item.ModifierTypes &&
-                              item.ModifierTypes.length > 0 && (
-                                <div className="mt-3">
-                                  <h6>Modificadores:</h6>
-                                  {item.ModifierTypes.map((modifierType) => (
-                                    <div key={modifierType.id}>
-                                      <h7>{modifierType.name}</h7>
-                                      <ul className="list-group">
-                                        {modifierType.Modifiers.map(
-                                          (modifier) => (
-                                            <li
-                                              key={modifier.id}
-                                              className="list-group-item d-flex justify-content-between align-items-center"
-                                            >
-                                              {modifier.name}
-                                              <span>
-                                                ${modifier.price.toFixed(2)}
-                                              </span>
-                                            </li>
-                                          )
-                                        )}
-                                      </ul>
-                                    </div>
-                                  ))}
-                                </div>
-                              )}
-
-                            {/* Ingredientes de Pizza */}
-                            {item.PizzaIngredients &&
-                              item.PizzaIngredients.length > 0 && (
-                                <div className="mt-3">
-                                  <h6>Ingredientes de Pizza:</h6>
-                                  <ul className="list-group">
-                                    {item.PizzaIngredients.map((ingredient) => (
-                                      <li
-                                        key={ingredient.id}
-                                        className="list-group-item"
-                                      >
-                                        {ingredient.name}
-                                      </li>
-                                    ))}
-                                  </ul>
-                                </div>
-                              )}
-
-                            <button
-                              onClick={() =>
-                                toggleItemAvailability(item.id, "product")
-                              }
-                              className={`btn btn-${
-                                item.Availability.available
-                                  ? "danger"
-                                  : "success"
-                              } btn-sm mt-2`}
-                            >
-                              {item.Availability.available
-                                ? "Deshabilitar"
-                                : "Habilitar"}
-                            </button>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
+                    {items.map((item) => renderMenuItemCard(item))}
                   </div>
                 </div>
               )
