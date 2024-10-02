@@ -19,10 +19,12 @@ export default function Home() {
     estimatedPickupTime: 0,
     estimatedDeliveryTime: 0,
   });
+  const [menuItems, setMenuItems] = useState([]);
 
   useEffect(() => {
     fetchOrders(selectedDate); // Llamar con la fecha seleccionada o la actual
     fetchClients();
+    fetchMenu();
     const interval = setInterval(() => {
       fetchOrders(selectedDate); // Asegurarse de usar siempre la fecha seleccionada
     }, 30000);
@@ -162,6 +164,84 @@ export default function Home() {
     }
   };
 
+  const fetchMenu = async () => {
+    try {
+      const response = await axios.get("/api/menu");
+      setMenuItems(response.data);
+    } catch (error) {
+      console.error("Error al obtener el menú:", error);
+      setError(
+        "No se pudo obtener el menú. Por favor, inténtelo de nuevo más tarde."
+      );
+    }
+  };
+
+  const toggleItemAvailability = async (id, type) => {
+    try {
+      await axios.post("/api/menu", { id, type });
+      fetchMenu();
+    } catch (error) {
+      console.error("Error al cambiar la disponibilidad:", error);
+      setError(
+        "No se pudo cambiar la disponibilidad. Por favor, inténtelo de nuevo."
+      );
+    }
+  };
+
+  const groupMenuItemsByCategory = (menuItems) => {
+    const groupedItems = {};
+    menuItems.forEach((item) => {
+      if (!groupedItems[item.category]) {
+        groupedItems[item.category] = [];
+      }
+      groupedItems[item.category].push(item);
+    });
+    return groupedItems;
+  };
+
+  const createCompactIngredients = (ingredients) => {
+    if (!ingredients || ingredients.length === 0) return "";
+    const ingredientsByHalf = { left: [], right: [], full: [] };
+    ingredients.forEach((ing) => {
+      ingredientsByHalf[ing.half].push(
+        `${ing.action === "add" ? "Con" : "Sin"} ${ing.PizzaIngredient.name}`
+      );
+    });
+    let result = "<small><strong>Ingredientes:</strong> ";
+    for (const [half, ings] of Object.entries(ingredientsByHalf)) {
+      if (ings.length > 0) {
+        result += `${translateHalf(half)}: ${ings.join(", ")}; `;
+      }
+    }
+    return result.slice(0, -2) + "</small>";
+  };
+
+  const createCompactModifiers = (modifiers) => {
+    if (!modifiers || modifiers.length === 0) return "";
+    return (
+      "<small><strong>Modificadores:</strong> " +
+      modifiers
+        .map(
+          (mod) => `${mod.Modifier.name} (+$${mod.Modifier.price.toFixed(2)})`
+        )
+        .join(", ") +
+      "</small>"
+    );
+  };
+
+  const translateHalf = (half) => {
+    switch (half) {
+      case "left":
+        return "Izquierda";
+      case "right":
+        return "Derecha";
+      case "full":
+        return "Completa";
+      default:
+        return half;
+    }
+  };
+
   return (
     <div>
       <div className="view-selector">
@@ -188,6 +268,12 @@ export default function Home() {
           className={activeView === "restaurantConfig" ? "active" : ""}
         >
           Configuración del Restaurante
+        </button>
+        <button
+          onClick={() => setActiveView("menu")}
+          className={activeView === "menu" ? "active" : ""}
+        >
+          Ver Menú
         </button>
       </div>
 
@@ -332,6 +418,74 @@ export default function Home() {
           ) : (
             <p>Cargando configuración...</p>
           )}
+        </div>
+      )}
+
+      {activeView === "menu" && (
+        <div>
+          <h2>Menú</h2>
+          <button onClick={fetchMenu} className="refresh-button">
+            Refrescar Menú
+          </button>
+          {error && <div className="alert alert-danger">{error}</div>}
+          <div id="menu-list">
+            {Object.entries(groupMenuItemsByCategory(menuItems)).map(
+              ([category, items]) => (
+                <div key={category} className="col-12 mb-4">
+                  <h3>
+                    {category.charAt(0).toUpperCase() + category.slice(1)}
+                  </h3>
+                  <div className="row">
+                    {items.map((item) => (
+                      <div key={item.id} className="col-md-4 mb-3">
+                        <div className="card h-100">
+                          <div className="card-body">
+                            <h5 className="card-title">{item.name}</h5>
+                            <p className="card-text">
+                              Categoría: {item.category}
+                            </p>
+                            <p className="card-text">
+                              Precio:{" "}
+                              {item.price
+                                ? `$${item.price.toFixed(2)}`
+                                : "Varía según la variante"}
+                            </p>
+                            <p className="card-text">
+                              Disponible:{" "}
+                              <span
+                                className={`badge bg-${
+                                  item.Availability.available
+                                    ? "success"
+                                    : "danger"
+                                }`}
+                              >
+                                {item.Availability.available ? "Sí" : "No"}
+                              </span>
+                            </p>
+                            {/* Aquí puedes agregar más detalles del menú si lo deseas */}
+                            <button
+                              onClick={() =>
+                                toggleItemAvailability(item.id, "product")
+                              }
+                              className={`btn btn-${
+                                item.Availability.available
+                                  ? "danger"
+                                  : "success"
+                              } btn-sm`}
+                            >
+                              {item.Availability.available
+                                ? "Deshabilitar"
+                                : "Habilitar"}
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )
+            )}
+          </div>
         </div>
       )}
     </div>
