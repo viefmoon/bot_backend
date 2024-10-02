@@ -119,3 +119,26 @@
   background-color: #007bff;
   color: white;
 }
+.refresh-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 20px;
+  background-color: #4caf50;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 16px;
+  transition: background-color 0.3s;
+}
+
+.refresh-button:hover {
+  background-color: #45a049;
+}
+
+.refresh-icon {
+  width: 20px;
+  height: 20px;
+  margin-right: 8px;
+}
