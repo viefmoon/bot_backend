@@ -97,22 +97,56 @@ Availability.belongsTo(Product, {
   constraints: false,
   scope: { type: "product" },
 });
+
+Product.hasOne(Availability, {
+  foreignKey: "id",
+  constraints: false,
+  scope: { type: "product" },
+});
+
 Availability.belongsTo(ProductVariant, {
   foreignKey: "id",
   constraints: false,
   scope: { type: "productVariant" },
 });
+
+ProductVariant.hasOne(Availability, {
+  foreignKey: "id",
+  constraints: false,
+  scope: { type: "productVariant" },
+});
+
 Availability.belongsTo(PizzaIngredient, {
   foreignKey: "id",
   constraints: false,
   scope: { type: "pizzaIngredient" },
 });
+
+PizzaIngredient.hasOne(Availability, {
+  foreignKey: "id",
+  constraints: false,
+  scope: { type: "pizzaIngredient" },
+});
+
 Availability.belongsTo(ModifierType, {
   foreignKey: "id",
   constraints: false,
   scope: { type: "modifierType" },
 });
+
+ModifierType.hasOne(Availability, {
+  foreignKey: "id",
+  constraints: false,
+  scope: { type: "modifierType" },
+});
+
 Availability.belongsTo(Modifier, {
+  foreignKey: "id",
+  constraints: false,
+  scope: { type: "modifier" },
+});
+
+Modifier.hasOne(Availability, {
   foreignKey: "id",
   constraints: false,
   scope: { type: "modifier" },

@@ -12,6 +12,8 @@ import {
 export class MenuService {
   async getMenu() {
     try {
+      // Agregar logging para depuración
+      console.log("Iniciando recuperación del menú");
       const menu = await Product.findAll({
         attributes: {
           exclude: ["createdAt", "updatedAt", "keywords", "ingredients"],
@@ -69,7 +71,10 @@ export class MenuService {
       });
       return menu;
     } catch (error) {
-      throw new Error("Error al recuperar el menú");
+      // Mejorar el manejo de errores
+      console.error("Error al recuperar el menú:", error);
+      console.error("Stack trace:", error.stack);
+      throw new Error(`Error al recuperar el menú: ${error.message}`);
     }
   }
 }

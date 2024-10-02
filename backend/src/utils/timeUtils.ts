@@ -1,4 +1,4 @@
-import moment from "moment-timezone";
+import * as moment from "moment-timezone";
 import axios from "axios";
 
 let mexicoCityTime: moment.Moment | null = null;
@@ -10,7 +10,7 @@ async function getMexicoCityTime(): Promise<moment.Moment> {
     // Actualizar cada hora
     try {
       const response = await axios.get(
-        "http://worldtimeapi.org/api/timezone/America/Mexico_City"
+        "http://worldtimeapi.org/api/timezone/America/Mexico_City",
       );
       // Definir el tipo de respuesta
       interface WorldTimeResponse {
@@ -18,7 +18,7 @@ async function getMexicoCityTime(): Promise<moment.Moment> {
       }
       mexicoCityTime = moment.tz(
         (response.data as WorldTimeResponse).datetime,
-        "America/Mexico_City"
+        "America/Mexico_City",
       );
       lastFetch = now;
     } catch (error) {

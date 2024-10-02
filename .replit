@@ -8,5 +8,5 @@ channel = "stable-24_05"
 run = ["sh", "-c", "cd backend && npm run dev"]
 
 [[ports]]
-localPort = 3001
+localPort = 3000
 externalPort = 80
