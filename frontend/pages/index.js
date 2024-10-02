@@ -150,6 +150,7 @@ export default function Home() {
       const response = await axios.put("/api/restaurant_config", config);
       setRestaurantConfig(response.data.config);
       alert("Configuración actualizada exitosamente");
+      fetchRestaurantConfig(); // Añadir esta línea para actualizar la configuración
     } catch (error) {
       console.error(
         "Error al actualizar la configuración del restaurante:",
