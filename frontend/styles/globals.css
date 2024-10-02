@@ -81,3 +81,24 @@
 .modal-body .badge {
   font-size: 0.75rem;
 }
+
+.chat-history {
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.message {
+  margin-bottom: 10px;
+  padding: 10px;
+  border-radius: 5px;
+}
+
+.message.user {
+  background-color: #e6f2ff;
+  text-align: right;
+}
+
+.message.assistant {
+  background-color: #f0f0f0;
+  text-align: left;
+}

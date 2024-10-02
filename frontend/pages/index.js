@@ -33,7 +33,7 @@ export default function Home() {
     } catch (error) {
       console.error("Error al obtener pedidos:", error);
       setError(
-        "No se pudieron obtener los pedidos. Por favor, inténtelo de nuevo más tarde.",
+        "No se pudieron obtener los pedidos. Por favor, inténtelo de nuevo más tarde."
       );
     }
   };
@@ -45,7 +45,7 @@ export default function Home() {
     } catch (error) {
       console.error("Error al obtener clientes:", error);
       setError(
-        "No se pudieron obtener los clientes. Por favor, inténtelo de nuevo más tarde.",
+        "No se pudieron obtener los clientes. Por favor, inténtelo de nuevo más tarde."
       );
     }
   };
