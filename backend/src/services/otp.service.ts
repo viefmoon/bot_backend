@@ -1,5 +1,4 @@
-import { Injectable } from "@nestjs/common";
-import { Cron, CronExpression } from "@nestjs/schedule";
+import { Injectable, OnModuleInit, OnModuleDestroy } from "@nestjs/common";
 import {
   generateOTP,
   storeOTP,
@@ -8,7 +7,9 @@ import {
 } from "../utils/otp";
 
 @Injectable()
-export class OtpService {
+export class OtpService implements OnModuleInit, OnModuleDestroy {
+  private cleanupInterval: NodeJS.Timeout;
+
   generateOTP(): string {
     return generateOTP();
   }
@@ -21,9 +22,17 @@ export class OtpService {
     return verifyOTP(phoneNumber, otp);
   }
 
-  @Cron(CronExpression.EVERY_5_MINUTES)
-  handleCron() {
-    console.log("Limpiando OTPs expirados...");
-    cleanupExpiredOTPs();
+  onModuleInit() {
+    // Ejecutar la limpieza cada 5 minutos
+    this.cleanupInterval = setInterval(() => {
+      console.log("Limpiando OTPs expirados...");
+      cleanupExpiredOTPs();
+    }, 5 * 60 * 1000); // 5 minutos en milisegundos
+  }
+
+  onModuleDestroy() {
+    if (this.cleanupInterval) {
+      clearInterval(this.cleanupInterval);
+    }
   }
 }
