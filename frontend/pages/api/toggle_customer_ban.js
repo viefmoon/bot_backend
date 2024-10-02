@@ -1,8 +1,11 @@
 import axios from "axios";
 
+import dotenv from "dotenv";
+dotenv.config();
+
 export default async function handler(req, res) {
     const { method, body } = req;
-    const url = "https://pizzatototlan.store/api/ban_customer";
+    const url = `${process.env.NEXT_PUBLIC_BASE_URL}/ban_customer`;
 
     try {
         const response = await axios.post(url, body);

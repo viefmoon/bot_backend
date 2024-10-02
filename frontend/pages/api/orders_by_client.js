@@ -1,4 +1,6 @@
 import axios from "axios";
+import dotenv from "dotenv";
+dotenv.config();
 
 export default async function handler(req, res) {
     const { query } = req;
@@ -10,7 +12,7 @@ export default async function handler(req, res) {
             .json({ error: "Se requiere el parámetro clientId" });
     }
 
-    const url = `https://pizzatototlan.store/api/get_orders_by_client?clientId=${clientId}`;
+    const url = `${process.env.NEXT_PUBLIC_BASE_URL}/get_orders_by_client?clientId=${clientId}`;
 
     try {
         const response = await axios.get(url);

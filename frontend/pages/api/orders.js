@@ -1,9 +1,12 @@
 import axios from "axios";
 
+import dotenv from "dotenv";
+dotenv.config();
+
 export default async function handler(req, res) {
     const { method, query } = req;
     const { date } = query;
-    let url = "https://pizzatototlan.store/api/get_orders";
+    let url = `${process.env.NEXT_PUBLIC_BASE_URL}/get_orders`;
     if (date) {
         url += `?date=${date}`;
     }
