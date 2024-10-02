@@ -55,43 +55,54 @@ export default function Home() {
   };
 
   return (
-    <div>
-      <button
-        id="refreshOrdersButton"
-        onClick={() => fetchOrders(selectedDate)}
-      >
-        Refrescar Pedidos
-      </button>
-      <button id="refreshClientsButton" onClick={fetchClients}>
-        Refrescar Clientes
-      </button>
-
-      <div>
-        <label>Selecciona una fecha: </label>
-        <DatePicker
-          selected={selectedDate}
-          onChange={handleDateChange}
-          dateFormat="yyyy-MM-dd"
-          placeholderText="Selecciona una fecha"
-        />
+    <div className="container">
+      <div className="controls">
+        <button
+          id="refreshOrdersButton"
+          onClick={() => fetchOrders(selectedDate)}
+        >
+          Refrescar Pedidos
+        </button>
+        <button id="refreshClientsButton" onClick={fetchClients}>
+          Refrescar Clientes
+        </button>
+        <div>
+          <label>Selecciona una fecha: </label>
+          <DatePicker
+            selected={selectedDate}
+            onChange={handleDateChange}
+            dateFormat="yyyy-MM-dd"
+            placeholderText="Selecciona una fecha"
+          />
+        </div>
       </div>
 
       {error && <div className="alert alert-danger">{error}</div>}
-      <div id="order-list">
-        {orders.length === 0 ? (
-          <p className="text-center">No se encontraron pedidos.</p>
-        ) : (
-          orders.map((order) => <OrderCard key={order.id} order={order} />)
-        )}
-      </div>
-      <div id="client-list">
-        {clients.length === 0 ? (
-          <p className="text-center">No se encontraron clientes.</p>
-        ) : (
-          clients.map((client) => (
-            <CustomerCard key={client.clientId} client={client} />
-          ))
-        )}
+
+      <div className="content-wrapper">
+        <div className="column orders-column">
+          <h2>Pedidos</h2>
+          <div id="order-list">
+            {orders.length === 0 ? (
+              <p className="text-center">No se encontraron pedidos.</p>
+            ) : (
+              orders.map((order) => <OrderCard key={order.id} order={order} />)
+            )}
+          </div>
+        </div>
+
+        <div className="column clients-column">
+          <h2>Clientes</h2>
+          <div id="client-list">
+            {clients.length === 0 ? (
+              <p className="text-center">No se encontraron clientes.</p>
+            ) : (
+              clients.map((client) => (
+                <CustomerCard key={client.clientId} client={client} />
+              ))
+            )}
+          </div>
+        </div>
       </div>
     </div>
   );

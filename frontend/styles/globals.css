@@ -102,3 +102,38 @@
   background-color: #f0f0f0;
   text-align: left;
 }
+
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+.controls {
+  margin-bottom: 20px;
+}
+
+.content-wrapper {
+  display: flex;
+  gap: 20px;
+}
+
+.column {
+  flex: 1;
+  padding: 20px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+}
+
+.orders-column {
+  background-color: #f0f8ff; /* Azul claro para pedidos */
+}
+
+.clients-column {
+  background-color: #f0fff0; /* Verde claro para clientes */
+}
+
+h2 {
+  margin-top: 0;
+  margin-bottom: 15px;
+}
