@@ -6,7 +6,7 @@ export default async function handler(req, res) {
 
     try {
       const response = await axios.post(
-        `${process.env.NEXT_PUBLIC_BASE_URL}/customers/ban`,
+        `${process.env.NEXT_PUBLIC_BACKEND_BASE_URL}/customers/ban`,
         {
           clientId,
           action,

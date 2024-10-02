@@ -7,7 +7,7 @@ export default async function handler(req, res) {
   if (req.method === "GET") {
     try {
       const response = await axios.get(
-        `${process.env.NEXT_PUBLIC_BASE_URL}/restaurant-config`
+        `${process.env.NEXT_PUBLIC_BACKEND_BASE_URL}/restaurant-config`
       );
 
       res.status(200).json(response.data);
@@ -25,7 +25,7 @@ export default async function handler(req, res) {
 
     try {
       const response = await axios.put(
-        `${process.env.NEXT_PUBLIC_BASE_URL}/restaurant-config`,
+        `${process.env.NEXT_PUBLIC_BACKEND_BASE_URL}/restaurant-config`,
         config
       );
 

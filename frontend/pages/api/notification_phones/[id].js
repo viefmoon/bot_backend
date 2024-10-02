@@ -4,14 +4,14 @@ import dotenv from "dotenv";
 dotenv.config();
 
 export default async function handler(req, res) {
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL;
+  const baseUrl = process.env.NEXT_PUBLIC_BACKEND_BASE_URL;
   const { id } = req.query;
 
   if (req.method === "PUT") {
     try {
       const response = await axios.put(
         `${baseUrl}/notification-phones/${id}`,
-        req.body,
+        req.body
       );
       res.status(200).json(response.data);
     } catch (error) {
@@ -20,7 +20,7 @@ export default async function handler(req, res) {
   } else if (req.method === "DELETE") {
     try {
       const response = await axios.delete(
-        `${baseUrl}/notification-phones/${id}`,
+        `${baseUrl}/notification-phones/${id}`
       );
       res.status(200).json(response.data);
     } catch (error) {

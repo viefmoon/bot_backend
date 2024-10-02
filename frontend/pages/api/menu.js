@@ -4,7 +4,7 @@ export default async function handler(req, res) {
   if (req.method === "GET") {
     try {
       const response = await axios.get(
-        `${process.env.NEXT_PUBLIC_BASE_URL}/menu`
+        `${process.env.NEXT_PUBLIC_BACKEND_BASE_URL}/menu`
       );
       res.status(200).json(response.data);
     } catch (error) {
@@ -14,7 +14,7 @@ export default async function handler(req, res) {
   } else if (req.method === "POST") {
     try {
       const response = await axios.post(
-        `${process.env.NEXT_PUBLIC_BASE_URL}/availability/toggle`,
+        `${process.env.NEXT_PUBLIC_BACKEND_BASE_URL}/availability/toggle`,
         req.body
       );
       res.status(200).json(response.data);

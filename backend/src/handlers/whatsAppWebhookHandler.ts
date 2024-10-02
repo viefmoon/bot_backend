@@ -90,7 +90,7 @@ async function handleIncomingWhatsAppMessage(
   if (!customer.customerDeliveryInfo) {
     const otp = otpService.generateOTP();
     await otpService.storeOTP(from, otp);
-    const registrationLink = `https://tudominio.com/registro-direccion/${from}?otp=${otp}`;
+    const registrationLink = `${process.env.FRONTEND_BASE_URL}/delivery-info-registration/${from}?otp=${otp}`;
 
     await sendWhatsAppMessage(
       from,
