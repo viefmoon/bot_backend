@@ -1,5 +1,6 @@
 import { DataTypes, Model, Optional } from "sequelize";
 import { sequelize } from "../lib/db";
+import CustomerDeliveryInfo from "./customerDeliveryInfo";
 
 // Definición de la interfaz para los atributos del Customer
 interface CustomerAttributes {
@@ -36,6 +37,9 @@ class Customer
   // Timestamps
   public readonly createdAt!: Date;
   public readonly updatedAt!: Date;
+
+  // Associations
+  public customerDeliveryInfo?: CustomerDeliveryInfo;
 }
 
 Customer.init(

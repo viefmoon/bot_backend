@@ -11,6 +11,7 @@ import {
 import { verificarHorarioAtencion } from "../utils/timeUtils";
 import { checkMessageRateLimit } from "../utils/messageRateLimit";
 import { Request, Response } from "express";
+import { OtpService } from "../services/otp.service";
 
 interface WhatsAppMessage {
   from: string;
@@ -48,7 +49,8 @@ async function sendBannedMessage(clientId: string): Promise<void> {
 }
 
 async function handleIncomingWhatsAppMessage(
-  message: WhatsAppMessage
+  message: WhatsAppMessage,
+  otpService: OtpService
 ): Promise<void> {
   const { from, type, id } = message;
 
@@ -85,13 +87,17 @@ async function handleIncomingWhatsAppMessage(
     return;
   }
   // Verificar si el cliente tiene información de entrega
-  // if (!customer.CustomerDeliveryInfo) {
-  //   await sendWhatsAppMessage(
-  //     from,
-  //     "Antes de continuar, necesitamos que registres tu información de entrega. Por favor, proporciona tu dirección completa, podras cambiarla en cualquier momento.",
-  //   );
-  //   return;
-  // }
+  if (!customer.customerDeliveryInfo) {
+    const otp = otpService.generateOTP();
+    await otpService.storeOTP(from, otp);
+    const registrationLink = `https://tudominio.com/registro-direccion/${from}?otp=${otp}`;
+
+    await sendWhatsAppMessage(
+      from,
+      `Antes de continuar, necesitamos que registres tu información de entrega. Por favor, usa este enlace para proporcionar tu dirección completa: ${registrationLink}`
+    );
+    return;
+  }
 
   //manejar el mensaje dependiendo del tipo
   switch (type) {
@@ -112,7 +118,8 @@ async function handleIncomingWhatsAppMessage(
 // Manejo de mensajes de WhatsApp
 export async function handleWhatsAppWebhook(
   req: Request,
-  res: Response
+  res: Response,
+  otpService: OtpService
 ): Promise<void> {
   res.status(200).send("EVENT_RECEIVED");
   const { object, entry } = req.body as WebhookBody;
@@ -123,7 +130,7 @@ export async function handleWhatsAppWebhook(
         const { value } = change;
         if (value.messages && value.messages.length > 0) {
           for (const message of value.messages) {
-            await handleIncomingWhatsAppMessage(message);
+            await handleIncomingWhatsAppMessage(message, otpService);
           }
         }
       }

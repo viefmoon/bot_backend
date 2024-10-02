@@ -1,5 +1,6 @@
 import { Module } from "@nestjs/common";
 import { ConfigModule } from "@nestjs/config";
+import { ScheduleModule } from "@nestjs/schedule";
 import { MenuController } from "./controllers/menu.controller";
 import { CustomerController } from "./controllers/customer.controller";
 import { OrderController } from "./controllers/order.controller";
@@ -18,10 +19,12 @@ import { RestaurantConfigService } from "./services/restaurant-config.service";
 import { AvailabilityService } from "./services/availability.service";
 import { OrderStatusService } from "./services/order-status.service";
 import { WebhookService } from "./services/webhook.service";
+import { OtpService } from "./services/otp.service";
 
 @Module({
   imports: [
     ConfigModule.forRoot(),
+    ScheduleModule.forRoot(),
     // Otros módulos que necesites
   ],
   controllers: [
@@ -45,6 +48,7 @@ import { WebhookService } from "./services/webhook.service";
     AvailabilityService,
     OrderStatusService,
     WebhookService,
+    OtpService,
   ],
 })
 export class AppModule {}
