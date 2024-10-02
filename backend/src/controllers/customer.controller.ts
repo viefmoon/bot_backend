@@ -5,16 +5,16 @@ import { CustomerService } from "../services/customer.service";
 export class CustomerController {
   constructor(private readonly customerService: CustomerService) {}
 
-  @Post("ban")
-  async banCustomer(
-    @Body() body: { clientId: string; action: "ban" | "unban" }
-  ) {
-    return this.customerService.banCustomer(body.clientId, body.action);
-  }
-
   @Get()
   async getCustomers() {
     return this.customerService.getCustomers();
+  }
+
+  @Post("ban")
+  async banCustomer(
+    @Body() body: { clientId: string; action: "ban" | "unban" },
+  ) {
+    return this.customerService.banCustomer(body.clientId, body.action);
   }
 
   @Get(":clientId/chat-history")

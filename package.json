@@ -1,14 +1,13 @@
 {
-  "dependencies": {
-    "@nestjs/config": "^3.2.3",
-    "@types/axios": "^0.9.36",
-    "@types/next": "^8.0.7",
-    "axios": "^1.7.7",
-    "class-transformer": "^0.5.1",
-    "class-validator": "^0.14.1",
-    "next": "^14.2.14"
+  "name": "bot_app",
+  "version": "1.0.0",
+  "scripts": {
+    "dev": "concurrently \"cd frontend && npm run dev\" \"cd backend && npm run dev\"",
+    "build": "cd frontend && npm run build && cd ../backend && npm run build",
+    "start": "cd backend && npm start",
+    "install:all": "npm install && npm --prefix backend install && npm --prefix frontend install"
   },
   "devDependencies": {
-    "ts-node": "^10.9.2"
+    "concurrently": "^7.0.0"
   }
 }

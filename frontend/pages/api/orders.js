@@ -10,7 +10,7 @@ export default async function handler(req, res) {
 
     try {
         const response = await axios.get(url);
-        const data = response.data;
+        let data = response.data;
 
         if (!Array.isArray(data)) {
             data = data ? [data] : [];
