@@ -462,7 +462,80 @@ export default function Home() {
                                 {item.Availability.available ? "Sí" : "No"}
                               </span>
                             </p>
-                            {/* Aquí puedes agregar más detalles del menú si lo deseas */}
+
+                            {/* Mostrar variantes */}
+                            {item.Variants && item.Variants.length > 0 && (
+                              <div>
+                                <h6>Variantes:</h6>
+                                <ul>
+                                  {item.Variants.map((variant) => (
+                                    <li key={variant.id}>
+                                      {variant.name} - $
+                                      {variant.price.toFixed(2)}
+                                      <span
+                                        className={`badge bg-${
+                                          variant.Availability.available
+                                            ? "success"
+                                            : "danger"
+                                        } ms-2`}
+                                      >
+                                        {variant.Availability.available
+                                          ? "Disponible"
+                                          : "No disponible"}
+                                      </span>
+                                      <button
+                                        onClick={() =>
+                                          toggleItemAvailability(
+                                            variant.id,
+                                            "variant"
+                                          )
+                                        }
+                                        className={`btn btn-${
+                                          variant.Availability.available
+                                            ? "danger"
+                                            : "success"
+                                        } btn-sm ms-2`}
+                                      >
+                                        {variant.Availability.available
+                                          ? "Deshabilitar"
+                                          : "Habilitar"}
+                                      </button>
+                                    </li>
+                                  ))}
+                                </ul>
+                              </div>
+                            )}
+
+                            {/* Mostrar modificadores */}
+                            {item.Modifiers && item.Modifiers.length > 0 && (
+                              <div>
+                                <h6>Modificadores:</h6>
+                                <ul>
+                                  {item.Modifiers.map((modifier) => (
+                                    <li key={modifier.id}>
+                                      {modifier.name} - $
+                                      {modifier.price.toFixed(2)}
+                                    </li>
+                                  ))}
+                                </ul>
+                              </div>
+                            )}
+
+                            {/* Mostrar ingredientes */}
+                            {item.Ingredients &&
+                              item.Ingredients.length > 0 && (
+                                <div>
+                                  <h6>Ingredientes:</h6>
+                                  <ul>
+                                    {item.Ingredients.map((ingredient) => (
+                                      <li key={ingredient.id}>
+                                        {ingredient.name}
+                                      </li>
+                                    ))}
+                                  </ul>
+                                </div>
+                              )}
+
                             <button
                               onClick={() =>
                                 toggleItemAvailability(item.id, "product")
@@ -471,7 +544,7 @@ export default function Home() {
                                 item.Availability.available
                                   ? "danger"
                                   : "success"
-                              } btn-sm`}
+                              } btn-sm mt-2`}
                             >
                               {item.Availability.available
                                 ? "Deshabilitar"
