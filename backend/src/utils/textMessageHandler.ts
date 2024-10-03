@@ -40,7 +40,7 @@ interface ProcessRequest {
 }
 
 async function resetChatHistory(customer) {
-  await customer.update({ relevantChatHistory: "[]" });
+  await customer.update({ relevantChatHistory: [] });
   await sendWhatsAppMessage(
     customer.clientId,
     "Entendido, he olvidado el contexto anterior. ¿En qué puedo ayudarte ahora?"
@@ -163,6 +163,18 @@ export async function handleTextMessage(
     relevantChatHistory: relevantChatHistory,
     lastInteraction: new Date(),
   });
+  // Verifica el contenido después de la actualización
+  const updatedCustomer = await Customer.findOne({
+    where: { clientId: from },
+  });
+  console.log(
+    "fullChatHistory después de actualizar:",
+    updatedCustomer.fullChatHistory
+  );
+  console.log(
+    "relevantChatHistory después de actualizar:",
+    updatedCustomer.relevantChatHistory
+  );
 }
 
 async function processAndGenerateAIResponse(
