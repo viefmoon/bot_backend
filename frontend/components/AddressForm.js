@@ -7,17 +7,12 @@ export default function AddressForm({
   setFormData,
 }) {
   useEffect(() => {
-    if (selectedLocation && address) {
+    if (selectedLocation && typeof address === "string") {
       setFormData((prev) => ({
         ...prev,
-        latitude: selectedLocation.lat || "",
-        longitude: selectedLocation.lng || "",
-        streetAddress: address.streetAddress || "",
-        neighborhood: address.neighborhood || "",
-        postalCode: address.postalCode || "",
-        city: address.city || "",
-        state: address.state || "",
-        country: address.country || "",
+        latitude: selectedLocation.lat?.toString() || prev.latitude,
+        longitude: selectedLocation.lng?.toString() || prev.longitude,
+        streetAddress: address || prev.streetAddress,
       }));
     }
   }, [selectedLocation, address, setFormData]);

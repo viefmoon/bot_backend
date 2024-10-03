@@ -71,8 +71,7 @@ export default function DeliveryInfoRegistration() {
       if (response.data) {
         console.log("response.data", response.data);
 
-        // Actualizar todos los campos del formulario
-        setFormData({
+        const formattedData = {
           streetAddress: response.data.streetAddress || "",
           neighborhood: response.data.neighborhood || "",
           postalCode: response.data.postalCode || "",
@@ -82,10 +81,11 @@ export default function DeliveryInfoRegistration() {
           latitude: response.data.latitude?.toString() || "",
           longitude: response.data.longitude?.toString() || "",
           additionalDetails: response.data.additionalDetails || "",
-          // Agregar otros campos si es necesario
-        });
+        };
 
-        // Actualizar la ubicación seleccionada
+        setFormData(formattedData);
+        setAddress(formattedData.streetAddress);
+
         if (response.data.latitude && response.data.longitude) {
           setSelectedLocation({
             lat: parseFloat(response.data.latitude),
@@ -93,10 +93,6 @@ export default function DeliveryInfoRegistration() {
           });
         }
 
-        // Actualizar la dirección
-        setAddress(response.data.streetAddress || "");
-
-        // Indicar que estamos actualizando
         setIsUpdating(true);
       }
     } catch (error) {
