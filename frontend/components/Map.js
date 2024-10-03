@@ -1,5 +1,5 @@
 import React from "react";
-import { GoogleMap, useLoadScript, Marker } from "@react-google-maps/api";
+import { GoogleMap, Marker } from "@react-google-maps/api";
 
 const containerStyle = {
   width: "100%",
@@ -12,18 +12,11 @@ const center = {
 };
 
 export default function Map({ selectedLocation, onLocationChange }) {
-  const { isLoaded } = useLoadScript({
-    googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY,
-    libraries: ["places"],
-  });
-
   const handleMapClick = (event) => {
     const lat = event.latLng.lat();
     const lng = event.latLng.lng();
     onLocationChange({ lat, lng });
   };
-
-  if (!isLoaded) return <div>Cargando...</div>;
 
   return (
     <div className="mb-4">
