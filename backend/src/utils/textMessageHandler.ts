@@ -102,15 +102,8 @@ export async function handleTextMessage(
     JSON.stringify(customer.relevantChatHistory, null, 2)
   );
 
-  let fullChatHistory: ChatMessage[] =
-    typeof customer.fullChatHistory === "string"
-      ? JSON.parse(customer.fullChatHistory)
-      : [];
-
-  let relevantChatHistory: ChatMessage[] =
-    typeof customer.relevantChatHistory === "string"
-      ? JSON.parse(customer.relevantChatHistory)
-      : [];
+  let fullChatHistory: ChatMessage[] = customer.fullChatHistory || [];
+  let relevantChatHistory: ChatMessage[] = customer.relevantChatHistory || [];
 
   console.log("Mensaje recibido de:", from);
   console.log("Mensaje:", text);

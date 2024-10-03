@@ -3,10 +3,15 @@ import { sequelize } from "../lib/db";
 import CustomerDeliveryInfo from "./customerDeliveryInfo";
 
 // Definición de la interfaz para los atributos del Customer
+interface ChatMessage {
+  role: string;
+  content: string;
+}
+
 interface CustomerAttributes {
   clientId: string;
-  fullChatHistory?: object;
-  relevantChatHistory?: object;
+  fullChatHistory?: ChatMessage[];
+  relevantChatHistory?: ChatMessage[];
   stripeCustomerId?: string;
   lastInteraction?: Date;
   createdAt?: Date;
@@ -29,8 +34,8 @@ class Customer
   implements CustomerAttributes
 {
   public clientId!: string;
-  public fullChatHistory!: object | null;
-  public relevantChatHistory!: object | null;
+  public fullChatHistory!: ChatMessage[] | null;
+  public relevantChatHistory!: ChatMessage[] | null;
   public stripeCustomerId!: string | null;
   public lastInteraction!: Date | null;
 
