@@ -241,6 +241,21 @@ export default function DeliveryInfoRegistration() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    // Imprimir los datos en la consola antes de validar
+    console.log("Datos del formulario antes de validar:", {
+      clientId,
+      streetAddress: formData.streetAddress,
+      neighborhood: formData.neighborhood,
+      postalCode: formData.postalCode,
+      city: formData.city,
+      state: formData.state,
+      country: formData.country,
+      latitude: formData.latitude,
+      longitude: formData.longitude,
+      additionalDetails: formData.additionalDetails,
+    });
+
     const errors = validateForm();
     setFormErrors(errors);
 
