@@ -28,10 +28,33 @@ export default function AddressForm({
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  // Eliminamos la función handleSubmit de este componente
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      const response = await axios.post("/api/create-customer-delivery-info", {
+        ...formData,
+        clientId,
+      });
+      console.log("CustomerDeliveryInfo created:", response.data);
+    } catch (error) {
+      console.error("Error creating CustomerDeliveryInfo:", error);
+    }
+  };
+
+  const fieldTranslations = {
+    streetAddress: "Dirección completa",
+    neighborhood: "Colonia",
+    postalCode: "Código postal",
+    city: "Ciudad",
+    state: "Estado",
+    country: "País",
+  };
 
   return (
-    <div className="space-y-2 bg-white p-2 rounded-lg shadow-md">
+    <form
+      onSubmit={handleSubmit}
+      className="space-y-2 bg-white p-2 rounded-lg shadow-md"
+    >
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-1">
         {/* Campo de dirección completa */}
         <div className="col-span-1 sm:col-span-2">
@@ -107,6 +130,6 @@ export default function AddressForm({
           )}
         </div>
       </div>
-    </div>
+    </form>
   );
 }
