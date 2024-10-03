@@ -26,7 +26,7 @@ export default function DeliveryInfoRegistration() {
       if (response.data.valid) {
         setIsValidOtp(true);
       } else {
-        setError(`El enlace ha expirado o no es válido. ${response.data.message || ''}`);
+        setError(`El enlace ha expirado o no es válido. ${response || ''}`);
         
       }
     } catch (error) {
