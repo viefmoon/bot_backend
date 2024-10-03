@@ -79,11 +79,17 @@ export default function DeliveryInfoRegistration() {
             longitude: location.lng,
           }));
 
-          // Actualizar el campo de búsqueda de dirección
+          // Crear la dirección completa en el formato deseado
+          const fullAddress = `${addressDetails.streetAddress}, ${addressDetails.city}, ${addressDetails.state}, ${addressDetails.country}`;
+
+          // Actualizar el campo de búsqueda de dirección con la dirección completa
           const inputElement = document.querySelector('input[type="text"]');
           if (inputElement) {
-            inputElement.value = addressDetails.streetAddress;
+            inputElement.value = fullAddress;
           }
+
+          // Actualizar el estado de la dirección
+          setAddress(fullAddress);
         },
         (error) => {
           console.error("Error obteniendo la ubicación:", error);
