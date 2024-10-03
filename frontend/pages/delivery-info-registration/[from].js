@@ -111,7 +111,10 @@ export default function DeliveryInfoRegistration() {
         };
 
         addressComponents.forEach((component) => {
-          if (component.types.includes("neighborhood")) {
+          if (
+            component.types.includes("sublocality_level_1") ||
+            component.types.includes("neighborhood")
+          ) {
             addressDetails.neighborhood = component.long_name;
           }
           if (component.types.includes("postal_code")) {
