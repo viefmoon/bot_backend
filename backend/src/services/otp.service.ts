@@ -14,8 +14,8 @@ export class OtpService implements OnModuleInit, OnModuleDestroy {
     return generateOTP();
   }
 
-  storeOTP(phoneNumber: string, otp: string): void {
-    storeOTP(phoneNumber, otp);
+  storeOTP(clientId: string, otp: string): void {
+    storeOTP(clientId, otp);
   }
 
   verifyOTP(clientId: string, otp: string): boolean {
