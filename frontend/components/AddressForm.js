@@ -37,96 +37,31 @@ export default function AddressForm({ clientId, selectedLocation, address }) {
         { ...formData, clientId }
       );
       console.log("CustomerDeliveryInfo created:", response.data);
-      // Aquí puedes agregar lógica adicional, como redireccionar al usuario o mostrar un mensaje de éxito
     } catch (error) {
       console.error("Error creating CustomerDeliveryInfo:", error);
-      // Aquí puedes manejar el error, como mostrar un mensaje al usuario
     }
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6 bg-white p-6 rounded-lg shadow-lg">
-      <h2 className="text-2xl font-bold mb-4">Detalles de la dirección</h2>
+    <form onSubmit={handleSubmit} className="space-y-6 bg-white p-6 rounded-lg shadow-md">
+      <h2 className="text-2xl font-bold mb-4 text-gray-800">Detalles de la dirección</h2>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div>
-          <label htmlFor="streetAddress" className="block mb-1 font-medium text-gray-700">
-            Dirección
-          </label>
-          <input
-            type="text"
-            id="streetAddress"
-            name="streetAddress"
-            value={formData.streetAddress}
-            onChange={handleChange}
-            className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-            required
-          />
-        </div>
-        <div>
-          <label htmlFor="neighborhood" className="block mb-1 font-medium text-gray-700">
-            Colonia
-          </label>
-          <input
-            type="text"
-            id="neighborhood"
-            name="neighborhood"
-            value={formData.neighborhood}
-            onChange={handleChange}
-            className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-          />
-        </div>
-        <div>
-          <label htmlFor="postalCode" className="block mb-1 font-medium text-gray-700">
-            Código Postal
-          </label>
-          <input
-            type="text"
-            id="postalCode"
-            name="postalCode"
-            value={formData.postalCode}
-            onChange={handleChange}
-            className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-          />
-        </div>
-        <div>
-          <label htmlFor="city" className="block mb-1 font-medium text-gray-700">
-            Ciudad
-          </label>
-          <input
-            type="text"
-            id="city"
-            name="city"
-            value={formData.city}
-            onChange={handleChange}
-            className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-          />
-        </div>
-        <div>
-          <label htmlFor="state" className="block mb-1 font-medium text-gray-700">
-            Estado
-          </label>
-          <input
-            type="text"
-            id="state"
-            name="state"
-            value={formData.state}
-            onChange={handleChange}
-            className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-          />
-        </div>
-        <div>
-          <label htmlFor="country" className="block mb-1 font-medium text-gray-700">
-            País
-          </label>
-          <input
-            type="text"
-            id="country"
-            name="country"
-            value={formData.country}
-            onChange={handleChange}
-            className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-          />
-        </div>
+        {["streetAddress", "neighborhood", "postalCode", "city", "state", "country"].map((field) => (
+          <div key={field}>
+            <label htmlFor={field} className="block mb-1 font-medium text-gray-700">
+              {field.charAt(0).toUpperCase() + field.slice(1)}
+            </label>
+            <input
+              type="text"
+              id={field}
+              name={field}
+              value={formData[field]}
+              onChange={handleChange}
+              className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              required={field === "streetAddress"}
+            />
+          </div>
+        ))}
       </div>
       <div>
         <label htmlFor="additionalDetails" className="block mb-1 font-medium text-gray-700">
@@ -137,13 +72,13 @@ export default function AddressForm({ clientId, selectedLocation, address }) {
           name="additionalDetails"
           value={formData.additionalDetails}
           onChange={handleChange}
-          className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+          className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
           rows="3"
         ></textarea>
       </div>
       <button
         type="submit"
-        className="w-full bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-700 transition duration-300"
+        className="w-full bg-blue-600 text-white px-4 py-2 rounded-md font-semibold hover:bg-blue-700 transition duration-300"
       >
         Guardar Dirección
       </button>

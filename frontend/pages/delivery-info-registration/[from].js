@@ -91,32 +91,32 @@ export default function DeliveryInfoRegistration() {
   };
 
   if (loadError) {
-    return <div>Error al cargar Google Maps API</div>;
+    return <div className="text-red-600 font-semibold">Error al cargar Google Maps API</div>;
   }
 
   if (!isLoaded) {
-    return <div>Cargando...</div>;
+    return <div className="text-gray-600">Cargando...</div>;
   }
 
   if (loading) {
-    return <p>Verificando enlace...</p>;
+    return <p className="text-gray-600">Verificando enlace...</p>;
   }
 
   if (error) {
-    return <p>{error}</p>;
+    return <p className="text-red-600">{error}</p>;
   }
 
   if (!isValidOtp) {
-    return <p>El enlace ha expirado o no es válido.</p>;
+    return <p className="text-red-600">El enlace ha expirado o no es válido.</p>;
   }
 
   if (isValidOtp) {
     return (
-      <div>
-        <h1>Registro de Información de Entrega</h1>
+      <div className="container mx-auto px-4 py-8">
+        <h1 className="text-3xl font-bold mb-8 text-gray-800">Registro de Información de Entrega</h1>
         <button
           onClick={requestLocation}
-          className="btn btn-primary mb-4"
+          className="bg-blue-600 text-white px-4 py-2 rounded-md mb-6 hover:bg-blue-700 transition duration-300"
         >
           Usar ubicación actual
         </button>
@@ -128,8 +128,8 @@ export default function DeliveryInfoRegistration() {
   }
 
   return (
-    <div>
-      <h1>Registro de Información de Entrega</h1>
+    <div className="container mx-auto px-4 py-8">
+      <h1 className="text-3xl font-bold mb-8 text-gray-800">Registro de Información de Entrega</h1>
       <AddressForm clientId={clientId} />
     </div>
   );
