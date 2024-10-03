@@ -169,19 +169,19 @@ export default function DeliveryInfoRegistration() {
 
   if (isValidOtp) {
     return (
-      <div className="container mx-auto px-2 py-2">
-        <h1 className="text-xl md:text-2xl font-bold mb-1 text-gray-800 text-center">
+      <div className="container mx-auto px-1 py-1">
+        <h1 className="text-lg md:text-xl font-bold mb-0.5 text-gray-800 text-center">
           Registro de
           <span className="block text-blue-600">Información de Entrega</span>
         </h1>
-        <p className="text-center text-gray-600 mb-2">
+        <p className="text-center text-gray-600 mb-1 text-sm">
           ID del cliente: {clientId}
         </p>
-        <div className="mb-2">
+        <div className="mb-1">
           <AddressSearch onSelect={handleLocationSelect} value={address} />
           <button
             onClick={requestLocation}
-            className="mt-1 w-full bg-blue-600 text-white px-3 py-1 rounded-md hover:bg-blue-700 transition duration-300"
+            className="mt-0.5 w-full bg-blue-600 text-white px-2 py-0.5 rounded-md hover:bg-blue-700 transition duration-300 text-sm"
           >
             Usar ubicación actual
           </button>
