@@ -3,7 +3,9 @@ import { GoogleMap, Marker } from "@react-google-maps/api";
 
 const containerStyle = {
   width: "100%",
-  height: "200px",
+  height: "300px",
+  borderRadius: "8px",
+  boxShadow: "0 4px 6px rgba(0, 0, 0, 0.1)",
 };
 
 const center = {
@@ -19,14 +21,25 @@ export default function Map({ selectedLocation, onLocationChange }) {
   };
 
   return (
-    <div className="mb-4">
+    <div className="mb-6">
+      <h2 className="text-xl font-semibold mb-2">Selecciona tu ubicación</h2>
       <GoogleMap
         mapContainerStyle={containerStyle}
         center={selectedLocation || center}
         zoom={15}
         onClick={handleMapClick}
+        options={{
+          streetViewControl: false,
+          mapTypeControl: false,
+          fullscreenControl: false,
+        }}
       >
-        {selectedLocation && <Marker position={selectedLocation} />}
+        {selectedLocation && (
+          <Marker
+            position={selectedLocation}
+            animation={window.google.maps.Animation.DROP}
+          />
+        )}
       </GoogleMap>
     </div>
   );

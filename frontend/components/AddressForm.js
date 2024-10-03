@@ -45,25 +45,54 @@ export default function AddressForm({ clientId, selectedLocation, address }) {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      <div>
-        <label htmlFor="streetAddress" className="block mb-1 font-medium">
-          Dirección
-        </label>
-        <input
-          type="text"
-          id="streetAddress"
-          name="streetAddress"
-          value={formData.streetAddress}
-          onChange={handleChange}
-          className="w-full p-2 border border-gray-300 rounded"
-          required
-        />
+    <form onSubmit={handleSubmit} className="space-y-6 bg-white p-6 rounded-lg shadow-md">
+      <h2 className="text-2xl font-bold mb-4">Detalles de la dirección</h2>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <label htmlFor="streetAddress" className="block mb-1 font-medium text-gray-700">
+            Dirección
+          </label>
+          <input
+            type="text"
+            id="streetAddress"
+            name="streetAddress"
+            value={formData.streetAddress}
+            onChange={handleChange}
+            className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            required
+          />
+        </div>
+        <div>
+          <label htmlFor="neighborhood" className="block mb-1 font-medium text-gray-700">
+            Colonia
+          </label>
+          <input
+            type="text"
+            id="neighborhood"
+            name="neighborhood"
+            value={formData.neighborhood}
+            onChange={handleChange}
+            className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+          />
+        </div>
+        {/* Agrega campos similares para postalCode, city, state, country */}
       </div>
-      {/* Repite este patrón para los demás campos del formulario */}
+      <div>
+        <label htmlFor="additionalDetails" className="block mb-1 font-medium text-gray-700">
+          Detalles adicionales
+        </label>
+        <textarea
+          id="additionalDetails"
+          name="additionalDetails"
+          value={formData.additionalDetails}
+          onChange={handleChange}
+          className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+          rows="3"
+        ></textarea>
+      </div>
       <button
         type="submit"
-        className="w-full bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+        className="w-full bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-700 transition duration-300"
       >
         Guardar Dirección
       </button>

@@ -16,12 +16,19 @@ export default function AddressSearch({ onSelect }) {
   };
 
   return (
-    <Autocomplete onLoad={(autocomplete) => autocomplete.addListener("place_changed", () => onPlaceChanged(autocomplete))}>
-      <input
-        type="text"
-        placeholder="Busca tu dirección"
-        className="w-full p-2 border border-gray-300 rounded mb-4"
-      />
-    </Autocomplete>
+    <div className="mb-6">
+      <h2 className="text-xl font-semibold mb-2">Busca tu dirección</h2>
+      <Autocomplete
+        onLoad={(autocomplete) =>
+          autocomplete.addListener("place_changed", () => onPlaceChanged(autocomplete))
+        }
+      >
+        <input
+          type="text"
+          placeholder="Ingresa tu dirección"
+          className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-200"
+        />
+      </Autocomplete>
+    </div>
   );
 }
