@@ -69,6 +69,7 @@ export default function DeliveryInfoRegistration() {
         `/api/customer_delivery_info/${clientId}`
       );
       if (response.data) {
+        console.log("response.data", response.data);
         setFormData(response.data);
         setSelectedLocation({
           lat: parseFloat(response.data.latitude),
@@ -82,7 +83,6 @@ export default function DeliveryInfoRegistration() {
         "Error al cargar la información de entrega existente:",
         error
       );
-      // Si no hay información existente, no hacemos nada y dejamos el formulario vacío
     }
   };
 
