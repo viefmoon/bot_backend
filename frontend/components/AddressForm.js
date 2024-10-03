@@ -59,37 +59,49 @@ export default function AddressForm({
         Detalles de la dirección
       </h2>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-1">
-        {[
-          "streetAddress",
-          "neighborhood",
-          "postalCode",
-          "city",
-          "state",
-          "country",
-        ].map((field) => (
-          <div key={field}>
-            <label
-              htmlFor={field}
-              className="block mb-0.5 text-xs font-medium text-gray-700"
-            >
-              {fieldTranslations[field]}
-            </label>
-            <input
-              type="text"
-              id={field}
-              name={field}
-              value={formData[field]}
-              onChange={handleChange}
-              className={`w-full p-0.5 text-sm border rounded-md ${
-                field !== "streetAddress"
-                  ? "bg-gray-100 text-gray-600 cursor-not-allowed"
-                  : "border-gray-300 focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
-              }`}
-              required={field === "streetAddress"}
-              readOnly={field !== "streetAddress"}
-            />
-          </div>
-        ))}
+        {/* Campo de dirección completa */}
+        <div className="col-span-1 sm:col-span-2">
+          <label
+            htmlFor="streetAddress"
+            className="block mb-0.5 text-xs font-medium text-gray-700"
+          >
+            {fieldTranslations.streetAddress}
+          </label>
+          <input
+            type="text"
+            id="streetAddress"
+            name="streetAddress"
+            value={formData.streetAddress}
+            onChange={handleChange}
+            className="w-full p-0.5 text-sm border rounded-md border-gray-300 focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+            required
+          />
+        </div>
+
+        {/* Campos agrupados */}
+        <div className="col-span-1 sm:col-span-2 grid grid-cols-3 gap-1">
+          {["neighborhood", "postalCode", "city", "state", "country"].map(
+            (field) => (
+              <div key={field}>
+                <label
+                  htmlFor={field}
+                  className="block mb-0.5 text-xs font-medium text-gray-700"
+                >
+                  {fieldTranslations[field]}
+                </label>
+                <input
+                  type="text"
+                  id={field}
+                  name={field}
+                  value={formData[field]}
+                  onChange={handleChange}
+                  className="w-full p-0.5 text-sm border rounded-md bg-gray-100 text-gray-600 cursor-not-allowed"
+                  readOnly
+                />
+              </div>
+            )
+          )}
+        </div>
       </div>
       <div>
         <label
