@@ -93,6 +93,14 @@ export async function handleTextMessage(
   });
 
   console.log("customer", customer);
+  console.log(
+    "Full Chat History:",
+    JSON.stringify(customer.fullChatHistory, null, 2)
+  );
+  console.log(
+    "Relevant Chat History:",
+    JSON.stringify(customer.relevantChatHistory, null, 2)
+  );
 
   let fullChatHistory: ChatMessage[] =
     typeof customer.fullChatHistory === "string"
