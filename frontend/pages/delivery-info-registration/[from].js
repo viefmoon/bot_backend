@@ -243,7 +243,6 @@ export default function DeliveryInfoRegistration() {
   return (
     <div className="container mx-auto px-1 py-1">
       <h1 className="text-lg md:text-xl font-bold mb-0.5 text-gray-800 text-center">
-        Registro de{" "}
         <span className="block text-blue-600">Información de Entrega</span>
       </h1>
       <p className="text-center text-gray-600 mb-1 text-sm">
