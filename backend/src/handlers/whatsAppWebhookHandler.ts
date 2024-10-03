@@ -90,7 +90,7 @@ async function handleIncomingWhatsAppMessage(
   if (!customer.customerDeliveryInfo) {
     const otp = otpService.generateOTP();
     await otpService.storeOTP(from, otp);
-    const registrationLink = `${process.env.FRONTEND_BASE_URL}/delivery_info_registration/${from}?otp=${otp}`;
+    const registrationLink = `${process.env.FRONTEND_BASE_URL}/delivery-info-registration/${from}?otp=${otp}`;
 
     await sendWhatsAppMessage(
       from,
