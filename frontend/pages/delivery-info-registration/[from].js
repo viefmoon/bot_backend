@@ -230,7 +230,7 @@ export default function DeliveryInfoRegistration() {
   const validateForm = () => {
     const errors = {};
     if (!formData.streetAddress.trim())
-      errors.streetAddress = "La dirección es obligatoria";
+      errors.streetAddress = "La dirección completa es obligatoria";
     if (!formData.city.trim()) errors.city = "La ciudad es obligatoria";
     if (!formData.state.trim()) errors.state = "El estado es obligatorio";
     if (!formData.country.trim()) errors.country = "El país es obligatorio";
@@ -246,13 +246,10 @@ export default function DeliveryInfoRegistration() {
 
     if (Object.keys(errors).length === 0) {
       try {
-        const response = await axios.post(
-          "/api/create-customer-delivery-info",
-          {
-            ...formData,
-            clientId,
-          }
-        );
+        const response = await axios.post("/api/customer_delivery_info", {
+          ...formData,
+          clientId,
+        });
         console.log("CustomerDeliveryInfo creado:", response.data);
         alert("Dirección guardada exitosamente");
       } catch (error) {
@@ -260,9 +257,8 @@ export default function DeliveryInfoRegistration() {
         alert("Error al guardar la dirección. Por favor, inténtelo de nuevo.");
       }
     } else {
-      // Mostrar errores específicos
       const errorMessages = Object.values(errors).join("\n");
-      alert(`Por favor, corrija los siguientes errores:\n\n${errorMessages}`);
+      alert(`Por favor, complete los siguientes campos:\n\n${errorMessages}`);
     }
   };
 

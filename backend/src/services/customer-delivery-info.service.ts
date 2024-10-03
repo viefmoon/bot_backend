@@ -2,7 +2,7 @@ import { Injectable } from "@nestjs/common";
 import { Customer, CustomerDeliveryInfo } from "../models";
 
 @Injectable()
-export class CustomerDeliveryService {
+export class CustomerDeliveryInfoService {
   async createOrUpdateDeliveryInfo(deliveryInfo: any) {
     const { clientId, ...info } = deliveryInfo;
 
@@ -21,6 +21,6 @@ export class CustomerDeliveryService {
       await customerDeliveryInfo.update(info);
     }
 
-    return customerDeliveryInfo;
+    return CustomerDeliveryInfoService;
   }
 }

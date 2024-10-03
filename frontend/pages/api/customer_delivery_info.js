@@ -2,23 +2,13 @@ import axios from "axios";
 
 export default async function handler(req, res) {
   if (req.method === "POST") {
-    const { phoneNumber, otp, deliveryInfo } = req.body;
+    const { clientId, ...deliveryInfo } = req.body;
 
     try {
-      // Verificar OTP
-      const otpVerificationResponse = await axios.post(
-        `${process.env.NEXT_PUBLIC_BACKEND_BASE_URL}/verify-otp`,
-        { phoneNumber, otp }
-      );
-
-      if (!otpVerificationResponse.data.success) {
-        return res.status(400).json({ error: "OTP inválido" });
-      }
-
       // Crear CustomerDeliveryInfo
       const createDeliveryInfoResponse = await axios.post(
         `${process.env.NEXT_PUBLIC_BACKEND_BASE_URL}/customer-delivery-info`,
-        { clientId: phoneNumber, ...deliveryInfo }
+        { clientId, ...deliveryInfo }
       );
 
       res.status(201).json(createDeliveryInfoResponse.data);
