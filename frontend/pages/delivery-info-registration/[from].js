@@ -310,6 +310,8 @@ export default function DeliveryInfoRegistration() {
             ? "Dirección actualizada exitosamente"
             : "Dirección guardada exitosamente"
         );
+        const whatsappNumber = process.env.NEXT_PUBLIC_BOT_WHATSAPP_NUMBER;
+        window.location.href = `https://wa.me/${whatsappNumber}`;
       } catch (error) {
         console.error("Error al guardar CustomerDeliveryInfo:", error);
         alert("Error al guardar la dirección. Por favor, inténtelo de nuevo.");
