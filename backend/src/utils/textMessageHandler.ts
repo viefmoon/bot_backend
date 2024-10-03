@@ -133,9 +133,6 @@ export async function handleTextMessage(
 
   updateChatHistory({ role: "user", content: text }, true);
 
-  console.log("fullChatHistory CON EL MENSAJE", fullChatHistory);
-  console.log("relevantChatHistory CON EL MENSAJE", relevantChatHistory);
-
   const response = await processAndGenerateAIResponse({
     relevantMessages: relevantChatHistory,
     conversationId: from,
@@ -150,8 +147,6 @@ export async function handleTextMessage(
         { role: "assistant", content: item.text },
         item.isRelevant == true
       );
-      console.log("fullChatHistory CON EL MENSAJE 2", fullChatHistory);
-      console.log("relevantChatHistory CON EL MENSAJE 2", relevantChatHistory);
     }
 
     if (item.confirmationMessage) {
@@ -166,26 +161,11 @@ export async function handleTextMessage(
     }
   }
 
-  console.log("fullChatHistory", fullChatHistory);
-  console.log("relevantChatHistory", relevantChatHistory);
-
   await customer.update({
     fullChatHistory: JSON.stringify(fullChatHistory),
     relevantChatHistory: JSON.stringify(relevantChatHistory),
     lastInteraction: new Date(),
   });
-  // Verifica el contenido después de la actualización
-  const updatedCustomer = await Customer.findOne({
-    where: { clientId: from },
-  });
-  console.log(
-    "fullChatHistory después de actualizar:",
-    updatedCustomer.fullChatHistory
-  );
-  console.log(
-    "relevantChatHistory después de actualizar:",
-    updatedCustomer.relevantChatHistory
-  );
 }
 
 async function processAndGenerateAIResponse(
