@@ -70,12 +70,33 @@ export default function DeliveryInfoRegistration() {
       );
       if (response.data) {
         console.log("response.data", response.data);
-        setFormData(response.data);
-        setSelectedLocation({
-          lat: parseFloat(response.data.latitude),
-          lng: parseFloat(response.data.longitude),
+
+        // Actualizar todos los campos del formulario
+        setFormData({
+          streetAddress: response.data.streetAddress || "",
+          neighborhood: response.data.neighborhood || "",
+          postalCode: response.data.postalCode || "",
+          city: response.data.city || "",
+          state: response.data.state || "",
+          country: response.data.country || "",
+          latitude: response.data.latitude?.toString() || "",
+          longitude: response.data.longitude?.toString() || "",
+          additionalDetails: response.data.additionalDetails || "",
+          // Agregar otros campos si es necesario
         });
-        setAddress(response.data.streetAddress);
+
+        // Actualizar la ubicación seleccionada
+        if (response.data.latitude && response.data.longitude) {
+          setSelectedLocation({
+            lat: parseFloat(response.data.latitude),
+            lng: parseFloat(response.data.longitude),
+          });
+        }
+
+        // Actualizar la dirección
+        setAddress(response.data.streetAddress || "");
+
+        // Indicar que estamos actualizando
         setIsUpdating(true);
       }
     } catch (error) {
