@@ -72,7 +72,7 @@ async function sendWelcomeMessage(phoneNumber) {
             { id: "chatbot_help", title: "¿Cómo usar el bot?" },
             {
               id: "change_delivery_info",
-              title: "Cambiar información de entrega",
+              title: "Act. info de entrega",
             },
             { id: "reorder", title: "Reordenar" },
           ],
