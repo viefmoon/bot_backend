@@ -51,10 +51,15 @@ export default function DeliveryInfoRegistration() {
   const requestLocation = () => {
     if ("geolocation" in navigator) {
       navigator.geolocation.getCurrentPosition(
-        (position) => {
+        async (position) => {
           const { latitude, longitude } = position.coords;
-          setCurrentLocation({ lat: latitude, lng: longitude });
-          setSelectedLocation({ lat: latitude, lng: longitude });
+          const location = { lat: latitude, lng: longitude };
+          setCurrentLocation(location);
+          setSelectedLocation(location);
+          
+          // Obtener la dirección a partir de las coordenadas
+          const formattedAddress = await getAddressFromCoordinates(location);
+          setAddress(formattedAddress);
         },
         (error) => {
           console.error("Error obteniendo la ubicación:", error);
@@ -64,6 +69,20 @@ export default function DeliveryInfoRegistration() {
     } else {
       setError("Geolocalización no está soportada en este navegador.");
     }
+  };
+
+  const getAddressFromCoordinates = async (location) => {
+    try {
+      const response = await axios.get(
+        `https://maps.googleapis.com/maps/api/geocode/json?latlng=${location.lat},${location.lng}&key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}`
+      );
+      if (response.data.results.length > 0) {
+        return response.data.results[0].formatted_address;
+      }
+    } catch (error) {
+      console.error("Error obteniendo la dirección:", error);
+    }
+    return "";
   };
 
   const handleLocationSelect = (location, formattedAddress) => {
@@ -98,7 +117,7 @@ export default function DeliveryInfoRegistration() {
         <button onClick={requestLocation} className="mb-4 bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">
           Usar ubicación actual
         </button>
-        <AddressSearch onSelect={handleLocationSelect} />
+        <AddressSearch onSelect={handleLocationSelect} value={address} />
         <Map selectedLocation={selectedLocation} onLocationChange={setSelectedLocation} />
         <AddressForm clientId={clientId} selectedLocation={selectedLocation} address={address} />
       </div>
