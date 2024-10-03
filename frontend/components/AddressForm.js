@@ -55,9 +55,6 @@ export default function AddressForm({
       onSubmit={handleSubmit}
       className="space-y-2 bg-white p-2 rounded-lg shadow-md"
     >
-      <h2 className="text-lg font-bold mb-1 text-gray-800">
-        Detalles de la dirección
-      </h2>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-1">
         {/* Campo de dirección completa */}
         <div className="col-span-1 sm:col-span-2">
@@ -98,6 +95,10 @@ export default function AddressForm({
             className="w-full p-0.5 text-sm border border-gray-300 rounded-md focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
             rows="1"
           ></textarea>
+          <p className="text-xs text-gray-600 mt-0.5">
+            Agregue información extra para ubicar su dirección más fácilmente
+            (ej. entre calles, puntos de referencia)
+          </p>
         </div>
 
         {/* Campos agrupados */}
