@@ -274,16 +274,16 @@ export default function DeliveryInfoRegistration() {
           </button>
         </div>
       </div>
-      <Map
-        selectedLocation={selectedLocation}
-        onLocationChange={setSelectedLocation}
-      />
       <AddressForm
         clientId={clientId}
         selectedLocation={selectedLocation}
         address={address}
         formData={formData}
         setFormData={setFormData}
+      />
+      <Map
+        selectedLocation={selectedLocation}
+        onLocationChange={setSelectedLocation}
       />
     </div>
   );
