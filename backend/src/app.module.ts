@@ -19,6 +19,7 @@ import { AvailabilityService } from "./services/availability.service";
 import { OrderStatusService } from "./services/order-status.service";
 import { WebhookService } from "./services/webhook.service";
 import { OtpService } from "./services/otp.service";
+import { OtpController } from "./controllers/otp.controller";
 
 @Module({
   imports: [ConfigModule.forRoot()],
@@ -32,6 +33,7 @@ import { OtpService } from "./services/otp.service";
     AvailabilityController,
     OrderStatusController,
     WebhookController,
+    OtpController,
   ],
   providers: [
     MenuService,
