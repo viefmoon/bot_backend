@@ -114,7 +114,10 @@ export default function DeliveryInfoRegistration() {
     return (
       <div>
         <h1>Registro de Información de Entrega</h1>
-        <button onClick={requestLocation} className="mb-4 bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">
+        <button
+          onClick={requestLocation}
+          className="mb-4 bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 shadow-lg transform transition-transform duration-300 hover:scale-105"
+        >
           Usar ubicación actual
         </button>
         <AddressSearch onSelect={handleLocationSelect} value={address} />
