@@ -263,12 +263,12 @@ export default function DeliveryInfoRegistration() {
             <input
               type="text"
               placeholder="Ingresa tu dirección"
-              className="w-full p-0.5 text-sm border border-gray-300 rounded-md focus:ring-1 focus:ring-blue-500 focus:border-blue-500 transition duration-200"
+              className="w-full p-1.5 text-base border border-gray-300 rounded-md focus:ring-1 focus:ring-blue-500 focus:border-blue-500 transition duration-200"
             />
           </Autocomplete>
           <button
             onClick={requestLocation}
-            className="bg-blue-600 text-white px-2 py-0.5 rounded-md hover:bg-blue-700 transition duration-300 text-sm"
+            className="bg-blue-600 text-white px-3 py-1.5 rounded-md hover:bg-blue-700 transition duration-300 text-base"
           >
             Usar ubicación actual
           </button>
