@@ -45,11 +45,11 @@ export default function AddressForm({ clientId, selectedLocation, address }) {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6 bg-white p-6 rounded-lg shadow-md">
-      <h2 className="text-2xl font-bold mb-4">Detalles de la dirección</h2>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+    <form onSubmit={handleSubmit} className="space-y-8 bg-white p-8 rounded-lg shadow-lg">
+      <h2 className="text-3xl font-bold mb-6 text-indigo-700">Detalles de la dirección</h2>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div>
-          <label htmlFor="streetAddress" className="block mb-1 font-medium text-gray-700">
+          <label htmlFor="streetAddress" className="block mb-2 font-semibold text-gray-700">
             Dirección
           </label>
           <input
@@ -58,12 +58,12 @@ export default function AddressForm({ clientId, selectedLocation, address }) {
             name="streetAddress"
             value={formData.streetAddress}
             onChange={handleChange}
-            className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            className="w-full p-3 border-2 border-indigo-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition duration-200"
             required
           />
         </div>
         <div>
-          <label htmlFor="neighborhood" className="block mb-1 font-medium text-gray-700">
+          <label htmlFor="neighborhood" className="block mb-2 font-semibold text-gray-700">
             Colonia
           </label>
           <input
@@ -72,13 +72,13 @@ export default function AddressForm({ clientId, selectedLocation, address }) {
             name="neighborhood"
             value={formData.neighborhood}
             onChange={handleChange}
-            className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            className="w-full p-3 border-2 border-indigo-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition duration-200"
           />
         </div>
         {/* Agrega campos similares para postalCode, city, state, country */}
       </div>
       <div>
-        <label htmlFor="additionalDetails" className="block mb-1 font-medium text-gray-700">
+        <label htmlFor="additionalDetails" className="block mb-2 font-semibold text-gray-700">
           Detalles adicionales
         </label>
         <textarea
@@ -86,13 +86,13 @@ export default function AddressForm({ clientId, selectedLocation, address }) {
           name="additionalDetails"
           value={formData.additionalDetails}
           onChange={handleChange}
-          className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-          rows="3"
+          className="w-full p-3 border-2 border-indigo-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition duration-200"
+          rows="4"
         ></textarea>
       </div>
       <button
         type="submit"
-        className="w-full bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-700 transition duration-300"
+        className="w-full bg-indigo-600 text-white px-6 py-4 rounded-lg font-bold text-lg hover:bg-indigo-700 transition duration-300 transform hover:scale-105"
       >
         Guardar Dirección
       </button>
