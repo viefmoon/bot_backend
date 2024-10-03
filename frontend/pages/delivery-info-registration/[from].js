@@ -26,6 +26,7 @@ export default function DeliveryInfoRegistration() {
     longitude: "",
     additionalDetails: "",
   });
+  const [formErrors, setFormErrors] = useState({});
 
   const { isLoaded, loadError } = useLoadScript({
     googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY,
@@ -226,6 +227,44 @@ export default function DeliveryInfoRegistration() {
     return addressDetails;
   };
 
+  const validateForm = () => {
+    const errors = {};
+    if (!formData.streetAddress.trim())
+      errors.streetAddress = "La dirección es obligatoria";
+    if (!formData.city.trim()) errors.city = "La ciudad es obligatoria";
+    if (!formData.state.trim()) errors.state = "El estado es obligatorio";
+    if (!formData.country.trim()) errors.country = "El país es obligatorio";
+    if (!formData.postalCode.trim())
+      errors.postalCode = "El código postal es obligatorio";
+    return errors;
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    const errors = validateForm();
+    setFormErrors(errors);
+
+    if (Object.keys(errors).length === 0) {
+      try {
+        const response = await axios.post(
+          "/api/create-customer-delivery-info",
+          {
+            ...formData,
+            clientId,
+          }
+        );
+        console.log("CustomerDeliveryInfo creado:", response.data);
+        alert("Dirección guardada exitosamente");
+        // Aquí puedes agregar lógica adicional después de guardar exitosamente
+      } catch (error) {
+        console.error("Error al crear CustomerDeliveryInfo:", error);
+        alert("Error al guardar la dirección. Por favor, inténtelo de nuevo.");
+      }
+    } else {
+      alert("Por favor, complete todos los campos obligatorios.");
+    }
+  };
+
   if (loadError)
     return (
       <div className="text-red-600 font-semibold">
@@ -239,21 +278,6 @@ export default function DeliveryInfoRegistration() {
     return (
       <p className="text-red-600">El enlace ha expirado o no es válido.</p>
     );
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    try {
-      const response = await axios.post("/api/create-customer-delivery-info", {
-        ...formData,
-        clientId,
-      });
-      console.log("CustomerDeliveryInfo creado:", response.data);
-      // Aquí puedes agregar lógica adicional después de guardar exitosamente
-    } catch (error) {
-      console.error("Error al crear CustomerDeliveryInfo:", error);
-      // Aquí puedes manejar el error, por ejemplo, mostrando un mensaje al usuario
-    }
-  };
 
   return (
     <div className="container mx-auto px-1 py-1">
@@ -283,7 +307,7 @@ export default function DeliveryInfoRegistration() {
           </Autocomplete>
           <button
             onClick={requestLocation}
-            className="bg-blue-600 text-white px-3 py-1.5 rounded-md hover:bg-blue-700 transition duration-300 text-base"
+            className="bg-green-600 text-white px-3 py-1.5 rounded-md hover:bg-green-700 transition duration-300 text-base"
           >
             Usar ubicación actual
           </button>
@@ -296,7 +320,13 @@ export default function DeliveryInfoRegistration() {
           address={address}
           formData={formData}
           setFormData={setFormData}
+          formErrors={formErrors}
         />
+        {Object.keys(formErrors).length > 0 && (
+          <div className="text-red-600 mt-2">
+            Por favor, complete todos los campos obligatorios.
+          </div>
+        )}
         <button
           type="submit"
           className="w-full mt-2 bg-blue-600 text-white px-3 py-2 text-base rounded-md font-semibold hover:bg-blue-700 transition duration-300"
