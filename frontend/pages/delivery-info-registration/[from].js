@@ -22,6 +22,7 @@ export default function DeliveryInfoRegistration() {
   const verifyOtp = async (phone, otp) => {
     try {
       const response = await axios.post("/api/verify_otp", { phone, otp });
+      console.log(response.data);
       setLoading(false);
       if (response.data.valid) {
         setIsValidOtp(true);
