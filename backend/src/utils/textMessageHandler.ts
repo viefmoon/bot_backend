@@ -122,6 +122,9 @@ export async function handleTextMessage(
 
   updateChatHistory({ role: "user", content: text }, true);
 
+  console.log("fullChatHistory CON EL MENSAJE", fullChatHistory);
+  console.log("relevantChatHistory CON EL MENSAJE", relevantChatHistory);
+
   const response = await processAndGenerateAIResponse({
     relevantMessages: relevantChatHistory,
     conversationId: from,
