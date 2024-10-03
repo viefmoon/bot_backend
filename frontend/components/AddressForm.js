@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 
-export default function AddressForm({ clientId, selectedLocation, address }) {
+export default function AddressForm({ clientId, selectedLocation, addressData }) {
   const [formData, setFormData] = useState({
     streetAddress: "",
     neighborhood: "",
@@ -15,15 +15,20 @@ export default function AddressForm({ clientId, selectedLocation, address }) {
   });
 
   useEffect(() => {
-    if (selectedLocation) {
+    if (selectedLocation && addressData) {
       setFormData((prev) => ({
         ...prev,
         latitude: selectedLocation.lat,
         longitude: selectedLocation.lng,
-        streetAddress: address,
+        streetAddress: addressData.streetAddress,
+        neighborhood: addressData.neighborhood,
+        postalCode: addressData.postalCode,
+        city: addressData.city,
+        state: addressData.state,
+        country: addressData.country,
       }));
     }
-  }, [selectedLocation, address]);
+  }, [selectedLocation, addressData]);
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
