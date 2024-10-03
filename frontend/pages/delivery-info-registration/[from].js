@@ -116,7 +116,7 @@ export default function DeliveryInfoRegistration() {
         <h1>Registro de Información de Entrega</h1>
         <button
           onClick={requestLocation}
-          className="mb-4 bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 shadow-lg transform transition-transform duration-300 hover:scale-105"
+          className="mb-4 bg-blue-600 text-white font-bold px-6 py-3 rounded-lg hover:bg-blue-700 shadow-lg transform transition-transform duration-300 hover:scale-105 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50"
         >
           Usar ubicación actual
         </button>
