@@ -148,8 +148,51 @@ export default function DeliveryInfoRegistration() {
         };
         setSelectedLocation(selectedLocation);
         setAddress(place.formatted_address);
+
+        // Actualizar los detalles de la dirección
+        const addressDetails = extractAddressDetails(place.address_components);
+        setFormData((prev) => ({
+          ...prev,
+          ...addressDetails,
+          latitude: selectedLocation.lat,
+          longitude: selectedLocation.lng,
+          streetAddress: place.formatted_address,
+        }));
       }
     }
+  };
+
+  const extractAddressDetails = (addressComponents) => {
+    const addressDetails = {
+      neighborhood: "",
+      postalCode: "",
+      city: "",
+      state: "",
+      country: "",
+    };
+
+    addressComponents.forEach((component) => {
+      if (
+        component.types.includes("sublocality_level_1") ||
+        component.types.includes("neighborhood")
+      ) {
+        addressDetails.neighborhood = component.long_name;
+      }
+      if (component.types.includes("postal_code")) {
+        addressDetails.postalCode = component.long_name;
+      }
+      if (component.types.includes("locality")) {
+        addressDetails.city = component.long_name;
+      }
+      if (component.types.includes("administrative_area_level_1")) {
+        addressDetails.state = component.long_name;
+      }
+      if (component.types.includes("country")) {
+        addressDetails.country = component.long_name;
+      }
+    });
+
+    return addressDetails;
   };
 
   if (loadError) {
@@ -190,28 +233,30 @@ export default function DeliveryInfoRegistration() {
         </p>
         <div className="mb-2 p-2 bg-white rounded-lg shadow-md">
           <h2 className="text-base font-semibold mb-1 text-gray-800">
-            Busca tu dirección
+            Busca tu dirección o usa tu ubicación actual
           </h2>
-          <Autocomplete
-            onLoad={(autocomplete) =>
-              autocomplete.addListener("place_changed", () =>
-                handlePlaceChanged(autocomplete)
-              )
-            }
-          >
-            <input
-              type="text"
-              placeholder="Ingresa tu dirección"
-              className="w-full p-0.5 text-sm border border-gray-300 rounded-md focus:ring-1 focus:ring-blue-500 focus:border-blue-500 transition duration-200"
-            />
-          </Autocomplete>
+          <div className="flex items-center space-x-2">
+            <Autocomplete
+              onLoad={(autocomplete) =>
+                autocomplete.addListener("place_changed", () =>
+                  handlePlaceChanged(autocomplete)
+                )
+              }
+            >
+              <input
+                type="text"
+                placeholder="Ingresa tu dirección"
+                className="flex-grow p-0.5 text-sm border border-gray-300 rounded-md focus:ring-1 focus:ring-blue-500 focus:border-blue-500 transition duration-200"
+              />
+            </Autocomplete>
+            <button
+              onClick={requestLocation}
+              className="bg-blue-600 text-white px-2 py-0.5 rounded-md hover:bg-blue-700 transition duration-300 text-sm"
+            >
+              Usar ubicación actual
+            </button>
+          </div>
         </div>
-        <button
-          onClick={requestLocation}
-          className="mt-0.5 w-full bg-blue-600 text-white px-2 py-0.5 rounded-md hover:bg-blue-700 transition duration-300 text-sm"
-        >
-          Usar ubicación actual
-        </button>
         <Map
           selectedLocation={selectedLocation}
           onLocationChange={setSelectedLocation}
