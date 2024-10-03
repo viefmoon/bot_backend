@@ -95,12 +95,6 @@ export async function handleTextMessage(
   let fullChatHistory: ChatMessage[] = customer.fullChatHistory || [];
   let relevantChatHistory: ChatMessage[] = customer.relevantChatHistory || [];
 
-  console.log("fullChatHistory", fullChatHistory);
-  console.log("relevantChatHistory", relevantChatHistory);
-
-  console.log("Mensaje recibido de:", from);
-  console.log("Mensaje:", text);
-
   if (text.toLowerCase().includes("olvida lo anterior")) {
     await resetChatHistory(customer);
     return;
@@ -115,16 +109,21 @@ export async function handleTextMessage(
     await sendWelcomeMessage(from);
   }
 
-  // Función para actualizar el historial de chat
+  // Función para actualizar el historial de chat completo y relevante
   const updateChatHistory = (
     message: ChatMessage,
     isRelevant: boolean = true
   ): void => {
+    // Agrega el mensaje al historial completo del chat
     fullChatHistory.push(message);
+    // Si el mensaje es relevante, también se agrega al historial relevante
     if (isRelevant) relevantChatHistory.push(message);
   };
 
-  updateChatHistory({ role: "user", content: text });
+  updateChatHistory({ role: "user", content: text }, true);
+
+  console.log("fullChatHistory", fullChatHistory);
+  console.log("relevantChatHistory", relevantChatHistory);
 
   const response = await processAndGenerateAIResponse({
     relevantMessages: relevantChatHistory,
