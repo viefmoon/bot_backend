@@ -12,7 +12,7 @@ export class CustomerController {
 
   @Post("ban")
   async banCustomer(
-    @Body() body: { clientId: string; action: "ban" | "unban" },
+    @Body() body: { clientId: string; action: "ban" | "unban" }
   ) {
     return this.customerService.banCustomer(body.clientId, body.action);
   }

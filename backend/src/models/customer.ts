@@ -3,7 +3,7 @@ import { sequelize } from "../lib/db";
 import CustomerDeliveryInfo from "./customerDeliveryInfo";
 
 // Definición de la interfaz para los atributos del Customer
-interface ChatMessage {
+export interface ChatMessage {
   role: string;
   content: string;
 }
