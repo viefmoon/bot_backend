@@ -45,7 +45,7 @@ export default function AddressForm({ clientId, selectedLocation, address }) {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6 bg-white p-6 rounded-lg shadow-md">
+    <form onSubmit={handleSubmit} className="space-y-6 bg-white p-6 rounded-lg shadow-lg">
       <h2 className="text-2xl font-bold mb-4">Detalles de la dirección</h2>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
@@ -75,7 +75,58 @@ export default function AddressForm({ clientId, selectedLocation, address }) {
             className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
           />
         </div>
-        {/* Agrega campos similares para postalCode, city, state, country */}
+        <div>
+          <label htmlFor="postalCode" className="block mb-1 font-medium text-gray-700">
+            Código Postal
+          </label>
+          <input
+            type="text"
+            id="postalCode"
+            name="postalCode"
+            value={formData.postalCode}
+            onChange={handleChange}
+            className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+          />
+        </div>
+        <div>
+          <label htmlFor="city" className="block mb-1 font-medium text-gray-700">
+            Ciudad
+          </label>
+          <input
+            type="text"
+            id="city"
+            name="city"
+            value={formData.city}
+            onChange={handleChange}
+            className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+          />
+        </div>
+        <div>
+          <label htmlFor="state" className="block mb-1 font-medium text-gray-700">
+            Estado
+          </label>
+          <input
+            type="text"
+            id="state"
+            name="state"
+            value={formData.state}
+            onChange={handleChange}
+            className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+          />
+        </div>
+        <div>
+          <label htmlFor="country" className="block mb-1 font-medium text-gray-700">
+            País
+          </label>
+          <input
+            type="text"
+            id="country"
+            name="country"
+            value={formData.country}
+            onChange={handleChange}
+            className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+          />
+        </div>
       </div>
       <div>
         <label htmlFor="additionalDetails" className="block mb-1 font-medium text-gray-700">

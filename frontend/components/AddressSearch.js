@@ -16,8 +16,8 @@ export default function AddressSearch({ onSelect }) {
   };
 
   return (
-    <div className="mb-6">
-      <h2 className="text-xl font-semibold mb-2">Busca tu dirección</h2>
+    <div className="mb-6 p-4 bg-white rounded-lg shadow-lg">
+      <h2 className="text-2xl font-semibold mb-4">Busca tu dirección</h2>
       <Autocomplete
         onLoad={(autocomplete) =>
           autocomplete.addListener("place_changed", () => onPlaceChanged(autocomplete))
