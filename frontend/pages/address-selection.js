@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Head from "next/head";
 import AddressSearch from "../components/AddressSearch";
 import Map from "../components/Map";
@@ -7,6 +7,27 @@ import AddressForm from "../components/AddressForm";
 export default function AddressSelection() {
   const [selectedLocation, setSelectedLocation] = useState(null);
   const [address, setAddress] = useState("");
+
+  useEffect(() => {
+    solicitarUbicacion();
+  }, []);
+
+  const solicitarUbicacion = () => {
+    if ("geolocation" in navigator) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const { latitude, longitude } = position.coords;
+          setSelectedLocation({ lat: latitude, lng: longitude });
+          // Aquí podrías hacer una llamada a la API de geocodificación inversa para obtener la dirección
+        },
+        (error) => {
+          console.error("Error al obtener la ubicación:", error);
+        }
+      );
+    } else {
+      console.log("La geolocalización no está disponible en este navegador.");
+    }
+  };
 
   const handleLocationSelect = (location, address) => {
     try {
@@ -36,6 +57,9 @@ export default function AddressSelection() {
           <p>Selecciona una ubicación para mostrar el mapa</p>
         )}
         <AddressForm selectedLocation={selectedLocation} address={address} />
+        <button onClick={solicitarUbicacion} className="mb-4 bg-blue-500 text-white p-2 rounded">
+          Usar mi ubicación actual
+        </button>
       </main>
     </div>
   );
