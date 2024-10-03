@@ -10,10 +10,10 @@ export interface ChatMessage {
 
 interface CustomerAttributes {
   clientId: string;
-  fullChatHistory?: ChatMessage[];
-  relevantChatHistory?: ChatMessage[];
-  stripeCustomerId?: string;
-  lastInteraction?: Date;
+  fullChatHistory?: ChatMessage[] | string | null;
+  relevantChatHistory?: ChatMessage[] | string | null;
+  stripeCustomerId?: string | null;
+  lastInteraction?: Date | null;
   createdAt?: Date;
   updatedAt?: Date;
 }
@@ -34,8 +34,8 @@ class Customer
   implements CustomerAttributes
 {
   public clientId!: string;
-  public fullChatHistory!: ChatMessage[] | null;
-  public relevantChatHistory!: ChatMessage[] | null;
+  public fullChatHistory!: ChatMessage[] | string | null;
+  public relevantChatHistory!: ChatMessage[] | string | null;
   public stripeCustomerId!: string | null;
   public lastInteraction!: Date | null;
 

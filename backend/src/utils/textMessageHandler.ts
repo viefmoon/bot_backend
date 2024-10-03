@@ -92,8 +92,19 @@ export async function handleTextMessage(
     where: { clientId: from },
   });
 
-  let fullChatHistory: ChatMessage[] = customer.fullChatHistory || [];
-  let relevantChatHistory: ChatMessage[] = customer.relevantChatHistory || [];
+  let fullChatHistory: ChatMessage[] = [];
+  if (Array.isArray(customer.fullChatHistory)) {
+    fullChatHistory = customer.fullChatHistory;
+  } else if (typeof customer.fullChatHistory === "string") {
+    fullChatHistory = JSON.parse(customer.fullChatHistory);
+  }
+
+  let relevantChatHistory: ChatMessage[] = [];
+  if (Array.isArray(customer.relevantChatHistory)) {
+    relevantChatHistory = customer.relevantChatHistory;
+  } else if (typeof customer.relevantChatHistory === "string") {
+    relevantChatHistory = JSON.parse(customer.relevantChatHistory);
+  }
 
   if (text.toLowerCase().includes("olvida lo anterior")) {
     await resetChatHistory(customer);
