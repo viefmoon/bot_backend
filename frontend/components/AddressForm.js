@@ -1,44 +1,29 @@
 import React, { useEffect } from "react";
-import axios from "axios";
 
 export default function AddressForm({
-  clientId,
   selectedLocation,
   address,
   formData,
   setFormData,
 }) {
   useEffect(() => {
-    if (selectedLocation) {
+    if (selectedLocation && address) {
       setFormData((prev) => ({
         ...prev,
-        latitude: selectedLocation.lat,
-        longitude: selectedLocation.lng,
-        streetAddress: address.streetAddress,
-        neighborhood: address.neighborhood,
-        postalCode: address.postalCode,
-        city: address.city,
-        state: address.state,
-        country: address.country,
+        latitude: selectedLocation.lat || "",
+        longitude: selectedLocation.lng || "",
+        streetAddress: address.streetAddress || "",
+        neighborhood: address.neighborhood || "",
+        postalCode: address.postalCode || "",
+        city: address.city || "",
+        state: address.state || "",
+        country: address.country || "",
       }));
     }
   }, [selectedLocation, address, setFormData]);
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    try {
-      const response = await axios.post("/api/create-customer-delivery-info", {
-        ...formData,
-        clientId,
-      });
-      console.log("CustomerDeliveryInfo created:", response.data);
-    } catch (error) {
-      console.error("Error creating CustomerDeliveryInfo:", error);
-    }
   };
 
   const fieldTranslations = {
@@ -51,10 +36,7 @@ export default function AddressForm({
   };
 
   return (
-    <form
-      onSubmit={handleSubmit}
-      className="space-y-2 bg-white p-2 rounded-lg shadow-md"
-    >
+    <form className="space-y-2 bg-white p-2 rounded-lg shadow-md">
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-1">
         {/* Campo de dirección completa */}
         <div className="col-span-1 sm:col-span-2">
