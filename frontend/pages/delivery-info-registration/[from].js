@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/router";
 import axios from "axios";
-import AddressForm from "../components/AddressForm";
+import AddressForm from "../../components/AddressForm";
 
 export default function DeliveryInfoRegistration() {
   const router = useRouter();
@@ -11,13 +11,13 @@ export default function DeliveryInfoRegistration() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (from && otp) {
+    if (router.isReady && from && otp) {
       verifyOtp(from, otp);
-    } else {
+    } else if (router.isReady) {
       setLoading(false);
       setError("El enlace no es válido. Falta información necesaria.");
     }
-  }, [from, otp]);
+  }, [router.isReady, from, otp]);
 
   const verifyOtp = async (phone, otp) => {
     try {
