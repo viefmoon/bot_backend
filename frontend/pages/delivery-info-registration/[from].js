@@ -98,10 +98,9 @@ export default function DeliveryInfoRegistration() {
       );
       if (response.data.results.length > 0) {
         const addressComponents = response.data.results[0].address_components;
-        const formattedAddress = response.data.results[0].formatted_address;
 
         const addressDetails = {
-          streetAddress: formattedAddress,
+          streetAddress: "",
           neighborhood: "",
           postalCode: "",
           city: "",
@@ -110,6 +109,12 @@ export default function DeliveryInfoRegistration() {
         };
 
         addressComponents.forEach((component) => {
+          if (component.types.includes("street_number")) {
+            addressDetails.streetAddress = component.long_name + " ";
+          }
+          if (component.types.includes("route")) {
+            addressDetails.streetAddress += component.long_name;
+          }
           if (
             component.types.includes("sublocality_level_1") ||
             component.types.includes("neighborhood")
@@ -164,6 +169,7 @@ export default function DeliveryInfoRegistration() {
 
   const extractAddressDetails = (addressComponents) => {
     const addressDetails = {
+      streetAddress: "",
       neighborhood: "",
       postalCode: "",
       city: "",
@@ -172,6 +178,12 @@ export default function DeliveryInfoRegistration() {
     };
 
     addressComponents.forEach((component) => {
+      if (component.types.includes("street_number")) {
+        addressDetails.streetAddress = component.long_name + " ";
+      }
+      if (component.types.includes("route")) {
+        addressDetails.streetAddress += component.long_name;
+      }
       if (
         component.types.includes("sublocality_level_1") ||
         component.types.includes("neighborhood")
@@ -235,7 +247,7 @@ export default function DeliveryInfoRegistration() {
           <h2 className="text-base font-semibold mb-1 text-gray-800">
             Busca tu dirección o usa tu ubicación actual
           </h2>
-          <div className="flex items-center space-x-2">
+          <div className="flex flex-col space-y-2">
             <Autocomplete
               onLoad={(autocomplete) =>
                 autocomplete.addListener("place_changed", () =>
@@ -246,7 +258,7 @@ export default function DeliveryInfoRegistration() {
               <input
                 type="text"
                 placeholder="Ingresa tu dirección"
-                className="flex-grow p-0.5 text-sm border border-gray-300 rounded-md focus:ring-1 focus:ring-blue-500 focus:border-blue-500 transition duration-200"
+                className="w-full p-0.5 text-sm border border-gray-300 rounded-md focus:ring-1 focus:ring-blue-500 focus:border-blue-500 transition duration-200"
               />
             </Autocomplete>
             <button
