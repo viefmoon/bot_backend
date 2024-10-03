@@ -22,6 +22,17 @@ export default function DeliveryInfoRegistration() {
   const [currentLocation, setCurrentLocation] = useState(null);
   const [selectedLocation, setSelectedLocation] = useState(null);
   const [address, setAddress] = useState("");
+  const [formData, setFormData] = useState({
+    streetAddress: "",
+    neighborhood: "",
+    postalCode: "",
+    city: "",
+    state: "",
+    country: "",
+    latitude: "",
+    longitude: "",
+    additionalDetails: "",
+  });
 
   useEffect(() => {
     if (router.isReady && clientId && otp) {
@@ -44,7 +55,9 @@ export default function DeliveryInfoRegistration() {
     } catch (error) {
       console.error("Error al verificar el OTP:", error);
       setLoading(false);
-      setError("Hubo un error al verificar el enlace. Por favor, inténtelo de nuevo.");
+      setError(
+        "Hubo un error al verificar el enlace. Por favor, inténtelo de nuevo."
+      );
     }
   };
 
@@ -69,7 +82,9 @@ export default function DeliveryInfoRegistration() {
         },
         (error) => {
           console.error("Error obteniendo la ubicación:", error);
-          setError("No se pudo obtener la ubicación actual. Por favor, ingrese su dirección manualmente.");
+          setError(
+            "No se pudo obtener la ubicación actual. Por favor, ingrese su dirección manualmente."
+          );
         }
       );
     } else {
@@ -127,7 +142,11 @@ export default function DeliveryInfoRegistration() {
   };
 
   if (loadError) {
-    return <div className="text-red-600 font-semibold">Error al cargar Google Maps API</div>;
+    return (
+      <div className="text-red-600 font-semibold">
+        Error al cargar Google Maps API
+      </div>
+    );
   }
 
   if (!isLoaded) {
@@ -143,13 +162,17 @@ export default function DeliveryInfoRegistration() {
   }
 
   if (!isValidOtp) {
-    return <p className="text-red-600">El enlace ha expirado o no es válido.</p>;
+    return (
+      <p className="text-red-600">El enlace ha expirado o no es válido.</p>
+    );
   }
 
   if (isValidOtp) {
     return (
       <div className="container mx-auto px-4 py-8">
-        <h1 className="text-3xl font-bold mb-8 text-gray-800">Registro de Información de Entrega</h1>
+        <h1 className="text-3xl font-bold mb-8 text-gray-800">
+          Registro de Información de Entrega
+        </h1>
         <button
           onClick={requestLocation}
           className="bg-blue-600 text-white px-4 py-2 rounded-md mb-6 hover:bg-blue-700 transition duration-300"
@@ -157,15 +180,26 @@ export default function DeliveryInfoRegistration() {
           Usar ubicación actual
         </button>
         <AddressSearch onSelect={handleLocationSelect} value={address} />
-        <Map selectedLocation={selectedLocation} onLocationChange={setSelectedLocation} />
-        <AddressForm clientId={clientId} selectedLocation={selectedLocation} address={address} />
+        <Map
+          selectedLocation={selectedLocation}
+          onLocationChange={setSelectedLocation}
+        />
+        <AddressForm
+          clientId={clientId}
+          selectedLocation={selectedLocation}
+          address={address}
+          formData={formData}
+          setFormData={setFormData}
+        />
       </div>
     );
   }
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <h1 className="text-3xl font-bold mb-8 text-gray-800">Registro de Información de Entrega</h1>
+      <h1 className="text-3xl font-bold mb-8 text-gray-800">
+        Registro de Información de Entrega
+      </h1>
       <AddressForm clientId={clientId} />
     </div>
   );
