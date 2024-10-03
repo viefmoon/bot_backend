@@ -92,18 +92,11 @@ export async function handleTextMessage(
     where: { clientId: from },
   });
 
-  console.log("customer", customer);
-  console.log(
-    "Full Chat History:",
-    JSON.stringify(customer.fullChatHistory, null, 2)
-  );
-  console.log(
-    "Relevant Chat History:",
-    JSON.stringify(customer.relevantChatHistory, null, 2)
-  );
-
   let fullChatHistory: ChatMessage[] = customer.fullChatHistory || [];
   let relevantChatHistory: ChatMessage[] = customer.relevantChatHistory || [];
+
+  console.log("fullChatHistory", fullChatHistory);
+  console.log("relevantChatHistory", relevantChatHistory);
 
   console.log("Mensaje recibido de:", from);
   console.log("Mensaje:", text);
@@ -112,8 +105,6 @@ export async function handleTextMessage(
     await resetChatHistory(customer);
     return;
   }
-
-  console.log("relevantChatHistory.length", relevantChatHistory.length);
 
   if (
     new Date().getTime() - new Date(customer.lastInteraction).getTime() >
