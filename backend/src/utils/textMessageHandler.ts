@@ -115,6 +115,8 @@ export async function handleTextMessage(
     return;
   }
 
+  console.log("relevantChatHistory.length", relevantChatHistory.length);
+
   if (
     new Date().getTime() - new Date(customer.lastInteraction).getTime() >
       60 * 60 * 1000 ||
