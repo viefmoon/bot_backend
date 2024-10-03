@@ -78,6 +78,12 @@ export default function DeliveryInfoRegistration() {
             latitude: location.lat,
             longitude: location.lng,
           }));
+
+          // Actualizar el campo de búsqueda de dirección
+          const inputElement = document.querySelector('input[type="text"]');
+          if (inputElement) {
+            inputElement.value = addressDetails.streetAddress;
+          }
         },
         (error) => {
           console.error("Error obteniendo la ubicación:", error);
@@ -245,7 +251,7 @@ export default function DeliveryInfoRegistration() {
         </p>
         <div className="mb-2 p-2 bg-white rounded-lg shadow-md">
           <h2 className="text-base font-semibold mb-1 text-gray-800">
-            Busca tu dirección o usa tu ubicación actual
+            Busca tu dirección
           </h2>
           <div className="flex flex-col space-y-2">
             <Autocomplete
