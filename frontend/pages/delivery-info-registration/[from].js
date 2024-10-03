@@ -5,23 +5,23 @@ import AddressForm from "../../components/AddressForm";
 
 export default function DeliveryInfoRegistration() {
   const router = useRouter();
-  const { from, otp } = router.query;
+  const { from: clientId, otp } = router.query;
   const [isValidOtp, setIsValidOtp] = useState(false);
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (router.isReady && from && otp) {
-      verifyOtp(from, otp);
+    if (router.isReady && clientId && otp) {
+      verifyOtp(clientId, otp);
     } else if (router.isReady) {
       setLoading(false);
       setError("El enlace no es válido. Falta información necesaria.");
     }
-  }, [router.isReady, from, otp]);
+  }, [router.isReady, clientId, otp]);
 
-  const verifyOtp = async (phone, otp) => {
+  const verifyOtp = async (clientId, otp) => {
     try {
-      const response = await axios.post("/api/verify_otp", { phone, otp });
+      const response = await axios.post("/api/verify_otp", { clientId, otp });
       setLoading(false);
       if (response.data.valid) {
         setIsValidOtp(true);
@@ -51,7 +51,7 @@ export default function DeliveryInfoRegistration() {
   return (
     <div>
       <h1>Registro de Información de Entrega</h1>
-      <AddressForm clientId={from} />
+      <AddressForm clientId={clientId} />
     </div>
   );
 }
