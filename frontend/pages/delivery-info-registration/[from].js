@@ -177,13 +177,15 @@ export default function DeliveryInfoRegistration() {
         <p className="text-center text-gray-600 mb-4">
           ID del cliente: {clientId}
         </p>
-        <button
-          onClick={requestLocation}
-          className="bg-blue-600 text-white px-3 py-1 rounded-md mb-4 hover:bg-blue-700 transition duration-300"
-        >
-          Usar ubicación actual
-        </button>
-        <AddressSearch onSelect={handleLocationSelect} value={address} />
+        <div className="flex flex-col md:flex-row items-center justify-center gap-4 mb-4">
+          <AddressSearch onSelect={handleLocationSelect} value={address} />
+          <button
+            onClick={requestLocation}
+            className="bg-blue-600 text-white px-3 py-2 rounded-md hover:bg-blue-700 transition duration-300 w-full md:w-auto"
+          >
+            Usar ubicación actual
+          </button>
+        </div>
         <Map
           selectedLocation={selectedLocation}
           onLocationChange={setSelectedLocation}
