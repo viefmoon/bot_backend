@@ -1,9 +1,9 @@
-import React, { useEffect } from "react";
+import React from "react";
 import { useJsApiLoader, Autocomplete } from "@react-google-maps/api";
 
 const libraries = ["places"];
 
-export default function AddressSearch({ onSelect, selectedLocation }) {
+export default function AddressSearch({ onSelect }) {
   const { isLoaded, loadError } = useJsApiLoader({
     googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY,
     libraries: libraries,
@@ -21,17 +21,6 @@ export default function AddressSearch({ onSelect, selectedLocation }) {
       }
     }
   };
-
-  useEffect(() => {
-    if (selectedLocation && isLoaded) {
-      const geocoder = new google.maps.Geocoder();
-      geocoder.geocode({ location: selectedLocation }, (results, status) => {
-        if (status === "OK" && results[0]) {
-          onSelect(selectedLocation, results[0].formatted_address);
-        }
-      });
-    }
-  }, [selectedLocation, isLoaded]);
 
   if (loadError) {
     return <div className="text-red-500">Error al cargar Google Maps API</div>;

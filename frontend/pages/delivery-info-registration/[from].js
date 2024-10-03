@@ -11,6 +11,7 @@ export default function DeliveryInfoRegistration() {
   const [isValidOtp, setIsValidOtp] = useState(false);
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [currentLocation, setCurrentLocation] = useState(null);
   const [selectedLocation, setSelectedLocation] = useState(null);
   const [address, setAddress] = useState("");
 
@@ -39,29 +40,59 @@ export default function DeliveryInfoRegistration() {
     }
   };
 
+  const requestLocation = () => {
+    if ("geolocation" in navigator) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const { latitude, longitude } = position.coords;
+          setCurrentLocation({ lat: latitude, lng: longitude });
+          setSelectedLocation({ lat: latitude, lng: longitude });
+        },
+        (error) => {
+          console.error("Error obteniendo la ubicación:", error);
+          setError("No se pudo obtener la ubicación actual. Por favor, ingrese su dirección manualmente.");
+        }
+      );
+    } else {
+      setError("Geolocalización no está soportada en este navegador.");
+    }
+  };
+
   const handleLocationSelect = (location, formattedAddress) => {
     setSelectedLocation(location);
     setAddress(formattedAddress);
   };
 
   if (loading) {
-    return <p className="text-center p-4">Verificando enlace...</p>;
+    return <p>Verificando enlace...</p>;
   }
 
   if (error) {
-    return <p className="text-center p-4 text-red-500">{error}</p>;
+    return <p>{error}</p>;
   }
 
   if (!isValidOtp) {
-    return <p className="text-center p-4">El enlace ha expirado o no es válido.</p>;
+    return <p>El enlace ha expirado o no es válido.</p>;
+  }
+
+  if (isValidOtp) {
+    return (
+      <div>
+        <h1>Registro de Información de Entrega</h1>
+        <button onClick={requestLocation} className="mb-4 bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">
+          Usar ubicación actual
+        </button>
+        <AddressSearch onSelect={handleLocationSelect} />
+        <Map selectedLocation={selectedLocation} onLocationChange={setSelectedLocation} />
+        <AddressForm clientId={clientId} selectedLocation={selectedLocation} address={address} />
+      </div>
+    );
   }
 
   return (
-    <div className="max-w-md mx-auto p-4">
-      <h1 className="text-2xl font-bold mb-4 text-center">Registro de Información de Entrega</h1>
-      <AddressSearch onSelect={handleLocationSelect} />
-      <Map selectedLocation={selectedLocation} onLocationChange={handleLocationSelect} />
-      <AddressForm clientId={clientId} selectedLocation={selectedLocation} address={address} />
+    <div>
+      <h1>Registro de Información de Entrega</h1>
+      <AddressForm clientId={clientId} />
     </div>
   );
 }
