@@ -3,7 +3,7 @@ import { GoogleMap, Marker } from "@react-google-maps/api";
 
 const containerStyle = {
   width: "100%",
-  height: "400px",
+  height: "300px", // Reducimos la altura del mapa
 };
 
 const center = {
@@ -19,8 +19,8 @@ export default function Map({ selectedLocation, onLocationChange }) {
   };
 
   return (
-    <div className="mb-4 p-3 bg-white rounded-lg shadow-md">
-      <h2 className="text-lg font-semibold mb-2 text-gray-800">
+    <div className="mb-2 p-2 bg-white rounded-lg shadow-md">
+      <h2 className="text-base font-semibold mb-1 text-gray-800">
         Selecciona tu ubicación
       </h2>
       <div className="rounded-lg overflow-hidden">
@@ -33,6 +33,7 @@ export default function Map({ selectedLocation, onLocationChange }) {
             streetViewControl: false,
             mapTypeControl: false,
             fullscreenControl: false,
+            zoomControl: false, // Eliminamos el control de zoom para hacer el mapa más compacto
           }}
         >
           {selectedLocation && (
