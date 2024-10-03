@@ -170,8 +170,8 @@ export async function handleTextMessage(
   console.log("relevantChatHistory", relevantChatHistory);
 
   await customer.update({
-    fullChatHistory: fullChatHistory,
-    relevantChatHistory: relevantChatHistory,
+    fullChatHistory: JSON.stringify(fullChatHistory),
+    relevantChatHistory: JSON.stringify(relevantChatHistory),
     lastInteraction: new Date(),
   });
   // Verifica el contenido después de la actualización
