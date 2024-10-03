@@ -88,14 +88,11 @@ export async function handleTextMessage(
   from: string,
   text: string
 ): Promise<void> {
-  const [customer] = await Customer.findOrCreate({
+  const customer = await Customer.findOne({
     where: { clientId: from },
-    defaults: {
-      fullChatHistory: [],
-      relevantChatHistory: [],
-      lastInteraction: new Date(),
-    },
   });
+
+  console.log("customer", customer);
 
   let fullChatHistory: ChatMessage[] =
     typeof customer.fullChatHistory === "string"
