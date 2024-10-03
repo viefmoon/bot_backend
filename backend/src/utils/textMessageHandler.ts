@@ -132,21 +132,24 @@ export async function handleTextMessage(
 
   for (const item of response) {
     if (item.text) {
-      if (item.sendToWhatsApp !== false) {
+      if (item.sendToWhatsApp == true) {
         await sendWhatsAppMessage(from, item.text);
       }
       updateChatHistory(
         { role: "assistant", content: item.text },
-        item.isRelevant !== false
+        item.isRelevant == true
       );
     }
 
     if (item.confirmationMessage) {
       await sendWhatsAppMessage(from, item.confirmationMessage);
-      updateChatHistory({
-        role: "assistant",
-        content: item.confirmationMessage,
-      });
+      updateChatHistory(
+        {
+          role: "assistant",
+          content: item.confirmationMessage,
+        },
+        true
+      );
     }
   }
 
