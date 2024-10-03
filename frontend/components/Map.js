@@ -1,5 +1,5 @@
 import React from "react";
-import { GoogleMap, useJsApiLoader, Marker } from "@react-google-maps/api";
+import { GoogleMap, useLoadScript, Marker } from "@react-google-maps/api";
 
 const containerStyle = {
   width: "100%",
@@ -12,8 +12,9 @@ const center = {
 };
 
 export default function Map({ selectedLocation, onLocationChange }) {
-  const { isLoaded } = useJsApiLoader({
+  const { isLoaded } = useLoadScript({
     googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY,
+    libraries: ["places"],
   });
 
   const handleMapClick = (event) => {
