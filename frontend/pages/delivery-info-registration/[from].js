@@ -22,12 +22,12 @@ export default function DeliveryInfoRegistration() {
   const verifyOtp = async (phone, otp) => {
     try {
       const response = await axios.post("/api/verify_otp", { phone, otp });
-      console.log(response.data);
       setLoading(false);
       if (response.data.valid) {
         setIsValidOtp(true);
       } else {
-        setError("El enlace ha expirado o no es válido.");
+        setError(`El enlace ha expirado o no es válido. ${response.data.message || ''}`);
+        
       }
     } catch (error) {
       console.error("Error al verificar el OTP:", error);
