@@ -80,7 +80,11 @@ export default function AddressForm({
               name={field}
               value={formData[field]}
               onChange={handleChange}
-              className="w-full p-0.5 text-sm border border-gray-300 rounded-md focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+              className={`w-full p-0.5 text-sm border rounded-md ${
+                field !== "streetAddress"
+                  ? "bg-gray-100 text-gray-600 cursor-not-allowed"
+                  : "border-gray-300 focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+              }`}
               required={field === "streetAddress"}
               readOnly={field !== "streetAddress"}
             />
