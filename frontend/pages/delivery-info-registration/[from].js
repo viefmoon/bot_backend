@@ -79,17 +79,11 @@ export default function DeliveryInfoRegistration() {
             longitude: location.lng,
           }));
 
-          // Crear la dirección completa en el formato deseado
-          const fullAddress = `${addressDetails.streetAddress}, ${addressDetails.city}, ${addressDetails.state}, ${addressDetails.country}`;
-
-          // Actualizar el campo de búsqueda de dirección con la dirección completa
+          // Actualizar el campo de búsqueda de dirección
           const inputElement = document.querySelector('input[type="text"]');
           if (inputElement) {
-            inputElement.value = fullAddress;
+            inputElement.value = addressDetails.streetAddress;
           }
-
-          // Actualizar el estado de la dirección
-          setAddress(fullAddress);
         },
         (error) => {
           console.error("Error obteniendo la ubicación:", error);
@@ -120,12 +114,15 @@ export default function DeliveryInfoRegistration() {
           country: "",
         };
 
+        let streetNumber = "";
+        let streetName = "";
+
         addressComponents.forEach((component) => {
           if (component.types.includes("street_number")) {
-            addressDetails.streetAddress = component.long_name + " ";
+            streetNumber = component.long_name;
           }
           if (component.types.includes("route")) {
-            addressDetails.streetAddress += component.long_name;
+            streetName = component.long_name;
           }
           if (
             component.types.includes("sublocality_level_1") ||
@@ -146,6 +143,10 @@ export default function DeliveryInfoRegistration() {
             addressDetails.country = component.long_name;
           }
         });
+
+        // Combinar el nombre de la calle y el número en el orden correcto
+        addressDetails.streetAddress =
+          streetName + (streetNumber ? ` ${streetNumber}` : "");
 
         return addressDetails;
       }
