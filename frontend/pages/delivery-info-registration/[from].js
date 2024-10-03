@@ -255,13 +255,14 @@ export default function DeliveryInfoRegistration() {
         );
         console.log("CustomerDeliveryInfo creado:", response.data);
         alert("Dirección guardada exitosamente");
-        // Aquí puedes agregar lógica adicional después de guardar exitosamente
       } catch (error) {
         console.error("Error al crear CustomerDeliveryInfo:", error);
         alert("Error al guardar la dirección. Por favor, inténtelo de nuevo.");
       }
     } else {
-      alert("Por favor, complete todos los campos obligatorios.");
+      // Mostrar errores específicos
+      const errorMessages = Object.values(errors).join("\n");
+      alert(`Por favor, corrija los siguientes errores:\n\n${errorMessages}`);
     }
   };
 
@@ -322,11 +323,6 @@ export default function DeliveryInfoRegistration() {
           setFormData={setFormData}
           formErrors={formErrors}
         />
-        {Object.keys(formErrors).length > 0 && (
-          <div className="text-red-600 mt-2">
-            Por favor, complete todos los campos obligatorios.
-          </div>
-        )}
         <button
           type="submit"
           className="w-full mt-2 bg-blue-600 text-white px-3 py-2 text-base rounded-md font-semibold hover:bg-blue-700 transition duration-300"
