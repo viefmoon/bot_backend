@@ -240,6 +240,21 @@ export default function DeliveryInfoRegistration() {
       <p className="text-red-600">El enlace ha expirado o no es válido.</p>
     );
 
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      const response = await axios.post("/api/create-customer-delivery-info", {
+        ...formData,
+        clientId,
+      });
+      console.log("CustomerDeliveryInfo creado:", response.data);
+      // Aquí puedes agregar lógica adicional después de guardar exitosamente
+    } catch (error) {
+      console.error("Error al crear CustomerDeliveryInfo:", error);
+      // Aquí puedes manejar el error, por ejemplo, mostrando un mensaje al usuario
+    }
+  };
+
   return (
     <div className="container mx-auto px-1 py-1">
       <h1 className="text-lg md:text-xl font-bold mb-0.5 text-gray-800 text-center">
@@ -274,17 +289,25 @@ export default function DeliveryInfoRegistration() {
           </button>
         </div>
       </div>
-      <AddressForm
-        clientId={clientId}
-        selectedLocation={selectedLocation}
-        address={address}
-        formData={formData}
-        setFormData={setFormData}
-      />
-      <Map
-        selectedLocation={selectedLocation}
-        onLocationChange={setSelectedLocation}
-      />
+      <form onSubmit={handleSubmit}>
+        <AddressForm
+          clientId={clientId}
+          selectedLocation={selectedLocation}
+          address={address}
+          formData={formData}
+          setFormData={setFormData}
+        />
+        <button
+          type="submit"
+          className="w-full mt-2 bg-blue-600 text-white px-2 py-0.5 text-sm rounded-md font-semibold hover:bg-blue-700 transition duration-300"
+        >
+          Guardar Dirección
+        </button>
+        <Map
+          selectedLocation={selectedLocation}
+          onLocationChange={setSelectedLocation}
+        />
+      </form>
     </div>
   );
 }
