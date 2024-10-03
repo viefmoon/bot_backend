@@ -14,13 +14,13 @@ export const storeOTP = (phoneNumber: string, otp: string): void => {
   otpStore.set(phoneNumber, { otp, expiresAt: expirationTime });
 };
 
-export const verifyOTP = (phoneNumber: string, otp: string): boolean => {
-  const record = otpStore.get(phoneNumber);
-  console.log("phoneNumber", phoneNumber);
+export const verifyOTP = (clientId: string, otp: string): boolean => {
+  const record = otpStore.get(clientId);
+  console.log("clientId", clientId);
   console.log("otp", otp);
   console.log("record", record);
   if (record && record.otp === otp && Date.now() < record.expiresAt) {
-    otpStore.delete(phoneNumber); // Eliminar el OTP después de usarlo
+    otpStore.delete(clientId); // Eliminar el OTP después de usarlo
     return true;
   }
   return false;

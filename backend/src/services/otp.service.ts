@@ -18,8 +18,8 @@ export class OtpService implements OnModuleInit, OnModuleDestroy {
     storeOTP(phoneNumber, otp);
   }
 
-  verifyOTP(phoneNumber: string, otp: string): boolean {
-    return verifyOTP(phoneNumber, otp);
+  verifyOTP(clientId: string, otp: string): boolean {
+    return verifyOTP(clientId, otp);
   }
 
   onModuleInit() {
