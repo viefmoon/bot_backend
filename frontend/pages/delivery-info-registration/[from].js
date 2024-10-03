@@ -1,11 +1,19 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/router";
 import axios from "axios";
+import { useLoadScript } from "@react-google-maps/api";
 import AddressForm from "../../components/AddressForm";
 import AddressSearch from "../../components/AddressSearch";
 import Map from "../../components/Map";
 
+const libraries = ["places"];
+
 export default function DeliveryInfoRegistration() {
+  const { isLoaded, loadError } = useLoadScript({
+    googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY,
+    libraries,
+  });
+
   const router = useRouter();
   const { from: clientId, otp } = router.query;
   const [isValidOtp, setIsValidOtp] = useState(false);
@@ -62,6 +70,14 @@ export default function DeliveryInfoRegistration() {
     setSelectedLocation(location);
     setAddress(formattedAddress);
   };
+
+  if (loadError) {
+    return <div>Error al cargar Google Maps API</div>;
+  }
+
+  if (!isLoaded) {
+    return <div>Cargando...</div>;
+  }
 
   if (loading) {
     return <p>Verificando enlace...</p>;
