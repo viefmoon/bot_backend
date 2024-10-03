@@ -18,10 +18,16 @@ export default function Map({ selectedLocation, onLocationChange }) {
     onLocationChange({ lat, lng });
   };
 
+  const handleMarkerDragEnd = (event) => {
+    const lat = event.latLng.lat();
+    const lng = event.latLng.lng();
+    onLocationChange({ lat, lng });
+  };
+
   return (
     <div className="mb-2 p-2 bg-white rounded-lg shadow-md">
       <h2 className="text-base font-semibold mb-1 text-gray-800">
-        Selecciona tu ubicación
+        Ajusta tu ubicación
       </h2>
       <div className="rounded-lg overflow-hidden">
         <GoogleMap
@@ -33,12 +39,14 @@ export default function Map({ selectedLocation, onLocationChange }) {
             streetViewControl: false,
             mapTypeControl: false,
             fullscreenControl: false,
-            zoomControl: false, // Eliminamos el control de zoom para hacer el mapa más compacto
+            zoomControl: false,
           }}
         >
           {selectedLocation && (
             <Marker
               position={selectedLocation}
+              draggable={true}
+              onDragEnd={handleMarkerDragEnd}
               animation={window.google.maps.Animation.DROP}
             />
           )}
