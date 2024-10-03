@@ -16,6 +16,9 @@ export const storeOTP = (phoneNumber: string, otp: string): void => {
 
 export const verifyOTP = (phoneNumber: string, otp: string): boolean => {
   const record = otpStore.get(phoneNumber);
+  console.log("phoneNumber", phoneNumber);
+  console.log("otp", otp);
+  console.log("record", record);
   if (record && record.otp === otp && Date.now() < record.expiresAt) {
     otpStore.delete(phoneNumber); // Eliminar el OTP después de usarlo
     return true;
