@@ -44,13 +44,13 @@ async function sendBannedMessage(clientId: string): Promise<void> {
       "Si crees que es un error, por favor contacta directamente con el restaurante:\n\n" +
       "📞 Teléfono fijo: 3919160126\n" +
       "📱 Celular: 3338423316\n\n" +
-      "Agradecemos tu comprensión y esperamos resolver cualquier malentendido."
+      "Agradecemos tu comprensión y esperamos resolver cualquier malentendido.",
   );
 }
 
 async function handleIncomingWhatsAppMessage(
   message: WhatsAppMessage,
-  otpService: OtpService
+  otpService: OtpService,
 ): Promise<void> {
   const { from, type, id } = message;
 
@@ -82,7 +82,7 @@ async function handleIncomingWhatsAppMessage(
   if (!(await verificarHorarioAtencion())) {
     await sendWhatsAppMessage(
       from,
-      "Lo sentimos, el restaurante está cerrado en este momento."
+      "Lo sentimos, el restaurante está cerrado en este momento.",
     );
     return;
   }
@@ -90,11 +90,11 @@ async function handleIncomingWhatsAppMessage(
   if (!customer.customerDeliveryInfo) {
     const otp = otpService.generateOTP();
     await otpService.storeOTP(from, otp);
-    const registrationLink = `${process.env.FRONTEND_BASE_URL}/delivery-info-registration/${from}?otp=${otp}`;
+    const registrationLink = `${process.env.FRONTEND_BASE_URL}/delivery_info_registration/${from}?otp=${otp}`;
 
     await sendWhatsAppMessage(
       from,
-      `Antes de continuar, necesitamos que registres tu información de entrega. Por favor, usa este enlace para proporcionar tu dirección completa: ${registrationLink}`
+      `Antes de continuar, necesitamos que registres tu información de entrega. Por favor, usa este enlace para proporcionar tu dirección completa: ${registrationLink}`,
     );
     return;
   }
@@ -119,7 +119,7 @@ async function handleIncomingWhatsAppMessage(
 export async function handleWhatsAppWebhook(
   req: Request,
   res: Response,
-  otpService: OtpService
+  otpService: OtpService,
 ): Promise<void> {
   res.status(200).send("EVENT_RECEIVED");
   const { object, entry } = req.body as WebhookBody;
