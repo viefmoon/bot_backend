@@ -139,6 +139,8 @@ export async function handleTextMessage(
         { role: "assistant", content: item.text },
         item.isRelevant == true
       );
+      console.log("fullChatHistory CON EL MENSAJE 2", fullChatHistory);
+      console.log("relevantChatHistory CON EL MENSAJE 2", relevantChatHistory);
     }
 
     if (item.confirmationMessage) {
