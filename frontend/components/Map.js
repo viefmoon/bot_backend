@@ -19,8 +19,10 @@ export default function Map({ selectedLocation, onLocationChange }) {
   };
 
   return (
-    <div className="mb-6 p-4 bg-white rounded-lg shadow-md">
-      <h2 className="text-xl font-semibold mb-4 text-gray-800">Selecciona tu ubicación</h2>
+    <div className="mb-4 p-3 bg-white rounded-lg shadow-md">
+      <h2 className="text-lg font-semibold mb-2 text-gray-800">
+        Selecciona tu ubicación
+      </h2>
       <div className="rounded-lg overflow-hidden">
         <GoogleMap
           mapContainerStyle={containerStyle}

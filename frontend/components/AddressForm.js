@@ -44,12 +44,12 @@ export default function AddressForm({
   return (
     <form
       onSubmit={handleSubmit}
-      className="space-y-6 bg-white p-6 rounded-lg shadow-md"
+      className="space-y-4 bg-white p-4 rounded-lg shadow-md"
     >
-      <h2 className="text-2xl font-bold mb-4 text-gray-800">
+      <h2 className="text-xl font-bold mb-2 text-gray-800">
         Detalles de la dirección
       </h2>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
         {[
           "streetAddress",
           "neighborhood",
@@ -61,7 +61,7 @@ export default function AddressForm({
           <div key={field}>
             <label
               htmlFor={field}
-              className="block mb-1 font-medium text-gray-700"
+              className="block mb-1 text-sm font-medium text-gray-700"
             >
               {field.charAt(0).toUpperCase() + field.slice(1)}
             </label>
@@ -71,7 +71,7 @@ export default function AddressForm({
               name={field}
               value={formData[field]}
               onChange={handleChange}
-              className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="w-full p-1 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               required={field === "streetAddress"}
             />
           </div>
@@ -80,7 +80,7 @@ export default function AddressForm({
       <div>
         <label
           htmlFor="additionalDetails"
-          className="block mb-1 font-medium text-gray-700"
+          className="block mb-1 text-sm font-medium text-gray-700"
         >
           Detalles adicionales
         </label>
@@ -89,13 +89,13 @@ export default function AddressForm({
           name="additionalDetails"
           value={formData.additionalDetails}
           onChange={handleChange}
-          className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-          rows="3"
+          className="w-full p-1 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+          rows="2"
         ></textarea>
       </div>
       <button
         type="submit"
-        className="w-full bg-blue-600 text-white px-4 py-2 rounded-md font-semibold hover:bg-blue-700 transition duration-300"
+        className="w-full bg-blue-600 text-white px-3 py-1 rounded-md font-semibold hover:bg-blue-700 transition duration-300"
       >
         Guardar Dirección
       </button>
