@@ -82,6 +82,7 @@ export default function AddressForm({
               onChange={handleChange}
               className="w-full p-0.5 text-sm border border-gray-300 rounded-md focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
               required={field === "streetAddress"}
+              readOnly={field !== "streetAddress"}
             />
           </div>
         ))}
