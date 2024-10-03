@@ -8,17 +8,11 @@ import Map from "../../components/Map";
 const libraries = ["places"];
 
 export default function DeliveryInfoRegistration() {
-  const { isLoaded, loadError } = useLoadScript({
-    googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY,
-    libraries,
-  });
-
   const router = useRouter();
   const { from: clientId, otp } = router.query;
   const [isValidOtp, setIsValidOtp] = useState(false);
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [currentLocation, setCurrentLocation] = useState(null);
   const [selectedLocation, setSelectedLocation] = useState(null);
   const [address, setAddress] = useState("");
   const [formData, setFormData] = useState({
@@ -31,6 +25,11 @@ export default function DeliveryInfoRegistration() {
     latitude: "",
     longitude: "",
     additionalDetails: "",
+  });
+
+  const { isLoaded, loadError } = useLoadScript({
+    googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY,
+    libraries,
   });
 
   useEffect(() => {
@@ -66,7 +65,6 @@ export default function DeliveryInfoRegistration() {
         async (position) => {
           const { latitude, longitude } = position.coords;
           const location = { lat: latitude, lng: longitude };
-          setCurrentLocation(location);
           setSelectedLocation(location);
 
           // Obtener la dirección a partir de las coordenadas
@@ -227,89 +225,66 @@ export default function DeliveryInfoRegistration() {
     return addressDetails;
   };
 
-  if (loadError) {
+  if (loadError)
     return (
       <div className="text-red-600 font-semibold">
         Error al cargar Google Maps API
       </div>
     );
-  }
-
-  if (!isLoaded) {
-    return <div className="text-gray-600">Cargando...</div>;
-  }
-
-  if (loading) {
-    return <p className="text-gray-600">Verificando enlace...</p>;
-  }
-
-  if (error) {
-    return <p className="text-red-600">{error}</p>;
-  }
-
-  if (!isValidOtp) {
+  if (!isLoaded) return <div className="text-gray-600">Cargando...</div>;
+  if (loading) return <p className="text-gray-600">Verificando enlace...</p>;
+  if (error) return <p className="text-red-600">{error}</p>;
+  if (!isValidOtp)
     return (
       <p className="text-red-600">El enlace ha expirado o no es válido.</p>
     );
-  }
-
-  if (isValidOtp) {
-    return (
-      <div className="container mx-auto px-1 py-1">
-        <h1 className="text-lg md:text-xl font-bold mb-0.5 text-gray-800 text-center">
-          Registro de
-          <span className="block text-blue-600">Información de Entrega</span>
-        </h1>
-        <p className="text-center text-gray-600 mb-1 text-sm">
-          ID del cliente: {clientId}
-        </p>
-        <div className="mb-2 p-2 bg-white rounded-lg shadow-md">
-          <h2 className="text-base font-semibold mb-1 text-gray-800">
-            Busca tu dirección
-          </h2>
-          <div className="flex flex-col space-y-2">
-            <Autocomplete
-              onLoad={(autocomplete) =>
-                autocomplete.addListener("place_changed", () =>
-                  handlePlaceChanged(autocomplete)
-                )
-              }
-            >
-              <input
-                type="text"
-                placeholder="Ingresa tu dirección"
-                className="w-full p-0.5 text-sm border border-gray-300 rounded-md focus:ring-1 focus:ring-blue-500 focus:border-blue-500 transition duration-200"
-              />
-            </Autocomplete>
-            <button
-              onClick={requestLocation}
-              className="bg-blue-600 text-white px-2 py-0.5 rounded-md hover:bg-blue-700 transition duration-300 text-sm"
-            >
-              Usar ubicación actual
-            </button>
-          </div>
-        </div>
-        <Map
-          selectedLocation={selectedLocation}
-          onLocationChange={setSelectedLocation}
-        />
-        <AddressForm
-          clientId={clientId}
-          selectedLocation={selectedLocation}
-          address={address}
-          formData={formData}
-          setFormData={setFormData}
-        />
-      </div>
-    );
-  }
 
   return (
-    <div className="container mx-auto px-2 py-4">
-      <h1 className="text-3xl font-bold mb-8 text-gray-800">
-        Registro de Información de Entrega
+    <div className="container mx-auto px-1 py-1">
+      <h1 className="text-lg md:text-xl font-bold mb-0.5 text-gray-800 text-center">
+        Registro de{" "}
+        <span className="block text-blue-600">Información de Entrega</span>
       </h1>
-      <AddressForm clientId={clientId} />
+      <p className="text-center text-gray-600 mb-1 text-sm">
+        ID del cliente: {clientId}
+      </p>
+      <div className="mb-2 p-2 bg-white rounded-lg shadow-md">
+        <h2 className="text-base font-semibold mb-1 text-gray-800">
+          Busca tu dirección
+        </h2>
+        <div className="flex flex-col space-y-2">
+          <Autocomplete
+            onLoad={(autocomplete) =>
+              autocomplete.addListener("place_changed", () =>
+                handlePlaceChanged(autocomplete)
+              )
+            }
+          >
+            <input
+              type="text"
+              placeholder="Ingresa tu dirección"
+              className="w-full p-0.5 text-sm border border-gray-300 rounded-md focus:ring-1 focus:ring-blue-500 focus:border-blue-500 transition duration-200"
+            />
+          </Autocomplete>
+          <button
+            onClick={requestLocation}
+            className="bg-blue-600 text-white px-2 py-0.5 rounded-md hover:bg-blue-700 transition duration-300 text-sm"
+          >
+            Usar ubicación actual
+          </button>
+        </div>
+      </div>
+      <Map
+        selectedLocation={selectedLocation}
+        onLocationChange={setSelectedLocation}
+      />
+      <AddressForm
+        clientId={clientId}
+        selectedLocation={selectedLocation}
+        address={address}
+        formData={formData}
+        setFormData={setFormData}
+      />
     </div>
   );
 }
