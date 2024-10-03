@@ -757,6 +757,16 @@ module.exports = {
         type: Sequelize.TEXT,
         allowNull: true,
       },
+      preOrderId: {
+        type: Sequelize.INTEGER.UNSIGNED,
+        allowNull: true,
+        references: {
+          model: "PreOrders",
+          key: "id",
+        },
+        onUpdate: "CASCADE",
+        onDelete: "SET NULL",
+      },
       createdAt: {
         allowNull: false,
         type: Sequelize.DATE,

@@ -405,7 +405,7 @@ export class PreOrderService {
     // Actualizar información de entrega
     await orderDeliveryInfo.update({
       preOrderId: preOrder.id,
-    } as any);
+    });
     return {
       status: 200,
       json: { mensaje: relevantMessageContent },
