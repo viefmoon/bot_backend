@@ -10,42 +10,7 @@ export default function AddressSearch({ onSelect }) {
           lat: place.geometry.location.lat(),
           lng: place.geometry.location.lng(),
         };
-        
-        // Extraer más información de la dirección
-        const addressComponents = place.address_components;
-        const formattedAddress = place.formatted_address;
-        
-        const addressData = {
-          streetAddress: formattedAddress,
-          neighborhood: '',
-          postalCode: '',
-          city: '',
-          state: '',
-          country: '',
-        };
-
-        for (let component of addressComponents) {
-          const componentType = component.types[0];
-          switch (componentType) {
-            case "sublocality_level_1":
-              addressData.neighborhood = component.long_name;
-              break;
-            case "postal_code":
-              addressData.postalCode = component.long_name;
-              break;
-            case "locality":
-              addressData.city = component.long_name;
-              break;
-            case "administrative_area_level_1":
-              addressData.state = component.long_name;
-              break;
-            case "country":
-              addressData.country = component.long_name;
-              break;
-          }
-        }
-
-        onSelect(selectedLocation, addressData);
+        onSelect(selectedLocation, place.formatted_address);
       }
     }
   };

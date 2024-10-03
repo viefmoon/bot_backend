@@ -56,10 +56,16 @@ export default function DeliveryInfoRegistration() {
           const location = { lat: latitude, lng: longitude };
           setCurrentLocation(location);
           setSelectedLocation(location);
-          
+
           // Obtener la dirección a partir de las coordenadas
-          const formattedAddress = await getAddressFromCoordinates(location);
-          setAddress(formattedAddress);
+          const addressDetails = await getAddressFromCoordinates(location);
+          setAddress(addressDetails.streetAddress);
+          setFormData((prev) => ({
+            ...prev,
+            ...addressDetails,
+            latitude: location.lat,
+            longitude: location.lng,
+          }));
         },
         (error) => {
           console.error("Error obteniendo la ubicación:", error);
@@ -77,12 +83,42 @@ export default function DeliveryInfoRegistration() {
         `https://maps.googleapis.com/maps/api/geocode/json?latlng=${location.lat},${location.lng}&key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}`
       );
       if (response.data.results.length > 0) {
-        return response.data.results[0].formatted_address;
+        const addressComponents = response.data.results[0].address_components;
+        const formattedAddress = response.data.results[0].formatted_address;
+
+        const addressDetails = {
+          streetAddress: formattedAddress,
+          neighborhood: "",
+          postalCode: "",
+          city: "",
+          state: "",
+          country: "",
+        };
+
+        addressComponents.forEach((component) => {
+          if (component.types.includes("neighborhood")) {
+            addressDetails.neighborhood = component.long_name;
+          }
+          if (component.types.includes("postal_code")) {
+            addressDetails.postalCode = component.long_name;
+          }
+          if (component.types.includes("locality")) {
+            addressDetails.city = component.long_name;
+          }
+          if (component.types.includes("administrative_area_level_1")) {
+            addressDetails.state = component.long_name;
+          }
+          if (component.types.includes("country")) {
+            addressDetails.country = component.long_name;
+          }
+        });
+
+        return addressDetails;
       }
     } catch (error) {
       console.error("Error obteniendo la dirección:", error);
     }
-    return "";
+    return {};
   };
 
   const handleLocationSelect = (location, formattedAddress) => {
