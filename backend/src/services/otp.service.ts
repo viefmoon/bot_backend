@@ -19,6 +19,8 @@ export class OtpService implements OnModuleInit, OnModuleDestroy {
   }
 
   verifyOTP(clientId: string, otp: string): boolean {
+    console.log("clientId en backend", clientId);
+    console.log("otp en backend", otp);
     return verifyOTP(clientId, otp);
   }
 

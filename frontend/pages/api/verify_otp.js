@@ -5,7 +5,6 @@ export default async function handler(req, res) {
     const { clientId, otp } = req.body;
 
     try {
-      console.error("Datos recibidos:", { clientId, otp });
       const response = await axios.post(
         `${process.env.NEXT_PUBLIC_BACKEND_BASE_URL}/otp/verify`,
         { clientId, otp }
