@@ -244,7 +244,7 @@ async function handleChatbotHelp(clientId: string): Promise<void> {
 async function handleChangeDeliveryInfo(from: string): Promise<void> {
   const otp = otpService.generateOTP();
   await otpService.storeOTP(from, otp);
-  const updateLink = `${process.env.FRONTEND_BASE_URL}/update-delivery-info/${from}?otp=${otp}`;
+  const updateLink = `${process.env.FRONTEND_BASE_URL}/delivery-info-registration/${from}?otp=${otp}`;
 
   await sendWhatsAppMessage(
     from,
