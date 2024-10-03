@@ -70,6 +70,10 @@ async function sendWelcomeMessage(phoneNumber) {
             { id: "wait_times", title: "Tiempos de espera" },
             { id: "restaurant_info", title: "Información y horarios" },
             { id: "chatbot_help", title: "¿Cómo usar el bot?" },
+            {
+              id: "change_delivery_info",
+              title: "Cambiar información de entrega",
+            },
             { id: "reorder", title: "Reordenar" },
           ],
         },

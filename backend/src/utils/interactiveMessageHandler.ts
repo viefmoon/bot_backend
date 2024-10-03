@@ -11,10 +11,13 @@ import { Order, Customer, RestaurantConfig } from "../models";
 import { sendWhatsAppMessage } from "../utils/whatsAppUtils";
 import Stripe from "stripe";
 import menuText from "../data/menu";
+import { OtpService } from "../services/otp.service";
 
 const stripeClient = new Stripe(process.env.STRIPE_SECRET_KEY!, {
   apiVersion: "2024-06-20",
 });
+
+const otpService = new OtpService();
 
 export async function handleInteractiveMessage(
   from: string,
@@ -45,6 +48,8 @@ export async function handleInteractiveMessage(
       await handleReorder(from);
     } else if (listReplyId === "chatbot_help") {
       await handleChatbotHelp(from);
+    } else if (listReplyId === "change_delivery_info") {
+      await handleChangeDeliveryInfo(from);
     }
   }
 }
@@ -234,4 +239,15 @@ async function handleChatbotHelp(clientId: string): Promise<void> {
     "¡Disfruta tu experiencia con nuestro chatbot! 🍽️🤖";
 
   await sendWhatsAppMessage(clientId, chatbotHelp);
+}
+
+async function handleChangeDeliveryInfo(from: string): Promise<void> {
+  const otp = otpService.generateOTP();
+  await otpService.storeOTP(from, otp);
+  const updateLink = `${process.env.FRONTEND_BASE_URL}/update-delivery-info/${from}?otp=${otp}`;
+
+  await sendWhatsAppMessage(
+    from,
+    `Para actualizar tu información de entrega, por favor utiliza este enlace: ${updateLink}\n\nEste enlace es válido por un tiempo limitado por razones de seguridad.`
+  );
 }
