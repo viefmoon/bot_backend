@@ -27,6 +27,7 @@ export default function DeliveryInfoRegistration() {
     additionalDetails: "",
   });
   const [formErrors, setFormErrors] = useState({});
+  const [isUpdating, setIsUpdating] = useState(false);
 
   const { isLoaded, loadError } = useLoadScript({
     googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY,
@@ -46,9 +47,11 @@ export default function DeliveryInfoRegistration() {
     try {
       const response = await axios.post("/api/verify_otp", { clientId, otp });
       setLoading(false);
-      // Cambiamos esta parte para interpretar directamente el resultado
       setIsValidOtp(response.data);
-      if (!response.data) {
+      if (response.data) {
+        // Si el OTP es válido, intentamos cargar la información existente
+        loadExistingDeliveryInfo(clientId);
+      } else {
         setError(`El enlace ha expirado o no es válido.`);
       }
     } catch (error) {
@@ -57,6 +60,29 @@ export default function DeliveryInfoRegistration() {
       setError(
         "Hubo un error al verificar el enlace. Por favor, inténtelo de nuevo."
       );
+    }
+  };
+
+  const loadExistingDeliveryInfo = async (clientId) => {
+    try {
+      const response = await axios.get(
+        `/api/customer_delivery_info/${clientId}`
+      );
+      if (response.data) {
+        setFormData(response.data);
+        setSelectedLocation({
+          lat: parseFloat(response.data.latitude),
+          lng: parseFloat(response.data.longitude),
+        });
+        setAddress(response.data.streetAddress);
+        setIsUpdating(true);
+      }
+    } catch (error) {
+      console.error(
+        "Error al cargar la información de entrega existente:",
+        error
+      );
+      // Si no hay información existente, no hacemos nada y dejamos el formulario vacío
     }
   };
 
@@ -241,34 +267,34 @@ export default function DeliveryInfoRegistration() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
-    // Imprimir los datos en la consola antes de validar
-    console.log("Datos del formulario antes de validar:", {
-      clientId,
-      streetAddress: formData.streetAddress,
-      neighborhood: formData.neighborhood,
-      postalCode: formData.postalCode,
-      city: formData.city,
-      state: formData.state,
-      country: formData.country,
-      latitude: formData.latitude,
-      longitude: formData.longitude,
-      additionalDetails: formData.additionalDetails,
-    });
-
     const errors = validateForm();
     setFormErrors(errors);
 
     if (Object.keys(errors).length === 0) {
       try {
-        const response = await axios.post("/api/customer_delivery_info", {
-          ...formData,
-          clientId,
-        });
-        console.log("CustomerDeliveryInfo creado:", response.data);
-        alert("Dirección guardada exitosamente");
+        let response;
+        if (isUpdating) {
+          response = await axios.put(
+            `/api/customer_delivery_info/${clientId}`,
+            {
+              ...formData,
+              clientId,
+            }
+          );
+        } else {
+          response = await axios.post("/api/customer_delivery_info", {
+            ...formData,
+            clientId,
+          });
+        }
+        console.log("CustomerDeliveryInfo guardado:", response.data);
+        alert(
+          isUpdating
+            ? "Dirección actualizada exitosamente"
+            : "Dirección guardada exitosamente"
+        );
       } catch (error) {
-        console.error("Error al crear CustomerDeliveryInfo:", error);
+        console.error("Error al guardar CustomerDeliveryInfo:", error);
         alert("Error al guardar la dirección. Por favor, inténtelo de nuevo.");
       }
     } else {
@@ -294,7 +320,11 @@ export default function DeliveryInfoRegistration() {
   return (
     <div className="container mx-auto px-1 py-1">
       <h1 className="text-lg md:text-xl font-bold mb-0.5 text-gray-800 text-center">
-        <span className="block text-blue-600">Información de Entrega</span>
+        <span className="block text-blue-600">
+          {isUpdating
+            ? "Actualizar Información de Entrega"
+            : "Información de Entrega"}
+        </span>
       </h1>
       <p className="text-center text-gray-600 mb-1 text-sm">
         ID del cliente: {clientId}
@@ -338,7 +368,7 @@ export default function DeliveryInfoRegistration() {
           type="submit"
           className="w-full mt-2 bg-blue-600 text-white px-3 py-2 text-base rounded-md font-semibold hover:bg-blue-700 transition duration-300"
         >
-          Guardar Dirección
+          {isUpdating ? "Actualizar Dirección" : "Guardar Dirección"}
         </button>
         <Map
           selectedLocation={selectedLocation}
