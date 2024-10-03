@@ -172,7 +172,8 @@ export default function DeliveryInfoRegistration() {
           ...addressDetails,
           latitude: selectedLocation.lat,
           longitude: selectedLocation.lng,
-          streetAddress: place.formatted_address,
+          // Usamos la calle y número extraídos en lugar de la dirección completa
+          streetAddress: addressDetails.streetAddress,
         }));
       }
     }
