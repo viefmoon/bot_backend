@@ -85,10 +85,9 @@ export default function DeliveryInfoRegistration() {
     return "";
   };
 
-  const handleLocationSelect = (location, addressData) => {
+  const handleLocationSelect = (location, formattedAddress) => {
     setSelectedLocation(location);
-    setAddress(addressData.streetAddress);
-    // Puedes guardar addressData en el estado si lo necesitas para otros propósitos
+    setAddress(formattedAddress);
   };
 
   if (loadError) {
