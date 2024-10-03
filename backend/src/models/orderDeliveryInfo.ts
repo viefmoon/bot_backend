@@ -17,6 +17,7 @@ export interface OrderDeliveryInfoAttributes {
   createdAt?: Date;
   updatedAt?: Date;
   preOrderId?: number; // Añadir este campo
+  orderId?: number; // Añadir este campo si es necesario
 }
 
 export interface OrderDeliveryInfoCreationAttributes
@@ -42,6 +43,7 @@ class OrderDeliveryInfo
   public geocodedAddress!: string | null;
   public additionalDetails!: string | null;
   public preOrderId!: number | null; // Añadir este campo
+  public orderId!: number | null; // Añadir este campo si es necesario
 
   // Timestamps
   public readonly createdAt!: Date;
@@ -100,6 +102,10 @@ OrderDeliveryInfo.init(
       allowNull: true,
     },
     preOrderId: {
+      type: DataTypes.INTEGER.UNSIGNED,
+      allowNull: true,
+    },
+    orderId: {
       type: DataTypes.INTEGER.UNSIGNED,
       allowNull: true,
     },
