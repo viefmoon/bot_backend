@@ -229,13 +229,27 @@ export default function DeliveryInfoRegistration() {
 
   const validateForm = () => {
     const errors = {};
-    if (!formData.streetAddress?.trim())
+
+    if (!formData.streetAddress || formData.streetAddress.trim() === "") {
       errors.streetAddress = "La dirección completa es obligatoria";
-    if (!formData.city?.trim()) errors.city = "La ciudad es obligatoria";
-    if (!formData.state?.trim()) errors.state = "El estado es obligatorio";
-    if (!formData.country?.trim()) errors.country = "El país es obligatorio";
-    if (!formData.postalCode?.trim())
+    }
+
+    if (!formData.city || formData.city.trim() === "") {
+      errors.city = "La ciudad es obligatoria";
+    }
+
+    if (!formData.state || formData.state.trim() === "") {
+      errors.state = "El estado es obligatorio";
+    }
+
+    if (!formData.country || formData.country.trim() === "") {
+      errors.country = "El país es obligatorio";
+    }
+
+    if (!formData.postalCode || formData.postalCode.trim() === "") {
       errors.postalCode = "El código postal es obligatorio";
+    }
+
     return errors;
   };
 
