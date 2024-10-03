@@ -170,11 +170,9 @@ export default function DeliveryInfoRegistration() {
   if (isValidOtp) {
     return (
       <div className="container mx-auto px-4 py-8">
-        <h1 className="text-4xl font-bold mb-8 text-gray-800 flex items-center justify-center">
-          <FaTruck className="mr-4 text-blue-600" />
-          <span className="bg-gradient-to-r from-blue-600 to-green-400 text-transparent bg-clip-text">
-            Registro de Información de Entrega
-          </span>
+        <h1 className="text-2xl md:text-3xl font-bold mb-6 text-gray-800 text-center">
+          Registro de
+          <span className="block text-blue-600">Información de Entrega</span>
         </h1>
         <button
           onClick={requestLocation}
