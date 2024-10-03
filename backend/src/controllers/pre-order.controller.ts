@@ -1,6 +1,7 @@
-import { Request, Response } from "express";
+import { Controller, Request, Response, Post } from "@nestjs/common";
 import { PreOrderService } from "../services/pre-order.service";
 
+@Controller("pre-orders")
 export class PreOrderController {
   private preOrderService: PreOrderService;
 
@@ -8,11 +9,8 @@ export class PreOrderController {
     this.preOrderService = new PreOrderService();
   }
 
-  async selectProducts(req: Request, res: Response) {
-    if (req.method !== "POST") {
-      return res.status(405).end(`Method ${req.method} Not Allowed`);
-    }
-
+  @Post("select-products")
+  async selectProducts(@Request() req, @Response() res) {
     const { orderItems, clientId, orderType, scheduledDeliveryTime } = req.body;
 
     try {

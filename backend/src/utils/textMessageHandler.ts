@@ -5,8 +5,8 @@ import {
 import { Customer } from "../models";
 import * as dotenv from "dotenv";
 import { preprocessMessages } from "./messagePreprocess";
-import axios from "axios";
 import { Anthropic } from "@anthropic-ai/sdk";
+import { PreOrderService } from "../services/pre-order.service";
 
 dotenv.config();
 
@@ -217,19 +217,17 @@ async function processAndGenerateAIResponse(
         .content[0].input as any;
 
       try {
-        const selectProductsResponse = (await axios.post(
-          `${process.env.BASE_URL}/api/orders/select_products`,
-          {
-            orderItems,
-            clientId: conversationId,
-            orderType,
-            scheduledDeliveryTime,
-          }
-        )) as any;
+        const preOrderService = new PreOrderService();
+        const selectProductsResponse = await preOrderService.selectProducts({
+          orderItems,
+          clientId: conversationId,
+          orderType,
+          scheduledDeliveryTime,
+        });
 
         return [
           {
-            text: selectProductsResponse.data.mensaje,
+            text: selectProductsResponse.json.mensaje,
             sendToWhatsApp: false,
             isRelevant: true,
           },
@@ -237,7 +235,7 @@ async function processAndGenerateAIResponse(
       } catch (error) {
         console.error("Error al seleccionar los productos:", error);
         const errorMessage =
-          (error as any).response?.data?.error ||
+          error.message ||
           "Error al procesar tu pedido. Por favor, inténtalo de nuevo.";
         return [{ text: errorMessage, sendToWhatsApp: true, isRelevant: true }];
       }
