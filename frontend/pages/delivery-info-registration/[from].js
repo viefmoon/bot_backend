@@ -26,8 +26,7 @@ export default function DeliveryInfoRegistration() {
       if (response.data.valid) {
         setIsValidOtp(true);
       } else {
-        setError(`El enlace ha expirado o no es válido. ${JSON.stringify(response.data) || ''}`);
-        
+        setError(`El enlace ha expirado o no es válido. ${clientId} ${otp}`);
       }
     } catch (error) {
       console.error("Error al verificar el OTP:", error);
