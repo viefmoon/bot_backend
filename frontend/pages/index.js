@@ -346,35 +346,55 @@ export default function Home() {
   );
 
   return (
-    <div>
-      <div className="view-selector">
+    <div className="container mx-auto px-4 py-8">
+      <div className="flex flex-wrap gap-4 mb-8">
         <button
           onClick={() => setActiveView("orders")}
-          className={activeView === "orders" ? "active" : ""}
+          className={`px-4 py-2 rounded-lg ${
+            activeView === "orders"
+              ? "bg-blue-600 text-white"
+              : "bg-gray-200 text-gray-800"
+          }`}
         >
           Ver Pedidos
         </button>
         <button
           onClick={() => setActiveView("clients")}
-          className={activeView === "clients" ? "active" : ""}
+          className={`px-4 py-2 rounded-lg ${
+            activeView === "clients"
+              ? "bg-blue-600 text-white"
+              : "bg-gray-200 text-gray-800"
+          }`}
         >
           Ver Clientes
         </button>
         <button
           onClick={() => setActiveView("notificationPhones")}
-          className={activeView === "notificationPhones" ? "active" : ""}
+          className={`px-4 py-2 rounded-lg ${
+            activeView === "notificationPhones"
+              ? "bg-blue-600 text-white"
+              : "bg-gray-200 text-gray-800"
+          }`}
         >
           Ver Teléfonos de Notificación
         </button>
         <button
           onClick={() => setActiveView("restaurantConfig")}
-          className={activeView === "restaurantConfig" ? "active" : ""}
+          className={`px-4 py-2 rounded-lg ${
+            activeView === "restaurantConfig"
+              ? "bg-blue-600 text-white"
+              : "bg-gray-200 text-gray-800"
+          }`}
         >
           Configuración del Restaurante
         </button>
         <button
           onClick={() => setActiveView("menu")}
-          className={activeView === "menu" ? "active" : ""}
+          className={`px-4 py-2 rounded-lg ${
+            activeView === "menu"
+              ? "bg-blue-600 text-white"
+              : "bg-gray-200 text-gray-800"
+          }`}
         >
           Ver Menú
         </button>
@@ -383,17 +403,20 @@ export default function Home() {
       {activeView === "orders" && (
         <div>
           <button
-            id="refreshOrdersButton"
             onClick={() => fetchOrders(selectedDate)}
-            className="refresh-button"
+            className="flex items-center justify-center px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition duration-300"
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
-              viewBox="0 0 24 24"
+              className="h-5 w-5 mr-2"
+              viewBox="0 0 20 20"
               fill="currentColor"
-              className="refresh-icon"
             >
-              <path d="M12 20.25c4.97 0 9-3.694 9-8.25s-4.03-8.25-9-8.25S3 7.444 3 12c0 2.104.859 4.023 2.273 5.48.432.447.74 1.04.586 1.641a4.483 4.483 0 01-.923 1.785A5.969 5.969 0 006 21c1.282 0 2.47-.402 3.445-1.087.81.22 1.668.337 2.555.337z" />
+              <path
+                fillRule="evenodd"
+                d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z"
+                clipRule="evenodd"
+              />
             </svg>
             Refrescar Pedidos
           </button>

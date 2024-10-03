@@ -1,5 +1,4 @@
-import React from "react";
-import { useState } from "react";
+import React, { useState } from "react";
 
 const OrderCard = ({ order, onUpdateStatus }) => {
     const [isLoading, setIsLoading] = useState(false);
@@ -17,65 +16,71 @@ const OrderCard = ({ order, onUpdateStatus }) => {
     };
 
     return (
-        <div className="col-md-6 col-lg-4 mb-3">
-            <div className="card order-card">
-                <div className="card-body">
-                    <h5 className="card-title">Pedido #{order.dailyOrderNumber}</h5>
-                    <p className="card-text">Fecha de Pedido: {formatDateToMexicoTime(order.orderDate, true)}</p>
-                    <p className="card-text">Tipo: {translateOrderType(order.orderType)}</p>
-                    <p className="card-text">ID del Cliente: {order.clientId}</p>
-                    <p className="card-text"><strong>Info de Entrega:</strong> {order.deliveryInfo || 'N/A'}</p>
-                    <p className="card-text">Tiempo Estimado: {order.estimatedTime} minutos</p>
-                    <p className="card-text"><strong>Total:</strong> ${order.totalCost.toFixed(2)}</p>
-                    <p className="card-text">Estado: <span className={`badge bg-${getStatusColor(order.status)}`}>{translateStatus(order.status)}</span></p>
-                    <p className="card-text">Pago: <span className={`badge bg-${getPaymentStatusColor(order.paymentStatus)}`}>{translatePaymentStatus(order.paymentStatus)}</span></p>
-                    <p className="card-text"><small className="text-muted">Creado: {formatDateToMexicoTime(order.createdAt)}</small></p>
-                    <p className="card-text"><small className="text-muted">Actualizado: {formatDateToMexicoTime(order.updatedAt)}</small></p>
-
-                    {order.orderItems && order.orderItems.length > 0 && (
-                        <div className="mt-3">
-                            <h6>Elementos del pedido:</h6>
-                            <ul className="list-group">
-                                {order.orderItems.map((item, index) => (
-                                    <li key={index} className="list-group-item p-2">
-                                        <strong>{item.Product.name} - {item.ProductVariant.name}</strong><br />
-                                        Cantidad: {item.quantity}, Precio: ${item.price.toFixed(2)}
-                                        {item.selectedPizzaIngredients && item.selectedPizzaIngredients.length > 0 && (
-                                            <div>
-                                                <strong>Ingredientes de pizza:</strong>
-                                                {renderPizzaIngredients(item.selectedPizzaIngredients)}
-                                            </div>
-                                        )}
-                                        {item.selectedModifiers && item.selectedModifiers.length > 0 && (
-                                            <div>
-                                                <strong>Modificadores:</strong> {renderModifiers(item.selectedModifiers)}
-                                            </div>
-                                        )}
-                                        {item.comments && (
-                                            <div><strong>Comentarios:</strong> {item.comments}</div>
-                                        )}
-                                    </li>
-                                ))}
-                            </ul>
-                        </div>
-                    )}
-
-                    <div className="btn-group mt-3">
-                        <button 
-                            className="btn btn-success" 
-                            onClick={() => handleUpdateStatus('accepted')}
-                            disabled={order.status === 'accepted' || isLoading}
-                        >
-                            Aceptar
-                        </button>
-                        <button 
-                            className="btn btn-danger" 
-                            onClick={() => handleUpdateStatus('canceled')}
-                            disabled={order.status === 'canceled' || isLoading}
-                        >
-                            Rechazar
-                        </button>
+        <div className="bg-white shadow-md rounded-lg overflow-hidden mb-4">
+            <div className="p-4">
+                <h5 className="text-xl font-semibold mb-2">Pedido #{order.dailyOrderNumber}</h5>
+                <p className="text-gray-600 mb-1">Fecha de Pedido: {formatDateToMexicoTime(order.orderDate, true)}</p>
+                <p className="text-gray-600 mb-1">Tipo: {translateOrderType(order.orderType)}</p>
+                <p className="text-gray-600 mb-1">ID del Cliente: {order.clientId}</p>
+                <p className="text-gray-600 mb-1"><strong>Info de Entrega:</strong> {order.deliveryInfo || 'N/A'}</p>
+                <p className="text-gray-600 mb-1">Tiempo Estimado: {order.estimatedTime} minutos</p>
+                <p className="text-gray-600 mb-1"><strong>Total:</strong> ${order.totalCost.toFixed(2)}</p>
+                <p className="text-gray-600 mb-1">
+                    Estado: 
+                    <span className={`ml-2 px-2 py-1 rounded-full text-xs ${getStatusColor(order.status)}`}>
+                        {translateStatus(order.status)}
+                    </span>
+                </p>
+                <p className="text-gray-600 mb-1">
+                    Pago: 
+                    <span className={`ml-2 px-2 py-1 rounded-full text-xs ${getPaymentStatusColor(order.paymentStatus)}`}>
+                        {translatePaymentStatus(order.paymentStatus)}
+                    </span>
+                </p>
+                
+                {order.orderItems && order.orderItems.length > 0 && (
+                    <div className="mt-3">
+                        <h6>Elementos del pedido:</h6>
+                        <ul className="list-group">
+                            {order.orderItems.map((item, index) => (
+                                <li key={index} className="list-group-item p-2">
+                                    <strong>{item.Product.name} - {item.ProductVariant.name}</strong><br />
+                                    Cantidad: {item.quantity}, Precio: ${item.price.toFixed(2)}
+                                    {item.selectedPizzaIngredients && item.selectedPizzaIngredients.length > 0 && (
+                                        <div>
+                                            <strong>Ingredientes de pizza:</strong>
+                                            {renderPizzaIngredients(item.selectedPizzaIngredients)}
+                                        </div>
+                                    )}
+                                    {item.selectedModifiers && item.selectedModifiers.length > 0 && (
+                                        <div>
+                                            <strong>Modificadores:</strong> {renderModifiers(item.selectedModifiers)}
+                                        </div>
+                                    )}
+                                    {item.comments && (
+                                        <div><strong>Comentarios:</strong> {item.comments}</div>
+                                    )}
+                                </li>
+                            ))}
+                        </ul>
                     </div>
+                )}
+
+                <div className="mt-4 flex space-x-2">
+                    <button 
+                        className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600 disabled:opacity-50"
+                        onClick={() => handleUpdateStatus('accepted')}
+                        disabled={order.status === 'accepted' || isLoading}
+                    >
+                        Aceptar
+                    </button>
+                    <button 
+                        className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600 disabled:opacity-50"
+                        onClick={() => handleUpdateStatus('canceled')}
+                        disabled={order.status === 'canceled' || isLoading}
+                    >
+                        Rechazar
+                    </button>
                 </div>
             </div>
         </div>

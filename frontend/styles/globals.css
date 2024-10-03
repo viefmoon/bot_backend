@@ -1,3 +1,9 @@
+@import 'tailwindcss/base';
+@import 'tailwindcss/components';
+@import 'tailwindcss/utilities';
+
+/* Puedes agregar estilos personalizados aquí si es necesario */
+
 .order-card {
   transition: all 0.3s ease;
   margin-bottom: 0.25rem;

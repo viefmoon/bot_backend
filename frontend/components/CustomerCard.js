@@ -39,50 +39,40 @@ const CustomerCard = ({ client, onToggleBan }) => {
   };
 
   return (
-    <div className="col-md-6 col-lg-4 mb-3">
-      <div className="card client-card">
-        <div className="card-body">
-          <h5 className="card-title">Cliente ID: {client.clientId}</h5>
-          <p className="card-text">
-            Información de entrega: {client.deliveryInfo || "N/A"}
-          </p>
-          <p className="card-text">
-            Stripe Customer ID: {client.stripeCustomerId || "N/A"}
-          </p>
-          <p className="card-text">
-            Última interacción: {formatDateToMexicoTime(client.lastInteraction)}
-          </p>
-          <p className="card-text">
-            <small className="text-muted">
-              Creado: {formatDateToMexicoTime(client.createdAt)}
-            </small>
-          </p>
-          <p className="card-text">
-            Estado:{" "}
-            <span className={`badge bg-${isBanned ? "danger" : "success"}`}>
-              {isBanned ? "Baneado" : "Activo"}
-            </span>
-          </p>
-          <div className="mt-3">
-            <button
-              className="btn btn-primary btn-sm me-2"
-              onClick={toggleChatHistoryModal}
-            >
-              Ver historial de chat
-            </button>
-            <button
-              className="btn btn-info btn-sm me-2"
-              onClick={toggleCustomerOrdersModal}
-            >
-              Ver pedidos
-            </button>
-            <button
-              className={`btn btn-${isBanned ? "success" : "warning"} btn-sm`}
-              onClick={handleToggleBan}
-            >
-              {isBanned ? "Desbanear" : "Banear"}
-            </button>
-          </div>
+    <div className="bg-white shadow-md rounded-lg overflow-hidden mb-4">
+      <div className="p-4">
+        <h5 className="text-xl font-semibold mb-2">Cliente ID: {client.clientId}</h5>
+        <p className="text-gray-600 mb-1">Información de entrega: {client.deliveryInfo || "N/A"}</p>
+        <p className="text-gray-600 mb-1">Stripe Customer ID: {client.stripeCustomerId || "N/A"}</p>
+        <p className="text-gray-600 mb-1">Última interacción: {formatDateToMexicoTime(client.lastInteraction)}</p>
+        <p className="text-gray-600 mb-1">
+          <small>Creado: {formatDateToMexicoTime(client.createdAt)}</small>
+        </p>
+        <p className="text-gray-600 mb-1">
+          Estado: 
+          <span className={`ml-2 px-2 py-1 rounded-full text-xs ${isBanned ? "bg-red-100 text-red-800" : "bg-green-100 text-green-800"}`}>
+            {isBanned ? "Baneado" : "Activo"}
+          </span>
+        </p>
+        <div className="mt-4 flex space-x-2">
+          <button
+            className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+            onClick={toggleChatHistoryModal}
+          >
+            Ver historial de chat
+          </button>
+          <button
+            className="px-4 py-2 bg-indigo-500 text-white rounded hover:bg-indigo-600"
+            onClick={toggleCustomerOrdersModal}
+          >
+            Ver pedidos
+          </button>
+          <button
+            className={`px-4 py-2 ${isBanned ? "bg-green-500 hover:bg-green-600" : "bg-yellow-500 hover:bg-yellow-600"} text-white rounded`}
+            onClick={handleToggleBan}
+          >
+            {isBanned ? "Desbanear" : "Banear"}
+          </button>
         </div>
       </div>
       {showChatHistory && (
