@@ -6,9 +6,11 @@ export class OtpController {
   constructor(private readonly otpService: OtpService) {}
 
   @Post("verify")
-  async verifyOtp(@Body() body: { phoneNumber: string; otp: string }) {
-    const { phoneNumber, otp } = body;
-    const isValid = await this.otpService.verifyOTP(phoneNumber, otp);
-    return { success: isValid };
+  verifyOTP(@Body() body: { clientId: string, otp: string }) {
+    console.log("Cuerpo de la solicitud:", body);
+    const { clientId, otp } = body;
+    console.log("clientId en controlador:", clientId);
+    console.log("otp en controlador:", otp);
+    return this.otpService.verifyOTP(clientId, otp);
   }
 }
