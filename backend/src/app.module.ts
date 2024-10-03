@@ -5,6 +5,7 @@ import { CustomerController } from "./controllers/customer.controller";
 import { OrderController } from "./controllers/order.controller";
 import { NotificationPhoneController } from "./controllers/notification-phone.controller";
 import { RestaurantConfigController } from "./controllers/restaurant-config.controller";
+import { CustomerDeliveryInfoController } from "./controllers/customer-delivery-info.controller";
 //import { ProductSelectionController } from "./controllers/product-selection.controller";
 import { AvailabilityController } from "./controllers/availability.controller";
 import { OrderStatusController } from "./controllers/order-status.controller";
@@ -20,7 +21,7 @@ import { OrderStatusService } from "./services/order-status.service";
 import { WebhookService } from "./services/webhook.service";
 import { OtpService } from "./services/otp.service";
 import { OtpController } from "./controllers/otp.controller";
-
+import { CustomerDeliveryInfoService } from "./services/customer-delivery-info.service";
 @Module({
   imports: [ConfigModule.forRoot()],
   controllers: [
@@ -29,6 +30,7 @@ import { OtpController } from "./controllers/otp.controller";
     OrderController,
     NotificationPhoneController,
     RestaurantConfigController,
+    CustomerDeliveryInfoController,
     //ProductSelectionController,
     AvailabilityController,
     OrderStatusController,
@@ -41,6 +43,7 @@ import { OtpController } from "./controllers/otp.controller";
     OrderService,
     NotificationPhoneService,
     RestaurantConfigService,
+    CustomerDeliveryInfoService,
     //ProductSelectionService,
     AvailabilityService,
     OrderStatusService,
