@@ -41,6 +41,15 @@ export default function AddressForm({
     }
   };
 
+  const fieldTranslations = {
+    streetAddress: "Dirección completa",
+    neighborhood: "Colonia",
+    postalCode: "Código postal",
+    city: "Ciudad",
+    state: "Estado",
+    country: "País",
+  };
+
   return (
     <form
       onSubmit={handleSubmit}
@@ -63,7 +72,7 @@ export default function AddressForm({
               htmlFor={field}
               className="block mb-0.5 text-xs font-medium text-gray-700"
             >
-              {field.charAt(0).toUpperCase() + field.slice(1)}
+              {fieldTranslations[field]}
             </label>
             <input
               type="text"
