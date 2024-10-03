@@ -299,7 +299,7 @@ export default function DeliveryInfoRegistration() {
         />
         <button
           type="submit"
-          className="w-full mt-2 bg-blue-600 text-white px-2 py-0.5 text-sm rounded-md font-semibold hover:bg-blue-700 transition duration-300"
+          className="w-full mt-2 bg-blue-600 text-white px-3 py-2 text-base rounded-md font-semibold hover:bg-blue-700 transition duration-300"
         >
           Guardar Dirección
         </button>
