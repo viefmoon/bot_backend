@@ -1,9 +1,8 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/router";
 import axios from "axios";
-import { useLoadScript } from "@react-google-maps/api";
+import { useLoadScript, Autocomplete } from "@react-google-maps/api";
 import AddressForm from "../../components/AddressForm";
-import AddressSearch from "../../components/AddressSearch";
 import Map from "../../components/Map";
 
 const libraries = ["places"];
@@ -139,9 +138,18 @@ export default function DeliveryInfoRegistration() {
     return {};
   };
 
-  const handleLocationSelect = (location, formattedAddress) => {
-    setSelectedLocation(location);
-    setAddress(formattedAddress);
+  const handlePlaceChanged = (autocomplete) => {
+    if (autocomplete !== null) {
+      const place = autocomplete.getPlace();
+      if (place.geometry) {
+        const selectedLocation = {
+          lat: place.geometry.location.lat(),
+          lng: place.geometry.location.lng(),
+        };
+        setSelectedLocation(selectedLocation);
+        setAddress(place.formatted_address);
+      }
+    }
   };
 
   if (loadError) {
@@ -180,15 +188,30 @@ export default function DeliveryInfoRegistration() {
         <p className="text-center text-gray-600 mb-1 text-sm">
           ID del cliente: {clientId}
         </p>
-        <div className="mb-1">
-          <AddressSearch onSelect={handleLocationSelect} value={address} />
-          <button
-            onClick={requestLocation}
-            className="mt-0.5 w-full bg-blue-600 text-white px-2 py-0.5 rounded-md hover:bg-blue-700 transition duration-300 text-sm"
+        <div className="mb-2 p-2 bg-white rounded-lg shadow-md">
+          <h2 className="text-base font-semibold mb-1 text-gray-800">
+            Busca tu dirección
+          </h2>
+          <Autocomplete
+            onLoad={(autocomplete) =>
+              autocomplete.addListener("place_changed", () =>
+                handlePlaceChanged(autocomplete)
+              )
+            }
           >
-            Usar ubicación actual
-          </button>
+            <input
+              type="text"
+              placeholder="Ingresa tu dirección"
+              className="w-full p-0.5 text-sm border border-gray-300 rounded-md focus:ring-1 focus:ring-blue-500 focus:border-blue-500 transition duration-200"
+            />
+          </Autocomplete>
         </div>
+        <button
+          onClick={requestLocation}
+          className="mt-0.5 w-full bg-blue-600 text-white px-2 py-0.5 rounded-md hover:bg-blue-700 transition duration-300 text-sm"
+        >
+          Usar ubicación actual
+        </button>
         <Map
           selectedLocation={selectedLocation}
           onLocationChange={setSelectedLocation}
