@@ -6,11 +6,8 @@ export class OtpController {
   constructor(private readonly otpService: OtpService) {}
 
   @Post("verify")
-  verifyOTP(@Body() body: { clientId: string, otp: string }) {
-    console.log("Cuerpo de la solicitud:", body);
+  verifyOTP(@Body() body: { clientId: string; otp: string }) {
     const { clientId, otp } = body;
-    console.log("clientId en controlador:", clientId);
-    console.log("otp en controlador:", otp);
     return this.otpService.verifyOTP(clientId, otp);
   }
 }

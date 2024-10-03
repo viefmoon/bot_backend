@@ -19,17 +19,18 @@ export class OtpService implements OnModuleInit, OnModuleDestroy {
   }
 
   verifyOTP(clientId: string, otp: string): boolean {
-    console.log("clientId en backend", clientId);
-    console.log("otp en backend", otp);
     return verifyOTP(clientId, otp);
   }
 
   onModuleInit() {
     // Ejecutar la limpieza cada 5 minutos
-    this.cleanupInterval = setInterval(() => {
-      console.log("Limpiando OTPs expirados...");
-      cleanupExpiredOTPs();
-    }, 5 * 60 * 1000); // 5 minutos en milisegundos
+    this.cleanupInterval = setInterval(
+      () => {
+        console.log("Limpiando OTPs expirados...");
+        cleanupExpiredOTPs();
+      },
+      5 * 60 * 1000,
+    ); // 5 minutos en milisegundos
   }
 
   onModuleDestroy() {
