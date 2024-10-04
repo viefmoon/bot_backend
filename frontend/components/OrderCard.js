@@ -51,14 +51,11 @@ const OrderCard = ({ order, onUpdateStatus }) => {
           <div>
             <p className="text-gray-600">Info de Entrega:</p>
             <p className="font-medium">{order.deliveryInfo || "N/A"}</p>
+            <p className="text-gray-600 mt-2">Total:</p>
+            <p className="font-bold text-green-600">
+              ${order.totalCost.toFixed(2)}
+            </p>
           </div>
-        </div>
-
-        <div className="text-sm mb-2">
-          <p className="text-gray-600">Total:</p>
-          <p className="font-bold text-green-600">
-            ${order.totalCost.toFixed(2)}
-          </p>
         </div>
 
         {isExpanded && (
