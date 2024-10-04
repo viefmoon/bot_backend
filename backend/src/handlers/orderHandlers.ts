@@ -65,7 +65,9 @@ async function createOrderFromPreOrder(
     const orderData: CreateOrderDto = {
       orderType,
       orderItems,
-      scheduledDeliveryTime: scheduledDeliveryTime.toISOString(),
+      scheduledDeliveryTime: scheduledDeliveryTime
+        ? scheduledDeliveryTime.toISOString()
+        : null,
       clientId,
       orderDeliveryInfo,
     };
