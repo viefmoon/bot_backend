@@ -366,12 +366,12 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-gray-100">
-      <nav className="bg-white shadow-md">
+      <nav className="bg-blue-600 shadow-md">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between h-16">
             <div className="flex">
               <div className="flex-shrink-0 flex items-center">
-                <h1 className="text-xl font-bold text-gray-800">La Leña</h1>
+                <h1 className="text-xl font-bold text-white">La Leña</h1>
               </div>
             </div>
             <div className="hidden sm:ml-6 sm:flex sm:items-center">
@@ -385,10 +385,10 @@ export default function Home() {
                 <button
                   key={view}
                   onClick={() => setActiveView(view)}
-                  className={`px-3 py-2 rounded-md text-sm font-medium ${
+                  className={`px-3 py-2 rounded-md text-sm font-medium transition-colors duration-200 ${
                     activeView === view
-                      ? "bg-gray-900 text-white"
-                      : "text-gray-300 hover:bg-gray-700 hover:text-white"
+                      ? "bg-white text-blue-600"
+                      : "text-white hover:bg-blue-500"
                   }`}
                 >
                   {getViewTitle(view)}
@@ -398,7 +398,7 @@ export default function Home() {
             <div className="-mr-2 flex items-center sm:hidden">
               <button
                 onClick={() => setMenuOpen(!menuOpen)}
-                className="inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-white hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-white"
+                className="inline-flex items-center justify-center p-2 rounded-md text-white hover:text-white hover:bg-blue-500 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-white"
               >
                 <span className="sr-only">Abrir menú principal</span>
                 {menuOpen ? (
@@ -454,10 +454,10 @@ export default function Home() {
                   setActiveView(view);
                   setMenuOpen(false);
                 }}
-                className={`block px-3 py-2 rounded-md text-base font-medium ${
+                className={`block w-full text-left px-3 py-2 rounded-md text-base font-medium ${
                   activeView === view
-                    ? "bg-gray-900 text-white"
-                    : "text-gray-300 hover:bg-gray-700 hover:text-white"
+                    ? "bg-white text-blue-600"
+                    : "text-white hover:bg-blue-500"
                 }`}
               >
                 {getViewTitle(view)}
