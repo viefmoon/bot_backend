@@ -139,6 +139,10 @@ export class OrderService {
     });
 
     if (orderDeliveryInfo) {
+      console.log(
+        "orderDeliveryInfo en la creacion de la orden",
+        orderDeliveryInfo
+      );
       await OrderDeliveryInfo.create({
         ...orderDeliveryInfo,
         orderId: newOrder.id,
