@@ -48,13 +48,17 @@ const OrderCard = ({ order, onUpdateStatus }) => {
             <p className="text-gray-600">Cliente:</p>
             <p className="font-medium">{order.clientId}</p>
           </div>
-          <div>
-            <p className="text-gray-600">Info de Entrega:</p>
-            <p className="font-medium">{order.deliveryInfo || "N/A"}</p>
-            <p className="text-gray-600 mt-2">Total:</p>
-            <p className="font-bold text-green-600">
-              ${order.totalCost.toFixed(2)}
-            </p>
+          <div className="flex justify-between items-center">
+            <div>
+              <p className="text-gray-600">Info de Entrega:</p>
+              <p className="font-medium">{order.deliveryInfo || "N/A"}</p>
+            </div>
+            <div>
+              <p className="text-gray-600">Total:</p>
+              <p className="font-bold text-green-600">
+                ${order.totalCost.toFixed(2)}
+              </p>
+            </div>
           </div>
         </div>
 
