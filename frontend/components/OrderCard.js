@@ -22,11 +22,16 @@ const OrderCard = ({ order, onUpdateStatus }) => {
     <div className="bg-white shadow-md rounded-lg overflow-hidden mb-4 border border-gray-200">
       <div className="p-4">
         <div className="flex justify-between items-center mb-2">
-          <h5 className="text-lg font-bold text-gray-800">
-            Pedido #{order.dailyOrderNumber}
-          </h5>
+          <div className="flex items-center">
+            <h5 className="text-lg font-bold text-gray-800 mr-4">
+              Pedido #{order.dailyOrderNumber}
+            </h5>
+            <span className="text-sm text-gray-600">
+              {formatDateToMexicoTime(order.orderDate, true)}
+            </span>
+          </div>
           <span
-            className={`px-2 py-1 rounded-full text-xs font-semibold ${getStatusColor(
+            className={`px-3 py-1 rounded-full text-sm font-semibold ${getStatusColor(
               order.status
             )}`}
           >
@@ -35,37 +40,14 @@ const OrderCard = ({ order, onUpdateStatus }) => {
         </div>
 
         <div className="grid grid-cols-2 gap-2 text-sm mb-2">
-          <div>
-            <p className="text-gray-600">Fecha:</p>
-            <p className="font-medium">
-              {formatDateToMexicoTime(order.orderDate, true)}
-            </p>
-          </div>
-          <div>
-            <p className="text-gray-600">Tipo:</p>
-            <p className="font-medium">{translateOrderType(order.orderType)}</p>
-          </div>
-          <div>
-            <p className="text-gray-600">Cliente:</p>
-            <p className="font-medium">{order.clientId}</p>
-          </div>
-          <div>
-            <p className="text-gray-600">Total:</p>
-            <p className="font-bold text-green-600">
-              ${order.totalCost.toFixed(2)}
-            </p>
+          <div className="col-span-2">
+            <p className="text-gray-600">Info de Entrega:</p>
+            <p className="font-medium">{order.deliveryInfo || "N/A"}</p>
           </div>
         </div>
 
         {isExpanded && (
           <>
-            <div className="mb-2">
-              <p className="text-sm text-gray-600">Info de Entrega:</p>
-              <p className="text-sm font-medium">
-                {order.deliveryInfo || "N/A"}
-              </p>
-            </div>
-
             {order.orderItems && order.orderItems.length > 0 && (
               <div className="mt-3">
                 <h6 className="text-sm font-semibold mb-2">

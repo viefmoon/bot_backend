@@ -45,9 +45,9 @@ export default function Home() {
       const response = await axios.get(url);
       setOrders(response.data);
     } catch (error) {
-      console.error("Error al obtener pedidos:", error);
+      console.error("Error al obtener órdenes:", error);
       setError(
-        "No se pudieron obtener los pedidos. Por favor, inténtelo de nuevo más tarde."
+        "No se pudieron obtener las órdenes. Por favor, inténtelo de nuevo más tarde."
       );
     }
   };
@@ -469,6 +469,15 @@ export default function Home() {
                 {getViewTitle(view)}
               </button>
             ))}
+            <button
+              onClick={() => {
+                refreshAll();
+                setMenuOpen(false);
+              }}
+              className="block w-full text-left px-3 py-2 rounded-md text-base font-medium bg-yellow-500 text-white hover:bg-yellow-600"
+            >
+              Refrescar Todo
+            </button>
           </div>
         </div>
       </nav>
@@ -484,7 +493,7 @@ export default function Home() {
               <div>
                 <div className="mb-6 bg-gray-50 rounded-lg p-4">
                   <h3 className="text-lg font-semibold mb-3 text-gray-800">
-                    Filtrar pedidos por fecha
+                    Filtrar órdenes por fecha
                   </h3>
                   <div className="flex flex-col sm:flex-row items-center space-y-2 sm:space-y-0 sm:space-x-4">
                     <DatePicker
@@ -511,7 +520,7 @@ export default function Home() {
                 <div className="space-y-4">
                   {orders.length === 0 ? (
                     <p className="text-center text-gray-500">
-                      No se encontraron pedidos para la fecha seleccionada.
+                      No se encontraron órdenes para la fecha seleccionada.
                     </p>
                   ) : (
                     orders.map((order) => (
@@ -884,7 +893,7 @@ export default function Home() {
 // Función auxiliar para obtener el título de cada vista
 function getViewTitle(view) {
   const titles = {
-    orders: "Pedidos",
+    orders: "Órdenes",
     clients: "Clientes",
     notificationPhones: "Teléfonos de Notificación",
     restaurantConfig: "Configuración del Restaurante",
