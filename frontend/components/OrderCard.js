@@ -48,9 +48,6 @@ const OrderCard = ({ order, onUpdateStatus }) => {
             <p className="text-gray-600">Cliente:</p>
             <p className="font-medium">{order.clientId}</p>
           </div>
-        </div>
-
-        <div className="flex justify-between items-center text-sm mt-2">
           <div>
             <p className="text-gray-600">Info de Entrega:</p>
             <p className="font-medium">{order.deliveryInfo || "N/A"}</p>
