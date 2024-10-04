@@ -394,6 +394,12 @@ export default function Home() {
                   {getViewTitle(view)}
                 </button>
               ))}
+              <button
+                onClick={refreshAll}
+                className="ml-4 px-3 py-2 rounded-md text-sm font-medium bg-yellow-500 text-white hover:bg-yellow-600 transition-colors duration-200"
+              >
+                Refrescar Todo
+              </button>
             </div>
             <div className="-mr-2 flex items-center sm:hidden">
               <button
