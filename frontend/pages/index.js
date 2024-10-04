@@ -5,6 +5,7 @@ import CustomerCard from "../components/CustomerCard";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import { format } from "date-fns";
+import { es } from "date-fns/locale";
 
 export default function Home() {
   const [orders, setOrders] = useState([]);
@@ -425,19 +426,55 @@ export default function Home() {
 
       {activeView === "orders" && (
         <div>
-          <div>
-            <label>Selecciona una fecha: </label>
-            <DatePicker
-              selected={selectedDate}
-              onChange={handleDateChange}
-              dateFormat="yyyy-MM-dd"
-              placeholderText="Selecciona una fecha"
-            />
+          <div className="mb-6 bg-white shadow-md rounded-lg p-4">
+            <h3 className="text-lg font-semibold mb-3 text-gray-800">
+              Filtrar pedidos por fecha
+            </h3>
+            <div className="flex items-center space-x-4">
+              <DatePicker
+                selected={selectedDate}
+                onChange={handleDateChange}
+                dateFormat="dd/MM/yyyy"
+                locale={es}
+                className="w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                calendarClassName="bg-white shadow-lg rounded-lg border border-gray-200"
+                wrapperClassName="w-full"
+                popperClassName="z-10"
+                customInput={
+                  <button className="w-full flex items-center justify-between px-4 py-2 border border-gray-300 rounded-md shadow-sm bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                    <span>
+                      {format(selectedDate, "dd/MM/yyyy", { locale: es })}
+                    </span>
+                    <svg
+                      className="h-5 w-5 text-gray-400"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                      />
+                    </svg>
+                  </button>
+                }
+              />
+              <button
+                onClick={() => setSelectedDate(new Date())}
+                className="px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-opacity-50 transition duration-300"
+              >
+                Hoy
+              </button>
+            </div>
           </div>
           {error && <div className="alert alert-danger">{error}</div>}
           <div id="order-list">
             {orders.length === 0 ? (
-              <p className="text-center">No se encontraron pedidos.</p>
+              <p className="text-center text-gray-500">
+                No se encontraron pedidos para la fecha seleccionada.
+              </p>
             ) : (
               orders.map((order) => <OrderCard key={order.id} order={order} />)
             )}
