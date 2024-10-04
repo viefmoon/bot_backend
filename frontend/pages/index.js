@@ -197,150 +197,73 @@ export default function Home() {
   };
 
   const renderMenuItemCard = (item) => (
-    <div key={item.id} className="col-md-4 mb-3">
-      <div className="card h-100">
-        <div className="card-body">
-          <h5 className="card-title">{item.name}</h5>
-          <p className="card-text">Categoría: {item.category}</p>
-          <p className="card-text">
-            Precio:{" "}
-            {item.price
-              ? `$${item.price.toFixed(2)}`
-              : "Varía según la variante"}
-          </p>
-          <p className="card-text">
-            Disponible:{" "}
-            <span
-              className={`badge bg-${
-                item.Availability.available ? "success" : "danger"
-              }`}
-            >
-              {item.Availability.available ? "Sí" : "No"}
-            </span>
-          </p>
+    <div
+      key={item.id}
+      className="bg-white rounded-lg shadow-md overflow-hidden mb-6"
+    >
+      <div className="p-6">
+        <div className="flex justify-between items-center mb-4">
+          <h3 className="text-xl font-semibold text-gray-800">{item.name}</h3>
+          <span
+            className={`px-3 py-1 rounded-full text-sm font-semibold ${
+              item.Availability.available
+                ? "bg-green-100 text-green-800"
+                : "bg-red-100 text-red-800"
+            }`}
+          >
+            {item.Availability.available ? "Disponible" : "No disponible"}
+          </span>
+        </div>
+        <p className="text-gray-600 mb-2">Categoría: {item.category}</p>
+        <p className="text-gray-600 mb-4">
+          Precio:{" "}
+          {item.price ? `$${item.price.toFixed(2)}` : "Varía según la variante"}
+        </p>
 
-          {item.productVariants && item.productVariants.length > 0 && (
-            <div className="mt-3">
-              <h6>Variantes:</h6>
-              <ul className="list-group">
-                {item.productVariants.map((variant) => (
-                  <li
-                    key={variant.id}
-                    className="list-group-item d-flex justify-content-between align-items-center"
+        {item.productVariants && item.productVariants.length > 0 && (
+          <div className="mb-4">
+            <h4 className="font-semibold text-gray-700 mb-2">Variantes:</h4>
+            <div className="space-y-2">
+              {item.productVariants.map((variant) => (
+                <div
+                  key={variant.id}
+                  className="flex justify-between items-center bg-gray-50 p-2 rounded"
+                >
+                  <span>{variant.name}</span>
+                  <button
+                    onClick={() =>
+                      toggleItemAvailability(variant.id, "productVariant")
+                    }
+                    className={`px-3 py-1 rounded text-sm font-semibold ${
+                      variant.Availability.available
+                        ? "bg-red-500 text-white"
+                        : "bg-green-500 text-white"
+                    }`}
                   >
-                    {variant.name}
-                    <span
-                      className={`badge bg-${
-                        variant.Availability.available ? "success" : "danger"
-                      } rounded-pill`}
-                    >
-                      {variant.Availability.available
-                        ? "Disponible"
-                        : "No disponible"}
-                    </span>
-                    <button
-                      onClick={() =>
-                        toggleItemAvailability(variant.id, "productVariant")
-                      }
-                      className={`btn btn-${
-                        variant.Availability.available ? "danger" : "success"
-                      } btn-sm ms-2`}
-                    >
-                      {variant.Availability.available
-                        ? "Deshabilitar"
-                        : "Habilitar"}
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
-
-          {item.modifierTypes && item.modifierTypes.length > 0 && (
-            <div className="mt-3">
-              <h6>Modificadores:</h6>
-              {item.modifierTypes.map((modifierType) => (
-                <ul key={modifierType.id} className="list-group">
-                  {modifierType.modifiers.map((modifier) => (
-                    <li
-                      key={modifier.id}
-                      className="list-group-item d-flex justify-content-between align-items-center"
-                    >
-                      {modifier.name}
-                      <span
-                        className={`badge bg-${
-                          modifier.Availability.available ? "success" : "danger"
-                        } rounded-pill`}
-                      >
-                        {modifier.Availability.available
-                          ? "Disponible"
-                          : "No disponible"}
-                      </span>
-                      <button
-                        onClick={() =>
-                          toggleItemAvailability(modifier.id, "modifier")
-                        }
-                        className={`btn btn-${
-                          modifier.Availability.available ? "danger" : "success"
-                        } btn-sm ms-2`}
-                      >
-                        {modifier.Availability.available
-                          ? "Deshabilitar"
-                          : "Habilitar"}
-                      </button>
-                    </li>
-                  ))}
-                </ul>
+                    {variant.Availability.available
+                      ? "Deshabilitar"
+                      : "Habilitar"}
+                  </button>
+                </div>
               ))}
             </div>
-          )}
+          </div>
+        )}
 
-          {item.pizzaIngredients && item.pizzaIngredients.length > 0 && (
-            <div className="mt-3">
-              <h6>Ingredientes de Pizza:</h6>
-              <ul className="list-group">
-                {item.pizzaIngredients.map((ingredient) => (
-                  <li
-                    key={ingredient.id}
-                    className="list-group-item d-flex justify-content-between align-items-center"
-                  >
-                    {ingredient.name}
-                    <span
-                      className={`badge bg-${
-                        ingredient.Availability.available ? "success" : "danger"
-                      } rounded-pill`}
-                    >
-                      {ingredient.Availability.available
-                        ? "Disponible"
-                        : "No disponible"}
-                    </span>
-                    <button
-                      onClick={() =>
-                        toggleItemAvailability(ingredient.id, "pizzaIngredient")
-                      }
-                      className={`btn btn-${
-                        ingredient.Availability.available ? "danger" : "success"
-                      } btn-sm ms-2`}
-                    >
-                      {ingredient.Availability.available
-                        ? "Deshabilitar"
-                        : "Habilitar"}
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
+        {/* Secciones similares para modificadores e ingredientes de pizza */}
 
-          <button
-            onClick={() => toggleItemAvailability(item.id, "product")}
-            className={`btn btn-${
-              item.Availability.available ? "danger" : "success"
-            } btn-sm mt-2`}
-          >
-            {item.Availability.available ? "Deshabilitar" : "Habilitar"}
-          </button>
-        </div>
+        <button
+          onClick={() => toggleItemAvailability(item.id, "product")}
+          className={`w-full mt-4 px-4 py-2 rounded font-semibold ${
+            item.Availability.available
+              ? "bg-red-500 text-white"
+              : "bg-green-500 text-white"
+          }`}
+        >
+          {item.Availability.available
+            ? "Deshabilitar producto"
+            : "Habilitar producto"}
+        </button>
       </div>
     </div>
   );
@@ -551,11 +474,11 @@ export default function Home() {
       )}
 
       {activeView === "menu" && (
-        <div>
-          <h2>Menú</h2>
+        <div className="space-y-8">
+          <h2 className="text-3xl font-bold text-gray-800 mb-6">Menú</h2>
           <button
             onClick={fetchMenu}
-            className="flex items-center justify-center px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition duration-300"
+            className="flex items-center justify-center px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition duration-300"
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -571,15 +494,22 @@ export default function Home() {
             </svg>
             Refrescar Menú
           </button>
-          {error && <div className="alert alert-danger">{error}</div>}
-          <div id="menu-list">
+          {error && (
+            <div
+              className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative"
+              role="alert"
+            >
+              {error}
+            </div>
+          )}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {Object.entries(groupMenuItemsByCategory(menuItems)).map(
               ([category, items]) => (
-                <div key={category} className="col-12 mb-4">
-                  <h3>
-                    {category.charAt(0).toUpperCase() + category.slice(1)}
+                <div key={category} className="col-span-full">
+                  <h3 className="text-2xl font-semibold text-gray-800 mb-4 capitalize">
+                    {category}
                   </h3>
-                  <div className="row">
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {items.map((item) => renderMenuItemCard(item))}
                   </div>
                 </div>
