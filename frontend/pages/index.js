@@ -471,33 +471,68 @@ export default function Home() {
       )}
 
       {activeView === "notificationPhones" && (
-        <div>
-          <h2>Teléfonos de Notificación</h2>
-          <form onSubmit={addNotificationPhone}>
-            <input
-              type="text"
-              value={newPhoneNumber}
-              onChange={(e) => setNewPhoneNumber(e.target.value)}
-              placeholder="Nuevo número de teléfono"
-              required
-            />
-            <button type="submit">Agregar Teléfono</button>
+        <div className="bg-white shadow-lg rounded-lg p-6 max-w-2xl mx-auto">
+          <h2 className="text-2xl font-bold mb-6 text-gray-800 text-center">
+            Teléfonos de Notificación
+          </h2>
+
+          <form onSubmit={addNotificationPhone} className="mb-8">
+            <div className="flex items-center space-x-4">
+              <input
+                type="text"
+                value={newPhoneNumber}
+                onChange={(e) => setNewPhoneNumber(e.target.value)}
+                placeholder="Nuevo número de teléfono"
+                required
+                className="flex-grow px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              />
+              <button
+                type="submit"
+                className="px-6 py-2 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition duration-300"
+              >
+                Agregar
+              </button>
+            </div>
           </form>
-          <ul>
-            {notificationPhones.map((phone) => (
-              <li key={phone.id}>
-                {phone.phoneNumber}
-                <button
-                  onClick={() => togglePhoneStatus(phone.id, phone.isActive)}
+
+          {notificationPhones.length > 0 ? (
+            <ul className="space-y-4">
+              {notificationPhones.map((phone) => (
+                <li
+                  key={phone.id}
+                  className="flex items-center justify-between bg-gray-50 p-4 rounded-lg"
                 >
-                  {phone.isActive ? "Desactivar" : "Activar"}
-                </button>
-                <button onClick={() => deleteNotificationPhone(phone.id)}>
-                  Eliminar
-                </button>
-              </li>
-            ))}
-          </ul>
+                  <span className="text-lg font-medium text-gray-700">
+                    {phone.phoneNumber}
+                  </span>
+                  <div className="space-x-2">
+                    <button
+                      onClick={() =>
+                        togglePhoneStatus(phone.id, phone.isActive)
+                      }
+                      className={`px-4 py-2 rounded-lg text-sm font-medium transition duration-300 ${
+                        phone.isActive
+                          ? "bg-green-500 text-white hover:bg-green-600"
+                          : "bg-yellow-500 text-white hover:bg-yellow-600"
+                      }`}
+                    >
+                      {phone.isActive ? "Activo" : "Inactivo"}
+                    </button>
+                    <button
+                      onClick={() => deleteNotificationPhone(phone.id)}
+                      className="px-4 py-2 bg-red-500 text-white text-sm font-medium rounded-lg hover:bg-red-600 transition duration-300"
+                    >
+                      Eliminar
+                    </button>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="text-center text-gray-500">
+              No hay teléfonos de notificación registrados.
+            </p>
+          )}
         </div>
       )}
 
