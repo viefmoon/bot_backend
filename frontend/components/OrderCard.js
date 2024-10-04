@@ -3,6 +3,7 @@ import React, { useState } from "react";
 const OrderCard = ({ order, onUpdateStatus }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
+  const [showDetails, setShowDetails] = useState(false);
 
   const handleUpdateStatus = async (newStatus) => {
     setIsLoading(true);
@@ -17,6 +18,12 @@ const OrderCard = ({ order, onUpdateStatus }) => {
       setIsLoading(false);
     }
   };
+
+  const toggleDetails = () => {
+    setShowDetails(!showDetails);
+  };
+
+  const googleMapsLink = `https://www.google.com/maps?q=${order.orderDeliveryInfo.latitude},${order.orderDeliveryInfo.longitude}`;
 
   return (
     <div className="bg-white shadow-md rounded-lg overflow-hidden mb-4 border border-gray-200">
@@ -55,6 +62,45 @@ const OrderCard = ({ order, onUpdateStatus }) => {
                 ? order.orderDeliveryInfo.streetAddress
                 : order.orderDeliveryInfo?.pickupName || "N/A"}
             </p>
+            <button onClick={toggleDetails} className="text-blue-500 underline">
+              Ver detalles
+            </button>
+            {showDetails && (
+              <div className="mt-2">
+                <p>
+                  <strong>Colonia:</strong>{" "}
+                  {order.orderDeliveryInfo.neighborhood || "N/A"}
+                </p>
+                <p>
+                  <strong>Código Postal:</strong>{" "}
+                  {order.orderDeliveryInfo.postalCode || "N/A"}
+                </p>
+                <p>
+                  <strong>Ciudad:</strong>{" "}
+                  {order.orderDeliveryInfo.city || "N/A"}
+                </p>
+                <p>
+                  <strong>Estado:</strong>{" "}
+                  {order.orderDeliveryInfo.state || "N/A"}
+                </p>
+                <p>
+                  <strong>País:</strong>{" "}
+                  {order.orderDeliveryInfo.country || "N/A"}
+                </p>
+                <p>
+                  <strong>Detalles Adicionales:</strong>{" "}
+                  {order.orderDeliveryInfo.additionalDetails || "N/A"}
+                </p>
+                <a
+                  href={googleMapsLink}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-blue-500 underline"
+                >
+                  Ver en Google Maps
+                </a>
+              </div>
+            )}
           </div>
           <div>
             <p className="text-gray-600">Total:</p>
