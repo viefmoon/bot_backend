@@ -502,23 +502,35 @@ export default function Home() {
       )}
 
       {activeView === "restaurantConfig" && (
-        <div>
-          <h2>Configuración del Restaurante</h2>
+        <div className="bg-white shadow-lg rounded-lg p-6 max-w-md mx-auto">
+          <h2 className="text-2xl font-bold mb-6 text-gray-800 text-center">
+            Configuración del Restaurante
+          </h2>
           {restaurantConfig ? (
-            <form onSubmit={updateRestaurantConfig}>
-              <div>
-                <label htmlFor="acceptingOrders">Aceptando Pedidos:</label>
+            <form onSubmit={updateRestaurantConfig} className="space-y-6">
+              <div className="bg-gray-50 p-4 rounded-lg">
+                <label
+                  htmlFor="acceptingOrders"
+                  className="block text-sm font-medium text-gray-700 mb-2"
+                >
+                  Aceptando Pedidos:
+                </label>
                 <select
                   id="acceptingOrders"
                   name="acceptingOrders"
                   defaultValue={restaurantConfig.acceptingOrders?.toString()}
+                  className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"
                 >
                   <option value="true">Sí</option>
                   <option value="false">No</option>
                 </select>
               </div>
-              <div>
-                <label htmlFor="estimatedPickupTime">
+
+              <div className="bg-gray-50 p-4 rounded-lg">
+                <label
+                  htmlFor="estimatedPickupTime"
+                  className="block text-sm font-medium text-gray-700 mb-2"
+                >
                   Tiempo estimado de recogida (minutos):
                 </label>
                 <input
@@ -526,10 +538,15 @@ export default function Home() {
                   id="estimatedPickupTime"
                   name="estimatedPickupTime"
                   defaultValue={restaurantConfig.estimatedPickupTime}
+                  className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
                 />
               </div>
-              <div>
-                <label htmlFor="estimatedDeliveryTime">
+
+              <div className="bg-gray-50 p-4 rounded-lg">
+                <label
+                  htmlFor="estimatedDeliveryTime"
+                  className="block text-sm font-medium text-gray-700 mb-2"
+                >
                   Tiempo estimado de entrega (minutos):
                 </label>
                 <input
@@ -537,12 +554,23 @@ export default function Home() {
                   id="estimatedDeliveryTime"
                   name="estimatedDeliveryTime"
                   defaultValue={restaurantConfig.estimatedDeliveryTime}
+                  className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
                 />
               </div>
-              <button type="submit">Actualizar Configuración</button>
+
+              <div className="flex items-center justify-center">
+                <button
+                  type="submit"
+                  className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                >
+                  Actualizar Configuración
+                </button>
+              </div>
             </form>
           ) : (
-            <p>Cargando configuración...</p>
+            <p className="text-center text-gray-500">
+              Cargando configuración...
+            </p>
           )}
         </div>
       )}
