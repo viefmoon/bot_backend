@@ -23,7 +23,12 @@ const OrderCard = ({ order, onUpdateStatus }) => {
     setShowDetails(!showDetails);
   };
 
-  const googleMapsLink = `https://www.google.com/maps?q=${order.orderDeliveryInfo.latitude},${order.orderDeliveryInfo.longitude}`;
+  const hasCoordinates =
+    order.orderDeliveryInfo?.latitude != null &&
+    order.orderDeliveryInfo?.longitude != null;
+  const googleMapsLink = hasCoordinates
+    ? `https://www.google.com/maps?q=${order.orderDeliveryInfo.latitude},${order.orderDeliveryInfo.longitude}`
+    : null;
 
   return (
     <div className="bg-white shadow-md rounded-lg overflow-hidden mb-4 border border-gray-200">
@@ -91,14 +96,18 @@ const OrderCard = ({ order, onUpdateStatus }) => {
                   <strong>Detalles Adicionales:</strong>{" "}
                   {order.orderDeliveryInfo.additionalDetails || "N/A"}
                 </p>
-                <a
-                  href={googleMapsLink}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-blue-500 underline"
-                >
-                  Ver en Google Maps
-                </a>
+                {hasCoordinates ? (
+                  <a
+                    href={googleMapsLink}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-blue-500 underline"
+                  >
+                    Ver en Google Maps
+                  </a>
+                ) : (
+                  <p className="text-gray-500">Mapa no disponible</p>
+                )}
               </div>
             )}
           </div>
