@@ -17,6 +17,7 @@ import { OrderService } from "./services/order.service";
 import { PreOrderService } from "./services/pre-order.service";
 import { NotificationPhoneService } from "./services/notification-phone.service";
 import { RestaurantConfigService } from "./services/restaurant-config.service";
+import { WhatsAppController } from "./controllers/whatsapp.controller";
 //import { ProductSelectionService } from "./services/product-selection.service";
 import { AvailabilityService } from "./services/availability.service";
 import { OrderStatusService } from "./services/order-status.service";
@@ -34,6 +35,7 @@ import { CustomerDeliveryInfoService } from "./services/customer-delivery-info.s
     NotificationPhoneController,
     RestaurantConfigController,
     CustomerDeliveryInfoController,
+    WhatsAppController,
     //ProductSelectionController,
     AvailabilityController,
     OrderStatusController,

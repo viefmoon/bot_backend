@@ -4,7 +4,6 @@ import axios from "axios";
 import { useLoadScript, Autocomplete } from "@react-google-maps/api";
 import AddressForm from "../../components/AddressForm";
 import Map from "../../components/Map";
-import { sendWhatsAppMessage } from "../../utils/sendWhatsAppMessage";
 
 const libraries = ["places"];
 
@@ -327,6 +326,25 @@ export default function DeliveryInfoRegistration() {
     } else {
       const errorMessages = Object.values(errors).join("\n");
       alert(`Por favor, complete los siguientes campos:\n\n${errorMessages}`);
+    }
+  };
+
+  const sendWhatsAppMessage = async (to, message) => {
+    try {
+      const response = await axios.post("/api/send_whatsapp_message", {
+        to,
+        message,
+      });
+      if (response.data.success) {
+        console.log("Mensaje de WhatsApp enviado con éxito");
+      } else {
+        console.error(
+          "Error al enviar mensaje de WhatsApp:",
+          response.data.message
+        );
+      }
+    } catch (error) {
+      console.error("Error al enviar mensaje de WhatsApp:", error);
     }
   };
 
