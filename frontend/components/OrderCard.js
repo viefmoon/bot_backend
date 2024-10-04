@@ -39,7 +39,7 @@ const OrderCard = ({ order, onUpdateStatus }) => {
           </span>
         </div>
 
-        <div className="grid grid-cols-3 gap-2 text-sm mb-2">
+        <div className="grid grid-cols-2 gap-2 text-sm mb-2">
           <div>
             <p className="text-gray-600">Tipo:</p>
             <p className="font-medium">{translateOrderType(order.orderType)}</p>
@@ -48,17 +48,18 @@ const OrderCard = ({ order, onUpdateStatus }) => {
             <p className="text-gray-600">Cliente:</p>
             <p className="font-medium">{order.clientId}</p>
           </div>
-          <div className="flex justify-between items-center">
-            <div>
-              <p className="text-gray-600">Info de Entrega:</p>
-              <p className="font-medium">{order.deliveryInfo || "N/A"}</p>
-            </div>
-            <div>
-              <p className="text-gray-600">Total:</p>
-              <p className="font-bold text-green-600">
-                ${order.totalCost.toFixed(2)}
-              </p>
-            </div>
+        </div>
+
+        <div className="flex justify-between items-center text-sm mt-2">
+          <div>
+            <p className="text-gray-600">Info de Entrega:</p>
+            <p className="font-medium">{order.deliveryInfo || "N/A"}</p>
+          </div>
+          <div>
+            <p className="text-gray-600">Total:</p>
+            <p className="font-bold text-green-600">
+              ${order.totalCost.toFixed(2)}
+            </p>
           </div>
         </div>
 
