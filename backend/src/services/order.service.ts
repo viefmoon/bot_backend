@@ -52,7 +52,6 @@ export class OrderService {
         {
           model: OrderDeliveryInfo,
           as: "orderDeliveryInfo",
-          attributes: ["streetAddress", "pickupName"],
         },
       ],
       attributes: [

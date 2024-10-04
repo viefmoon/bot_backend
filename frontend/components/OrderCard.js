@@ -49,11 +49,10 @@ const OrderCard = ({ order, onUpdateStatus }) => {
             <p className="font-medium">{order.clientId}</p>
           </div>
           <div>
-            <p className="text-gray-600">Info de Entrega:</p>
             <p className="font-medium">
-              {order.orderType === "delivery"
+              {order.orderType === "delivery" && order.orderDeliveryInfo
                 ? order.orderDeliveryInfo.streetAddress
-                : order.orderDeliveryInfo.pickupName || "N/A"}
+                : order.orderDeliveryInfo?.pickupName || "N/A"}
             </p>
           </div>
           <div>
