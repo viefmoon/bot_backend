@@ -94,11 +94,10 @@ async function handleIncomingWhatsAppMessage(
 
     await sendWhatsAppMessage(
       from,
-      `Antes de continuar, necesitamos que registres tu información de entrega. Por favor, usa este enlace para proporcionar tu dirección completa: ${registrationLink}`
+      `Antes de continuar, necesitamos que registres tu información de entrega. Por favor, usa este enlace: ${registrationLink}\n\nEste enlace es válido por un tiempo limitado por razones de seguridad.`
     );
     return;
   }
-
   //manejar el mensaje dependiendo del tipo
   switch (type) {
     case "text":

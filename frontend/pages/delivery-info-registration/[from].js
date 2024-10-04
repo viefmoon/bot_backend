@@ -4,6 +4,7 @@ import axios from "axios";
 import { useLoadScript, Autocomplete } from "@react-google-maps/api";
 import AddressForm from "../../components/AddressForm";
 import Map from "../../components/Map";
+import { sendWhatsAppMessage } from "../../utils/sendWhatsAppMessage";
 
 const libraries = ["places"];
 
@@ -305,6 +306,13 @@ export default function DeliveryInfoRegistration() {
           });
         }
         console.log("CustomerDeliveryInfo guardado:", response.data);
+        // Enviar mensaje de confirmación por WhatsApp
+        const mensaje = isUpdating
+          ? "Tu información de entrega ha sido actualizada exitosamente. Gracias!."
+          : "Tu información de entrega ha sido guardada exitosamente. Gracias!.";
+
+        await sendWhatsAppMessage(clientId, mensaje);
+
         alert(
           isUpdating
             ? "Dirección actualizada exitosamente"
