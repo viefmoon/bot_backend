@@ -5,6 +5,7 @@ import {
   IsDateString,
   ValidateNested,
   IsNotEmpty,
+  IsNumber,
 } from "class-validator";
 import { Type } from "class-transformer";
 
@@ -52,10 +53,56 @@ class SelectedModifierDto {
 
 class OrderDeliveryInfoDto {
   @IsString()
-  streetAddress: string;
+  @IsOptional()
+  streetAddress?: string;
 
   @IsString()
-  pickupName: string;
+  @IsOptional()
+  neighborhood?: string;
+
+  @IsString()
+  @IsOptional()
+  postalCode?: string;
+
+  @IsString()
+  @IsOptional()
+  city?: string;
+
+  @IsString()
+  @IsOptional()
+  state?: string;
+
+  @IsString()
+  @IsOptional()
+  country?: string;
+
+  @IsNumber()
+  @IsOptional()
+  latitude?: number;
+
+  @IsNumber()
+  @IsOptional()
+  longitude?: number;
+
+  @IsString()
+  @IsOptional()
+  pickupName?: string;
+
+  @IsString()
+  @IsOptional()
+  geocodedAddress?: string;
+
+  @IsString()
+  @IsOptional()
+  additionalDetails?: string;
+
+  @IsNumber()
+  @IsOptional()
+  preOrderId?: number;
+
+  @IsNumber()
+  @IsOptional()
+  orderId?: number;
 }
 
 export class CreateOrderDto {
