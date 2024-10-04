@@ -49,6 +49,7 @@ const OrderCard = ({ order, onUpdateStatus }) => {
             <p className="font-medium">{order.clientId}</p>
           </div>
           <div>
+            <p className="text-gray-600">Info de Entrega:</p> <!-- Agregado -->
             <p className="font-medium">
               {order.orderType === "delivery" && order.orderDeliveryInfo
                 ? order.orderDeliveryInfo.streetAddress
