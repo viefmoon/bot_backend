@@ -19,9 +19,9 @@ const OrderCard = ({ order, onUpdateStatus }) => {
 
   return (
     <div className="bg-white shadow-lg rounded-lg overflow-hidden mb-6 border border-gray-200">
-      <div className="p-6">
-        <div className="flex justify-between items-center mb-4">
-          <h5 className="text-2xl font-bold text-gray-800">
+      <div className="p-4 sm:p-6">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4">
+          <h5 className="text-xl sm:text-2xl font-bold text-gray-800 mb-2 sm:mb-0">
             Pedido #{order.dailyOrderNumber}
           </h5>
           <span
@@ -33,7 +33,7 @@ const OrderCard = ({ order, onUpdateStatus }) => {
           </span>
         </div>
 
-        <div className="grid grid-cols-2 gap-4 mb-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
           <div>
             <p className="text-sm text-gray-600">Fecha de Pedido:</p>
             <p className="font-medium">
@@ -59,8 +59,8 @@ const OrderCard = ({ order, onUpdateStatus }) => {
           <p className="font-medium">{order.deliveryInfo || "N/A"}</p>
         </div>
 
-        <div className="flex justify-between items-center mb-4">
-          <div>
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4">
+          <div className="mb-2 sm:mb-0">
             <p className="text-sm text-gray-600">Total:</p>
             <p className="text-xl font-bold text-green-600">
               ${order.totalCost.toFixed(2)}
@@ -86,8 +86,8 @@ const OrderCard = ({ order, onUpdateStatus }) => {
             <ul className="space-y-4">
               {order.orderItems.map((item, index) => (
                 <li key={index} className="bg-gray-50 rounded-lg p-4">
-                  <div className="flex justify-between items-start">
-                    <div>
+                  <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center">
+                    <div className="mb-2 sm:mb-0">
                       <p className="font-semibold">
                         {item.Product.name} - {item.ProductVariant.name}
                       </p>
@@ -127,16 +127,16 @@ const OrderCard = ({ order, onUpdateStatus }) => {
           </div>
         )}
 
-        <div className="mt-6 flex space-x-4">
+        <div className="mt-6 flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-4">
           <button
-            className="flex-1 px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 disabled:opacity-50 disabled:cursor-not-allowed transition duration-300"
+            className="w-full sm:w-auto px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 disabled:opacity-50 disabled:cursor-not-allowed transition duration-300"
             onClick={() => handleUpdateStatus("accepted")}
             disabled={order.status === "accepted" || isLoading}
           >
             Aceptar
           </button>
           <button
-            className="flex-1 px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 disabled:opacity-50 disabled:cursor-not-allowed transition duration-300"
+            className="w-full sm:w-auto px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 disabled:opacity-50 disabled:cursor-not-allowed transition duration-300"
             onClick={() => handleUpdateStatus("canceled")}
             disabled={order.status === "canceled" || isLoading}
           >

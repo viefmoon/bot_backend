@@ -27,40 +27,48 @@ const ChatHistoryModal = ({ clientId, onClose }) => {
   const renderMessage = (message, index) => {
     const isUser = message.role === "user";
     return (
-      <div key={index} className={`message ${isUser ? "user" : "assistant"}`}>
-        <strong>{isUser ? "Usuario" : "Asistente"}:</strong>
-        <p>{message.content}</p>
+      <div
+        key={index}
+        className={`message ${
+          isUser ? "bg-blue-100" : "bg-gray-100"
+        } p-3 rounded-lg mb-2`}
+      >
+        <strong className={`${isUser ? "text-blue-600" : "text-gray-600"}`}>
+          {isUser ? "Usuario" : "Asistente"}:
+        </strong>
+        <p className="mt-1">{message.content}</p>
       </div>
     );
   };
 
   return (
-    <div className="modal" style={{ display: "block" }}>
-      <div className="modal-dialog modal-lg">
-        <div className="modal-content">
-          <div className="modal-header">
-            <h5 className="modal-title">Historial de Chat</h5>
-            <button
-              type="button"
-              className="btn-close"
-              onClick={onClose}
-            ></button>
-          </div>
-          <div className="modal-body">
-            {loading ? (
-              <p>Cargando historial de chat...</p>
-            ) : error ? (
-              <p className="text-danger">{error}</p>
-            ) : chatHistory.length === 0 ? (
-              <p>No hay historial de chat disponible.</p>
-            ) : (
-              <div className="chat-history">
-                {chatHistory.map((message, index) =>
-                  renderMessage(message, index)
-                )}
-              </div>
-            )}
-          </div>
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+      <div className="bg-white rounded-lg w-full max-w-2xl max-h-[90vh] overflow-hidden">
+        <div className="p-4 border-b">
+          <h5 className="text-xl font-semibold">Historial de Chat</h5>
+        </div>
+        <div className="p-4 overflow-y-auto max-h-[calc(90vh-8rem)]">
+          {loading ? (
+            <p className="text-center">Cargando historial de chat...</p>
+          ) : error ? (
+            <p className="text-center text-red-500">{error}</p>
+          ) : chatHistory.length === 0 ? (
+            <p className="text-center">No hay historial de chat disponible.</p>
+          ) : (
+            <div className="space-y-2">
+              {chatHistory.map((message, index) =>
+                renderMessage(message, index)
+              )}
+            </div>
+          )}
+        </div>
+        <div className="p-4 border-t">
+          <button
+            onClick={onClose}
+            className="w-full px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition duration-300"
+          >
+            Cerrar
+          </button>
         </div>
       </div>
     </div>
