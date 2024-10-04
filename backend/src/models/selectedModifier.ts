@@ -1,5 +1,6 @@
 import { DataTypes, Model } from "sequelize";
 import { sequelize } from "../lib/db";
+import Modifier from "./modifier"; // Asegúrate de importar el modelo Modifier
 
 interface SelectedModifierAttributes {
   orderItemId: number;
@@ -16,6 +17,9 @@ class SelectedModifier
   // Timestamps
   public readonly createdAt!: Date;
   public readonly updatedAt!: Date;
+
+  // Asociación
+  public Modifier?: Modifier;
 }
 
 SelectedModifier.init(

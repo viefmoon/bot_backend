@@ -1,5 +1,6 @@
 import { DataTypes, Model, UUIDV4 } from "sequelize";
 import { sequelize } from "../lib/db";
+import PizzaIngredient from "./pizzaIngredient";
 
 export enum PizzaHalf {
   left = "left",
@@ -35,6 +36,8 @@ class SelectedPizzaIngredient
   // Timestamps
   public readonly createdAt!: Date;
   public readonly updatedAt!: Date;
+
+  public PizzaIngredient?: PizzaIngredient;
 }
 
 SelectedPizzaIngredient.init(

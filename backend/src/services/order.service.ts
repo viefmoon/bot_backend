@@ -15,7 +15,6 @@ import { verificarHorarioAtencion } from "../utils/timeUtils";
 import { getNextDailyOrderNumber } from "../utils/orderUtils";
 import { CreateOrderDto } from "../dto/create-order.dto";
 import { PizzaHalf, IngredientAction } from "../models/selectedPizzaIngredient";
-import { OrderDeliveryInfoCreationAttributes } from "../models/orderDeliveryInfo";
 
 @Injectable()
 export class OrderService {
@@ -75,7 +74,7 @@ export class OrderService {
 
   async getOrdersByClient(clientId: string) {
     return this.getOrders().then((orders) =>
-      orders.filter((order) => order.clientId === clientId),
+      orders.filter((order) => order.clientId === clientId)
     );
   }
 
@@ -91,34 +90,32 @@ export class OrderService {
     const config = await RestaurantConfig.findOne();
     if (!config || !config.acceptingOrders) {
       throw new BadRequestException(
-        "El restaurante no está aceptando pedidos en este momento",
+        "Lo sentimos, el restaurante no está aceptando pedidos en este momento, puedes intentar mas tarde o llamar al restaurante."
       );
     }
 
     const estaAbierto = await verificarHorarioAtencion();
     if (!estaAbierto) {
       throw new BadRequestException(
-        "El restaurante está cerrado en este momento",
+        "Lo sentimos, solo podre procesar tu pedido cuando el restaurante este abierto."
       );
     }
 
     const mexicoTime = new Date().toLocaleString("en-US", {
       timeZone: "America/Mexico_City",
     });
-    const today = new Date(mexicoTime).toISOString().split("T")[0];
+    const today = new Date(mexicoTime);
     const dailyOrderNumber = await getNextDailyOrderNumber();
 
-    let estimatedTime;
+    let estimatedTime: number;
     if (scheduledDeliveryTime) {
       const now = new Date(mexicoTime);
       const scheduledTimeMexico = new Date(
-        scheduledDeliveryTime,
-      ).toLocaleString("en-US", {
-        timeZone: "America/Mexico_City",
-      });
+        scheduledDeliveryTime
+      ).toLocaleString("en-US", { timeZone: "America/Mexico_City" });
       const scheduledTime = new Date(scheduledTimeMexico);
       const diffInMinutes = Math.round(
-        (scheduledTime.getTime() - now.getTime()) / (1000 * 60),
+        (scheduledTime.getTime() - now.getTime()) / (1000 * 60)
       );
       estimatedTime = Math.max(diffInMinutes, 0);
     } else {
@@ -134,7 +131,7 @@ export class OrderService {
       status: "created",
       totalCost: 0,
       clientId,
-      orderDate: new Date(today),
+      orderDate: today,
       estimatedTime,
       scheduledDeliveryTime: scheduledDeliveryTime
         ? new Date(scheduledDeliveryTime)
@@ -145,24 +142,26 @@ export class OrderService {
       await OrderDeliveryInfo.create({
         ...orderDeliveryInfo,
         orderId: newOrder.id,
-      } as OrderDeliveryInfoCreationAttributes);
+      });
     }
 
     const createdItems = await Promise.all(
       orderItems.map(async (item) => {
         const product = await Product.findByPk(item.productId);
         if (!product) {
-          throw new Error(`Producto no encontrado: ${item.productId}`);
+          throw new BadRequestException(
+            `Producto no encontrado: ${item.productId}`
+          );
         }
         let itemPrice = product.price || 0;
 
         if (item.productVariantId) {
           const productVariant = await ProductVariant.findByPk(
-            item.productVariantId,
+            item.productVariantId
           );
           if (!productVariant) {
-            throw new Error(
-              `Variante de producto no encontrada: ${item.productVariantId}`,
+            throw new BadRequestException(
+              `Variante de producto no encontrada: ${item.productVariantId}`
             );
           }
           itemPrice = productVariant.price || 0;
@@ -177,19 +176,19 @@ export class OrderService {
 
           for (const ingredient of item.selectedPizzaIngredients) {
             const pizzaIngredient = await PizzaIngredient.findByPk(
-              ingredient.pizzaIngredientId,
+              ingredient.pizzaIngredientId
             );
             if (!pizzaIngredient) {
-              throw new Error(
-                `Ingrediente de pizza no encontrado en el menu: ${ingredient.pizzaIngredientId}`,
+              throw new BadRequestException(
+                `Ingrediente de pizza no encontrado en el menu: ${ingredient.pizzaIngredientId}`
               );
             }
             const ingredientValue =
-              ingredient.action === "add"
+              ingredient.action === IngredientAction.add
                 ? pizzaIngredient.ingredientValue
                 : -pizzaIngredient.ingredientValue;
 
-            if (ingredient.half === "full") {
+            if (ingredient.half === PizzaHalf.full) {
               totalIngredientValue += ingredientValue;
             } else {
               halfIngredientValue[ingredient.half] += ingredientValue;
@@ -212,7 +211,7 @@ export class OrderService {
             item.selectedModifiers.map(async (modifier) => {
               const mod = await Modifier.findByPk(modifier.modifierId);
               return mod.price;
-            }),
+            })
           );
           itemPrice += modifierPrices.reduce((sum, price) => sum + price, 0);
         }
@@ -232,8 +231,8 @@ export class OrderService {
               SelectedModifier.create({
                 orderItemId: orderItem.id,
                 modifierId: modifier.modifierId,
-              }),
-            ),
+              })
+            )
           );
         }
 
@@ -245,21 +244,97 @@ export class OrderService {
                 pizzaIngredientId: ingredient.pizzaIngredientId,
                 half: ingredient.half as PizzaHalf,
                 action: ingredient.action as IngredientAction,
-              }),
-            ),
+              })
+            )
           );
         }
 
         return orderItem;
-      }),
+      })
     );
 
     const totalCost = createdItems.reduce(
       (sum, item) => sum + item.price * item.quantity,
-      0,
+      0
     );
     await newOrder.update({ totalCost });
 
-    return newOrder;
+    return {
+      orden: {
+        id: newOrder.dailyOrderNumber,
+        telefono: newOrder.clientId.startsWith("521")
+          ? newOrder.clientId.slice(3)
+          : newOrder.clientId,
+        tipo: newOrder.orderType,
+        estado: newOrder.status,
+        informacion_entrega:
+          orderType === "delivery"
+            ? orderDeliveryInfo.streetAddress
+            : orderDeliveryInfo.pickupName,
+        precio_total: newOrder.totalCost,
+        fecha_creacion: newOrder.createdAt.toLocaleString("es-MX", {
+          timeZone: "America/Mexico_City",
+          year: "numeric",
+          month: "2-digit",
+          day: "2-digit",
+          hour: "2-digit",
+          minute: "2-digit",
+          second: "2-digit",
+          hour12: true,
+        }),
+        productos: await Promise.all(
+          createdItems.map(async (item) => {
+            const product = await Product.findByPk(item.productId);
+            const productVariant = item.productVariantId
+              ? await ProductVariant.findByPk(item.productVariantId)
+              : null;
+            const selectedModifiers = await SelectedModifier.findAll({
+              where: { orderItemId: item.id },
+              include: [{ model: Modifier }],
+            });
+            const selectedPizzaIngredients =
+              await SelectedPizzaIngredient.findAll({
+                where: { orderItemId: item.id },
+                include: [{ model: PizzaIngredient }],
+              });
+
+            return {
+              cantidad: item.quantity,
+              nombre: productVariant ? productVariant.name : product.name,
+              modificadores: selectedModifiers.map((sm) => ({
+                nombre: sm.Modifier.name,
+                precio: sm.Modifier.price,
+              })),
+              ingredientes_pizza: selectedPizzaIngredients.map((spi) => ({
+                nombre:
+                  spi.action === IngredientAction.remove
+                    ? `Sin ${spi.PizzaIngredient.name}`
+                    : spi.action === IngredientAction.add
+                    ? `Con ${spi.PizzaIngredient.name}`
+                    : spi.PizzaIngredient.name,
+                mitad: spi.half,
+              })),
+              comments: item.comments,
+              precio: item.price,
+            };
+          })
+        ),
+        tiempoEstimado: newOrder.estimatedTime,
+        ...(newOrder.scheduledDeliveryTime && {
+          horario_entrega_programado: new Date(
+            newOrder.scheduledDeliveryTime
+          ).toLocaleString("es-MX", {
+            timeZone: "America/Mexico_City",
+            year: "numeric",
+            month: "2-digit",
+            day: "2-digit",
+            hour: "2-digit",
+            minute: "2-digit",
+            second: "2-digit",
+            hour12: true,
+          }),
+        }),
+      },
+    };
   }
 }

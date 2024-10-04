@@ -17,8 +17,10 @@ import {
   sendWhatsAppMessage,
   sendWhatsAppInteractiveMessage,
 } from "../utils/whatsAppUtils";
+import { OrderService } from "../services/order.service";
 
 import * as dotenv from "dotenv";
+import { CreateOrderDto } from "src/dto/create-order.dto";
 dotenv.config();
 
 interface OrderData {
@@ -60,7 +62,7 @@ async function createOrderFromPreOrder(
     const { orderItems, orderType, scheduledDeliveryTime, orderDeliveryInfo } =
       preOrder;
 
-    const orderData: OrderData = {
+    const orderData: CreateOrderDto = {
       orderType,
       orderItems,
       scheduledDeliveryTime: scheduledDeliveryTime.toISOString(),
@@ -68,90 +70,77 @@ async function createOrderFromPreOrder(
       orderDeliveryInfo,
     };
 
-    const response = await axios.post<{ orden: NewOrder }>(
-      `${process.env.BASE_URL}/api/orders/create_order`,
-      orderData,
-      {
-        headers: {
-          "Content-Type": "application/json",
-        },
-      }
-    );
+    const orderService = new OrderService();
+    const { orden: newOrder } = await orderService.createOrder(orderData);
 
-    if (response.status === 201) {
-      const newOrder = response.data.orden;
+    const tipoOrdenTraducido =
+      orderType === "delivery"
+        ? "Entrega a domicilio"
+        : "Recolección en restaurante";
 
-      const tipoOrdenTraducido =
-        orderType === "delivery"
-          ? "Entrega a domicilio"
-          : "Recolección en restaurante";
-
-      let orderSummary = `🎉 *¡Tu orden #${newOrder.id} ha sido creada exitosamente!* 🎉\n\n`;
-      orderSummary += `📞 *Telefono:* ${newOrder.telefono}\n`;
-      orderSummary += `🍽️ *Tipo:* ${tipoOrdenTraducido}\n`;
-      orderSummary += `🏠 *informacion de entrega:* ${newOrder.informacion_entrega}\n`;
-      orderSummary += `💰 *Precio total:* $${newOrder.precio_total}\n`;
-      orderSummary += `📅 *Fecha de creación:* ${newOrder.fecha_creacion}\n`;
-      if (newOrder.horario_entrega_programado) {
-        orderSummary += `📅 *Fecha de entrega programada:* ${newOrder.horario_entrega_programado}\n`;
-      }
-      orderSummary += `⏱️ *Tiempo estimado de entrega:* ${newOrder.tiempoEstimado} minutos\n\n`;
-      orderSummary += `🛒 *Productos:*\n`;
-      newOrder.productos.forEach((producto) => {
-        orderSummary += `   *${producto.nombre}* x${producto.cantidad} - $${producto.precio}\n`;
-        if (producto.modificadores.length > 0) {
-          orderSummary += `     *Modificadores:*\n`;
-          producto.modificadores.forEach((mod) => {
-            orderSummary += `      • ${mod.nombre} - $${mod.precio}\n`;
-          });
-        }
-        if (
-          producto.ingredientes_pizza &&
-          producto.ingredientes_pizza.length > 0
-        ) {
-          orderSummary += `    *Ingredientes de pizza:*\n`;
-
-          const ingredientesPorMitad: {
-            left: string[];
-            right: string[];
-            full: string[];
-          } = {
-            left: [],
-            right: [],
-            full: [],
-          };
-
-          producto.ingredientes_pizza.forEach((ing) => {
-            ingredientesPorMitad[
-              ing.mitad as keyof typeof ingredientesPorMitad
-            ].push(ing.nombre);
-          });
-
-          if (ingredientesPorMitad.full.length > 0) {
-            orderSummary += `      • ${ingredientesPorMitad.full.join(", ")}\n`;
-          }
-
-          if (
-            ingredientesPorMitad.left.length > 0 ||
-            ingredientesPorMitad.right.length > 0
-          ) {
-            const mitadIzquierda = ingredientesPorMitad.left.join(", ");
-            const mitadDerecha = ingredientesPorMitad.right.join(", ");
-            orderSummary += `      • ${mitadIzquierda} / ${mitadDerecha}\n`;
-          }
-        }
-        if (producto.comments) {
-          orderSummary += `    💬 *Comentarios:* ${producto.comments}\n`;
-        }
-        orderSummary += `\n`;
-      });
-      orderSummary += `\n¡Gracias por tu pedido! 😊🍽️`;
-      orderSummary += `\nEn unos momentos recibirás la confirmación de recepción por parte del restaurante.`;
-
-      return { newOrder, orderSummary };
-    } else {
-      throw new Error("Error al crear la orden");
+    let orderSummary = `🎉 *¡Tu orden #${newOrder.id} ha sido creada exitosamente!* 🎉\n\n`;
+    orderSummary += `📞 *Telefono:* ${newOrder.telefono}\n`;
+    orderSummary += `🍽️ *Tipo:* ${tipoOrdenTraducido}\n`;
+    orderSummary += `🏠 *informacion de entrega:* ${newOrder.informacion_entrega}\n`;
+    orderSummary += `💰 *Precio total:* $${newOrder.precio_total}\n`;
+    orderSummary += `📅 *Fecha de creación:* ${newOrder.fecha_creacion}\n`;
+    if (newOrder.horario_entrega_programado) {
+      orderSummary += `📅 *Fecha de entrega programada:* ${newOrder.horario_entrega_programado}\n`;
     }
+    orderSummary += `⏱️ *Tiempo estimado de entrega:* ${newOrder.tiempoEstimado} minutos\n\n`;
+    orderSummary += `🛒 *Productos:*\n`;
+    newOrder.productos.forEach((producto) => {
+      orderSummary += `   *${producto.nombre}* x${producto.cantidad} - $${producto.precio}\n`;
+      if (producto.modificadores.length > 0) {
+        orderSummary += `     *Modificadores:*\n`;
+        producto.modificadores.forEach((mod) => {
+          orderSummary += `      • ${mod.nombre} - $${mod.precio}\n`;
+        });
+      }
+      if (
+        producto.ingredientes_pizza &&
+        producto.ingredientes_pizza.length > 0
+      ) {
+        orderSummary += `    *Ingredientes de pizza:*\n`;
+
+        const ingredientesPorMitad: {
+          left: string[];
+          right: string[];
+          full: string[];
+        } = {
+          left: [],
+          right: [],
+          full: [],
+        };
+
+        producto.ingredientes_pizza.forEach((ing) => {
+          ingredientesPorMitad[
+            ing.mitad as keyof typeof ingredientesPorMitad
+          ].push(ing.nombre);
+        });
+
+        if (ingredientesPorMitad.full.length > 0) {
+          orderSummary += `      • ${ingredientesPorMitad.full.join(", ")}\n`;
+        }
+
+        if (
+          ingredientesPorMitad.left.length > 0 ||
+          ingredientesPorMitad.right.length > 0
+        ) {
+          const mitadIzquierda = ingredientesPorMitad.left.join(", ");
+          const mitadDerecha = ingredientesPorMitad.right.join(", ");
+          orderSummary += `      • ${mitadIzquierda} / ${mitadDerecha}\n`;
+        }
+      }
+      if (producto.comments) {
+        orderSummary += `    💬 *Comentarios:* ${producto.comments}\n`;
+      }
+      orderSummary += `\n`;
+    });
+    orderSummary += `\n¡Gracias por tu pedido! 😊🍽️`;
+    orderSummary += `\nEn unos momentos recibirás la confirmación de recepción por parte del restaurante.`;
+
+    return { newOrder, orderSummary };
   } catch (error) {
     console.error(
       "Error detallado en createOrderFromPreOrder:",
