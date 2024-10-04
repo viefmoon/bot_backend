@@ -83,14 +83,14 @@ const OrderCard = ({ order, onUpdateStatus }) => {
           </>
         )}
 
-        <div className="mt-3 flex justify-between items-center">
+        <div className="mt-3 flex flex-col sm:flex-row justify-between items-start sm:items-center">
           <button
             onClick={() => setIsExpanded(!isExpanded)}
-            className="text-blue-600 hover:text-blue-800 text-sm font-medium"
+            className="text-blue-600 hover:text-blue-800 text-sm font-medium mb-2 sm:mb-0"
           >
             {isExpanded ? "Ver menos" : "Ver más"}
           </button>
-          <div className="space-x-2">
+          <div className="space-x-2 w-full sm:w-auto flex justify-end">
             <button
               className="px-3 py-1 bg-green-500 text-white text-sm rounded hover:bg-green-600 disabled:opacity-50 disabled:cursor-not-allowed transition duration-300"
               onClick={() => handleUpdateStatus("accepted")}
