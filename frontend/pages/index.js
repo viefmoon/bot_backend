@@ -366,7 +366,7 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-gray-100">
-      <nav className="bg-blue-600 shadow-md">
+      <nav className="bg-green-700 shadow-md">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between h-16">
             <div className="flex">
