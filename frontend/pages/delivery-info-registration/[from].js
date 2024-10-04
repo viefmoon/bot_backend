@@ -307,15 +307,15 @@ export default function DeliveryInfoRegistration() {
         console.log("CustomerDeliveryInfo guardado:", response.data);
         // Enviar mensaje de confirmación por WhatsApp
         const mensaje = isUpdating
-          ? "Tu información de entrega ha sido actualizada exitosamente. Gracias!."
-          : "Tu información de entrega ha sido guardada exitosamente. Gracias!.";
+          ? `Tu información de entrega ha sido actualizada exitosamente. Tu dirección registrada es: ${response.data.streetAddress}. Gracias!`
+          : `Tu información de entrega ha sido guardada exitosamente. Tu dirección registrada es: ${response.data.streetAddress}. Gracias!`;
 
         await sendWhatsAppMessage(clientId, mensaje);
 
         alert(
           isUpdating
-            ? "Dirección actualizada exitosamente"
-            : "Dirección guardada exitosamente"
+            ? `Dirección actualizada exitosamente: ${response.data.streetAddress}`
+            : `Dirección guardada exitosamente: ${response.data.streetAddress}`
         );
         const whatsappNumber = process.env.NEXT_PUBLIC_BOT_WHATSAPP_NUMBER;
         window.location.href = `https://wa.me/${whatsappNumber}`;
