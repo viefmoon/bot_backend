@@ -49,11 +49,11 @@ export class OrderService {
             },
           ],
         },
-        // {
-        //   model: OrderDeliveryInfo,
-        //   as: "orderDeliveryInfo",
-        //   attributes: ["streetAddress", "pickupName"],
-        // },
+        {
+          model: OrderDeliveryInfo,
+          as: "orderDeliveryInfo",
+          attributes: ["streetAddress", "pickupName"],
+        },
       ],
       attributes: [
         "id",
