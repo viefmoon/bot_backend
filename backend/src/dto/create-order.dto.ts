@@ -52,6 +52,10 @@ class SelectedModifierDto {
 }
 
 class OrderDeliveryInfoDto {
+  @IsNumber()
+  @IsOptional()
+  id?: number;
+
   @IsString()
   @IsOptional()
   streetAddress?: string;

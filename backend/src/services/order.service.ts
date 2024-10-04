@@ -139,7 +139,8 @@ export class OrderService {
     });
 
     if (orderDeliveryInfo) {
-      const { preOrderId, ...deliveryInfoWithoutPreOrder } = orderDeliveryInfo;
+      const { preOrderId, id, ...deliveryInfoWithoutPreOrder } =
+        orderDeliveryInfo;
 
       await OrderDeliveryInfo.create({
         ...deliveryInfoWithoutPreOrder,
