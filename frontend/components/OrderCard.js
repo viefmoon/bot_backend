@@ -39,7 +39,7 @@ const OrderCard = ({ order, onUpdateStatus }) => {
           </span>
         </div>
 
-        <div className="grid grid-cols-2 gap-2 text-sm mb-2">
+        <div className="grid grid-cols-3 gap-2 text-sm mb-2">
           <div>
             <p className="text-gray-600">Tipo:</p>
             <p className="font-medium">{translateOrderType(order.orderType)}</p>
@@ -49,16 +49,16 @@ const OrderCard = ({ order, onUpdateStatus }) => {
             <p className="font-medium">{order.clientId}</p>
           </div>
           <div>
-            <p className="text-gray-600">Total:</p>
-            <p className="font-bold text-green-600">
-              ${order.totalCost.toFixed(2)}
-            </p>
+            <p className="text-gray-600">Info de Entrega:</p>
+            <p className="font-medium">{order.deliveryInfo || "N/A"}</p>
           </div>
         </div>
 
-        <div className="mb-2">
-          <p className="text-sm text-gray-600">Info de Entrega:</p>
-          <p className="text-sm font-medium">{order.deliveryInfo || "N/A"}</p>
+        <div className="text-sm mb-2">
+          <p className="text-gray-600">Total:</p>
+          <p className="font-bold text-green-600">
+            ${order.totalCost.toFixed(2)}
+          </p>
         </div>
 
         {isExpanded && (
