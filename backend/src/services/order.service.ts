@@ -139,10 +139,6 @@ export class OrderService {
     });
 
     if (orderDeliveryInfo) {
-      console.log(
-        "orderDeliveryInfo en la creacion de la orden",
-        orderDeliveryInfo
-      );
       const { preOrderId, ...deliveryInfoWithoutPreOrder } = orderDeliveryInfo;
 
       await OrderDeliveryInfo.create({
