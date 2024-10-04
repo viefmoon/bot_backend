@@ -62,6 +62,8 @@ async function createOrderFromPreOrder(
     const { orderItems, orderType, scheduledDeliveryTime, orderDeliveryInfo } =
       preOrder;
 
+    console.log("orderDeliveryInfo", orderDeliveryInfo);
+
     const orderData: CreateOrderDto = {
       orderType,
       orderItems,
