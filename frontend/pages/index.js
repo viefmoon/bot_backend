@@ -345,6 +345,23 @@ export default function Home() {
     </div>
   );
 
+  const refreshAll = async () => {
+    try {
+      await Promise.all([
+        fetchOrders(selectedDate),
+        fetchClients(),
+        fetchMenu(),
+        fetchRestaurantConfig(),
+        fetchNotificationPhones(),
+      ]);
+    } catch (error) {
+      console.error("Error al refrescar datos:", error);
+      setError(
+        "No se pudieron refrescar los datos. Por favor, inténtelo de nuevo más tarde."
+      );
+    }
+  };
+
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="flex flex-wrap gap-4 mb-8">
@@ -398,28 +415,16 @@ export default function Home() {
         >
           Ver Menú
         </button>
+        <button
+          onClick={refreshAll}
+          className="px-4 py-2 rounded-lg bg-green-500 text-white hover:bg-green-600 transition duration-300"
+        >
+          Refrescar Todo
+        </button>
       </div>
 
       {activeView === "orders" && (
         <div>
-          <button
-            onClick={() => fetchOrders(selectedDate)}
-            className="flex items-center justify-center px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition duration-300"
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              className="h-5 w-5 mr-2"
-              viewBox="0 0 20 20"
-              fill="currentColor"
-            >
-              <path
-                fillRule="evenodd"
-                d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z"
-                clipRule="evenodd"
-              />
-            </svg>
-            Refrescar Pedidos
-          </button>
           <div>
             <label>Selecciona una fecha: </label>
             <DatePicker
@@ -442,21 +447,6 @@ export default function Home() {
 
       {activeView === "clients" && (
         <div>
-          <button
-            id="refreshClientsButton"
-            onClick={fetchClients}
-            className="refresh-button"
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              viewBox="0 0 24 24"
-              fill="currentColor"
-              className="refresh-icon"
-            >
-              <path d="M12 20.25c4.97 0 9-3.694 9-8.25s-4.03-8.25-9-8.25S3 7.444 3 12c0 2.104.859 4.023 2.273 5.48.432.447.74 1.04.586 1.641a4.483 4.483 0 01-.923 1.785A5.969 5.969 0 006 21c1.282 0 2.47-.402 3.445-1.087.81.22 1.668.337 2.555.337z" />
-            </svg>
-            Refrescar Clientes
-          </button>
           {error && <div className="alert alert-danger">{error}</div>}
           <div id="client-list">
             {clients.length === 0 ? (
