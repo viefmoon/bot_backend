@@ -50,7 +50,11 @@ const OrderCard = ({ order, onUpdateStatus }) => {
           </div>
           <div>
             <p className="text-gray-600">Info de Entrega:</p>
-            <p className="font-medium">{order.deliveryInfo || "N/A"}</p>
+            <p className="font-medium">
+              {order.orderType === "delivery"
+                ? order.orderDeliveryInfo.streetAddress
+                : order.orderDeliveryInfo.pickupName || "N/A"}
+            </p>
           </div>
           <div>
             <p className="text-gray-600">Total:</p>

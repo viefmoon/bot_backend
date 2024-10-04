@@ -146,11 +146,6 @@ export class OrderService {
         ...deliveryInfoWithoutPreOrder,
         orderId: newOrder.id,
       });
-
-      console.log(
-        "OrderDeliveryInfo creado:",
-        await OrderDeliveryInfo.findOne({ where: { orderId: newOrder.id } })
-      );
     }
 
     const createdItems = await Promise.all(
