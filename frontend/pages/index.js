@@ -365,465 +365,461 @@ export default function Home() {
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <div className="flex flex-wrap gap-4 mb-8">
-        <button
-          onClick={() => setActiveView("orders")}
-          className={`px-4 py-2 rounded-lg ${
-            activeView === "orders"
-              ? "bg-blue-600 text-white"
-              : "bg-gray-200 text-gray-800"
-          }`}
-        >
-          Ver Pedidos
-        </button>
-        <button
-          onClick={() => setActiveView("clients")}
-          className={`px-4 py-2 rounded-lg ${
-            activeView === "clients"
-              ? "bg-blue-600 text-white"
-              : "bg-gray-200 text-gray-800"
-          }`}
-        >
-          Ver Clientes
-        </button>
-        <button
-          onClick={() => setActiveView("notificationPhones")}
-          className={`px-4 py-2 rounded-lg ${
-            activeView === "notificationPhones"
-              ? "bg-blue-600 text-white"
-              : "bg-gray-200 text-gray-800"
-          }`}
-        >
-          Ver Teléfonos de Notificación
-        </button>
-        <button
-          onClick={() => setActiveView("restaurantConfig")}
-          className={`px-4 py-2 rounded-lg ${
-            activeView === "restaurantConfig"
-              ? "bg-blue-600 text-white"
-              : "bg-gray-200 text-gray-800"
-          }`}
-        >
-          Configuración del Restaurante
-        </button>
-        <button
-          onClick={() => setActiveView("menu")}
-          className={`px-4 py-2 rounded-lg ${
-            activeView === "menu"
-              ? "bg-blue-600 text-white"
-              : "bg-gray-200 text-gray-800"
-          }`}
-        >
-          Ver Menú
-        </button>
-        <button
-          onClick={refreshAll}
-          className="px-4 py-2 rounded-lg bg-green-500 text-white hover:bg-green-600 transition duration-300"
-        >
-          Refrescar Todo
-        </button>
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold text-gray-800 mb-4">
+          Panel de Control
+        </h1>
+        <div className="flex flex-wrap gap-4">
+          {[
+            "orders",
+            "clients",
+            "notificationPhones",
+            "restaurantConfig",
+            "menu",
+          ].map((view) => (
+            <button
+              key={view}
+              onClick={() => setActiveView(view)}
+              className={`px-4 py-2 rounded-lg transition-colors duration-300 ${
+                activeView === view
+                  ? "bg-blue-600 text-white"
+                  : "bg-gray-200 text-gray-800 hover:bg-gray-300"
+              }`}
+            >
+              {getViewTitle(view)}
+            </button>
+          ))}
+          <button
+            onClick={refreshAll}
+            className="px-4 py-2 rounded-lg bg-green-500 text-white hover:bg-green-600 transition duration-300"
+          >
+            Refrescar Todo
+          </button>
+        </div>
       </div>
 
-      {activeView === "orders" && (
-        <div>
-          <div className="mb-6 bg-white shadow-md rounded-lg p-4">
-            <h3 className="text-lg font-semibold mb-3 text-gray-800">
-              Filtrar pedidos por fecha
-            </h3>
-            <div className="flex items-center space-x-4">
-              <DatePicker
-                selected={selectedDate}
-                onChange={handleDateChange}
-                dateFormat="dd/MM/yyyy"
-                locale={es}
-                className="w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                calendarClassName="bg-white shadow-lg rounded-lg border border-gray-200"
-                wrapperClassName="w-full"
-                popperClassName="z-10"
-                customInput={
-                  <button className="w-full flex items-center justify-between px-4 py-2 border border-gray-300 rounded-md shadow-sm bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-                    <span>
-                      {format(selectedDate, "dd/MM/yyyy", { locale: es })}
-                    </span>
-                    <svg
-                      className="h-5 w-5 text-gray-400"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
-                      />
-                    </svg>
-                  </button>
-                }
-              />
-              <button
-                onClick={() => setSelectedDate(new Date())}
-                className="px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-opacity-50 transition duration-300"
-              >
-                Hoy
-              </button>
+      <div className="bg-white shadow-lg rounded-lg p-6">
+        <h2 className="text-2xl font-bold mb-6 text-gray-800">
+          {getViewTitle(activeView)}
+        </h2>
+
+        {activeView === "orders" && (
+          <div>
+            <div className="mb-6 bg-white shadow-md rounded-lg p-4">
+              <h3 className="text-lg font-semibold mb-3 text-gray-800">
+                Filtrar pedidos por fecha
+              </h3>
+              <div className="flex items-center space-x-4">
+                <DatePicker
+                  selected={selectedDate}
+                  onChange={handleDateChange}
+                  dateFormat="dd/MM/yyyy"
+                  locale={es}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  calendarClassName="bg-white shadow-lg rounded-lg border border-gray-200"
+                  wrapperClassName="w-full"
+                  popperClassName="z-10"
+                  customInput={
+                    <button className="w-full flex items-center justify-between px-4 py-2 border border-gray-300 rounded-md shadow-sm bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                      <span>
+                        {format(selectedDate, "dd/MM/yyyy", { locale: es })}
+                      </span>
+                      <svg
+                        className="h-5 w-5 text-gray-400"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                        />
+                      </svg>
+                    </button>
+                  }
+                />
+                <button
+                  onClick={() => setSelectedDate(new Date())}
+                  className="px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-opacity-50 transition duration-300"
+                >
+                  Hoy
+                </button>
+              </div>
+            </div>
+            {error && <div className="alert alert-danger">{error}</div>}
+            <div id="order-list">
+              {orders.length === 0 ? (
+                <p className="text-center text-gray-500">
+                  No se encontraron pedidos para la fecha seleccionada.
+                </p>
+              ) : (
+                orders.map((order) => (
+                  <OrderCard key={order.id} order={order} />
+                ))
+              )}
             </div>
           </div>
-          {error && <div className="alert alert-danger">{error}</div>}
-          <div id="order-list">
-            {orders.length === 0 ? (
-              <p className="text-center text-gray-500">
-                No se encontraron pedidos para la fecha seleccionada.
-              </p>
-            ) : (
-              orders.map((order) => <OrderCard key={order.id} order={order} />)
-            )}
-          </div>
-        </div>
-      )}
+        )}
 
-      {activeView === "clients" && (
-        <div>
-          {error && <div className="alert alert-danger">{error}</div>}
-          <div id="client-list">
-            {clients.length === 0 ? (
-              <p className="text-center">No se encontraron clientes.</p>
-            ) : (
-              clients.map((client) => (
-                <CustomerCard key={client.clientId} client={client} />
-              ))
-            )}
-          </div>
-        </div>
-      )}
-
-      {activeView === "notificationPhones" && (
-        <div className="bg-white shadow-lg rounded-lg p-6 max-w-2xl mx-auto">
-          <h2 className="text-2xl font-bold mb-6 text-gray-800 text-center">
-            Teléfonos de Notificación
-          </h2>
-
-          <form onSubmit={addNotificationPhone} className="mb-8">
-            <div className="flex items-center space-x-4">
-              <input
-                type="text"
-                value={newPhoneNumber}
-                onChange={(e) => setNewPhoneNumber(e.target.value)}
-                placeholder="Nuevo número de teléfono"
-                required
-                className="flex-grow px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              />
-              <button
-                type="submit"
-                className="px-6 py-2 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition duration-300"
-              >
-                Agregar
-              </button>
+        {activeView === "clients" && (
+          <div>
+            {error && <div className="alert alert-danger">{error}</div>}
+            <div id="client-list">
+              {clients.length === 0 ? (
+                <p className="text-center">No se encontraron clientes.</p>
+              ) : (
+                clients.map((client) => (
+                  <CustomerCard key={client.clientId} client={client} />
+                ))
+              )}
             </div>
-          </form>
+          </div>
+        )}
 
-          {notificationPhones.length > 0 ? (
-            <ul className="space-y-4">
-              {notificationPhones.map((phone) => (
-                <li
-                  key={phone.id}
-                  className="flex items-center justify-between bg-gray-50 p-4 rounded-lg"
-                >
-                  <span className="text-lg font-medium text-gray-700">
-                    {phone.phoneNumber}
-                  </span>
-                  <div className="space-x-2">
-                    <button
-                      onClick={() =>
-                        togglePhoneStatus(phone.id, phone.isActive)
-                      }
-                      className={`px-4 py-2 rounded-lg text-sm font-medium transition duration-300 ${
-                        phone.isActive
-                          ? "bg-green-500 text-white hover:bg-green-600"
-                          : "bg-yellow-500 text-white hover:bg-yellow-600"
-                      }`}
-                    >
-                      {phone.isActive ? "Activo" : "Inactivo"}
-                    </button>
-                    <button
-                      onClick={() => deleteNotificationPhone(phone.id)}
-                      className="px-4 py-2 bg-red-500 text-white text-sm font-medium rounded-lg hover:bg-red-600 transition duration-300"
-                    >
-                      Eliminar
-                    </button>
-                  </div>
-                </li>
-              ))}
-            </ul>
-          ) : (
-            <p className="text-center text-gray-500">
-              No hay teléfonos de notificación registrados.
-            </p>
-          )}
-        </div>
-      )}
+        {activeView === "notificationPhones" && (
+          <div className="bg-white shadow-lg rounded-lg p-6 max-w-2xl mx-auto">
+            <h2 className="text-2xl font-bold mb-6 text-gray-800 text-center">
+              Teléfonos de Notificación
+            </h2>
 
-      {activeView === "restaurantConfig" && (
-        <div className="bg-white shadow-lg rounded-lg p-6 max-w-md mx-auto">
-          <h2 className="text-2xl font-bold mb-6 text-gray-800 text-center">
-            Configuración del Restaurante
-          </h2>
-          {restaurantConfig ? (
-            <form onSubmit={updateRestaurantConfig} className="space-y-6">
-              <div className="bg-gray-50 p-4 rounded-lg">
-                <label
-                  htmlFor="acceptingOrders"
-                  className="block text-sm font-medium text-gray-700 mb-2"
-                >
-                  Aceptando Pedidos:
-                </label>
-                <select
-                  id="acceptingOrders"
-                  name="acceptingOrders"
-                  defaultValue={restaurantConfig.acceptingOrders?.toString()}
-                  className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"
-                >
-                  <option value="true">Sí</option>
-                  <option value="false">No</option>
-                </select>
-              </div>
-
-              <div className="bg-gray-50 p-4 rounded-lg">
-                <label
-                  htmlFor="estimatedPickupTime"
-                  className="block text-sm font-medium text-gray-700 mb-2"
-                >
-                  Tiempo estimado de recogida (minutos):
-                </label>
+            <form onSubmit={addNotificationPhone} className="mb-8">
+              <div className="flex items-center space-x-4">
                 <input
-                  type="number"
-                  id="estimatedPickupTime"
-                  name="estimatedPickupTime"
-                  defaultValue={restaurantConfig.estimatedPickupTime}
-                  className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                  type="text"
+                  value={newPhoneNumber}
+                  onChange={(e) => setNewPhoneNumber(e.target.value)}
+                  placeholder="Nuevo número de teléfono"
+                  required
+                  className="flex-grow px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
-              </div>
-
-              <div className="bg-gray-50 p-4 rounded-lg">
-                <label
-                  htmlFor="estimatedDeliveryTime"
-                  className="block text-sm font-medium text-gray-700 mb-2"
-                >
-                  Tiempo estimado de entrega (minutos):
-                </label>
-                <input
-                  type="number"
-                  id="estimatedDeliveryTime"
-                  name="estimatedDeliveryTime"
-                  defaultValue={restaurantConfig.estimatedDeliveryTime}
-                  className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                />
-              </div>
-
-              <div className="flex items-center justify-center">
                 <button
                   type="submit"
-                  className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                  className="px-6 py-2 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition duration-300"
                 >
-                  Actualizar Configuración
+                  Agregar
                 </button>
               </div>
             </form>
-          ) : (
-            <p className="text-center text-gray-500">
-              Cargando configuración...
-            </p>
-          )}
-        </div>
-      )}
 
-      {activeView === "menu" && (
-        <div className="bg-white shadow-md rounded-lg p-6">
-          <h2 className="text-2xl font-bold mb-6 text-gray-800">Menú</h2>
-          {error && (
-            <div
-              className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4"
-              role="alert"
-            >
-              {error}
-            </div>
-          )}
-          <div id="menu-list">
-            {Object.entries(groupMenuItemsByCategory(menuItems)).map(
-              ([category, items]) => (
-                <div key={category} className="mb-8">
-                  <h3 className="text-xl font-semibold mb-4 text-gray-700 border-b pb-2">
-                    {category.charAt(0).toUpperCase() + category.slice(1)}
-                  </h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {items.map((item) => (
-                      <div
-                        key={item.id}
-                        className="bg-gray-50 rounded-lg shadow-sm p-4 hover:shadow-md transition-shadow duration-300"
+            {notificationPhones.length > 0 ? (
+              <ul className="space-y-4">
+                {notificationPhones.map((phone) => (
+                  <li
+                    key={phone.id}
+                    className="flex items-center justify-between bg-gray-50 p-4 rounded-lg"
+                  >
+                    <span className="text-lg font-medium text-gray-700">
+                      {phone.phoneNumber}
+                    </span>
+                    <div className="space-x-2">
+                      <button
+                        onClick={() =>
+                          togglePhoneStatus(phone.id, phone.isActive)
+                        }
+                        className={`px-4 py-2 rounded-lg text-sm font-medium transition duration-300 ${
+                          phone.isActive
+                            ? "bg-green-500 text-white hover:bg-green-600"
+                            : "bg-yellow-500 text-white hover:bg-yellow-600"
+                        }`}
                       >
-                        <h4 className="text-lg font-medium mb-2 text-gray-800">
-                          {item.name}
-                        </h4>
-                        <p className="text-sm text-gray-600 mb-2">
-                          Categoría: {item.category}
-                        </p>
-                        <p className="text-sm text-gray-600 mb-2">
-                          Precio:{" "}
-                          {item.price
-                            ? `$${item.price.toFixed(2)}`
-                            : "Varía según la variante"}
-                        </p>
-                        <p className="text-sm mb-3">
-                          Disponible:
-                          <span
-                            className={`ml-2 px-2 py-1 rounded-full text-xs font-medium ${
-                              item.Availability.available
-                                ? "bg-green-100 text-green-800"
-                                : "bg-red-100 text-red-800"
-                            }`}
-                          >
-                            {item.Availability.available ? "Sí" : "No"}
-                          </span>
-                        </p>
-
-                        {item.productVariants &&
-                          item.productVariants.length > 0 && (
-                            <div className="mt-3">
-                              <h5 className="font-medium text-sm mb-2 text-gray-700">
-                                Variantes:
-                              </h5>
-                              <ul className="space-y-2">
-                                {item.productVariants.map((variant) => (
-                                  <li
-                                    key={variant.id}
-                                    className="flex justify-between items-center text-sm"
-                                  >
-                                    <span>{variant.name}</span>
-                                    <button
-                                      onClick={() =>
-                                        toggleItemAvailability(
-                                          variant.id,
-                                          "productVariant"
-                                        )
-                                      }
-                                      className={`px-2 py-1 rounded text-xs font-medium ${
-                                        variant.Availability.available
-                                          ? "bg-red-100 text-red-800 hover:bg-red-200"
-                                          : "bg-green-100 text-green-800 hover:bg-green-200"
-                                      }`}
-                                    >
-                                      {variant.Availability.available
-                                        ? "Deshabilitar"
-                                        : "Habilitar"}
-                                    </button>
-                                  </li>
-                                ))}
-                              </ul>
-                            </div>
-                          )}
-
-                        {item.modifierTypes &&
-                          item.modifierTypes.length > 0 && (
-                            <div className="mt-3">
-                              <h5 className="font-medium text-sm mb-2 text-gray-700">
-                                Modificadores:
-                              </h5>
-                              {item.modifierTypes.map((modifierType) => (
-                                <div key={modifierType.id} className="mb-2">
-                                  <h6 className="text-xs font-medium text-gray-600 mb-1">
-                                    {modifierType.name}:
-                                  </h6>
-                                  <ul className="space-y-2">
-                                    {modifierType.modifiers.map((modifier) => (
-                                      <li
-                                        key={modifier.id}
-                                        className="flex justify-between items-center text-sm"
-                                      >
-                                        <span>{modifier.name}</span>
-                                        <button
-                                          onClick={() =>
-                                            toggleItemAvailability(
-                                              modifier.id,
-                                              "modifier"
-                                            )
-                                          }
-                                          className={`px-2 py-1 rounded text-xs font-medium ${
-                                            modifier.Availability.available
-                                              ? "bg-red-100 text-red-800 hover:bg-red-200"
-                                              : "bg-green-100 text-green-800 hover:bg-green-200"
-                                          }`}
-                                        >
-                                          {modifier.Availability.available
-                                            ? "Deshabilitar"
-                                            : "Habilitar"}
-                                        </button>
-                                      </li>
-                                    ))}
-                                  </ul>
-                                </div>
-                              ))}
-                            </div>
-                          )}
-
-                        {item.pizzaIngredients &&
-                          item.pizzaIngredients.length > 0 && (
-                            <div className="mt-3">
-                              <h5 className="font-medium text-sm mb-2 text-gray-700">
-                                Ingredientes de Pizza:
-                              </h5>
-                              <ul className="space-y-2">
-                                {item.pizzaIngredients.map((ingredient) => (
-                                  <li
-                                    key={ingredient.id}
-                                    className="flex justify-between items-center text-sm"
-                                  >
-                                    <span>{ingredient.name}</span>
-                                    <button
-                                      onClick={() =>
-                                        toggleItemAvailability(
-                                          ingredient.id,
-                                          "pizzaIngredient"
-                                        )
-                                      }
-                                      className={`px-2 py-1 rounded text-xs font-medium ${
-                                        ingredient.Availability.available
-                                          ? "bg-red-100 text-red-800 hover:bg-red-200"
-                                          : "bg-green-100 text-green-800 hover:bg-green-200"
-                                      }`}
-                                    >
-                                      {ingredient.Availability.available
-                                        ? "Deshabilitar"
-                                        : "Habilitar"}
-                                    </button>
-                                  </li>
-                                ))}
-                              </ul>
-                            </div>
-                          )}
-
-                        <button
-                          onClick={() =>
-                            toggleItemAvailability(item.id, "product")
-                          }
-                          className={`mt-4 w-full py-2 px-4 rounded-lg text-sm font-medium ${
-                            item.Availability.available
-                              ? "bg-red-500 text-white hover:bg-red-600"
-                              : "bg-green-500 text-white hover:bg-green-600"
-                          } transition-colors duration-300`}
-                        >
-                          {item.Availability.available
-                            ? "Deshabilitar"
-                            : "Habilitar"}
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )
+                        {phone.isActive ? "Activo" : "Inactivo"}
+                      </button>
+                      <button
+                        onClick={() => deleteNotificationPhone(phone.id)}
+                        className="px-4 py-2 bg-red-500 text-white text-sm font-medium rounded-lg hover:bg-red-600 transition duration-300"
+                      >
+                        Eliminar
+                      </button>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="text-center text-gray-500">
+                No hay teléfonos de notificación registrados.
+              </p>
             )}
           </div>
-        </div>
-      )}
+        )}
+
+        {activeView === "restaurantConfig" && (
+          <div className="bg-white shadow-lg rounded-lg p-6 max-w-md mx-auto">
+            <h2 className="text-2xl font-bold mb-6 text-gray-800 text-center">
+              Configuración del Restaurante
+            </h2>
+            {restaurantConfig ? (
+              <form onSubmit={updateRestaurantConfig} className="space-y-6">
+                <div className="bg-gray-50 p-4 rounded-lg">
+                  <label
+                    htmlFor="acceptingOrders"
+                    className="block text-sm font-medium text-gray-700 mb-2"
+                  >
+                    Aceptando Pedidos:
+                  </label>
+                  <select
+                    id="acceptingOrders"
+                    name="acceptingOrders"
+                    defaultValue={restaurantConfig.acceptingOrders?.toString()}
+                    className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"
+                  >
+                    <option value="true">Sí</option>
+                    <option value="false">No</option>
+                  </select>
+                </div>
+
+                <div className="bg-gray-50 p-4 rounded-lg">
+                  <label
+                    htmlFor="estimatedPickupTime"
+                    className="block text-sm font-medium text-gray-700 mb-2"
+                  >
+                    Tiempo estimado de recogida (minutos):
+                  </label>
+                  <input
+                    type="number"
+                    id="estimatedPickupTime"
+                    name="estimatedPickupTime"
+                    defaultValue={restaurantConfig.estimatedPickupTime}
+                    className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                  />
+                </div>
+
+                <div className="bg-gray-50 p-4 rounded-lg">
+                  <label
+                    htmlFor="estimatedDeliveryTime"
+                    className="block text-sm font-medium text-gray-700 mb-2"
+                  >
+                    Tiempo estimado de entrega (minutos):
+                  </label>
+                  <input
+                    type="number"
+                    id="estimatedDeliveryTime"
+                    name="estimatedDeliveryTime"
+                    defaultValue={restaurantConfig.estimatedDeliveryTime}
+                    className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                  />
+                </div>
+
+                <div className="flex items-center justify-center">
+                  <button
+                    type="submit"
+                    className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                  >
+                    Actualizar Configuración
+                  </button>
+                </div>
+              </form>
+            ) : (
+              <p className="text-center text-gray-500">
+                Cargando configuración...
+              </p>
+            )}
+          </div>
+        )}
+
+        {activeView === "menu" && (
+          <div className="bg-white shadow-md rounded-lg p-6">
+            <h2 className="text-2xl font-bold mb-6 text-gray-800">Menú</h2>
+            {error && (
+              <div
+                className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4"
+                role="alert"
+              >
+                {error}
+              </div>
+            )}
+            <div id="menu-list">
+              {Object.entries(groupMenuItemsByCategory(menuItems)).map(
+                ([category, items]) => (
+                  <div key={category} className="mb-8">
+                    <h3 className="text-xl font-semibold mb-4 text-gray-700 border-b pb-2">
+                      {category.charAt(0).toUpperCase() + category.slice(1)}
+                    </h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                      {items.map((item) => (
+                        <div
+                          key={item.id}
+                          className="bg-gray-50 rounded-lg shadow-sm p-4 hover:shadow-md transition-shadow duration-300"
+                        >
+                          <h4 className="text-lg font-medium mb-2 text-gray-800">
+                            {item.name}
+                          </h4>
+                          <p className="text-sm text-gray-600 mb-2">
+                            Categoría: {item.category}
+                          </p>
+                          <p className="text-sm text-gray-600 mb-2">
+                            Precio:{" "}
+                            {item.price
+                              ? `$${item.price.toFixed(2)}`
+                              : "Varía según la variante"}
+                          </p>
+                          <p className="text-sm mb-3">
+                            Disponible:
+                            <span
+                              className={`ml-2 px-2 py-1 rounded-full text-xs font-medium ${
+                                item.Availability.available
+                                  ? "bg-green-100 text-green-800"
+                                  : "bg-red-100 text-red-800"
+                              }`}
+                            >
+                              {item.Availability.available ? "Sí" : "No"}
+                            </span>
+                          </p>
+
+                          {item.productVariants &&
+                            item.productVariants.length > 0 && (
+                              <div className="mt-3">
+                                <h5 className="font-medium text-sm mb-2 text-gray-700">
+                                  Variantes:
+                                </h5>
+                                <ul className="space-y-2">
+                                  {item.productVariants.map((variant) => (
+                                    <li
+                                      key={variant.id}
+                                      className="flex justify-between items-center text-sm"
+                                    >
+                                      <span>{variant.name}</span>
+                                      <button
+                                        onClick={() =>
+                                          toggleItemAvailability(
+                                            variant.id,
+                                            "productVariant"
+                                          )
+                                        }
+                                        className={`px-2 py-1 rounded text-xs font-medium ${
+                                          variant.Availability.available
+                                            ? "bg-red-100 text-red-800 hover:bg-red-200"
+                                            : "bg-green-100 text-green-800 hover:bg-green-200"
+                                        }`}
+                                      >
+                                        {variant.Availability.available
+                                          ? "Deshabilitar"
+                                          : "Habilitar"}
+                                      </button>
+                                    </li>
+                                  ))}
+                                </ul>
+                              </div>
+                            )}
+
+                          {item.modifierTypes &&
+                            item.modifierTypes.length > 0 && (
+                              <div className="mt-3">
+                                <h5 className="font-medium text-sm mb-2 text-gray-700">
+                                  Modificadores:
+                                </h5>
+                                {item.modifierTypes.map((modifierType) => (
+                                  <div key={modifierType.id} className="mb-2">
+                                    <h6 className="text-xs font-medium text-gray-600 mb-1">
+                                      {modifierType.name}:
+                                    </h6>
+                                    <ul className="space-y-2">
+                                      {modifierType.modifiers.map(
+                                        (modifier) => (
+                                          <li
+                                            key={modifier.id}
+                                            className="flex justify-between items-center text-sm"
+                                          >
+                                            <span>{modifier.name}</span>
+                                            <button
+                                              onClick={() =>
+                                                toggleItemAvailability(
+                                                  modifier.id,
+                                                  "modifier"
+                                                )
+                                              }
+                                              className={`px-2 py-1 rounded text-xs font-medium ${
+                                                modifier.Availability.available
+                                                  ? "bg-red-100 text-red-800 hover:bg-red-200"
+                                                  : "bg-green-100 text-green-800 hover:bg-green-200"
+                                              }`}
+                                            >
+                                              {modifier.Availability.available
+                                                ? "Deshabilitar"
+                                                : "Habilitar"}
+                                            </button>
+                                          </li>
+                                        )
+                                      )}
+                                    </ul>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+
+                          {item.pizzaIngredients &&
+                            item.pizzaIngredients.length > 0 && (
+                              <div className="mt-3">
+                                <h5 className="font-medium text-sm mb-2 text-gray-700">
+                                  Ingredientes de Pizza:
+                                </h5>
+                                <ul className="space-y-2">
+                                  {item.pizzaIngredients.map((ingredient) => (
+                                    <li
+                                      key={ingredient.id}
+                                      className="flex justify-between items-center text-sm"
+                                    >
+                                      <span>{ingredient.name}</span>
+                                      <button
+                                        onClick={() =>
+                                          toggleItemAvailability(
+                                            ingredient.id,
+                                            "pizzaIngredient"
+                                          )
+                                        }
+                                        className={`px-2 py-1 rounded text-xs font-medium ${
+                                          ingredient.Availability.available
+                                            ? "bg-red-100 text-red-800 hover:bg-red-200"
+                                            : "bg-green-100 text-green-800 hover:bg-green-200"
+                                        }`}
+                                      >
+                                        {ingredient.Availability.available
+                                          ? "Deshabilitar"
+                                          : "Habilitar"}
+                                      </button>
+                                    </li>
+                                  ))}
+                                </ul>
+                              </div>
+                            )}
+
+                          <button
+                            onClick={() =>
+                              toggleItemAvailability(item.id, "product")
+                            }
+                            className={`mt-4 w-full py-2 px-4 rounded-lg text-sm font-medium ${
+                              item.Availability.available
+                                ? "bg-red-500 text-white hover:bg-red-600"
+                                : "bg-green-500 text-white hover:bg-green-600"
+                            } transition-colors duration-300`}
+                          >
+                            {item.Availability.available
+                              ? "Deshabilitar"
+                              : "Habilitar"}
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )
+              )}
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
+}
+
+// Función auxiliar para obtener el título de cada vista
+function getViewTitle(view) {
+  const titles = {
+    orders: "Pedidos",
+    clients: "Clientes",
+    notificationPhones: "Teléfonos de Notificación",
+    restaurantConfig: "Configuración del Restaurante",
+    menu: "Menú",
+  };
+  return titles[view] || "Vista Desconocida";
 }
