@@ -271,6 +271,7 @@ export async function handleOrderCancellation(
   messageId: string
 ): Promise<void> {
   try {
+    console.log("handleOrderCancellation messageId", messageId);
     const order = await Order.findOne({ where: { messageId } });
 
     const customer = await Customer.findOne({ where: { clientId } });
