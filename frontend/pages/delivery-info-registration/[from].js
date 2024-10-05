@@ -111,29 +111,25 @@ export default function DeliveryInfoRegistration() {
           const { latitude, longitude } = position.coords;
           const location = { lat: latitude, lng: longitude };
 
-          // Verificar si la ubicación está dentro del área permitida
-          const googleLocation = new window.google.maps.LatLng(location.lat, location.lng);
-          if (window.google.maps.geometry.poly.containsLocation(googleLocation, new window.google.maps.Polygon({ paths: polygonCoords }))) {
+          if (isLocationAllowed(location)) {
             setSelectedLocation(location);
-            setLocationError(null); // Limpiar el error de ubicación
+            setLocationError(null);
+
+            const addressDetails = await getAddressFromCoordinates(location);
+            setAddress(addressDetails.streetAddress);
+            setFormData((prev) => ({
+              ...prev,
+              ...addressDetails,
+              latitude: location.lat,
+              longitude: location.lng,
+            }));
+
+            const inputElement = document.querySelector('input[type="text"]');
+            if (inputElement) {
+              inputElement.value = addressDetails.streetAddress;
+            }
           } else {
-            setLocationError("La ubicación seleccionada está fuera del área permitida.");
-          }
-
-          // Obtener la dirección a partir de las coordenadas
-          const addressDetails = await getAddressFromCoordinates(location);
-          setAddress(addressDetails.streetAddress);
-          setFormData((prev) => ({
-            ...prev,
-            ...addressDetails,
-            latitude: location.lat,
-            longitude: location.lng,
-          }));
-
-          // Actualizar el campo de búsqueda de dirección
-          const inputElement = document.querySelector('input[type="text"]');
-          if (inputElement) {
-            inputElement.value = addressDetails.streetAddress;
+            setLocationError("La ubicación actual está fuera del área permitida.");
           }
         },
         (error) => {
@@ -216,25 +212,22 @@ export default function DeliveryInfoRegistration() {
           lng: place.geometry.location.lng(),
         };
 
-        // Verificar si la ubicación está dentro del área permitida
-        const location = new window.google.maps.LatLng(selectedLocation.lat, selectedLocation.lng);
-        if (window.google.maps.geometry.poly.containsLocation(location, new window.google.maps.Polygon({ paths: polygonCoords }))) {
+        if (isLocationAllowed(selectedLocation)) {
           setSelectedLocation(selectedLocation);
           setAddress(place.formatted_address);
-          setLocationError(null); // Limpiar el error de ubicación
+          setLocationError(null);
+
+          const addressDetails = extractAddressDetails(place.address_components);
+          setFormData((prev) => ({
+            ...prev,
+            ...addressDetails,
+            latitude: selectedLocation.lat,
+            longitude: selectedLocation.lng,
+            streetAddress: addressDetails.streetAddress,
+          }));
         } else {
           setLocationError("La ubicación seleccionada está fuera del área permitida.");
         }
-
-        // Actualizar los detalles de la dirección
-        const addressDetails = extractAddressDetails(place.address_components);
-        setFormData((prev) => ({
-          ...prev,
-          ...addressDetails,
-          latitude: selectedLocation.lat,
-          longitude: selectedLocation.lng,
-          streetAddress: addressDetails.streetAddress,
-        }));
       }
     }
   };
@@ -450,3 +443,10 @@ export default function DeliveryInfoRegistration() {
     </div>
   );
 }
+
+const isLocationAllowed = (location) => {
+  const polygonCoords = JSON.parse(process.env.NEXT_PUBLIC_POLYGON_COORDS || '[]');
+  const point = new window.google.maps.LatLng(location.lat, location.lng);
+  const polygon = new window.google.maps.Polygon({ paths: polygonCoords });
+  return window.google.maps.geometry.poly.containsLocation(point, polygon);
+};

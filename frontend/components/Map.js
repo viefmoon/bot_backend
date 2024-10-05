@@ -15,15 +15,15 @@ const polygonCoords = JSON.parse(process.env.NEXT_PUBLIC_POLYGON_COORDS || '[]')
 
 console.log("polygonCoords", polygonCoords);
 
-export default function Map({ selectedLocation, onLocationChange, setError }) {
+export default function Map({ selectedLocation, onLocationChange, setError, isLocationAllowed }) {
   const handleMapClick = (event) => {
     const lat = event.latLng.lat();
     const lng = event.latLng.lng();
-    const location = new window.google.maps.LatLng(lat, lng);
+    const location = { lat, lng };
 
-    if (window.google.maps.geometry.poly.containsLocation(location, new window.google.maps.Polygon({ paths: polygonCoords }))) {
-      onLocationChange({ lat, lng });
-      setError(null); // Clear error if location is valid
+    if (isLocationAllowed(location)) {
+      onLocationChange(location);
+      setError(null);
     } else {
       setError("La ubicación seleccionada está fuera del área permitida.");
     }
@@ -32,11 +32,11 @@ export default function Map({ selectedLocation, onLocationChange, setError }) {
   const handleMarkerDragEnd = (event) => {
     const lat = event.latLng.lat();
     const lng = event.latLng.lng();
-    const location = new window.google.maps.LatLng(lat, lng);
+    const location = { lat, lng };
 
-    if (window.google.maps.geometry.poly.containsLocation(location, new window.google.maps.Polygon({ paths: polygonCoords }))) {
-      onLocationChange({ lat, lng });
-      setError(null); // Clear error if location is valid
+    if (isLocationAllowed(location)) {
+      onLocationChange(location);
+      setError(null);
     } else {
       setError("La ubicación seleccionada está fuera del área permitida.");
     }
