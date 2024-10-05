@@ -42,19 +42,6 @@ export default function Map({ selectedLocation, onLocationChange, setError, isLo
     }
   };
 
-  const polygonOptions = {
-    fillColor: "lightblue",
-    fillOpacity: 0.4,
-    strokeColor: "blue",
-    strokeOpacity: 0.8,
-    strokeWeight: 2,
-    clickable: false,
-    draggable: false,
-    editable: false,
-    geodesic: false,
-    zIndex: 1,
-  };
-
   return (
     <div className="mb-2 p-2 bg-white rounded-lg shadow-md">
       <h2 className="text-base font-semibold mb-1 text-gray-800">
@@ -73,18 +60,33 @@ export default function Map({ selectedLocation, onLocationChange, setError, isLo
             zoomControl: false,
           }}
         >
+          {/* Dibuja el polígono del área permitida */}
           {polygonCoords.length > 0 && (
             <Polygon
               paths={polygonCoords}
-              options={polygonOptions}
+              options={{
+                fillColor: "#66BB6A", // Color de relleno
+                fillOpacity: 0.4,
+                strokeColor: "#388E3C", // Color del borde
+                strokeOpacity: 1,
+                strokeWeight: 2,
+                clickable: false,
+                editable: false,
+                draggable: false,
+                geodesic: false,
+                zIndex: 1,
+              }}
             />
           )}
+
+          {/* Marcador de la ubicación seleccionada */}
           {selectedLocation && (
             <Marker
               position={selectedLocation}
               draggable={true}
               onDragEnd={handleMarkerDragEnd}
               animation={window.google.maps.Animation.DROP}
+              zIndex={2}
             />
           )}
         </GoogleMap>
