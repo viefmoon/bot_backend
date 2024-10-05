@@ -13,9 +13,7 @@ const center = {
 
 const polygonCoords = JSON.parse(process.env.NEXT_PUBLIC_POLYGON_COORDS || '[]');
 
-console.log("polygonCoords", polygonCoords);
-
-export default function Map({ selectedLocation, onLocationChange }) {
+export default function Map({ selectedLocation, onLocationChange, setIsLocationValid }) {
   const handleMapClick = (event) => {
     const lat = event.latLng.lat();
     const lng = event.latLng.lng();
@@ -24,8 +22,10 @@ export default function Map({ selectedLocation, onLocationChange }) {
     // Check if the location is within the polygon
     if (window.google.maps.geometry.poly.containsLocation(location, new window.google.maps.Polygon({ paths: polygonCoords }))) {
       onLocationChange({ lat, lng });
+      setIsLocationValid(true);
     } else {
-      alert("La ubicación seleccionada está fuera del área permitida.");
+      onLocationChange({ lat, lng });
+      setIsLocationValid(false);
     }
   };
 
@@ -37,8 +37,10 @@ export default function Map({ selectedLocation, onLocationChange }) {
     // Check if the location is within the polygon
     if (window.google.maps.geometry.poly.containsLocation(location, new window.google.maps.Polygon({ paths: polygonCoords }))) {
       onLocationChange({ lat, lng });
+      setIsLocationValid(true);
     } else {
-      alert("La ubicación seleccionada está fuera del área permitida.");
+      onLocationChange({ lat, lng });
+      setIsLocationValid(false);
     }
   };
 

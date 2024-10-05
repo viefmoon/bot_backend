@@ -5,6 +5,7 @@ export default function AddressForm({
   address,
   formData,
   setFormData,
+  isLocationValid,
 }) {
   useEffect(() => {
     if (selectedLocation && typeof address === "string") {
@@ -107,6 +108,14 @@ export default function AddressForm({
           )}
         </div>
       </div>
+
+      {!isLocationValid && (
+        <div className="col-span-1 sm:col-span-2">
+          <p className="text-red-600 text-sm">
+            La ubicación seleccionada está fuera del área permitida. Por favor, seleccione una ubicación dentro del área resaltada en el mapa.
+          </p>
+        </div>
+      )}
     </form>
   );
 }

@@ -28,6 +28,7 @@ export default function DeliveryInfoRegistration() {
   });
   const [formErrors, setFormErrors] = useState({});
   const [isUpdating, setIsUpdating] = useState(false);
+  const [isLocationValid, setIsLocationValid] = useState(true);
 
   const { isLoaded, loadError } = useLoadScript({
     googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY,
@@ -408,16 +409,23 @@ export default function DeliveryInfoRegistration() {
           formData={formData}
           setFormData={setFormData}
           formErrors={formErrors}
+          isLocationValid={isLocationValid}
         />
         <button
           type="submit"
-          className="w-full mt-2 bg-blue-600 text-white px-3 py-2 text-base rounded-md font-semibold hover:bg-blue-700 transition duration-300"
+          className={`w-full mt-2 px-3 py-2 text-base rounded-md font-semibold transition duration-300 ${
+            isLocationValid
+              ? "bg-blue-600 text-white hover:bg-blue-700"
+              : "bg-gray-400 text-gray-700 cursor-not-allowed"
+          }`}
+          disabled={!isLocationValid}
         >
           {isUpdating ? "Actualizar Dirección" : "Guardar Dirección"}
         </button>
         <Map
           selectedLocation={selectedLocation}
           onLocationChange={setSelectedLocation}
+          setIsLocationValid={setIsLocationValid}
         />
       </form>
     </div>
