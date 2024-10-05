@@ -14,12 +14,6 @@ const center = {
 
 const polygonCoords = JSON.parse(process.env.NEXT_PUBLIC_POLYGON_COORDS || '[]');
 
-const testPolygonCoords = [
-  { lat: 20.54, lng: -102.79 },
-  { lat: 20.55, lng: -102.80 },
-  { lat: 20.56, lng: -102.78 },
-  { lat: 20.54, lng: -102.79 },
-];
 
 export default function Map({ selectedLocation, onLocationChange, setError, isLocationAllowed }) {
   const handleMapClick = (event) => {
@@ -75,10 +69,10 @@ export default function Map({ selectedLocation, onLocationChange, setError, isLo
             />
           )}
           <Polygon
-            paths={testPolygonCoords}
+            paths={polygonCoords}
             options={{
-              fillColor: "rgba(255, 165, 0, 0.5)", // Color de relleno con transparencia
-              strokeColor: "orange", // Color del borde
+              fillColor: "rgba(255, 165, 0, 0.3)", 
+              strokeColor: "green",
               strokeOpacity: 1,
               strokeWeight: 2,
             }}
