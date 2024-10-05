@@ -289,11 +289,33 @@ export async function handleOrderCancellation(
     let mensaje: string;
     switch (order.status) {
       case "created":
-        console.log("order.status", order.status);
-        // Eliminar la orden en lugar de cancelarla
-        await order.destroy();
-        mensaje = `Tu orden #${order.dailyOrderNumber} ha sido eliminada exitosamente. Si tienes alguna pregunta, por favor contacta con el restaurante.`;
+        console.log(
+          "Orden encontrada con estado 'created'. Intentando eliminar..."
+        );
+        try {
+          await Order.destroy({ where: { id: order.id } });
+          console.log(`Orden #${order.id} eliminada exitosamente.`);
+          mensaje = `Tu orden #${order.dailyOrderNumber} ha sido eliminada exitosamente. Si tienes alguna pregunta, por favor contacta con el restaurante.`;
+        } catch (deleteError) {
+          console.error(
+            `Error al eliminar la orden #${order.id}:`,
+            deleteError
+          );
+          mensaje =
+            "Hubo un problema al eliminar tu orden. Por favor, contacta con el restaurante para asistencia.";
+        }
+
+        // Verificar si la orden aún existe después de intentar eliminarla
+        const orderStillExists = await Order.findByPk(order.id);
+        if (orderStillExists) {
+          console.error(
+            `La orden #${order.id} aún existe después de intentar eliminarla.`
+          );
+          mensaje =
+            "Hubo un problema al procesar tu solicitud. Por favor, contacta con el restaurante para asistencia.";
+        }
         break;
+
       case "accepted":
         mensaje =
           "Lo sentimos, pero esta orden ya no se puede cancelar porque ya fue aceptada por el restaurante. Por favor, contacta directamente con el restaurante si necesitas hacer cambios.";
