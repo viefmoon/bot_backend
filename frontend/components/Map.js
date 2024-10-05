@@ -1,7 +1,5 @@
 import React from "react";
-import { GoogleMap, Polygon } from "@react-google-maps/api";
-// Importar AdvancedMarkerElement
-import { AdvancedMarkerElement } from "@react-google-maps/api";
+import { GoogleMap, Polygon, useLoadScript } from "@react-google-maps/api";
 
 const containerStyle = {
   width: "100%",
@@ -18,6 +16,11 @@ const polygonCoords = JSON.parse(process.env.NEXT_PUBLIC_POLYGON_COORDS || '[]')
 console.log("polygonCoords", polygonCoords);
 
 export default function Map({ selectedLocation, onLocationChange, setError, isLocationAllowed }) {
+  const { isLoaded, loadError } = useLoadScript({
+    googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY,
+    libraries: ["marker"],
+  });
+
   const handleMapClick = (event) => {
     const lat = event.latLng.lat();
     const lng = event.latLng.lng();
@@ -43,6 +46,9 @@ export default function Map({ selectedLocation, onLocationChange, setError, isLo
       setError("La ubicación seleccionada está fuera del área permitida.");
     }
   };
+
+  if (loadError) return "Error al cargar los mapas";
+  if (!isLoaded) return "Cargando mapas...";
 
   return (
     <div className="mb-2 p-2 bg-white rounded-lg shadow-md">
