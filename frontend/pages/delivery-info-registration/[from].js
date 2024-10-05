@@ -153,14 +153,10 @@ export default function DeliveryInfoRegistration() {
         `https://maps.googleapis.com/maps/api/geocode/json?latlng=${location.lat},${location.lng}&key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}`
       );
       if (response.data.results.length > 0) {
-        const formattedAddress = response.data.results[0].formatted_address;
-        const addressComponents = response.data.results[0].address_components;
-        const extractedDetails = extractAddressDetails(addressComponents);
-
-        return {
-          ...extractedDetails,
-          streetAddress: formattedAddress, // Usar el formatted_address para consistencia
-        };
+        const addressDetails = extractAddressDetails(
+          response.data.results[0].address_components
+        );
+        return addressDetails;
       }
     } catch (error) {
       console.error("Error obteniendo la dirección:", error);
@@ -178,15 +174,14 @@ export default function DeliveryInfoRegistration() {
         };
 
         setSelectedLocation(selectedLocation);
-        setAddress(place.formatted_address);
-
         const addressDetails = extractAddressDetails(place.address_components);
-        return setFormData((prev) => ({
+        setAddress(addressDetails.streetAddress); // Cambio realizado aquí
+        setFormData((prev) => ({
           ...prev,
           ...addressDetails,
           latitude: selectedLocation.lat,
           longitude: selectedLocation.lng,
-          streetAddress: place.formatted_address, // Usar formatted_address para consistencia
+          streetAddress: addressDetails.streetAddress,
         }));
 
         if (!isLocationAllowed(selectedLocation)) {
@@ -241,8 +236,8 @@ export default function DeliveryInfoRegistration() {
     });
 
     // Combinar el nombre de la calle y el número en el orden correcto
-    // addressDetails.streetAddress =
-    //   streetName + (streetNumber ? ` ${streetNumber}` : "");
+    addressDetails.streetAddress =
+      streetName + (streetNumber ? ` ${streetNumber}` : "");
 
     return addressDetails;
   };
