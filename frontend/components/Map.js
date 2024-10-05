@@ -1,5 +1,5 @@
 import React from "react";
-import { GoogleMap, Marker, Polygon, useLoadScript } from "@react-google-maps/api";
+import { GoogleMap, Marker, Polygon } from "@react-google-maps/api";
 
 const containerStyle = {
   width: "100%",
@@ -11,22 +11,17 @@ const center = {
   lng: -102.79222,
 };
 
+
 const polygonCoords = JSON.parse(process.env.NEXT_PUBLIC_POLYGON_COORDS || '[]');
 
+const testPolygonCoords = [
+  { lat: 20.54, lng: -102.79 },
+  { lat: 20.55, lng: -102.80 },
+  { lat: 20.56, lng: -102.78 },
+  { lat: 20.54, lng: -102.79 },
+];
+
 export default function Map({ selectedLocation, onLocationChange, setError, isLocationAllowed }) {
-  const { isLoaded, loadError } = useLoadScript({
-    googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY, // Asegúrate de tener tu API Key aquí
-    libraries: ["places"],
-  });
-
-  if (loadError) {
-    return <div>Error al cargar el mapa</div>;
-  }
-
-  if (!isLoaded) {
-    return <div>Cargando...</div>;
-  }
-
   const handleMapClick = (event) => {
     const lat = event.latLng.lat();
     const lng = event.latLng.lng();
@@ -80,7 +75,7 @@ export default function Map({ selectedLocation, onLocationChange, setError, isLo
             />
           )}
           <Polygon
-            paths={polygonCoords}
+            paths={testPolygonCoords}
             options={{
               fillColor: "rgba(255, 165, 0, 0.5)", // Color de relleno con transparencia
               strokeColor: "orange", // Color del borde
