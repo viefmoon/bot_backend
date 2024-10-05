@@ -8,7 +8,20 @@ const OrderCard = ({ order, onUpdateStatus }) => {
   const handleUpdateStatus = async (newStatus) => {
     setIsLoading(true);
     try {
-      await onUpdateStatus(order.id, newStatus);
+      const response = await fetch("/api/update_order_status", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ orderId: order.id, newStatus }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Error al actualizar el estado de la orden");
+      }
+
+      const updatedOrder = await response.json();
+      onUpdateStatus(updatedOrder);
     } catch (error) {
       console.error("Error al actualizar el estado de la orden:", error);
       alert(

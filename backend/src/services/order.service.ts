@@ -1,4 +1,8 @@
-import { Injectable, BadRequestException } from "@nestjs/common";
+import {
+  Injectable,
+  BadRequestException,
+  NotFoundException,
+} from "@nestjs/common";
 import {
   Order,
   OrderItem,
@@ -11,10 +15,18 @@ import {
   OrderDeliveryInfo,
   RestaurantConfig,
 } from "../models";
-import { verificarHorarioAtencion } from "../utils/timeUtils";
 import { getNextDailyOrderNumber } from "../utils/orderUtils";
 import { CreateOrderDto } from "../dto/create-order.dto";
 import { PizzaHalf, IngredientAction } from "../models/selectedPizzaIngredient";
+
+export type OrderStatus =
+  | "created"
+  | "accepted"
+  | "in_preparation"
+  | "prepared"
+  | "in_delivery"
+  | "finished"
+  | "canceled";
 
 @Injectable()
 export class OrderService {
@@ -328,6 +340,41 @@ export class OrderService {
             second: "2-digit",
             hour12: true,
           }),
+        }),
+      },
+    };
+  }
+
+  async updateOrderStatus(orderId: number, newStatus: OrderStatus) {
+    const order = await Order.findByPk(orderId);
+
+    if (!order) {
+      throw new NotFoundException(`No se encontró la orden con ID ${orderId}`);
+    }
+
+    if (
+      !Object.values(Order.getAttributes().status.values).includes(newStatus)
+    ) {
+      throw new BadRequestException(`Estado de orden no válido: ${newStatus}`);
+    }
+
+    order.status = newStatus;
+    await order.save();
+
+    return {
+      mensaje: `Estado de la orden ${orderId} actualizado a ${newStatus}`,
+      orden: {
+        id: order.id,
+        estado: order.status,
+        fechaActualizacion: order.updatedAt.toLocaleString("es-MX", {
+          timeZone: "America/Mexico_City",
+          year: "numeric",
+          month: "2-digit",
+          day: "2-digit",
+          hour: "2-digit",
+          minute: "2-digit",
+          second: "2-digit",
+          hour12: true,
         }),
       },
     };

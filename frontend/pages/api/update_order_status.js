@@ -5,7 +5,7 @@ dotenv.config();
 
 export default async function handler(req, res) {
   const { method, body } = req;
-  const url = `${process.env.NEXT_PUBLIC_BACKEND_BASE_URL}/order-status`;
+  const url = `${process.env.NEXT_PUBLIC_BACKEND_BASE_URL}/orders/update-status`;
 
   try {
     const response = await axios.put(url, body);

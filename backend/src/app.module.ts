@@ -9,7 +9,6 @@ import { RestaurantConfigController } from "./controllers/restaurant-config.cont
 import { CustomerDeliveryInfoController } from "./controllers/customer-delivery-info.controller";
 //import { ProductSelectionController } from "./controllers/product-selection.controller";
 import { AvailabilityController } from "./controllers/availability.controller";
-import { OrderStatusController } from "./controllers/order-status.controller";
 import { WebhookController } from "./controllers/webhook.controller";
 import { MenuService } from "./services/menu.service";
 import { CustomerService } from "./services/customer.service";
@@ -20,7 +19,6 @@ import { RestaurantConfigService } from "./services/restaurant-config.service";
 import { WhatsAppController } from "./controllers/whatsapp.controller";
 //import { ProductSelectionService } from "./services/product-selection.service";
 import { AvailabilityService } from "./services/availability.service";
-import { OrderStatusService } from "./services/order-status.service";
 import { WebhookService } from "./services/webhook.service";
 import { OtpService } from "./services/otp.service";
 import { OtpController } from "./controllers/otp.controller";
@@ -38,7 +36,6 @@ import { CustomerDeliveryInfoService } from "./services/customer-delivery-info.s
     WhatsAppController,
     //ProductSelectionController,
     AvailabilityController,
-    OrderStatusController,
     WebhookController,
     OtpController,
   ],
@@ -52,7 +49,6 @@ import { CustomerDeliveryInfoService } from "./services/customer-delivery-info.s
     CustomerDeliveryInfoService,
     //ProductSelectionService,
     AvailabilityService,
-    OrderStatusService,
     WebhookService,
     OtpService,
   ],
