@@ -1,6 +1,7 @@
 import React from "react";
 import { GoogleMap, Polygon } from "@react-google-maps/api";
-import { AdvancedMarker } from "@react-google-maps/api";
+// Importar AdvancedMarkerElement
+import { AdvancedMarkerElement } from "@react-google-maps/api";
 
 const containerStyle = {
   width: "100%",
@@ -59,6 +60,7 @@ export default function Map({ selectedLocation, onLocationChange, setError, isLo
             mapTypeControl: false,
             fullscreenControl: false,
             zoomControl: false,
+            mapId: "DEMO_MAP_ID", // Agregar mapId para AdvancedMarkerElement
           }}
         >
           {/* Dibuja el polígono del área permitida */}
@@ -80,16 +82,14 @@ export default function Map({ selectedLocation, onLocationChange, setError, isLo
             />
           )}
 
-          {/* Marcador de la ubicación seleccionada */}
+          {/* Actualizar el Marcador a AdvancedMarkerElement */}
           {selectedLocation && (
-            <AdvancedMarker
+            <AdvancedMarkerElement
               position={selectedLocation}
               draggable={true}
               onDragEnd={handleMarkerDragEnd}
-              zIndex={2}
-            >
-              <div className="w-8 h-8 bg-red-500 rounded-full border-2 border-white shadow-lg"></div>
-            </AdvancedMarker>
+              title="Ubicación seleccionada"
+            />
           )}
         </GoogleMap>
       </div>
