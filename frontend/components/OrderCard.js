@@ -9,7 +9,7 @@ const OrderCard = ({ order, onUpdateStatus }) => {
     setIsLoading(true);
     try {
       const response = await fetch("/api/update_order_status", {
-        method: "POST",
+        method: "PUT",
         headers: {
           "Content-Type": "application/json",
         },

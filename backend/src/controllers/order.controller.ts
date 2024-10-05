@@ -22,11 +22,13 @@ export class OrderController {
     return this.orderService.createOrder(createOrderDto);
   }
 
-  @Put(":id/update-status")
+  @Put("update-status")
   async updateOrderStatus(
-    @Param("id") id: number,
-    @Body() updateStatusDto: { status: OrderStatus }
+    @Body() updateStatusDto: { orderId: number; status: OrderStatus }
   ) {
-    return this.orderService.updateOrderStatus(id, updateStatusDto.status);
+    return this.orderService.updateOrderStatus(
+      updateStatusDto.orderId,
+      updateStatusDto.status
+    );
   }
 }
