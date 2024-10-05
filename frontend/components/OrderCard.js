@@ -21,14 +21,15 @@ const OrderCard = ({ order, onUpdateStatus }) => {
       }
 
       const updatedOrder = await response.json();
+      // Actualizar el estado local
+      setIsLoading(false);
       onUpdateStatus(updatedOrder);
     } catch (error) {
       console.error("Error al actualizar el estado de la orden:", error);
+      setIsLoading(false);
       alert(
         "No se pudo actualizar el estado de la orden. Por favor, inténtelo de nuevo."
       );
-    } finally {
-      setIsLoading(false);
     }
   };
 
