@@ -415,8 +415,14 @@ export default function DeliveryInfoRegistration() {
         />
         <button
           type="submit"
-          className="w-full mt-2 bg-blue-600 text-white px-3 py-2 text-base rounded-md font-semibold hover:bg-blue-700 transition duration-300"
-          disabled={!!locationError} // Disable button if there's a location error
+          className="
+            w-full mt-2 px-3 py-2 text-base rounded-md font-semibold
+            bg-blue-600 text-white
+            hover:bg-blue-700
+            disabled:bg-gray-400 disabled:cursor-not-allowed
+            transition duration-300
+          "
+          disabled={!!locationError} // Deshabilitar el botón si hay un error de ubicación
         >
           {isUpdating ? "Actualizar Dirección" : "Guardar Dirección"}
         </button>
