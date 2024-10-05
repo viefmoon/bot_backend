@@ -34,40 +34,52 @@ async function getMexicoCityTime(): Promise<moment.Moment> {
 }
 
 async function verificarHorarioAtencion(): Promise<boolean> {
-  const ahora = await getMexicoCityTime();
-  const diaSemana = ahora.day(); // 0 es domingo, 1 es lunes, etc.
-  const tiempoActual = ahora.hours() * 60 + ahora.minutes();
+  const intentos = 3;
+  const retrasoEntreIntentos = 1000; // 1 segundo
 
-  const horarioNormal = {
-    apertura: 0 * 60, // 6:00 PM
-    cierre: 23 * 60, // 11:00 PM
-  };
+  for (let i = 0; i < intentos; i++) {
+    const ahora = await getMexicoCityTime();
+    const diaSemana = ahora.day();
+    const tiempoActual = ahora.hours() * 60 + ahora.minutes();
 
-  const horarioDomingo = {
-    apertura: 0 * 60, // 2:00 PM
-    cierre: 23 * 60, // 11:00 PM
-  };
+    const horarioNormal = {
+      apertura: 0 * 60, // 6:00 PM
+      cierre: 23 * 60, // 11:00 PM
+    };
 
-  switch (diaSemana) {
-    case 0: // Domingo
-      return (
-        tiempoActual >= horarioDomingo.apertura &&
-        tiempoActual < horarioDomingo.cierre
-      );
-    case 1: // Lunes
-    //return false; // Cerrado los lunes
-    case 2: // Martes
-    case 3: // Miércoles
-    case 4: // Jueves
-    case 5: // Viernes
-    case 6: // Sábado
-      return (
-        tiempoActual >= horarioNormal.apertura &&
-        tiempoActual < horarioNormal.cierre
-      );
-    default:
-      return false;
+    const horarioDomingo = {
+      apertura: 0 * 60, // 2:00 PM
+      cierre: 23 * 60, // 11:00 PM
+    };
+
+    const estaAbierto = (() => {
+      switch (diaSemana) {
+        case 0: // Domingo
+          return tiempoActual >= horarioDomingo.apertura && tiempoActual < horarioDomingo.cierre;
+        case 1: // Lunes
+          return false; // Cerrado los lunes
+        case 2: // Martes
+        case 3: // Miércoles
+        case 4: // Jueves
+        case 5: // Viernes
+        case 6: // Sábado
+          return tiempoActual >= horarioNormal.apertura && tiempoActual < horarioNormal.cierre;
+        default:
+          return false;
+      }
+    })();
+
+    if (estaAbierto) {
+      return true;
+    }
+
+    // Si no está abierto y no es el último intento, espera antes de intentar de nuevo
+    if (i < intentos - 1) {
+      await new Promise(resolve => setTimeout(resolve, retrasoEntreIntentos));
+    }
   }
+
+  return false;
 }
 
 export { verificarHorarioAtencion };
