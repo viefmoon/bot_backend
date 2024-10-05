@@ -440,6 +440,14 @@ export default function Home() {
     }
   };
 
+  const handleUpdateStatus = (updatedOrder) => {
+    setOrders((prevOrders) =>
+      prevOrders.map((order) =>
+        order.id === updatedOrder.id ? updatedOrder : order
+      )
+    );
+  };
+
   return (
     <div className="min-h-screen bg-gray-100">
       <nav className="bg-green-700 shadow-md">
@@ -606,7 +614,11 @@ export default function Home() {
                     </p>
                   ) : (
                     orders.map((order) => (
-                      <OrderCard key={order.id} order={order} />
+                      <OrderCard
+                        key={order.id}
+                        order={order}
+                        onUpdateStatus={handleUpdateStatus}
+                      />
                     ))
                   )}
                 </div>
