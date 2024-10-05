@@ -204,7 +204,7 @@ export default function DeliveryInfoRegistration() {
     return {};
   };
 
-  const handlePlaceChanged = (autocomplete) => {
+  const handlePlaceChanged = async (autocomplete) => {
     if (autocomplete !== null) {
       const place = autocomplete.getPlace();
       if (place.geometry) {
@@ -432,7 +432,7 @@ export default function DeliveryInfoRegistration() {
             disabled:bg-gray-400 disabled:cursor-not-allowed
             transition duration-300
           "
-          disabled={!!locationError || !isLocationAllowed(selectedLocation)}
+          disabled={!!locationError}
         >
           {isUpdating ? "Actualizar Dirección" : "Guardar Dirección"}
         </button>
