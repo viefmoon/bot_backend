@@ -60,16 +60,23 @@ export default function Map({ selectedLocation, onLocationChange, setError, isLo
             zoomControl: false,
           }}
         >
-          <Polygon
-            paths={polygonCoords}
-            options={{
-              fillColor: "rgba(173, 216, 230, 0.5)", // Cambia el color de relleno
-              strokeColor: "blue",
-              strokeOpacity: 0.8,
-              strokeWeight: 2, // Añade grosor al borde
-              fillOpacity: 0.35, // Ajusta la opacidad del relleno
-            }}
-          />
+          {polygonCoords.length > 0 && (
+            <Polygon
+              paths={polygonCoords}
+              options={{
+                fillColor: "#00FF00", // Color de relleno verde brillante
+                fillOpacity: 0.3,      // Opacidad del relleno
+                strokeColor: "#0000FF", // Color de borde azul
+                strokeOpacity: 0.8,     // Opacidad del borde
+                strokeWeight: 2,        // Grosor del borde
+                clickable: false,       // No clickeable
+                draggable: false,       // No arrastrable
+                editable: false,        // No editable
+                geodesic: false,        // No geodésico
+                zIndex: 1,               // Asegura que esté debajo de otros elementos
+              }}
+            />
+          )}
           {selectedLocation && (
             <Marker
               position={selectedLocation}
