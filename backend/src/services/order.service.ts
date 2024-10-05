@@ -18,6 +18,7 @@ import {
 import { getNextDailyOrderNumber } from "../utils/orderUtils";
 import { CreateOrderDto } from "../dto/create-order.dto";
 import { PizzaHalf, IngredientAction } from "../models/selectedPizzaIngredient";
+import { sendWhatsAppMessage } from "../utils/whatsAppUtils";
 
 export type OrderStatus =
   | "created"
@@ -361,6 +362,13 @@ export class OrderService {
     order.status = newStatus;
     await order.save();
 
+    // Enviar mensaje de WhatsApp al cliente
+    const mensaje = this.getOrderStatusMessage(
+      newStatus,
+      order.dailyOrderNumber
+    );
+    await sendWhatsAppMessage(order.clientId, mensaje);
+
     return {
       mensaje: `Estado de la orden ${orderId} actualizado a ${newStatus}`,
       orden: {
@@ -378,5 +386,27 @@ export class OrderService {
         }),
       },
     };
+  }
+
+  private getOrderStatusMessage(
+    status: OrderStatus,
+    dailyOrderNumber: number
+  ): string {
+    switch (status) {
+      case "accepted":
+        return `¡Buenas noticias! Tu orden #${dailyOrderNumber} ha sido aceptada y pronto comenzaremos a prepararla.`;
+      case "in_preparation":
+        return `Tu orden #${dailyOrderNumber} ya está siendo preparada.`;
+      case "prepared":
+        return `¡Tu orden #${dailyOrderNumber} está lista! Pronto saldrá para entrega o estará lista para recoger.`;
+      case "in_delivery":
+        return `¡Tu orden #${dailyOrderNumber} está en camino! Estará contigo en breve.`;
+      case "finished":
+        return `¡Tu orden #${dailyOrderNumber} está en camino! Estará contigo en breve, Muchas gracias por tu preferencia.`;
+      case "canceled":
+        return `Lo sentimos, tu orden #${dailyOrderNumber} ha sido cancelada. Si tienes alguna pregunta, por favor contáctanos.`;
+      default:
+        return `El estado de tu orden #${dailyOrderNumber} ha sido actualizado a: ${status}`;
+    }
   }
 }
