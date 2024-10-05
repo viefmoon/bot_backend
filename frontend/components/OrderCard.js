@@ -56,7 +56,7 @@ const OrderCard = ({ order, onUpdateStatus }) => {
             </span>
           </div>
           <span
-            className={`px-3 py-1 rounded-full text-sm lg:text-base font-semibold ${getStatusColor(
+            className={`px-3 py-1 rounded-full text-sm lg:text-base font-semibold text-white ${getStatusColor(
               order.status
             )}`}
           >
@@ -257,15 +257,15 @@ const translateAction = (action) => {
 
 const getStatusColor = (status) => {
   const colors = {
-    created: "primary",
-    accepted: "success",
-    in_preparation: "info",
-    prepared: "secondary",
-    in_delivery: "warning",
-    finished: "success",
-    canceled: "danger",
+    created: "bg-blue-500",
+    accepted: "bg-green-500",
+    in_preparation: "bg-yellow-500",
+    prepared: "bg-purple-500",
+    in_delivery: "bg-orange-500",
+    finished: "bg-green-700",
+    canceled: "bg-red-500",
   };
-  return colors[status] || "light";
+  return colors[status] || "bg-gray-500";
 };
 
 const getPaymentStatusColor = (status) => {
