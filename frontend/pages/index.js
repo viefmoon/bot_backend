@@ -446,6 +446,7 @@ export default function Home() {
         order.id === updatedOrder.id ? updatedOrder : order
       )
     );
+    fetchOrders(selectedDate);
   };
 
   return (

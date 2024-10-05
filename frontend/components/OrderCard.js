@@ -22,7 +22,6 @@ const OrderCard = ({ order, onUpdateStatus }) => {
 
       const updatedOrder = await response.json();
       onUpdateStatus(updatedOrder);
-      // Eliminar la alerta de éxito si no es necesaria
     } catch (error) {
       console.error("Error al actualizar el estado de la orden:", error);
       alert(
