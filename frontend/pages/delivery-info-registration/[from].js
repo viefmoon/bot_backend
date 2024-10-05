@@ -437,7 +437,8 @@ export default function DeliveryInfoRegistration() {
         <Map
           selectedLocation={selectedLocation}
           onLocationChange={setSelectedLocation}
-          setError={setLocationError} // Pass setError to Map component
+          setError={setLocationError}
+          isLocationAllowed={isLocationAllowed}
         />
       </form>
     </div>
