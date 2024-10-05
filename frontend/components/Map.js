@@ -21,11 +21,11 @@ export default function Map({ selectedLocation, onLocationChange, setError, isLo
     const lng = event.latLng.lng();
     const location = { lat, lng };
 
-    if (isLocationAllowed(location)) {
-      onLocationChange(location);
-      setError(null);
-    } else {
+    onLocationChange(location);
+    if (!isLocationAllowed(location)) {
       setError("La ubicación seleccionada está fuera del área permitida.");
+    } else {
+      setError(null);
     }
   };
 
@@ -34,11 +34,11 @@ export default function Map({ selectedLocation, onLocationChange, setError, isLo
     const lng = event.latLng.lng();
     const location = { lat, lng };
 
-    if (isLocationAllowed(location)) {
-      onLocationChange(location);
-      setError(null);
-    } else {
+    onLocationChange(location);
+    if (!isLocationAllowed(location)) {
       setError("La ubicación seleccionada está fuera del área permitida.");
+    } else {
+      setError(null);
     }
   };
 

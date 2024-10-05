@@ -111,25 +111,26 @@ export default function DeliveryInfoRegistration() {
           const { latitude, longitude } = position.coords;
           const location = { lat: latitude, lng: longitude };
 
-          if (isLocationAllowed(location)) {
-            setSelectedLocation(location);
-            setLocationError(null);
+          setSelectedLocation(location);
 
-            const addressDetails = await getAddressFromCoordinates(location);
-            setAddress(addressDetails.streetAddress);
-            setFormData((prev) => ({
-              ...prev,
-              ...addressDetails,
-              latitude: location.lat,
-              longitude: location.lng,
-            }));
+          const addressDetails = await getAddressFromCoordinates(location);
+          setAddress(addressDetails.streetAddress);
+          setFormData((prev) => ({
+            ...prev,
+            ...addressDetails,
+            latitude: location.lat,
+            longitude: location.lng,
+          }));
 
-            const inputElement = document.querySelector('input[type="text"]');
-            if (inputElement) {
-              inputElement.value = addressDetails.streetAddress;
-            }
-          } else {
+          const inputElement = document.querySelector('input[type="text"]');
+          if (inputElement) {
+            inputElement.value = addressDetails.streetAddress;
+          }
+
+          if (!isLocationAllowed(location)) {
             setLocationError("La ubicación actual está fuera del área permitida.");
+          } else {
+            setLocationError(null);
           }
         },
         (error) => {
@@ -212,21 +213,22 @@ export default function DeliveryInfoRegistration() {
           lng: place.geometry.location.lng(),
         };
 
-        if (isLocationAllowed(selectedLocation)) {
-          setSelectedLocation(selectedLocation);
-          setAddress(place.formatted_address);
-          setLocationError(null);
+        setSelectedLocation(selectedLocation);
+        setAddress(place.formatted_address);
 
-          const addressDetails = extractAddressDetails(place.address_components);
-          setFormData((prev) => ({
-            ...prev,
-            ...addressDetails,
-            latitude: selectedLocation.lat,
-            longitude: selectedLocation.lng,
-            streetAddress: addressDetails.streetAddress,
-          }));
-        } else {
+        const addressDetails = extractAddressDetails(place.address_components);
+        setFormData((prev) => ({
+          ...prev,
+          ...addressDetails,
+          latitude: selectedLocation.lat,
+          longitude: selectedLocation.lng,
+          streetAddress: addressDetails.streetAddress,
+        }));
+
+        if (!isLocationAllowed(selectedLocation)) {
           setLocationError("La ubicación seleccionada está fuera del área permitida.");
+        } else {
+          setLocationError(null);
         }
       }
     }
@@ -430,7 +432,7 @@ export default function DeliveryInfoRegistration() {
             disabled:bg-gray-400 disabled:cursor-not-allowed
             transition duration-300
           "
-          disabled={!!locationError} // Deshabilitar el botón si hay un error de ubicación
+          disabled={!!locationError || !isLocationAllowed(selectedLocation)}
         >
           {isUpdating ? "Actualizar Dirección" : "Guardar Dirección"}
         </button>
