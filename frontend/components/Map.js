@@ -13,6 +13,8 @@ const center = {
 
 const polygonCoords = JSON.parse(process.env.NEXT_PUBLIC_POLYGON_COORDS || '[]');
 
+console.log("polygonCoords", polygonCoords);
+
 export default function Map({ selectedLocation, onLocationChange }) {
   const handleMapClick = (event) => {
     const lat = event.latLng.lat();
