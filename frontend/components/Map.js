@@ -60,15 +60,15 @@ export default function Map({ selectedLocation, onLocationChange, setError, isLo
             zoomControl: false,
           }}
         >
-          <Polygon 
-            paths={polygonCoords} 
+          <Polygon
+            paths={polygonCoords}
             options={{
-              fillColor: "lightblue",
-              fillOpacity: 0.3,
+              fillColor: "rgba(173, 216, 230, 0.5)", // Cambia el color de relleno
               strokeColor: "blue",
               strokeOpacity: 0.8,
-              strokeWeight: 2
-            }} 
+              strokeWeight: 2, // Añade grosor al borde
+              fillOpacity: 0.35, // Ajusta la opacidad del relleno
+            }}
           />
           {selectedLocation && (
             <Marker
