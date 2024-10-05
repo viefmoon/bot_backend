@@ -18,6 +18,7 @@ import {
   sendWhatsAppInteractiveMessage,
 } from "../utils/whatsAppUtils";
 import { OrderService } from "../services/order.service";
+import { PreOrderService } from "../services/pre-order.service";
 
 import * as dotenv from "dotenv";
 import { CreateOrderDto } from "src/dto/create-order.dto";
@@ -286,8 +287,9 @@ export async function handleOrderCancellation(
     let mensaje: string;
     switch (order.status) {
       case "created":
-        await order.update({ status: "canceled" });
-        mensaje = `Tu orden #${order.dailyOrderNumber} ha sido cancelada exitosamente. Si tienes alguna pregunta, por favor contacta con el restaurante.`;
+        // Eliminar la orden en lugar de cancelarla
+        await order.destroy();
+        mensaje = `Tu orden #${order.dailyOrderNumber} ha sido eliminada exitosamente. Si tienes alguna pregunta, por favor contacta con el restaurante.`;
         break;
       case "accepted":
         mensaje =
@@ -320,10 +322,10 @@ export async function handleOrderCancellation(
 
     await sendWhatsAppMessage(clientId, mensaje);
   } catch (error) {
-    console.error("Error al cancelar la orden:", error);
+    console.error("Error al eliminar la orden:", error);
     await sendWhatsAppMessage(
       clientId,
-      "Hubo un error al procesar tu solicitud de cancelación. Por favor, intenta nuevamente o contacta con el restaurante."
+      "Hubo un error al procesar tu solicitud de eliminación. Por favor, intenta nuevamente o contacta con el restaurante."
     );
   }
 }
@@ -370,7 +372,7 @@ export async function handleOrderModification(
     switch (order.status) {
       case "created":
         canModify = true;
-        mensaje = `Tu orden #${order.dailyOrderNumber} sera cancelada y se generara una nueva preorden que podras modificar. Por favor, espera mientras procesamos los cambios...`;
+        mensaje = `Tu orden #${order.dailyOrderNumber} será eliminada y se generará una nueva preorden que podrás modificar. Por favor, espera mientras procesamos los cambios...`;
         break;
       case "accepted":
         mensaje =
@@ -407,11 +409,11 @@ export async function handleOrderModification(
       return;
     }
 
-    // Cancelar la orden existente
-    await order.update({ status: "canceled" });
+    // Extraer los datos necesarios antes de eliminar la orden
+    const { orderType, scheduledDeliveryTime, orderItems } = order;
 
-    // Extraer los campos necesarios para crear una nueva preorden
-    const { orderType, scheduledDeliveryTime } = order;
+    // Eliminar la orden existente en lugar de cancelarla
+    await order.destroy();
 
     const formattedScheduledDeliveryTime = new Date(
       scheduledDeliveryTime
@@ -422,7 +424,7 @@ export async function handleOrderModification(
       hour12: false,
     });
 
-    const filteredOrderItems = order.orderItems.map((item) => {
+    const filteredOrderItems = orderItems.map((item) => {
       const filteredItem: any = {
         quantity: item.quantity,
         productId: item.productId,
@@ -443,16 +445,22 @@ export async function handleOrderModification(
       return filteredItem;
     });
 
-    // Crear una nueva preorden utilizando select_products
+    // Crear una nueva preorden utilizando selectProducts
     try {
-      const selectProductsResponse = await axios.post<{
-        mensaje: string;
-      }>(`${process.env.BASE_URL}/api/orders/select_products`, {
+      const preOrderService = new PreOrderService();
+      const selectProductsResponse = await preOrderService.selectProducts({
         orderItems: filteredOrderItems,
         clientId,
         orderType,
         scheduledDeliveryTime: formattedScheduledDeliveryTime,
       });
+
+      if (selectProductsResponse.status !== 200) {
+        throw new Error(
+          selectProductsResponse.json.mensaje ||
+            "Error desconocido al crear la nueva preorden"
+        );
+      }
 
       const customer = await Customer.findOne({ where: { clientId } });
       if (!customer) {
@@ -472,7 +480,7 @@ export async function handleOrderModification(
 
       const assistantMessage = {
         role: "assistant",
-        content: selectProductsResponse.data.mensaje,
+        content: selectProductsResponse.json.mensaje,
       };
 
       relevantChatHistory.push(assistantMessage);
@@ -486,7 +494,7 @@ export async function handleOrderModification(
     } catch (error) {
       console.error("Error al crear la nueva preorden:", error);
       const errorMessage =
-        (error as any).response?.data?.error ||
+        error.message ||
         "Error al procesar tu solicitud de modificación. Por favor, inténtalo de nuevo o contacta con el restaurante.";
       await sendWhatsAppMessage(clientId, errorMessage);
     }
