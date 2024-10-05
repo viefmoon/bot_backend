@@ -13,19 +13,17 @@ const center = {
 
 const polygonCoords = JSON.parse(process.env.NEXT_PUBLIC_POLYGON_COORDS || '[]');
 
-export default function Map({ selectedLocation, onLocationChange, setIsLocationValid, isLocationValid }) {
+export default function Map({ selectedLocation, onLocationChange }) {
   const handleMapClick = (event) => {
     const lat = event.latLng.lat();
     const lng = event.latLng.lng();
     const location = new window.google.maps.LatLng(lat, lng);
 
-    // Verificar si la ubicación está dentro del polígono
+    // Check if the location is within the polygon
     if (window.google.maps.geometry.poly.containsLocation(location, new window.google.maps.Polygon({ paths: polygonCoords }))) {
       onLocationChange({ lat, lng });
-      setIsLocationValid(true);
     } else {
-      onLocationChange({ lat, lng });
-      setIsLocationValid(false);
+      alert("La ubicación seleccionada está fuera del área permitida.");
     }
   };
 
@@ -34,13 +32,11 @@ export default function Map({ selectedLocation, onLocationChange, setIsLocationV
     const lng = event.latLng.lng();
     const location = new window.google.maps.LatLng(lat, lng);
 
-    // Verificar si la ubicación está dentro del polígono
+    // Check if the location is within the polygon
     if (window.google.maps.geometry.poly.containsLocation(location, new window.google.maps.Polygon({ paths: polygonCoords }))) {
       onLocationChange({ lat, lng });
-      setIsLocationValid(true);
     } else {
-      onLocationChange({ lat, lng });
-      setIsLocationValid(false);
+      alert("La ubicación seleccionada está fuera del área permitida.");
     }
   };
 
@@ -62,18 +58,7 @@ export default function Map({ selectedLocation, onLocationChange, setIsLocationV
             zoomControl: false,
           }}
         >
-          {/* Mostrar el polígono únicamente cuando la ubicación no es válida */}
-          {!isLocationValid && (
-            <Polygon 
-              paths={polygonCoords} 
-              options={{
-                fillColor: "rgba(255, 0, 0, 0.3)", // Color rojo semitransparente
-                strokeColor: "red",
-                strokeOpacity: 0.8,
-                strokeWeight: 2,
-              }}
-            />
-          )}
+          <Polygon paths={polygonCoords} options={{ fillColor: "lightblue", fillOpacity: 0.5, strokeColor: "blue", strokeOpacity: 0.8 }} />
           {selectedLocation && (
             <Marker
               position={selectedLocation}
