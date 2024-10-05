@@ -1,5 +1,5 @@
 import React from "react";
-import { GoogleMap, Marker } from "@react-google-maps/api";
+import { GoogleMap, Marker, Polygon } from "@react-google-maps/api";
 
 const containerStyle = {
   width: "100%",
@@ -11,17 +11,33 @@ const center = {
   lng: -103.3474,
 };
 
+const polygonCoords = JSON.parse(process.env.NEXT_PUBLIC_POLYGON_COORDS || '[]');
+
 export default function Map({ selectedLocation, onLocationChange }) {
   const handleMapClick = (event) => {
     const lat = event.latLng.lat();
     const lng = event.latLng.lng();
-    onLocationChange({ lat, lng });
+    const location = new window.google.maps.LatLng(lat, lng);
+
+    // Check if the location is within the polygon
+    if (window.google.maps.geometry.poly.containsLocation(location, new window.google.maps.Polygon({ paths: polygonCoords }))) {
+      onLocationChange({ lat, lng });
+    } else {
+      alert("La ubicación seleccionada está fuera del área permitida.");
+    }
   };
 
   const handleMarkerDragEnd = (event) => {
     const lat = event.latLng.lat();
     const lng = event.latLng.lng();
-    onLocationChange({ lat, lng });
+    const location = new window.google.maps.LatLng(lat, lng);
+
+    // Check if the location is within the polygon
+    if (window.google.maps.geometry.poly.containsLocation(location, new window.google.maps.Polygon({ paths: polygonCoords }))) {
+      onLocationChange({ lat, lng });
+    } else {
+      alert("La ubicación seleccionada está fuera del área permitida.");
+    }
   };
 
   return (
@@ -42,6 +58,7 @@ export default function Map({ selectedLocation, onLocationChange }) {
             zoomControl: false,
           }}
         >
+          <Polygon paths={polygonCoords} options={{ fillColor: "lightblue", fillOpacity: 0.5, strokeColor: "blue", strokeOpacity: 0.8 }} />
           {selectedLocation && (
             <Marker
               position={selectedLocation}
