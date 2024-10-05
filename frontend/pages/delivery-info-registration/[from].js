@@ -110,10 +110,15 @@ export default function DeliveryInfoRegistration() {
         async (position) => {
           const { latitude, longitude } = position.coords;
           const location = { lat: latitude, lng: longitude };
-          setSelectedLocation(location);
 
-          // Limpiar el error de ubicación
-          setLocationError(null);
+          // Verificar si la ubicación está dentro del área permitida
+          const googleLocation = new window.google.maps.LatLng(location.lat, location.lng);
+          if (window.google.maps.geometry.poly.containsLocation(googleLocation, new window.google.maps.Polygon({ paths: polygonCoords }))) {
+            setSelectedLocation(location);
+            setLocationError(null); // Limpiar el error de ubicación
+          } else {
+            setLocationError("La ubicación seleccionada está fuera del área permitida.");
+          }
 
           // Obtener la dirección a partir de las coordenadas
           const addressDetails = await getAddressFromCoordinates(location);
@@ -210,11 +215,16 @@ export default function DeliveryInfoRegistration() {
           lat: place.geometry.location.lat(),
           lng: place.geometry.location.lng(),
         };
-        setSelectedLocation(selectedLocation);
-        setAddress(place.formatted_address);
 
-        // Limpiar el error de ubicación
-        setLocationError(null);
+        // Verificar si la ubicación está dentro del área permitida
+        const location = new window.google.maps.LatLng(selectedLocation.lat, selectedLocation.lng);
+        if (window.google.maps.geometry.poly.containsLocation(location, new window.google.maps.Polygon({ paths: polygonCoords }))) {
+          setSelectedLocation(selectedLocation);
+          setAddress(place.formatted_address);
+          setLocationError(null); // Limpiar el error de ubicación
+        } else {
+          setLocationError("La ubicación seleccionada está fuera del área permitida.");
+        }
 
         // Actualizar los detalles de la dirección
         const addressDetails = extractAddressDetails(place.address_components);
