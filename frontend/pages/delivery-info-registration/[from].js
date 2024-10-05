@@ -112,6 +112,9 @@ export default function DeliveryInfoRegistration() {
           const location = { lat: latitude, lng: longitude };
           setSelectedLocation(location);
 
+          // Limpiar el error de ubicación
+          setLocationError(null);
+
           // Obtener la dirección a partir de las coordenadas
           const addressDetails = await getAddressFromCoordinates(location);
           setAddress(addressDetails.streetAddress);
@@ -210,6 +213,9 @@ export default function DeliveryInfoRegistration() {
         setSelectedLocation(selectedLocation);
         setAddress(place.formatted_address);
 
+        // Limpiar el error de ubicación
+        setLocationError(null);
+
         // Actualizar los detalles de la dirección
         const addressDetails = extractAddressDetails(place.address_components);
         setFormData((prev) => ({
@@ -217,7 +223,6 @@ export default function DeliveryInfoRegistration() {
           ...addressDetails,
           latitude: selectedLocation.lat,
           longitude: selectedLocation.lng,
-          // Usamos la calle y número extraídos en lugar de la dirección completa
           streetAddress: addressDetails.streetAddress,
         }));
       }
