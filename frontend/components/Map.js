@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React from "react";
 import { GoogleMap, Marker, Polygon } from "@react-google-maps/api";
 
 const containerStyle = {
@@ -13,18 +13,19 @@ const center = {
 
 const polygonCoords = JSON.parse(process.env.NEXT_PUBLIC_POLYGON_COORDS || '[]');
 
-export default function Map({ selectedLocation, onLocationChange, setError }) {
+console.log("polygonCoords", polygonCoords);
+
+export default function Map({ selectedLocation, onLocationChange }) {
   const handleMapClick = (event) => {
     const lat = event.latLng.lat();
     const lng = event.latLng.lng();
     const location = new window.google.maps.LatLng(lat, lng);
 
-    // Verificar si la ubicación está dentro del polígono
+    // Check if the location is within the polygon
     if (window.google.maps.geometry.poly.containsLocation(location, new window.google.maps.Polygon({ paths: polygonCoords }))) {
       onLocationChange({ lat, lng });
-      setError(""); // Limpiar errores si la ubicación es válida
     } else {
-      setError("La ubicación seleccionada está fuera del área permitida.");
+      alert("La ubicación seleccionada está fuera del área permitida.");
     }
   };
 
@@ -33,20 +34,13 @@ export default function Map({ selectedLocation, onLocationChange, setError }) {
     const lng = event.latLng.lng();
     const location = new window.google.maps.LatLng(lat, lng);
 
-    // Verificar si la ubicación está dentro del polígono
+    // Check if the location is within the polygon
     if (window.google.maps.geometry.poly.containsLocation(location, new window.google.maps.Polygon({ paths: polygonCoords }))) {
       onLocationChange({ lat, lng });
-      setError(""); // Limpiar errores si la ubicación es válida
     } else {
-      setError("La ubicación seleccionada está fuera del área permitida.");
+      alert("La ubicación seleccionada está fuera del área permitida.");
     }
   };
-
-  useEffect(() => {
-    if (selectedLocation) {
-      // Opcional: Puedes agregar lógica adicional aquí si es necesario
-    }
-  }, [selectedLocation]);
 
   return (
     <div className="mb-2 p-2 bg-white rounded-lg shadow-md">
@@ -66,16 +60,7 @@ export default function Map({ selectedLocation, onLocationChange, setError }) {
             zoomControl: false,
           }}
         >
-          <Polygon
-            paths={polygonCoords}
-            options={{
-              fillColor: "lightblue",
-              fillOpacity: 0.5,
-              strokeColor: "blue",
-              strokeOpacity: 0.8,
-              strokeWeight: 2,
-            }}
-          />
+          <Polygon paths={polygonCoords} options={{ fillColor: "lightblue", fillOpacity: 0.5, strokeColor: "blue", strokeOpacity: 0.8 }} />
           {selectedLocation && (
             <Marker
               position={selectedLocation}
