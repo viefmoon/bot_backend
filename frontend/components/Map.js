@@ -62,7 +62,16 @@ export default function Map({ selectedLocation, onLocationChange, setIsLocationV
             zoomControl: false,
           }}
         >
-          <Polygon paths={polygonCoords} options={{ fillColor: "lightblue", fillOpacity: 0.5, strokeColor: "blue", strokeOpacity: 0.8 }} />
+          <Polygon 
+            paths={polygonCoords} 
+            options={{
+              fillColor: "lightblue",
+              fillOpacity: 0.3,
+              strokeColor: "blue",
+              strokeOpacity: 0.8,
+              strokeWeight: 2,
+            }}
+          />
           {selectedLocation && (
             <Marker
               position={selectedLocation}
