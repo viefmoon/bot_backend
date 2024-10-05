@@ -7,8 +7,8 @@ const containerStyle = {
 };
 
 const center = {
-  lat: 20.6534,
-  lng: -103.3474,
+  lat: 20.54217,
+  lng: -102.79222,
 };
 
 const polygonCoords = JSON.parse(process.env.NEXT_PUBLIC_POLYGON_COORDS || '[]');
