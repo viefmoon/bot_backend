@@ -128,7 +128,9 @@ export default function DeliveryInfoRegistration() {
           }
 
           if (!isLocationAllowed(location)) {
-            setLocationError("La ubicación actual está fuera del área permitida.");
+            setLocationError(
+              "La ubicación actual está fuera del área permitida."
+            );
           } else {
             setLocationError(null);
           }
@@ -151,51 +153,9 @@ export default function DeliveryInfoRegistration() {
         `https://maps.googleapis.com/maps/api/geocode/json?latlng=${location.lat},${location.lng}&key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}`
       );
       if (response.data.results.length > 0) {
-        const addressComponents = response.data.results[0].address_components;
-
-        const addressDetails = {
-          streetAddress: "",
-          neighborhood: "",
-          postalCode: "",
-          city: "",
-          state: "",
-          country: "",
-        };
-
-        let streetNumber = "";
-        let streetName = "";
-
-        addressComponents.forEach((component) => {
-          if (component.types.includes("street_number")) {
-            streetNumber = component.long_name;
-          }
-          if (component.types.includes("route")) {
-            streetName = component.long_name;
-          }
-          if (
-            component.types.includes("sublocality_level_1") ||
-            component.types.includes("neighborhood")
-          ) {
-            addressDetails.neighborhood = component.long_name;
-          }
-          if (component.types.includes("postal_code")) {
-            addressDetails.postalCode = component.long_name;
-          }
-          if (component.types.includes("locality")) {
-            addressDetails.city = component.long_name;
-          }
-          if (component.types.includes("administrative_area_level_1")) {
-            addressDetails.state = component.long_name;
-          }
-          if (component.types.includes("country")) {
-            addressDetails.country = component.long_name;
-          }
-        });
-
-        // Combinar el nombre de la calle y el número en el orden correcto
-        addressDetails.streetAddress =
-          streetName + (streetNumber ? ` ${streetNumber}` : "");
-
+        const addressDetails = extractAddressDetails(
+          response.data.results[0].address_components
+        );
         return addressDetails;
       }
     } catch (error) {
@@ -226,7 +186,9 @@ export default function DeliveryInfoRegistration() {
         }));
 
         if (!isLocationAllowed(selectedLocation)) {
-          setLocationError("La ubicación seleccionada está fuera del área permitida.");
+          setLocationError(
+            "La ubicación seleccionada está fuera del área permitida."
+          );
         } else {
           setLocationError(null);
         }
@@ -411,9 +373,7 @@ export default function DeliveryInfoRegistration() {
           </button>
         </div>
       </div>
-      {locationError && (
-        <p className="text-red-600">{locationError}</p>
-      )}
+      {locationError && <p className="text-red-600">{locationError}</p>}
       <form onSubmit={handleSubmit}>
         <AddressForm
           clientId={clientId}
@@ -448,7 +408,9 @@ export default function DeliveryInfoRegistration() {
 }
 
 const isLocationAllowed = (location) => {
-  const polygonCoords = JSON.parse(process.env.NEXT_PUBLIC_POLYGON_COORDS || '[]');
+  const polygonCoords = JSON.parse(
+    process.env.NEXT_PUBLIC_POLYGON_COORDS || "[]"
+  );
   const point = new window.google.maps.LatLng(location.lat, location.lng);
   const polygon = new window.google.maps.Polygon({ paths: polygonCoords });
   return window.google.maps.geometry.poly.containsLocation(point, polygon);
