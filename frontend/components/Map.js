@@ -1,5 +1,6 @@
 import React from "react";
-import { GoogleMap, Marker, Polygon } from "@react-google-maps/api";
+import { GoogleMap, Polygon } from "@react-google-maps/api";
+import { AdvancedMarker } from "@react-google-maps/api";
 
 const containerStyle = {
   width: "100%",
@@ -81,13 +82,14 @@ export default function Map({ selectedLocation, onLocationChange, setError, isLo
 
           {/* Marcador de la ubicación seleccionada */}
           {selectedLocation && (
-            <Marker
+            <AdvancedMarker
               position={selectedLocation}
               draggable={true}
               onDragEnd={handleMarkerDragEnd}
-              animation={window.google.maps.Animation.DROP}
               zIndex={2}
-            />
+            >
+              <div className="w-8 h-8 bg-red-500 rounded-full border-2 border-white shadow-lg"></div>
+            </AdvancedMarker>
           )}
         </GoogleMap>
       </div>
