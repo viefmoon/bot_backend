@@ -1,5 +1,5 @@
 import React from "react";
-import { GoogleMap, Polygon, useLoadScript } from "@react-google-maps/api";
+import { GoogleMap, Marker, Polygon } from "@react-google-maps/api";
 
 const containerStyle = {
   width: "100%",
@@ -11,16 +11,12 @@ const center = {
   lng: -102.79222,
 };
 
+
 const polygonCoords = JSON.parse(process.env.NEXT_PUBLIC_POLYGON_COORDS || '[]');
 
 console.log("polygonCoords", polygonCoords);
 
 export default function Map({ selectedLocation, onLocationChange, setError, isLocationAllowed }) {
-  const { isLoaded, loadError } = useLoadScript({
-    googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY,
-    libraries: ["marker"],
-  });
-
   const handleMapClick = (event) => {
     const lat = event.latLng.lat();
     const lng = event.latLng.lng();
@@ -47,9 +43,6 @@ export default function Map({ selectedLocation, onLocationChange, setError, isLo
     }
   };
 
-  if (loadError) return "Error al cargar los mapas";
-  if (!isLoaded) return "Cargando mapas...";
-
   return (
     <div className="mb-2 p-2 bg-white rounded-lg shadow-md">
       <h2 className="text-base font-semibold mb-1 text-gray-800">
@@ -66,37 +59,25 @@ export default function Map({ selectedLocation, onLocationChange, setError, isLo
             mapTypeControl: false,
             fullscreenControl: false,
             zoomControl: false,
-            mapId: "DEMO_MAP_ID", // Agregar mapId para AdvancedMarkerElement
           }}
         >
-          {/* Dibuja el polígono del área permitida */}
-          {polygonCoords.length > 0 && (
-            <Polygon
-              paths={polygonCoords}
-              options={{
-                fillColor: "#66BB6A", // Color de relleno
-                fillOpacity: 0.4,
-                strokeColor: "#388E3C", // Color del borde
-                strokeOpacity: 1,
-                strokeWeight: 2,
-                clickable: false,
-                editable: false,
-                draggable: false,
-                geodesic: false,
-                zIndex: 1,
-              }}
-            />
-          )}
-
-          {/* Actualizar el Marcador a AdvancedMarkerElement */}
           {selectedLocation && (
-            <AdvancedMarkerElement
+            <Marker
               position={selectedLocation}
               draggable={true}
               onDragEnd={handleMarkerDragEnd}
-              title="Ubicación seleccionada"
+              animation={window.google.maps.Animation.DROP}
             />
           )}
+          <Polygon
+            paths={polygonCoords}
+            options={{
+              fillColor: "rgba(255, 165, 0, 0.5)", // Color de relleno con transparencia
+              strokeColor: "orange", // Color del borde
+              strokeOpacity: 1,
+              strokeWeight: 2,
+            }}
+          />
         </GoogleMap>
       </div>
     </div>
