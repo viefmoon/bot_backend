@@ -8,6 +8,13 @@ import { format } from "date-fns";
 import { es } from "date-fns/locale";
 
 export default function Home() {
+  // Estados de autenticación
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [loginError, setLoginError] = useState("");
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+
+  // Otros estados existentes
   const [orders, setOrders] = useState([]);
   const [clients, setClients] = useState([]);
   const [error, setError] = useState(null);
@@ -24,17 +31,86 @@ export default function Home() {
   const [menuOpen, setMenuOpen] = useState(false);
 
   useEffect(() => {
-    fetchOrders(selectedDate);
-    fetchClients();
-    fetchMenu();
-    fetchRestaurantConfig();
-    fetchNotificationPhones();
-    const interval = setInterval(() => {
+    if (isAuthenticated) {
       fetchOrders(selectedDate);
-    }, 30000);
-    return () => clearInterval(interval);
-  }, [selectedDate]);
+      fetchClients();
+      fetchMenu();
+      fetchRestaurantConfig();
+      fetchNotificationPhones();
+      const interval = setInterval(() => {
+        fetchOrders(selectedDate);
+      }, 30000);
+      return () => clearInterval(interval);
+    }
+  }, [selectedDate, isAuthenticated]);
 
+  // Funciones de autenticación
+  const handleLogin = (e) => {
+    e.preventDefault();
+    const envUsername = process.env.NEXT_PUBLIC_DEFAULT_USERNAME;
+    const envPassword = process.env.NEXT_PUBLIC_DEFAULT_PASSWORD;
+
+    if (username === envUsername && password === envPassword) {
+      setIsAuthenticated(true);
+      setLoginError("");
+    } else {
+      setLoginError("Credenciales incorrectas. Por favor, inténtalo de nuevo.");
+    }
+  };
+
+  // Renderizar formulario de login si no está autenticado
+  if (!isAuthenticated) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-100">
+        <div className="bg-white p-8 rounded shadow-md w-full max-w-md">
+          <h2 className="text-2xl font-bold mb-6 text-center">
+            Iniciar Sesión
+          </h2>
+          <form onSubmit={handleLogin}>
+            <div className="mb-4">
+              <label htmlFor="username" className="block text-gray-700 mb-2">
+                Usuario
+              </label>
+              <input
+                type="text"
+                id="username"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                required
+                className="w-full px-3 py-2 border rounded"
+                placeholder="Ingresa tu usuario"
+              />
+            </div>
+            <div className="mb-6">
+              <label htmlFor="password" className="block text-gray-700 mb-2">
+                Contraseña
+              </label>
+              <input
+                type="password"
+                id="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                className="w-full px-3 py-2 border rounded"
+                placeholder="Ingresa tu contraseña"
+              />
+            </div>
+            {loginError && (
+              <div className="mb-4 text-red-500 text-sm">{loginError}</div>
+            )}
+            <button
+              type="submit"
+              className="w-full bg-green-700 text-white py-2 rounded hover:bg-green-800 transition-colors"
+            >
+              Entrar
+            </button>
+          </form>
+        </div>
+      </div>
+    );
+  }
+
+  // Funciones y lógica existentes después de la autenticación
   const fetchOrders = async (date) => {
     try {
       let url = "/api/orders";
@@ -371,7 +447,10 @@ export default function Home() {
           <div className="flex justify-between h-16">
             <div className="flex">
               <div className="flex-shrink-0 flex items-center">
-                <h1 className="text-xl lg:text-2xl font-bold text-white">La Leña</h1> {/* Aumentado solo en pantallas grandes */}
+                <h1 className="text-xl lg:text-2xl font-bold text-white">
+                  La Leña
+                </h1>{" "}
+                {/* Aumentado solo en pantallas grandes */}
               </div>
             </div>
             <div className="hidden sm:ml-6 sm:flex sm:items-center">
@@ -385,7 +464,8 @@ export default function Home() {
                 <button
                   key={view}
                   onClick={() => setActiveView(view)}
-                  className={`px-3 py-2 lg:px-4 lg:py-3 rounded-md text-sm lg:text-lg font-medium transition-colors duration-200 ${ // Aumentado solo en pantallas grandes
+                  className={`px-3 py-2 lg:px-4 lg:py-3 rounded-md text-sm lg:text-lg font-medium transition-colors duration-200 ${
+                    // Aumentado solo en pantallas grandes
                     activeView === view
                       ? "bg-white text-blue-600"
                       : "text-white hover:bg-blue-500"
@@ -485,7 +565,9 @@ export default function Home() {
       <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
         <div className="px-4 py-6 sm:px-0">
           <div className="bg-white shadow rounded-lg p-6">
-            <h2 className="text-2xl lg:text-3xl font-bold mb-6 lg:mb-8 text-gray-800"> {/* Aumentado solo en pantallas grandes */}
+            <h2 className="text-2xl lg:text-3xl font-bold mb-6 lg:mb-8 text-gray-800">
+              {" "}
+              {/* Aumentado solo en pantallas grandes */}
               {getViewTitle(activeView)}
             </h2>
 
