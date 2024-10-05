@@ -14,19 +14,18 @@ const center = {
 const polygonCoords = JSON.parse(process.env.NEXT_PUBLIC_POLYGON_COORDS || '[]');
 
 export default function Map({ selectedLocation, onLocationChange, setIsLocationValid }) {
+  const [isValidLocation, setIsValidLocation] = React.useState(true);
+
   const handleMapClick = (event) => {
     const lat = event.latLng.lat();
     const lng = event.latLng.lng();
     const location = new window.google.maps.LatLng(lat, lng);
 
     // Check if the location is within the polygon
-    if (window.google.maps.geometry.poly.containsLocation(location, new window.google.maps.Polygon({ paths: polygonCoords }))) {
-      onLocationChange({ lat, lng });
-      setIsLocationValid(true);
-    } else {
-      onLocationChange({ lat, lng });
-      setIsLocationValid(false);
-    }
+    const isValid = window.google.maps.geometry.poly.containsLocation(location, new window.google.maps.Polygon({ paths: polygonCoords }));
+    onLocationChange({ lat, lng });
+    setIsLocationValid(isValid);
+    setIsValidLocation(isValid);
   };
 
   const handleMarkerDragEnd = (event) => {
@@ -35,13 +34,10 @@ export default function Map({ selectedLocation, onLocationChange, setIsLocationV
     const location = new window.google.maps.LatLng(lat, lng);
 
     // Check if the location is within the polygon
-    if (window.google.maps.geometry.poly.containsLocation(location, new window.google.maps.Polygon({ paths: polygonCoords }))) {
-      onLocationChange({ lat, lng });
-      setIsLocationValid(true);
-    } else {
-      onLocationChange({ lat, lng });
-      setIsLocationValid(false);
-    }
+    const isValid = window.google.maps.geometry.poly.containsLocation(location, new window.google.maps.Polygon({ paths: polygonCoords }));
+    onLocationChange({ lat, lng });
+    setIsLocationValid(isValid);
+    setIsValidLocation(isValid);
   };
 
   return (
@@ -65,9 +61,9 @@ export default function Map({ selectedLocation, onLocationChange, setIsLocationV
           <Polygon 
             paths={polygonCoords} 
             options={{
-              fillColor: "lightblue",
+              fillColor: isValidLocation ? "lightblue" : "red",
               fillOpacity: 0.3,
-              strokeColor: "blue",
+              strokeColor: isValidLocation ? "blue" : "darkred",
               strokeOpacity: 0.8,
               strokeWeight: 2,
             }}
