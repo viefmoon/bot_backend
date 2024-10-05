@@ -15,8 +15,8 @@ const CustomerOrdersModal = ({ clientId, onClose }) => {
         setOrders(response.data);
         setLoading(false);
       } catch (error) {
-        console.error("Error al obtener los pedidos del cliente:", error);
-        setError("No se pudieron cargar los pedidos del cliente");
+        console.error("Error al obtener las órdenes del cliente:", error);
+        setError("No se pudieron cargar las órdenes del cliente");
         setLoading(false);
       }
     };
@@ -49,11 +49,11 @@ const CustomerOrdersModal = ({ clientId, onClose }) => {
           </div>
           <div className="modal-body">
             {loading ? (
-              <p>Cargando pedidos...</p>
+              <p>Cargando órdenes...</p>
             ) : error ? (
               <p className="text-danger">{error}</p>
             ) : orders.length === 0 ? (
-              <p>Este cliente no tiene pedidos.</p>
+              <p>Este cliente no tiene órdenes.</p>
             ) : (
               <div className="client-orders">
                 {orders.map((order) => renderOrder(order))}

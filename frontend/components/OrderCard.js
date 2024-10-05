@@ -10,9 +10,9 @@ const OrderCard = ({ order, onUpdateStatus }) => {
     try {
       await onUpdateStatus(order.id, newStatus);
     } catch (error) {
-      console.error("Error al actualizar el estado del pedido:", error);
+      console.error("Error al actualizar el estado de la orden:", error);
       alert(
-        "No se pudo actualizar el estado del pedido. Por favor, inténtelo de nuevo."
+        "No se pudo actualizar el estado de la orden. Por favor, inténtelo de nuevo."
       );
     } finally {
       setIsLoading(false);
@@ -32,18 +32,18 @@ const OrderCard = ({ order, onUpdateStatus }) => {
 
   return (
     <div className="bg-white shadow-md rounded-lg overflow-hidden mb-4 border border-gray-200">
-      <div className="p-4">
+      <div className="p-4 lg:p-6">
         <div className="flex justify-between items-center mb-2">
           <div className="flex items-center">
-            <h5 className="text-lg font-bold text-gray-800 mr-4">
+            <h5 className="text-lg lg:text-xl font-bold text-gray-800 mr-4">
               Pedido #{order.dailyOrderNumber}
             </h5>
-            <span className="text-sm text-gray-600">
+            <span className="text-sm lg:text-base text-gray-600">
               {formatDateToMexicoTime(order.orderDate, true)}
             </span>
           </div>
           <span
-            className={`px-3 py-1 rounded-full text-sm font-semibold ${getStatusColor(
+            className={`px-3 py-1 rounded-full text-sm lg:text-base font-semibold ${getStatusColor(
               order.status
             )}`}
           >
@@ -51,7 +51,7 @@ const OrderCard = ({ order, onUpdateStatus }) => {
           </span>
         </div>
 
-        <div className="grid grid-cols-2 gap-2 text-sm mb-2">
+        <div className="grid grid-cols-2 gap-2 text-sm lg:text-base mb-2">
           <div>
             <p className="text-gray-600">Tipo:</p>
             <p className="font-medium">{translateOrderType(order.orderType)}</p>
@@ -123,12 +123,12 @@ const OrderCard = ({ order, onUpdateStatus }) => {
           <>
             {order.orderItems && order.orderItems.length > 0 && (
               <div className="mt-3">
-                <h6 className="text-sm font-semibold mb-2">
-                  Elementos del pedido:
+                <h6 className="text-sm lg:text-base font-semibold mb-2">
+                  Elementos de la orden:
                 </h6>
                 <ul className="space-y-2">
                   {order.orderItems.map((item, index) => (
-                    <li key={index} className="text-sm">
+                    <li key={index} className="text-sm lg:text-base">
                       <p className="font-medium">
                         {item.Product.name} - {item.ProductVariant.name} (x
                         {item.quantity})
@@ -145,20 +145,20 @@ const OrderCard = ({ order, onUpdateStatus }) => {
         <div className="mt-3 flex flex-col sm:flex-row justify-between items-start sm:items-center">
           <button
             onClick={() => setIsExpanded(!isExpanded)}
-            className="text-blue-600 hover:text-blue-800 text-sm font-medium mb-2 sm:mb-0"
+            className="text-blue-600 hover:text-blue-800 text-sm lg:text-base font-medium mb-2 sm:mb-0"
           >
             {isExpanded ? "Ver menos" : "Ver más"}
           </button>
           <div className="space-x-2 w-full sm:w-auto flex justify-end">
             <button
-              className="px-3 py-1 bg-green-500 text-white text-sm rounded hover:bg-green-600 disabled:opacity-50 disabled:cursor-not-allowed transition duration-300"
+              className="px-3 py-1 lg:px-4 lg:py-2 bg-green-500 text-white text-sm lg:text-base rounded hover:bg-green-600 disabled:opacity-50 disabled:cursor-not-allowed transition duration-300"
               onClick={() => handleUpdateStatus("accepted")}
               disabled={order.status === "accepted" || isLoading}
             >
               Aceptar
             </button>
             <button
-              className="px-3 py-1 bg-red-500 text-white text-sm rounded hover:bg-red-600 disabled:opacity-50 disabled:cursor-not-allowed transition duration-300"
+              className="px-3 py-1 lg:px-4 lg:py-2 bg-red-500 text-white text-sm lg:text-base rounded hover:bg-red-600 disabled:opacity-50 disabled:cursor-not-allowed transition duration-300"
               onClick={() => handleUpdateStatus("canceled")}
               disabled={order.status === "canceled" || isLoading}
             >
