@@ -28,6 +28,7 @@ export default function DeliveryInfoRegistration() {
   });
   const [formErrors, setFormErrors] = useState({});
   const [isUpdating, setIsUpdating] = useState(false);
+  const [locationError, setLocationError] = useState(null);
 
   const { isLoaded, loadError } = useLoadScript({
     googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY,
@@ -400,6 +401,9 @@ export default function DeliveryInfoRegistration() {
           </button>
         </div>
       </div>
+      {locationError && (
+        <p className="text-red-600">{locationError}</p>
+      )}
       <form onSubmit={handleSubmit}>
         <AddressForm
           clientId={clientId}
@@ -412,12 +416,14 @@ export default function DeliveryInfoRegistration() {
         <button
           type="submit"
           className="w-full mt-2 bg-blue-600 text-white px-3 py-2 text-base rounded-md font-semibold hover:bg-blue-700 transition duration-300"
+          disabled={!!locationError} // Disable button if there's a location error
         >
           {isUpdating ? "Actualizar Dirección" : "Guardar Dirección"}
         </button>
         <Map
           selectedLocation={selectedLocation}
           onLocationChange={setSelectedLocation}
+          setError={setLocationError} // Pass setError to Map component
         />
       </form>
     </div>
