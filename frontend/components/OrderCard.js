@@ -13,7 +13,7 @@ const OrderCard = ({ order, onUpdateStatus }) => {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ orderId: order.id, newStatus }),
+        body: JSON.stringify({ orderId: order.id, status: newStatus }),
       });
 
       if (!response.ok) {
