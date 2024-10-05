@@ -371,7 +371,7 @@ export default function Home() {
           <div className="flex justify-between h-16">
             <div className="flex">
               <div className="flex-shrink-0 flex items-center">
-                <h1 className="text-xl font-bold text-white">La Leña</h1>
+                <h1 className="text-xl lg:text-2xl font-bold text-white">La Leña</h1> {/* Aumentado solo en pantallas grandes */}
               </div>
             </div>
             <div className="hidden sm:ml-6 sm:flex sm:items-center">
@@ -385,7 +385,7 @@ export default function Home() {
                 <button
                   key={view}
                   onClick={() => setActiveView(view)}
-                  className={`px-3 py-2 rounded-md text-sm font-medium transition-colors duration-200 ${
+                  className={`px-3 py-2 lg:px-4 lg:py-3 rounded-md text-sm lg:text-lg font-medium transition-colors duration-200 ${ // Aumentado solo en pantallas grandes
                     activeView === view
                       ? "bg-white text-blue-600"
                       : "text-white hover:bg-blue-500"
@@ -396,7 +396,7 @@ export default function Home() {
               ))}
               <button
                 onClick={refreshAll}
-                className="ml-4 px-3 py-2 rounded-md text-sm font-medium bg-yellow-500 text-white hover:bg-yellow-600 transition-colors duration-200"
+                className="ml-4 px-3 py-2 lg:px-4 lg:py-3 rounded-md text-sm lg:text-lg font-medium bg-yellow-500 text-white hover:bg-yellow-600 transition-colors duration-200" // Aumentado solo en pantallas grandes
               >
                 Refrescar Todo
               </button>
@@ -404,12 +404,12 @@ export default function Home() {
             <div className="-mr-2 flex items-center sm:hidden">
               <button
                 onClick={() => setMenuOpen(!menuOpen)}
-                className="inline-flex items-center justify-center p-2 rounded-md text-white hover:text-white hover:bg-blue-500 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-white"
+                className="inline-flex items-center justify-center p-2 lg:p-3 rounded-md text-white hover:text-white hover:bg-blue-500 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-white" // Aumentado solo en pantallas grandes
               >
                 <span className="sr-only">Abrir menú principal</span>
                 {menuOpen ? (
                   <svg
-                    className="block h-6 w-6"
+                    className="block h-6 w-6 lg:h-8 lg:w-8" // Aumentado solo en pantallas grandes
                     xmlns="http://www.w3.org/2000/svg"
                     fill="none"
                     viewBox="0 0 24 24"
@@ -425,7 +425,7 @@ export default function Home() {
                   </svg>
                 ) : (
                   <svg
-                    className="block h-6 w-6"
+                    className="block h-6 w-6 lg:h-8 lg:w-8" // Aumentado solo en pantallas grandes
                     xmlns="http://www.w3.org/2000/svg"
                     fill="none"
                     viewBox="0 0 24 24"
@@ -485,7 +485,7 @@ export default function Home() {
       <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
         <div className="px-4 py-6 sm:px-0">
           <div className="bg-white shadow rounded-lg p-6">
-            <h2 className="text-2xl font-bold mb-6 text-gray-800">
+            <h2 className="text-2xl lg:text-3xl font-bold mb-6 lg:mb-8 text-gray-800"> {/* Aumentado solo en pantallas grandes */}
               {getViewTitle(activeView)}
             </h2>
 
