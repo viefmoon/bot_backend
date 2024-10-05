@@ -273,10 +273,11 @@ export async function handleOrderCancellation(
   try {
     console.log("handleOrderCancellation messageId", messageId);
     const order = await Order.findOne({ where: { messageId } });
+    console.log("order", order);
 
     const customer = await Customer.findOne({ where: { clientId } });
-    await customer?.update({ relevantChatHistory: [] });
-
+    await customer.update({ relevantChatHistory: [] });
+    console.log("customer", customer);
     if (!order) {
       console.error(`No se encontró orden para el messageId: ${messageId}`);
       await sendWhatsAppMessage(
@@ -288,6 +289,7 @@ export async function handleOrderCancellation(
     let mensaje: string;
     switch (order.status) {
       case "created":
+        console.log("order.status", order.status);
         // Eliminar la orden en lugar de cancelarla
         await order.destroy();
         mensaje = `Tu orden #${order.dailyOrderNumber} ha sido eliminada exitosamente. Si tienes alguna pregunta, por favor contacta con el restaurante.`;
@@ -320,7 +322,7 @@ export async function handleOrderCancellation(
         mensaje =
           "Lo sentimos, pero no podemos procesar tu solicitud de cancelación en este momento. Por favor, contacta directamente con el restaurante para obtener ayuda.";
     }
-
+    console.log("mensaje", mensaje);
     await sendWhatsAppMessage(clientId, mensaje);
   } catch (error) {
     console.error("Error al eliminar la orden:", error);
