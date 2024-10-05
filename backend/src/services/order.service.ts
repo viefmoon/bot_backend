@@ -93,13 +93,6 @@ export class OrderService {
       );
     }
 
-    const estaAbierto = await verificarHorarioAtencion();
-    if (!estaAbierto) {
-      throw new BadRequestException(
-        "Lo sentimos, solo podre procesar tu pedido cuando el restaurante este abierto."
-      );
-    }
-
     const mexicoTime = new Date().toLocaleString("en-US", {
       timeZone: "America/Mexico_City",
     });

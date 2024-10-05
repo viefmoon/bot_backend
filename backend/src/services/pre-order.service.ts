@@ -24,9 +24,6 @@ export class PreOrderService {
     let fullScheduledDeliveryTime: Date | null = null;
 
     const config = await RestaurantConfig.findOne();
-    if (!config) {
-      throw new Error("Configuración del restaurante no encontrada.");
-    }
 
     // Validar tiempo de entrega programado
     if (scheduledDeliveryTime) {

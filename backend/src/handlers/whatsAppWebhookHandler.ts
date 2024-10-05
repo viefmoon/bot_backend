@@ -7,6 +7,7 @@ import {
   MessageLog,
   Customer,
   CustomerDeliveryInfo,
+  RestaurantConfig,
 } from "../models";
 import { verificarHorarioAtencion } from "../utils/timeUtils";
 import { checkMessageRateLimit } from "../utils/messageRateLimit";
@@ -54,12 +55,12 @@ async function handleIncomingWhatsAppMessage(
 ): Promise<void> {
   const { from, type, id } = message;
 
-  console.log("Mensaje recibido de:", from);
-  //ver si ya se procesó
   if (await MessageLog.findOne({ where: { messageId: id } })) {
     return;
   }
   await MessageLog.create({ messageId: id, processed: true });
+
+  console.log("Mensaje recibido de:", from);
 
   let customer = await Customer.findOne({
     where: { clientId: from },
@@ -86,6 +87,16 @@ async function handleIncomingWhatsAppMessage(
     );
     return;
   }
+
+  const config = await RestaurantConfig.findOne();
+  if (!config || !config.acceptingOrders) {
+    await sendWhatsAppMessage(
+      from,
+      "Lo sentimos, el restaurante no está aceptando pedidos en este momento, puedes intentar más tarde o llamar al restaurante."
+    );
+    return;
+  }
+
   // Verificar si el cliente tiene información de entrega
   if (!customer.customerDeliveryInfo) {
     const otp = otpService.generateOTP();

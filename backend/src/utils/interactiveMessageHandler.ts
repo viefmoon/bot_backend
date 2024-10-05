@@ -168,9 +168,6 @@ async function sendMenu(phoneNumber: string): Promise<boolean> {
 async function handleWaitTimes(clientId: string): Promise<void> {
   try {
     const config = await RestaurantConfig.findOne();
-    if (!config) {
-      throw new Error("No se encontró la configuración del restaurante");
-    }
 
     const message =
       `🕒 *Tiempos de espera estimados:*\n\n` +
