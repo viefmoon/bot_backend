@@ -22,6 +22,7 @@ export default function DeliveryInfoRegistration() {
   const [currentLocation, setCurrentLocation] = useState(null);
   const [selectedLocation, setSelectedLocation] = useState(null);
   const [address, setAddress] = useState("");
+  const [locationError, setLocationError] = useState(""); // Nuevo estado para errores de ubicación
 
   useEffect(() => {
     if (router.isReady && clientId && otp) {
@@ -36,7 +37,6 @@ export default function DeliveryInfoRegistration() {
     try {
       const response = await axios.post("/api/verify_otp", { clientId, otp });
       setLoading(false);
-      // Cambiamos esta parte para interpretar directamente el resultado
       setIsValidOtp(response.data);
       if (!response.data) {
         setError(`El enlace ha expirado o no es válido.`);
@@ -66,6 +66,7 @@ export default function DeliveryInfoRegistration() {
             latitude: location.lat,
             longitude: location.lng,
           }));
+          setLocationError(""); // Limpiar errores de ubicación
         },
         (error) => {
           console.error("Error obteniendo la ubicación:", error);
@@ -124,6 +125,11 @@ export default function DeliveryInfoRegistration() {
   const handleLocationSelect = (location, formattedAddress) => {
     setSelectedLocation(location);
     setAddress(formattedAddress);
+    setLocationError(""); // Limpiar errores si la ubicación es válida
+  };
+
+  const handleMapError = (message) => {
+    setLocationError(message);
   };
 
   if (loadError) {
@@ -157,8 +163,20 @@ export default function DeliveryInfoRegistration() {
           Usar ubicación actual
         </button>
         <AddressSearch onSelect={handleLocationSelect} value={address} />
-        <Map selectedLocation={selectedLocation} onLocationChange={setSelectedLocation} />
-        <AddressForm clientId={clientId} selectedLocation={selectedLocation} address={address} />
+        <Map
+          selectedLocation={selectedLocation}
+          onLocationChange={setSelectedLocation}
+          setError={handleMapError}
+        />
+        {locationError && (
+          <p className="text-red-600 mb-4">{locationError}</p>
+        )}
+        <AddressForm
+          clientId={clientId}
+          selectedLocation={selectedLocation}
+          address={address}
+          disabled={!!locationError} // Deshabilitar si hay error
+        />
       </div>
     );
   }
