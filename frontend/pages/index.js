@@ -441,11 +441,6 @@ export default function Home() {
   };
 
   const handleUpdateStatus = (updatedOrder) => {
-    setOrders((prevOrders) =>
-      prevOrders.map((order) =>
-        order.id === updatedOrder.id ? updatedOrder : order
-      )
-    );
     fetchOrders(selectedDate);
   };
 
