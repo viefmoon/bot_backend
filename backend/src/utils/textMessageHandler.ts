@@ -216,6 +216,11 @@ async function processAndGenerateAIResponse(
       const { orderItems, orderType, scheduledDeliveryTime } = response
         .content[0].input as any;
 
+
+      console.log("orderItems", orderItems);
+      console.log("orderType", orderType);
+      console.log("scheduledDeliveryTime", scheduledDeliveryTime);
+
       try {
         const preOrderService = new PreOrderService();
         const selectProductsResponse = await preOrderService.selectProducts({
