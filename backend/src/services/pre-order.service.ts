@@ -18,6 +18,8 @@ export class PreOrderService {
     orderType: string;
     scheduledDeliveryTime?: string;
   }) {
+
+    console.log("orderDatadd", orderData);
     const { orderItems, clientId, orderType, scheduledDeliveryTime } =
       orderData;
     let totalCost = 0;
