@@ -42,6 +42,9 @@ export class OrderService {
       
       mexicoDate.setHours(23, 59, 59, 999);
       const endDate = this.convertToUTC(mexicoDate, 'America/Mexico_City');
+
+      console.log("startDate", startDate);
+      console.log("endDate", endDate);
       
       whereClause = {
         createdAt: {
