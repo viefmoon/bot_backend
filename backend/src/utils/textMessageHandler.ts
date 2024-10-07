@@ -195,9 +195,9 @@ async function processAndGenerateAIResponse(
 
     const systemContent = [
       "Basándote en el objeto proporcionado, utiliza la función `select_products`",
-      "- Utiliza los `relevantMenuItems` proporcionados para mapear las descripciones de los productos a sus respectivos IDs, si no se encuentra ID relevante para construir el producto, informa al cliente que no se encontró el producto.",
-      "- No es necesario usar todos los relevantMenuItems si no aplican",
-      "- Manten la conversación agil, no pidas confirmaciónes, ejecuta directamente la función o informa al usuario de los faltantes",
+      "- Utiliza los `relevantMenuItems` proporcionados para mapear las descripciones de los productos a sus respectivos IDs. Si no se encuentra un ID relevante para construir el producto, omite esa observación o producto.",
+      "- El campo de comentarios debe usarse ÚNICAMENTE para observaciones simples o para indicar ingredientes que se deben retirar del producto. Nunca lo uses para agregar ingredientes o modificaciones que puedan generar un costo extra.",
+      "- No es necesario usar todos los relevantMenuItems si no aplican a la solicitud del usuario.",
     ].join("\n");
 
     const response = await anthropic.messages.create({
@@ -208,7 +208,7 @@ async function processAndGenerateAIResponse(
       ],
       max_tokens: 4096,
       tools: [selectProductsToolClaude],
-      //tool_choice: { type: "tool", name: "select_products" },
+      tool_choice: { type: "tool", name: "select_products" },
     });
 
     if (
