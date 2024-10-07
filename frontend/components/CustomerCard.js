@@ -46,7 +46,10 @@ const CustomerCard = ({ client, onToggleBan }) => {
         </h5>
         <div className="text-sm text-gray-600 space-y-1">
           <p>Nombre: {client.customerDeliveryInfo?.pickupName || "N/A"}</p>
-          <p>Dirección de entrega: {client.customerDeliveryInfo?.streetAddress || "N/A"}</p>
+          <p>
+            Dirección de entrega:{" "}
+            {client.customerDeliveryInfo?.streetAddress || "N/A"}
+          </p>
           <p>Stripe ID: {client.stripeCustomerId || "N/A"}</p>
           <p>
             Última interacción: {formatDateToMexicoTime(client.lastInteraction)}
