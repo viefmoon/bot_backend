@@ -44,8 +44,6 @@ export async function handleInteractiveMessage(
       await sendMenu(from);
     } else if (listReplyId === "restaurant_info") {
       await handleRestaurantInfo(from);
-    } else if (listReplyId === "reorder") {
-      await handleReorder(from);
     } else if (listReplyId === "chatbot_help") {
       await handleChatbotHelp(from);
     } else if (listReplyId === "change_delivery_info") {
@@ -196,13 +194,6 @@ async function handleRestaurantInfo(clientId: string): Promise<void> {
     "¡Gracias por tu interés! Esperamos verte pronto.";
 
   await sendWhatsAppMessage(clientId, restaurantInfo);
-}
-
-async function handleReorder(clientId: string): Promise<void> {
-  await sendWhatsAppMessage(
-    clientId,
-    "Función no disponible en este momento, pronto estará disponible"
-  );
 }
 
 async function handleChatbotHelp(clientId: string): Promise<void> {

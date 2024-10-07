@@ -74,7 +74,6 @@ async function sendWelcomeMessage(phoneNumber) {
               id: "change_delivery_info",
               title: "Act. info de entrega",
             },
-            { id: "reorder", title: "Reordenar" },
           ],
         },
       ],
