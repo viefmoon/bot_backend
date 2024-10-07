@@ -55,7 +55,7 @@ export default function AddressForm({
 
         {/* Campo de dirección completa */}
         <div className="col-span-1 sm:col-span-2">
-          <div className="flex items-center justify-between mb-1"> {/* Añadido mb-1 para espaciado */}
+          <div className="flex items-center justify-between mb-3"> {/* Añadido mb-1 para espaciado */}
             <label
               htmlFor="streetAddress"
               className="block mb-0.5 text-xs font-medium text-gray-700"
