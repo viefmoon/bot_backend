@@ -360,7 +360,7 @@ async function verifyOrderItems(
   };
 
   const response = await openai.chat.completions.create({
-    model: "gpt-4-mini",
+    model: "gpt-4o-mini",
     messages: [systemMessage, userMessage],
   });
   console.log(
