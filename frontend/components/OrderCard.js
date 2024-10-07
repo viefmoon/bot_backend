@@ -43,6 +43,10 @@ const OrderCard = ({ order, onUpdateStatus }) => {
     ? `https://www.google.com/maps?q=${order.orderDeliveryInfo.latitude},${order.orderDeliveryInfo.longitude}`
     : null;
 
+  const getOrderTypeColor = (type) => {
+    return type === "delivery" ? "bg-blue-400" : "bg-purple-400";
+  };
+
   return (
     <div className="bg-white shadow-md rounded-lg overflow-hidden mb-4 border border-gray-200">
       <div className="p-4 lg:p-6">
@@ -51,6 +55,9 @@ const OrderCard = ({ order, onUpdateStatus }) => {
             <h5 className="text-lg lg:text-xl font-bold text-gray-800 mr-4">
               Pedido #{order.dailyOrderNumber}
             </h5>
+            <span className={`px-2 py-1 rounded-full text-xs lg:text-sm font-semibold text-white mr-2 ${getOrderTypeColor(order.orderType)}`}>
+              {translateOrderType(order.orderType)}
+            </span>
             <span className="text-sm lg:text-base text-gray-600">
               {formatDateToMexicoTime(order.createdAt, true)}
             </span>
@@ -65,10 +72,6 @@ const OrderCard = ({ order, onUpdateStatus }) => {
         </div>
 
         <div className="grid grid-cols-2 gap-2 text-sm lg:text-base mb-2">
-          <div>
-            <p className="text-gray-600">Tipo:</p>
-            <p className="font-medium">{translateOrderType(order.orderType)}</p>
-          </div>
           <div>
             <p className="text-gray-600">Cliente:</p>
             <p className="font-medium">{order.clientId}</p>
