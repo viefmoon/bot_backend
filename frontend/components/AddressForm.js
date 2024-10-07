@@ -55,14 +55,14 @@ export default function AddressForm({
 
         {/* Campo de dirección completa */}
         <div className="col-span-1 sm:col-span-2">
-          <div className="flex items-center justify-between mb-3"> {/* Añadido mb-1 para espaciado */}
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-1">
             <label
               htmlFor="streetAddress"
-              className="block mb-0.5 text-xs font-medium text-gray-700"
+              className="block text-xs font-medium text-gray-700 mb-0.5 sm:mb-0"
             >
               <strong>{fieldTranslations.streetAddress}</strong>
             </label>
-            <p className="text-xs text-red-600 font-semibold">
+            <p className="text-xs text-red-600 font-semibold mt-0.5 sm:mt-0">
               Importante: Incluya la orientación de la calle si aplica (ej.
               Norte, Sur, etc.)
             </p>
@@ -96,7 +96,7 @@ export default function AddressForm({
             name="additionalDetails"
             value={formData.additionalDetails}
             onChange={handleChange}
-            className="w-full p-1.5 text-sm border border-gray-300 rounded-md focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+            className="w-full p-1 text-sm border border-gray-300 rounded-md focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
             rows="2"
             placeholder="ej. entre calles, puntos de referencia"
           ></textarea>
