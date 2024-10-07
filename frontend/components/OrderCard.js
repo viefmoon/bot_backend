@@ -77,7 +77,13 @@ const OrderCard = ({ order, onUpdateStatus }) => {
             <p className="font-medium">{order.clientId}</p>
           </div>
           <div>
-            <p className="text-gray-600">Info de Entrega:</p>
+            <p className="text-gray-600">Total:</p>
+            <p className="font-bold text-green-600">
+              ${order.totalCost.toFixed(2)}
+            </p>
+          </div>
+          <div>
+            <p className="text-gray-600">Entrega a:</p>
             <p className="font-medium">
               {order.orderType === "delivery" && order.orderDeliveryInfo
                 ? `${order.orderDeliveryInfo.streetAddress}${order.orderDeliveryInfo.additionalDetails ? `, ${order.orderDeliveryInfo.additionalDetails}` : ''}`
@@ -127,12 +133,6 @@ const OrderCard = ({ order, onUpdateStatus }) => {
               </div>
             )}
           </div>
-          <div>
-            <p className="text-gray-600">Total:</p>
-            <p className="font-bold text-green-600">
-              ${order.totalCost.toFixed(2)}
-            </p>
-          </div>
         </div>
 
         {isExpanded && (
@@ -151,7 +151,7 @@ const OrderCard = ({ order, onUpdateStatus }) => {
                       </p>
                       {/* ... (resto del código para mostrar detalles del item) ... */}
                     </li>
-                  ))}
+                  ))}ggg
                 </ul>
               </div>
             )}
