@@ -20,6 +20,7 @@ import { CreateOrderDto } from "../dto/create-order.dto";
 import { PizzaHalf, IngredientAction } from "../models/selectedPizzaIngredient";
 import { sendWhatsAppMessage } from "../utils/whatsAppUtils";
 import { Op } from 'sequelize';
+import { DateTime } from 'luxon';
 
 export type OrderStatus =
   | "created"
@@ -36,21 +37,19 @@ export class OrderService {
     let whereClause = {};
     
     if (date) {
-      const inputDate = new Date(date);
-      const utcDate = new Date(Date.UTC(inputDate.getUTCFullYear(), inputDate.getUTCMonth(), inputDate.getUTCDate()));
+      // Parsear la fecha asumiendo que ya está en hora de México
+      const mexicoDate = DateTime.fromFormat(date, 'dd/LL/yyyy');
       
-      const startDate = new Date(utcDate);
-      startDate.setUTCHours(0, 0, 0, 0);
+      // Definir el inicio y fin del día en UTC
+      const startDate = mexicoDate.startOf('day').toUTC();
+      const endDate = mexicoDate.endOf('day').toUTC();
       
-      const endDate = new Date(utcDate);
-      endDate.setUTCHours(23, 59, 59, 999);
-
-      console.log("startDate", startDate.toISOString());
-      console.log("endDate", endDate.toISOString());
+      console.log("startDate", startDate.toISO());
+      console.log("endDate", endDate.toISO());
       
       whereClause = {
         createdAt: {
-          [Op.between]: [startDate, endDate]
+          [Op.between]: [startDate.toJSDate(), endDate.toJSDate()]
         }
       };
     }
