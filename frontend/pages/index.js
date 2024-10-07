@@ -29,6 +29,7 @@ export default function Home() {
   });
   const [menuItems, setMenuItems] = useState([]);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [selectedStatus, setSelectedStatus] = useState("created");
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -42,7 +43,7 @@ export default function Home() {
       }, 30000);
       return () => clearInterval(interval);
     }
-  }, [selectedDate, isAuthenticated]);
+  }, [selectedDate, selectedStatus, isAuthenticated]);
 
   // Funciones de autenticación
   const handleLogin = (e) => {
@@ -117,6 +118,9 @@ export default function Home() {
       if (date) {
         const formattedDate = format(date, "yyyy-MM-dd"); // Formato de la fecha
         url += `?date=${formattedDate}`;
+      }
+      if (selectedStatus) {
+        url += `${date ? '&' : '?'}status=${selectedStatus}`;
       }
       const response = await axios.get(url);
       setOrders(response.data);
@@ -579,7 +583,7 @@ export default function Home() {
               <div>
                 <div className="mb-6 bg-gray-50 rounded-lg p-4">
                   <h3 className="text-lg font-semibold mb-3 text-gray-800">
-                    Filtrar órdenes por fecha
+                    Filtrar órdenes
                   </h3>
                   <div className="flex flex-col sm:flex-row items-center space-y-2 sm:space-y-0 sm:space-x-4">
                     <DatePicker
@@ -596,6 +600,20 @@ export default function Home() {
                     >
                       Hoy
                     </button>
+                    <select
+                      value={selectedStatus}
+                      onChange={(e) => setSelectedStatus(e.target.value)}
+                      className="w-full sm:w-auto px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    >
+                      <option value="">Todos los estados</option>
+                      <option value="created">Creado</option>
+                      <option value="accepted">Aceptado</option>
+                      <option value="in_preparation">En preparación</option>
+                      <option value="prepared">Preparado</option>
+                      <option value="in_delivery">En entrega</option>
+                      <option value="finished">Finalizado</option>
+                      <option value="canceled">Cancelado</option>
+                    </select>
                   </div>
                 </div>
                 {error && (
