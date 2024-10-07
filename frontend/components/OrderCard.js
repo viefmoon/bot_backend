@@ -288,11 +288,6 @@ const formatDateToMexicoTime = (dateString, dateOnly = false) => {
   const day = mexicoDate.getDate().toString().padStart(2, '0');
   const month = (mexicoDate.getMonth() + 1).toString().padStart(2, '0');
   const year = mexicoDate.getFullYear();
-  
-  if (dateOnly) {
-    return `${day}/${month}/${year}`;
-  }
-  
   const hours = mexicoDate.getHours().toString().padStart(2, '0');
   const minutes = mexicoDate.getMinutes().toString().padStart(2, '0');
   
