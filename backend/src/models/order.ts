@@ -21,6 +21,8 @@ interface OrderAttributes {
   scheduledDeliveryTime?: Date;
   messageId?: string;
   stripeSessionId?: string;
+  createdAt: Date;  // Añadido
+  updatedAt: Date;  // Añadido
 }
 
 interface OrderCreationAttributes extends Optional<OrderAttributes, "id"> {}
