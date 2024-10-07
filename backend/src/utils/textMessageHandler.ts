@@ -247,7 +247,6 @@ async function processAndGenerateAIResponse(
         return [{ text: errorMessage, sendToWhatsApp: true, isRelevant: true }];
       }
     } else if (response.content && response.content[0]?.type === "text") {
-      con;
       return [
         {
           text: response.content[0].text,
