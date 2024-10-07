@@ -197,6 +197,7 @@ async function processAndGenerateAIResponse(
       "Basándote en el objeto proporcionado, utiliza la función `select_products`",
       "- Utiliza los `relevantMenuItems` proporcionados para mapear las descripciones de los productos a sus respectivos IDs, si no se encuentra ID relevante para construir el producto, informa al cliente que no se encontró el producto.",
       "- No es necesario usar todos los relevantMenuItems si no aplican",
+      "- Manten la conversación agil, no pidas confirmaciónes, ejecuta directamente la función o informa al usuario de los faltantes",
     ].join("\n");
 
     const response = await anthropic.messages.create({
@@ -246,7 +247,7 @@ async function processAndGenerateAIResponse(
         return [{ text: errorMessage, sendToWhatsApp: true, isRelevant: true }];
       }
     } else if (response.content && response.content[0]?.type === "text") {
-      console.log("response.content", response.content);
+      con;
       return [
         {
           text: response.content[0].text,
