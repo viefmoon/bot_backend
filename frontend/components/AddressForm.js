@@ -33,12 +33,12 @@ export default function AddressForm({
   };
 
   return (
-    <form className="space-y-4 bg-white p-4 rounded-lg shadow-md">
-      <div className="grid grid-cols-1 gap-4">
+    <form className="space-y-2 bg-white p-2 rounded-lg shadow-md">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-1">
         {/* Campo de Nombre del cliente */}
-        <div>
-          <label htmlFor="pickupName" className="block mb-1 text-sm font-medium text-gray-700">
-            Nombre del cliente
+        <div className="col-span-1 sm:col-span-2">
+          <label htmlFor="pickupName" className="block mb-0.5 text-xs font-medium text-gray-700">
+            <strong>Nombre del cliente</strong>
           </label>
           <input
             type="text"
@@ -46,69 +46,72 @@ export default function AddressForm({
             name="pickupName"
             value={formData.pickupName}
             onChange={handleChange}
-            className="w-full p-2 text-sm border rounded-md border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-            placeholder="Ingrese el nombre del cliente"
+            className="w-full p-1 text-sm border rounded-md border-gray-300 focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
           />
           {formErrors.pickupName && (
-            <p className="mt-1 text-xs text-red-600">{formErrors.pickupName}</p>
+            <p className="mt-0.5 text-xs text-red-600">{formErrors.pickupName}</p>
           )}
         </div>
 
         {/* Campo de dirección completa */}
-        <div>
-          <label
-            htmlFor="streetAddress"
-            className="block mb-1 text-sm font-medium text-gray-700"
-          >
-            {fieldTranslations.streetAddress}
-          </label>
+        <div className="col-span-1 sm:col-span-2">
+          <div className="flex items-center justify-between">
+            <label
+              htmlFor="streetAddress"
+              className="block mb-0.5 text-xs font-medium text-gray-700"
+            >
+              <strong>{fieldTranslations.streetAddress}</strong>
+            </label>
+            <p className="text-xs text-red-600 font-semibold">
+              Importante: Incluya la orientación de la calle si aplica (ej.
+              Norte, Sur, etc.)
+            </p>
+          </div>
           <input
             type="text"
             id="streetAddress"
             name="streetAddress"
             value={formData.streetAddress}
             onChange={handleChange}
-            className="w-full p-2 text-sm border rounded-md border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            className="w-full p-1 text-sm border rounded-md border-gray-300 focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
             required
-            placeholder="Ingrese la dirección completa"
           />
-          <p className="mt-1 text-xs text-red-600">
-            Importante: Incluya la orientación de la calle si aplica (ej. Norte, Sur, etc.)
-          </p>
         </div>
 
         {/* Campo de detalles adicionales */}
-        <div>
-          <label
-            htmlFor="additionalDetails"
-            className="block mb-1 text-sm font-medium text-gray-700"
-          >
-            Detalles adicionales
-          </label>
+        <div className="col-span-1 sm:col-span-2">
+          <div className="flex items-center justify-between">
+            <label
+              htmlFor="additionalDetails"
+              className="block mb-0.5 text-xs font-medium text-gray-700"
+            >
+              <strong>Detalles adicionales</strong>
+            </label>
+            <p className="text-xs text-gray-600">
+              Agregue información extra para ubicar su dirección más fácilmente
+            </p>
+          </div>
           <textarea
             id="additionalDetails"
             name="additionalDetails"
             value={formData.additionalDetails}
             onChange={handleChange}
-            className="w-full p-2 text-sm border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-            rows="3"
+            className="w-full p-1 text-sm border border-gray-300 rounded-md focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+            rows="2"
             placeholder="ej. entre calles, puntos de referencia"
           ></textarea>
-          <p className="mt-1 text-xs text-gray-600">
-            Agregue información extra para ubicar su dirección más fácilmente
-          </p>
         </div>
 
         {/* Campos agrupados */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+        <div className="col-span-1 sm:col-span-2 grid grid-cols-3 gap-1">
           {["neighborhood", "postalCode", "city", "state", "country"].map(
             (field) => (
               <div key={field}>
                 <label
                   htmlFor={field}
-                  className="block mb-1 text-sm font-medium text-gray-700"
+                  className="block mb-0.5 text-xs font-medium text-gray-700"
                 >
-                  {fieldTranslations[field]}
+                  <strong>{fieldTranslations[field]}</strong>
                 </label>
                 <input
                   type="text"
@@ -116,7 +119,7 @@ export default function AddressForm({
                   name={field}
                   value={formData[field]}
                   onChange={handleChange}
-                  className="w-full p-2 text-sm border rounded-md bg-gray-100 text-gray-600 cursor-not-allowed"
+                  className="w-full p-0.5 text-sm border rounded-md bg-gray-100 text-gray-600 cursor-not-allowed"
                   readOnly
                 />
               </div>
