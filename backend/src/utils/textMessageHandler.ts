@@ -195,9 +195,8 @@ async function processAndGenerateAIResponse(
 
     const systemContent = [
       "Basándote en el objeto proporcionado, utiliza la función `select_products`",
-      "- Utiliza los `relevantMenuItems` proporcionados para mapear las descripciones de los productos a sus respectivos IDs, si no se encuentra ID relevante, se omite el producto.",
+      "- Utiliza los `relevantMenuItems` proporcionados para mapear las descripciones de los productos a sus respectivos IDs, si no se encuentra ID relevante para construir el producto, informa al cliente que no se encontró el producto.",
       "- No es necesario usar todos los relevantMenuItems si no aplican",
-      "- Es OBLIGATORIO usar la función `select_products` para completar esta tarea.",
     ].join("\n");
 
     const response = await anthropic.messages.create({
@@ -208,7 +207,7 @@ async function processAndGenerateAIResponse(
       ],
       max_tokens: 4096,
       tools: [selectProductsToolClaude],
-      tool_choice: { type: "tool", name: "select_products" },
+      //tool_choice: { type: "tool", name: "select_products" },
     });
 
     if (
@@ -246,6 +245,15 @@ async function processAndGenerateAIResponse(
           "Error al procesar tu pedido. Por favor, inténtalo de nuevo.";
         return [{ text: errorMessage, sendToWhatsApp: true, isRelevant: true }];
       }
+    } else if (response.content && response.content[0]?.type === "text") {
+      console.log("response.content", response.content);
+      return [
+        {
+          text: response.content[0].text,
+          sendToWhatsApp: true,
+          isRelevant: true,
+        },
+      ];
     }
 
     return [
