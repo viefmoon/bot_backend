@@ -55,7 +55,11 @@ const OrderCard = ({ order, onUpdateStatus }) => {
             <h5 className="text-lg lg:text-xl font-bold text-gray-800 mr-4">
               Pedido #{order.dailyOrderNumber}
             </h5>
-            <span className={`px-2 py-1 rounded-full text-xs lg:text-sm font-semibold text-white mr-2 ${getOrderTypeColor(order.orderType)}`}>
+            <span
+              className={`px-2 py-1 rounded-full text-xs lg:text-sm font-semibold text-white mr-2 ${getOrderTypeColor(
+                order.orderType
+              )}`}
+            >
               {translateOrderType(order.orderType)}
             </span>
             <span className="text-sm lg:text-base text-gray-600">
@@ -86,7 +90,11 @@ const OrderCard = ({ order, onUpdateStatus }) => {
             <p className="text-gray-600">Entrega a:</p>
             <p className="font-medium">
               {order.orderType === "delivery" && order.orderDeliveryInfo
-                ? `${order.orderDeliveryInfo.streetAddress}${order.orderDeliveryInfo.additionalDetails ? `, ${order.orderDeliveryInfo.additionalDetails}` : ''}`
+                ? `${order.orderDeliveryInfo.streetAddress}${
+                    order.orderDeliveryInfo.additionalDetails
+                      ? `, ${order.orderDeliveryInfo.additionalDetails}`
+                      : ""
+                  }`
                 : order.orderDeliveryInfo?.pickupName || "N/A"}
             </p>
             <button onClick={toggleDetails} className="text-blue-500 underline">
@@ -134,7 +142,6 @@ const OrderCard = ({ order, onUpdateStatus }) => {
             )}
           </div>
         </div>
-
         {isExpanded && (
           <>
             {order.orderItems && order.orderItems.length > 0 && (
@@ -142,16 +149,41 @@ const OrderCard = ({ order, onUpdateStatus }) => {
                 <h6 className="text-sm lg:text-base font-semibold mb-2">
                   Elementos de la orden:
                 </h6>
-                <ul className="space-y-2">
+                <ul className="space-y-4">
                   {order.orderItems.map((item, index) => (
-                    <li key={index} className="text-sm lg:text-base">
-                      <p className="font-medium">
-                        {item.Product.name} - {item.ProductVariant.name} (x
-                        {item.quantity})
-                      </p>
-                      {/* ... (resto del código para mostrar detalles del item) ... */}
+                    <li
+                      key={index}
+                      className="text-sm lg:text-base border-b pb-2"
+                    >
+                      <div className="flex justify-between items-start">
+                        <p className="font-medium">
+                          {item.ProductVariant.name || item.Product.name} (x
+                          {item.quantity})
+                        </p>
+                        <p className="font-bold">${item.price.toFixed(2)}</p>
+                      </div>
+                      {item.selectedModifiers &&
+                        item.selectedModifiers.length > 0 && (
+                          <div className="mt-1 text-gray-600">
+                            <p className="font-medium">Modificadores:</p>
+                            <ul className="list-disc list-inside pl-2">
+                              {item.selectedModifiers.map((mod, modIndex) => (
+                                <li key={modIndex}>
+                                  {mod.Modifier.name} (+$
+                                  {mod.Modifier.price.toFixed(2)})
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        )}
+                      {item.comments && (
+                        <p className="mt-1 text-gray-600">
+                          <span className="font-medium">Comentarios:</span>{" "}
+                          {item.comments}
+                        </p>
+                      )}
                     </li>
-                  ))}ggg
+                  ))}
                 </ul>
               </div>
             )}
@@ -284,16 +316,18 @@ const formatDateToMexicoTime = (dateString, dateOnly = false) => {
   if (!dateString) return "N/A";
   const date = new Date(dateString);
   if (isNaN(date.getTime())) return "Fecha inválida";
-  
+
   // Convertir a la zona horaria de México
-  const mexicoDate = new Date(date.toLocaleString("en-US", {timeZone: "America/Mexico_City"}));
-  
-  const day = mexicoDate.getDate().toString().padStart(2, '0');
-  const month = (mexicoDate.getMonth() + 1).toString().padStart(2, '0');
+  const mexicoDate = new Date(
+    date.toLocaleString("en-US", { timeZone: "America/Mexico_City" })
+  );
+
+  const day = mexicoDate.getDate().toString().padStart(2, "0");
+  const month = (mexicoDate.getMonth() + 1).toString().padStart(2, "0");
   const year = mexicoDate.getFullYear();
-  const hours = mexicoDate.getHours().toString().padStart(2, '0');
-  const minutes = mexicoDate.getMinutes().toString().padStart(2, '0');
-  
+  const hours = mexicoDate.getHours().toString().padStart(2, "0");
+  const minutes = mexicoDate.getMinutes().toString().padStart(2, "0");
+
   return `${day}/${month}/${year} ${hours}:${minutes}`;
 };
 
