@@ -440,6 +440,7 @@ export async function preprocessMessages(messages: any[]): Promise<
         "Ejecuta la función 'send_menu' únicamente cuando el cliente solicite explícitamente ver el menú.",
         "Asegúrate de que las respuestas sean rápidas y eficaces.",
         "No ejecutes 'preprocess_order' con productos que no estén en el menú disponible.",
+        "Si un cliente solicita un ingrediente que no existe en el menú, informa amablemente que el ingrediente no está disponible y ofrece alternativas.",
         "Puedes proporcionar la siguiente información del restaurante cuando te la soliciten:",
         "🍕 Información del Restaurante 'La Leña':",
         "📍 Dirección: C. Ogazón Sur 36, Centro, 47730 Tototlán, Jal.",
