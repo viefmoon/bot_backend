@@ -80,7 +80,7 @@ const OrderCard = ({ order, onUpdateStatus }) => {
             <p className="text-gray-600">Info de Entrega:</p>
             <p className="font-medium">
               {order.orderType === "delivery" && order.orderDeliveryInfo
-                ? order.orderDeliveryInfo.streetAddress
+                ? `${order.orderDeliveryInfo.streetAddress}${order.orderDeliveryInfo.additionalDetails ? `, ${order.orderDeliveryInfo.additionalDetails}` : ''}`
                 : order.orderDeliveryInfo?.pickupName || "N/A"}
             </p>
             <button onClick={toggleDetails} className="text-blue-500 underline">
