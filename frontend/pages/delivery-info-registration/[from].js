@@ -31,6 +31,7 @@ export default function DeliveryInfoRegistration() {
   const [formErrors, setFormErrors] = useState({});
   const [isUpdating, setIsUpdating] = useState(false);
   const [locationError, setLocationError] = useState(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const { isLoaded, loadError } = useLoadScript({
     googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY,
@@ -258,10 +259,14 @@ export default function DeliveryInfoRegistration() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (isSubmitting) return; // Evita múltiples envíos
+
     const errors = validateForm();
     setFormErrors(errors);
 
     if (Object.keys(errors).length === 0) {
+      setIsSubmitting(true); // Bloquea el botón
+
       try {
         let response;
         if (isUpdating) {
@@ -296,6 +301,8 @@ export default function DeliveryInfoRegistration() {
       } catch (error) {
         console.error("Error al guardar CustomerDeliveryInfo:", error);
         alert("Error al guardar la dirección. Por favor, inténtelo de nuevo.");
+      } finally {
+        setIsSubmitting(false); // Desbloquea el botón
       }
     } else {
       const errorMessages = Object.values(errors).join("\n");
@@ -393,9 +400,11 @@ export default function DeliveryInfoRegistration() {
             disabled:bg-gray-400 disabled:cursor-not-allowed
             transition duration-300
           "
-          disabled={!!locationError}
+          disabled={!!locationError || isSubmitting}
         >
-          {isUpdating ? "Actualizar Dirección" : "Guardar Dirección"}
+          {isSubmitting 
+            ? "Enviando..." 
+            : (isUpdating ? "Actualizar Dirección" : "Guardar Dirección")}
         </button>
         <Map
           selectedLocation={selectedLocation}
