@@ -25,6 +25,8 @@ export default function DeliveryInfoRegistration() {
     latitude: "",
     longitude: "",
     additionalDetails: "",
+    pickupName: "",
+    geocodedAddress: "",
   });
   const [formErrors, setFormErrors] = useState({});
   const [isUpdating, setIsUpdating] = useState(false);
@@ -238,6 +240,9 @@ export default function DeliveryInfoRegistration() {
     // Combinar el nombre de la calle y el número en el orden correcto
     addressDetails.streetAddress =
       streetName + (streetNumber ? ` ${streetNumber}` : "");
+
+    // Añadir geocodedAddress
+    addressDetails.geocodedAddress = addressComponents.map(component => component.long_name).join(', ');
 
     return addressDetails;
   };
