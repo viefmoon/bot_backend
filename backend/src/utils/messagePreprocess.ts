@@ -338,52 +338,6 @@ function extractMentionedProducts(
   return mentionedProducts;
 }
 
-async function validatePreprocessedContent(
-  preprocessedContent: PreprocessedContent
-): Promise<{
-  success: boolean;
-  message?: string;
-  validatedItems?: any[];
-}> {
-  const systemMessage = {
-    role: "system",
-    content: JSON.stringify({
-      instructions: [
-        "Eres un asistente especializado en validar pedidos de restaurante.",
-        "Analiza cada item del pedido y verifica si se puede construir utilizando los elementos en relevantMenuItems.",
-        "Si todos los items se pueden construir, devuelve un mensaje de éxito.",
-        "Si algún item no se puede construir, devuelve un mensaje detallando los productos que no se encontraron.",
-      ],
-    }),
-  };
-
-  const orderItemsMessage = {
-    role: "user",
-    content: JSON.stringify(preprocessedContent.orderItems),
-  };
-
-  // Asegúrate de que systemMessage y orderItemsMessage sean arrays
-  const systemMessageArray = Array.isArray(systemMessage)
-    ? systemMessage
-    : [systemMessage];
-  const orderItemsMessageArray = Array.isArray(orderItemsMessage)
-    ? orderItemsMessage
-    : [orderItemsMessage];
-
-  const validationMessages = [...systemMessageArray, ...orderItemsMessageArray];
-
-  const response = await openai.chat.completions.create({
-    model: "gpt-4o-mini",
-    messages: validationMessages,
-  });
-
-  const assistantResponse = response.choices[0].message.content;
-  const parsedResponse = JSON.parse(assistantResponse);
-  console.log("parsedResponse", parsedResponse);
-
-  return parsedResponse;
-}
-
 export async function preprocessMessages(messages: any[]): Promise<
   | PreprocessedContent
   | {
@@ -434,27 +388,11 @@ export async function preprocessMessages(messages: any[]): Promise<
           console.error("Item inválido o sin descripción:", item);
         }
       }
-      console.log("preprocessedContent", preprocessedContent);
-
-      // Nuevo paso de validación
-      const validationResult = await validatePreprocessedContent(
-        preprocessedContent
+      console.log(
+        "preprocessedContent",
+        JSON.stringify(preprocessedContent, null, 2)
       );
-
-      console.log("validationResult", validationResult);
-
-      // if (validationResult.success) {
-      //   return {
-      //     ...preprocessedContent,
-      //     validatedItems: validationResult.validatedItems,
-      //   };
-      // } else {
-      //   return {
-      //     text: validationResult.message || "Error en la validación del pedido",
-      //     isDirectResponse: true,
-      //     isRelevant: true,
-      //   };
-      // }
+      return preprocessedContent;
     } else if (toolCall.function.name === "send_menu") {
       return {
         text: menu,
