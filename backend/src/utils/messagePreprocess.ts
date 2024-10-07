@@ -446,21 +446,11 @@ export async function preprocessMessages(messages: any[]): Promise<
         "📞 Números de contacto: Fijo: 3919160126, Celular: 3338423316",
         "🕒 Horarios: Martes a sábado: 6:00 PM - 11:00 PM, Domingos: 2:00 PM - 11:00 PM",
       ],
-    }),
-  };
-
-  const assistantMessageWithMenu = {
-    role: "assistant",
-    content: JSON.stringify({
       "MENU DISPONIBLE": availableMenu,
     }),
   };
 
-  const preprocessingMessages = [
-    systemMessageForPreprocessing,
-    assistantMessageWithMenu,
-    ...messages,
-  ];
+  const preprocessingMessages = [systemMessageForPreprocessing, ...messages];
 
   console.log("preprocessingMessages", preprocessingMessages);
 
