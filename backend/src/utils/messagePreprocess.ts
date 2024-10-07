@@ -7,6 +7,7 @@ import {
   Modifier,
 } from "../models";
 import OpenAI from "openai";
+import { ChatCompletionMessageParam } from "openai/resources/chat";
 import { ratio } from "fuzzball";
 import { preprocessOrderTool, sendMenuTool } from "../aiTools/aiTools";
 import * as dotenv from "dotenv";
@@ -338,6 +339,40 @@ function extractMentionedProducts(
   return mentionedProducts;
 }
 
+async function verifyOrderItems(
+  preprocessedContent: PreprocessedContent
+): Promise<string> {
+  const systemMessage: ChatCompletionMessageParam = {
+    role: "system",
+    content: JSON.stringify({
+      instructions: [
+        "Eres un asistente especializado en verificar los orderItems del pedido.",
+        "Analiza cada item del pedido y verifica si su descripcion se puede construir con los productos relevantes proporcionados.",
+        "Si todos los items se pueden construir, devuelve un mensaje de éxito.",
+        "Si algún item no se puede construir, devuelve un mensaje detallando los productos, ingredientes, modificadores que no se encontraron.",
+      ],
+    }),
+  };
+
+  const userMessage: ChatCompletionMessageParam = {
+    role: "user",
+    content: JSON.stringify(preprocessedContent.orderItems),
+  };
+
+  const response = await openai.chat.completions.create({
+    model: "gpt-4-mini",
+    messages: [systemMessage, userMessage],
+  });
+  console.log(
+    "response.choices[0].message.content",
+    response.choices[0].message.content
+  );
+  return (
+    response.choices[0].message.content || "No se pudo verificar el pedido."
+  );
+}
+
+// Modificar la función preprocessMessages para incluir esta nueva verificación
 export async function preprocessMessages(messages: any[]): Promise<
   | PreprocessedContent
   | {
@@ -388,11 +423,15 @@ export async function preprocessMessages(messages: any[]): Promise<
           console.error("Item inválido o sin descripción:", item);
         }
       }
-      console.log(
-        "preprocessedContent",
-        JSON.stringify(preprocessedContent, null, 2)
-      );
-      return preprocessedContent;
+      console.log("preprocessedContent", preprocessedContent);
+
+      // Nueva verificación de los items del pedido
+      const verificationResult = await verifyOrderItems(preprocessedContent);
+
+      return {
+        ...preprocessedContent,
+        verificationResult,
+      };
     } else if (toolCall.function.name === "send_menu") {
       return {
         text: menu,
