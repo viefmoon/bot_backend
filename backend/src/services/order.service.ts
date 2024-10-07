@@ -36,17 +36,16 @@ export class OrderService {
     let whereClause = {};
     
     if (date) {
-      const startDate = new Date(date);
-      startDate.setHours(0, 0, 0, 0);
-      const endDate = new Date(date);
-      endDate.setHours(23, 59, 59, 999);
+      const mexicoDate = new Date(date);
+      mexicoDate.setHours(0, 0, 0, 0);
+      const startDate = this.convertToUTC(mexicoDate, 'America/Mexico_City');
+      
+      mexicoDate.setHours(23, 59, 59, 999);
+      const endDate = this.convertToUTC(mexicoDate, 'America/Mexico_City');
       
       whereClause = {
         createdAt: {
-          [Op.between]: [
-            startDate.toLocaleString('en-US', { timeZone: 'America/Mexico_City' }),
-            endDate.toLocaleString('en-US', { timeZone: 'America/Mexico_City' })
-          ]
+          [Op.between]: [startDate, endDate]
         }
       };
     }
@@ -422,5 +421,11 @@ export class OrderService {
       default:
         return `El estado de tu orden #${dailyOrderNumber} ha sido actualizado a: ${status}`;
     }
+  }
+
+  private convertToUTC(date: Date, fromTimeZone: string): Date {
+    const localDate = new Date(date.toLocaleString('en-US', { timeZone: fromTimeZone }));
+    const utcDate = new Date(localDate.getTime() + localDate.getTimezoneOffset() * 60000);
+    return utcDate;
   }
 }
