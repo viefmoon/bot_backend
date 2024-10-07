@@ -18,6 +18,7 @@ const anthropic = new Anthropic({
 interface ChatMessage {
   role: string;
   content: string;
+  timestamp: Date;
 }
 
 interface ResponseItem {
@@ -130,7 +131,10 @@ export async function handleTextMessage(
     if (isRelevant) relevantChatHistory.push(message);
   };
 
-  updateChatHistory({ role: "user", content: text }, true);
+  updateChatHistory(
+    { role: "user", content: text, timestamp: new Date() },
+    true
+  );
 
   const response = await processAndGenerateAIResponse({
     relevantMessages: relevantChatHistory,
@@ -143,7 +147,7 @@ export async function handleTextMessage(
         await sendWhatsAppMessage(from, item.text);
       }
       updateChatHistory(
-        { role: "assistant", content: item.text },
+        { role: "assistant", content: item.text, timestamp: new Date() },
         item.isRelevant == true
       );
     }
@@ -154,6 +158,7 @@ export async function handleTextMessage(
         {
           role: "assistant",
           content: item.confirmationMessage,
+          timestamp: new Date(),
         },
         true
       );
@@ -213,7 +218,6 @@ async function processAndGenerateAIResponse(
     ) {
       const { orderItems, orderType, scheduledDeliveryTime } = response
         .content[0].input as any;
-
 
       console.log("orderItems", orderItems);
       console.log("orderType", orderType);

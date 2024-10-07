@@ -6,6 +6,7 @@ import CustomerDeliveryInfo from "./customerDeliveryInfo";
 export interface ChatMessage {
   role: string;
   content: string;
+  timestamp: Date;
 }
 
 interface CustomerAttributes {

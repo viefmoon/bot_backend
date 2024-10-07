@@ -33,10 +33,15 @@ const ChatHistoryModal = ({ clientId, onClose }) => {
           isUser ? "bg-blue-100" : "bg-gray-100"
         } p-3 rounded-lg mb-2`}
       >
-        <strong className={`${isUser ? "text-blue-600" : "text-gray-600"}`}>
-          {isUser ? "Usuario" : "Asistente"}:
-        </strong>
-        <p className="mt-1">{message.content}</p>
+        <div className="flex justify-between items-center mb-2">
+          <strong className={`${isUser ? "text-blue-600" : "text-gray-600"}`}>
+            {isUser ? "Usuario" : "Asistente"}
+          </strong>
+          <span className="text-xs text-gray-500">
+            {new Date(message.timestamp).toLocaleString()}
+          </span>
+        </div>
+        <p>{message.content}</p>
       </div>
     );
   };
