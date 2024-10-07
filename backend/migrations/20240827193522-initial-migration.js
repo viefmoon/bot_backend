@@ -354,6 +354,10 @@ module.exports = {
         allowNull: false,
         type: Sequelize.DATE,
       },
+      finishedAt: {
+        type: Sequelize.DATE,
+        allowNull: true,
+      },
     });
 
     await queryInterface.createTable("OrderItems", {

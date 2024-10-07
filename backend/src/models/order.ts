@@ -21,6 +21,7 @@ interface OrderAttributes {
   scheduledDeliveryTime?: Date;
   messageId?: string;
   stripeSessionId?: string;
+  finishedAt?: Date;  // Nuevo campo
   createdAt: Date;  // Añadido
   updatedAt: Date;  // Añadido
 }
@@ -49,6 +50,7 @@ class Order
   public scheduledDeliveryTime?: Date;
   public messageId?: string;
   public stripeSessionId?: string;
+  public finishedAt?: Date;  // Nuevo campo
 
   // Timestamps
   public readonly createdAt!: Date;
@@ -114,6 +116,10 @@ Order.init(
     },
     stripeSessionId: {
       type: DataTypes.STRING,
+      allowNull: true,
+    },
+    finishedAt: {
+      type: DataTypes.DATE,
       allowNull: true,
     },
     createdAt: {
