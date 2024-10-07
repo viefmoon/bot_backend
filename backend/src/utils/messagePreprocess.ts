@@ -428,10 +428,10 @@ export async function preprocessMessages(messages: any[]): Promise<
       // Nueva verificación de los items del pedido
       const verificationResult = await verifyOrderItems(preprocessedContent);
 
-      return {
-        ...preprocessedContent,
-        verificationResult,
-      };
+      // return {
+      //   ...preprocessedContent,
+      //   verificationResult,
+      // };
     } else if (toolCall.function.name === "send_menu") {
       return {
         text: menu,
