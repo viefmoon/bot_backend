@@ -168,87 +168,6 @@ async function getMenuAvailability(): Promise<any> {
   }
 }
 
-async function getAvailableMenu(): Promise<
-  MenuItem[] | { error: string; detalles?: string; stack?: string }
-> {
-  try {
-    const products = await Product.findAll({
-      include: [
-        {
-          model: ProductVariant,
-          as: "productVariants",
-          include: [{ model: Availability, where: { available: true } }],
-        },
-        {
-          model: PizzaIngredient,
-          as: "pizzaIngredients",
-          include: [{ model: Availability, where: { available: true } }],
-        },
-        {
-          model: ModifierType,
-          as: "modifierTypes",
-          include: [
-            {
-              model: Modifier,
-              as: "modifiers",
-              include: [{ model: Availability, where: { available: true } }],
-            },
-          ],
-        },
-        { model: Availability, where: { available: true } },
-      ],
-    });
-
-    if (!products || products.length === 0) {
-      console.error("No se encontraron productos disponibles");
-      return {
-        error: "No se encontraron productos disponibles en la base de datos",
-      };
-    }
-
-    return products.map((producto) => {
-      const productoInfo: any = {
-        name: producto.name,
-      };
-
-      if (producto.ingredients) {
-        productoInfo.ingredients = producto.ingredients;
-      }
-
-      if (producto.productVariants?.length > 0) {
-        productoInfo.variantes = producto.productVariants.map((v) => ({
-          name: v.name,
-          ...(v.ingredients && { ingredients: v.ingredients }),
-        }));
-      }
-
-      if (producto.modifierTypes?.length > 0) {
-        const modificadores = producto.modifierTypes.flatMap(
-          (mt) => mt.modifiers?.map((m) => m.name) || []
-        );
-        if (modificadores.length > 0) {
-          productoInfo.modificadores = modificadores;
-        }
-      }
-
-      if (producto.pizzaIngredients?.length > 0) {
-        productoInfo.ingredientesPizza = producto.pizzaIngredients.map((i) => ({
-          name: i.name,
-        }));
-      }
-
-      return productoInfo;
-    });
-  } catch (error: any) {
-    console.error("Error al obtener el menú disponible:", error);
-    return {
-      error: "No se pudo obtener el menú disponible",
-      detalles: error.message,
-      stack: error.stack,
-    };
-  }
-}
-
 async function getRelevantMenuItems(
   preprocessedContent: PreprocessedContent
 ): Promise<MenuItem[]> {
@@ -419,6 +338,52 @@ function extractMentionedProducts(
   return mentionedProducts;
 }
 
+async function validatePreprocessedContent(
+  preprocessedContent: PreprocessedContent
+): Promise<{
+  success: boolean;
+  message?: string;
+  validatedItems?: any[];
+}> {
+  const systemMessage = {
+    role: "system",
+    content: JSON.stringify({
+      instructions: [
+        "Eres un asistente especializado en validar pedidos de restaurante.",
+        "Analiza cada item del pedido y verifica si se puede construir utilizando los elementos en relevantMenuItems.",
+        "Si todos los items se pueden construir, devuelve un mensaje de éxito.",
+        "Si algún item no se puede construir, devuelve un mensaje detallando los productos que no se encontraron.",
+      ],
+    }),
+  };
+
+  const orderItemsMessage = {
+    role: "user",
+    content: JSON.stringify(preprocessedContent.orderItems),
+  };
+
+  // Asegúrate de que systemMessage y orderItemsMessage sean arrays
+  const systemMessageArray = Array.isArray(systemMessage)
+    ? systemMessage
+    : [systemMessage];
+  const orderItemsMessageArray = Array.isArray(orderItemsMessage)
+    ? orderItemsMessage
+    : [orderItemsMessage];
+
+  const validationMessages = [...systemMessageArray, ...orderItemsMessageArray];
+
+  const response = await openai.chat.completions.create({
+    model: "gpt-4o-mini",
+    messages: validationMessages,
+  });
+
+  const assistantResponse = response.choices[0].message.content;
+  const parsedResponse = JSON.parse(assistantResponse);
+  console.log("parsedResponse", parsedResponse);
+
+  return parsedResponse;
+}
+
 export async function preprocessMessages(messages: any[]): Promise<
   | PreprocessedContent
   | {
@@ -428,8 +393,6 @@ export async function preprocessMessages(messages: any[]): Promise<
       confirmationMessage?: string;
     }
 > {
-  const availableMenu = await getAvailableMenu();
-
   const systemMessageForPreprocessing = {
     role: "system",
     content: JSON.stringify({
@@ -473,7 +436,25 @@ export async function preprocessMessages(messages: any[]): Promise<
       }
       console.log("preprocessedContent", preprocessedContent);
 
-      return preprocessedContent;
+      // Nuevo paso de validación
+      const validationResult = await validatePreprocessedContent(
+        preprocessedContent
+      );
+
+      console.log("validationResult", validationResult);
+
+      // if (validationResult.success) {
+      //   return {
+      //     ...preprocessedContent,
+      //     validatedItems: validationResult.validatedItems,
+      //   };
+      // } else {
+      //   return {
+      //     text: validationResult.message || "Error en la validación del pedido",
+      //     isDirectResponse: true,
+      //     isRelevant: true,
+      //   };
+      // }
     } else if (toolCall.function.name === "send_menu") {
       return {
         text: menu,
