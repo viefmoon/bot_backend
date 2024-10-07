@@ -196,7 +196,7 @@ async function processAndGenerateAIResponse(
     const systemContent = [
       "Basándote en el objeto proporcionado, utiliza la función `select_products`",
       "- Utiliza los `relevantMenuItems` proporcionados para mapear las descripciones de los productos a sus respectivos IDs. Si no se encuentra un ID relevante para construir el producto, omite esa observación o producto.",
-      "- El campo de comentarios debe usarse ÚNICAMENTE para observaciones simples o para indicar ingredientes que se deben retirar del producto. Nunca lo uses para agregar ingredientes o modificaciones que puedan generar un costo extra.",
+      "- El campo de comentarios en los orderitems debe usarse ÚNICAMENTE para observaciones simples o para indicar ingredientes que se deben retirar del producto. Nunca lo uses para agregar ingredientes o modificaciones que puedan generar un costo extra.",
       "- No es necesario usar todos los relevantMenuItems si no aplican a la solicitud del usuario.",
     ].join("\n");
 

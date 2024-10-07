@@ -216,7 +216,7 @@ const selectProductsToolClaude = {
             comments: {
               type: "string",
               description:
-                "Añadir las observaciones que no pudieron ser definidas en los modificadores del producto.",
+                "Añadir las observaciones que no pudieron ser definidas en los modificadores del producto. El campo de comentarios debe usarse ÚNICAMENTE para observaciones simples o para indicar ingredientes que se deben retirar del producto. Nunca lo uses para agregar ingredientes o modificaciones que puedan generar un costo extra.",
             },
             quantity: {
               type: "integer",
