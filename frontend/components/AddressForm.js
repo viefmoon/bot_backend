@@ -23,6 +23,7 @@ export default function AddressForm({
   };
 
   const fieldTranslations = {
+    
     streetAddress: "Dirección completa",
     neighborhood: "Colonia",
     postalCode: "Código postal",
@@ -34,6 +35,24 @@ export default function AddressForm({
   return (
     <form className="space-y-2 bg-white p-2 rounded-lg shadow-md">
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-1">
+        {/* Campo de Nombre del cliente */}
+        <div className="col-span-1 sm:col-span-2">
+          <label htmlFor="pickupName" className="block mb-0.5 text-xs font-medium text-gray-700">
+            Nombre del cliente
+          </label>
+          <input
+            type="text"
+            id="pickupName"
+            name="pickupName"
+            value={formData.pickupName}
+            onChange={handleChange}
+            className="w-full p-1 text-sm border rounded-md border-gray-300 focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+          />
+          {formErrors.pickupName && (
+            <p className="mt-0.5 text-xs text-red-600">{formErrors.pickupName}</p>
+          )}
+        </div>
+
         {/* Campo de dirección completa */}
         <div className="col-span-1 sm:col-span-2">
           <div className="flex items-center justify-between">
