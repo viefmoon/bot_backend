@@ -329,10 +329,6 @@ module.exports = {
         type: Sequelize.STRING,
         allowNull: false,
       },
-      orderDate: {
-        type: Sequelize.DATEONLY,
-        allowNull: false,
-      },
       estimatedTime: {
         type: Sequelize.INTEGER,
         allowNull: false,

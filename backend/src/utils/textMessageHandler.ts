@@ -192,7 +192,7 @@ async function processAndGenerateAIResponse(
 
     const systemContent = [
       "Basándote en el objeto proporcionado, utiliza la función `select_products`",
-      "- Utiliza los `relevantMenuItems` proporcionados para mapear las descripciones de los productos a sus respectivos IDs.",
+      "- Utiliza los `relevantMenuItems` proporcionados para mapear las descripciones de los productos a sus respectivos IDs, si no se encuentra ID relevante, se omite el producto.",
       "- No es necesario usar todos los relevantMenuItems si no aplican",
       "- Es OBLIGATORIO usar la función `select_products` para completar esta tarea.",
     ].join("\n");

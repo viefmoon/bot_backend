@@ -52,7 +52,7 @@ const OrderCard = ({ order, onUpdateStatus }) => {
               Pedido #{order.dailyOrderNumber}
             </h5>
             <span className="text-sm lg:text-base text-gray-600">
-              {formatDateToMexicoTime(order.orderDate, true)}
+              {formatDateToMexicoTime(order.createdAt, true)}
             </span>
           </div>
           <span

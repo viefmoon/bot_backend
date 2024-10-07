@@ -19,6 +19,7 @@ import { getNextDailyOrderNumber } from "../utils/orderUtils";
 import { CreateOrderDto } from "../dto/create-order.dto";
 import { PizzaHalf, IngredientAction } from "../models/selectedPizzaIngredient";
 import { sendWhatsAppMessage } from "../utils/whatsAppUtils";
+import { Op } from 'sequelize';
 
 export type OrderStatus =
   | "created"
@@ -32,12 +33,28 @@ export type OrderStatus =
 @Injectable()
 export class OrderService {
   async getOrders(date?: string) {
-    const whereClause = date ? { orderDate: date } : {};
-
+    let whereClause = {};
+    
+    if (date) {
+      const startDate = new Date(date);
+      startDate.setHours(0, 0, 0, 0);
+      const endDate = new Date(date);
+      endDate.setHours(23, 59, 59, 999);
+      
+      whereClause = {
+        createdAt: {
+          [Op.between]: [
+            startDate.toLocaleString('en-US', { timeZone: 'America/Mexico_City' }),
+            endDate.toLocaleString('en-US', { timeZone: 'America/Mexico_City' })
+          ]
+        }
+      };
+    }
+  
     return Order.findAll({
       where: whereClause,
       order: [
-        ["orderDate", "DESC"],
+        ["createdAt", "DESC"],
         ["dailyOrderNumber", "DESC"],
       ],
       include: [
@@ -75,7 +92,6 @@ export class OrderService {
         "paymentStatus",
         "totalCost",
         "clientId",
-        "orderDate",
         "estimatedTime",
         "scheduledDeliveryTime",
         "createdAt",
@@ -109,7 +125,6 @@ export class OrderService {
     const mexicoTime = new Date().toLocaleString("en-US", {
       timeZone: "America/Mexico_City",
     });
-    const today = new Date(mexicoTime);
     const dailyOrderNumber = await getNextDailyOrderNumber();
 
     let estimatedTime: number;
@@ -136,7 +151,6 @@ export class OrderService {
       status: "created",
       totalCost: 0,
       clientId,
-      orderDate: today,
       estimatedTime,
       scheduledDeliveryTime: scheduledDeliveryTime
         ? new Date(scheduledDeliveryTime)

@@ -17,7 +17,6 @@ interface OrderAttributes {
   paymentStatus: "pending" | "paid" | "failed";
   totalCost: number;
   clientId: string;
-  orderDate: Date;
   estimatedTime: number;
   scheduledDeliveryTime?: Date;
   messageId?: string;
@@ -44,7 +43,6 @@ class Order
   public paymentStatus!: "pending" | "paid" | "failed";
   public totalCost!: number;
   public clientId!: string;
-  public orderDate!: Date;
   public estimatedTime!: number;
   public scheduledDeliveryTime?: Date;
   public messageId?: string;
@@ -97,10 +95,6 @@ Order.init(
     },
     clientId: {
       type: DataTypes.STRING,
-      allowNull: false,
-    },
-    orderDate: {
-      type: DataTypes.DATEONLY,
       allowNull: false,
     },
     estimatedTime: {
