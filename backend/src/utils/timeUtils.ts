@@ -10,7 +10,7 @@ async function getMexicoCityTime(): Promise<moment.Moment> {
     // Actualizar cada hora
     try {
       const response = await axios.get(
-        "http://worldtimeapi.org/api/timezone/America/Mexico_City",
+        "http://worldtimeapi.org/api/timezone/America/Mexico_City"
       );
       // Definir el tipo de respuesta
       interface WorldTimeResponse {
@@ -18,7 +18,7 @@ async function getMexicoCityTime(): Promise<moment.Moment> {
       }
       mexicoCityTime = moment.tz(
         (response.data as WorldTimeResponse).datetime,
-        "America/Mexico_City",
+        "America/Mexico_City"
       );
       lastFetch = now;
     } catch (error) {
@@ -55,15 +55,21 @@ async function verificarHorarioAtencion(): Promise<boolean> {
     const estaAbierto = (() => {
       switch (diaSemana) {
         case 0: // Domingo
-          return tiempoActual >= horarioDomingo.apertura && tiempoActual < horarioDomingo.cierre;
+          return (
+            tiempoActual >= horarioDomingo.apertura &&
+            tiempoActual < horarioDomingo.cierre
+          );
         case 1: // Lunes
-          return false; // Cerrado los lunes
+        //return false; // Cerrado los lunes
         case 2: // Martes
         case 3: // Miércoles
         case 4: // Jueves
         case 5: // Viernes
         case 6: // Sábado
-          return tiempoActual >= horarioNormal.apertura && tiempoActual < horarioNormal.cierre;
+          return (
+            tiempoActual >= horarioNormal.apertura &&
+            tiempoActual < horarioNormal.cierre
+          );
         default:
           return false;
       }
@@ -75,7 +81,7 @@ async function verificarHorarioAtencion(): Promise<boolean> {
 
     // Si no está abierto y no es el último intento, espera antes de intentar de nuevo
     if (i < intentos - 1) {
-      await new Promise(resolve => setTimeout(resolve, retrasoEntreIntentos));
+      await new Promise((resolve) => setTimeout(resolve, retrasoEntreIntentos));
     }
   }
 
