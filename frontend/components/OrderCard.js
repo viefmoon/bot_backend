@@ -47,6 +47,44 @@ const OrderCard = ({ order, onUpdateStatus }) => {
     return type === "delivery" ? "bg-blue-400" : "bg-purple-400";
   };
 
+  const renderPizzaIngredients = (ingredients) => {
+    const ingredientsByHalf = { left: [], right: [], full: [] };
+    ingredients.forEach((ing) => {
+      const action = ing.action === "remove" ? "sin" : "";
+      ingredientsByHalf[ing.half].push(`${action} ${ing.PizzaIngredient.name}`);
+    });
+
+    // Agregar ingredientes 'full' a ambas mitades
+    ingredientsByHalf.left = [
+      ...ingredientsByHalf.left,
+      ...ingredientsByHalf.full,
+    ];
+    ingredientsByHalf.right = [
+      ...ingredientsByHalf.right,
+      ...ingredientsByHalf.full,
+    ];
+
+    if (
+      ingredientsByHalf.left.length === 0 &&
+      ingredientsByHalf.right.length === 0
+    ) {
+      return null;
+    }
+
+    if (
+      ingredientsByHalf.left.length === ingredientsByHalf.right.length &&
+      ingredientsByHalf.left.every(
+        (ing, i) => ing === ingredientsByHalf.right[i]
+      )
+    ) {
+      return `(${ingredientsByHalf.left.join(", ")})`;
+    }
+
+    return `(${ingredientsByHalf.left.join(
+      ", "
+    )} / ${ingredientsByHalf.right.join(", ")})`;
+  };
+
   return (
     <div className="bg-white shadow-md rounded-lg overflow-hidden mb-4 border border-gray-200">
       <div className="p-4 lg:p-6">
@@ -160,6 +198,11 @@ const OrderCard = ({ order, onUpdateStatus }) => {
                           <p className="font-medium">
                             {item.ProductVariant.name || item.Product.name} (x
                             {item.quantity})
+                            {item.selectedPizzaIngredients &&
+                              item.selectedPizzaIngredients.length > 0 &&
+                              ` ${renderPizzaIngredients(
+                                item.selectedPizzaIngredients
+                              )}`}
                           </p>
                           <p className="text-gray-600">
                             Precio base: $
@@ -228,24 +271,6 @@ const OrderCard = ({ order, onUpdateStatus }) => {
         </div>
       </div>
     </div>
-  );
-};
-
-const renderPizzaIngredients = (ingredients) => {
-  const ingredientsByHalf = { left: [], right: [], full: [] };
-  ingredients.forEach((ing) => {
-    ingredientsByHalf[ing.half].push(
-      `${ing.PizzaIngredient.name} (${translateAction(ing.action)})`
-    );
-  });
-
-  return Object.entries(ingredientsByHalf).map(
-    ([half, ings]) =>
-      ings.length > 0 && (
-        <div key={half}>
-          <em>{translateHalf(half)}:</em> {ings.join(", ")}
-        </div>
-      )
   );
 };
 
