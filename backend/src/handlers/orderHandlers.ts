@@ -490,7 +490,6 @@ export async function handleOrderModification(
       await customer.update({
         relevantChatHistory: relevantChatHistory,
         fullChatHistory: fullChatHistory,
-        lastInteraction: new Date(),
       });
     } catch (error) {
       console.error("Error al crear la nueva preorden:", error);

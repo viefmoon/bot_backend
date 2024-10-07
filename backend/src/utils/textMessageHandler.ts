@@ -164,7 +164,6 @@ export async function handleTextMessage(
   await customer.update({
     fullChatHistory: JSON.stringify(fullChatHistory),
     relevantChatHistory: JSON.stringify(relevantChatHistory),
-    lastInteraction: new Date(),
   });
 }
 

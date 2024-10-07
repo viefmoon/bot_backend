@@ -70,6 +70,9 @@ async function handleIncomingWhatsAppMessage(
     customer = await Customer.create({ clientId: from });
   }
 
+  // Actualizar la última interacción
+  await customer.update({ lastInteraction: new Date() });
+
   //verificar si está baneado
   if (await checkBannedCustomer(from)) {
     await sendBannedMessage(from);
