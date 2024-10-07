@@ -156,11 +156,23 @@ const OrderCard = ({ order, onUpdateStatus }) => {
                       className="text-sm lg:text-base border-b pb-2"
                     >
                       <div className="flex justify-between items-start">
-                        <p className="font-medium">
-                          {item.ProductVariant.name || item.Product.name} (x
-                          {item.quantity})
+                        <div>
+                          <p className="font-medium">
+                            {item.ProductVariant.name || item.Product.name} (x
+                            {item.quantity})
+                          </p>
+                          <p className="text-gray-600">
+                            Precio base: $
+                            {(
+                              item.ProductVariant.price ||
+                              item.Product.price ||
+                              0
+                            ).toFixed(2)}
+                          </p>
+                        </div>
+                        <p className="font-bold">
+                          Total: ${item.price.toFixed(2)}
                         </p>
-                        <p className="font-bold">${item.price.toFixed(2)}</p>
                       </div>
                       {item.selectedModifiers &&
                         item.selectedModifiers.length > 0 && (
