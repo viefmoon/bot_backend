@@ -8,8 +8,11 @@ export class OrderController {
   constructor(private readonly orderService: OrderService) {}
 
   @Get()
-  async getOrders(@Query("date") date: string) {
-    return this.orderService.getOrders(date);
+  async getOrders(
+    @Query("date") date?: string,
+    @Query("status") status?: OrderStatus
+  ) {
+    return this.orderService.getOrders(date, status);
   }
 
   @Get(":clientId")

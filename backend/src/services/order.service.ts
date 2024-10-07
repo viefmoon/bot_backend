@@ -33,13 +33,12 @@ export type OrderStatus =
 
 @Injectable()
 export class OrderService {
-  async getOrders(date?: string) {
-    let whereClause = {};
+  async getOrders(date?: string, status?: OrderStatus) {
+    let whereClause: any = {};
     
     if (date) {
       // Parsear la fecha asumiendo que ya está en hora de México
       const mexicoDate = DateTime.fromISO(date, { zone: 'America/Mexico_City' });
-      
       
       // Definir el inicio y fin del día en UTC
       const startDate = mexicoDate.startOf('day').toUTC();
@@ -48,11 +47,13 @@ export class OrderService {
       console.log("startDate", startDate.toISO());
       console.log("endDate", endDate.toISO());
       
-      whereClause = {
-        createdAt: {
-          [Op.between]: [startDate.toJSDate(), endDate.toJSDate()]
-        }
+      whereClause.createdAt = {
+        [Op.between]: [startDate.toJSDate(), endDate.toJSDate()]
       };
+    }
+  
+    if (status) {
+      whereClause.status = status;
     }
   
     return Order.findAll({

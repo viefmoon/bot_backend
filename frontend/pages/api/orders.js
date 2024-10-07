@@ -5,11 +5,14 @@ dotenv.config();
 
 export default async function handler(req, res) {
   const { method, query } = req;
-  const { date } = query;
+  const { date, status } = query;
   let url = `${process.env.NEXT_PUBLIC_BACKEND_BASE_URL}/orders`;
-  if (date) {
-    url += `?date=${date}`;
-  }
+  
+  // Construir la URL con los parámetros de consulta
+  const params = new URLSearchParams();
+  if (date) params.append('date', date);
+  if (status) params.append('status', status);
+  if (params.toString()) url += `?${params.toString()}`;
 
   try {
     const response = await axios.get(url);
