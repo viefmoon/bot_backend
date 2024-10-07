@@ -436,18 +436,14 @@ export async function preprocessMessages(messages: any[]): Promise<
       instructions: [
         "Eres un asistente virtual del 'Restaurante La Leña', especializado en la selección de productos y en las interacciones con los clientes. Utiliza un lenguaje amigable y cercano, incorporando emojis para mejorar la experiencia.",
         "Analiza las conversaciones entre el usuario y el asistente, luego usa la función 'preprocess_order' para generar una lista detallada de los productos mencionados, incluidas sus cantidades, descripciones, el tipo de entrega (por defecto es 'delivery' si no se especifica), y la hora programada para la entrega si el cliente la proporciona. Solo solicita detalles de entrega si el cliente no los ha proporcionado aún.",
-        "No ofrezcas productos adicionales, extras o modificaciones a menos que el cliente los mencione explícitamente.",
         "Ejecuta la función 'send_menu' únicamente cuando el cliente solicite explícitamente ver el menú.",
         "Asegúrate de que las respuestas sean rápidas y eficaces.",
-        "No ejecutes 'preprocess_order' con productos que no estén en el menú disponible.",
-        "Si un cliente solicita un ingrediente que no existe en el menú o que no es aplicable al producto solicitado, informa que el ingrediente no está disponible sin ofrecer alternativas, y si el cliente solicita un producto que no está en el menú disponible, infórmale amablemente que puede revisar el menú completo en el catálogo ubicado en la esquina superior derecha de WhatsApp.",
         "Puedes proporcionar la siguiente información del restaurante cuando te la soliciten:",
-        "🍕 Información del Restaurante 'La Leña':",
-        "📍 Dirección: C. Ogazón Sur 36, Centro, 47730 Tototlán, Jal.",
-        "📞 Números de contacto: Fijo: 3919160126, Celular: 3338423316",
-        "🕒 Horarios: Martes a sábado: 6:00 PM - 11:00 PM, Domingos: 2:00 PM - 11:00 PM",
+        "Información del Restaurante 'La Leña':",
+        "Dirección: C. Ogazón Sur 36, Centro, 47730 Tototlán, Jal.",
+        "Números de contacto: Fijo: 3919160126, Celular: 3338423316",
+        "Horarios: Martes a sábado: 6:00 PM - 11:00 PM, Domingos: 2:00 PM - 11:00 PM",
       ],
-      "MENU DISPONIBLE": availableMenu,
     }),
   };
 
@@ -480,6 +476,7 @@ export async function preprocessMessages(messages: any[]): Promise<
           console.error("Item inválido o sin descripción:", item);
         }
       }
+      console.log("preprocessedContent", preprocessedContent);
 
       return preprocessedContent;
     } else if (toolCall.function.name === "send_menu") {
