@@ -36,15 +36,17 @@ export class OrderService {
     let whereClause = {};
     
     if (date) {
-      const mexicoDate = new Date(date);
-      mexicoDate.setHours(0, 0, 0, 0);
-      const startDate = this.convertToUTC(mexicoDate, 'America/Mexico_City');
+      const inputDate = new Date(date);
+      const utcDate = new Date(Date.UTC(inputDate.getUTCFullYear(), inputDate.getUTCMonth(), inputDate.getUTCDate()));
       
-      mexicoDate.setHours(23, 59, 59, 999);
-      const endDate = this.convertToUTC(mexicoDate, 'America/Mexico_City');
+      const startDate = new Date(utcDate);
+      startDate.setUTCHours(0, 0, 0, 0);
+      
+      const endDate = new Date(utcDate);
+      endDate.setUTCHours(23, 59, 59, 999);
 
-      console.log("startDate", startDate);
-      console.log("endDate", endDate);
+      console.log("startDate", startDate.toISOString());
+      console.log("endDate", endDate.toISOString());
       
       whereClause = {
         createdAt: {
