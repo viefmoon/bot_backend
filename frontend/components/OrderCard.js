@@ -281,18 +281,22 @@ const formatDateToMexicoTime = (dateString, dateOnly = false) => {
   if (!dateString) return "N/A";
   const date = new Date(dateString);
   if (isNaN(date.getTime())) return "Fecha inválida";
-  const options = {
-    timeZone: "America/Mexico_City",
-    year: "numeric",
-    month: "short",
-    day: "numeric",
-  };
-  if (!dateOnly) {
-    options.hour = "2-digit";
-    options.minute = "2-digit";
-    options.hour12 = true;
+  
+  // Convertir a la zona horaria de México
+  const mexicoDate = new Date(date.toLocaleString("en-US", {timeZone: "America/Mexico_City"}));
+  
+  const day = mexicoDate.getDate().toString().padStart(2, '0');
+  const month = (mexicoDate.getMonth() + 1).toString().padStart(2, '0');
+  const year = mexicoDate.getFullYear();
+  
+  if (dateOnly) {
+    return `${day}/${month}/${year}`;
   }
-  return date.toLocaleString("es-MX", options);
+  
+  const hours = mexicoDate.getHours().toString().padStart(2, '0');
+  const minutes = mexicoDate.getMinutes().toString().padStart(2, '0');
+  
+  return `${day}/${month}/${year} ${hours}:${minutes}`;
 };
 
 export default OrderCard;
