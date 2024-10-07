@@ -38,7 +38,8 @@ export class OrderService {
     
     if (date) {
       // Parsear la fecha asumiendo que ya está en hora de México
-      const mexicoDate = DateTime.fromFormat(date, 'dd/LL/yyyy');
+      const mexicoDate = DateTime.fromISO(date, { zone: 'America/Mexico_City' });
+      
       
       // Definir el inicio y fin del día en UTC
       const startDate = mexicoDate.startOf('day').toUTC();
