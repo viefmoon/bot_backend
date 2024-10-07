@@ -5,28 +5,27 @@ import {
   getStatusColor,
 } from "../utils/orderUtils";
 import { formatDateToMexicoTime } from "../utils/dateUtils";
+import axios from "axios";
 
 const CustomerOrdersModal = ({ clientId, onClose }) => {
   const [orders, setOrders] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const fetchOrders = async () => {
+    const fetchClientOrders = async () => {
       try {
-        const response = await fetch(`/api/customer_orders/${clientId}`);
-        if (!response.ok) {
-          throw new Error("Error al obtener los pedidos del cliente");
-        }
-        const data = await response.json();
-        setOrders(data);
+        const response = await axios.get(
+          `/api/customer_orders?clientId=${clientId}`
+        );
+        setOrders(response.data);
       } catch (error) {
-        console.error("Error:", error);
+        console.error("Error al obtener los pedidos del cliente:", error);
       } finally {
         setIsLoading(false);
       }
     };
 
-    fetchOrders();
+    fetchClientOrders();
   }, [clientId]);
 
   const renderPizzaIngredients = (ingredients) => {
