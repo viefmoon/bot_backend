@@ -46,7 +46,7 @@ export default function AddressForm({
             name="pickupName"
             value={formData.pickupName}
             onChange={handleChange}
-            className="w-full p-1 text-sm border rounded-md border-gray-300 focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+            className="w-full p-1.5 text-sm border rounded-md border-gray-300 focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
           />
           {formErrors.pickupName && (
             <p className="mt-0.5 text-xs text-red-600">{formErrors.pickupName}</p>
@@ -73,7 +73,7 @@ export default function AddressForm({
             name="streetAddress"
             value={formData.streetAddress}
             onChange={handleChange}
-            className="w-full p-1 text-sm border rounded-md border-gray-300 focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+            className="w-full p-1.5 text-sm border rounded-md border-gray-300 focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
             required
           />
         </div>
@@ -96,7 +96,7 @@ export default function AddressForm({
             name="additionalDetails"
             value={formData.additionalDetails}
             onChange={handleChange}
-            className="w-full p-1 text-sm border border-gray-300 rounded-md focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+            className="w-full p-1.5 text-sm border border-gray-300 rounded-md focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
             rows="2"
             placeholder="ej. entre calles, puntos de referencia"
           ></textarea>
