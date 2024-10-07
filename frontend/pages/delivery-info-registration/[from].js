@@ -16,6 +16,7 @@ export default function DeliveryInfoRegistration() {
   const [selectedLocation, setSelectedLocation] = useState(null);
   const [address, setAddress] = useState("");
   const [formData, setFormData] = useState({
+    pickupName: "",
     streetAddress: "",
     neighborhood: "",
     postalCode: "",
@@ -25,7 +26,6 @@ export default function DeliveryInfoRegistration() {
     latitude: "",
     longitude: "",
     additionalDetails: "",
-    pickupName: "",
     geocodedAddress: "",
   });
   const [formErrors, setFormErrors] = useState({});
@@ -75,6 +75,7 @@ export default function DeliveryInfoRegistration() {
         console.log("response.data", response.data);
 
         const formattedData = {
+          pickupName: response.data.pickupName || "",
           streetAddress: response.data.streetAddress || "",
           neighborhood: response.data.neighborhood || "",
           postalCode: response.data.postalCode || "",
@@ -241,21 +242,17 @@ export default function DeliveryInfoRegistration() {
     addressDetails.streetAddress =
       streetName + (streetNumber ? ` ${streetNumber}` : "");
 
-    // Añadir geocodedAddress
-    addressDetails.geocodedAddress = addressComponents.map(component => component.long_name).join(', ');
-
     return addressDetails;
   };
 
   const validateForm = () => {
     const errors = {};
-    if (!formData.streetAddress.trim())
-      errors.streetAddress = "La dirección completa es obligatoria";
+    if (!formData.pickupName.trim()) errors.pickupName = "El nombre del cliente es obligatorio";
+    if (!formData.streetAddress.trim()) errors.streetAddress = "La dirección completa es obligatoria";
     if (!formData.city.trim()) errors.city = "La ciudad es obligatoria";
     if (!formData.state.trim()) errors.state = "El estado es obligatorio";
     if (!formData.country.trim()) errors.country = "El país es obligatorio";
-    if (!formData.postalCode.trim())
-      errors.postalCode = "El código postal es obligatorio";
+    if (!formData.postalCode.trim()) errors.postalCode = "El código postal es obligatorio";
     return errors;
   };
 
@@ -284,8 +281,8 @@ export default function DeliveryInfoRegistration() {
         console.log("CustomerDeliveryInfo guardado:", response.data);
         // Enviar mensaje de confirmación por WhatsApp
         const mensaje = isUpdating
-          ? `Tu información de entrega ha sido actualizada exitosamente. Tu dirección registrada es: ${response.data.streetAddress}. Gracias!`
-          : `Tu información de entrega ha sido guardada exitosamente. Tu dirección registrada es: ${response.data.streetAddress}. Gracias!`;
+          ? `Hola ${formData.pickupName}, tu información de entrega ha sido actualizada exitosamente. Tu dirección registrada es: ${response.data.streetAddress}. Gracias!`
+          : `Hola ${formData.pickupName}, tu información de entrega ha sido guardada exitosamente. Tu dirección registrada es: ${response.data.streetAddress}. Gracias!`;
 
         await sendWhatsAppMessage(clientId, mensaje);
 

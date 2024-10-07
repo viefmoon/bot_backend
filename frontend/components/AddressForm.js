@@ -5,6 +5,7 @@ export default function AddressForm({
   address,
   formData,
   setFormData,
+  formErrors,
 }) {
   useEffect(() => {
     if (selectedLocation && typeof address === "string") {
@@ -108,9 +109,10 @@ export default function AddressForm({
         </div>
       </div>
 
-      <div className="mb-4">
+      {/* Add this new field for pickupName */}
+      <div>
         <label htmlFor="pickupName" className="block text-sm font-medium text-gray-700">
-          Nombre para recolección
+          Nombre del cliente
         </label>
         <input
           type="text"
