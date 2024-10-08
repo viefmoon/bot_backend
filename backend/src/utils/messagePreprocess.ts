@@ -444,7 +444,7 @@ export async function preprocessMessages(messages: any[]): Promise<
         return preprocessedContent;
       } else {
         return {
-          text: parsedResult.message,
+          text: `${parsedResult.message} Recuerda que puedes solicitarme el menú disponible o revisar el catálogo en WhatsApp.`,
           isDirectResponse: true,
           isRelevant: true,
         };
