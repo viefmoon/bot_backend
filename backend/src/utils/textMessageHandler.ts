@@ -107,7 +107,7 @@ export async function handleTextMessage(
     relevantChatHistory = JSON.parse(customer.relevantChatHistory);
   }
   const restartPhrases = [
-    "olvida el pasado",
+    "olvida lo anterior",
     "reinicia la conversación",
     "borra el historial",
     "empecemos de nuevo",

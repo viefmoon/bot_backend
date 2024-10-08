@@ -104,7 +104,7 @@ async function handleIncomingWhatsAppMessage(
 
     await sendWhatsAppMessage(
       from,
-      `Antes de continuar, necesitamos que registres tu información de entrega. Por favor, usa este enlace: ${registrationLink}\n\nEste enlace es válido por un tiempo limitado por razones de seguridad.`
+      `¡Hola! 👋 Antes de continuar, necesitamos que registres tu información de entrega. 📝\n\nPor favor, usa este enlace: 🔗 ${registrationLink}\n\n⚠️ Este enlace es válido por un tiempo limitado por razones de seguridad. 🔒`
     );
     return;
   }

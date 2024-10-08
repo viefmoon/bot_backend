@@ -104,7 +104,6 @@ Envía un mensaje a la vez y espera la respuesta antes del siguiente para evitar
 `;
 
 export const CHANGE_DELIVERY_INFO_MESSAGE = (updateLink: string) => `
-Para actualizar tu información de entrega, por favor utiliza este enlace: ${updateLink}
-
-Este enlace es válido por un tiempo limitado por razones de seguridad.
-`;
+🚚 ¡Actualiza tu información de entrega! 📝
+🔗 Por favor, utiliza este enlace para hacer cambios: ${updateLink}
+⏳ ¡Ojo! Este enlace tiene validez limitada por motivos de seguridad. 🔒`;
