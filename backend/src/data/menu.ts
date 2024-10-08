@@ -125,6 +125,7 @@ async function getUnavailableItems(): Promise<string> {
           include: [
             {
               model: Availability,
+              as: "availability",
               where: { available: false },
             },
           ],
@@ -135,6 +136,7 @@ async function getUnavailableItems(): Promise<string> {
           include: [
             {
               model: Availability,
+              as: "availability",
               where: { available: false },
             },
           ],
@@ -149,6 +151,7 @@ async function getUnavailableItems(): Promise<string> {
               include: [
                 {
                   model: Availability,
+                  as: "availability",
                   where: { available: false },
                 },
               ],
