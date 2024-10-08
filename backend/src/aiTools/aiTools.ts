@@ -171,7 +171,8 @@ const verifyOrderItemsTool = {
         },
         message: {
           type: "string",
-          description: "Mensaje con los campos no disponibles.",
+          description:
+            "Mensaje amigable explicando el resultado de la verificación, solo requerido cuando success es false.",
         },
       },
       required: ["success", "message"],
