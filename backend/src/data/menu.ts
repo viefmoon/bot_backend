@@ -6,7 +6,7 @@ import {
   Modifier,
   Availability,
 } from "../models";
-
+import { Op } from "sequelize";
 const menu: string = `
 🍽️ ¡Este es nuestro menú! 🍽️
 
@@ -118,6 +118,8 @@ async function getUnavailableItems(): Promise<string> {
       include: [
         {
           model: Availability,
+          where: { available: false },
+          required: false,
         },
         {
           model: ProductVariant,
@@ -126,8 +128,10 @@ async function getUnavailableItems(): Promise<string> {
             {
               model: Availability,
               where: { available: false },
+              required: true,
             },
           ],
+          required: false,
         },
         {
           model: PizzaIngredient,
@@ -136,8 +140,10 @@ async function getUnavailableItems(): Promise<string> {
             {
               model: Availability,
               where: { available: false },
+              required: true,
             },
           ],
+          required: false,
         },
         {
           model: ModifierType,
@@ -150,12 +156,23 @@ async function getUnavailableItems(): Promise<string> {
                 {
                   model: Availability,
                   where: { available: false },
+                  required: true,
                 },
               ],
+              required: false,
             },
           ],
+          required: false,
         },
       ],
+      where: {
+        [Op.or]: [
+          { "$Availability.available$": false },
+          { "$productVariants.Availability.available$": false },
+          { "$pizzaIngredients.Availability.available$": false },
+          { "$modifierTypes.modifiers.Availability.available$": false },
+        ],
+      },
     });
     console.log("productos no disponibles", JSON.stringify(products));
 
