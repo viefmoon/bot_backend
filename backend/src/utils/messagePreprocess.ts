@@ -372,9 +372,10 @@ async function verifyOrderItems(
     content: JSON.stringify({
       instructions: [
         "Analiza detalladamente el producto solicitado y verifica si se puede construir el producto en base a su menu disponible para la creacion.",
-        "Permite modificaciones que eliminen ingredientes estándar sin (por ejemplo, 'sin jitomate', 'sin cebolla'), considera estas modificaciones como válidas y no las marques como errores.",
-        "Solo marca como error si se intenta añadir ingredientes que no están en Menu disponible para la creacion.",
+        "Permite modificaciones que eliminen ingredientes estándar (por ejemplo, 'sin jitomate', 'sin cebolla'), considera estas modificaciones como válidas y no las marques como errores.",
+        "Marca como error si se intenta añadir ingredientes que no están en 'Menu disponible para la creacion'.",
         "Si hay discrepancias por adición de ingredientes no listados, indica específicamente cuáles.",
+        "Verifica que todos los ingredientes mencionados en 'Producto solicitado' estén en 'Menu disponible para la creacion', excepto los que se piden eliminar.",
       ],
     }),
   };
