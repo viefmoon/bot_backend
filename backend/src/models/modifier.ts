@@ -1,6 +1,7 @@
 import { DataTypes, Model, Optional } from "sequelize";
 import { sequelize } from "../lib/db";
 import ModifierType from "./modifierType";
+import Availability from "./availability";
 
 interface ModifierAttributes {
   id: string;
@@ -29,6 +30,7 @@ class Modifier
 
   // Associations
   public modifierType?: ModifierType;
+  public availability?: Availability;
 }
 
 Modifier.init(

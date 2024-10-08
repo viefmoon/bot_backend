@@ -10,7 +10,6 @@ import {
 import { Order, Customer, RestaurantConfig } from "../models";
 import { sendWhatsAppMessage } from "../utils/whatsAppUtils";
 import Stripe from "stripe";
-import menuText from "../data/menu";
 import { OtpService } from "../services/otp.service";
 import {
   WAIT_TIMES_MESSAGE,
@@ -18,6 +17,7 @@ import {
   CHATBOT_HELP_MESSAGE,
   CHANGE_DELIVERY_INFO_MESSAGE,
 } from "../config/predefinedMessages";
+import getFullMenu from "../data/menu";
 
 const stripeClient = new Stripe(process.env.STRIPE_SECRET_KEY!, {
   apiVersion: "2024-06-20",
@@ -162,9 +162,11 @@ async function handleOnlinePayment(
 
 async function sendMenu(phoneNumber: string): Promise<boolean> {
   try {
-    await sendWhatsAppMessage(phoneNumber, menuText);
+    const fullMenu = await getFullMenu();
+    await sendWhatsAppMessage(phoneNumber, fullMenu);
     return true;
   } catch (error) {
+    console.error("Error al enviar el menú:", error);
     return false;
   }
 }

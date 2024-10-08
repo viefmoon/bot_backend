@@ -19,10 +19,9 @@ import {
   SYSTEM_MESSAGE_PHASE_1,
   SYSTEM_MESSAGE_PHASE_2,
 } from "../config/predefinedMessages";
+import getFullMenu from "src/data/menu";
 
 dotenv.config();
-
-const menu = require("../data/menu");
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
@@ -459,8 +458,9 @@ export async function preprocessMessages(messages: any[]): Promise<
         };
       }
     } else if (toolCall.function.name === "send_menu") {
+      const fullMenu = await getFullMenu();
       return {
-        text: menu,
+        text: fullMenu,
         isDirectResponse: true,
         isRelevant: false,
         confirmationMessage:

@@ -1,5 +1,6 @@
 import { DataTypes, Model, Optional } from "sequelize";
 import { sequelize } from "../lib/db";
+import Availability from "./availability";
 
 interface PizzaIngredientAttributes {
   id: string;
@@ -27,6 +28,9 @@ class PizzaIngredient
   // Timestamps
   public readonly createdAt!: Date;
   public readonly updatedAt!: Date;
+
+  // Associations
+  public availability?: Availability;
 }
 
 PizzaIngredient.init(

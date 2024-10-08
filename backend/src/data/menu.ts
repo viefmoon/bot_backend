@@ -1,3 +1,12 @@
+import {
+  Product,
+  ProductVariant,
+  PizzaIngredient,
+  ModifierType,
+  Modifier,
+  Availability,
+} from "../models";
+
 const menu: string = `
 🍽️ ¡Este es nuestro menú! 🍽️
 
@@ -100,6 +109,96 @@ Incluyen: Pollo a la plancha o jamón, chile morrón, elote, lechuga, jitomate, 
 14. Paloma ($80)
 15. Carajillo ($90)
 16. Tinto de verano ($90)
-17. Clericot ($80)`;
+17. Clericot ($80)
+`;
 
-export default menu;
+async function getUnavailableItems(): Promise<string> {
+  try {
+    const products = await Product.findAll({
+      include: [
+        { model: Availability },
+        { model: ProductVariant, include: [{ model: Availability }] },
+        { model: PizzaIngredient, include: [{ model: Availability }] },
+        {
+          model: ModifierType,
+          include: [{ model: Modifier, include: [{ model: Availability }] }],
+        },
+      ],
+    });
+
+    let unavailableItemsText = "\n\n❌ Productos no disponibles:\n";
+    let hasUnavailableItems = false;
+
+    for (const product of products) {
+      let productUnavailable = false;
+      let unavailableDetails = "";
+
+      if (product.availability && !product.availability.available) {
+        unavailableDetails += "  • Producto completo\n";
+        productUnavailable = true;
+      }
+
+      if (product.productVariants && product.productVariants.length > 0) {
+        const unavailableVariants = product.productVariants.filter(
+          (v) => v.availability && !v.availability.available
+        );
+        if (unavailableVariants.length > 0) {
+          unavailableDetails +=
+            "  • Variantes: " +
+            unavailableVariants.map((v) => v.name).join(", ") +
+            "\n";
+          productUnavailable = true;
+        }
+      }
+
+      if (product.pizzaIngredients && product.pizzaIngredients.length > 0) {
+        const unavailableIngredients = product.pizzaIngredients.filter(
+          (i) => i.availability && !i.availability.available
+        );
+        if (unavailableIngredients.length > 0) {
+          unavailableDetails +=
+            "  • Ingredientes: " +
+            unavailableIngredients.map((i) => i.name).join(", ") +
+            "\n";
+          productUnavailable = true;
+        }
+      }
+
+      if (product.modifierTypes) {
+        for (const modifierType of product.modifierTypes) {
+          if (modifierType.modifiers) {
+            const unavailableModifiers = modifierType.modifiers.filter(
+              (m) => m.availability && !m.availability.available
+            );
+            if (unavailableModifiers.length > 0) {
+              unavailableDetails +=
+                `  • ${modifierType.name}: ` +
+                unavailableModifiers.map((m) => m.name).join(", ") +
+                "\n";
+              productUnavailable = true;
+            }
+          }
+        }
+      }
+
+      if (productUnavailable) {
+        unavailableItemsText += `- ${product.name}:\n${unavailableDetails}`;
+        hasUnavailableItems = true;
+      }
+    }
+
+    return hasUnavailableItems
+      ? unavailableItemsText
+      : "\n\nTodos los productos están disponibles.";
+  } catch (error) {
+    console.error("Error al obtener los productos no disponibles:", error);
+    return "\n\nError al obtener los productos no disponibles.";
+  }
+}
+
+async function getFullMenu(): Promise<string> {
+  const unavailableItems = await getUnavailableItems();
+  return menu + unavailableItems;
+}
+
+export default getFullMenu;

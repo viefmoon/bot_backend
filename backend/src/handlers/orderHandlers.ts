@@ -281,35 +281,35 @@ export async function handleOrderCancellation(
     switch (order.status) {
       case "created":
         await order.destroy();
-        mensaje = `Tu orden #${order.dailyOrderNumber} ha sido eliminada exitosamente. Si tienes alguna pregunta, por favor contacta con el restaurante.`;
+        mensaje = `Tu orden #${order.dailyOrderNumber} ha sido eliminada exitosamente. ✅ Si tienes alguna pregunta, por favor contacta con el restaurante. 📞`;
         break;
       case "accepted":
         mensaje =
-          "Lo sentimos, pero esta orden ya no se puede cancelar porque ya fue aceptada por el restaurante. Por favor, contacta directamente con el restaurante si necesitas hacer cambios.";
+          "Lo sentimos, pero esta orden ya no se puede cancelar porque ya fue aceptada por el restaurante. ⚠️ Por favor, contacta directamente con el restaurante si necesitas hacer cambios. 📞";
         break;
       case "in_preparation":
         mensaje =
-          "Lo sentimos, pero esta orden ya está en preparación y no se puede cancelar. Por favor, contacta directamente con el restaurante si tienes alguna inquietud.";
+          "Lo sentimos, pero esta orden ya está en preparación y no se puede cancelar. 👨‍🍳 Por favor, contacta directamente con el restaurante si tienes alguna inquietud. 📞";
         break;
       case "prepared":
         mensaje =
-          "Lo sentimos, pero esta orden ya está preparada y no se puede cancelar. Por favor, contacta directamente con el restaurante para resolver cualquier problema.";
+          "Lo sentimos, pero esta orden ya está preparada y no se puede cancelar. 🍽️ Por favor, contacta directamente con el restaurante para resolver cualquier problema. 📞";
         break;
       case "in_delivery":
         mensaje =
-          "Lo sentimos, pero esta orden ya está en camino y no se puede cancelar. Por favor, contacta directamente con el restaurante o el repartidor si necesitas hacer algún cambio.";
+          "Lo sentimos, pero esta orden ya está en camino y no se puede cancelar. 🚚 Por favor, contacta directamente con el restaurante o el repartidor si necesitas hacer algún cambio. 📞";
         break;
       case "finished":
         mensaje =
-          "Esta orden ya ha sido finalizada y no se puede cancelar. Si tienes algún problema con tu pedido, por favor contacta directamente con el restaurante.";
+          "Esta orden ya ha sido finalizada y no se puede cancelar. ✨ Si tienes algún problema con tu pedido, por favor contacta directamente con el restaurante. 📞";
         break;
       case "canceled":
         mensaje =
-          "Esta orden ya ha sido cancelada previamente. No es necesario realizar ninguna acción adicional.";
+          "Esta orden ya ha sido cancelada previamente. ❌ No es necesario realizar ninguna acción adicional.";
         break;
       default:
         mensaje =
-          "Lo sentimos, pero no podemos procesar tu solicitud de cancelación en este momento. Por favor, contacta directamente con el restaurante para obtener ayuda.";
+          "Lo sentimos, pero no podemos procesar tu solicitud de cancelación en este momento. ⚠️ Por favor, contacta directamente con el restaurante para obtener ayuda. 📞";
     }
     await sendWhatsAppMessage(clientId, mensaje);
   } catch (error) {
@@ -326,7 +326,7 @@ export async function handleOrderModification(
   messageId: string
 ): Promise<void> {
   const customer = await Customer.findOne({ where: { clientId } });
-  await customer?.update({ relevantChatHistory: [] });
+  await customer.update({ relevantChatHistory: [] });
 
   try {
     const order = await Order.findOne({
@@ -363,35 +363,35 @@ export async function handleOrderModification(
     switch (order.status) {
       case "created":
         canModify = true;
-        mensaje = `Tu orden #${order.dailyOrderNumber} será eliminada y se generará una nueva preorden que podrás modificar. Por favor, espera mientras procesamos los cambios...`;
+        mensaje = `Tu orden #${order.dailyOrderNumber} será eliminada y se generará una nueva preorden que podrás modificar. ♻️ Por favor, espera mientras procesamos los cambios... ⏳`;
         break;
       case "accepted":
         mensaje =
-          "Lo sentimos, pero esta orden ya no se puede modificar debido a que ya fue aceptada. Por favor, contacta directamente con el restaurante si necesitas hacer cambios.";
+          "Lo sentimos, pero esta orden ya no se puede modificar debido a que ya fue aceptada. ✅ Por favor, contacta directamente con el restaurante si necesitas hacer cambios. 📞";
         break;
       case "in_preparation":
         mensaje =
-          "Lo sentimos, pero esta orden ya no se puede modificar debido a que ya esta en preparación. Por favor, contacta directamente con el restaurante si necesitas hacer cambios.";
+          "Lo sentimos, pero esta orden ya no se puede modificar debido a que ya está en preparación. 👨‍🍳 Por favor, contacta directamente con el restaurante si necesitas hacer cambios. 📞";
         break;
       case "prepared":
         mensaje =
-          "Lo sentimos, pero esta orden ya no se puede modificar debido a que ya esta preparada. Por favor, contacta directamente con el restaurante si necesitas hacer cambios.";
+          "Lo sentimos, pero esta orden ya no se puede modificar debido a que ya está preparada. 🍽️ Por favor, contacta directamente con el restaurante si necesitas hacer cambios. 📞";
         break;
       case "in_delivery":
         mensaje =
-          "Lo sentimos, pero esta orden ya no se puede modificar debido a que ya esta en camino. Por favor, contacta directamente con el restaurante o el repartidor si necesitas hacer cambios.";
+          "Lo sentimos, pero esta orden ya no se puede modificar debido a que ya está en camino. 🚚 Por favor, contacta directamente con el restaurante o el repartidor si necesitas hacer cambios. 📞";
         break;
       case "finished":
         mensaje =
-          "Lo sentimos, pero esta orden ya no se puede modificar debido a que ya fue finalizada. Por favor, contacta directamente con el restaurante si necesitas hacer cambios.";
+          "Lo sentimos, pero esta orden ya no se puede modificar debido a que ya fue finalizada. ✨ Por favor, contacta directamente con el restaurante si necesitas hacer cambios. 📞";
         break;
       case "canceled":
         mensaje =
-          "Lo sentimos, pero esta orden ya no se puede modificar debido a que ya fue cancelada. Por favor, contacta directamente con el restaurante si necesitas hacer cambios.";
+          "Lo sentimos, pero esta orden ya no se puede modificar debido a que ya fue cancelada. ❌ Por favor, contacta directamente con el restaurante si necesitas hacer cambios. 📞";
         break;
       default:
         mensaje =
-          "Lo sentimos, pero no podemos procesar tu solicitud de modificación en este momento. Por favor, contacta directamente con el restaurante para obtener ayuda.";
+          "Lo sentimos, pero no podemos procesar tu solicitud de modificación en este momento. ⚠️ Por favor, contacta directamente con el restaurante para obtener ayuda. 📞";
     }
 
     await sendWhatsAppMessage(clientId, mensaje);

@@ -3,6 +3,7 @@ import { sequelize } from "../lib/db";
 import ProductVariant from "./productVariant";
 import ModifierType from "./modifierType";
 import PizzaIngredient from "./pizzaIngredient";
+import Availability from "./availability";
 
 interface ProductAttributes {
   id: string;
@@ -31,6 +32,7 @@ class Product
   public readonly updatedAt!: Date;
 
   //associations
+  public availability?: Availability;
   public productVariants?: ProductVariant[];
   public modifierTypes?: ModifierType[];
   public pizzaIngredients?: PizzaIngredient[];

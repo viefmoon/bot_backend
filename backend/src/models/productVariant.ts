@@ -1,5 +1,6 @@
 import { DataTypes, Model, Optional } from "sequelize";
 import { sequelize } from "../lib/db";
+import Availability from "./availability";
 interface ProductVariantAttributes {
   id: string;
   name: string;
@@ -27,6 +28,8 @@ class ProductVariant
 
   public readonly createdAt!: Date;
   public readonly updatedAt!: Date;
+
+  public availability?: Availability;
 }
 
 ProductVariant.init(
