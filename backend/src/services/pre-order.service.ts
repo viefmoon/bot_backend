@@ -452,7 +452,7 @@ export class PreOrderService {
           include: [
             { model: Product, as: "Product" },
             { model: ProductVariant, as: "ProductVariant" },
-            { model: SelectedPizzaIngredient, as: "SelectedPizzaIngredients" },
+            { model: SelectedPizzaIngredient, as: "selectedPizzaIngredients" },
             { model: SelectedModifier, as: "SelectedModifiers" },
           ],
         },
