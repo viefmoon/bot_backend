@@ -453,7 +453,7 @@ export class PreOrderService {
             { model: Product, as: "Product" },
             { model: ProductVariant, as: "ProductVariant" },
             { model: SelectedPizzaIngredient, as: "selectedPizzaIngredients" },
-            { model: SelectedModifier, as: "SelectedModifiers" },
+            { model: SelectedModifier, as: "selectedModifiers" },
           ],
         },
       ],
