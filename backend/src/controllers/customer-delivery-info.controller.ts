@@ -59,10 +59,14 @@ export class CustomerDeliveryInfoController {
         scheduledDeliveryTime: existingPreOrder.scheduledDeliveryTime,
       });
 
+      console.log("retornando updatedInfo", updatedInfo);
+
       return {
         updatedInfo,
       };
     }
+
+    console.log("retornando updatedInfo", updatedInfo);
 
     return updatedInfo;
   }
