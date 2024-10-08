@@ -370,7 +370,10 @@ async function verifyOrderItems(
     tool_choice: { type: "function", function: { name: "verify_order_items" } },
   });
 
-  console.log("response de verifyOrderItems", response);
+  console.log(
+    "response.choices[0].message.tool_calls?.[0].function.arguments",
+    response.choices[0].message.tool_calls?.[0].function.arguments
+  );
 
   const result = response.choices[0].message.tool_calls?.[0].function.arguments;
 
