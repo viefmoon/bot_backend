@@ -1,6 +1,6 @@
+import * as moment from "moment-timezone";
 import { Op } from "sequelize";
 import { Order } from "../models";
-import moment from "moment-timezone";
 
 export async function getNextDailyOrderNumber(): Promise<number> {
   try {
