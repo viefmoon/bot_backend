@@ -245,7 +245,7 @@ async function getUnavailableItems(): Promise<string> {
 
 async function getFullMenu(): Promise<string> {
   const unavailableItems = await getUnavailableItems();
-  return menu + unavailableItems;
+  return unavailableItems + menu; // Cambia el orden de concatenación
 }
 
 export default getFullMenu;
