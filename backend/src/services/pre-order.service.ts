@@ -18,8 +18,6 @@ export class PreOrderService {
     orderType: string;
     scheduledDeliveryTime?: string;
   }) {
-
-    console.log("orderDatadd", orderData);
     const { orderItems, clientId, orderType, scheduledDeliveryTime } =
       orderData;
     let totalCost = 0;
@@ -145,7 +143,7 @@ export class PreOrderService {
           item.selectedPizzaIngredients &&
           item.selectedPizzaIngredients.length > 0
         ) {
-          let totalIngredientValue = 0;
+          // Inicializar los valores de ingredientes por mitad
           let halfIngredientValue = { left: 0, right: 0 };
 
           for (const ingredient of item.selectedPizzaIngredients) {
@@ -154,7 +152,7 @@ export class PreOrderService {
             );
             if (!pizzaIngredient) {
               throw new Error(
-                `Ingrediente de pizza no encontrado en el menu: ${ingredient.pizzaIngredientId}`
+                `Ingrediente de pizza no encontrado en el menú: ${ingredient.pizzaIngredientId}`
               );
             }
             const ingredientValue =
@@ -163,16 +161,20 @@ export class PreOrderService {
                 : -pizzaIngredient.ingredientValue;
 
             if (ingredient.half === "full") {
-              totalIngredientValue += ingredientValue;
-            } else {
+              // Los ingredientes "full" contribuyen completamente a ambas mitades
+              halfIngredientValue.left += ingredientValue;
+              halfIngredientValue.right += ingredientValue;
+            } else if (
+              ingredient.half === "left" ||
+              ingredient.half === "right"
+            ) {
               halfIngredientValue[ingredient.half] += ingredientValue;
+            } else {
+              throw new Error(`Valor de mitad inválido: ${ingredient.half}`);
             }
           }
 
-          if (totalIngredientValue > 4) {
-            itemPrice += (totalIngredientValue - 4) * 10;
-          }
-
+          // Ahora, calcular el precio adicional por cada mitad
           for (const half in halfIngredientValue) {
             if (halfIngredientValue[half] > 4) {
               itemPrice += (halfIngredientValue[half] - 4) * 5;
@@ -245,7 +247,7 @@ export class PreOrderService {
                 ingredient.action === "remove"
                   ? `Sin ${pizzaIngredient.name}`
                   : ingredient.action === "add"
-                  ? `Con ${pizzaIngredient.name}`
+                  ? `${pizzaIngredient.name}`
                   : pizzaIngredient.name;
               if (ingredient.half === "full") {
                 pizzaIngredientNames.full.push(ingredientName);
@@ -282,7 +284,7 @@ export class PreOrderService {
       : `${config.estimatedDeliveryTime} minutos`;
 
     let messageContent =
-      "Aquí tienes el resumen de tu pedido, informame si tienes algun cambio o deseas agregar algun producto mas.\n\n";
+      "Informame si tienes algun cambio o deseas agregar algun producto mas.\n\n";
     let relevantMessageContent =
       "Resumen del pedido hasta este momento, informame si tienes algun cambio o deseas agregar algun producto mas.\n\n";
 
@@ -293,17 +295,13 @@ export class PreOrderService {
       deliveryInfo = orderDeliveryInfo.pickupName;
     }
 
-    messageContent += `🏠 *Información de ${
-      orderType === "delivery" ? "entrega" : "recolección"
+    messageContent += `${orderType === "delivery" ? "🚚" : "🏪"} *${
+      orderType === "delivery" ? "Domicilio" : "Nombre recolección"
     }*: ${deliveryInfo || "No disponible"}\n`;
-    relevantMessageContent += `Información de ${
-      orderType === "delivery" ? "entrega" : "recolección"
+    relevantMessageContent += `${
+      orderType === "delivery" ? "Domicilio" : "Nombre recolección"
     }: ${deliveryInfo || "No disponible"}\n`;
-    messageContent += `⏱️ *Tiempo estimado de ${
-      orderType === "pickup"
-        ? "recolección en el restaurante"
-        : "entrega a domicilio"
-    }: ${estimatedTime}*\n\n`;
+    messageContent += `⏱️ *Tiempo estimado: ${estimatedTime}*\n`;
 
     calculatedItems.forEach((item) => {
       messageContent += `- *${item.quantity}x ${item.nombre_producto}*: $${item.precio_total_orderItem}\n`;
@@ -317,29 +315,35 @@ export class PreOrderService {
         messageContent += "  🔸 Ingredientes de pizza:\n";
         relevantMessageContent += "  Ingredientes de pizza:\n";
 
-        if (item.ingredientes_pizza.full.length > 0) {
-          messageContent += `    Completa: ${item.ingredientes_pizza.full.join(
-            ", "
+        let leftIngredients = [...item.ingredientes_pizza.left];
+        let rightIngredients = [...item.ingredientes_pizza.right];
+
+        // Agregar ingredientes "full" a ambas mitades
+        item.ingredientes_pizza.full.forEach((ingredient) => {
+          leftIngredients.push(ingredient);
+          rightIngredients.push(ingredient);
+        });
+
+        // Formatear los ingredientes
+        const formatIngredients = (ingredients) => ingredients.join(", ");
+
+        if (
+          item.ingredientes_pizza.full.length > 0 &&
+          leftIngredients.length === rightIngredients.length
+        ) {
+          // Si solo hay ingredientes "full", no separamos por mitades
+          messageContent += `    ${formatIngredients(leftIngredients)}\n`;
+          relevantMessageContent += `    ${formatIngredients(
+            leftIngredients
           )}\n`;
-          relevantMessageContent += `    Completa: ${item.ingredientes_pizza.full.join(
-            ", "
-          )}\n`;
-        }
-        if (item.ingredientes_pizza.left.length > 0) {
-          messageContent += `    Mitad izquierda: ${item.ingredientes_pizza.left.join(
-            ", "
-          )}\n`;
-          relevantMessageContent += `    Mitad izquierda: ${item.ingredientes_pizza.left.join(
-            ", "
-          )}\n`;
-        }
-        if (item.ingredientes_pizza.right.length > 0) {
-          messageContent += `    Mitad derecha: ${item.ingredientes_pizza.right.join(
-            ", "
-          )}\n`;
-          relevantMessageContent += `    Mitad derecha: ${item.ingredientes_pizza.right.join(
-            ", "
-          )}\n`;
+        } else {
+          // Si hay ingredientes en mitades o una combinación, usamos el formato con separación
+          messageContent += `    (${formatIngredients(
+            leftIngredients
+          )} / ${formatIngredients(rightIngredients)})\n`;
+          relevantMessageContent += `    (${formatIngredients(
+            leftIngredients
+          )} / ${formatIngredients(rightIngredients)})\n`;
         }
       }
 

@@ -19,8 +19,8 @@ import { getNextDailyOrderNumber } from "../utils/orderUtils";
 import { CreateOrderDto } from "../dto/create-order.dto";
 import { PizzaHalf, IngredientAction } from "../models/selectedPizzaIngredient";
 import { sendWhatsAppMessage } from "../utils/whatsAppUtils";
-import { Op } from 'sequelize';
-import { DateTime } from 'luxon';
+import { Op } from "sequelize";
+import { DateTime } from "luxon";
 
 export type OrderStatus =
   | "created"
@@ -35,27 +35,29 @@ export type OrderStatus =
 export class OrderService {
   async getOrders(date?: string, status?: OrderStatus) {
     let whereClause: any = {};
-    
+
     if (date) {
       // Parsear la fecha asumiendo que ya está en hora de México
-      const mexicoDate = DateTime.fromISO(date, { zone: 'America/Mexico_City' });
-      
+      const mexicoDate = DateTime.fromISO(date, {
+        zone: "America/Mexico_City",
+      });
+
       // Definir el inicio y fin del día en UTC
-      const startDate = mexicoDate.startOf('day').toUTC();
-      const endDate = mexicoDate.endOf('day').toUTC();
-      
+      const startDate = mexicoDate.startOf("day").toUTC();
+      const endDate = mexicoDate.endOf("day").toUTC();
+
       console.log("startDate", startDate.toISO());
       console.log("endDate", endDate.toISO());
-      
+
       whereClause.createdAt = {
-        [Op.between]: [startDate.toJSDate(), endDate.toJSDate()]
+        [Op.between]: [startDate.toJSDate(), endDate.toJSDate()],
       };
     }
-  
+
     if (status) {
       whereClause.status = status;
     }
-  
+
     return Order.findAll({
       where: whereClause,
       order: [
@@ -337,7 +339,7 @@ export class OrderService {
                   spi.action === IngredientAction.remove
                     ? `Sin ${spi.PizzaIngredient.name}`
                     : spi.action === IngredientAction.add
-                    ? `Con ${spi.PizzaIngredient.name}`
+                    ? `${spi.PizzaIngredient.name}`
                     : spi.PizzaIngredient.name,
                 mitad: spi.half,
               })),
@@ -430,8 +432,12 @@ export class OrderService {
   }
 
   private convertToUTC(date: Date, fromTimeZone: string): Date {
-    const localDate = new Date(date.toLocaleString('en-US', { timeZone: fromTimeZone }));
-    const utcDate = new Date(localDate.getTime() + localDate.getTimezoneOffset() * 60000);
+    const localDate = new Date(
+      date.toLocaleString("en-US", { timeZone: fromTimeZone })
+    );
+    const utcDate = new Date(
+      localDate.getTime() + localDate.getTimezoneOffset() * 60000
+    );
     return utcDate;
   }
 }
