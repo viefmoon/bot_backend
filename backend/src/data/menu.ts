@@ -117,11 +117,26 @@ async function getUnavailableItems(): Promise<string> {
     const products = await Product.findAll({
       include: [
         { model: Availability },
-        { model: ProductVariant, include: [{ model: Availability }] },
-        { model: PizzaIngredient, include: [{ model: Availability }] },
+        {
+          model: ProductVariant,
+          as: "productVariants",
+          include: [{ model: Availability }],
+        },
+        {
+          model: PizzaIngredient,
+          as: "pizzaIngredients",
+          include: [{ model: Availability }],
+        },
         {
           model: ModifierType,
-          include: [{ model: Modifier, include: [{ model: Availability }] }],
+          as: "modifierTypes",
+          include: [
+            {
+              model: Modifier,
+              as: "modifiers",
+              include: [{ model: Availability }],
+            },
+          ],
         },
       ],
     });
