@@ -118,7 +118,6 @@ async function getUnavailableItems(): Promise<string> {
       include: [
         {
           model: Availability,
-          as: "availability",
         },
         {
           model: ProductVariant,
@@ -181,7 +180,7 @@ async function getUnavailableItems(): Promise<string> {
       let productUnavailable = false;
       let unavailableDetails = "";
 
-      if (product.availability && !product.availability.available) {
+      if (product.Availability && !product.Availability.available) {
         unavailableDetails += "  • Producto completo\n";
         productUnavailable = true;
       }

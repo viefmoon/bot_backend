@@ -32,7 +32,7 @@ class Product
   public readonly updatedAt!: Date;
 
   //associations
-  public availability?: Availability;
+  public Availability?: Availability;
   public productVariants?: ProductVariant[];
   public modifierTypes?: ModifierType[];
   public pizzaIngredients?: PizzaIngredient[];
