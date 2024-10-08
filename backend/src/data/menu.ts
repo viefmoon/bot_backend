@@ -118,6 +118,7 @@ async function getUnavailableItems(): Promise<string> {
       include: [
         {
           model: Availability,
+          as: "availability",
         },
         {
           model: ProductVariant,
