@@ -350,7 +350,9 @@ async function verifyOrderItems(
     role: "system",
     content: JSON.stringify({
       instructions: [
-        "Analiza parte a parte cada orderItem y verifica si el orderitem se puede construir con los IDs de relevantMenuItems dentro del orderItem, si no se puede o no hay la informacion necesaria devuelve un mensaje indicando el porque.",
+        "Analiza detalladamente cada orderItem y verifica si se puede construir completamente con los IDs de relevantMenuItems.",
+        "Comprueba que todos los ingredientes y características mencionados en la descripción estén presentes en relevantMenuItems.",
+        "Si falta algún elemento o hay discrepancias, indica específicamente qué falta o no coincide.",
       ],
     }),
   };
