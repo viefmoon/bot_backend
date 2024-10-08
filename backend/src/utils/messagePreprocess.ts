@@ -352,6 +352,7 @@ async function verifyOrderItems(
       instructions: [
         "Analiza detalladamente cada orderItem y verifica si se puede construir completamente con los IDs de relevantMenuItems.",
         "Comprueba que todos los ingredientes y características mencionados en la descripción estén presentes en relevantMenuItems.",
+        "Permite observaciones para quitar ingredientes, pero verifica que no se añadan ingredientes no listados.",
         "Si falta algún elemento o hay discrepancias, indica específicamente qué falta o no coincide.",
       ],
     }),
@@ -450,7 +451,7 @@ export async function preprocessMessages(messages: any[]): Promise<
         return preprocessedContent;
       } else {
         return {
-          text: `${parsedResult.message} Recuerda que puedes solicitarme el menú disponible o revisar el catálogo en WhatsApp.`,
+          text: `${parsedResult.message} Recuerda que puedes solicitarme el menú disponible o revisar el catálogo en WhatsApp para revisar los productos disponibles.`,
           isDirectResponse: true,
           isRelevant: true,
         };
