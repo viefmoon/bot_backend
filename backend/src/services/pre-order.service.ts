@@ -9,6 +9,8 @@ import {
   CustomerDeliveryInfo,
   OrderDeliveryInfo,
   OrderItem,
+  SelectedPizzaIngredient,
+  SelectedModifier,
 } from "../models";
 import { sendWhatsAppInteractiveMessage } from "../utils/whatsAppUtils";
 
@@ -447,6 +449,12 @@ export class PreOrderService {
         {
           model: OrderItem,
           as: "orderItems",
+          include: [
+            { model: Product, as: "product" },
+            { model: ProductVariant, as: "productVariant" },
+            { model: SelectedPizzaIngredient, as: "selectedPizzaIngredients" },
+            { model: SelectedModifier, as: "selectedModifiers" },
+          ],
         },
       ],
     });
