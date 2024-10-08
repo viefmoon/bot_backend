@@ -371,7 +371,10 @@ async function verifyOrderItems(
     tool_choice: { type: "function", function: { name: "verify_order_items" } },
   });
 
-  console.log("response de la funcion verify_order_items", response);
+  console.log(
+    "Respuesta de la función verify_order_items:",
+    response.choices[0].message.tool_calls?.[0].function.arguments
+  );
 
   return (
     response.choices[0].message.content || "No se pudo verificar el pedido."
