@@ -155,6 +155,30 @@ const preprocessOrderTool = [
   },
 ];
 
+const verifyOrderItemsTool = {
+  type: "function",
+  function: {
+    strict: true,
+    name: "verify_order_items",
+    description: "Verifica los items del pedido y su disponibilidad",
+    parameters: {
+      type: "object",
+      properties: {
+        success: {
+          type: "boolean",
+          description:
+            "Estado de la verificación del pedido. true si es exitoso, false si hay un error.",
+        },
+        message: {
+          type: "string",
+          description: "Mensaje con los campos no disponibles.",
+        },
+      },
+      required: ["success", "message"],
+    },
+  },
+};
+
 const selectProductsToolClaude = {
   name: "select_products",
   description:
@@ -261,4 +285,5 @@ export {
   preprocessOrderTool,
   selectProductsToolClaude,
   sendMenuTool,
+  verifyOrderItemsTool,
 };

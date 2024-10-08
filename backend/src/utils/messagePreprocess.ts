@@ -9,7 +9,11 @@ import {
 import OpenAI from "openai";
 import { ChatCompletionMessageParam } from "openai/resources/chat";
 import { ratio } from "fuzzball";
-import { preprocessOrderTool, sendMenuTool } from "../aiTools/aiTools";
+import {
+  preprocessOrderTool,
+  sendMenuTool,
+  verifyOrderItemsTool,
+} from "../aiTools/aiTools";
 import * as dotenv from "dotenv";
 
 dotenv.config();
@@ -362,11 +366,13 @@ async function verifyOrderItems(
   const response = await openai.chat.completions.create({
     model: "gpt-4o-mini",
     messages: [systemMessage, userMessage],
+    tools: [verifyOrderItemsTool] as any,
+    parallel_tool_calls: false,
+    tool_choice: { type: "function", function: { name: "verify_order_items" } },
   });
-  console.log(
-    "response.choices[0].message.content",
-    response.choices[0].message.content
-  );
+
+  console.log("response de la funcion verify_order_items", response);
+
   return (
     response.choices[0].message.content || "No se pudo verificar el pedido."
   );
