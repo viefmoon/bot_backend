@@ -175,6 +175,7 @@ const verifyOrderItemsTool = {
         },
       },
       required: ["success", "message"],
+      additionalProperties: false,
     },
   },
 };
