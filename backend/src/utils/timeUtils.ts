@@ -44,7 +44,7 @@ async function verificarHorarioAtencion(): Promise<boolean> {
 
     const horarioNormal = {
       apertura: 0 * 60, // 6:00 PM
-      cierre: 23 * 60, // 11:00 PM
+      cierre: 24 * 60, // 11:00 PM
     };
 
     const horarioDomingo = {
