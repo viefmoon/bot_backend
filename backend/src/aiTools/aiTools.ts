@@ -160,18 +160,19 @@ const verifyOrderItemsTool = {
   function: {
     strict: true,
     name: "verify_order_items",
-    description: "Verifica construccion de orderItems",
+    description: "Verifica que se puedan construir los orderItems",
     parameters: {
       type: "object",
       properties: {
         success: {
           type: "boolean",
           description:
-            "Estado de la verificación del pedido. true si es exitoso, false si hay un error.",
+            "Estado de la verificación del pedido. true si es exitoso, false si hay un faltante.",
         },
         message: {
           type: "string",
-          description: "Mensaje explicando el resultado de la verificación.",
+          description:
+            "Mensaje explicando el resultado de la verificación y los faltantes.",
         },
       },
       required: ["success", "message"],
