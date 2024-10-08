@@ -448,7 +448,7 @@ export class PreOrderService {
       include: [
         {
           model: OrderItem,
-          as: "orderItems",
+          as: "preOrderItems",
           include: [
             { model: Product, as: "product" },
             { model: ProductVariant, as: "productVariant" },
