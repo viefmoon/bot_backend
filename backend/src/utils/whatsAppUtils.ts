@@ -20,27 +20,60 @@ interface WhatsAppInteractiveMessage {
 export async function sendWhatsAppMessage(
   phoneNumber: string,
   message: string
-): Promise<string | null> {
+): Promise<string[] | null> {
+  // Cambiar el tipo de retorno a un array de strings
   try {
-    const payload: WhatsAppMessage = {
-      messaging_product: "whatsapp",
-      to: phoneNumber,
-      type: "text",
-      text: { body: message },
-    };
+    const messageIds: string[] = []; // Array para almacenar los IDs de los mensajes enviados
 
-    const response = await axios.post<{ messages: [{ id: string }] }>(
-      `https://graph.facebook.com/v19.0/${process.env.WHATSAPP_PHONE_NUMBER_ID}/messages`,
-      payload,
-      {
-        headers: {
-          Authorization: `Bearer ${process.env.WHATSAPP_ACCESS_TOKEN}`,
-          "Content-Type": "application/json",
-        },
-      }
-    );
+    while (message.length > 4096) {
+      const part = message.slice(0, 4096); // Obtener la primera parte del mensaje
+      message = message.slice(4096); // Reducir el mensaje original
 
-    return response.data.messages[0].id;
+      const payload: WhatsAppMessage = {
+        messaging_product: "whatsapp",
+        to: phoneNumber,
+        type: "text",
+        text: { body: part },
+      };
+
+      const response = await axios.post<{ messages: [{ id: string }] }>(
+        `https://graph.facebook.com/v19.0/${process.env.WHATSAPP_PHONE_NUMBER_ID}/messages`,
+        payload,
+        {
+          headers: {
+            Authorization: `Bearer ${process.env.WHATSAPP_ACCESS_TOKEN}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      messageIds.push(response.data.messages[0].id); // Almacenar el ID del mensaje enviado
+    }
+
+    // Enviar el mensaje restante si hay
+    if (message.length > 0) {
+      const payload: WhatsAppMessage = {
+        messaging_product: "whatsapp",
+        to: phoneNumber,
+        type: "text",
+        text: { body: message },
+      };
+
+      const response = await axios.post<{ messages: [{ id: string }] }>(
+        `https://graph.facebook.com/v19.0/${process.env.WHATSAPP_PHONE_NUMBER_ID}/messages`,
+        payload,
+        {
+          headers: {
+            Authorization: `Bearer ${process.env.WHATSAPP_ACCESS_TOKEN}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      messageIds.push(response.data.messages[0].id);
+    }
+
+    return messageIds; // Retornar los IDs de todos los mensajes enviados
   } catch (error) {
     console.error("Error al enviar mensaje de WhatsApp:", error);
     return null;
