@@ -160,7 +160,7 @@ const verifyOrderItemsTool = {
   function: {
     strict: true,
     name: "verify_order_items",
-    description: "Verifica que se puedan construir los orderItems",
+    description: "Verifica que se puedan construir productos solicitados",
     parameters: {
       type: "object",
       properties: {
