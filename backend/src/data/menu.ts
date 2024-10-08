@@ -118,8 +118,6 @@ async function getUnavailableItems(): Promise<string> {
       include: [
         {
           model: Availability,
-          where: { available: false },
-          required: false,
         },
         {
           model: ProductVariant,
@@ -167,7 +165,6 @@ async function getUnavailableItems(): Promise<string> {
       ],
       where: {
         [Op.or]: [
-          { "$Availability.available$": false },
           { "$productVariants.Availability.available$": false },
           { "$pizzaIngredients.Availability.available$": false },
           { "$modifierTypes.modifiers.Availability.available$": false },
@@ -237,6 +234,7 @@ async function getUnavailableItems(): Promise<string> {
       }
     }
 
+    // Asegúrate de que el retorno sea correcto
     return hasUnavailableItems
       ? unavailableItemsText
       : "\n\nTodos los productos están disponibles.";
