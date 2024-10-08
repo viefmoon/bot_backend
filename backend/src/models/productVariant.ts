@@ -29,7 +29,7 @@ class ProductVariant
   public readonly createdAt!: Date;
   public readonly updatedAt!: Date;
 
-  public availability?: Availability;
+  public Availability?: Availability;
 }
 
 ProductVariant.init(

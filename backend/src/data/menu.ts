@@ -181,13 +181,12 @@ async function getUnavailableItems(): Promise<string> {
       let unavailableDetails = "";
 
       if (product.Availability && !product.Availability.available) {
-        unavailableDetails += "  • Producto completo\n";
         productUnavailable = true;
       }
 
       if (product.productVariants && product.productVariants.length > 0) {
         const unavailableVariants = product.productVariants.filter(
-          (v) => v.availability && !v.availability.available
+          (v) => v.Availability && !v.Availability.available
         );
         if (unavailableVariants.length > 0) {
           unavailableDetails +=
@@ -200,7 +199,7 @@ async function getUnavailableItems(): Promise<string> {
 
       if (product.pizzaIngredients && product.pizzaIngredients.length > 0) {
         const unavailableIngredients = product.pizzaIngredients.filter(
-          (i) => i.availability && !i.availability.available
+          (i) => i.Availability && !i.Availability.available
         );
         if (unavailableIngredients.length > 0) {
           unavailableDetails +=
@@ -215,7 +214,7 @@ async function getUnavailableItems(): Promise<string> {
         for (const modifierType of product.modifierTypes) {
           if (modifierType.modifiers) {
             const unavailableModifiers = modifierType.modifiers.filter(
-              (m) => m.availability && !m.availability.available
+              (m) => m.Availability && !m.Availability.available
             );
             if (unavailableModifiers.length > 0) {
               unavailableDetails +=

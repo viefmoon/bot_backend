@@ -30,7 +30,7 @@ class Modifier
 
   // Associations
   public modifierType?: ModifierType;
-  public availability?: Availability;
+  public Availability?: Availability;
 }
 
 Modifier.init(

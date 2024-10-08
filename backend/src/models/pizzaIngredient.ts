@@ -30,7 +30,7 @@ class PizzaIngredient
   public readonly updatedAt!: Date;
 
   // Associations
-  public availability?: Availability;
+  public Availability?: Availability;
 }
 
 PizzaIngredient.init(
