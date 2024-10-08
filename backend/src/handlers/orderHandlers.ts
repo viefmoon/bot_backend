@@ -77,70 +77,76 @@ async function createOrderFromPreOrder(
     const { orden: newOrder } = await orderService.createOrder(orderData);
 
     const tipoOrdenTraducido =
-      orderType === "delivery"
-        ? "Entrega a domicilio"
-        : "Recolección en restaurante";
+      orderType === "delivery" ? "A domicilio 🚚" : "Recolección 🏪";
 
     let orderSummary = `🎉 *¡Tu orden #${newOrder.id} ha sido creada exitosamente!* 🎉\n\n`;
     orderSummary += `📞 *Telefono:* ${newOrder.telefono}\n`;
-    orderSummary += `🍽️ *Tipo:* ${tipoOrdenTraducido}\n`;
-    orderSummary += `🏠 *informacion de entrega:* ${newOrder.informacion_entrega}\n`;
-    orderSummary += `💰 *Precio total:* $${newOrder.precio_total}\n`;
     orderSummary += `📅 *Fecha de creación:* ${newOrder.fecha_creacion}\n`;
+    orderSummary += `🍽️ *Informacion de entrega :* ${tipoOrdenTraducido} - ${newOrder.informacion_entrega}\n`;
+    orderSummary += `⏱️ *Tiempo estimado:* ${newOrder.tiempoEstimado} minutos\n`;
+
     if (newOrder.horario_entrega_programado) {
-      orderSummary += `📅 *Fecha de entrega programada:* ${newOrder.horario_entrega_programado}\n`;
+      orderSummary += `📅 *Entrega programada:* ${newOrder.horario_entrega_programado}\n`;
     }
-    orderSummary += `⏱️ *Tiempo estimado de entrega:* ${newOrder.tiempoEstimado} minutos\n\n`;
-    orderSummary += `🛒 *Productos:*\n`;
+    orderSummary += `\n🛒 *Productos:*\n`;
     newOrder.productos.forEach((producto) => {
-      orderSummary += `   *${producto.nombre}* x${producto.cantidad} - $${producto.precio}\n`;
-      if (producto.modificadores.length > 0) {
-        orderSummary += `     *Modificadores:*\n`;
-        producto.modificadores.forEach((mod) => {
-          orderSummary += `      • ${mod.nombre} - $${mod.precio}\n`;
-        });
-      }
+      orderSummary += `- *${producto.cantidad}x ${producto.nombre}*: $${producto.precio}\n`;
+
       if (
         producto.ingredientes_pizza &&
         producto.ingredientes_pizza.length > 0
       ) {
-        orderSummary += `    *Ingredientes de pizza:*\n`;
+        orderSummary += "  🔸 Ingredientes de pizza:\n";
 
-        const ingredientesPorMitad: {
-          left: string[];
-          right: string[];
-          full: string[];
-        } = {
-          left: [],
-          right: [],
-          full: [],
+        const ingredientesPorMitad = {
+          left: producto.ingredientes_pizza
+            .filter((ing) => ing.mitad === "left")
+            .map((ing) => ing.nombre),
+          right: producto.ingredientes_pizza
+            .filter((ing) => ing.mitad === "right")
+            .map((ing) => ing.nombre),
+          full: producto.ingredientes_pizza
+            .filter((ing) => ing.mitad === "full")
+            .map((ing) => ing.nombre),
         };
 
-        producto.ingredientes_pizza.forEach((ing) => {
-          ingredientesPorMitad[
-            ing.mitad as keyof typeof ingredientesPorMitad
-          ].push(ing.nombre);
-        });
+        const leftIngredients = [
+          ...ingredientesPorMitad.left,
+          ...ingredientesPorMitad.full,
+        ];
+        const rightIngredients = [
+          ...ingredientesPorMitad.right,
+          ...ingredientesPorMitad.full,
+        ];
 
-        if (ingredientesPorMitad.full.length > 0) {
-          orderSummary += `      • ${ingredientesPorMitad.full.join(", ")}\n`;
-        }
+        const formatIngredients = (ingredients: string[]) =>
+          ingredients.join(", ");
 
         if (
-          ingredientesPorMitad.left.length > 0 ||
-          ingredientesPorMitad.right.length > 0
+          ingredientesPorMitad.full.length > 0 &&
+          leftIngredients.length === rightIngredients.length
         ) {
-          const mitadIzquierda = ingredientesPorMitad.left.join(", ");
-          const mitadDerecha = ingredientesPorMitad.right.join(", ");
-          orderSummary += `      • ${mitadIzquierda} / ${mitadDerecha}\n`;
+          orderSummary += `    ${formatIngredients(leftIngredients)}\n`;
+        } else {
+          orderSummary += `    (${formatIngredients(
+            leftIngredients
+          )} / ${formatIngredients(rightIngredients)})\n`;
         }
       }
-      if (producto.comments) {
-        orderSummary += `    💬 *Comentarios:* ${producto.comments}\n`;
+
+      if (producto.modificadores.length > 0) {
+        orderSummary += `  🔸 Modificadores: ${producto.modificadores
+          .map((mod) => mod.nombre)
+          .join(", ")}\n`;
       }
-      orderSummary += `\n`;
+
+      if (producto.comments) {
+        orderSummary += `  💬 Comentarios: ${producto.comments}\n`;
+      }
     });
-    orderSummary += `\n¡Gracias por tu pedido! 😊🍽️`;
+
+    orderSummary += `\n💰 *Total: $${newOrder.precio_total}*`;
+    orderSummary += `\n\n¡Gracias por tu pedido! 😊🍽️`;
     orderSummary += `\nEn unos momentos recibirás la confirmación de recepción por parte del restaurante.`;
 
     return { newOrder, orderSummary };
@@ -178,15 +184,11 @@ export async function handlePreOrderConfirmation(
 
     const interactiveOptions = {
       type: "list",
-      header: {
-        type: "text",
-        text: "Resumen del Pedido",
-      },
       body: {
         text: orderSummary,
       },
       footer: {
-        text: "Selecciona una opción:",
+        text: "Selecciona una opción si es necesario:",
       },
       action: {
         button: "Ver opciones",
@@ -246,7 +248,10 @@ export async function handlePreOrderDiscard(
     const preOrder = await PreOrder.findOne({ where: { messageId } });
 
     if (!preOrder) {
-      await sendWhatsAppMessage(clientId, "Esta preorden ya fue descartada.");
+      await sendWhatsAppMessage(
+        clientId,
+        "Esta preorden ya no esta disponible."
+      );
       return;
     }
     await preOrder.destroy();

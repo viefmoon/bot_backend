@@ -295,13 +295,13 @@ export class PreOrderService {
       deliveryInfo = orderDeliveryInfo.pickupName;
     }
 
-    messageContent += `${orderType === "delivery" ? "🚚" : "🏪"} *${
+    messageContent += `${orderType === "delivery" ? "🚚" : "🏬"} *${
       orderType === "delivery" ? "Domicilio" : "Nombre recolección"
     }*: ${deliveryInfo || "No disponible"}\n`;
     relevantMessageContent += `${
       orderType === "delivery" ? "Domicilio" : "Nombre recolección"
     }: ${deliveryInfo || "No disponible"}\n`;
-    messageContent += `⏱️ *Tiempo estimado: ${estimatedTime}*\n`;
+    messageContent += `⏱️ *Tiempo estimado*: ${estimatedTime}\n`;
 
     calculatedItems.forEach((item) => {
       messageContent += `- *${item.quantity}x ${item.nombre_producto}*: $${item.precio_total_orderItem}\n`;
