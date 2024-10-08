@@ -125,7 +125,6 @@ async function getUnavailableItems(): Promise<string> {
           include: [
             {
               model: Availability,
-              as: "availability",
               where: { available: false },
             },
           ],
@@ -136,7 +135,6 @@ async function getUnavailableItems(): Promise<string> {
           include: [
             {
               model: Availability,
-              as: "availability",
               where: { available: false },
             },
           ],
@@ -151,7 +149,6 @@ async function getUnavailableItems(): Promise<string> {
               include: [
                 {
                   model: Availability,
-                  as: "availability",
                   where: { available: false },
                 },
               ],
@@ -160,8 +157,7 @@ async function getUnavailableItems(): Promise<string> {
         },
       ],
     });
-
-    console.log("products unaviables", products);
+    console.log("productos no disponibles", JSON.stringify(products));
 
     let unavailableItemsText = "\n\n❌ Productos no disponibles:\n";
     let hasUnavailableItems = false;
