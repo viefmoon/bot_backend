@@ -360,6 +360,9 @@ async function verifyOrderItems(
     content: JSON.stringify(preprocessedContent.orderItems),
   };
 
+  console.log("systemMessage", systemMessage);
+  console.log("userMessage", userMessage);
+
   const response = await openai.chat.completions.create({
     model: "gpt-4o-mini",
     messages: [systemMessage, userMessage],
