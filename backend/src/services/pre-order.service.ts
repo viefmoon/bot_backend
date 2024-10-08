@@ -444,19 +444,6 @@ export class PreOrderService {
   }
 
   async getPreOrderById(preOrderId: string): Promise<PreOrder | null> {
-    return await PreOrder.findByPk(preOrderId, {
-      include: [
-        {
-          model: OrderItem,
-          as: "preOrderItems",
-          include: [
-            { model: Product, as: "Product" },
-            { model: ProductVariant, as: "ProductVariant" },
-            { model: SelectedPizzaIngredient, as: "selectedPizzaIngredients" },
-            { model: SelectedModifier, as: "selectedModifiers" },
-          ],
-        },
-      ],
-    });
+    return await PreOrder.findByPk(preOrderId);
   }
 }
