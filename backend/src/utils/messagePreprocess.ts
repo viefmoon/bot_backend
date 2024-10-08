@@ -434,7 +434,8 @@ export async function preprocessMessages(messages: any[]): Promise<
         "Por defecto, asume que el tipo de entrega es 'delivery' y la hora programada es null (entrega inmediata). Solo considera un tipo de entrega diferente o una hora programada si el cliente lo menciona explícitamente.",
         "No preguntes por el tipo de pedido ni la hora de entrega a menos que el cliente lo solicite específicamente.",
         "Ejecuta la función 'send_menu' únicamente cuando el cliente solicite explícitamente ver el menú.",
-        "Mantén la interacción rápida y eficiente, centrándote en los productos solicitados.",
+        "Mantén la interacción rápida y eficiente, centrándote en los productos solicitados sin ofrecer modificaciones o extras. Solo procesa lo que el cliente menciona específicamente.",
+        "No sugieras ni preguntes sobre ingredientes adicionales o modificaciones. El cliente debe solicitar estos cambios por iniciativa propia.",
       ],
     }),
   };
