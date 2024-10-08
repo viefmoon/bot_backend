@@ -24,14 +24,6 @@ import * as dotenv from "dotenv";
 import { CreateOrderDto } from "src/dto/create-order.dto";
 dotenv.config();
 
-interface OrderData {
-  orderType: string;
-  orderItems: any[];
-  scheduledDeliveryTime: string | null;
-  clientId: string;
-  orderDeliveryInfo: any;
-}
-
 interface NewOrder {
   id: number;
   telefono: string;
@@ -227,10 +219,8 @@ export async function handlePreOrderConfirmation(
     }
 
     await preOrder.destroy();
-
     const customer = await Customer.findOne({ where: { clientId } });
-
-    await customer?.update({ relevantChatHistory: [] });
+    await customer.update({ relevantChatHistory: [] });
   } catch (error) {
     console.error("Error al confirmar la orden:", error);
     await sendWhatsAppMessage(
@@ -257,10 +247,10 @@ export async function handlePreOrderDiscard(
     await preOrder.destroy();
 
     const customer = await Customer.findOne({ where: { clientId } });
-    await customer?.update({ relevantChatHistory: [] });
+    await customer.update({ relevantChatHistory: [] });
 
     const confirmationMessage =
-      "Tu preorden ha sido descartada y el historial de conversación reciente ha sido borrado. ¿En qué más puedo ayudarte?";
+      "Tu preorden ha sido descartada y el historial de conversación reciente ha sido borrado. ¿En qué más puedo ayudarte? 😊";
     await sendWhatsAppMessage(clientId, confirmationMessage);
   } catch (error) {
     console.error("Error al descartar la preorden:", error);
@@ -276,13 +266,9 @@ export async function handleOrderCancellation(
   messageId: string
 ): Promise<void> {
   try {
-    console.log("handleOrderCancellation messageId", messageId);
     const order = await Order.findOne({ where: { messageId } });
-    console.log("order", order);
-
     const customer = await Customer.findOne({ where: { clientId } });
     await customer.update({ relevantChatHistory: [] });
-    console.log("customer", customer);
     if (!order) {
       console.error(`No se encontró orden para el messageId: ${messageId}`);
       await sendWhatsAppMessage(
@@ -325,7 +311,6 @@ export async function handleOrderCancellation(
         mensaje =
           "Lo sentimos, pero no podemos procesar tu solicitud de cancelación en este momento. Por favor, contacta directamente con el restaurante para obtener ayuda.";
     }
-    console.log("mensaje", mensaje);
     await sendWhatsAppMessage(clientId, mensaje);
   } catch (error) {
     console.error("Error al eliminar la orden:", error);

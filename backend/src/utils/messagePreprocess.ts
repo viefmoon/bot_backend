@@ -15,6 +15,10 @@ import {
   verifyOrderItemsTool,
 } from "../aiTools/aiTools";
 import * as dotenv from "dotenv";
+import {
+  SYSTEM_MESSAGE_PHASE_1,
+  SYSTEM_MESSAGE_PHASE_2,
+} from "../config/predefinedMessages";
 
 dotenv.config();
 
@@ -92,27 +96,30 @@ async function getMenuAvailability(): Promise<any> {
         {
           model: ProductVariant,
           as: "productVariants",
-          include: [{ model: Availability }],
+          include: [{ model: Availability, where: { available: true } }],
         },
         {
           model: PizzaIngredient,
           as: "pizzaIngredients",
-          include: [{ model: Availability }],
+          include: [{ model: Availability, where: { available: true } }],
         },
         {
           model: ModifierType,
           as: "modifierTypes",
           include: [
-            { model: Availability },
+            { model: Availability, where: { available: true } },
             {
               model: Modifier,
               as: "modifiers",
-              include: [{ model: Availability }],
+              include: [{ model: Availability, where: { available: true } }],
             },
           ],
         },
-        { model: Availability },
+        { model: Availability, where: { available: true } },
       ],
+      where: {
+        "$Availability.available$": true,
+      },
     });
 
     if (!products || products.length === 0) {
@@ -125,7 +132,6 @@ async function getMenuAvailability(): Promise<any> {
         productId: producto.id.toString(),
         name: producto.name,
         keywords: producto.keywords,
-        //active: m.Availability?.available || false,
       };
 
       if (producto.productVariants?.length > 0) {
@@ -133,7 +139,6 @@ async function getMenuAvailability(): Promise<any> {
           variantId: v.id,
           name: v.name,
           keywords: v.keywords,
-          //active: m.Availability?.available || false,
         }));
       }
 
@@ -145,7 +150,6 @@ async function getMenuAvailability(): Promise<any> {
               modifierId: m.id,
               name: m.name,
               keywords: m.keywords || null,
-              //active: m.Availability?.available || false,
             })) || []
         );
       }
@@ -156,7 +160,6 @@ async function getMenuAvailability(): Promise<any> {
           pizzaIngredientId: i.id,
           name: i.name,
           keywords: i.keywords || null,
-          //active: i.Availability?.available || false,
         }));
       }
 
@@ -369,25 +372,13 @@ async function verifyOrderItems(
 
   const systemMessage: ChatCompletionMessageParam = {
     role: "system",
-    content: JSON.stringify({
-      instructions: [
-        "Ejecuta siempre verify_order_items",
-        "Analiza detalladamente el producto solicitado y verifica si se puede construir el producto en base a su menu disponible para la creacion.",
-        "Permite que eliminen ingredientes estándar (por ejemplo, 'sin jitomate', 'sin cebolla'), considera estas modificaciones como válidas y no las marques como errores.",
-        "Marca como error si se intenta añadir ingredientes que no están en 'Menu disponible para la creacion'.",
-        "Si hay discrepancias por adición de ingredientes no listados, indica específicamente cuáles.",
-        "Verifica que todos los ingredientes mencionados en 'Producto solicitado' estén en 'Menu disponible para la creacion', excepto los que se piden eliminar.",
-      ],
-    }),
+    content: SYSTEM_MESSAGE_PHASE_2,
   };
 
   const userMessage: ChatCompletionMessageParam = {
     role: "user",
     content: JSON.stringify(transformedOrderItems),
   };
-
-  console.log("systemMessage", systemMessage);
-  console.log("userMessage", userMessage);
 
   const response = await openai.chat.completions.create({
     model: "gpt-4o-mini",
@@ -396,11 +387,6 @@ async function verifyOrderItems(
     parallel_tool_calls: false,
     tool_choice: { type: "function", function: { name: "verify_order_items" } },
   });
-
-  console.log(
-    "response.choices[0].message.tool_calls?.[0].function.arguments",
-    response.choices[0].message.tool_calls?.[0].function.arguments
-  );
 
   const result = response.choices[0].message.tool_calls?.[0].function.arguments;
 
@@ -427,17 +413,7 @@ export async function preprocessMessages(messages: any[]): Promise<
 > {
   const systemMessageForPreprocessing = {
     role: "system",
-    content: JSON.stringify({
-      instructions: [
-        "Eres un asistente virtual del 'Restaurante La Leña'. Utiliza un lenguaje amigable y cercano, incorporando emojis para mejorar la experiencia.",
-        "Analiza las conversaciones entre el usuario y el asistente, luego usa la función 'preprocess_order' para generar una lista detallada de los productos mencionados, incluidas sus cantidades y descripciones.",
-        "Por defecto, asume que el tipo de entrega es 'delivery' y la hora programada es null (entrega inmediata). Solo considera un tipo de entrega diferente o una hora programada si el cliente lo menciona explícitamente.",
-        "No preguntes por el tipo de pedido ni la hora de entrega a menos que el cliente lo solicite específicamente.",
-        "Ejecuta la función 'send_menu' únicamente cuando el cliente solicite explícitamente ver el menú.",
-        "Mantén la interacción rápida y eficiente, centrándote en los productos solicitados sin ofrecer modificaciones o extras. Solo procesa lo que el cliente menciona específicamente.",
-        "No sugieras ni preguntes sobre ingredientes adicionales o modificaciones. El cliente debe solicitar estos cambios por iniciativa propia.",
-      ],
-    }),
+    content: SYSTEM_MESSAGE_PHASE_1,
   };
 
   const preprocessingMessages = [systemMessageForPreprocessing, ...messages];

@@ -13,6 +13,7 @@ import { verificarHorarioAtencion } from "../utils/timeUtils";
 import { checkMessageRateLimit } from "../utils/messageRateLimit";
 import { Request, Response } from "express";
 import { OtpService } from "../services/otp.service";
+import { BANNED_USER_MESSAGE } from "../config/predefinedMessages";
 
 interface WhatsAppMessage {
   from: string;
@@ -39,14 +40,7 @@ async function checkBannedCustomer(clientId: string): Promise<boolean> {
 }
 
 async function sendBannedMessage(clientId: string): Promise<void> {
-  await sendWhatsAppMessage(
-    clientId,
-    "Lo sentimos, tu número ha sido baneado debido a la detección de un uso inadecuado de nuestro servicio. " +
-      "Si crees que es un error, por favor contacta directamente con el restaurante:\n\n" +
-      "📞 Teléfono fijo: 3919160126\n" +
-      "📱 Celular: 3338423316\n\n" +
-      "Agradecemos tu comprensión y esperamos resolver cualquier malentendido."
-  );
+  await sendWhatsAppMessage(clientId, BANNED_USER_MESSAGE);
 }
 
 async function handleIncomingWhatsAppMessage(
@@ -55,13 +49,16 @@ async function handleIncomingWhatsAppMessage(
 ): Promise<void> {
   const { from, type, id } = message;
 
+  //obtener el config del restaurante
+  const config = await RestaurantConfig.findOne();
+
+  //verificar si el mensaje ya ha sido procesado
   if (await MessageLog.findOne({ where: { messageId: id } })) {
     return;
   }
   await MessageLog.create({ messageId: id, processed: true });
 
-  console.log("Mensaje recibido de:", from);
-
+  //verificar si el cliente existe, si no existe, crear uno nuevo
   let customer = await Customer.findOne({
     where: { clientId: from },
     include: [{ model: CustomerDeliveryInfo, as: "customerDeliveryInfo" }],
@@ -91,7 +88,6 @@ async function handleIncomingWhatsAppMessage(
     return;
   }
 
-  const config = await RestaurantConfig.findOne();
   if (!config || !config.acceptingOrders) {
     await sendWhatsAppMessage(
       from,
@@ -125,6 +121,10 @@ async function handleIncomingWhatsAppMessage(
       break;
     default:
       console.log(`Tipo de mensaje no manejado: ${type}`);
+      await sendWhatsAppMessage(
+        from,
+        "Lo siento, no puedo procesar este tipo de mensaje. Por favor, envía un mensaje de texto, interactivo o de audio."
+      );
   }
 }
 

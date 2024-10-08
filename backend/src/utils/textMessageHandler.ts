@@ -7,6 +7,7 @@ import * as dotenv from "dotenv";
 import { preprocessMessages } from "./messagePreprocess";
 import { Anthropic } from "@anthropic-ai/sdk";
 import { PreOrderService } from "../services/pre-order.service";
+import { SYSTEM_MESSAGE_PHASE_3 } from "../config/predefinedMessages";
 
 dotenv.config();
 
@@ -53,10 +54,10 @@ async function sendWelcomeMessage(phoneNumber) {
     type: "list",
     header: {
       type: "text",
-      text: "Bienvenido a La Leña",
+      text: "Bienvenido a La Leña 🪵🔥",
     },
     body: {
-      text: "¿Cómo podemos ayudarte hoy?",
+      text: "¿Cómo podemos ayudarte hoy? 😊",
     },
     footer: {
       text: "Selecciona una opción:",
@@ -105,8 +106,16 @@ export async function handleTextMessage(
   } else if (typeof customer.relevantChatHistory === "string") {
     relevantChatHistory = JSON.parse(customer.relevantChatHistory);
   }
+  const restartPhrases = [
+    "olvida el pasado",
+    "reinicia la conversación",
+    "borra el historial",
+    "empecemos de nuevo",
+    "olvida todo",
+    "reinicia el chat",
+  ];
 
-  if (text.toLowerCase().includes("olvida lo anterior")) {
+  if (restartPhrases.some((phrase) => text.toLowerCase().includes(phrase))) {
     await resetChatHistory(customer);
     return;
   }
@@ -176,7 +185,6 @@ async function processAndGenerateAIResponse(
 ): Promise<ResponseItem[]> {
   const { relevantMessages, conversationId } = req;
 
-  console.log("relevantMessages", relevantMessages);
   try {
     const preprocessedContent: PreprocessedContent = (await preprocessMessages(
       relevantMessages
@@ -193,16 +201,9 @@ async function processAndGenerateAIResponse(
       ];
     }
 
-    const systemContent = [
-      "Basándote en el objeto proporcionado, utiliza la función `select_products`",
-      "- Utiliza los `relevantMenuItems` proporcionados para mapear las descripciones de los productos a sus respectivos IDs. Si no se encuentra un ID relevante para construir el producto, omite esa observación o producto.",
-      "- El campo de comentarios en los orderitems debe usarse ÚNICAMENTE para observaciones simples o para indicar ingredientes que se deben retirar del producto. Nunca lo uses para agregar ingredientes o modificaciones que puedan generar un costo extra.",
-      "- No es necesario usar todos los relevantMenuItems si no aplican a la solicitud del usuario.",
-    ].join("\n");
-
     const response = await anthropic.messages.create({
       model: "claude-3-5-sonnet-20240620",
-      system: systemContent,
+      system: SYSTEM_MESSAGE_PHASE_3,
       messages: [
         { role: "user", content: JSON.stringify(preprocessedContent) },
       ],
@@ -218,10 +219,6 @@ async function processAndGenerateAIResponse(
     ) {
       const { orderItems, orderType, scheduledDeliveryTime } = response
         .content[0].input as any;
-
-      console.log("orderItems", orderItems);
-      console.log("orderType", orderType);
-      console.log("scheduledDeliveryTime", scheduledDeliveryTime);
 
       try {
         const preOrderService = new PreOrderService();
@@ -246,14 +243,6 @@ async function processAndGenerateAIResponse(
           "Error al procesar tu pedido. Por favor, inténtalo de nuevo.";
         return [{ text: errorMessage, sendToWhatsApp: true, isRelevant: true }];
       }
-    } else if (response.content && response.content[0]?.type === "text") {
-      return [
-        {
-          text: response.content[0].text,
-          sendToWhatsApp: true,
-          isRelevant: true,
-        },
-      ];
     }
 
     return [

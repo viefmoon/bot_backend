@@ -12,8 +12,6 @@ import {
 export class MenuService {
   async getMenu() {
     try {
-      // Agregar logging para depuración
-      console.log("Iniciando recuperación del menú");
       const menu = await Product.findAll({
         attributes: {
           exclude: ["createdAt", "updatedAt", "keywords", "ingredients"],

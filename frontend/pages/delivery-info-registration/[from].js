@@ -73,8 +73,6 @@ export default function DeliveryInfoRegistration() {
         `/api/customer_delivery_info/${clientId}`
       );
       if (response.data) {
-        console.log("response.data", response.data);
-
         const formattedData = {
           pickupName: response.data.pickupName || "",
           streetAddress: response.data.streetAddress || "",
@@ -248,12 +246,15 @@ export default function DeliveryInfoRegistration() {
 
   const validateForm = () => {
     const errors = {};
-    if (!formData.pickupName.trim()) errors.pickupName = "El nombre del cliente es obligatorio";
-    if (!formData.streetAddress.trim()) errors.streetAddress = "La dirección completa es obligatoria";
+    if (!formData.pickupName.trim())
+      errors.pickupName = "El nombre del cliente es obligatorio";
+    if (!formData.streetAddress.trim())
+      errors.streetAddress = "La dirección completa es obligatoria";
     if (!formData.city.trim()) errors.city = "La ciudad es obligatoria";
     if (!formData.state.trim()) errors.state = "El estado es obligatorio";
     if (!formData.country.trim()) errors.country = "El país es obligatorio";
-    if (!formData.postalCode.trim()) errors.postalCode = "El código postal es obligatorio";
+    if (!formData.postalCode.trim())
+      errors.postalCode = "El código postal es obligatorio";
     return errors;
   };
 
@@ -402,9 +403,11 @@ export default function DeliveryInfoRegistration() {
           "
           disabled={!!locationError || isSubmitting}
         >
-          {isSubmitting 
-            ? "Enviando..." 
-            : (isUpdating ? "Actualizar Dirección" : "Guardar Dirección")}
+          {isSubmitting
+            ? "Enviando..."
+            : isUpdating
+            ? "Actualizar Dirección"
+            : "Guardar Dirección"}
         </button>
         <Map
           selectedLocation={selectedLocation}

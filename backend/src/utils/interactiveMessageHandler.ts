@@ -12,6 +12,12 @@ import { sendWhatsAppMessage } from "../utils/whatsAppUtils";
 import Stripe from "stripe";
 import menuText from "../data/menu";
 import { OtpService } from "../services/otp.service";
+import {
+  WAIT_TIMES_MESSAGE,
+  RESTAURANT_INFO_MESSAGE,
+  CHATBOT_HELP_MESSAGE,
+  CHANGE_DELIVERY_INFO_MESSAGE,
+} from "../config/predefinedMessages";
 
 const stripeClient = new Stripe(process.env.STRIPE_SECRET_KEY!, {
   apiVersion: "2024-06-20",
@@ -166,13 +172,10 @@ async function sendMenu(phoneNumber: string): Promise<boolean> {
 async function handleWaitTimes(clientId: string): Promise<void> {
   try {
     const config = await RestaurantConfig.findOne();
-
-    const message =
-      `🕒 *Tiempos de espera estimados:*\n\n` +
-      `🏠 Recolección en restaurante: ${config.estimatedPickupTime} minutos\n` +
-      `🚚 Entrega a domicilio: ${config.estimatedDeliveryTime} minutos\n\n` +
-      `Estos tiempos son aproximados y pueden variar según la demanda actual.`;
-
+    const message = WAIT_TIMES_MESSAGE(
+      config.estimatedPickupTime,
+      config.estimatedDeliveryTime
+    );
     await sendWhatsAppMessage(clientId, message);
   } catch (error) {
     const errorMessage =
@@ -182,60 +185,17 @@ async function handleWaitTimes(clientId: string): Promise<void> {
 }
 
 async function handleRestaurantInfo(clientId: string): Promise<void> {
-  const restaurantInfo =
-    "🍕 *Información y horarios de La Leña*\n\n" +
-    "📍 *Ubicación:* C. Ogazón Sur 36, Centro, 47730 Tototlán, Jal.\n\n" +
-    "📞 *Teléfonos:*\n" +
-    "   Fijo: 3919160126\n" +
-    "   Celular: 3338423316\n\n" +
-    "🕒 *Horarios:*\n" +
-    "   Martes a sábado: 6:00 PM - 11:00 PM\n" +
-    "   Domingos: 2:00 PM - 11:00 PM\n\n" +
-    "¡Gracias por tu interés! Esperamos verte pronto.";
-
-  await sendWhatsAppMessage(clientId, restaurantInfo);
+  await sendWhatsAppMessage(clientId, RESTAURANT_INFO_MESSAGE);
 }
 
 async function handleChatbotHelp(clientId: string): Promise<void> {
-  const chatbotHelp =
-    "🤖💬 *¡Bienvenido al Chatbot de La Leña!*\n\n" +
-    "Este asistente virtual está potenciado por inteligencia artificial para brindarte una experiencia fluida y natural. Aquí te explicamos cómo usarlo:\n\n" +
-    "🚀 *Iniciar una conversación:*\n" +
-    "Envía cualquier mensaje para comenzar. Recibirás opciones para:\n" +
-    "   📜 Consultar el menú\n" +
-    "   ⏱️ Ver tiempos de espera\n" +
-    "   🔄 Reordenar\n" +
-    "   ℹ️ Información del restaurante\n\n" +
-    "🍕 *Realizar un pedido:*\n" +
-    "Escribe o envía un audio con tu pedido. Opciones:\n" +
-    "   🏠 Entrega a domicilio: Incluye la dirección completa\n" +
-    "   🏃 Recolección en restaurante: Indica el nombre para recoger\n" +
-    "Ejemplos:\n" +
-    "   '2 pizzas grandes especiales y una coca-cola para entrega a Morelos 66 poniente'\n" +
-    "   'Pizza mediana hawaiana y ensalada grande de pollo para recoger, nombre: Juan Pérez'\n\n" +
-    "Una vez generado tu pedido, recibirás un mensaje de confirmación cuando el restaurante lo acepte o un mensaje de rechazo en caso de que no puedan procesarlo.\n\n" +
-    "✏️ *Modificar un pedido:*\n" +
-    "Usa la opción en el mensaje de confirmación, solo si el restaurante aún no lo ha aceptado.\n\n" +
-    "❌ *Cancelar un pedido:*\n" +
-    "Disponible en las opciones del mensaje de confirmación, solo se puede cancelar si el restaurante aún no ha aceptado el pedido.\n\n" +
-    "💳 *Pagar:*\n" +
-    "Genera un enlace de pago desde las opciones del mensaje de confirmación.\n\n" +
-    "🔁 *Reordenar:*\n" +
-    "Selecciona 'Reordenar' en el mensaje de bienvenida para ver tus últimas 3 órdenes y poder reordenar con solo un click.\n\n" +
-    "⚠️ *IMPORTANTE:*\n" +
-    "Envía un mensaje a la vez y espera la respuesta antes del siguiente para evitar confusiones.\n\n" +
-    "¡Disfruta tu experiencia con nuestro chatbot! 🍽️🤖";
-
-  await sendWhatsAppMessage(clientId, chatbotHelp);
+  await sendWhatsAppMessage(clientId, CHATBOT_HELP_MESSAGE);
 }
 
 async function handleChangeDeliveryInfo(from: string): Promise<void> {
   const otp = otpService.generateOTP();
   await otpService.storeOTP(from, otp);
   const updateLink = `${process.env.FRONTEND_BASE_URL}/delivery-info-registration/${from}?otp=${otp}`;
-
-  await sendWhatsAppMessage(
-    from,
-    `Para actualizar tu información de entrega, por favor utiliza este enlace: ${updateLink}\n\nEste enlace es válido por un tiempo limitado por razones de seguridad.`
-  );
+  const message = CHANGE_DELIVERY_INFO_MESSAGE(updateLink);
+  await sendWhatsAppMessage(from, message);
 }

@@ -46,9 +46,6 @@ export class OrderService {
       const startDate = mexicoDate.startOf("day").toUTC();
       const endDate = mexicoDate.endOf("day").toUTC();
 
-      console.log("startDate", startDate.toISO());
-      console.log("endDate", endDate.toISO());
-
       whereClause.createdAt = {
         [Op.between]: [startDate.toJSDate(), endDate.toJSDate()],
       };

@@ -20,6 +20,7 @@ export class PreOrderService {
   }) {
     const { orderItems, clientId, orderType, scheduledDeliveryTime } =
       orderData;
+    console.log("orderData", orderData);
     let totalCost = 0;
     let fullScheduledDeliveryTime: Date | null = null;
 

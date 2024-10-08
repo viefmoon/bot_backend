@@ -208,7 +208,7 @@ const menu: any[] = [
             id: "PM1-1",
             name: "Sin queso",
             keywords: [
-              ["sin", "retirar", "quitar"],
+              ["sin", "retirar", "quitar", "quitale"],
               ["queso", "gratinar"],
             ],
             price: 0,
@@ -399,11 +399,19 @@ const menu: any[] = [
             ],
             price: 15,
           },
-          { id: "HM1-3", name: "Con gajos", keywords: ["gajos"], price: 15 },
+          {
+            id: "HM1-3",
+            name: "Con gajos",
+            keywords: ["gajos", "gajo"],
+            price: 15,
+          },
           {
             id: "HM1-4",
             name: "Con gajos gratinadas",
-            keywords: [["gratinadas", "queso"], ["gajos"]],
+            keywords: [
+              ["gratinadas", "queso"],
+              ["gajos", "gajo"],
+            ],
             price: 20,
           },
           {
@@ -493,7 +501,7 @@ const menu: any[] = [
   {
     id: "RCC",
     name: "Refresco de Coca Cola",
-    keywords: ["coca"],
+    keywords: ["coca", "coca-cola"],
     category: "bebidas",
     price: 30,
   },
