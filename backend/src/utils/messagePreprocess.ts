@@ -350,7 +350,7 @@ async function verifyOrderItems(
     role: "system",
     content: JSON.stringify({
       instructions: [
-        "Analiza parte a parte cada orderItem y verifica si se puede construir con los IDs de relevantMenuItems dentro del orderItem, si no se puede o no hay la informacion necesaria devuelve un mensaje indicando que no se encuentra en el menu disponible.",
+        "Analiza parte a parte cada orderItem y verifica si se puede construir con los IDs de relevantMenuItems dentro del orderItem, si no se puede o no hay la informacion necesaria devuelve un mensaje indicando los datos que faltan.",
       ],
     }),
   };
