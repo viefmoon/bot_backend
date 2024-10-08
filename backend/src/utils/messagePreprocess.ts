@@ -28,6 +28,7 @@ interface MenuItem {
   productId?: string;
   name: string;
   keywords?: object;
+  products?: Product[];
   productVariants?: ProductVariant[];
   modifiers?: Modifier[];
   pizzaIngredients?: PizzaIngredient[];
@@ -346,6 +347,26 @@ function extractMentionedProducts(
 async function verifyOrderItems(
   preprocessedContent: PreprocessedContent
 ): Promise<string> {
+  const transformedOrderItems = preprocessedContent.orderItems.map((item) => {
+    const relevantItems =
+      item.relevantMenuItems
+        ?.map((menuItem) => {
+          const names = [
+            ...(menuItem.products?.map((p) => p.name) || []),
+            ...(menuItem.productVariants?.map((v) => v.name) || []),
+            ...(menuItem.modifiers?.map((m) => m.name) || []),
+            ...(menuItem.pizzaIngredients?.map((i) => i.name) || []),
+          ];
+          return names.join(", ");
+        })
+        .join("; ") || "";
+
+    return {
+      "Producto solicitado": item.description,
+      "Menu disponible para la creacion": relevantItems,
+    };
+  });
+
   const systemMessage: ChatCompletionMessageParam = {
     role: "system",
     content: JSON.stringify({
@@ -360,7 +381,7 @@ async function verifyOrderItems(
 
   const userMessage: ChatCompletionMessageParam = {
     role: "user",
-    content: JSON.stringify(preprocessedContent.orderItems),
+    content: JSON.stringify(transformedOrderItems),
   };
 
   console.log("systemMessage", systemMessage);
