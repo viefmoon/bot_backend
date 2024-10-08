@@ -8,47 +8,48 @@ import {
 } from "../models";
 import { Op } from "sequelize";
 const menu: string = `
-🍽️ ¡Este es nuestro menú! 🍽️
+🍽️ Menú 🍽️
 
 🥗 Entradas:
 1. 🍗 Alitas
-   - BBQ (orden completa $135 / media $70)
-   - Picosas (orden completa $135 / media $70)
-   - Fritas (orden completa $135 / media $70)
-   - Mango habanero (orden completa $140 / media $75)
+   - BBQ (orden $135 / media $70)
+   - Picosas (orden $135 / media $70)
+   - Fritas (orden $135 / media $70)
+   - Mango habanero (orden $140 / media $75)
    - Mixtas BBQ y picosas ($135)
-   Todas las alitas vienen acompañadas de chile de aceite.
+   Las alitas vienen acompañadas de chile de aceite.
 
 2. 🍟 Papas:
-   - A la Francesa (orden completa $90 / media $50)
-   - Gajos (orden completa $105 / media $65)
+   - Francesa (orden $90 / media $50)
+   - Gajos (orden $105 / media $65)
    - Mixtas francesa y gajos ($100)
    🧀 Opción: Con queso y sin queso sin costo.
-   Todas las papas vienen acompañadas de aderezo.
+   Las papas vienen acompañadas de aderezo.
 
 3. 🧀 Dedos de Queso ($90)
+
 🍕 Pizzas:
 Tamaños: Grande ($240), Mediana ($190), Chica ($140)
 Opción de orilla rellena: Grande (+$30), Mediana (+$30), Chica (+$20)
 Variedades:
-1. Especial: Pepperoni, Salchicha, Jamón, Salami, Chile morrón
-2. Carnes Frías: Pepperoni, Salchicha, Jamón, Salami
-3. Carranza: Chorizo, Jamón, Chile jalapeño, Jitomate
-4. Zapata: Salami, Jamón, Champiñón
-5. Villa: Chorizo, Tocino, Piña, Chile jalapeño
-6. Margarita: 3 Quesos, Jitomate, Albahaca
-7. Adelita: Jamón, Piña, Arándano
-8. Hawaiana: Jamón, Piña
-9. Mexicana: Chorizo, Cebolla, Chile jalapeño, Jitomate
-10. Rivera: Elote, Champiñón, Chile morrón
-11. Kahlo: Calabaza, Elote, Champiñón, Jitomate, Chile morrón
-12. Lupita: Carne molida, Tocino, Cebolla, Chile morrón
-13. Pepperoni
-14. La Leña: Tocino, Pierna, Chorizo, Carne molida (+$20)
-15. La María: Pollo BBQ, Piña, Chile jalapeño (+$20)
-16. Malinche: 3 Quesos, Queso de cabra, Champiñón, Jamón, Chile seco, Albahaca (+$20)
-17. Philadelphia: Jamon, Queso philadelphia, Chile , Albahaca (+$20)
-18. Personalizada con hasta 3 ingredientes de los disponibles sin costo extra.
+- Especial: Pepperoni, Salchicha, Jamón, Salami, Chile morrón
+- Carnes Frías: Pepperoni, Salchicha, Jamón, Salami
+- Carranza: Chorizo, Jamón, Chile jalapeño, Jitomate
+- Zapata: Salami, Jamón, Champiñón
+- Villa: Chorizo, Tocino, Piña, Chile jalapeño
+- Margarita: 3 Quesos, Jitomate, Albahaca
+- Adelita: Jamón, Piña, Arándano
+- Hawaiana: Jamón, Piña
+- Mexicana: Chorizo, Cebolla, Chile jalapeño, Jitomate
+- Rivera: Elote, Champiñón, Chile morrón
+- Kahlo: Calabaza, Elote, Champiñón, Jitomate, Chile morrón
+- Lupita: Carne molida, Tocino, Cebolla, Chile morrón
+- Pepperoni
+- La Leña: Tocino, Pierna, Chorizo, Carne molida (+$20)
+- La María: Pollo BBQ, Piña, Chile jalapeño (+$20)
+- Malinche: 3 Quesos, Queso de cabra, Champiñón, Jamón, Chile seco, Albahaca (+$20)
+- Philadelphia: Jamon, Queso philadelphia, Chile , Albahaca (+$20)
+- Personalizada con hasta 3 ingredientes de los disponibles sin costo extra.
 -Ingrediente extra (+$10)
 Opción de pizza mitad y mitad: Se puede armar una pizza mitad y mitad con dos variedades diferentes, sin costo adicional.
 Todas las pizzas vienen acompañadas de chile de aceite y aderezo.
@@ -56,16 +57,15 @@ Todas las pizzas vienen acompañadas de chile de aceite y aderezo.
 🍔 Hamburguesas:
 Todas nuestras hamburguesas incluyen: cebolla, jitomate, lechuga, chile jalapeño, catsup, aderezo, crema y mostaza.
 
-1. Tradicional: Carne de res, tocino, queso amarillo, queso asadero ($85)
-2. Especial: Carne de res, tocino, pierna, queso amarillo, queso asadero ($95)
-3. Hawaiana: Carne de res, tocino, piña, jamón, queso amarillo, queso asadero ($95)
-4. Pollo: Pechuga de pollo a la plancha, tocino, queso amarillo, queso asadero ($100)
-5. BBQ: Carne de res, salsa BBQ, tocino, queso amarillo, queso asadero, cebolla guisada ($100)
-6. Lenazo: Doble carne de sirlón, tocino, queso amarillo, queso asadero ($110)
-7. Cubana: Carne de res, tocino, pierna, salchicha, jamón, queso amarillo ($100)
-Todas nuestras hamburguesas vienen acompañadas de aderezo y salsa catsup.
+- Tradicional: Carne de res, tocino, queso amarillo, queso asadero ($85)
+- Especial: Carne de res, tocino, pierna, queso amarillo, queso asadero ($95)
+- Hawaiana: Carne de res, tocino, piña, jamón, queso amarillo, queso asadero ($95)
+- Pollo: Pechuga de pollo a la plancha, tocino, queso amarillo, queso asadero ($100)
+- BBQ: Carne de res, salsa BBQ, tocino, queso amarillo, queso asadero, cebolla guisada ($100)
+- Lenazo: Doble carne de sirlón, tocino, queso amarillo, queso asadero ($110)
+- Cubana: Carne de res, tocino, pierna, salchicha, jamón, queso amarillo ($100)
 
-🥔 Opción de hamburguesas con papas: 
+🥔 Hamburguesas con papas: 
    - Francesa (+$10)
    - Gajos (+$15)
    - Mixtas (+$15)
@@ -93,23 +93,23 @@ Incluyen: Pollo a la plancha o jamón, chile morrón, elote, lechuga, jitomate, 
 - Frappés especiales ($85): Rompope, Mazapán, Magnum
 
 🍹 Coctelería:
-1. Copa de vino tinto ($90)
-2. Sangría con vino ($80)
-3. Vampiro ($80)
-4. Gin de Maracuyá ($90)
-5. Margarita ($85)
-6. Ruso Blanco ($85)
-7. Palo santo ($80)
-8. Gin de pepino ($90)
-9. Mojito ($100)
-10. Piña colada ($75)
-11. Piñada (sin alcohol) ($70)
-12. Conga ($75)
-13. Destornillador ($75)
-14. Paloma ($80)
-15. Carajillo ($90)
-16. Tinto de verano ($90)
-17. Clericot ($80)
+- Vino tinto ($90)
+- Sangría con vino ($80)
+- Vampiro ($80)
+- Gin de Maracuyá ($90)
+- Margarita ($85)
+- Ruso Blanco ($85)
+- Palo santo ($80)
+- Gin de pepino ($90)
+- Mojito ($100)
+- Piña colada ($75)
+- Piñada ($70)
+- Conga ($75)
+- Destornillador ($75)
+- Paloma ($80)
+- Carajillo ($90)
+- Tinto de verano ($90)
+- Clericot ($80)
 `;
 
 async function getUnavailableItems(): Promise<string> {
