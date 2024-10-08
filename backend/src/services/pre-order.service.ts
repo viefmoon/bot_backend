@@ -8,6 +8,7 @@ import {
   PreOrder,
   CustomerDeliveryInfo,
   OrderDeliveryInfo,
+  OrderItem,
 } from "../models";
 import { sendWhatsAppInteractiveMessage } from "../utils/whatsAppUtils";
 
@@ -16,7 +17,7 @@ export class PreOrderService {
     orderItems: any[];
     clientId: string;
     orderType: string;
-    scheduledDeliveryTime?: string;
+    scheduledDeliveryTime?: string | Date;
   }) {
     const { orderItems, clientId, orderType, scheduledDeliveryTime } =
       orderData;
@@ -28,12 +29,23 @@ export class PreOrderService {
 
     // Validar tiempo de entrega programado
     if (scheduledDeliveryTime) {
-      const today = new Date().toISOString().split("T")[0];
       const now = new Date();
 
-      fullScheduledDeliveryTime = new Date(
-        `${today}T${scheduledDeliveryTime}:00-06:00`
-      );
+      if (typeof scheduledDeliveryTime === "string") {
+        if (scheduledDeliveryTime.includes("T")) {
+          // Formato completo
+          fullScheduledDeliveryTime = new Date(scheduledDeliveryTime);
+        } else {
+          // Formato de solo horas
+          const today = now.toISOString().split("T")[0];
+          fullScheduledDeliveryTime = new Date(
+            `${today}T${scheduledDeliveryTime}:00-06:00`
+          );
+        }
+      } else {
+        // Es un objeto Date
+        fullScheduledDeliveryTime = scheduledDeliveryTime;
+      }
 
       const minTimeRequired =
         orderType === "pickup"
@@ -380,6 +392,13 @@ export class PreOrderService {
           {
             type: "reply",
             reply: {
+              id: "modify_delivery",
+              title: "Modificar Entrega",
+            },
+          },
+          {
+            type: "reply",
+            reply: {
               id: "discard_order",
               title: "Descartar Orden",
             },
@@ -420,5 +439,16 @@ export class PreOrderService {
       status: 400,
       json: { error: error.message },
     };
+  }
+
+  async getPreOrderById(preOrderId: string): Promise<PreOrder | null> {
+    return await PreOrder.findByPk(preOrderId, {
+      include: [
+        {
+          model: OrderItem,
+          as: "orderItems",
+        },
+      ],
+    });
   }
 }

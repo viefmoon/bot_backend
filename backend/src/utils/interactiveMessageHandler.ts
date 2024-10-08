@@ -7,7 +7,7 @@ import {
   handleOrderModification,
 } from "../handlers/orderHandlers";
 
-import { Order, Customer, RestaurantConfig } from "../models";
+import { Order, Customer, RestaurantConfig, PreOrder } from "../models";
 import { sendWhatsAppMessage } from "../utils/whatsAppUtils";
 import Stripe from "stripe";
 import { OtpService } from "../services/otp.service";
@@ -35,6 +35,8 @@ export async function handleInteractiveMessage(
       await handlePreOrderConfirmation(from, message.context.id);
     } else if (buttonId === "discard_order") {
       await handlePreOrderDiscard(from, message.context.id);
+    } else if (buttonId === "modify_delivery") {
+      await handlePreOrderDeliveryModification(from, message.context.id);
     }
   } else if (message.interactive.type === "list_reply") {
     const listReplyId = message.interactive.list_reply!.id;
@@ -55,6 +57,40 @@ export async function handleInteractiveMessage(
     } else if (listReplyId === "change_delivery_info") {
       await handleChangeDeliveryInfo(from);
     }
+  }
+}
+
+async function handlePreOrderDeliveryModification(
+  from: string,
+  messageId: string
+): Promise<void> {
+  try {
+    const preOrder = await PreOrder.findOne({ where: { messageId } });
+
+    if (!preOrder) {
+      await sendWhatsAppMessage(
+        from,
+        "No se pudo encontrar la preorden para modificar la información de entrega."
+      );
+      return;
+    }
+
+    const clientId = preOrder.clientId;
+    const preOrderId = preOrder.id; // Obtener el ID de la preorden
+
+    const otp = otpService.generateOTP();
+    await otpService.storeOTP(clientId, otp);
+
+    const updateLink = `${process.env.FRONTEND_BASE_URL}/delivery-info-registration/${clientId}?otp=${otp}&preOrderId=${preOrderId}`;
+    const message = CHANGE_DELIVERY_INFO_MESSAGE(updateLink);
+
+    await sendWhatsAppMessage(clientId, message);
+  } catch (error) {
+    console.error("Error al manejar la modificación de entrega:", error);
+    await sendWhatsAppMessage(
+      from,
+      "Hubo un error al procesar tu solicitud. Por favor, intenta nuevamente más tarde."
+    );
   }
 }
 

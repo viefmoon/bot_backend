@@ -9,7 +9,7 @@ const libraries = ["places"];
 
 export default function DeliveryInfoRegistration() {
   const router = useRouter();
-  const { from: clientId, otp } = router.query;
+  const { from: clientId, otp, preOrderId } = router.query;
   const [isValidOtp, setIsValidOtp] = useState(false);
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -260,17 +260,26 @@ export default function DeliveryInfoRegistration() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (isSubmitting) return; // Evita múltiples envíos
+    if (isSubmitting) return;
 
     const errors = validateForm();
     setFormErrors(errors);
 
     if (Object.keys(errors).length === 0) {
-      setIsSubmitting(true); // Bloquea el botón
+      setIsSubmitting(true);
 
       try {
         let response;
-        if (isUpdating) {
+        if (preOrderId) {
+          // Si hay un preOrderId, usamos el nuevo endpoint
+          response = await axios.put(
+            `/api/update_pre_order_delivery_info/${preOrderId}`,
+            {
+              ...formData,
+              clientId,
+            }
+          );
+        } else if (isUpdating) {
           response = await axios.put(
             `/api/customer_delivery_info/${clientId}`,
             {
@@ -284,26 +293,26 @@ export default function DeliveryInfoRegistration() {
             clientId,
           });
         }
-        console.log("CustomerDeliveryInfo guardado:", response.data);
-        // Enviar mensaje de confirmación por WhatsApp
-        const mensaje = isUpdating
+
+        console.log("Información de entrega guardada:", response.data);
+
+        // Mensaje personalizado basado en si es una actualización de preorden o no
+        const mensaje = preOrderId
+          ? `Hola ${formData.pickupName}, tu información de entrega para la preorden ha sido actualizada exitosamente. Tu dirección registrada es: ${response.data.streetAddress}. Gracias!`
+          : isUpdating
           ? `Hola ${formData.pickupName}, tu información de entrega ha sido actualizada exitosamente. Tu dirección registrada es: ${response.data.streetAddress}. Gracias!`
           : `Hola ${formData.pickupName}, tu información de entrega ha sido guardada exitosamente. Tu dirección registrada es: ${response.data.streetAddress}. Gracias!`;
 
         await sendWhatsAppMessage(clientId, mensaje);
 
-        alert(
-          isUpdating
-            ? `Dirección actualizada exitosamente: ${response.data.streetAddress}`
-            : `Dirección guardada exitosamente: ${response.data.streetAddress}`
-        );
+        alert(mensaje);
         const whatsappNumber = process.env.NEXT_PUBLIC_BOT_WHATSAPP_NUMBER;
         window.location.href = `https://wa.me/${whatsappNumber}`;
       } catch (error) {
-        console.error("Error al guardar CustomerDeliveryInfo:", error);
+        console.error("Error al guardar la información de entrega:", error);
         alert("Error al guardar la dirección. Por favor, inténtelo de nuevo.");
       } finally {
-        setIsSubmitting(false); // Desbloquea el botón
+        setIsSubmitting(false);
       }
     } else {
       const errorMessages = Object.values(errors).join("\n");
@@ -348,7 +357,9 @@ export default function DeliveryInfoRegistration() {
     <div className="container mx-auto px-1 py-1">
       <h1 className="text-lg md:text-xl font-bold mb-0.5 text-gray-800 text-center">
         <span className="block text-blue-600">
-          {isUpdating
+          {preOrderId
+            ? "Actualizar Información de Entrega para orden"
+            : isUpdating
             ? "Actualizar Información de Entrega"
             : "Información de Entrega"}
         </span>
