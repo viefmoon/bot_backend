@@ -171,8 +171,7 @@ const verifyOrderItemsTool = {
         },
         message: {
           type: "string",
-          description:
-            "Mensaje amigable explicando el resultado de la verificación, solo requerido cuando success es false.",
+          description: "Mensaje explicando el resultado de la verificación.",
         },
       },
       required: ["success", "message"],
