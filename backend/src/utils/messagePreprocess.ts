@@ -351,10 +351,8 @@ async function verifyOrderItems(
     content: JSON.stringify({
       instructions: [
         "Eres un asistente amigable del 'Restaurante La Leña', especializado en verificar que los items del pedido se puedan preparar con los productos disponibles en el menu.",
-        "Analiza cada item del pedido y verifica si se puede preparar con los relevantMenuItems dentro del orderItem.",
-        "Si no hay suficientes ingredientes, modificadores o variantes, devuelve un mensaje indicando que no se encuentra en el menu disponible.",
-        "Usa un tono conversacional y cercano, incluyendo emojis para dar calidez a tus mensajes.",
-        "No es necesario proporcionar un mensaje si el estado de verificación es 'true' para todos los items.",
+        "Analiza cada orderItem y verifica si se puede construir con los ID de relevantMenuItems dentro del orderItem.",
+        "Si no hay la informacion necesaria, devuelve un mensaje indicando que no se encuentra en el menu disponible.",
       ],
     }),
   };
@@ -371,6 +369,8 @@ async function verifyOrderItems(
     parallel_tool_calls: false,
     tool_choice: { type: "function", function: { name: "verify_order_items" } },
   });
+
+  console.log("response de verifyOrderItems", response);
 
   const result = response.choices[0].message.tool_calls?.[0].function.arguments;
 
