@@ -350,9 +350,7 @@ async function verifyOrderItems(
     role: "system",
     content: JSON.stringify({
       instructions: [
-        "Eres un asistente amigable del 'Restaurante La Leña', especializado en verificar que los items del pedido se puedan preparar con los productos disponibles en el menu.",
-        "Analiza cada orderItem y verifica si se puede construir con los ID de relevantMenuItems dentro del orderItem.",
-        "Si no hay la informacion necesaria, devuelve un mensaje indicando que no se encuentra en el menu disponible.",
+        "Analiza parte a parte cada orderItem y verifica si se puede construir con los IDs de relevantMenuItems dentro del orderItem, si no se puede o no hay la informacion necesaria devuelve un mensaje indicando que no se encuentra en el menu disponible.",
       ],
     }),
   };
