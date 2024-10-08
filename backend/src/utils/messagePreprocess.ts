@@ -372,14 +372,17 @@ async function verifyOrderItems(
     tool_choice: { type: "function", function: { name: "verify_order_items" } },
   });
 
-  console.log(
-    "Respuesta de la función verify_order_items:",
-    response.choices[0].message.tool_calls?.[0].function.arguments
-  );
+  const result = response.choices[0].message.tool_calls?.[0].function.arguments;
 
-  return (
-    response.choices[0].message.content || "No se pudo verificar el pedido."
-  );
+  if (result) {
+    return result;
+  } else {
+    return JSON.stringify({
+      success: false,
+      message:
+        "No se pudo verificar la disponibilidad de los productos del pedido.",
+    });
+  }
 }
 
 // Modificar la función preprocessMessages para incluir esta nueva verificación
@@ -434,14 +437,18 @@ export async function preprocessMessages(messages: any[]): Promise<
         }
       }
       console.log("preprocessedContent", preprocessedContent);
-
-      // Nueva verificación de los items del pedido
       const verificationResult = await verifyOrderItems(preprocessedContent);
+      const parsedResult = JSON.parse(verificationResult);
 
-      // return {
-      //   ...preprocessedContent,
-      //   verificationResult,
-      // };
+      if (parsedResult.success) {
+        return preprocessedContent;
+      } else {
+        return {
+          text: parsedResult.message,
+          isDirectResponse: true,
+          isRelevant: true,
+        };
+      }
     } else if (toolCall.function.name === "send_menu") {
       return {
         text: menu,
