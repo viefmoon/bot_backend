@@ -303,7 +303,10 @@ export default function DeliveryInfoRegistration() {
           ? `Hola ${formData.pickupName}, tu información de entrega ha sido actualizada exitosamente. Tu dirección registrada es: ${response.data.streetAddress}. Gracias!`
           : `Hola ${formData.pickupName}, tu información de entrega ha sido guardada exitosamente. Tu dirección registrada es: ${response.data.streetAddress}. Gracias!`;
 
-        await sendWhatsAppMessage(clientId, mensaje);
+        // Solo enviamos el mensaje de WhatsApp si no es una actualización de preorden
+        if (!preOrderId) {
+          await sendWhatsAppMessage(clientId, mensaje);
+        }
 
         alert(mensaje);
         const whatsappNumber = process.env.NEXT_PUBLIC_BOT_WHATSAPP_NUMBER;
