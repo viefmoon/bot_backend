@@ -350,10 +350,11 @@ async function verifyOrderItems(
     role: "system",
     content: JSON.stringify({
       instructions: [
-        "Analiza detalladamente cada orderItem y verifica si se puede construir completamente con los IDs de relevantMenuItems.",
-        "Comprueba que todos los ingredientes y características mencionados en la descripción estén presentes en relevantMenuItems.",
-        "Permite observaciones para quitar ingredientes, pero verifica que no se añadan ingredientes no listados.",
-        "Si falta algún elemento o hay discrepancias, indica específicamente qué falta o no coincide.",
+        "Analiza detalladamente cada orderItem y verifica si se puede construir con los IDs de relevantMenuItems.",
+        "Permite modificaciones que eliminen ingredientes estándar (por ejemplo, 'sin jitomate', 'sin cebolla').",
+        "Considera estas modificaciones como válidas y no las marques como errores.",
+        "Solo marca como error si se intenta añadir ingredientes que no están en relevantMenuItems.",
+        "Si hay discrepancias por adición de ingredientes no listados, indica específicamente cuáles.",
       ],
     }),
   };
