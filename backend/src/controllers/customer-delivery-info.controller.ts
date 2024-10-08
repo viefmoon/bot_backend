@@ -60,9 +60,7 @@ export class CustomerDeliveryInfoController {
       });
 
       return {
-        message: "Información de entrega actualizada y preorden regenerada",
-        customerDeliveryInfo: updatedInfo,
-        preOrder: regeneratedPreOrder,
+        updatedInfo,
       };
     }
 

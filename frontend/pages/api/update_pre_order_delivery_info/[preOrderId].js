@@ -11,6 +11,7 @@ export default async function handler(req, res) {
         deliveryInfo
       );
 
+      // Devolver la respuesta completa del backend
       res.status(200).json(updateDeliveryInfoResponse.data);
     } catch (error) {
       console.error(
