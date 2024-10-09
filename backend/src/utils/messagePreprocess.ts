@@ -234,16 +234,20 @@ function extractMentionedProducts(productMessage, menu) {
     "la",
   ];
 
-  function normalizeText(text) {
+  function normalizeText(text: string): string {
     const normalized = text
       .toLowerCase()
       .normalize("NFD")
       .replace(/[\u0300-\u036f]/g, "")
-      .replace(/[^a-z\s]/g, "") // Cambiado para eliminar números y otros caracteres
+      .replace(/[^a-z\s]/g, "")
       .trim();
 
     const words = normalized.split(/\s+/);
     const filteredWords = words.filter((word) => !wordsToFilter.includes(word));
+
+    // Ordenar las palabras alfabéticamente
+    filteredWords.sort();
+
     return filteredWords.join(" ");
   }
 
@@ -304,9 +308,11 @@ function extractMentionedProducts(productMessage, menu) {
   // Configurar Fuse.js
   const fuseOptions = {
     keys: ["name"],
-    threshold: 0.4, // Reducir el umbral para hacer la coincidencia más estricta
+    threshold: 0.4,
     includeScore: true,
     ignoreLocation: true,
+    tokenize: true, // Habilita la tokenización
+    matchAllTokens: true, // Asegura que todos los tokens sean considerados en la búsqueda
   };
 
   console.log("searchList", JSON.stringify(searchList, null, 2));
