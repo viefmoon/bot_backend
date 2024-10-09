@@ -164,7 +164,6 @@ async function getMenuAvailability(): Promise<any> {
       return productoInfo;
     });
 
-    console.log("menuSimplificado", JSON.stringify(menuSimplificado));
 
     return menuSimplificado as ProductoInfo[];
   } catch (error: any) {
@@ -194,7 +193,6 @@ async function getRelevantMenuItems(
       fullMenu
     );
     productos = [...productos, ...productsInMessage];
-    console.log("productos", JSON.stringify(productos));
   }
 
   productos = Array.from(new Set(productos.map((p) => JSON.stringify(p)))).map(
