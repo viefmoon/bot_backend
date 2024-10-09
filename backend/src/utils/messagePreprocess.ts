@@ -277,10 +277,14 @@ function extractMentionedProducts(
     ],
   };
 
+  // Agregar log para ver las opciones de Fuse
+  console.log("Opciones de Fuse:", JSON.stringify(fuseOptions, null, 2));
+
   const fuse = new (Fuse as any)(menu, fuseOptions);
+
   // Realizar la búsqueda
   const results = fuse.search(cleanedMessage);
-  console.log("results", results);
+  console.log("Resultados de la búsqueda:", JSON.stringify(results, null, 2));
 
   const mentionedProducts: MentionedProduct[] = results.map((result) => {
     const product = result.item;
