@@ -165,6 +165,8 @@ async function getMenuAvailability(): Promise<any> {
       return productoInfo;
     });
 
+    console.log("menuSimplificado", JSON.stringify(menuSimplificado));
+
     return menuSimplificado as ProductoInfo[];
   } catch (error: any) {
     console.error("Error al obtener la disponibilidad del menú:", error);
