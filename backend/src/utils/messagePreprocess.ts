@@ -20,7 +20,7 @@ import {
   SYSTEM_MESSAGE_PHASE_2,
 } from "../config/predefinedMessages";
 import getFullMenu from "src/data/menu";
-import Fuse from "fuse.js";
+import * as Fuse from "fuse.js";
 
 dotenv.config();
 
