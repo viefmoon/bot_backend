@@ -321,11 +321,11 @@ function extractMentionedProducts(
           continue; // Si no hay variantes coincidentes, saltamos este producto
         }
       } else {
-        // Si no hay variantes, incluimos el productId y name del producto principal
-        mentionedProduct.productId = product.productId;
-        mentionedProduct.name = product.name;
+        mentionedProduct.products = [{
+          productId: product.productId,
+          name: product.name,
+        }];
       }
-
       // Verificar modificadores
       if (product.modifiers) {
         mentionedProduct.modifiers = product.modifiers.filter((modifier) =>
