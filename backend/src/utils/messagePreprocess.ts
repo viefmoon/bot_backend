@@ -282,7 +282,7 @@ function extractMentionedProducts(productMessage, menu) {
     // Agregar el producto principal
     searchList.push({
       type: "product",
-      id: product.id,
+      id: product.productId,
       name: product.name,
       keywords: generateKeywordCombinations(product.keywords),
       item: product,
@@ -293,8 +293,8 @@ function extractMentionedProducts(productMessage, menu) {
       for (const variant of product.productVariants) {
         searchList.push({
           type: "variant",
-          parentId: product.id,
-          id: variant.id,
+          parentId: product.productId,
+          id: variant.variantId,
           name: variant.name,
           keywords: generateKeywordCombinations(variant.keywords),
           item: variant,
@@ -307,8 +307,8 @@ function extractMentionedProducts(productMessage, menu) {
       for (const modifier of product.modifiers) {
         searchList.push({
           type: "modifier",
-          parentId: product.id,
-          id: modifier.id,
+          parentId: product.productId,
+          id: modifier.modifierId,
           name: modifier.name,
           keywords: generateKeywordCombinations(modifier.keywords),
           item: modifier,
@@ -320,9 +320,9 @@ function extractMentionedProducts(productMessage, menu) {
     if (product.pizzaIngredients) {
       for (const ingredient of product.pizzaIngredients) {
         searchList.push({
-          type: "ingredient",
-          parentId: product.id,
-          id: ingredient.id,
+          type: "pizzaIngredient",
+          parentId: product.productId,
+          id: ingredient.pizzaIngredientId,
           name: ingredient.name,
           keywords: generateKeywordCombinations(ingredient.keywords),
           item: ingredient,
