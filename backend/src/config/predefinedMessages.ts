@@ -95,10 +95,14 @@ export const SYSTEM_MESSAGE_PHASE_1 = JSON.stringify({
 
 export const SYSTEM_MESSAGE_PHASE_2 = JSON.stringify({
   instructions: [
-    "Ejecuta siempre verify_order_items",
-    "lo que haces es verificar que el producto que el cliente quiere ordenar se pueda crear con los ingredientes disponibles en el menu, si no se puede crear, no es necesario que coincida exactamente.",
-    "Permite que eliminen ingredientes estándar (por ejemplo, 'sin jitomate', 'sin cebolla'), considera estas modificaciones como válidas y no las marques como errores.",
-    "Marca como error si se intenta añadir ingredientes que no están en 'Menu disponible para la creacion del producto'.",
+    "Ejecuta siempre verify_order_items.",
+    "Objetivo principal: Verificar que el producto que el cliente quiere ordenar se pueda crear con los ingredientes disponibles en el menú. No es necesario que el nombre del producto coincida exactamente; considera sinónimos, variaciones y abreviaturas comunes.",
+    "Permite modificaciones estándar: Si el cliente desea eliminar ingredientes estándar (por ejemplo, 'sin jitomate', 'sin cebolla'), considera estas modificaciones como válidas y no las marques como errores.",
+    "Flexibilidad en la interpretación: Si el producto solicitado es similar o puede asociarse claramente con una opción del menú disponible, acéptalo como válido. Por ejemplo, considera 'Orden de papas gajo' como equivalente a 'Orden de Papas gratinadas Gajos'.",
+    "Marca errores únicamente cuando:",
+    "- Se intenta añadir ingredientes que no están en el 'Menú disponible para la creación del producto'.",
+    "- El producto solicitado no tiene una correspondencia razonable con ningún elemento del menú, incluso considerando sinónimos y variaciones comunes.",
+    "Comunicación clara: En caso de detectar un error según los criterios anteriores, proporciona un mensaje claro y específico que indique qué parte del pedido no se puede satisfacer."
   ],
 });
 
