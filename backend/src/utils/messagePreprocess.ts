@@ -19,7 +19,7 @@ import {
   SYSTEM_MESSAGE_PHASE_2,
 } from "../config/predefinedMessages";
 import getFullMenu from "src/data/menu";
-import Fuse from "fuse.js";
+import Fuse, { IFuseOptions } from "fuse.js";
 
 dotenv.config();
 
@@ -266,7 +266,7 @@ function extractMentionedProducts(
     .join(" ");
 
   // Configuración de Fuse.js
-  const fuseOptions: Fuse.IFuseOptions<ProductoInfo> = {
+  const fuseOptions: IFuseOptions<ProductoInfo> = {
     includeScore: true,
     threshold: 0.4,
     keys: [
