@@ -447,7 +447,7 @@ export async function preprocessMessages(messages: any[]): Promise<
           console.error("Item inválido o sin descripción:", item);
         }
       }
-      console.log("preprocessedContent", preprocessedContent);
+      console.log("preprocessedContent", JSON.stringify(preprocessedContent));
       const verificationResult = await verifyOrderItems(preprocessedContent);
       const parsedResult = JSON.parse(verificationResult);
 
