@@ -345,6 +345,8 @@ function extractMentionedProducts(productMessage, menu) {
   // Realizar búsqueda
   const results = fuse.search(filteredMessage);
 
+  console.log("results", results);
+
   // Agrupar resultados por producto
   const mentionedProductsMap = new Map();
 
