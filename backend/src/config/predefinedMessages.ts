@@ -63,6 +63,7 @@ export const SYSTEM_MESSAGE_PHASE_1 = JSON.stringify({
       acompañamientos: ["chile de aceite", "aderezo"]
     },
     hamburguesas: {
+      opciones: ["Con papas francesas", "Con papas gajos", "Con papas mixtas"],
       ingredientesBase: ["cebolla", "jitomate", "lechuga", "chile jalapeño", "catsup", "aderezo", "crema", "mostaza"],
       variedades: [
         {nombre: "Tradicional", ingredientes: ["Carne de res", "tocino", "queso amarillo", "queso asadero"]},
@@ -73,7 +74,6 @@ export const SYSTEM_MESSAGE_PHASE_1 = JSON.stringify({
         {nombre: "Lenazo", ingredientes: ["Doble carne de sirlón", "tocino", "queso amarillo", "queso asadero"]},
         {nombre: "Cubana", ingredientes: ["Carne de res", "tocino", "pierna", "salchicha", "jamón", "queso amarillo"]}
       ],
-      opcionesPapas: ["Francesa", "Gajos", "Mixtas"]
     },
     ensaladas: {
       tipos: ["De Pollo", "De Jamón"],
