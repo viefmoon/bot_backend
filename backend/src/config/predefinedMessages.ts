@@ -27,40 +27,37 @@ export const SYSTEM_MESSAGE_PHASE_1 = JSON.stringify({
       alitas: {
         sabores: ["BBQ", "Picosas", "Fritas", "Mango habanero", "Mixtas BBQ y picosas"],
         tamaños: ["orden", "media"],
-        acompañamiento: "chile de aceite"
       },
       papas: {
         tipos: ["Francesa", "Gajos", "Mixtas francesa y gajos"],
         tamaños: ["orden", "media"],
-        opciones: ["Con queso", "Sin queso"],
-        acompañamiento: "aderezo"
+        opciones: ["Con queso o sin queso"],
       },
       dedosDeQueso: {}
     },
     pizzas: {
       tamaños: ["Grande", "Mediana", "Chica"],
-      opcionesOrilla: ["rellena"],
+      opcionesOrilla: ["Orilla rellena de queso"],
       variedades: [
-        {nombre: "Especial", ingredientes: ["Pepperoni", "Salchicha", "Jamón", "Salami", "Chile morrón"]},
-        {nombre: "Carnes Frías", ingredientes: ["Pepperoni", "Salchicha", "Jamón", "Salami"]},
-        {nombre: "Carranza", ingredientes: ["Chorizo", "Jamón", "Chile jalapeño", "Jitomate"]},
-        {nombre: "Zapata", ingredientes: ["Salami", "Jamón", "Champiñón"]},
-        {nombre: "Villa", ingredientes: ["Chorizo", "Tocino", "Piña", "Chile jalapeño"]},
-        {nombre: "Margarita", ingredientes: ["3 Quesos", "Jitomate", "Albahaca"]},
-        {nombre: "Adelita", ingredientes: ["Jamón", "Piña", "Arándano"]},
-        {nombre: "Hawaiana", ingredientes: ["Jamón", "Piña"]},
-        {nombre: "Mexicana", ingredientes: ["Chorizo", "Cebolla", "Chile jalapeño", "Jitomate"]},
-        {nombre: "Rivera", ingredientes: ["Elote", "Champiñón", "Chile morrón"]},
-        {nombre: "Kahlo", ingredientes: ["Calabaza", "Elote", "Champiñón", "Jitomate", "Chile morrón"]},
-        {nombre: "Lupita", ingredientes: ["Carne molida", "Tocino", "Cebolla", "Chile morrón"]},
-        {nombre: "Pepperoni", ingredientes: ["Pepperoni"]},
-        {nombre: "La Leña", ingredientes: ["Tocino", "Pierna", "Chorizo", "Carne molida"]},
-        {nombre: "La María", ingredientes: ["Pollo BBQ", "Piña", "Chile jalapeño"]},
-        {nombre: "Malinche", ingredientes: ["3 Quesos", "Queso de cabra", "Champiñón", "Jamón", "Chile seco", "Albahaca"]},
-        {nombre: "Philadelphia", ingredientes: ["Jamon", "Queso philadelphia", "Chile", "Albahaca"]}
+        {nombre: "Especial"},
+        {nombre: "Carnes Frías"},
+        {nombre: "Carranza"},
+        {nombre: "Zapata"},
+        {nombre: "Villa"},
+        {nombre: "Margarita"},
+        {nombre: "Adelita"},
+        {nombre: "Hawaiana"},
+        {nombre: "Mexicana"},
+        {nombre: "Rivera"},
+        {nombre: "Kahlo"},
+        {nombre: "Lupita"},
+        {nombre: "Pepperoni"},
+        {nombre: "La Leña"},
+        {nombre: "La María"},
+        {nombre: "Malinche"},
+        {nombre: "Philadelphia"}
       ],
       opciones: ["Personalizada con hasta 3 ingredientes", "Ingrediente extra", "Mitad y mitad"],
-      acompañamientos: ["chile de aceite", "aderezo"]
     },
     hamburguesas: {
       opciones: ["Con papas francesas", "Con papas gajos", "Con papas mixtas"],
@@ -79,15 +76,13 @@ export const SYSTEM_MESSAGE_PHASE_1 = JSON.stringify({
       tipos: ["De Pollo", "De Jamón"],
       tamaños: ["Chica", "Grande"],
       ingredientes: ["Pollo a la plancha o jamón", "chile morrón", "elote", "lechuga", "jitomate", "zanahoria", "queso parmesano", "aderezo", "betabel crujiente"],
-      extras: ["vinagreta"]
     },
     bebidas: {
       aguasFrescas: ["Agua de horchata", "Limonada", "Limonada Mineral"],
       refrescos: ["Coca Cola", "7up", "Mirinda", "Sangría", "Agua Mineral", "Squirt"],
       otras: ["Sangría Preparada", "Micheladas"],
       cafeCaliente: ["Americano", "Capuchino", "Chocolate", "Mocachino", "Latte Vainilla", "Latte Capuchino"],
-      frappes: ["Capuchino", "Coco", "Caramelo", "Cajeta", "Mocaccino", "Galleta", "Bombón"],
-      frappesEspeciales: ["Rompope", "Mazapán", "Magnum"]
+      frappes: ["Capuchino", "Coco", "Caramelo", "Cajeta", "Mocaccino", "Galleta", "Bombón","Rompope", "Mazapán", "Magnum"],
     },
     cocteleria: [
       "Vino tinto", "Sangría con vino", "Vampiro", "Gin de Maracuyá", "Margarita", 
