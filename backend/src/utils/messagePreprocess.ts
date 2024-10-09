@@ -338,14 +338,10 @@ function extractMentionedProducts(
         }];
       }
 
-      console.log("product", JSON.stringify(product));
-      console.log("words", words);
       if (product.modifiers) {
-        console.log("product.modifiers", JSON.stringify(product.modifiers));
         mentionedProduct.modifiers = product.modifiers.filter((modifier) =>
           checkKeywords(modifier.keywords, words)
         );
-        console.log("mentionedProduct.modifiers", JSON.stringify(mentionedProduct.modifiers));
       }
 
       // Verificar ingredientes de pizza
