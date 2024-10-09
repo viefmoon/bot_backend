@@ -384,7 +384,7 @@ async function verifyOrderItems(
   console.log("transformedOrderItems", transformedOrderItems);
 
   const response = await openai.chat.completions.create({
-    model: "gpt-4o-mini",
+    model: "gpt-4o",
     messages: [systemMessage, userMessage],
     tools: [verifyOrderItemsTool] as any,
     parallel_tool_calls: false,
