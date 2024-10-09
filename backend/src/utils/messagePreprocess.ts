@@ -333,7 +333,7 @@ function extractMentionedProducts(productMessage, menu) {
 
   // Configurar Fuse.js
   const fuseOptions = {
-    keys: ["keywords"],
+    keys: ["name"],
     threshold: 0.6, // Aumentar el umbral para permitir coincidencias más flexibles
     includeScore: true,
     ignoreLocation: true,
