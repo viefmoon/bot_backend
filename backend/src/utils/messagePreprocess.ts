@@ -264,7 +264,8 @@ function extractMentionedProducts(productMessage, menu) {
     return text
       .toLowerCase()
       .normalize("NFD")
-      .replace(/[\u0300-\u036f]/g, "");
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/[^a-z0-9\s]/g, ""); // Eliminar caracteres especiales
   }
 
   const filteredWords = productMessage
@@ -332,14 +333,13 @@ function extractMentionedProducts(productMessage, menu) {
 
   // Configurar Fuse.js
   const fuseOptions = {
-    keys: ["keywords"],
-    threshold: 0.3, // Ajusta este valor según tus necesidades
+    keys: ["keywords", "name"], // Añadir 'name' como clave de búsqueda
+    threshold: 0.6, // Aumentar el umbral para permitir coincidencias más flexibles
     includeScore: true,
     ignoreLocation: true,
   };
 
-  console.log("searchList", searchList);
-
+  console.log("searchList", JSON.stringify(searchList, null, 2));
   console.log("filteredMessage", filteredMessage);
 
   const fuse = new Fuse(searchList, fuseOptions);
@@ -347,7 +347,7 @@ function extractMentionedProducts(productMessage, menu) {
   // Realizar búsqueda
   const results = fuse.search(filteredMessage);
 
-  console.log("results", results);
+  console.log("results", JSON.stringify(results, null, 2));
 
   // Agrupar resultados por producto
   const mentionedProductsMap = new Map();
@@ -441,7 +441,8 @@ function normalizeText(text) {
   return text
     .toLowerCase()
     .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "");
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9\s]/g, ""); // Eliminar caracteres especiales
 }
 
 async function verifyOrderItems(
