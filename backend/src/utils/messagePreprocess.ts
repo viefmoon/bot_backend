@@ -379,6 +379,9 @@ async function verifyOrderItems(
     content: JSON.stringify(transformedOrderItems),
   };
 
+  console.log("systemMessage", systemMessage);
+  console.log("transformedOrderItems", transformedOrderItems);
+
   const response = await openai.chat.completions.create({
     model: "gpt-4o-mini",
     messages: [systemMessage, userMessage],
