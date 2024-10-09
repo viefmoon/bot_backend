@@ -106,7 +106,6 @@ async function getMenuAvailability(): Promise<any> {
           model: ModifierType,
           as: "modifierTypes",
           include: [
-            { model: Availability, where: { available: true } },
             {
               model: Modifier,
               as: "modifiers",
