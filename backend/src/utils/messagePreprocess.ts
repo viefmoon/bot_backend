@@ -277,8 +277,7 @@ function extractMentionedProducts(
     ],
   };
 
-  const fuse = new Fuse.default<ProductoInfo>(menu, fuseOptions);
-
+  const fuse = new (Fuse as any)(menu, fuseOptions);
   // Realizar la búsqueda
   const results = fuse.search(cleanedMessage);
 
@@ -297,7 +296,7 @@ function extractMentionedProducts(
 
     // Verificar variantes
     if (product.productVariants) {
-      const variantFuse = new Fuse.default(product.productVariants, {
+      const variantFuse = new (Fuse as any)(product.productVariants, {
         keys: ["keywords"],
         threshold: 0.4,
       });
@@ -312,7 +311,7 @@ function extractMentionedProducts(
 
     // Verificar modificadores
     if (product.modifiers) {
-      const modifierFuse = new Fuse.default(product.modifiers, {
+      const modifierFuse = new (Fuse as any)(product.modifiers, {
         keys: ["keywords"],
         threshold: 0.4,
       });
@@ -327,7 +326,7 @@ function extractMentionedProducts(
 
     // Verificar ingredientes de pizza
     if (product.pizzaIngredients) {
-      const ingredientFuse = new Fuse.default(product.pizzaIngredients, {
+      const ingredientFuse = new (Fuse as any)(product.pizzaIngredients, {
         keys: ["keywords"],
         threshold: 0.4,
       });
