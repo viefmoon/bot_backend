@@ -340,6 +340,8 @@ function extractMentionedProducts(productMessage, menu) {
 
   console.log("searchList", searchList);
 
+  console.log("filteredMessage", filteredMessage);
+
   const fuse = new Fuse(searchList, fuseOptions);
 
   // Realizar búsqueda
