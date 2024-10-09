@@ -36,8 +36,7 @@ export const SYSTEM_MESSAGE_PHASE_1 = JSON.stringify({
       dedosDeQueso: {}
     },
     pizzas: {
-      tamaños: ["Grande", "Mediana", "Chica"],
-      opcionesOrilla: ["Orilla rellena de queso"],
+      tamaños: ["Grande, Mediana, Chica y con orilla rellena de queso"],
       variedades: [
         {nombre: "Especial"},
         {nombre: "Carnes Frías"},
@@ -57,7 +56,7 @@ export const SYSTEM_MESSAGE_PHASE_1 = JSON.stringify({
         {nombre: "Malinche"},
         {nombre: "Philadelphia"}
       ],
-      opciones: ["Personalizada con hasta 3 ingredientes", "Ingrediente extra", "Mitad y mitad"],
+      opciones: ["Ingrediente extra", "Mitad y mitad"],
     },
     hamburguesas: {
       opciones: ["Con papas francesas", "Con papas gajos", "Con papas mixtas"],
