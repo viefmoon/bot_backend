@@ -14,14 +14,14 @@ export class MenuService {
     try {
       const menu = await Product.findAll({
         attributes: {
-          exclude: ["createdAt", "updatedAt", "keywords", "ingredients"],
+          exclude: ["createdAt", "updatedAt", "ingredients"],
         },
         include: [
           {
             model: ProductVariant,
             as: "productVariants",
             attributes: {
-              exclude: ["createdAt", "updatedAt", "keywords", "ingredients"],
+              exclude: ["createdAt", "updatedAt", "ingredients"],
             },
             include: [
               {
@@ -38,7 +38,7 @@ export class MenuService {
             model: PizzaIngredient,
             as: "pizzaIngredients",
             attributes: {
-              exclude: ["createdAt", "updatedAt", "keywords", "ingredients"],
+              exclude: ["createdAt", "updatedAt", "ingredients"],
             },
             include: [
               {
@@ -55,7 +55,7 @@ export class MenuService {
               {
                 model: Modifier,
                 as: "modifiers",
-                attributes: { exclude: ["createdAt", "updatedAt", "keywords"] },
+                attributes: { exclude: ["createdAt", "updatedAt"] },
                 include: [
                   {
                     model: Availability,

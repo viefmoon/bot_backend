@@ -8,7 +8,6 @@ interface ModifierAttributes {
   name: string;
   price: number;
   modifierTypeId: string;
-  keywords?: object;
 }
 
 interface ModifierCreationAttributes
@@ -22,7 +21,6 @@ class Modifier
   public name!: string;
   public price!: number;
   public modifierTypeId!: string;
-  public keywords?: object;
 
   // Timestamps
   public readonly createdAt!: Date;
@@ -55,10 +53,6 @@ Modifier.init(
         model: "ModifierTypes",
         key: "id",
       },
-    },
-    keywords: {
-      type: DataTypes.JSON,
-      allowNull: true,
     },
   },
   {

@@ -8,7 +8,6 @@ import {
 } from "../models";
 import OpenAI from "openai";
 import { ChatCompletionMessageParam } from "openai/resources/chat";
-import { ratio } from "fuzzball";
 import {
   preprocessOrderTool,
   sendMenuTool,
@@ -31,7 +30,6 @@ const openai = new OpenAI({
 interface MenuItem {
   productId?: string;
   name: string;
-  keywords?: object;
   products?: Product[];
   productVariants?: ProductVariant[];
   modifiers?: Modifier[];
@@ -48,32 +46,18 @@ interface PreprocessedContent {
 interface ProductoInfo {
   productId: string;
   name: string;
-  keywords: object;
   productVariants?: Array<{
     variantId: string;
     name: string;
-    keywords: object;
   }>;
   modifiers?: Array<{
     modifierId: string;
     name: string;
-    keywords: object;
   }>;
   pizzaIngredients?: Array<{
     pizzaIngredientId: string;
     name: string;
-    keywords: object;
   }>;
-}
-
-interface MentionedProduct {
-  productId: string;
-  name: string;
-  products?: Array<{ productId: string; name: string }>;
-  variants?: Array<{ variantId: string; name: string }>;
-  modifiers?: Array<{ modifierId: string; name: string }>;
-  pizzaIngredients?: Array<{ pizzaIngredientId: string; name: string }>;
-  ingredients?: string[];
 }
 
 async function getMenuAvailability(): Promise<any> {
@@ -130,14 +114,12 @@ async function getMenuAvailability(): Promise<any> {
       const productoInfo: ProductoInfo = {
         productId: producto.id.toString(),
         name: producto.name,
-        keywords: producto.keywords,
       };
 
       if (producto.productVariants?.length > 0) {
         productoInfo.productVariants = producto.productVariants.map((v) => ({
           variantId: v.id,
           name: v.name,
-          keywords: v.keywords,
         }));
       }
 
@@ -148,7 +130,6 @@ async function getMenuAvailability(): Promise<any> {
             mt.modifiers?.map((m) => ({
               modifierId: m.id,
               name: m.name,
-              keywords: m.keywords || null,
             })) || []
         );
       }
@@ -158,7 +139,6 @@ async function getMenuAvailability(): Promise<any> {
         productoInfo.pizzaIngredients = producto.pizzaIngredients.map((i) => ({
           pizzaIngredientId: i.id,
           name: i.name,
-          keywords: i.keywords || null,
         }));
       }
 
@@ -199,13 +179,9 @@ async function getRelevantMenuItems(
     (p) => {
       const producto = JSON.parse(p);
 
-      // Eliminar el campo keywords
-      delete producto.keywords;
-
       // Procesar productVariants
       if (producto.productVariants?.length) {
         producto.productVariants = producto.productVariants.map((variant) => {
-          delete variant.keywords;
           return variant;
         });
       } else {
@@ -215,7 +191,6 @@ async function getRelevantMenuItems(
       // Procesar modifiers
       if (producto.modifiers?.length) {
         producto.modifiers = producto.modifiers.map((modifier) => {
-          delete modifier.keywords;
           return modifier;
         });
       } else {
@@ -226,7 +201,6 @@ async function getRelevantMenuItems(
       if (producto.pizzaIngredients?.length) {
         producto.pizzaIngredients = producto.pizzaIngredients.map(
           (ingredient) => {
-            delete ingredient.keywords;
             return ingredient;
           }
         );
@@ -261,12 +235,16 @@ function extractMentionedProducts(productMessage, menu) {
   ];
 
   function normalizeText(text) {
-    return text
+    const normalized = text
       .toLowerCase()
       .normalize("NFD")
       .replace(/[\u0300-\u036f]/g, "")
       .replace(/[^a-z0-9\s]/g, "")
       .trim();
+
+    const words = normalized.split(/\s+/);
+    const filteredWords = words.filter((word) => !wordsToFilter.includes(word));
+    return filteredWords.join(" ");
   }
 
   const filteredMessage = normalizeText(productMessage);
@@ -280,7 +258,6 @@ function extractMentionedProducts(productMessage, menu) {
       type: "product",
       id: product.productId,
       name: normalizeText(product.name),
-      keywords: generateKeywordCombinations(product.keywords),
       item: product,
     });
 
@@ -292,7 +269,6 @@ function extractMentionedProducts(productMessage, menu) {
           parentId: product.productId,
           id: variant.variantId,
           name: normalizeText(variant.name),
-          keywords: generateKeywordCombinations(variant.keywords),
           item: variant,
         });
       }
@@ -306,7 +282,6 @@ function extractMentionedProducts(productMessage, menu) {
           parentId: product.productId,
           id: modifier.modifierId,
           name: normalizeText(modifier.name),
-          keywords: generateKeywordCombinations(modifier.keywords),
           item: modifier,
         });
       }
@@ -320,7 +295,6 @@ function extractMentionedProducts(productMessage, menu) {
           parentId: product.productId,
           id: ingredient.pizzaIngredientId,
           name: normalizeText(ingredient.name),
-          keywords: generateKeywordCombinations(ingredient.keywords),
           item: ingredient,
         });
       }
@@ -401,45 +375,6 @@ function extractMentionedProducts(productMessage, menu) {
   const mentionedProducts = Array.from(mentionedProductsMap.values());
 
   return mentionedProducts;
-}
-
-// Función para generar todas las combinaciones de keywords
-function generateKeywordCombinations(keywords) {
-  if (!keywords) return [];
-
-  if (Array.isArray(keywords[0])) {
-    // Es un array de arrays, generar combinaciones
-    const combinations = getCombinations(keywords);
-    return combinations.map(normalizeText);
-  } else {
-    // Es un array simple
-    return keywords.map(normalizeText);
-  }
-}
-
-// Función para obtener todas las combinaciones posibles de keywords
-function getCombinations(arrays, prefix = "") {
-  if (!arrays.length) return [prefix.trim()];
-
-  const result = [];
-  const firstArray = arrays[0];
-  const restArrays = arrays.slice(1);
-
-  for (const word of firstArray) {
-    const newPrefix = `${prefix} ${word}`;
-    result.push(...getCombinations(restArrays, newPrefix));
-  }
-
-  return result;
-}
-
-function normalizeText(text) {
-  return text
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .replace(/[^a-z0-9\s]/g, "")
-    .trim();
 }
 
 async function verifyOrderItems(

@@ -8,7 +8,6 @@ interface PizzaIngredientAttributes {
   ingredientValue: number;
   productId: string;
   ingredients?: string;
-  keywords?: object;
 }
 
 interface PizzaIngredientCreationAttributes
@@ -23,7 +22,6 @@ class PizzaIngredient
   public ingredientValue!: number;
   public productId!: string;
   public ingredients?: string;
-  public keywords?: object;
 
   // Timestamps
   public readonly createdAt!: Date;
@@ -59,10 +57,6 @@ PizzaIngredient.init(
     },
     ingredients: {
       type: DataTypes.STRING,
-      allowNull: true,
-    },
-    keywords: {
-      type: DataTypes.JSON,
       allowNull: true,
     },
   },

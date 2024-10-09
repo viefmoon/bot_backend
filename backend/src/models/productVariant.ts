@@ -7,7 +7,6 @@ interface ProductVariantAttributes {
   price: number;
   productId: string;
   ingredients?: string;
-  keywords?: object;
   createdAt?: Date;
   updatedAt?: Date;
 }
@@ -24,7 +23,6 @@ class ProductVariant
   public price!: number;
   public productId!: string;
   public ingredients?: string;
-  public keywords?: object;
 
   public readonly createdAt!: Date;
   public readonly updatedAt!: Date;
@@ -57,10 +55,6 @@ ProductVariant.init(
     },
     ingredients: {
       type: DataTypes.STRING,
-      allowNull: true,
-    },
-    keywords: {
-      type: DataTypes.JSON,
       allowNull: true,
     },
   },
