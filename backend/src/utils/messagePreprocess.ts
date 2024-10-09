@@ -329,7 +329,7 @@ function extractMentionedProducts(
       }
 
       console.log("product", JSON.stringify(product));
-      // Verificar modificadores
+      console.log("words", words);
       if (product.modifiers) {
         console.log("product.modifiers", JSON.stringify(product.modifiers));
         mentionedProduct.modifiers = product.modifiers.filter((modifier) =>
