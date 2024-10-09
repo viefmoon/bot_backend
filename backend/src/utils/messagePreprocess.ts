@@ -280,6 +280,7 @@ function extractMentionedProducts(
   const fuse = new (Fuse as any)(menu, fuseOptions);
   // Realizar la búsqueda
   const results = fuse.search(cleanedMessage);
+  console.log("results", results);
 
   const mentionedProducts: MentionedProduct[] = results.map((result) => {
     const product = result.item;
