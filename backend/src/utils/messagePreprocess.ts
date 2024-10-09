@@ -338,6 +338,8 @@ function extractMentionedProducts(productMessage, menu) {
     ignoreLocation: true,
   };
 
+  console.log("searchList", searchList);
+
   const fuse = new Fuse(searchList, fuseOptions);
 
   // Realizar búsqueda
