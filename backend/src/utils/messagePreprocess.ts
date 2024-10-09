@@ -8,7 +8,6 @@ import {
 } from "../models";
 import OpenAI from "openai";
 import { ChatCompletionMessageParam } from "openai/resources/chat";
-import { ratio } from "fuzzball";
 import {
   preprocessOrderTool,
   sendMenuTool,
@@ -20,6 +19,7 @@ import {
   SYSTEM_MESSAGE_PHASE_2,
 } from "../config/predefinedMessages";
 import getFullMenu from "src/data/menu";
+import Fuse from "fuse.js";
 
 dotenv.config();
 
@@ -27,20 +27,10 @@ const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
-interface MenuItem {
-  productId?: string;
-  name: string;
-  keywords?: object;
-  products?: Product[];
-  productVariants?: ProductVariant[];
-  modifiers?: Modifier[];
-  pizzaIngredients?: PizzaIngredient[];
-}
-
 interface PreprocessedContent {
   orderItems: {
     description: string;
-    relevantMenuItems?: MenuItem[];
+    relevantMenuItems?: MentionedProduct[];
   }[];
 }
 
@@ -69,7 +59,7 @@ interface MentionedProduct {
   productId: string;
   name: string;
   products?: Array<{ productId: string; name: string }>;
-  variants?: Array<{ variantId: string; name: string }>;
+  productVariants?: Array<{ variantId: string; name: string }>;
   modifiers?: Array<{ modifierId: string; name: string }>;
   pizzaIngredients?: Array<{ pizzaIngredientId: string; name: string }>;
   ingredients?: string[];
@@ -164,7 +154,6 @@ async function getMenuAvailability(): Promise<any> {
       return productoInfo;
     });
 
-
     return menuSimplificado as ProductoInfo[];
   } catch (error: any) {
     console.error("Error al obtener la disponibilidad del menú:", error);
@@ -178,14 +167,14 @@ async function getMenuAvailability(): Promise<any> {
 
 async function getRelevantMenuItems(
   preprocessedContent: PreprocessedContent
-): Promise<MenuItem[]> {
+): Promise<MentionedProduct[]> {
   const fullMenu = await getMenuAvailability();
   if ("error" in fullMenu) {
     console.error("Error al obtener el menú completo:", fullMenu.error);
     return [];
   }
 
-  let productos: MenuItem[] = [];
+  let productos: MentionedProduct[] = [];
 
   for (const product of preprocessedContent.orderItems) {
     const productsInMessage = extractMentionedProducts(
@@ -244,8 +233,7 @@ async function getRelevantMenuItems(
 function extractMentionedProducts(
   productMessage: string,
   menu: ProductoInfo[]
-): MenuItem[] {
-  const mentionedProducts = [];
+): MentionedProduct[] {
   const wordsToFilter = [
     "del",
     "los",
@@ -255,106 +243,108 @@ function extractMentionedProducts(
     "unas",
     "pero",
     "para",
+    "con",
+    "y",
+    "o",
+    "de",
+    "en",
+    "el",
+    "la",
   ];
-  function normalizeWord(word) {
-    return word
+
+  function normalizeText(text: string): string {
+    return text
       .toLowerCase()
       .normalize("NFD")
       .replace(/[\u0300-\u036f]/g, "");
   }
 
-  const words = productMessage
+  // Preprocesar el mensaje
+  const cleanedMessage = normalizeText(productMessage)
     .split(/\s+/)
+    .filter((word) => word.length >= 3 && !wordsToFilter.includes(word))
+    .join(" ");
 
-    .map(normalizeWord)
-    .filter((word) => word.length >= 3 && !wordsToFilter.includes(word));
+  // Configuración de Fuse.js
+  const fuseOptions: Fuse.IFuseOptions<ProductoInfo> = {
+    includeScore: true,
+    threshold: 0.4,
+    keys: [
+      "keywords",
+      "productVariants.keywords",
+      "modifiers.keywords",
+      "pizzaIngredients.keywords",
+    ],
+  };
 
-  function checkKeywords(keywords, filteredWords) {
-    if (!keywords) return false;
+  const fuse = new Fuse(menu, fuseOptions);
 
-    function compareWords(keyword, word) {
-      const normalizedKeyword = normalizeWord(keyword);
-      const similarity = ratio(normalizedKeyword, word);
-      const lengthDifference = Math.abs(keyword.length - word.length);
-  
-      console.log(`Comparando: ${keyword} con ${word}`);
-      console.log(`Similitud: ${similarity}, Diferencia de longitud: ${lengthDifference}`);
-  
-      // Ajustamos los umbrales según la longitud de las palabras
-      if (keyword.length <= 3) {
-        return similarity === 100 && lengthDifference === 0;
-      } else if (keyword.length <= 5) {
-        return similarity >= 90 && lengthDifference <= 1;
-      } else {
-        return similarity >= 85 && lengthDifference <= 2;
-      }
-    }
-  
-    if (Array.isArray(keywords[0])) {
-      return keywords.every((group) =>
-        group.some((keyword) =>
-          filteredWords.some((word) => {
-            const result = compareWords(keyword, word);
-            console.log(`Resultado para ${keyword} y ${word}: ${result}`);
-            return result;
-          })
-        )
-      );
-    } else {
-      return keywords.some((keyword) =>
-        filteredWords.some((word) => {
-          const result = compareWords(keyword, word);
-          console.log(`Resultado para ${keyword} y ${word}: ${result}`);
-          return result;
-        })
-      );
-    }
-  }
+  // Realizar la búsqueda
+  const results = fuse.search(cleanedMessage);
 
-  for (const product of menu) {
-    let isProductMentioned = checkKeywords(product.keywords, words);
-
-    if (isProductMentioned) {
-      let mentionedProduct: Partial<MentionedProduct> = {};
-
-      // Verificar variantes
-      if (product.productVariants) {
-        const matchedVariants = product.productVariants.filter((variant) =>
-          checkKeywords(variant.keywords, words)
-        );
-
-        if (matchedVariants.length > 0) {
-          mentionedProduct.products = matchedVariants.map((variant) => ({
-            productId: variant.variantId,
-            name: variant.name,
-          }));
-        } else {
-          continue; // Si no hay variantes coincidentes, saltamos este producto
-        }
-      } else {
-        mentionedProduct.products = [{
+  const mentionedProducts: MentionedProduct[] = results.map((result) => {
+    const product = result.item;
+    const mentionedProduct: MentionedProduct = {
+      productId: product.productId,
+      name: product.name,
+      products: [
+        {
           productId: product.productId,
           name: product.name,
-        }];
-      }
+        },
+      ],
+    };
 
-      if (product.modifiers) {
-        mentionedProduct.modifiers = product.modifiers.filter((modifier) =>
-          checkKeywords(modifier.keywords, words)
-        );
+    // Verificar variantes
+    if (product.productVariants) {
+      const variantFuse = new Fuse(product.productVariants, {
+        keys: ["keywords"],
+        threshold: 0.4,
+      });
+      const variantResults = variantFuse.search(cleanedMessage);
+      if (variantResults.length > 0) {
+        mentionedProduct.productVariants = variantResults.map((vResult) => ({
+          variantId: vResult.item.variantId,
+          name: vResult.item.name,
+        }));
       }
-
-      // Verificar ingredientes de pizza
-      if (product.pizzaIngredients) {
-        mentionedProduct.pizzaIngredients = product.pizzaIngredients.filter(
-          (ingredient) => checkKeywords(ingredient.keywords, words)
-        );
-      }
-
-      console.log("Producto mencionado:", mentionedProduct);
-      mentionedProducts.push(mentionedProduct);
     }
-  }
+
+    // Verificar modificadores
+    if (product.modifiers) {
+      const modifierFuse = new Fuse(product.modifiers, {
+        keys: ["keywords"],
+        threshold: 0.4,
+      });
+      const modifierResults = modifierFuse.search(cleanedMessage);
+      if (modifierResults.length > 0) {
+        mentionedProduct.modifiers = modifierResults.map((mResult) => ({
+          modifierId: mResult.item.modifierId,
+          name: mResult.item.name,
+        }));
+      }
+    }
+
+    // Verificar ingredientes de pizza
+    if (product.pizzaIngredients) {
+      const ingredientFuse = new Fuse(product.pizzaIngredients, {
+        keys: ["keywords"],
+        threshold: 0.4,
+      });
+      const ingredientResults = ingredientFuse.search(cleanedMessage);
+      if (ingredientResults.length > 0) {
+        mentionedProduct.pizzaIngredients = ingredientResults.map(
+          (iResult) => ({
+            pizzaIngredientId: iResult.item.pizzaIngredientId,
+            name: iResult.item.name,
+          })
+        );
+      }
+    }
+
+    return mentionedProduct;
+  });
+
   return mentionedProducts;
 }
 
