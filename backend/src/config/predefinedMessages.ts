@@ -27,11 +27,10 @@ export const SYSTEM_MESSAGE_PHASE_1 = JSON.stringify({
 export const SYSTEM_MESSAGE_PHASE_2 = JSON.stringify({
   instructions: [
     "Ejecuta siempre verify_order_items",
-    "Analiza detalladamente el producto solicitado y verifica si se puede construir el producto en base a su menu disponible para la creacion.",
+    "lo que haces es verificar que el producto que el cliente quiere ordenar se pueda crear con los ingredientes disponibles en el menu, si no se puede crear, debes mandar un mensaje de error indicando que el producto no se puede crear con los ingredientes disponibles.",
+    "Analiza detalladamente el producto solicitado y verifica si se puede construir el producto en base a los ingredientes del menu disponible para la creacion.",
     "Permite que eliminen ingredientes estándar (por ejemplo, 'sin jitomate', 'sin cebolla'), considera estas modificaciones como válidas y no las marques como errores.",
     "Marca como error si se intenta añadir ingredientes que no están en 'Menu disponible para la creacion'.",
-    "Si hay discrepancias por adición de ingredientes no listados, indica específicamente cuáles.",
-    "Verifica que todos los ingredientes mencionados en 'Producto solicitado' estén en 'Menu disponible para la creacion', excepto los que se piden eliminar.",
   ],
 });
 
