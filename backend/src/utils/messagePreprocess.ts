@@ -335,6 +335,7 @@ function extractMentionedProducts(
         mentionedProduct.modifiers = product.modifiers.filter((modifier) =>
           checkKeywords(modifier.keywords, words)
         );
+        console.log("mentionedProduct.modifiers", JSON.stringify(mentionedProduct.modifiers));
       }
 
       // Verificar ingredientes de pizza
