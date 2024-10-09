@@ -274,32 +274,32 @@ function extractMentionedProducts(productMessage, menu) {
       });
     }
 
-  //   // Agregar modifiers
-  //   if (product.modifiers) {
-  //     for (const modifier of product.modifiers) {
-  //       searchList.push({
-  //         type: "modifier",
-  //         parentId: product.productId,
-  //         id: modifier.modifierId,
-  //         name: normalizeText(modifier.name),
-  //         item: modifier,
-  //       });
-  //     }
-  //   }
+    // // Agregar modifiers
+    // if (product.modifiers) {
+    //   for (const modifier of product.modifiers) {
+    //     searchList.push({
+    //       type: "modifier",
+    //       parentId: product.productId,
+    //       id: modifier.modifierId,
+    //       name: normalizeText(modifier.name),
+    //       item: modifier,
+    //     });
+    //   }
+    // }
 
-  //   // Agregar ingredientes de pizza
-  //   if (product.pizzaIngredients) {
-  //     for (const ingredient of product.pizzaIngredients) {
-  //       searchList.push({
-  //         type: "pizzaIngredient",
-  //         parentId: product.productId,
-  //         id: ingredient.pizzaIngredientId,
-  //         name: normalizeText(ingredient.name),
-  //         item: ingredient,
-  //       });
-  //     }
-  //   }
-  // }
+    // // Agregar ingredientes de pizza
+    // if (product.pizzaIngredients) {
+    //   for (const ingredient of product.pizzaIngredients) {
+    //     searchList.push({
+    //       type: "pizzaIngredient",
+    //       parentId: product.productId,
+    //       id: ingredient.pizzaIngredientId,
+    //       name: normalizeText(ingredient.name),
+    //       item: ingredient,
+    //     });
+    //   }
+    // }
+  }
 
   // Configurar Fuse.js
   const fuseOptions = {
