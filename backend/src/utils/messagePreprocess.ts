@@ -275,9 +275,13 @@ function extractMentionedProducts(
     if (!keywords) return false;
 
     function compareWords(keyword, word) {
-      const similarity = ratio(normalizeWord(keyword), word);
+      const normalizedKeyword = normalizeWord(keyword);
+      const similarity = ratio(normalizedKeyword, word);
       const lengthDifference = Math.abs(keyword.length - word.length);
-
+  
+      console.log(`Comparando: ${keyword} con ${word}`);
+      console.log(`Similitud: ${similarity}, Diferencia de longitud: ${lengthDifference}`);
+  
       // Ajustamos los umbrales según la longitud de las palabras
       if (keyword.length <= 3) {
         return similarity === 100 && lengthDifference === 0;
@@ -287,16 +291,24 @@ function extractMentionedProducts(
         return similarity >= 85 && lengthDifference <= 2;
       }
     }
-
+  
     if (Array.isArray(keywords[0])) {
       return keywords.every((group) =>
         group.some((keyword) =>
-          filteredWords.some((word) => compareWords(keyword, word))
+          filteredWords.some((word) => {
+            const result = compareWords(keyword, word);
+            console.log(`Resultado para ${keyword} y ${word}: ${result}`);
+            return result;
+          })
         )
       );
     } else {
       return keywords.some((keyword) =>
-        filteredWords.some((word) => compareWords(keyword, word))
+        filteredWords.some((word) => {
+          const result = compareWords(keyword, word);
+          console.log(`Resultado para ${keyword} y ${word}: ${result}`);
+          return result;
+        })
       );
     }
   }
