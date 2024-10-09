@@ -19,7 +19,7 @@ import {
   SYSTEM_MESSAGE_PHASE_2,
 } from "../config/predefinedMessages";
 import getFullMenu from "src/data/menu";
-import Fuse, { IFuseOptions } from "fuse.js";
+import * as Fuse from "fuse.js";
 
 dotenv.config();
 
@@ -266,7 +266,7 @@ function extractMentionedProducts(
     .join(" ");
 
   // Configuración de Fuse.js
-  const fuseOptions: IFuseOptions<ProductoInfo> = {
+  const fuseOptions: Fuse.IFuseOptions<ProductoInfo> = {
     includeScore: true,
     threshold: 0.4,
     keys: [
@@ -277,7 +277,7 @@ function extractMentionedProducts(
     ],
   };
 
-  const fuse = new Fuse(menu, fuseOptions);
+  const fuse = new Fuse.default<ProductoInfo>(menu, fuseOptions);
 
   // Realizar la búsqueda
   const results = fuse.search(cleanedMessage);
@@ -297,7 +297,7 @@ function extractMentionedProducts(
 
     // Verificar variantes
     if (product.productVariants) {
-      const variantFuse = new Fuse(product.productVariants, {
+      const variantFuse = new Fuse.default(product.productVariants, {
         keys: ["keywords"],
         threshold: 0.4,
       });
@@ -312,7 +312,7 @@ function extractMentionedProducts(
 
     // Verificar modificadores
     if (product.modifiers) {
-      const modifierFuse = new Fuse(product.modifiers, {
+      const modifierFuse = new Fuse.default(product.modifiers, {
         keys: ["keywords"],
         threshold: 0.4,
       });
@@ -327,7 +327,7 @@ function extractMentionedProducts(
 
     // Verificar ingredientes de pizza
     if (product.pizzaIngredients) {
-      const ingredientFuse = new Fuse(product.pizzaIngredients, {
+      const ingredientFuse = new Fuse.default(product.pizzaIngredients, {
         keys: ["keywords"],
         threshold: 0.4,
       });
