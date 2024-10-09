@@ -326,6 +326,8 @@ function extractMentionedProducts(
           name: product.name,
         }];
       }
+
+      console.log("product", JSON.stringify(product));
       // Verificar modificadores
       if (product.modifiers) {
         mentionedProduct.modifiers = product.modifiers.filter((modifier) =>
