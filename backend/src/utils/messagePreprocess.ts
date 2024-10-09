@@ -331,6 +331,7 @@ function extractMentionedProducts(
       console.log("product", JSON.stringify(product));
       // Verificar modificadores
       if (product.modifiers) {
+        console.log("product.modifiers", JSON.stringify(product.modifiers));
         mentionedProduct.modifiers = product.modifiers.filter((modifier) =>
           checkKeywords(modifier.keywords, words)
         );
