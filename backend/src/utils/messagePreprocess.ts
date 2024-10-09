@@ -253,16 +253,8 @@ function extractMentionedProducts(productMessage, menu) {
   let searchList = [];
 
   for (const product of menu) {
-    // Agregar el producto principal
-    searchList.push({
-      type: "product",
-      id: product.productId,
-      name: normalizeText(product.name),
-      item: product,
-    });
-
-    // Agregar variantes
-    if (product.productVariants) {
+    if (product.productVariants && product.productVariants.length > 0) {
+      // Si el producto tiene variantes, solo agregar las variantes
       for (const variant of product.productVariants) {
         searchList.push({
           type: "variant",
@@ -272,34 +264,42 @@ function extractMentionedProducts(productMessage, menu) {
           item: variant,
         });
       }
+    } else {
+      // Si el producto no tiene variantes, agregar el producto principal
+      searchList.push({
+        type: "product",
+        id: product.productId,
+        name: normalizeText(product.name),
+        item: product,
+      });
     }
 
-    // Agregar modifiers
-    if (product.modifiers) {
-      for (const modifier of product.modifiers) {
-        searchList.push({
-          type: "modifier",
-          parentId: product.productId,
-          id: modifier.modifierId,
-          name: normalizeText(modifier.name),
-          item: modifier,
-        });
-      }
-    }
+  //   // Agregar modifiers
+  //   if (product.modifiers) {
+  //     for (const modifier of product.modifiers) {
+  //       searchList.push({
+  //         type: "modifier",
+  //         parentId: product.productId,
+  //         id: modifier.modifierId,
+  //         name: normalizeText(modifier.name),
+  //         item: modifier,
+  //       });
+  //     }
+  //   }
 
-    // Agregar ingredientes de pizza
-    if (product.pizzaIngredients) {
-      for (const ingredient of product.pizzaIngredients) {
-        searchList.push({
-          type: "pizzaIngredient",
-          parentId: product.productId,
-          id: ingredient.pizzaIngredientId,
-          name: normalizeText(ingredient.name),
-          item: ingredient,
-        });
-      }
-    }
-  }
+  //   // Agregar ingredientes de pizza
+  //   if (product.pizzaIngredients) {
+  //     for (const ingredient of product.pizzaIngredients) {
+  //       searchList.push({
+  //         type: "pizzaIngredient",
+  //         parentId: product.productId,
+  //         id: ingredient.pizzaIngredientId,
+  //         name: normalizeText(ingredient.name),
+  //         item: ingredient,
+  //       });
+  //     }
+  //   }
+  // }
 
   // Configurar Fuse.js
   const fuseOptions = {
