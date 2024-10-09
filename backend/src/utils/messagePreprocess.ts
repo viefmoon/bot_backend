@@ -265,15 +265,11 @@ function extractMentionedProducts(productMessage, menu) {
       .toLowerCase()
       .normalize("NFD")
       .replace(/[\u0300-\u036f]/g, "")
-      .replace(/[^a-z0-9\s]/g, ""); // Eliminar caracteres especiales
+      .replace(/[^a-z0-9\s]/g, "")
+      .trim();
   }
 
-  const filteredWords = productMessage
-    .split(/\s+/)
-    .map(normalizeText)
-    .filter((word) => word.length >= 3 && !wordsToFilter.includes(word));
-
-  const filteredMessage = filteredWords.join(" ");
+  const filteredMessage = normalizeText(productMessage);
 
   // Preparar la lista de búsqueda para Fuse.js
   let searchList = [];
@@ -283,7 +279,7 @@ function extractMentionedProducts(productMessage, menu) {
     searchList.push({
       type: "product",
       id: product.productId,
-      name: product.name,
+      name: normalizeText(product.name),
       keywords: generateKeywordCombinations(product.keywords),
       item: product,
     });
@@ -295,7 +291,7 @@ function extractMentionedProducts(productMessage, menu) {
           type: "variant",
           parentId: product.productId,
           id: variant.variantId,
-          name: variant.name,
+          name: normalizeText(variant.name),
           keywords: generateKeywordCombinations(variant.keywords),
           item: variant,
         });
@@ -309,7 +305,7 @@ function extractMentionedProducts(productMessage, menu) {
           type: "modifier",
           parentId: product.productId,
           id: modifier.modifierId,
-          name: modifier.name,
+          name: normalizeText(modifier.name),
           keywords: generateKeywordCombinations(modifier.keywords),
           item: modifier,
         });
@@ -323,7 +319,7 @@ function extractMentionedProducts(productMessage, menu) {
           type: "pizzaIngredient",
           parentId: product.productId,
           id: ingredient.pizzaIngredientId,
-          name: ingredient.name,
+          name: normalizeText(ingredient.name),
           keywords: generateKeywordCombinations(ingredient.keywords),
           item: ingredient,
         });
@@ -334,7 +330,7 @@ function extractMentionedProducts(productMessage, menu) {
   // Configurar Fuse.js
   const fuseOptions = {
     keys: ["name"],
-    threshold: 0.6, // Aumentar el umbral para permitir coincidencias más flexibles
+    threshold: 0.4, // Reducir el umbral para hacer la coincidencia más estricta
     includeScore: true,
     ignoreLocation: true,
   };
@@ -442,7 +438,8 @@ function normalizeText(text) {
     .toLowerCase()
     .normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "")
-    .replace(/[^a-z0-9\s]/g, ""); // Eliminar caracteres especiales
+    .replace(/[^a-z0-9\s]/g, "")
+    .trim();
 }
 
 async function verifyOrderItems(
