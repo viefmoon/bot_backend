@@ -278,7 +278,6 @@ function extractMentionedProducts(productMessage, menu) {
   let searchList = [];
 
   for (const product of menu) {
-    console.log("product", product);
     // Agregar el producto principal
     searchList.push({
       type: "product",
