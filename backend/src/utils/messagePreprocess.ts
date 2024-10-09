@@ -8,6 +8,7 @@ import {
 } from "../models";
 import OpenAI from "openai";
 import { ChatCompletionMessageParam } from "openai/resources/chat";
+import { ratio } from "fuzzball";
 import {
   preprocessOrderTool,
   sendMenuTool,
@@ -19,7 +20,7 @@ import {
   SYSTEM_MESSAGE_PHASE_2,
 } from "../config/predefinedMessages";
 import getFullMenu from "src/data/menu";
-import * as Fuse from "fuse.js";
+import Fuse from "fuse.js";
 
 dotenv.config();
 
@@ -27,10 +28,20 @@ const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
+interface MenuItem {
+  productId?: string;
+  name: string;
+  keywords?: object;
+  products?: Product[];
+  productVariants?: ProductVariant[];
+  modifiers?: Modifier[];
+  pizzaIngredients?: PizzaIngredient[];
+}
+
 interface PreprocessedContent {
   orderItems: {
     description: string;
-    relevantMenuItems?: MentionedProduct[];
+    relevantMenuItems?: MenuItem[];
   }[];
 }
 
@@ -59,7 +70,7 @@ interface MentionedProduct {
   productId: string;
   name: string;
   products?: Array<{ productId: string; name: string }>;
-  productVariants?: Array<{ variantId: string; name: string }>;
+  variants?: Array<{ variantId: string; name: string }>;
   modifiers?: Array<{ modifierId: string; name: string }>;
   pizzaIngredients?: Array<{ pizzaIngredientId: string; name: string }>;
   ingredients?: string[];
@@ -167,14 +178,14 @@ async function getMenuAvailability(): Promise<any> {
 
 async function getRelevantMenuItems(
   preprocessedContent: PreprocessedContent
-): Promise<MentionedProduct[]> {
+): Promise<MenuItem[]> {
   const fullMenu = await getMenuAvailability();
   if ("error" in fullMenu) {
     console.error("Error al obtener el menú completo:", fullMenu.error);
     return [];
   }
 
-  let productos: MentionedProduct[] = [];
+  let productos: MenuItem[] = [];
 
   for (const product of preprocessedContent.orderItems) {
     const productsInMessage = extractMentionedProducts(
@@ -230,10 +241,7 @@ async function getRelevantMenuItems(
   return productos;
 }
 
-function extractMentionedProducts(
-  productMessage: string,
-  menu: ProductoInfo[]
-): MentionedProduct[] {
+function extractMentionedProducts(productMessage, menu) {
   const wordsToFilter = [
     "del",
     "los",
@@ -252,104 +260,182 @@ function extractMentionedProducts(
     "la",
   ];
 
-  function normalizeText(text: string): string {
+  function normalizeText(text) {
     return text
       .toLowerCase()
       .normalize("NFD")
       .replace(/[\u0300-\u036f]/g, "");
   }
 
-  // Preprocesar el mensaje
-  const cleanedMessage = normalizeText(productMessage)
+  const filteredWords = productMessage
     .split(/\s+/)
-    .filter((word) => word.length >= 3 && !wordsToFilter.includes(word))
-    .join(" ");
+    .map(normalizeText)
+    .filter((word) => word.length >= 3 && !wordsToFilter.includes(word));
 
-  // Configuración de Fuse.js
-  const fuseOptions: Fuse.IFuseOptions<ProductoInfo> = {
+  const filteredMessage = filteredWords.join(" ");
+
+  // Preparar la lista de búsqueda para Fuse.js
+  let searchList = [];
+
+  for (const product of menu) {
+    // Agregar el producto principal
+    searchList.push({
+      type: "product",
+      id: product.id,
+      name: product.name,
+      keywords: generateKeywordCombinations(product.keywords),
+      item: product,
+    });
+
+    // Agregar variantes
+    if (product.productVariants) {
+      for (const variant of product.productVariants) {
+        searchList.push({
+          type: "variant",
+          parentId: product.id,
+          id: variant.id,
+          name: variant.name,
+          keywords: generateKeywordCombinations(variant.keywords),
+          item: variant,
+        });
+      }
+    }
+
+    // Agregar modifiers
+    if (product.modifiers) {
+      for (const modifier of product.modifiers) {
+        searchList.push({
+          type: "modifier",
+          parentId: product.id,
+          id: modifier.id,
+          name: modifier.name,
+          keywords: generateKeywordCombinations(modifier.keywords),
+          item: modifier,
+        });
+      }
+    }
+
+    // Agregar ingredientes de pizza
+    if (product.pizzaIngredients) {
+      for (const ingredient of product.pizzaIngredients) {
+        searchList.push({
+          type: "ingredient",
+          parentId: product.id,
+          id: ingredient.id,
+          name: ingredient.name,
+          keywords: generateKeywordCombinations(ingredient.keywords),
+          item: ingredient,
+        });
+      }
+    }
+  }
+
+  // Configurar Fuse.js
+  const fuseOptions = {
+    keys: ["keywords"],
+    threshold: 0.3, // Ajusta este valor según tus necesidades
     includeScore: true,
-    threshold: 0.4,
-    keys: [
-      "keywords",
-      "productVariants.keywords",
-      "modifiers.keywords",
-      "pizzaIngredients.keywords",
-    ],
+    ignoreLocation: true,
   };
 
-  // Agregar log para ver las opciones de Fuse
-  console.log("Opciones de Fuse:", JSON.stringify(fuseOptions, null, 2));
+  const fuse = new Fuse(searchList, fuseOptions);
 
-  const fuse = new (Fuse as any)(menu, fuseOptions);
+  // Realizar búsqueda
+  const results = fuse.search(filteredMessage);
 
-  // Realizar la búsqueda
-  const results = fuse.search(cleanedMessage);
-  console.log("Resultados de la búsqueda:", JSON.stringify(results, null, 2));
+  // Agrupar resultados por producto
+  const mentionedProductsMap = new Map();
 
-  const mentionedProducts: MentionedProduct[] = results.map((result) => {
-    const product = result.item;
-    const mentionedProduct: MentionedProduct = {
-      productId: product.productId,
-      name: product.name,
-      products: [
-        {
-          productId: product.productId,
-          name: product.name,
-        },
-      ],
-    };
+  for (const result of results) {
+    const { type, id, parentId, name } = result.item;
 
-    // Verificar variantes
-    if (product.productVariants) {
-      const variantFuse = new (Fuse as any)(product.productVariants, {
-        keys: ["keywords"],
-        threshold: 0.4,
-      });
-      const variantResults = variantFuse.search(cleanedMessage);
-      if (variantResults.length > 0) {
-        mentionedProduct.productVariants = variantResults.map((vResult) => ({
-          variantId: vResult.item.variantId,
-          name: vResult.item.name,
-        }));
+    if (type === "product") {
+      if (!mentionedProductsMap.has(id)) {
+        mentionedProductsMap.set(id, {
+          productId: id,
+          name: name,
+          variants: [],
+          modifiers: [],
+          pizzaIngredients: [],
+        });
+      }
+    } else {
+      // Es variante, modificador o ingrediente
+      const productId = parentId;
+      if (!mentionedProductsMap.has(productId)) {
+        // Añadir el producto padre si no está
+        const parentProduct = menu.find((p) => p.id === productId);
+        mentionedProductsMap.set(productId, {
+          productId: productId,
+          name: parentProduct.name,
+          variants: [],
+          modifiers: [],
+          pizzaIngredients: [],
+        });
+      }
+
+      const mentionedProduct = mentionedProductsMap.get(productId);
+
+      if (type === "variant") {
+        mentionedProduct.variants.push({
+          id: id,
+          name: name,
+        });
+      } else if (type === "modifier") {
+        mentionedProduct.modifiers.push({
+          id: id,
+          name: name,
+        });
+      } else if (type === "ingredient") {
+        mentionedProduct.pizzaIngredients.push({
+          id: id,
+          name: name,
+        });
       }
     }
+  }
 
-    // Verificar modificadores
-    if (product.modifiers) {
-      const modifierFuse = new (Fuse as any)(product.modifiers, {
-        keys: ["keywords"],
-        threshold: 0.4,
-      });
-      const modifierResults = modifierFuse.search(cleanedMessage);
-      if (modifierResults.length > 0) {
-        mentionedProduct.modifiers = modifierResults.map((mResult) => ({
-          modifierId: mResult.item.modifierId,
-          name: mResult.item.name,
-        }));
-      }
-    }
-
-    // Verificar ingredientes de pizza
-    if (product.pizzaIngredients) {
-      const ingredientFuse = new (Fuse as any)(product.pizzaIngredients, {
-        keys: ["keywords"],
-        threshold: 0.4,
-      });
-      const ingredientResults = ingredientFuse.search(cleanedMessage);
-      if (ingredientResults.length > 0) {
-        mentionedProduct.pizzaIngredients = ingredientResults.map(
-          (iResult) => ({
-            pizzaIngredientId: iResult.item.pizzaIngredientId,
-            name: iResult.item.name,
-          })
-        );
-      }
-    }
-
-    return mentionedProduct;
-  });
+  // Convertir Map a Array
+  const mentionedProducts = Array.from(mentionedProductsMap.values());
 
   return mentionedProducts;
+}
+
+// Función para generar todas las combinaciones de keywords
+function generateKeywordCombinations(keywords) {
+  if (!keywords) return [];
+
+  if (Array.isArray(keywords[0])) {
+    // Es un array de arrays, generar combinaciones
+    const combinations = getCombinations(keywords);
+    return combinations.map(normalizeText);
+  } else {
+    // Es un array simple
+    return keywords.map(normalizeText);
+  }
+}
+
+// Función para obtener todas las combinaciones posibles de keywords
+function getCombinations(arrays, prefix = "") {
+  if (!arrays.length) return [prefix.trim()];
+
+  const result = [];
+  const firstArray = arrays[0];
+  const restArrays = arrays.slice(1);
+
+  for (const word of firstArray) {
+    const newPrefix = `${prefix} ${word}`;
+    result.push(...getCombinations(restArrays, newPrefix));
+  }
+
+  return result;
+}
+
+function normalizeText(text) {
+  return text
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "");
 }
 
 async function verifyOrderItems(
