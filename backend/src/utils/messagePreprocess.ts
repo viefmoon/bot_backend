@@ -461,7 +461,10 @@ function extractMentionedProducts(productMessage, menu) {
 
       // Agregar la mejor variante al producto si se encontró
       if (bestVariant && bestVariant.score >= VARIANT_SIMILARITY_THRESHOLD) {
-        bestProduct.variant = bestVariant;
+        bestProduct.productVariants = [bestVariant];
+      } else {
+        // Si no se encontró una variante que cumpla con el umbral, dejamos productVariants vacío
+        bestProduct.productVariants = [];
       }
     }
 
