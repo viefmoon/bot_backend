@@ -489,6 +489,7 @@ export async function preprocessMessages(messages: any[]): Promise<
     model: "gpt-4o-mini",
     messages: preprocessingMessages,
     tools: [...preprocessOrderTool, ...sendMenuTool] as any,
+    temperature: 0.2,
     parallel_tool_calls: false,
   });
 
