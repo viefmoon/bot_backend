@@ -271,7 +271,7 @@ function extractMentionedProducts(productMessage, menu) {
           type: "variant",
           parentId: product.productId,
           id: variant.variantId,
-          name: normalizeText(variant.name),
+          name: getProductKeywords(variant.name),
           item: variant,
         });
       }
@@ -280,7 +280,7 @@ function extractMentionedProducts(productMessage, menu) {
       searchList.push({
         type: "product",
         id: product.productId,
-        name: normalizeText(product.name),
+        name: getProductKeywords(product.name),
         item: product,
       });
     }
