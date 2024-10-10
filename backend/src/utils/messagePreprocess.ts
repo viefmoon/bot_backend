@@ -19,9 +19,7 @@ import {
   SYSTEM_MESSAGE_PHASE_2,
 } from "../config/predefinedMessages";
 import getFullMenu from "src/data/menu";
-import { mapSynonym } from "seeders/seedMenuItems";
 const Fuse = require("fuse.js");
-const natural = require("natural");
 
 dotenv.config();
 
@@ -215,6 +213,33 @@ async function getRelevantMenuItems(
   );
 
   return productos;
+}
+
+function mapSynonym(normalizedWord: string): string | null {
+  const synonyms: { [key: string]: string[] } = {
+    grande: ["grandes"],
+    mediana: ["medianas"],
+    chica: ["chicas"],
+    orden: ["ordenes"],
+    media: ["1/2", "medias", "medio"],
+    bbq: ["barbacoa", "barbicue"],
+    picosas: ["picositas"],
+    alitas: ["alas"],
+    extra: ["adicional", "mas"],
+    doradas: ["doraditas"],
+    hamburguesa: ["hamburguesas", "burger"],
+    pizza: ["pizzas", "pizaa", "pozza"],
+    capuchino: ["cappuccino"],
+    frappe: ["frape"],
+  };
+
+  for (const [mainWord, synonymList] of Object.entries(synonyms)) {
+    if (synonymList.includes(normalizedWord)) {
+      return mainWord;
+    }
+  }
+
+  return null;
 }
 
 function extractMentionedProducts(productMessage, menu) {

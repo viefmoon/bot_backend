@@ -21,33 +21,6 @@ const testConnection = async (): Promise<void> => {
 
 testConnection();
 
-export function mapSynonym(normalizedWord: string): string | null {
-  const synonyms: { [key: string]: string[] } = {
-    grande: ["grandes"],
-    mediana: ["medianas"],
-    chica: ["chicas"],
-    orden: ["ordenes"],
-    media: ["1/2", "medias", "medio"],
-    bbq: ["barbacoa", "barbicue"],
-    picosas: ["picositas"],
-    alitas: ["alas"],
-    extra: ["adicional", "mas"],
-    doradas: ["doraditas"],
-    hamburguesa: ["hamburguesas", "burger"],
-    pizza: ["pizzas", "pizaa", "pozza"],
-    capuchino: ["cappuccino"],
-    frappe: ["frape"],
-  };
-
-  for (const [mainWord, synonymList] of Object.entries(synonyms)) {
-    if (synonymList.includes(normalizedWord)) {
-      return mainWord;
-    }
-  }
-
-  return null;
-}
-
 const menu: any[] = [
   {
     id: "A",
