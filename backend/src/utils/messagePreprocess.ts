@@ -236,6 +236,7 @@ function extractMentionedProducts(productMessage, menu) {
     "en",
     "el",
     "la",
+    "a",
   ];
 
   function normalizeText(text) {
@@ -246,7 +247,8 @@ function extractMentionedProducts(productMessage, menu) {
       .replace(/[^a-z\s]/g, "")
       .trim();
 
-    let words = tokenizer.tokenize(normalized);
+    //let words = tokenizer.tokenize(normalized);
+    let words = normalized.split(" ");
     words = words.filter((word) => !wordsToFilter.includes(word));
     words = words.map((word) => stemmer.stem(word));
 
