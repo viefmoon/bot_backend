@@ -288,7 +288,7 @@ function extractMentionedProducts(productMessage, menu) {
     const normalizedProductName = normalizeText(product.name);
     const matchScore = ratio(filteredMessage, normalizedProductName);
 
-    if (matchScore > 60) {
+    if (matchScore > 30) {
       // Puedes ajustar este umbral según sea necesario
       mentionedProducts.push({
         productId: product.productId,
