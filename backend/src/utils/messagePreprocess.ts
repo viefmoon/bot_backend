@@ -313,6 +313,7 @@ function extractMentionedProducts(productMessage, menu) {
       name: product.name,
       normalizedName,
       wordCount: nameWords.length,
+      productVariants: product.productVariants, // Añadimos las variantes
     };
   });
 
@@ -358,14 +359,10 @@ function extractMentionedProducts(productMessage, menu) {
   // Comparar cada n-grama con los nombres de los productos
   for (const ngram of messageNGrams) {
     for (const product of normalizedProducts) {
-      console.log("comparando ngram con normalizedName");
-      console.log("ngram:", ngram);
-      console.log("normalizedName:", product.normalizedName);
       const similarity = stringSimilarity.compareTwoStrings(
         ngram,
         product.normalizedName
       );
-      console.log("similarity:", similarity);
 
       if (similarity >= SIMILARITY_THRESHOLD && similarity > highestScore) {
         highestScore = similarity;
@@ -373,6 +370,7 @@ function extractMentionedProducts(productMessage, menu) {
           productId: product.productId,
           name: product.name,
           score: similarity,
+          productVariants: product.productVariants, // Añadimos las variantes
         };
       }
     }
@@ -380,6 +378,93 @@ function extractMentionedProducts(productMessage, menu) {
 
   // Verificar si se encontró un producto que cumpla con el umbral
   if (bestProduct && bestProduct.score >= SIMILARITY_THRESHOLD) {
+    // **Nuevo código para buscar la mejor variante**
+    if (bestProduct.productVariants && bestProduct.productVariants.length > 0) {
+      // Normalizar los nombres de las variantes y construir el conjunto de palabras
+      const variantWordsSet = new Set<string>();
+      const normalizedVariants = bestProduct.productVariants.map((variant) => {
+        const normalizedNameArray = normalizeText(variant.name);
+        // Añadir palabras al conjunto
+        normalizedNameArray.forEach((word) => variantWordsSet.add(word));
+        const normalizedName = normalizedNameArray.join(" ");
+        const nameWords = normalizedNameArray;
+        return {
+          variantId: variant.variantId,
+          name: variant.name,
+          normalizedName,
+          wordCount: nameWords.length,
+        };
+      });
+
+      // **Usamos messageWords sin filtrar para las variantes**
+      const variantMessageWords = messageWords;
+
+      // Establecer un umbral de similitud para palabras individuales (variantes)
+      const VARIANT_WORD_SIMILARITY_THRESHOLD = 0.8; // Ajusta este valor según sea necesario
+
+      // Filtrar las palabras del mensaje que son similares a las palabras de las variantes
+      const filteredVariantMessageWords = variantMessageWords.filter(
+        (messageWord) => {
+          for (const variantWord of Array.from(variantWordsSet)) {
+            const similarity = stringSimilarity.compareTwoStrings(
+              messageWord,
+              variantWord
+            );
+            if (similarity >= VARIANT_WORD_SIMILARITY_THRESHOLD) {
+              return true; // Conservar esta palabra
+            }
+          }
+          return false; // Desechar esta palabra
+        }
+      );
+
+      console.log("filteredVariantMessageWords:", filteredVariantMessageWords);
+
+      let bestVariant = null;
+      let highestVariantScore = 0;
+
+      // Obtener el máximo número de palabras en los nombres de las variantes
+      const maxVariantNameWordCount = Math.max(
+        ...normalizedVariants.map((v) => v.wordCount)
+      );
+
+      // Generar n-gramas del mensaje filtrado para variantes
+      const variantMessageNGrams = generateNGrams(
+        filteredVariantMessageWords,
+        maxVariantNameWordCount
+      );
+
+      // Establecer un umbral de similitud para los n-gramas de variantes
+      const VARIANT_SIMILARITY_THRESHOLD = 0.8; // Ajusta este valor según sea necesario
+
+      // Comparar cada n-grama con los nombres de las variantes
+      for (const ngram of variantMessageNGrams) {
+        for (const variant of normalizedVariants) {
+          const similarity = stringSimilarity.compareTwoStrings(
+            ngram,
+            variant.normalizedName
+          );
+
+          if (
+            similarity >= VARIANT_SIMILARITY_THRESHOLD &&
+            similarity > highestVariantScore
+          ) {
+            highestVariantScore = similarity;
+            bestVariant = {
+              variantId: variant.variantId,
+              name: variant.name,
+              score: similarity,
+            };
+          }
+        }
+      }
+
+      // Agregar la mejor variante al producto si se encontró
+      if (bestVariant && bestVariant.score >= VARIANT_SIMILARITY_THRESHOLD) {
+        bestProduct.variant = bestVariant;
+      }
+    }
+
     console.log("bestProduct", JSON.stringify(bestProduct, null, 2));
     return bestProduct;
   } else {
