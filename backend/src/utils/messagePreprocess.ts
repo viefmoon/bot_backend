@@ -19,7 +19,7 @@ import {
   SYSTEM_MESSAGE_PHASE_2,
 } from "../config/predefinedMessages";
 import getFullMenu from "src/data/menu";
-import stringSimilarity from "string-similarity";
+import * as stringSimilarity from "string-similarity";
 
 dotenv.config();
 
