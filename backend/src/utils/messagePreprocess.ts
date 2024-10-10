@@ -268,6 +268,7 @@ function extractMentionedProducts(productMessage, menu) {
       .normalize("NFD")
       .replace(/[\u0300-\u036f]/g, "")
       .replace(/[^a-z\s]/g, "")
+      .replace(/\s+/g, " ")
       .trim();
 
     const words = normalized.split(/\s+/);
