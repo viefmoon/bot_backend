@@ -321,6 +321,9 @@ function extractMentionedProducts(productMessage, menu) {
   // Comparar cada n-grama con los nombres de los productos
   for (const ngram of messageNGrams) {
     for (const product of normalizedProducts) {
+      console.log("comparando ngram con normalizedName");
+      console.log("ngram:", ngram);
+      console.log("normalizedName:", product.normalizedName);
       const similarity = stringSimilarity.compareTwoStrings(
         ngram,
         product.normalizedName
