@@ -259,6 +259,7 @@ function extractMentionedProducts(productMessage, menu) {
     "en",
     "el",
     "la",
+    "con",
   ];
 
   function normalizeText(text: string): string {
