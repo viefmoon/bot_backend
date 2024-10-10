@@ -259,6 +259,10 @@ function extractMentionedProducts(productMessage, menu) {
     "el",
     "la",
     "con",
+    "adicional",
+    "mas",
+    "por",
+    "al",
   ];
 
   function normalizeText(text: string): string[] {
@@ -289,14 +293,21 @@ function extractMentionedProducts(productMessage, menu) {
     return ngrams;
   }
 
+  // Obtener las palabras del mensaje normalizado
   const messageWords = normalizeText(productMessage);
   console.log("productMessage:", productMessage);
   console.log("messageWords:", messageWords);
 
-  // Obtener los nombres de productos normalizados y su longitud en palabras
+  // Obtener todas las palabras únicas de los nombres de productos
+  const productWordsSet = new Set<string>();
+
+  // Normalizar los nombres de los productos y construir el conjunto de palabras
   const normalizedProducts = menu.map((product) => {
-    const normalizedName = normalizeText(product.name).join(" ");
-    const nameWords = normalizedName.split(" ");
+    const normalizedNameArray = normalizeText(product.name);
+    // Añadir palabras al conjunto
+    normalizedNameArray.forEach((word) => productWordsSet.add(word));
+    const normalizedName = normalizedNameArray.join(" ");
+    const nameWords = normalizedNameArray;
     return {
       productId: product.productId,
       name: product.name,
@@ -305,6 +316,32 @@ function extractMentionedProducts(productMessage, menu) {
     };
   });
 
+  // Convertir el conjunto de palabras de productos a un array
+  const productWordsArray = Array.from(productWordsSet);
+
+  // Establecer un umbral de similitud para palabras individuales
+  const WORD_SIMILARITY_THRESHOLD = 0.8; // Ajusta este valor según sea necesario
+
+  // Filtrar las palabras del mensaje que son similares a las palabras de los productos
+  const filteredMessageWords = messageWords.filter((messageWord) => {
+    let maxSimilarity = 0;
+    for (const productWord of productWordsArray) {
+      const similarity = stringSimilarity.compareTwoStrings(
+        messageWord,
+        productWord
+      );
+      if (similarity > maxSimilarity) {
+        maxSimilarity = similarity;
+      }
+      if (similarity >= WORD_SIMILARITY_THRESHOLD) {
+        return true; // Conservar esta palabra
+      }
+    }
+    return false; // Desechar esta palabra
+  });
+
+  console.log("filteredMessageWords:", filteredMessageWords);
+
   let mentionedProducts = [];
 
   // Obtener el máximo número de palabras en los nombres de los productos
@@ -312,10 +349,13 @@ function extractMentionedProducts(productMessage, menu) {
     ...normalizedProducts.map((p) => p.wordCount)
   );
 
-  // Generar n-gramas del mensaje hasta el tamaño máximo de palabras en los nombres de los productos
-  const messageNGrams = generateNGrams(messageWords, maxProductNameWordCount);
+  // Generar n-gramas del mensaje filtrado
+  const messageNGrams = generateNGrams(
+    filteredMessageWords,
+    maxProductNameWordCount
+  );
 
-  // Establecer un umbral de similitud
+  // Establecer un umbral de similitud para los n-gramas
   const SIMILARITY_THRESHOLD = 0.6; // Ajusta este valor según sea necesario
 
   // Comparar cada n-grama con los nombres de los productos

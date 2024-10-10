@@ -126,7 +126,7 @@ const menu: any[] = [
   },
   {
     id: "P",
-    name: "Papas",
+    name: "Orden de Papas",
     category: "entradas",
     productVariants: [
       {
@@ -347,7 +347,7 @@ const menu: any[] = [
       },
       {
         id: "HM2",
-        name: "Extras Hamburguesas",
+        name: "Hamburguesa extras",
         required: false,
         acceptsMultiple: true,
         modifiers: [
@@ -442,7 +442,7 @@ const menu: any[] = [
   },
   {
     id: "MICH",
-    name: "Micheladas",
+    name: "Michelada",
     category: "bebidas",
     productVariants: [
       {
@@ -495,7 +495,7 @@ const menu: any[] = [
   },
   {
     id: "F",
-    name: "Frappes",
+    name: "Frappe",
     category: "bebidas",
     productVariants: [
       {
