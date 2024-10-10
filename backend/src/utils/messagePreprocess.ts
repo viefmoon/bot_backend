@@ -19,8 +19,7 @@ import {
   SYSTEM_MESSAGE_PHASE_2,
 } from "../config/predefinedMessages";
 import getFullMenu from "src/data/menu";
-const Fuse = require("fuse.js");
-import { ratio } from "fuzzball";
+import stringSimilarity from "string-similarity";
 
 dotenv.config();
 
@@ -285,19 +284,24 @@ function extractMentionedProducts(productMessage, menu) {
 
   let mentionedProducts = [];
 
-  for (const product of menu) {
-    const normalizedProductName = normalizeText(product.name);
-    const matchScore = ratio(filteredMessage, normalizedProductName);
+  // Crear una lista de nombres de productos normalizados
+  const productNames = menu.map((product) => normalizeText(product.name));
 
-    if (matchScore > 30) {
-      // Puedes ajustar este umbral según sea necesario
+  // Utilizar string-similarity para encontrar las mejores coincidencias
+  const matches = stringSimilarity.findBestMatch(filteredMessage, productNames);
+
+  // Establecer un umbral de similitud
+  const SIMILARITY_THRESHOLD = 0.3; // Puedes ajustar este valor según tus necesidades
+
+  matches.ratings.forEach((rating, index) => {
+    if (rating.rating >= SIMILARITY_THRESHOLD) {
       mentionedProducts.push({
-        productId: product.productId,
-        name: product.name,
-        score: matchScore,
+        productId: menu[index].productId,
+        name: menu[index].name,
+        score: rating.rating,
       });
     }
-  }
+  });
 
   // // Agregar modifiers
   // if (product.modifiers) {
