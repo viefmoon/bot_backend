@@ -380,24 +380,28 @@ function extractMentionedProducts(productMessage, menu) {
   if (bestProduct && bestProduct.score >= SIMILARITY_THRESHOLD) {
     // **Nuevo código para buscar la mejor variante**
     if (bestProduct.productVariants && bestProduct.productVariants.length > 0) {
+      // Obtener las palabras del nombre del producto
+      const productNameWords = new Set(normalizeText(bestProduct.name));
       // Normalizar los nombres de las variantes y construir el conjunto de palabras
       const variantWordsSet = new Set<string>();
       const normalizedVariants = bestProduct.productVariants.map((variant) => {
-        const normalizedNameArray = normalizeText(variant.name);
-        // Añadir palabras al conjunto
+        const normalizedNameArray = normalizeText(variant.name).filter(
+          (word) => !productNameWords.has(word)
+        ); // Eliminar palabras del nombre del producto
         normalizedNameArray.forEach((word) => variantWordsSet.add(word));
         const normalizedName = normalizedNameArray.join(" ");
-        const nameWords = normalizedNameArray;
         return {
           variantId: variant.variantId,
           name: variant.name,
           normalizedName,
-          wordCount: nameWords.length,
+          wordCount: normalizedNameArray.length,
         };
       });
 
-      // **Usamos messageWords sin filtrar para las variantes**
-      const variantMessageWords = messageWords;
+      // Usamos messageWords sin filtrar para las variantes
+      const variantMessageWords = messageWords.filter(
+        (word) => !productNameWords.has(word)
+      );
 
       // Establecer un umbral de similitud para palabras individuales (variantes)
       const VARIANT_WORD_SIMILARITY_THRESHOLD = 0.8; // Ajusta este valor según sea necesario
