@@ -324,15 +324,11 @@ function extractMentionedProducts(productMessage, menu) {
 
   // Filtrar las palabras del mensaje que son similares a las palabras de los productos
   const filteredMessageWords = messageWords.filter((messageWord) => {
-    let maxSimilarity = 0;
     for (const productWord of productWordsArray) {
       const similarity = stringSimilarity.compareTwoStrings(
         messageWord,
         productWord
       );
-      if (similarity > maxSimilarity) {
-        maxSimilarity = similarity;
-      }
       if (similarity >= WORD_SIMILARITY_THRESHOLD) {
         return true; // Conservar esta palabra
       }
@@ -342,7 +338,8 @@ function extractMentionedProducts(productMessage, menu) {
 
   console.log("filteredMessageWords:", filteredMessageWords);
 
-  let mentionedProducts = [];
+  let bestProduct = null;
+  let highestScore = 0;
 
   // Obtener el máximo número de palabras en los nombres de los productos
   const maxProductNameWordCount = Math.max(
@@ -356,7 +353,7 @@ function extractMentionedProducts(productMessage, menu) {
   );
 
   // Establecer un umbral de similitud para los n-gramas
-  const SIMILARITY_THRESHOLD = 0.6; // Ajusta este valor según sea necesario
+  const SIMILARITY_THRESHOLD = 0.8; // Ajusta este valor según sea necesario
 
   // Comparar cada n-grama con los nombres de los productos
   for (const ngram of messageNGrams) {
@@ -370,34 +367,25 @@ function extractMentionedProducts(productMessage, menu) {
       );
       console.log("similarity:", similarity);
 
-      if (similarity >= SIMILARITY_THRESHOLD) {
-        mentionedProducts.push({
+      if (similarity >= SIMILARITY_THRESHOLD && similarity > highestScore) {
+        highestScore = similarity;
+        bestProduct = {
           productId: product.productId,
           name: product.name,
           score: similarity,
-        });
+        };
       }
     }
   }
 
-  // Eliminar duplicados y mantener el mayor puntaje para cada producto
-  const productsMap = new Map();
-  for (const product of mentionedProducts) {
-    if (
-      !productsMap.has(product.productId) ||
-      productsMap.get(product.productId).score < product.score
-    ) {
-      productsMap.set(product.productId, product);
-    }
+  // Verificar si se encontró un producto que cumpla con el umbral
+  if (bestProduct && bestProduct.score >= SIMILARITY_THRESHOLD) {
+    console.log("bestProduct", JSON.stringify(bestProduct, null, 2));
+    return bestProduct;
+  } else {
+    console.log("No se encontró un producto que cumpla con el umbral.");
+    return null;
   }
-
-  // Convertir el mapa a una lista y ordenar por puntuación
-  mentionedProducts = Array.from(productsMap.values());
-  mentionedProducts.sort((a, b) => b.score - a.score);
-
-  console.log("mentionedProducts", JSON.stringify(mentionedProducts, null, 2));
-
-  return mentionedProducts;
 }
 
 async function verifyOrderItems(
