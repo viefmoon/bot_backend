@@ -384,22 +384,22 @@ const menu: any[] = [
             price: 0,
           },
           {
-            id: "HM2-3",
+            id: "HM2-2",
             name: "Doble carne o pollo",
             price: 15,
           },
           {
-            id: "HM2-4",
+            id: "HM2-3",
             name: "Pollo en lugar de carne de res",
             price: 15,
           },
           {
-            id: "HM2-5",
+            id: "HM2-4",
             name: "Con ensalada",
             price: 15,
           },
           {
-            id: "HM2-6",
+            id: "HM2-5",
             name: "Carne dorada",
             price: 0,
           },
