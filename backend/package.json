@@ -39,6 +39,7 @@
   "devDependencies": {
     "@types/axios": "^0.14.0",
     "@types/next": "^9.0.0",
+    "@types/string-similarity": "^4.0.2",
     "cross-env": "^7.0.3",
     "sequelize-cli": "^6.6.2",
     "ts-node": "^10.9.2"
