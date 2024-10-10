@@ -20,6 +20,7 @@ import {
 } from "../config/predefinedMessages";
 import getFullMenu from "src/data/menu";
 const Fuse = require("fuse.js");
+const natural = require("natural");
 
 dotenv.config();
 
@@ -215,6 +216,9 @@ async function getRelevantMenuItems(
   return productos;
 }
 
+const tokenizer = new natural.AggressiveTokenizerEs(); // Tokenizador en español
+const stemmer = natural.PorterStemmerEs; // Stemmer en español
+
 function extractMentionedProducts(productMessage, menu) {
   const wordsToFilter = [
     "del",
@@ -234,7 +238,7 @@ function extractMentionedProducts(productMessage, menu) {
     "la",
   ];
 
-  function normalizeText(text: string): string {
+  function normalizeText(text) {
     const normalized = text
       .toLowerCase()
       .normalize("NFD")
@@ -242,19 +246,22 @@ function extractMentionedProducts(productMessage, menu) {
       .replace(/[^a-z\s]/g, "")
       .trim();
 
-    const words = normalized.split(/\s+/);
-    const filteredWords = words.filter((word) => !wordsToFilter.includes(word));
+    let words = tokenizer.tokenize(normalized);
+    words = words.filter((word) => !wordsToFilter.includes(word));
+    words = words.map((word) => stemmer.stem(word));
 
-    // Ordenar las palabras alfabéticamente
-    filteredWords.sort();
-
-    return filteredWords.join(" ");
+    return words.join(" ");
   }
 
   const filteredMessage = normalizeText(productMessage);
 
   // Preparar la lista de búsqueda para Fuse.js
   let searchList = [];
+
+  function getProductKeywords(name) {
+    const normalized = normalizeText(name);
+    return normalized;
+  }
 
   for (const product of menu) {
     if (product.productVariants && product.productVariants.length > 0) {
@@ -308,11 +315,9 @@ function extractMentionedProducts(productMessage, menu) {
   // Configurar Fuse.js
   const fuseOptions = {
     keys: ["name"],
-    threshold: 0.4,
+    threshold: 0.3,
     includeScore: true,
     ignoreLocation: true,
-    tokenize: true, // Habilita la tokenización
-    matchAllTokens: true, // Asegura que todos los tokens sean considerados en la búsqueda
   };
 
   console.log("searchList", JSON.stringify(searchList, null, 2));
