@@ -20,6 +20,7 @@ import {
 } from "../config/predefinedMessages";
 import getFullMenu from "src/data/menu";
 const Fuse = require("fuse.js");
+import { ratio } from "fuzzball";
 
 dotenv.config();
 
@@ -243,8 +244,6 @@ function mapSynonym(normalizedWord: string): string | null {
 }
 
 function extractMentionedProducts(productMessage, menu) {
-  console.log("productMessage", productMessage);
-
   const wordsToFilter = [
     "del",
     "los",
@@ -279,132 +278,110 @@ function extractMentionedProducts(productMessage, menu) {
   }
 
   const filteredMessage = normalizeText(productMessage);
+  console.log("productMessage", productMessage);
   console.log("filteredMessage", filteredMessage);
 
-  // Preparar la lista de búsqueda para Fuse.js
-  let searchList = [];
+  let mentionedProducts = [];
 
   for (const product of menu) {
-    if (product.productVariants && product.productVariants.length > 0) {
-      // Si el producto tiene variantes, solo agregar las variantes
-      for (const variant of product.productVariants) {
-        searchList.push({
-          type: "variant",
-          parentId: product.productId,
-          id: variant.variantId,
-          name: normalizeText(variant.name),
-          item: variant,
-        });
-      }
-    } else {
-      // Si el producto no tiene variantes, agregar el producto principal
-      searchList.push({
-        type: "product",
-        id: product.productId,
-        name: normalizeText(product.name),
-        item: product,
+    const normalizedProductName = normalizeText(product.name);
+    const matchScore = ratio(filteredMessage, normalizedProductName);
+
+    if (matchScore > 60) {
+      // Puedes ajustar este umbral según sea necesario
+      mentionedProducts.push({
+        productId: product.productId,
+        name: product.name,
+        score: matchScore,
       });
     }
-
-    // // Agregar modifiers
-    // if (product.modifiers) {
-    //   for (const modifier of product.modifiers) {
-    //     searchList.push({
-    //       type: "modifier",
-    //       parentId: product.productId,
-    //       id: modifier.modifierId,
-    //       name: normalizeText(modifier.name),
-    //       item: modifier,
-    //     });
-    //   }
-    // }
-
-    // // Agregar ingredientes de pizza
-    // if (product.pizzaIngredients) {
-    //   for (const ingredient of product.pizzaIngredients) {
-    //     searchList.push({
-    //       type: "pizzaIngredient",
-    //       parentId: product.productId,
-    //       id: ingredient.pizzaIngredientId,
-    //       name: normalizeText(ingredient.name),
-    //       item: ingredient,
-    //     });
-    //   }
-    // }
   }
 
-  // Configurar Fuse.js
-  const fuseOptions = {
-    keys: ["name"],
-    threshold: 0.4,
-    includeScore: true,
-    ignoreLocation: true,
-    distance: 100,
-  };
+  // // Agregar modifiers
+  // if (product.modifiers) {
+  //   for (const modifier of product.modifiers) {
+  //     searchList.push({
+  //       type: "modifier",
+  //       parentId: product.productId,
+  //       id: modifier.modifierId,
+  //       name: normalizeText(modifier.name),
+  //       item: modifier,
+  //     });
+  //   }
+  // }
 
-  console.log("searchList", JSON.stringify(searchList, null, 2));
+  // // Agregar ingredientes de pizza
+  // if (product.pizzaIngredients) {
+  //   for (const ingredient of product.pizzaIngredients) {
+  //     searchList.push({
+  //       type: "pizzaIngredient",
+  //       parentId: product.productId,
+  //       id: ingredient.pizzaIngredientId,
+  //       name: normalizeText(ingredient.name),
+  //       item: ingredient,
+  //     });
+  //   }
+  // }
 
-  const fuse = new Fuse(searchList, fuseOptions);
+  // // Agrupar resultados por producto
+  // const mentionedProductsMap = new Map();
 
-  // Realizar búsqueda
-  const results = fuse.search(filteredMessage);
+  // for (const result of results) {
+  //   const { type, id, parentId, name } = result.item;
 
-  console.log("results", JSON.stringify(results, null, 2));
+  //   if (type === "product") {
+  //     if (!mentionedProductsMap.has(id)) {
+  //       mentionedProductsMap.set(id, {
+  //         productId: id,
+  //         name: name,
+  //         variants: [],
+  //         modifiers: [],
+  //         pizzaIngredients: [],
+  //       });
+  //     }
+  //   } else {
+  //     // Es variante, modificador o ingrediente
+  //     const productId = parentId;
+  //     if (!mentionedProductsMap.has(productId)) {
+  //       // Añadir el producto padre si no está
+  //       const parentProduct = menu.find((p) => p.id === productId);
+  //       mentionedProductsMap.set(productId, {
+  //         productId: productId,
+  //         name: parentProduct.name,
+  //         variants: [],
+  //         modifiers: [],
+  //         pizzaIngredients: [],
+  //       });
+  //     }
 
-  // Agrupar resultados por producto
-  const mentionedProductsMap = new Map();
+  //     const mentionedProduct = mentionedProductsMap.get(productId);
 
-  for (const result of results) {
-    const { type, id, parentId, name } = result.item;
+  //     if (type === "variant") {
+  //       mentionedProduct.variants.push({
+  //         id: id,
+  //         name: name,
+  //       });
+  //     } else if (type === "modifier") {
+  //       mentionedProduct.modifiers.push({
+  //         id: id,
+  //         name: name,
+  //       });
+  //     } else if (type === "ingredient") {
+  //       mentionedProduct.pizzaIngredients.push({
+  //         id: id,
+  //         name: name,
+  //       });
+  //     }
+  //   }
+  // }
 
-    if (type === "product") {
-      if (!mentionedProductsMap.has(id)) {
-        mentionedProductsMap.set(id, {
-          productId: id,
-          name: name,
-          variants: [],
-          modifiers: [],
-          pizzaIngredients: [],
-        });
-      }
-    } else {
-      // Es variante, modificador o ingrediente
-      const productId = parentId;
-      if (!mentionedProductsMap.has(productId)) {
-        // Añadir el producto padre si no está
-        const parentProduct = menu.find((p) => p.id === productId);
-        mentionedProductsMap.set(productId, {
-          productId: productId,
-          name: parentProduct.name,
-          variants: [],
-          modifiers: [],
-          pizzaIngredients: [],
-        });
-      }
+  // // Convertir Map a Array
+  // const mentionedProducts = Array.from(mentionedProductsMap.values());
 
-      const mentionedProduct = mentionedProductsMap.get(productId);
+  // Ordenar los productos mencionados por puntuación, de mayor a menor
+  mentionedProducts.sort((a, b) => b.score - a.score);
 
-      if (type === "variant") {
-        mentionedProduct.variants.push({
-          id: id,
-          name: name,
-        });
-      } else if (type === "modifier") {
-        mentionedProduct.modifiers.push({
-          id: id,
-          name: name,
-        });
-      } else if (type === "ingredient") {
-        mentionedProduct.pizzaIngredients.push({
-          id: id,
-          name: name,
-        });
-      }
-    }
-  }
-
-  // Convertir Map a Array
-  const mentionedProducts = Array.from(mentionedProductsMap.values());
+  console.log("mentionedProducts", JSON.stringify(mentionedProducts, null, 2));
 
   return mentionedProducts;
 }

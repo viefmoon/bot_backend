@@ -184,7 +184,7 @@ const menu: any[] = [
   },
   {
     id: "E",
-    name: "Ensaladas",
+    name: "Ensalada",
     category: "comida",
     productVariants: [
       {
@@ -253,54 +253,54 @@ const menu: any[] = [
   },
   {
     id: "H",
-    name: "Hamburguesas",
+    name: "Hamburguesa",
     category: "comida",
     productVariants: [
       {
         id: "HV1",
-        name: "Hamburgesa Tradicional",
+        name: "Hamburguesa Tradicional",
         price: 85,
         ingredients:
           "Carne de res, tocino, queso amarillo, queso asadero, cebolla, jitomate, lechuga, chile jalapeño, catsup, aderezo, crema, mostaza",
       },
       {
         id: "HV2",
-        name: "Hamburgesa Especial",
+        name: "Hamburguesa Especial",
         price: 95,
         ingredients:
           "Carne de res, tocino, pierna, queso amarillo, queso asadero, cebolla, jitomate, lechuga, chile jalapeño, catsup, aderezo, crema, mostaza",
       },
       {
         id: "HV3",
-        name: "Hamburgesa Hawaiana",
+        name: "Hamburguesa Hawaiana",
         price: 95,
         ingredients:
           "Carne de res, tocino, piña, jamon, queso amarillo, queso asadero, cebolla, jitomate, lechuga, chile jalapeño, catsup, aderezo, crema, mostaza",
       },
       {
         id: "HV4",
-        name: "Hamburgesa Pollo",
+        name: "Hamburguesa Pollo",
         price: 100,
         ingredients:
           "Pollo a la plancha, tocino, queso amarillo, queso asadero, cebolla, jitomate, lechuga, chile jalapeño, catsup, aderezo, crema, mostaza",
       },
       {
         id: "HV5",
-        name: "Hamburgesa BBQ",
+        name: "Hamburguesa BBQ",
         price: 100,
         ingredients:
           "Carne de res, salsa bbq, tocino, queso amarillo, queso asadero, cebolla guisada, jitomate, lechuga, chile jalapeño, catsup, aderezo, crema, mostaza",
       },
       {
         id: "HV6",
-        name: "Hamburgesa Leñazo",
+        name: "Hamburguesa Leñazo",
         price: 110,
         ingredients:
           "Doble carne de sirlon, tocino, queso amarillo, queso asadero, cebolla guisada, jitomate, lechuga, chile jalapeño, catsup, aderezo, crema, mostaza",
       },
       {
         id: "HV7",
-        name: "Hamburgesa Cubana",
+        name: "Hamburguesa Cubana",
         price: 100,
         ingredients:
           "Carne de res, tocino, pierna, salchicha, jamon, queso amarillo, cebolla, jitomate, lechuga, chile jalapeño, catsup, aderezo, crema, mostaza",
