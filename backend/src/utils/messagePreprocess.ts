@@ -261,7 +261,7 @@ function extractMentionedProducts(productMessage, menu) {
     "con",
   ];
 
-  function normalizeText(text: string): string {
+  function normalizeText(text: string): string[] {
     const normalized = text
       .toLowerCase()
       .normalize("NFD")
@@ -275,35 +275,80 @@ function extractMentionedProducts(productMessage, menu) {
       .filter((word) => !wordsToFilter.includes(word))
       .map((word) => mapSynonym(word) || word);
 
-    return filteredWords.join(" ");
+    return filteredWords;
   }
 
-  const filteredMessage = normalizeText(productMessage);
-  console.log("productMessage", productMessage);
-  console.log("filteredMessage", filteredMessage);
+  function generateNGrams(words: string[], maxN: number): string[] {
+    const ngrams = [];
+    const len = words.length;
+    for (let n = 1; n <= maxN; n++) {
+      for (let i = 0; i <= len - n; i++) {
+        ngrams.push(words.slice(i, i + n).join(" "));
+      }
+    }
+    return ngrams;
+  }
+
+  const messageWords = normalizeText(productMessage);
+  console.log("productMessage:", productMessage);
+  console.log("messageWords:", messageWords);
+
+  // Obtener los nombres de productos normalizados y su longitud en palabras
+  const normalizedProducts = menu.map((product) => {
+    const normalizedName = normalizeText(product.name).join(" ");
+    const nameWords = normalizedName.split(" ");
+    return {
+      productId: product.productId,
+      name: product.name,
+      normalizedName,
+      wordCount: nameWords.length,
+    };
+  });
 
   let mentionedProducts = [];
 
-  // Crear una lista de nombres de productos normalizados
-  const productNames = menu.map((product) => normalizeText(product.name));
+  // Obtener el máximo número de palabras en los nombres de los productos
+  const maxProductNameWordCount = Math.max(
+    ...normalizedProducts.map((p) => p.wordCount)
+  );
 
-  // Utilizar string-similarity para encontrar las mejores coincidencias
-  const matches = stringSimilarity.findBestMatch(filteredMessage, productNames);
+  // Generar n-gramas del mensaje hasta el tamaño máximo de palabras en los nombres de los productos
+  const messageNGrams = generateNGrams(messageWords, maxProductNameWordCount);
 
   // Establecer un umbral de similitud
-  const SIMILARITY_THRESHOLD = 0.3; // Puedes ajustar este valor según tus necesidades
+  const SIMILARITY_THRESHOLD = 0.6; // Ajusta este valor según sea necesario
 
-  matches.ratings.forEach((rating, index) => {
-    if (rating.rating >= SIMILARITY_THRESHOLD) {
-      mentionedProducts.push({
-        productId: menu[index].productId,
-        name: menu[index].name,
-        score: rating.rating,
-      });
+  // Comparar cada n-grama con los nombres de los productos
+  for (const ngram of messageNGrams) {
+    for (const product of normalizedProducts) {
+      const similarity = stringSimilarity.compareTwoStrings(
+        ngram,
+        product.normalizedName
+      );
+
+      if (similarity >= SIMILARITY_THRESHOLD) {
+        mentionedProducts.push({
+          productId: product.productId,
+          name: product.name,
+          score: similarity,
+        });
+      }
     }
-  });
+  }
 
-  // Ordenar los productos mencionados por puntuación, de mayor a menor
+  // Eliminar duplicados y mantener el mayor puntaje para cada producto
+  const productsMap = new Map();
+  for (const product of mentionedProducts) {
+    if (
+      !productsMap.has(product.productId) ||
+      productsMap.get(product.productId).score < product.score
+    ) {
+      productsMap.set(product.productId, product);
+    }
+  }
+
+  // Convertir el mapa a una lista y ordenar por puntuación
+  mentionedProducts = Array.from(productsMap.values());
   mentionedProducts.sort((a, b) => b.score - a.score);
 
   console.log("mentionedProducts", JSON.stringify(mentionedProducts, null, 2));
