@@ -328,6 +328,7 @@ function extractMentionedProducts(productMessage, menu) {
         ngram,
         product.normalizedName
       );
+      console.log("similarity:", similarity);
 
       if (similarity >= SIMILARITY_THRESHOLD) {
         mentionedProducts.push({
