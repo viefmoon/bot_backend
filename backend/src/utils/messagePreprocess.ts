@@ -336,9 +336,10 @@ function extractMentionedProducts(productMessage, menu) {
   // Configurar Fuse.js
   const fuseOptions = {
     keys: ["name"],
-    threshold: 0.3,
+    threshold: 0.4,
     includeScore: true,
     ignoreLocation: true,
+    distance: 100,
   };
 
   console.log("searchList", JSON.stringify(searchList, null, 2));
