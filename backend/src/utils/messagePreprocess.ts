@@ -19,6 +19,7 @@ import {
   SYSTEM_MESSAGE_PHASE_2,
 } from "../config/predefinedMessages";
 import getFullMenu from "src/data/menu";
+import { mapSynonym } from "seeders/seedMenuItems";
 const Fuse = require("fuse.js");
 const natural = require("natural");
 
@@ -216,10 +217,9 @@ async function getRelevantMenuItems(
   return productos;
 }
 
-const tokenizer = new natural.AggressiveTokenizerEs(); // Tokenizador en español
-const stemmer = natural.PorterStemmerEs; // Stemmer en español
-
 function extractMentionedProducts(productMessage, menu) {
+  console.log("productMessage", productMessage);
+
   const wordsToFilter = [
     "del",
     "los",
@@ -229,17 +229,15 @@ function extractMentionedProducts(productMessage, menu) {
     "unas",
     "pero",
     "para",
-    "con",
     "y",
     "o",
     "de",
     "en",
     "el",
     "la",
-    "a",
   ];
 
-  function normalizeText(text) {
+  function normalizeText(text: string): string {
     const normalized = text
       .toLowerCase()
       .normalize("NFD")
@@ -247,23 +245,19 @@ function extractMentionedProducts(productMessage, menu) {
       .replace(/[^a-z\s]/g, "")
       .trim();
 
-    //let words = tokenizer.tokenize(normalized);
-    let words = normalized.split(" ");
-    words = words.filter((word) => !wordsToFilter.includes(word));
-    words = words.map((word) => stemmer.stem(word));
+    const words = normalized.split(/\s+/);
+    const filteredWords = words
+      .filter((word) => !wordsToFilter.includes(word))
+      .map((word) => mapSynonym(word) || word);
 
-    return words.join(" ");
+    return filteredWords.join(" ");
   }
 
   const filteredMessage = normalizeText(productMessage);
+  console.log("filteredMessage", filteredMessage);
 
   // Preparar la lista de búsqueda para Fuse.js
   let searchList = [];
-
-  function getProductKeywords(name) {
-    const normalized = normalizeText(name);
-    return normalized;
-  }
 
   for (const product of menu) {
     if (product.productVariants && product.productVariants.length > 0) {
@@ -273,7 +267,7 @@ function extractMentionedProducts(productMessage, menu) {
           type: "variant",
           parentId: product.productId,
           id: variant.variantId,
-          name: getProductKeywords(variant.name),
+          name: normalizeText(variant.name),
           item: variant,
         });
       }
@@ -282,7 +276,7 @@ function extractMentionedProducts(productMessage, menu) {
       searchList.push({
         type: "product",
         id: product.productId,
-        name: getProductKeywords(product.name),
+        name: normalizeText(product.name),
         item: product,
       });
     }
@@ -317,13 +311,12 @@ function extractMentionedProducts(productMessage, menu) {
   // Configurar Fuse.js
   const fuseOptions = {
     keys: ["name"],
-    threshold: 0.3,
+    threshold: 0.4,
     includeScore: true,
     ignoreLocation: true,
   };
 
   console.log("searchList", JSON.stringify(searchList, null, 2));
-  console.log("filteredMessage", filteredMessage);
 
   const fuse = new Fuse(searchList, fuseOptions);
 

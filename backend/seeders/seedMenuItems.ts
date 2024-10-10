@@ -21,6 +21,33 @@ const testConnection = async (): Promise<void> => {
 
 testConnection();
 
+export function mapSynonym(normalizedWord: string): string | null {
+  const synonyms: { [key: string]: string[] } = {
+    grande: ["grandes"],
+    mediana: ["medianas"],
+    chica: ["chicas"],
+    orden: ["ordenes"],
+    media: ["1/2", "medias", "medio"],
+    bbq: ["barbacoa", "barbicue"],
+    picosas: ["picositas"],
+    alitas: ["alas"],
+    extra: ["adicional", "mas"],
+    doradas: ["doraditas"],
+    hamburguesa: ["hamburguesas", "burger"],
+    pizza: ["pizzas", "pizaa", "pozza"],
+    capuchino: ["cappuccino"],
+    frappe: ["frape"],
+  };
+
+  for (const [mainWord, synonymList] of Object.entries(synonyms)) {
+    if (synonymList.includes(normalizedWord)) {
+      return mainWord;
+    }
+  }
+
+  return null;
+}
+
 const menu: any[] = [
   {
     id: "A",
@@ -82,7 +109,7 @@ const menu: any[] = [
         modifiers: [
           {
             id: "AM1-1",
-            name: "Mas doradas",
+            name: "Extra doradas",
             price: 0,
           },
           {
@@ -126,32 +153,32 @@ const menu: any[] = [
   },
   {
     id: "P",
-    name: "Papas gratinadas",
+    name: "Papas",
     category: "entradas",
     productVariants: [
       {
         id: "PV1",
-        name: "Orden de Papas gratinadas a la Francesa",
+        name: "Orden de Papas a la Francesa",
         price: 90,
       },
       {
         id: "PV2",
-        name: "Media Orden de Papas gratinadas a la Francesa",
+        name: "Media Orden de Papas a la Francesa",
         price: 50,
       },
       {
         id: "PV3",
-        name: "Orden de Papas gratinadas Gajos",
+        name: "Orden de Papas Gajo",
         price: 105,
       },
       {
         id: "PV4",
-        name: "Media Orden de Papas gratinadas Gajos",
+        name: "Media Orden de Papas Gajo",
         price: 65,
       },
       {
         id: "PV5",
-        name: "Orden de Papas gratinadas Mixtas francesa y gajos",
+        name: "Orden de Papas Mixtas francesa y gajo",
         price: 105,
       },
     ],
@@ -238,19 +265,14 @@ const menu: any[] = [
         acceptsMultiple: true,
         modifiers: [
           {
-            id: "EM1-3",
-            name: "Con vinagreta",
+            id: "EM1-1",
+            name: "Vinagreta",
             price: 0,
           },
           {
-            id: "EM1-4",
+            id: "EM1-2",
             name: "Doble pollo",
             price: 15,
-          },
-          {
-            id: "EM1-5",
-            name: "Doble vinagreta",
-            price: 0,
           },
         ],
       },
@@ -330,12 +352,12 @@ const menu: any[] = [
           },
           {
             id: "HM1-3",
-            name: "Con gajos",
+            name: "Con papas gajo",
             price: 15,
           },
           {
             id: "HM1-4",
-            name: "Con gajos gratinadas",
+            name: "Con papas gajo gratinadas",
             price: 20,
           },
           {
@@ -358,7 +380,7 @@ const menu: any[] = [
         modifiers: [
           {
             id: "HM2-1",
-            name: "Partida en 2 mitades",
+            name: "Partida en mitad",
             price: 0,
           },
           {
@@ -378,7 +400,7 @@ const menu: any[] = [
           },
           {
             id: "HM2-6",
-            name: "Carne bien dorada",
+            name: "Carne dorada",
             price: 0,
           },
         ],
@@ -387,19 +409,19 @@ const menu: any[] = [
   },
   {
     id: "AH",
-    name: "Agua fresca de horchata (1 Litro)",
+    name: "Agua fresca de horchata",
     category: "bebidas",
     price: 35,
   },
   {
     id: "LIM",
-    name: "Limonada (1 Litro)",
+    name: "Limonada",
     category: "bebidas",
     price: 35,
   },
   {
     id: "LIMM",
-    name: "Limonada Mineral (1 Litro)",
+    name: "Limonada Mineral",
     category: "bebidas",
     price: 35,
   },
@@ -875,7 +897,7 @@ const menu: any[] = [
           },
           {
             id: "PZ-M1-2",
-            name: "mas doradita",
+            name: "Extra doradita",
             price: 0,
           },
           {
