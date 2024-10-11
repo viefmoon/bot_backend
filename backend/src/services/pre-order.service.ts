@@ -104,11 +104,13 @@ export class PreOrderService {
         if (item.productId && item.productVariant.productVariantId) {
           // Si ambos están presentes, buscar producto y variante
           product = await Product.findByPk(item.productId);
-          productVariant = await ProductVariant.findByPk(item.productVariantId);
+          productVariant = await ProductVariant.findByPk(
+            item.productVariant.id
+          );
 
           if (!product || !productVariant) {
             throw new Error(
-              `Producto o variante no encontrado en el menú: Producto ${item.productId}, Variante ${item.productVariantId}`
+              `Producto o variante no encontrado en el menú: Producto ${item.productId}, Variante ${item.productVariant.productVariantId}`
             );
           }
 
@@ -118,7 +120,7 @@ export class PreOrderService {
           item.productId = product.id;
         } else {
           throw new Error(
-            `Producto o variante no encontrada en el menú: ${item.productId}, ${item.productVariantId}`
+            `Producto o variante no encontrada en el menú: ${item.productId}, ${item.productVariant.id}`
           );
         }
 
