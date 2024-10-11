@@ -197,13 +197,24 @@ async function getRelevantMenuItem(
         delete producto.productVariants;
       }
 
-      // Procesar modifiers
-      if (producto.modifiers?.length) {
-        producto.modifiers = producto.modifiers.map((modifier) => {
-          return modifier;
-        });
+      // Extraer y procesar modifiers
+      if (producto.modifierTypes && producto.modifierTypes.length) {
+        producto.modifiers = producto.modifierTypes.flatMap(
+          (type) => type.modifiers || []
+        );
+
+        if (producto.modifiers.length) {
+          producto.modifiers = producto.modifiers.map((modifier) => {
+            return modifier;
+          });
+        } else {
+          delete producto.modifiers;
+        }
+
+        delete producto.modifierTypes;
       } else {
         delete producto.modifiers;
+        delete producto.modifierTypes;
       }
 
       // Procesar pizzaIngredients
