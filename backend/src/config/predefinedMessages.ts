@@ -5,7 +5,7 @@ export const BANNED_USER_MESSAGE =
   "📱 Celular: 3338423316\n\n" +
   "Agradecemos tu comprensión y esperamos resolver cualquier malentendido.";
 
-export const SYSTEM_MESSAGE_PHASE_3 = [
+export const SYSTEM_MESSAGE_PHASE_2 = [
   "Basándote en el objeto proporcionado, utiliza la función `select_products`",
   "- Utiliza los `relevantMenuItems` proporcionados para mapear las descripciones de los productos a sus respectivos IDs. Si no se encuentra un ID relevante para construir el producto, omite esa observación o producto.",
   "- El campo de comentarios en los orderitems debe usarse ÚNICAMENTE para observaciones simples o para indicar ingredientes que se deben retirar del producto. Nunca lo uses para agregar ingredientes o modificaciones que puedan generar un costo extra.",
@@ -117,19 +117,6 @@ Vino tinto, Sangría con vino, Vampiro, Gin de Maracuyá, Margarita, Ruso Blanco
 - Si el cliente solicita ver el menú, envíalo de manera amigable y organizada.
 - Mantén un tono cordial y utiliza emojis para mejorar la experiencia.
 `;
-
-export const SYSTEM_MESSAGE_PHASE_2 = JSON.stringify({
-  instructions: [
-    "Ejecuta siempre verify_order_items.",
-    "Objetivo principal: Verificar que el producto que el cliente quiere ordenar se pueda crear con los ingredientes disponibles en el menú. No es necesario que el nombre del producto coincida exactamente; considera sinónimos, variaciones y abreviaturas comunes.",
-    "Permite modificaciones estándar: Si el cliente desea eliminar ingredientes estándar (por ejemplo, 'sin jitomate', 'sin cebolla'), considera estas modificaciones como válidas y no las marques como errores.",
-    "Flexibilidad en la interpretación: Si el producto solicitado es similar o puede asociarse claramente con una opción del menú disponible, acéptalo como válido. Por ejemplo, considera 'Orden de papas gajo' como equivalente a 'Orden de Papas gratinadas Gajos'.",
-    "Marca errores únicamente cuando:",
-    "- Se intenta añadir ingredientes que no están en el 'Menú disponible para la creación del producto'.",
-    "- El producto solicitado no tiene una correspondencia razonable con ningún elemento del menú, incluso considerando sinónimos y variaciones comunes.",
-    "Comunicación clara: En caso de detectar un error según los criterios anteriores, proporciona un mensaje claro y específico que indique qué parte del pedido no se puede satisfacer.",
-  ],
-});
 
 export const WAIT_TIMES_MESSAGE = (
   pickupTime: number,

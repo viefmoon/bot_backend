@@ -155,32 +155,6 @@ const preprocessOrderTool = [
   },
 ];
 
-const verifyOrderItemsTool = {
-  type: "function",
-  function: {
-    strict: true,
-    name: "verify_order_items",
-    description: "Verifica que se puedan construir productos solicitados",
-    parameters: {
-      type: "object",
-      properties: {
-        success: {
-          type: "boolean",
-          description:
-            "Estado de la verificación del pedido. true si es exitoso, false si hay un faltante.",
-        },
-        message: {
-          type: "string",
-          description:
-            "Mensaje explicando el resultado de la verificación y los faltantes.",
-        },
-      },
-      required: ["success", "message"],
-      additionalProperties: false,
-    },
-  },
-};
-
 const selectProductsToolClaude = {
   name: "select_products",
   description:
@@ -287,5 +261,4 @@ export {
   preprocessOrderTool,
   selectProductsToolClaude,
   sendMenuTool,
-  verifyOrderItemsTool,
 };

@@ -7,7 +7,7 @@ import * as dotenv from "dotenv";
 import { preprocessMessages } from "./messagePreprocess";
 import { Anthropic } from "@anthropic-ai/sdk";
 import { PreOrderService } from "../services/pre-order.service";
-import { SYSTEM_MESSAGE_PHASE_3 } from "../config/predefinedMessages";
+import { SYSTEM_MESSAGE_PHASE_2 } from "../config/predefinedMessages";
 
 dotenv.config();
 
@@ -200,10 +200,19 @@ async function processAndGenerateAIResponse(
         },
       ];
     }
+    console.log(preprocessedContent);
+
+    // const preOrderService = new PreOrderService();
+    // const selectProductsResponse = await preOrderService.selectProducts({
+    //   orderItems,
+    //   clientId: conversationId,
+    //   orderType,
+    //   scheduledDeliveryTime,
+    // });
 
     const response = await anthropic.messages.create({
       model: "claude-3-5-sonnet-20240620",
-      system: SYSTEM_MESSAGE_PHASE_3,
+      system: SYSTEM_MESSAGE_PHASE_2,
       messages: [
         { role: "user", content: JSON.stringify(preprocessedContent) },
       ],

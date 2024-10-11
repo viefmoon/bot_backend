@@ -7,17 +7,9 @@ import {
   Modifier,
 } from "../models";
 import OpenAI from "openai";
-import { ChatCompletionMessageParam } from "openai/resources/chat";
-import {
-  preprocessOrderTool,
-  sendMenuTool,
-  verifyOrderItemsTool,
-} from "../aiTools/aiTools";
+import { preprocessOrderTool, sendMenuTool } from "../aiTools/aiTools";
 import * as dotenv from "dotenv";
-import {
-  SYSTEM_MESSAGE_PHASE_1,
-  SYSTEM_MESSAGE_PHASE_2,
-} from "../config/predefinedMessages";
+import { SYSTEM_MESSAGE_PHASE_1 } from "../config/predefinedMessages";
 import getFullMenu from "src/data/menu";
 import * as stringSimilarity from "string-similarity";
 
@@ -816,8 +808,6 @@ export async function preprocessMessages(messages: any[]): Promise<
           console.error("Item inválido o sin descripción:", item);
         }
       }
-      console.log("preprocessedContent", JSON.stringify(preprocessedContent));
-
       // Recopilar todos los errores de los elementos del menú
       const allErrors = preprocessedContent.orderItems
         .filter((item) => item.menuItem && item.menuItem.errors)
@@ -832,6 +822,7 @@ export async function preprocessMessages(messages: any[]): Promise<
           isRelevant: true,
         };
       }
+      return preprocessedContent;
     } else if (toolCall.function.name === "send_menu") {
       const fullMenu = await getFullMenu();
       return {
