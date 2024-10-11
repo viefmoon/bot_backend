@@ -203,6 +203,7 @@ function removeScoreField(obj) {
   return obj;
 }
 function extractMentionedProduct(productMessage, menu) {
+  console.log("productMessage", productMessage);
   const wordsToFilter = [
     "del",
     "los",
@@ -702,7 +703,7 @@ function extractMentionedProduct(productMessage, menu) {
           );
           if (similarity >= INGREDIENT_SIMILARITY_THRESHOLD) {
             matchedIngredients.push({
-              ingredientId: ingredient.ingredientId,
+              pizzaIngredientId: ingredient.ingredientId,
               name: ingredient.name,
               score: similarity,
             });
@@ -714,11 +715,11 @@ function extractMentionedProduct(productMessage, menu) {
       const uniqueIngredientsMap = new Map();
       for (const ingredient of matchedIngredients) {
         if (
-          !uniqueIngredientsMap.has(ingredient.ingredientId) ||
-          uniqueIngredientsMap.get(ingredient.ingredientId).score <
+          !uniqueIngredientsMap.has(ingredient.pizzaIngredientId) ||
+          uniqueIngredientsMap.get(ingredient.pizzaIngredientId).score <
             ingredient.score
         ) {
-          uniqueIngredientsMap.set(ingredient.ingredientId, ingredient);
+          uniqueIngredientsMap.set(ingredient.pizzaIngredientId, ingredient);
         }
       }
       matchedIngredients = Array.from(uniqueIngredientsMap.values());
