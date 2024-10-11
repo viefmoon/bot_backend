@@ -31,7 +31,6 @@ interface MenuItem {
   productId?: string;
   name: string;
   productVariant?: ProductVariant;
-  modifierTypes?: ModifierType[];
   modifiers?: Modifier[];
   pizzaIngredients?: PizzaIngredient[];
 }
@@ -39,7 +38,7 @@ interface MenuItem {
 interface PreprocessedContent {
   orderItems: {
     description: string;
-    relevantMenuItem?: MenuItem[];
+    menuItem?: MenuItem;
   }[];
 }
 
@@ -164,76 +163,6 @@ async function getMenuAvailability(): Promise<any> {
       stack: error.stack,
     };
   }
-}
-
-async function getRelevantMenuItem(
-  preprocessedContent: PreprocessedContent
-): Promise<MenuItem[]> {
-  const fullMenu = await getMenuAvailability();
-  if ("error" in fullMenu) {
-    console.error("Error al obtener el menú completo:", fullMenu.error);
-    return [];
-  }
-
-  let productos: MenuItem[] = [];
-
-  for (const product of preprocessedContent.orderItems) {
-    const productInMessage = extractMentionedProduct(
-      product.description,
-      fullMenu
-    );
-    productos.push(productInMessage);
-  }
-
-  productos = Array.from(new Set(productos.map((p) => JSON.stringify(p)))).map(
-    (p) => {
-      const producto = JSON.parse(p);
-
-      // Procesar productVariants
-      if (producto.productVariants?.length) {
-        producto.productVariants = producto.productVariants.map((variant) => {
-          return variant;
-        });
-      } else {
-        delete producto.productVariants;
-      }
-
-      // Extraer y procesar modifiers
-      if (producto.modifierTypes && producto.modifierTypes.length) {
-        producto.modifiers = producto.modifierTypes.flatMap(
-          (type) => type.modifiers || []
-        );
-
-        if (producto.modifiers.length) {
-          producto.modifiers = producto.modifiers.map((modifier) => {
-            return modifier;
-          });
-        } else {
-          delete producto.modifiers;
-        }
-
-        delete producto.modifierTypes;
-      } else {
-        delete producto.modifiers;
-        delete producto.modifierTypes;
-      }
-
-      // Procesar pizzaIngredients
-      if (producto.pizzaIngredients?.length) {
-        producto.pizzaIngredients = producto.pizzaIngredients.map(
-          (ingredient) => {
-            return ingredient;
-          }
-        );
-      } else {
-        delete producto.pizzaIngredients;
-      }
-
-      return producto;
-    }
-  );
-
-  return productos;
 }
 
 function mapSynonym(normalizedWord: string): string | null {
@@ -840,65 +769,6 @@ function extractMentionedProduct(productMessage, menu) {
   }
 }
 
-async function verifyOrderItems(
-  preprocessedContent: PreprocessedContent
-): Promise<string> {
-  const transformedOrderItems = preprocessedContent.orderItems.map((item) => {
-    const relevantItems =
-      item.relevantMenuItem
-        ?.map((menuItem) => {
-          const names = [
-            ...(menuItem.name ? [menuItem.name] : []),
-            ...(menuItem.productVariant?.name
-              ? [menuItem.productVariant.name]
-              : []),
-            ...(menuItem.modifiers?.map((m) => m.name) || []),
-            ...(menuItem.pizzaIngredients?.map((i) => i.name) || []),
-          ];
-          return names.join(", ");
-        })
-        .join("; ") || "";
-
-    return {
-      "Producto solicitado": item.description,
-      "Producto disponible": relevantItems,
-    };
-  });
-
-  const systemMessage: ChatCompletionMessageParam = {
-    role: "system",
-    content: SYSTEM_MESSAGE_PHASE_2,
-  };
-
-  const userMessage: ChatCompletionMessageParam = {
-    role: "user",
-    content: JSON.stringify(transformedOrderItems),
-  };
-
-  console.log("systemMessage", systemMessage);
-  console.log("transformedOrderItems", transformedOrderItems);
-
-  const response = await openai.chat.completions.create({
-    model: "gpt-4o",
-    messages: [systemMessage, userMessage],
-    tools: [verifyOrderItemsTool] as any,
-    parallel_tool_calls: false,
-    tool_choice: { type: "function", function: { name: "verify_order_items" } },
-  });
-
-  const result = response.choices[0].message.tool_calls?.[0].function.arguments;
-
-  if (result) {
-    return result;
-  } else {
-    return JSON.stringify({
-      success: false,
-      message:
-        "No se pudo verificar la disponibilidad de los productos del pedido.",
-    });
-  }
-}
-
 // Modificar la función preprocessMessages para incluir esta nueva verificación
 export async function preprocessMessages(messages: any[]): Promise<
   | PreprocessedContent
@@ -934,29 +804,29 @@ export async function preprocessMessages(messages: any[]): Promise<
       const preprocessedContent: PreprocessedContent = JSON.parse(
         toolCall.function.arguments
       );
+      const fullMenu = await getMenuAvailability();
 
       for (const item of preprocessedContent.orderItems) {
         if (item && typeof item.description === "string") {
-          item.relevantMenuItem = await getRelevantMenuItem({
-            orderItems: [{ description: item.description }],
-          });
+          item.menuItem = await extractMentionedProduct(
+            item.description,
+            fullMenu
+          );
         } else {
           console.error("Item inválido o sin descripción:", item);
         }
       }
       console.log("preprocessedContent", JSON.stringify(preprocessedContent));
-      const verificationResult = await verifyOrderItems(preprocessedContent);
-      const parsedResult = JSON.parse(verificationResult);
 
-      if (parsedResult.success) {
-        return preprocessedContent;
-      } else {
-        return {
-          text: `${parsedResult.message} Recuerda que puedes solicitarme el menú disponible o revisar el catálogo en WhatsApp para revisar los productos disponibles.`,
-          isDirectResponse: true,
-          isRelevant: true,
-        };
-      }
+      // if (preprocessedContent.success) {
+      //   return preprocessedContent;
+      // } else {
+      //   return {
+      //     text: `${parsedResult.message} Recuerda que puedes solicitarme el menú disponible o revisar el catálogo en WhatsApp para revisar los productos disponibles.`,
+      //     isDirectResponse: true,
+      //     isRelevant: true,
+      //   };
+      // }
     } else if (toolCall.function.name === "send_menu") {
       const fullMenu = await getFullMenu();
       return {
