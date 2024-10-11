@@ -728,6 +728,11 @@ function extractMentionedProduct(productMessage, menu) {
           return false; // Desechar esta palabra
         });
 
+      console.log(
+        "filteredPizzaIngredientMessageWords",
+        filteredPizzaIngredientMessageWords
+      );
+
       let matchedIngredients = [];
 
       // Obtener el máximo número de palabras en los nombres de los ingredientes
