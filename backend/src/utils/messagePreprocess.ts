@@ -788,9 +788,11 @@ function extractMentionedProduct(productMessage, menu) {
         errors.push(
           `Lo siento, no pude identificar en el menú ingredientes para el producto "${productMessage}". 😕`
         );
+        delete bestProduct.pizzaIngredients;
       } else {
         // Agregar los ingredientes encontrados al bestProduct
-        bestProduct.selectedIngredients = matchedIngredients;
+        delete bestProduct.pizzaIngredients;
+        bestProduct.pizzaIngredients = matchedIngredients;
       }
     }
 
