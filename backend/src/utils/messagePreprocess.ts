@@ -800,10 +800,11 @@ export async function preprocessMessages(messages: any[]): Promise<
 
       for (const item of preprocessedContent.orderItems) {
         if (item && typeof item.description === "string") {
-          item.menuItem = await extractMentionedProduct(
+          const extractedProduct = await extractMentionedProduct(
             item.description,
             fullMenu
           );
+          Object.assign(item, extractedProduct);
         } else {
           console.error("Item inválido o sin descripción:", item);
         }
