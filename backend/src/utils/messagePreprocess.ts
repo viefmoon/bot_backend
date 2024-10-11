@@ -33,6 +33,7 @@ interface MenuItem {
   productVariant?: ProductVariant;
   modifierTypes?: ModifierType[];
   pizzaIngredients?: PizzaIngredient[];
+  errors?: string[];
 }
 
 interface PreprocessedContent {
@@ -754,8 +755,6 @@ function extractMentionedProduct(productMessage, menu) {
 
     // Si hay errores, puedes decidir cómo manejarlos
     if (errors.length > 0) {
-      // Puedes lanzar una excepción, retornar null o agregar los errores al objeto
-      console.error("Errores encontrados:", errors);
       bestProduct.errors = errors;
     }
 
@@ -765,7 +764,8 @@ function extractMentionedProduct(productMessage, menu) {
     errors.push(
       `Lo siento, no pude identificar dentro del menu un producto válido para "${productMessage}". 😕`
     );
-    return { product: null, errors };
+    bestProduct.errors = errors;
+    return bestProduct;
   }
 }
 
@@ -818,15 +818,20 @@ export async function preprocessMessages(messages: any[]): Promise<
       }
       console.log("preprocessedContent", JSON.stringify(preprocessedContent));
 
-      // if (preprocessedContent.success) {
-      //   return preprocessedContent;
-      // } else {
-      //   return {
-      //     text: `${parsedResult.message} Recuerda que puedes solicitarme el menú disponible o revisar el catálogo en WhatsApp para revisar los productos disponibles.`,
-      //     isDirectResponse: true,
-      //     isRelevant: true,
-      //   };
-      // }
+      // Recopilar todos los errores de los elementos del menú
+      const allErrors = preprocessedContent.orderItems
+        .filter((item) => item.menuItem && item.menuItem.errors)
+        .flatMap((item) => item.menuItem.errors);
+
+      if (allErrors.length > 0) {
+        return {
+          text: `Se encontraron los siguientes problemas con tu pedido:\n${allErrors.join(
+            "\n"
+          )}\nRecuerda que puedes solicitarme el menú disponible o revisar el catálogo en WhatsApp para ver los productos disponibles.`,
+          isDirectResponse: true,
+          isRelevant: true,
+        };
+      }
     } else if (toolCall.function.name === "send_menu") {
       const fullMenu = await getFullMenu();
       return {
