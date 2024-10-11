@@ -393,7 +393,7 @@ function extractMentionedProducts(productMessage, menu) {
 
   // Verificar si se encontró un producto que cumpla con el umbral
   if (bestProduct && bestProduct.score >= SIMILARITY_THRESHOLD) {
-    // **Nuevo código para buscar la mejor variante**
+    // **Buscar la mejor variante**
     if (bestProduct.productVariants && bestProduct.productVariants.length > 0) {
       // Obtener las palabras del nombre del producto
       const productNameWords = new Set(normalizeText(bestProduct.name));
@@ -487,7 +487,7 @@ function extractMentionedProducts(productMessage, menu) {
       }
     }
 
-    // **Nuevo código para buscar los modificadores por grupo (modifierTypes)**
+    // **Buscar los modificadores por grupo (modifierTypes)**
     if (bestProduct.modifierTypes && bestProduct.modifierTypes.length > 0) {
       const productNameWords = new Set(normalizeText(bestProduct.name));
       const variantNameWords = new Set();
@@ -617,23 +617,36 @@ function extractMentionedProducts(productMessage, menu) {
           }
           // No agregar este modifierType si no se encontraron modificadores y no es requerido
         } else {
-          if (!acceptsMultiple && matchedModifiers.length > 1) {
-            // Generar error si se encontraron múltiples modificadores en un modifierType que no acepta múltiples
-            console.error(
-              `Se encontraron múltiples modificadores para el grupo '${modifierTypeName}', que no acepta múltiples opciones.`
-            );
-            errors.push(
-              `Se encontraron múltiples modificadores para el grupo '${modifierTypeName}', que no acepta múltiples opciones.`
-            );
+          if (!acceptsMultiple) {
+            // Seleccionar el mejor modificador
+            const bestModifier = matchedModifiers.reduce((best, current) => {
+              if (current.score > best.score) {
+                return current;
+              } else if (current.score === best.score) {
+                // Si las puntuaciones son iguales, priorizar el modificador con el nombre más largo
+                return current.name.length > best.name.length ? current : best;
+              } else {
+                return best;
+              }
+            }, matchedModifiers[0]);
+            // Agregar solo el mejor modificador
+            collectedModifierTypes.push({
+              modifierTypeId,
+              name: modifierTypeName,
+              acceptsMultiple,
+              required,
+              modifiers: [bestModifier],
+            });
+          } else {
+            // acceptsMultiple es true, agregar todos los modificadores encontrados
+            collectedModifierTypes.push({
+              modifierTypeId,
+              name: modifierTypeName,
+              acceptsMultiple,
+              required,
+              modifiers: matchedModifiers,
+            });
           }
-          // Agregar los modificadores encontrados al modifierType
-          collectedModifierTypes.push({
-            modifierTypeId,
-            name: modifierTypeName,
-            acceptsMultiple,
-            required,
-            modifiers: matchedModifiers,
-          });
         }
       }
 
