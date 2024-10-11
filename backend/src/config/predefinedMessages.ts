@@ -58,8 +58,9 @@ Instrucciones:
 
 - orderItems:
   - { "quantity": 1, "description": "Pizza grande Margarita" }
-  - { "quantity": 1, "description": "Orden de Alitas BBQ" }
+  - { "quantity": 2, "description": "Orden de Alitas BBQ" }
   - { "quantity": 1, "description": "Media Orden de Alitas BBQ" }
+  - { "quantity": 1, "description": "Hamburguesa tradicional con papas francesas gratinadas" }
 
 *Solicitud del Cliente:*
 
@@ -76,7 +77,7 @@ Instrucciones:
 - **Alitas**
   - Sabores: BBQ, Picosas, Fritas, Mango Habanero, Mixtas BBQ y Picosas
   - Tamaños: Orden, Media
-- **Papas**
+- **Ordenes de Papas**
   - Tipos: Francesa, Gajos, Mixtas Francesa y Gajos
   - Tamaños: Orden, Media
   - Opciones: Con queso o sin queso
@@ -90,7 +91,7 @@ Instrucciones:
 
 **Hamburguesas:**
 
-- **Opciones:** Con papas francesas, Con papas gajos, Con papas mixtas
+- **Opciones:** Con papas francesas, Con papas gajos, Con papas mixtas y las papas pueden ir gratinadas
 - **Variedades:** Tradicional, Especial, Hawaiana, Pollo, BBQ, Lenazo, Cubana
 
 **Ensaladas:**
