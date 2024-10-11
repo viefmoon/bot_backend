@@ -381,7 +381,7 @@ function extractMentionedProducts(productMessage, menu) {
       console.log("normalizedName:", product.normalizedName);
       console.log("similarity:", similarity);
 
-      if (similarity >= SIMILARITY_THRESHOLD && similarity > highestScore) {
+      if (similarity >= SIMILARITY_THRESHOLD && similarity >= highestScore) {
         highestScore = similarity;
         bestProduct = {
           productId: product.productId,
