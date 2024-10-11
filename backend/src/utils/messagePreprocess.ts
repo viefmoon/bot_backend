@@ -439,7 +439,6 @@ function extractMentionedProduct(productMessage, menu) {
 
     // **Buscar los modificadores por grupo (modifierTypes)**
     if (bestProduct.modifierTypes && bestProduct.modifierTypes.length > 0) {
-      const productNameWords = new Set(normalizeText(bestProduct.name));
       const variantNameWords = new Set();
       if (
         bestProduct.productVariants &&
@@ -462,7 +461,6 @@ function extractMentionedProduct(productMessage, menu) {
       // Recorrer cada modifierType
       for (const modifierType of bestProduct.modifierTypes) {
         const {
-          modifierTypeId,
           name: modifierTypeName,
           acceptsMultiple,
           required,
@@ -588,6 +586,7 @@ function extractMentionedProduct(productMessage, menu) {
 
       // Agregar los modifierTypes recopilados al bestProduct
       bestProduct.selectedModifiers = collectedModifiers;
+      delete bestProduct.modifierTypes;
 
       // Si hay errores, puedes decidir cómo manejarlos
       if (errors.length > 0) {
