@@ -225,7 +225,7 @@ function mapSynonym(normalizedWord: string): string | null {
     bbq: ["barbacoa", "barbicue"],
     picosas: ["picositas"],
     alitas: ["alas"],
-    gajos: ["gajos"],
+    gajo: ["gajos"],
     mixtas: ["mixtas"],
     extra: ["adicional", "mas", "extras", "doble"],
     doradas: ["doraditas"],
