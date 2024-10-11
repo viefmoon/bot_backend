@@ -328,6 +328,7 @@ function extractMentionedProduct(productMessage, menu) {
       wordCount: nameWords.length,
       productVariants: product.productVariants,
       modifierTypes: product.modifierTypes,
+      pizzaIngredients: product.pizzaIngredients,
     };
   });
 
@@ -652,6 +653,146 @@ function extractMentionedProduct(productMessage, menu) {
         console.error("Errores encontrados en los modificadores:", errors);
         bestProduct.errors = errors;
       }
+    }
+
+    // **Buscar los pizzaIngredients**
+    if (
+      bestProduct.pizzaIngredients &&
+      bestProduct.pizzaIngredients.length > 0
+    ) {
+      // Obtener las palabras normalizadas del nombre del producto
+      const productNameWords = new Set(normalizeText(bestProduct.name));
+
+      // Obtener las palabras normalizadas del nombre de la variante, si existe
+      const variantNameWords = new Set();
+      if (bestProduct.productVariant) {
+        normalizeText(bestProduct.productVariant.name).forEach((word) =>
+          variantNameWords.add(word)
+        );
+      }
+
+      // Obtener las palabras normalizadas de los modificadores detectados
+      const modifierWords = new Set();
+      if (bestProduct.modifierTypes && bestProduct.modifierTypes.length > 0) {
+        for (const modifierType of bestProduct.modifierTypes) {
+          for (const modifier of modifierType.modifiers) {
+            normalizeText(modifier.name).forEach((word) =>
+              modifierWords.add(word)
+            );
+          }
+        }
+      }
+
+      // Eliminar las palabras del producto, variante y modificadores de las palabras del mensaje
+      const pizzaIngredientMessageWords = messageWords.filter(
+        (word) =>
+          !productNameWords.has(word) &&
+          !variantNameWords.has(word) &&
+          !modifierWords.has(word)
+      );
+
+      // Normalizar los nombres de los ingredientes de pizza y construir el conjunto de palabras
+      const pizzaIngredientWordsSet = new Set<string>();
+      const normalizedPizzaIngredients = bestProduct.pizzaIngredients.map(
+        (ingredient) => {
+          const normalizedNameArray = normalizeText(ingredient.name);
+          normalizedNameArray.forEach((word) =>
+            pizzaIngredientWordsSet.add(word)
+          );
+          const normalizedName = normalizedNameArray.join(" ");
+          return {
+            ingredientId: ingredient.ingredientId,
+            name: ingredient.name,
+            normalizedName,
+            wordCount: normalizedNameArray.length,
+          };
+        }
+      );
+
+      // Establecer un umbral de similitud para palabras individuales (ingredientes)
+      const INGREDIENT_WORD_SIMILARITY_THRESHOLD = 0.8; // Ajusta este valor según sea necesario
+
+      // Filtrar las palabras del mensaje que son similares a las palabras de los ingredientes de pizza
+      const filteredPizzaIngredientMessageWords =
+        pizzaIngredientMessageWords.filter((messageWord) => {
+          for (const ingredientWord of Array.from(pizzaIngredientWordsSet)) {
+            const similarity = stringSimilarity.compareTwoStrings(
+              messageWord,
+              ingredientWord
+            );
+            if (similarity >= INGREDIENT_WORD_SIMILARITY_THRESHOLD) {
+              return true; // Conservar esta palabra
+            }
+          }
+          return false; // Desechar esta palabra
+        });
+
+      let matchedIngredients = [];
+
+      // Obtener el máximo número de palabras en los nombres de los ingredientes
+      const maxIngredientNameWordCount = Math.max(
+        ...normalizedPizzaIngredients.map((ing) => ing.wordCount)
+      );
+
+      // Generar n-gramas del mensaje filtrado para ingredientes
+      const ingredientMessageNGrams = generateNGrams(
+        filteredPizzaIngredientMessageWords,
+        maxIngredientNameWordCount
+      );
+
+      // Establecer un umbral de similitud para los n-gramas de ingredientes
+      const INGREDIENT_SIMILARITY_THRESHOLD = 0.8; // Ajusta este valor según sea necesario
+
+      // Comparar cada n-grama con los nombres de los ingredientes
+      for (const ngram of ingredientMessageNGrams) {
+        for (const ingredient of normalizedPizzaIngredients) {
+          const similarity = stringSimilarity.compareTwoStrings(
+            ngram,
+            ingredient.normalizedName
+          );
+          if (similarity >= INGREDIENT_SIMILARITY_THRESHOLD) {
+            matchedIngredients.push({
+              ingredientId: ingredient.ingredientId,
+              name: ingredient.name,
+              score: similarity,
+            });
+          }
+        }
+      }
+
+      // Eliminar duplicados y mantener los ingredientes con mayor similitud
+      const uniqueIngredientsMap = new Map();
+      for (const ingredient of matchedIngredients) {
+        if (
+          !uniqueIngredientsMap.has(ingredient.ingredientId) ||
+          uniqueIngredientsMap.get(ingredient.ingredientId).score <
+            ingredient.score
+        ) {
+          uniqueIngredientsMap.set(ingredient.ingredientId, ingredient);
+        }
+      }
+      matchedIngredients = Array.from(uniqueIngredientsMap.values());
+
+      // Verificar si se encontraron ingredientes
+      if (matchedIngredients.length === 0) {
+        // Generar error si no se encontraron ingredientes en un producto que los requiere
+        console.error(
+          `No se encontraron ingredientes para el producto ${productMessage} que requiere ingredientes de pizza.`
+        );
+        errors.push(
+          `Lo siento, no pude identificar en el menú ingredientes para el producto "${productMessage}". 😕`
+        );
+      } else {
+        // Agregar los ingredientes encontrados al bestProduct
+        bestProduct.selectedIngredients = matchedIngredients;
+      }
+    }
+
+    // Si hay errores, puedes decidir cómo manejarlos
+    if (errors.length > 0) {
+      // Puedes lanzar una excepción, retornar null o agregar los errores al objeto
+      console.error("Errores encontrados:", errors);
+      bestProduct.errors = errors;
     }
 
     return bestProduct;
