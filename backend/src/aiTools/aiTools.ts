@@ -102,7 +102,7 @@ const preprocessOrderTool = [
     function: {
       name: "preprocess_order",
       description:
-        "Preprocesa la orden del cliente en una lista estructurada de productos y detalles de entrega, incluyendo un resumen de la conversación. Si la información de entrega es desconocida, se debe solicitar antes de procesar la orden.",
+        "Preprocesa la orden del cliente en una lista estructurada de productos y detalles de entrega.",
       strict: true,
       parameters: {
         type: "object",
@@ -132,23 +132,13 @@ const preprocessOrderTool = [
             description:
               "Tipo de orden: entrega a domicilio o recolección en restaurante.",
           },
-          conversationSummary: {
-            type: "string",
-            description:
-              "Transcripción completa de la conversación entre el cliente y el asistente.",
-          },
           scheduledDeliveryTime: {
             type: ["string", "null"],
             description:
               "Hora programada para el pedido (opcional, en formato de 24 horas).",
           },
         },
-        required: [
-          "orderItems",
-          "orderType",
-          "conversationSummary",
-          "scheduledDeliveryTime",
-        ],
+        required: ["orderItems", "orderType", "scheduledDeliveryTime"],
         additionalProperties: false,
       },
     },
