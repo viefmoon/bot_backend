@@ -384,6 +384,7 @@ function extractMentionedProduct(productMessage, menu) {
           score: similarity,
           productVariants: product.productVariants,
           modifierTypes: product.modifierTypes,
+          pizzaIngredients: product.pizzaIngredients,
         };
       }
     }
