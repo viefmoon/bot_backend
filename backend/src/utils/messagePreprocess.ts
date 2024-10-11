@@ -50,9 +50,15 @@ interface ProductoInfo {
     variantId: string;
     name: string;
   }>;
-  modifiers?: Array<{
-    modifierId: string;
+  modifierTypes?: Array<{
+    modifierTypeId: string;
     name: string;
+    acceptsMultiple: boolean;
+    required: boolean;
+    modifiers?: Array<{
+      modifierId: string;
+      name: string;
+    }>;
   }>;
   pizzaIngredients?: Array<{
     pizzaIngredientId: string;
@@ -125,13 +131,17 @@ async function getMenuAvailability(): Promise<any> {
 
       // Agregar modificadores
       if (producto.modifierTypes?.length > 0) {
-        productoInfo.modifiers = producto.modifierTypes.flatMap(
-          (mt) =>
+        productoInfo.modifierTypes = producto.modifierTypes.map((mt) => ({
+          modifierTypeId: mt.id,
+          name: mt.name,
+          acceptsMultiple: mt.acceptsMultiple,
+          required: mt.required,
+          modifiers:
             mt.modifiers?.map((m) => ({
               modifierId: m.id,
               name: m.name,
-            })) || []
-        );
+            })) || [],
+        }));
       }
 
       // Agregar ingredientes de pizza
@@ -245,6 +255,7 @@ function mapSynonym(normalizedWord: string): string | null {
   return null;
 }
 function extractMentionedProducts(productMessage, menu) {
+  console.log("menu:", menu);
   const wordsToFilter = [
     "del",
     "los",
