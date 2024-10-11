@@ -573,13 +573,17 @@ function extractMentionedProduct(productMessage, menu) {
             }, matchedModifiers[0]);
             // Agregar solo el mejor modificador
             collectedModifiers.push({
-              bestModifier,
+              modifierId: bestModifier.modifierId,
+              name: bestModifier.name,
             });
           } else {
             // acceptsMultiple es true, agregar todos los modificadores encontrados
-            collectedModifiers.push({
-              modifiers: matchedModifiers,
-            });
+            collectedModifiers.push(
+              ...matchedModifiers.map((modifier) => ({
+                modifierId: modifier.modifierId,
+                name: modifier.name,
+              }))
+            );
           }
         }
       }
