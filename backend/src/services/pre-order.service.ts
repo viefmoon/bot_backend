@@ -105,7 +105,7 @@ export class PreOrderService {
           // Si ambos están presentes, buscar producto y variante
           product = await Product.findByPk(item.productId);
           productVariant = await ProductVariant.findByPk(
-            item.productVariant.id
+            item.productVariant.productVariantId
           );
 
           if (!product || !productVariant) {
