@@ -381,7 +381,6 @@ function extractMentionedProduct(productMessage, menu) {
         bestProduct = {
           productId: product.productId,
           name: product.name,
-          score: similarity,
           productVariants: product.productVariants,
           modifierTypes: product.modifierTypes,
           pizzaIngredients: product.pizzaIngredients,
@@ -581,7 +580,6 @@ function extractMentionedProduct(productMessage, menu) {
               matchedModifiers.push({
                 modifierId: modifier.modifierId,
                 name: modifier.name,
-                score: similarity,
               });
             }
           }
@@ -760,7 +758,6 @@ function extractMentionedProduct(productMessage, menu) {
             matchedIngredients.push({
               ingredientId: ingredient.ingredientId,
               name: ingredient.name,
-              score: similarity,
             });
           }
         }
