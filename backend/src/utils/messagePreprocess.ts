@@ -32,6 +32,7 @@ interface MenuItem {
   name: string;
   productVariant?: ProductVariant;
   modifierTypes?: ModifierType[];
+  modifiers?: Modifier[];
   pizzaIngredients?: PizzaIngredient[];
 }
 
@@ -847,14 +848,11 @@ async function verifyOrderItems(
       item.relevantMenuItem
         ?.map((menuItem) => {
           const names = [
-            ...(menuItem?.name ? [menuItem.name] : []),
-            ...(menuItem?.productVariant?.name
+            ...(menuItem.name ? [menuItem.name] : []),
+            ...(menuItem.productVariant?.name
               ? [menuItem.productVariant.name]
               : []),
-            ...(menuItem.modifierTypes?.flatMap(
-              (modifierType) =>
-                modifierType.modifiers?.map((modifier) => modifier.name) || []
-            ) || []),
+            ...(menuItem.modifiers?.map((m) => m.name) || []),
             ...(menuItem.pizzaIngredients?.map((i) => i.name) || []),
           ];
           return names.join(", ");
