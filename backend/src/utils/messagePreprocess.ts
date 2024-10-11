@@ -23,7 +23,7 @@ interface MenuItem {
   productId?: string;
   name: string;
   productVariant?: ProductVariant;
-  modifierTypes?: ModifierType[];
+  selectedModifiers?: Modifier[];
   pizzaIngredients?: PizzaIngredient[];
   errors?: string[];
 }
@@ -457,7 +457,7 @@ function extractMentionedProduct(productMessage, menu) {
 
       const modifierMessageWords = messageWords;
 
-      const collectedModifierTypes = [];
+      const collectedModifiers = [];
 
       // Recorrer cada modifierType
       for (const modifierType of bestProduct.modifierTypes) {
@@ -574,20 +574,12 @@ function extractMentionedProduct(productMessage, menu) {
               }
             }, matchedModifiers[0]);
             // Agregar solo el mejor modificador
-            collectedModifierTypes.push({
-              modifierTypeId,
-              name: modifierTypeName,
-              acceptsMultiple,
-              required,
-              modifiers: [bestModifier],
+            collectedModifiers.push({
+              bestModifier,
             });
           } else {
             // acceptsMultiple es true, agregar todos los modificadores encontrados
-            collectedModifierTypes.push({
-              modifierTypeId,
-              name: modifierTypeName,
-              acceptsMultiple,
-              required,
+            collectedModifiers.push({
               modifiers: matchedModifiers,
             });
           }
@@ -595,7 +587,7 @@ function extractMentionedProduct(productMessage, menu) {
       }
 
       // Agregar los modifierTypes recopilados al bestProduct
-      bestProduct.modifierTypes = collectedModifierTypes;
+      bestProduct.selectedModifiers = collectedModifiers;
 
       // Si hay errores, puedes decidir cómo manejarlos
       if (errors.length > 0) {
