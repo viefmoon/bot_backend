@@ -253,6 +253,21 @@ function mapSynonym(normalizedWord: string): string | null {
 
   return null;
 }
+
+function removeScoreField(obj) {
+  if (Array.isArray(obj)) {
+    return obj.map(removeScoreField);
+  } else if (typeof obj === "object" && obj !== null) {
+    const newObj = {};
+    for (const [key, value] of Object.entries(obj)) {
+      if (key !== "score") {
+        newObj[key] = removeScoreField(value);
+      }
+    }
+    return newObj;
+  }
+  return obj;
+}
 function extractMentionedProduct(productMessage, menu) {
   const wordsToFilter = [
     "del",
@@ -381,6 +396,7 @@ function extractMentionedProduct(productMessage, menu) {
         bestProduct = {
           productId: product.productId,
           name: product.name,
+          score: similarity,
           productVariants: product.productVariants,
           modifierTypes: product.modifierTypes,
           pizzaIngredients: product.pizzaIngredients,
@@ -580,6 +596,7 @@ function extractMentionedProduct(productMessage, menu) {
               matchedModifiers.push({
                 modifierId: modifier.modifierId,
                 name: modifier.name,
+                score: similarity,
               });
             }
           }
@@ -758,6 +775,7 @@ function extractMentionedProduct(productMessage, menu) {
             matchedIngredients.push({
               ingredientId: ingredient.ingredientId,
               name: ingredient.name,
+              score: similarity,
             });
           }
         }
@@ -788,7 +806,7 @@ function extractMentionedProduct(productMessage, menu) {
         delete bestProduct.pizzaIngredients;
       } else {
         // Agregar los ingredientes encontrados al bestProduct
-        delete bestProduct.pizzaIngredients;
+        delete bestProduct.selectedIngredients;
         bestProduct.pizzaIngredients = matchedIngredients;
       }
     }
@@ -800,7 +818,7 @@ function extractMentionedProduct(productMessage, menu) {
       bestProduct.errors = errors;
     }
 
-    return bestProduct;
+    return removeScoreField(bestProduct);
   } else {
     console.log("No se encontró un producto que cumpla con el umbral.");
     errors.push(
