@@ -30,16 +30,15 @@ const openai = new OpenAI({
 interface MenuItem {
   productId?: string;
   name: string;
-  products?: Product[];
-  productVariants?: ProductVariant[];
-  modifiers?: Modifier[];
+  productVariant?: ProductVariant;
+  modifierTypes?: ModifierType[];
   pizzaIngredients?: PizzaIngredient[];
 }
 
 interface PreprocessedContent {
   orderItems: {
     description: string;
-    relevantMenuItems?: MenuItem[];
+    relevantMenuItem?: MenuItem[];
   }[];
 }
 
@@ -255,7 +254,6 @@ function mapSynonym(normalizedWord: string): string | null {
   return null;
 }
 function extractMentionedProduct(productMessage, menu) {
-  console.log("menu:", JSON.stringify(menu, null, 2));
   const wordsToFilter = [
     "del",
     "los",
@@ -310,6 +308,8 @@ function extractMentionedProduct(productMessage, menu) {
   const messageWords = normalizeText(productMessage);
   console.log("productMessage:", productMessage);
   console.log("messageWords:", messageWords);
+
+  const errors = [];
 
   // Obtener todas las palabras únicas de los nombres de productos
   const productWordsSet = new Set<string>();
@@ -474,10 +474,15 @@ function extractMentionedProduct(productMessage, menu) {
 
       // Agregar la mejor variante al producto si se encontró
       if (bestVariant && bestVariant.score >= VARIANT_SIMILARITY_THRESHOLD) {
-        bestProduct.productVariants = [bestVariant];
+        bestProduct.productVariant = bestVariant;
+        delete bestProduct.productVariants;
       } else {
-        // Si no se encontró una variante que cumpla con el umbral, dejamos productVariants vacío
-        bestProduct.productVariants = [];
+        // Si no se encontró una variante que cumpla con el umbral, generamos un error
+        console.error("No se encontró una variante válida para el producto.");
+        errors.push(
+          `Lo siento, no pude identificar en el menu una variante (requerida) válida para el producto ${productMessage}. 😕`
+        );
+        delete bestProduct.productVariants;
       }
     }
 
@@ -502,7 +507,6 @@ function extractMentionedProduct(productMessage, menu) {
       const modifierMessageWords = messageWords;
 
       const collectedModifierTypes = [];
-      const errors = [];
 
       // Recorrer cada modifierType
       for (const modifierType of bestProduct.modifierTypes) {
@@ -598,10 +602,10 @@ function extractMentionedProduct(productMessage, menu) {
           if (required) {
             // Generar error si no se encontraron modificadores en un modifierType requerido
             console.error(
-              `No se encontraron modificadores para el grupo requerido '${modifierTypeName}'.`
+              `No se encontraron modificadores para el grupo requerido '${modifierTypeName}' en el producto ${productMessage}.`
             );
             errors.push(
-              `No se encontraron modificadores para el grupo requerido '${modifierTypeName}'.`
+              `Lo siento, no pude identificar en el menu modificadores para el grupo requerido '${modifierTypeName}' en el producto ${productMessage}. 😕`
             );
           }
           // No agregar este modifierType si no se encontraron modificadores y no es requerido
@@ -653,7 +657,10 @@ function extractMentionedProduct(productMessage, menu) {
     return bestProduct;
   } else {
     console.log("No se encontró un producto que cumpla con el umbral.");
-    return null;
+    errors.push(
+      `Lo siento, no pude identificar dentro del menu un producto válido para "${productMessage}". 😕`
+    );
+    return { product: null, errors };
   }
 }
 
@@ -662,12 +669,17 @@ async function verifyOrderItems(
 ): Promise<string> {
   const transformedOrderItems = preprocessedContent.orderItems.map((item) => {
     const relevantItems =
-      item.relevantMenuItems
+      item.relevantMenuItem
         ?.map((menuItem) => {
           const names = [
-            ...(menuItem.products?.map((p) => p.name) || []),
-            ...(menuItem.productVariants?.map((v) => v.name) || []),
-            ...(menuItem.modifiers?.map((m) => m.name) || []),
+            ...(menuItem?.name ? [menuItem.name] : []),
+            ...(menuItem?.productVariant?.name
+              ? [menuItem.productVariant.name]
+              : []),
+            ...(menuItem.modifierTypes?.flatMap(
+              (modifierType) =>
+                modifierType.modifiers?.map((modifier) => modifier.name) || []
+            ) || []),
             ...(menuItem.pizzaIngredients?.map((i) => i.name) || []),
           ];
           return names.join(", ");
@@ -676,7 +688,7 @@ async function verifyOrderItems(
 
     return {
       "Producto solicitado": item.description,
-      "Menu disponible para la creacion": relevantItems,
+      "Producto disponible": relevantItems,
     };
   });
 
