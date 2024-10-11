@@ -23,7 +23,7 @@ export class PreOrderService {
   }) {
     const { orderItems, clientId, orderType, scheduledDeliveryTime } =
       orderData;
-    console.log("orderData", orderData);
+    console.log("orderData", JSON.stringify(orderData));
     let totalCost = 0;
     let fullScheduledDeliveryTime: Date | null = null;
 
@@ -101,7 +101,7 @@ export class PreOrderService {
         let product, productVariant;
         let itemPrice, productName;
 
-        if (item.productId && item.productVariantId) {
+        if (item.productId && item.productVariant.productVariantId) {
           // Si ambos están presentes, buscar producto y variante
           product = await Product.findByPk(item.productId);
           productVariant = await ProductVariant.findByPk(item.productVariantId);
