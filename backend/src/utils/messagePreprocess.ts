@@ -225,7 +225,7 @@ function mapSynonym(normalizedWord: string): string | null {
     bbq: ["barbacoa", "barbicue"],
     picosas: ["picositas"],
     alitas: ["alas"],
-    extra: ["adicional", "mas"],
+    extra: ["adicional", "mas", "extras", "doble"],
     doradas: ["doraditas"],
     hamburguesa: ["hamburguesas", "burger"],
     pizza: ["pizzas", "pizaa", "pozza"],
@@ -243,6 +243,8 @@ function mapSynonym(normalizedWord: string): string | null {
 }
 
 function extractMentionedProducts(productMessage, menu) {
+
+  console.log("menu", menu);
   const wordsToFilter = [
     "del",
     "los",

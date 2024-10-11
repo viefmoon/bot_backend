@@ -82,43 +82,18 @@ const menu: any[] = [
         modifiers: [
           {
             id: "AM1-1",
-            name: "Extra doradas",
-            price: 0,
+            name: "Extra salsa",
+            price: 10,
           },
           {
             id: "AM1-2",
-            name: "Menos doradas",
-            price: 0,
+            name: "Con aderezo ranch",
+            price: 10,
           },
           {
             id: "AM1-3",
-            name: "Extra salsa",
-            price: 0,
-          },
-          {
-            id: "AM1-4",
-            name: "Arregladas con verdura y totopos",
-            price: 0,
-          },
-          {
-            id: "AM1-5",
-            name: "Aderezo ranch",
-            price: 0,
-          },
-          {
-            id: "AM1-6",
-            name: "Salsa picosa aparte",
-            price: 0,
-          },
-          {
-            id: "AM1-7",
-            name: "Salsa BBQ aparte",
-            price: 0,
-          },
-          {
-            id: "AM1-8",
             name: "Extra chile de aceite",
-            price: 0,
+            price: 10,
           },
         ],
       },
@@ -164,11 +139,21 @@ const menu: any[] = [
         modifiers: [
           {
             id: "PM1-1",
-            name: "Sin queso",
+            name: "Con queso",
             price: 0,
           },
           {
             id: "PM1-2",
+            name: "Extra queso",
+            price: 10,
+          },
+          {
+            id: "PM1-3",
+            name: "Sin queso",
+            price: 0,
+          },
+          {
+            id: "PM1-4",
             name: "Extra aderezo",
             price: 0,
           },
@@ -239,12 +224,12 @@ const menu: any[] = [
         modifiers: [
           {
             id: "EM1-1",
-            name: "Vinagreta",
+            name: "Con vinagreta",
             price: 0,
           },
           {
             id: "EM1-2",
-            name: "Doble pollo",
+            name: "Extra pollo",
             price: 15,
           },
         ],
@@ -353,28 +338,13 @@ const menu: any[] = [
         modifiers: [
           {
             id: "HM2-1",
-            name: "Partida en mitad",
-            price: 0,
-          },
-          {
-            id: "HM2-2",
             name: "Doble carne o pollo",
             price: 15,
           },
           {
-            id: "HM2-3",
+            id: "HM2-2",
             name: "Pollo en lugar de carne de res",
             price: 15,
-          },
-          {
-            id: "HM2-4",
-            name: "Con ensalada",
-            price: 15,
-          },
-          {
-            id: "HM2-5",
-            name: "Carne dorada",
-            price: 0,
           },
         ],
       },
@@ -865,40 +835,21 @@ const menu: any[] = [
         modifiers: [
           {
             id: "PZ-M1-1",
-            name: "Partida en 16 pedazos",
+            name: "Extra salsa de pizza",
             price: 0,
           },
-          {
-            id: "PZ-M1-2",
-            name: "Extra doradita",
-            price: 0,
-          },
+          { id: "PZ-M1-2", name: "Con catsup", price: 0 },
           {
             id: "PZ-M1-3",
-            name: "pizza con poco queso",
+            name: "Extra aderezo",
             price: 0,
           },
           {
             id: "PZ-M1-4",
-            name: "extra salsa de tomate",
+            name: "Extra chile de aceite",
             price: 0,
           },
-          { id: "PZ-M1-5", name: "con catsup", price: 0 },
-          {
-            id: "PZ-M1-6",
-            name: "doble aderezo",
-            price: 0,
-          },
-          {
-            id: "PZ-M1-7",
-            name: "doble chile de aceite",
-            price: 0,
-          },
-          {
-            id: "PZ-M1-8",
-            name: "menos doradita",
-            price: 0,
-          },
+
         ],
       },
     ],
