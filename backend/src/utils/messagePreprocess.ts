@@ -181,7 +181,7 @@ async function getRelevantMenuItem(
       product.description,
       fullMenu
     );
-    productos = [...productos, ...productInMessage];
+    productos.push(productInMessage);
   }
 
   productos = Array.from(new Set(productos.map((p) => JSON.stringify(p)))).map(
