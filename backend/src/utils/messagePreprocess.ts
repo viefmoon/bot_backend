@@ -278,7 +278,7 @@ function extractMentionedProducts(productMessage, menu) {
     "al",
   ];
 
-  function normalizeText(text: string): string[] {
+  function normalizeText(text) {
     const normalized = text
       .toLowerCase()
       .normalize("NFD")
@@ -487,8 +487,8 @@ function extractMentionedProducts(productMessage, menu) {
       }
     }
 
-    // **Nuevo código para buscar los modificadores**
-    if (bestProduct.modifiers && bestProduct.modifiers.length > 0) {
+    // **Nuevo código para buscar los modificadores por grupo (modifierTypes)**
+    if (bestProduct.modifierTypes && bestProduct.modifierTypes.length > 0) {
       const productNameWords = new Set(normalizeText(bestProduct.name));
       const variantNameWords = new Set();
       if (
@@ -505,98 +505,144 @@ function extractMentionedProducts(productMessage, menu) {
         (word) => !productNameWords.has(word) && !variantNameWords.has(word)
       );
 
-      // Normalizar los nombres de los modificadores y construir el conjunto de palabras
-      const modifierWordsSet = new Set<string>();
-      const normalizedModifiers = bestProduct.modifiers.map((modifier) => {
-        const normalizedNameArray = normalizeText(modifier.name);
-        normalizedNameArray.forEach((word) => modifierWordsSet.add(word));
-        const normalizedName = normalizedNameArray.join(" ");
-        return {
-          modifierId: modifier.modifierId,
-          name: modifier.name,
-          normalizedName,
-          wordCount: normalizedNameArray.length,
-        };
-      });
+      const collectedModifierTypes = [];
+      const errors = [];
 
-      console.log("normalizedModifiers:", normalizedModifiers);
+      // Recorrer cada modifierType
+      for (const modifierType of bestProduct.modifierTypes) {
+        const {
+          modifierTypeId,
+          name: modifierTypeName,
+          acceptsMultiple,
+          required,
+          modifiers,
+        } = modifierType;
 
-      // Establecer un umbral de similitud para palabras individuales (modificadores)
-      const MODIFIER_WORD_SIMILARITY_THRESHOLD = 0.8; // Ajusta este valor según sea necesario
+        // Normalizar los nombres de los modificadores y construir el conjunto de palabras
+        const modifierWordsSet = new Set<string>();
+        const normalizedModifiers = modifiers.map((modifier) => {
+          const normalizedNameArray = normalizeText(modifier.name);
+          normalizedNameArray.forEach((word) => modifierWordsSet.add(word));
+          const normalizedName = normalizedNameArray.join(" ");
+          return {
+            modifierId: modifier.modifierId,
+            name: modifier.name,
+            normalizedName,
+            wordCount: normalizedNameArray.length,
+          };
+        });
 
-      // Filtrar las palabras del mensaje que son similares a las palabras de los modificadores
-      const filteredModifierMessageWords = modifierMessageWords.filter(
-        (messageWord) => {
-          for (const modifierWord of Array.from(modifierWordsSet)) {
+        // Establecer un umbral de similitud para palabras individuales (modificadores)
+        const MODIFIER_WORD_SIMILARITY_THRESHOLD = 0.8; // Ajusta este valor según sea necesario
+
+        // Filtrar las palabras del mensaje que son similares a las palabras de los modificadores
+        const filteredModifierMessageWords = modifierMessageWords.filter(
+          (messageWord) => {
+            for (const modifierWord of Array.from(modifierWordsSet)) {
+              const similarity = stringSimilarity.compareTwoStrings(
+                messageWord,
+                modifierWord
+              );
+              if (similarity >= MODIFIER_WORD_SIMILARITY_THRESHOLD) {
+                return true; // Conservar esta palabra
+              }
+            }
+            return false; // Desechar esta palabra
+          }
+        );
+
+        console.log(
+          `filteredModifierMessageWords for ${modifierTypeName}:`,
+          filteredModifierMessageWords
+        );
+
+        let matchedModifiers = [];
+
+        // Obtener el máximo número de palabras en los nombres de los modificadores
+        const maxModifierNameWordCount = Math.max(
+          ...normalizedModifiers.map((m) => m.wordCount)
+        );
+
+        // Generar n-gramas del mensaje filtrado para modificadores
+        const modifierMessageNGrams = generateNGrams(
+          filteredModifierMessageWords,
+          maxModifierNameWordCount
+        );
+
+        // Establecer un umbral de similitud para los n-gramas de modificadores
+        const MODIFIER_SIMILARITY_THRESHOLD = 0.8; // Ajusta este valor según sea necesario
+
+        // Comparar cada n-grama con los nombres de los modificadores
+        for (const ngram of modifierMessageNGrams) {
+          for (const modifier of normalizedModifiers) {
             const similarity = stringSimilarity.compareTwoStrings(
-              messageWord,
-              modifierWord
+              ngram,
+              modifier.normalizedName
             );
-            if (similarity >= MODIFIER_WORD_SIMILARITY_THRESHOLD) {
-              return true; // Conservar esta palabra
+
+            if (similarity >= MODIFIER_SIMILARITY_THRESHOLD) {
+              matchedModifiers.push({
+                modifierId: modifier.modifierId,
+                name: modifier.name,
+                score: similarity,
+              });
             }
           }
-          return false; // Desechar esta palabra
         }
-      );
 
-      console.log(
-        "filteredModifierMessageWords:",
-        filteredModifierMessageWords
-      );
-
-      let matchedModifiers = [];
-
-      // Obtener el máximo número de palabras en los nombres de los modificadores
-      const maxModifierNameWordCount = Math.max(
-        ...normalizedModifiers.map((m) => m.wordCount)
-      );
-
-      // Generar n-gramas del mensaje filtrado para modificadores
-      const modifierMessageNGrams = generateNGrams(
-        filteredModifierMessageWords,
-        maxModifierNameWordCount
-      );
-
-      // Establecer un umbral de similitud para los n-gramas de modificadores
-      const MODIFIER_SIMILARITY_THRESHOLD = 0.8; // Ajusta este valor según sea necesario
-
-      // Comparar cada n-grama con los nombres de los modificadores
-      for (const ngram of modifierMessageNGrams) {
-        for (const modifier of normalizedModifiers) {
-          const similarity = stringSimilarity.compareTwoStrings(
-            ngram,
-            modifier.normalizedName
-          );
-
-          if (similarity >= MODIFIER_SIMILARITY_THRESHOLD) {
-            matchedModifiers.push({
-              modifierId: modifier.modifierId,
-              name: modifier.name,
-              score: similarity,
-            });
+        // Eliminar duplicados y mantener los modificadores con mayor similitud
+        const uniqueModifiersMap = new Map();
+        for (const modifier of matchedModifiers) {
+          if (
+            !uniqueModifiersMap.has(modifier.modifierId) ||
+            uniqueModifiersMap.get(modifier.modifierId).score < modifier.score
+          ) {
+            uniqueModifiersMap.set(modifier.modifierId, modifier);
           }
         }
-      }
+        matchedModifiers = Array.from(uniqueModifiersMap.values());
 
-      // Eliminar duplicados y mantener los modificadores con mayor similitud
-      const uniqueModifiersMap = new Map();
-      for (const modifier of matchedModifiers) {
-        if (
-          !uniqueModifiersMap.has(modifier.modifierId) ||
-          uniqueModifiersMap.get(modifier.modifierId).score < modifier.score
-        ) {
-          uniqueModifiersMap.set(modifier.modifierId, modifier);
+        // Validar si se encontraron modificadores según las reglas de acceptsMultiple y required
+        if (matchedModifiers.length === 0) {
+          if (required) {
+            // Generar error si no se encontraron modificadores en un modifierType requerido
+            console.error(
+              `No se encontraron modificadores para el grupo requerido '${modifierTypeName}'.`
+            );
+            errors.push(
+              `No se encontraron modificadores para el grupo requerido '${modifierTypeName}'.`
+            );
+          }
+          // No agregar este modifierType si no se encontraron modificadores y no es requerido
+        } else {
+          if (!acceptsMultiple && matchedModifiers.length > 1) {
+            // Generar error si se encontraron múltiples modificadores en un modifierType que no acepta múltiples
+            console.error(
+              `Se encontraron múltiples modificadores para el grupo '${modifierTypeName}', que no acepta múltiples opciones.`
+            );
+            errors.push(
+              `Se encontraron múltiples modificadores para el grupo '${modifierTypeName}', que no acepta múltiples opciones.`
+            );
+          }
+          // Agregar los modificadores encontrados al modifierType
+          collectedModifierTypes.push({
+            modifierTypeId,
+            name: modifierTypeName,
+            acceptsMultiple,
+            required,
+            modifiers: matchedModifiers,
+          });
         }
       }
-      matchedModifiers = Array.from(uniqueModifiersMap.values());
 
-      // Agregar los modificadores al producto si se encontraron
-      if (matchedModifiers.length > 0) {
-        bestProduct.modifiers = matchedModifiers;
-      } else {
-        // Si no se encontraron modificadores que cumplan con el umbral, dejamos modifiers vacío
-        bestProduct.modifiers = [];
+      // Agregar los modifierTypes recopilados al bestProduct
+      bestProduct.modifierTypes = collectedModifierTypes;
+
+      // Si hay errores, puedes decidir cómo manejarlos
+      if (errors.length > 0) {
+        // Puedes lanzar una excepción, retornar null o agregar los errores al objeto
+        console.error("Errores encontrados en los modificadores:", errors);
+        bestProduct.errors = errors;
       }
     }
 
