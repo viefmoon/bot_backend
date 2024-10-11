@@ -501,9 +501,11 @@ function extractMentionedProducts(productMessage, menu) {
         );
       }
       // Filtrar las palabras del mensaje que no están en el nombre del producto ni de la variante
-      const modifierMessageWords = messageWords.filter(
-        (word) => !productNameWords.has(word) && !variantNameWords.has(word)
-      );
+      // const modifierMessageWords = messageWords.filter(
+      //   (word) => !productNameWords.has(word) && !variantNameWords.has(word)
+      // );
+
+      const modifierMessageWords = messageWords;
 
       const collectedModifierTypes = [];
       const errors = [];

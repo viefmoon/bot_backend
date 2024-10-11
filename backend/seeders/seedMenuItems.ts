@@ -76,7 +76,7 @@ const menu: any[] = [
     modifierTypes: [
       {
         id: "AM1",
-        name: "Observaciones Alitas",
+        name: "Extras Alitas",
         required: false,
         acceptsMultiple: true,
         modifiers: [
@@ -139,18 +139,18 @@ const menu: any[] = [
         modifiers: [
           {
             id: "PM1-1",
-            name: "Con queso",
+            name: "Sin queso",
             price: 0,
           },
           {
             id: "PM1-2",
-            name: "Extra queso",
-            price: 10,
+            name: "Con queso",
+            price: 0,
           },
           {
             id: "PM1-3",
-            name: "Sin queso",
-            price: 0,
+            name: "Extra queso",
+            price: 10,
           },
           {
             id: "PM1-4",
@@ -833,23 +833,17 @@ const menu: any[] = [
         required: false,
         acceptsMultiple: true,
         modifiers: [
+          { id: "PZ-M1-1", name: "Con catsup", price: 0 },
           {
-            id: "PZ-M1-1",
-            name: "Extra salsa de pizza",
-            price: 0,
-          },
-          { id: "PZ-M1-2", name: "Con catsup", price: 0 },
-          {
-            id: "PZ-M1-3",
+            id: "PZ-M1-2",
             name: "Extra aderezo",
             price: 0,
           },
           {
-            id: "PZ-M1-4",
+            id: "PZ-M1-3",
             name: "Extra chile de aceite",
             price: 0,
           },
-
         ],
       },
     ],
