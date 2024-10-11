@@ -227,6 +227,7 @@ function mapSynonym(normalizedWord: string): string | null {
     alitas: ["alas"],
     extra: ["adicional", "mas", "extras", "doble"],
     doradas: ["doraditas"],
+    queso: ["gratinadas", "gratinado", "quesos"],
     hamburguesa: ["hamburguesas", "burger"],
     pizza: ["pizzas", "pizaa", "pozza"],
     capuchino: ["cappuccino"],
