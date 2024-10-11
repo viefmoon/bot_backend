@@ -202,7 +202,6 @@ async function processAndGenerateAIResponse(
         },
       ];
     }
-    console.log("preprocessedContent", JSON.stringify(preprocessedContent));
 
     const preOrderService = new PreOrderService();
     const selectProductsResponse = await preOrderService.selectProducts({
