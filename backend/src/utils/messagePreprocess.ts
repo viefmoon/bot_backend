@@ -472,7 +472,7 @@ function extractMentionedProducts(productMessage, menu) {
 
           if (
             similarity >= VARIANT_SIMILARITY_THRESHOLD &&
-            similarity > highestVariantScore
+            similarity >= highestVariantScore
           ) {
             highestVariantScore = similarity;
             bestVariant = {
