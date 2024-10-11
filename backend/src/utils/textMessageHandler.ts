@@ -31,6 +31,9 @@ interface ResponseItem {
 
 interface PreprocessedContent {
   isDirectResponse: boolean;
+  orderItems: any[];
+  orderType: string;
+  scheduledDeliveryTime?: string | Date;
   text: string;
   isRelevant: boolean;
   confirmationMessage?: string;
@@ -200,59 +203,16 @@ async function processAndGenerateAIResponse(
         },
       ];
     }
-    console.log(preprocessedContent);
+    console.log("preprocessedContent", preprocessedContent);
 
-    // const preOrderService = new PreOrderService();
-    // const selectProductsResponse = await preOrderService.selectProducts({
-    //   orderItems,
-    //   clientId: conversationId,
-    //   orderType,
-    //   scheduledDeliveryTime,
-    // });
-
-    const response = await anthropic.messages.create({
-      model: "claude-3-5-sonnet-20240620",
-      system: SYSTEM_MESSAGE_PHASE_2,
-      messages: [
-        { role: "user", content: JSON.stringify(preprocessedContent) },
-      ],
-      max_tokens: 4096,
-      tools: [selectProductsToolClaude],
-      tool_choice: { type: "tool", name: "select_products" },
+    const preOrderService = new PreOrderService();
+    const selectProductsResponse = await preOrderService.selectProducts({
+      orderItems: preprocessedContent.orderItems,
+      clientId: conversationId,
+      orderType: preprocessedContent.orderType,
+      scheduledDeliveryTime: preprocessedContent.scheduledDeliveryTime,
     });
-
-    if (
-      response.content &&
-      response.content[0]?.type === "tool_use" &&
-      response.content[0]?.name === "select_products"
-    ) {
-      const { orderItems, orderType, scheduledDeliveryTime } = response
-        .content[0].input as any;
-
-      try {
-        const preOrderService = new PreOrderService();
-        const selectProductsResponse = await preOrderService.selectProducts({
-          orderItems,
-          clientId: conversationId,
-          orderType,
-          scheduledDeliveryTime,
-        });
-
-        return [
-          {
-            text: selectProductsResponse.json.mensaje,
-            sendToWhatsApp: false,
-            isRelevant: true,
-          },
-        ];
-      } catch (error) {
-        console.error("Error al seleccionar los productos:", error);
-        const errorMessage =
-          error.message ||
-          "Error al procesar tu pedido. Por favor, inténtalo de nuevo.";
-        return [{ text: errorMessage, sendToWhatsApp: true, isRelevant: true }];
-      }
-    }
+    console.log("selectProductsResponse", selectProductsResponse);
 
     return [
       {
