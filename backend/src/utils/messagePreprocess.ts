@@ -255,7 +255,7 @@ function mapSynonym(normalizedWord: string): string | null {
   return null;
 }
 function extractMentionedProducts(productMessage, menu) {
-  console.log("menu:", menu);
+  console.log("menu:", JSON.stringify(menu, null, 2));
   const wordsToFilter = [
     "del",
     "los",
