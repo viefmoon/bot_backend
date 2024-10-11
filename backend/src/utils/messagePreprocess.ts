@@ -510,6 +510,7 @@ function extractMentionedProducts(productMessage, menu) {
 
       // Recorrer cada modifierType
       for (const modifierType of bestProduct.modifierTypes) {
+        console.log("modifierType:", JSON.stringify(modifierType, null, 2));
         const {
           modifierTypeId,
           name: modifierTypeName,
