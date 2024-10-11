@@ -24,7 +24,7 @@ interface MenuItem {
   name: string;
   productVariant?: ProductVariant;
   selectedModifiers?: Modifier[];
-  pizzaIngredients?: PizzaIngredient[];
+  selectedPizzaIngredients?: PizzaIngredient[];
   errors?: string[];
 }
 
@@ -735,8 +735,8 @@ function extractMentionedProduct(productMessage, menu) {
         delete bestProduct.pizzaIngredients;
       } else {
         // Agregar los ingredientes encontrados al bestProduct
-        delete bestProduct.selectedIngredients;
-        bestProduct.pizzaIngredients = matchedIngredients;
+        delete bestProduct.pizzaIngredients;
+        bestProduct.selectedPizzaIngredients = matchedIngredients;
       }
     }
 
