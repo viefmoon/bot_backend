@@ -39,7 +39,7 @@ interface ProductoInfo {
   productId: string;
   name: string;
   productVariants?: Array<{
-    variantId: string;
+    productVariantId: string;
     name: string;
   }>;
   modifierTypes?: Array<{
@@ -116,7 +116,7 @@ async function getMenuAvailability(): Promise<any> {
 
       if (producto.productVariants?.length > 0) {
         productoInfo.productVariants = producto.productVariants.map((v) => ({
-          variantId: v.id,
+          productVariantId: v.id,
           name: v.name,
         }));
       }
@@ -354,7 +354,7 @@ function extractMentionedProduct(productMessage, menu) {
         normalizedNameArray.forEach((word) => variantWordsSet.add(word));
         const normalizedName = normalizedNameArray.join(" ");
         return {
-          variantId: variant.variantId,
+          productVariantId: variant.productVariantId,
           name: variant.name,
           normalizedName,
           wordCount: normalizedNameArray.length,
@@ -415,7 +415,7 @@ function extractMentionedProduct(productMessage, menu) {
           ) {
             highestVariantScore = similarity;
             bestVariant = {
-              variantId: variant.variantId,
+              productVariantId: variant.productVariantId,
               name: variant.name,
               score: similarity,
             };
