@@ -377,6 +377,9 @@ function extractMentionedProducts(productMessage, menu) {
         ngram,
         product.normalizedName
       );
+      console.log("ngram:", ngram);
+      console.log("normalizedName:", product.normalizedName);
+      console.log("similarity:", similarity);
 
       if (similarity >= SIMILARITY_THRESHOLD && similarity > highestScore) {
         highestScore = similarity;
@@ -463,6 +466,9 @@ function extractMentionedProducts(productMessage, menu) {
             ngram,
             variant.normalizedName
           );
+          console.log("ngram:", ngram);
+          console.log("normalizedName:", variant.normalizedName);
+          console.log("similarity:", similarity);
 
           if (
             similarity >= VARIANT_SIMILARITY_THRESHOLD &&
