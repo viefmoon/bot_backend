@@ -327,7 +327,7 @@ function extractMentionedProducts(productMessage, menu) {
       normalizedName,
       wordCount: nameWords.length,
       productVariants: product.productVariants,
-      modifiers: product.modifiers,
+      modifierTypes: product.modifierTypes,
     };
   });
 
@@ -385,7 +385,7 @@ function extractMentionedProducts(productMessage, menu) {
           name: product.name,
           score: similarity,
           productVariants: product.productVariants,
-          modifiers: product.modifiers,
+          modifierTypes: product.modifierTypes,
         };
       }
     }
