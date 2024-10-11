@@ -7,7 +7,6 @@ import * as dotenv from "dotenv";
 import { preprocessMessages } from "./messagePreprocess";
 import { Anthropic } from "@anthropic-ai/sdk";
 import { PreOrderService } from "../services/pre-order.service";
-import { SYSTEM_MESSAGE_PHASE_2 } from "../config/predefinedMessages";
 
 dotenv.config();
 
@@ -203,7 +202,7 @@ async function processAndGenerateAIResponse(
         },
       ];
     }
-    console.log("preprocessedContent", preprocessedContent);
+    console.log("preprocessedContent", JSON.stringify(preprocessedContent));
 
     const preOrderService = new PreOrderService();
     const selectProductsResponse = await preOrderService.selectProducts({

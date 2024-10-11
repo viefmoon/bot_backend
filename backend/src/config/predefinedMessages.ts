@@ -5,13 +5,6 @@ export const BANNED_USER_MESSAGE =
   "📱 Celular: 3338423316\n\n" +
   "Agradecemos tu comprensión y esperamos resolver cualquier malentendido.";
 
-export const SYSTEM_MESSAGE_PHASE_2 = [
-  "Basándote en el objeto proporcionado, utiliza la función `select_products`",
-  "- Utiliza los `relevantMenuItems` proporcionados para mapear las descripciones de los productos a sus respectivos IDs. Si no se encuentra un ID relevante para construir el producto, omite esa observación o producto.",
-  "- El campo de comentarios en los orderitems debe usarse ÚNICAMENTE para observaciones simples o para indicar ingredientes que se deben retirar del producto. Nunca lo uses para agregar ingredientes o modificaciones que puedan generar un costo extra.",
-  "- No es necesario usar todos los relevantMenuItems si no aplican a la solicitud del usuario.",
-].join("\n");
-
 export const SYSTEM_MESSAGE_PHASE_1 = `
 [Asistente Virtual del Restaurante La Leña]
 
@@ -46,7 +39,6 @@ Instrucciones:
 
 - Si el cliente menciona un producto de manera imprecisa, intenta mapearlo al nombre exacto en el menú.
 - Si no estás seguro, utiliza la mejor aproximación basada en el menú disponible.
-- Genera un resumen de la conversación en conversationSummary.
 
 **Ejemplos:**
 
