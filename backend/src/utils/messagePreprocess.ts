@@ -165,7 +165,7 @@ async function getMenuAvailability(): Promise<any> {
   }
 }
 
-async function getRelevantMenuItems(
+async function getRelevantMenuItem(
   preprocessedContent: PreprocessedContent
 ): Promise<MenuItem[]> {
   const fullMenu = await getMenuAvailability();
@@ -764,7 +764,7 @@ export async function preprocessMessages(messages: any[]): Promise<
 
       for (const item of preprocessedContent.orderItems) {
         if (item && typeof item.description === "string") {
-          item.relevantMenuItems = await getRelevantMenuItems({
+          item.relevantMenuItem = await getRelevantMenuItem({
             orderItems: [{ description: item.description }],
           });
         } else {
