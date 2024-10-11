@@ -481,9 +481,14 @@ function extractMentionedProducts(productMessage, menu) {
     if (bestProduct.modifiers && bestProduct.modifiers.length > 0) {
       const productNameWords = new Set(normalizeText(bestProduct.name));
       const variantNameWords = new Set();
-      if (bestProduct.productVariants && bestProduct.productVariants.length > 0) {
+      if (
+        bestProduct.productVariants &&
+        bestProduct.productVariants.length > 0
+      ) {
         const bestVariant = bestProduct.productVariants[0];
-        normalizeText(bestVariant.name).forEach((word) => variantNameWords.add(word));
+        normalizeText(bestVariant.name).forEach((word) =>
+          variantNameWords.add(word)
+        );
       }
       // Filtrar las palabras del mensaje que no están en el nombre del producto ni de la variante
       const modifierMessageWords = messageWords.filter(
@@ -504,6 +509,8 @@ function extractMentionedProducts(productMessage, menu) {
         };
       });
 
+      console.log("normalizedModifiers:", normalizedModifiers);
+
       // Establecer un umbral de similitud para palabras individuales (modificadores)
       const MODIFIER_WORD_SIMILARITY_THRESHOLD = 0.8; // Ajusta este valor según sea necesario
 
@@ -523,7 +530,10 @@ function extractMentionedProducts(productMessage, menu) {
         }
       );
 
-      console.log("filteredModifierMessageWords:", filteredModifierMessageWords);
+      console.log(
+        "filteredModifierMessageWords:",
+        filteredModifierMessageWords
+      );
 
       let matchedModifiers = [];
 
@@ -587,9 +597,6 @@ function extractMentionedProducts(productMessage, menu) {
     return null;
   }
 }
-
-
-
 
 async function verifyOrderItems(
   preprocessedContent: PreprocessedContent
