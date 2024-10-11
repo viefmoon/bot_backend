@@ -31,7 +31,7 @@ interface MenuItem {
   productId?: string;
   name: string;
   productVariant?: ProductVariant;
-  modifiers?: Modifier[];
+  modifierTypes?: ModifierType[];
   pizzaIngredients?: PizzaIngredient[];
 }
 
