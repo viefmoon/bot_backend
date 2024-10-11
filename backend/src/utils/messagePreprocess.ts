@@ -242,6 +242,7 @@ function mapSynonym(normalizedWord: string): string | null {
   return null;
 }
 function extractMentionedProducts(productMessage, menu) {
+
   console.log("menu", menu);
   const wordsToFilter = [
     "del",
@@ -265,7 +266,7 @@ function extractMentionedProducts(productMessage, menu) {
     "al",
   ];
 
-  function normalizeText(text) {
+  function normalizeText(text: string): string[] {
     const normalized = text
       .toLowerCase()
       .normalize("NFD")
@@ -282,7 +283,7 @@ function extractMentionedProducts(productMessage, menu) {
     return filteredWords;
   }
 
-  function generateNGrams(words, maxN) {
+  function generateNGrams(words: string[], maxN: number): string[] {
     const ngrams = [];
     const len = words.length;
     for (let n = 1; n <= maxN; n++) {
@@ -299,7 +300,7 @@ function extractMentionedProducts(productMessage, menu) {
   console.log("messageWords:", messageWords);
 
   // Obtener todas las palabras únicas de los nombres de productos
-  const productWordsSet = new Set();
+  const productWordsSet = new Set<string>();
 
   // Normalizar los nombres de los productos y construir el conjunto de palabras
   const normalizedProducts = menu.map((product) => {
@@ -313,8 +314,8 @@ function extractMentionedProducts(productMessage, menu) {
       name: product.name,
       normalizedName,
       wordCount: nameWords.length,
-      productVariants: product.productVariants,
-      modifiers: product.modifiers,
+      productVariants: product.productVariants, 
+      
     };
   });
 
