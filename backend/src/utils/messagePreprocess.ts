@@ -178,11 +178,11 @@ async function getRelevantMenuItems(
   let productos: MenuItem[] = [];
 
   for (const product of preprocessedContent.orderItems) {
-    const productsInMessage = extractMentionedProducts(
+    const productInMessage = extractMentionedProduct(
       product.description,
       fullMenu
     );
-    productos = [...productos, ...productsInMessage];
+    productos = [...productos, ...productInMessage];
   }
 
   productos = Array.from(new Set(productos.map((p) => JSON.stringify(p)))).map(
@@ -254,7 +254,7 @@ function mapSynonym(normalizedWord: string): string | null {
 
   return null;
 }
-function extractMentionedProducts(productMessage, menu) {
+function extractMentionedProduct(productMessage, menu) {
   console.log("menu:", JSON.stringify(menu, null, 2));
   const wordsToFilter = [
     "del",
@@ -351,8 +351,6 @@ function extractMentionedProducts(productMessage, menu) {
     return false; // Desechar esta palabra
   });
 
-  console.log("filteredMessageWords:", filteredMessageWords);
-
   let bestProduct = null;
   let highestScore = 0;
 
@@ -377,10 +375,6 @@ function extractMentionedProducts(productMessage, menu) {
         ngram,
         product.normalizedName
       );
-      console.log("ngram:", ngram);
-      console.log("normalizedName:", product.normalizedName);
-      console.log("similarity:", similarity);
-
       if (similarity >= SIMILARITY_THRESHOLD && similarity >= highestScore) {
         highestScore = similarity;
         bestProduct = {
@@ -440,8 +434,6 @@ function extractMentionedProducts(productMessage, menu) {
         }
       );
 
-      console.log("filteredVariantMessageWords:", filteredVariantMessageWords);
-
       let bestVariant = null;
       let highestVariantScore = 0;
 
@@ -466,10 +458,6 @@ function extractMentionedProducts(productMessage, menu) {
             ngram,
             variant.normalizedName
           );
-          console.log("ngram:", ngram);
-          console.log("normalizedName:", variant.normalizedName);
-          console.log("similarity:", similarity);
-
           if (
             similarity >= VARIANT_SIMILARITY_THRESHOLD &&
             similarity >= highestVariantScore
@@ -557,11 +545,6 @@ function extractMentionedProducts(productMessage, menu) {
             }
             return false; // Desechar esta palabra
           }
-        );
-
-        console.log(
-          `filteredModifierMessageWords for ${modifierTypeName}:`,
-          filteredModifierMessageWords
         );
 
         let matchedModifiers = [];
@@ -667,7 +650,6 @@ function extractMentionedProducts(productMessage, menu) {
       }
     }
 
-    console.log("bestProduct", JSON.stringify(bestProduct, null, 2));
     return bestProduct;
   } else {
     console.log("No se encontró un producto que cumpla con el umbral.");
