@@ -242,7 +242,6 @@ function mapSynonym(normalizedWord: string): string | null {
   return null;
 }
 function extractMentionedProducts(productMessage, menu) {
-
   console.log("menu", menu);
   const wordsToFilter = [
     "del",
@@ -314,8 +313,8 @@ function extractMentionedProducts(productMessage, menu) {
       name: product.name,
       normalizedName,
       wordCount: nameWords.length,
-      productVariants: product.productVariants, 
-      
+      productVariants: product.productVariants,
+      modifiers: product.modifiers,
     };
   });
 
@@ -382,12 +381,11 @@ function extractMentionedProducts(productMessage, menu) {
   // Verificar si se encontró un producto que cumpla con el umbral
   if (bestProduct && bestProduct.score >= SIMILARITY_THRESHOLD) {
     // **Nuevo código para buscar la mejor variante**
-    let bestVariant = null;
     if (bestProduct.productVariants && bestProduct.productVariants.length > 0) {
       // Obtener las palabras del nombre del producto
       const productNameWords = new Set(normalizeText(bestProduct.name));
       // Normalizar los nombres de las variantes y construir el conjunto de palabras
-      const variantWordsSet = new Set();
+      const variantWordsSet = new Set<string>();
       const normalizedVariants = bestProduct.productVariants.map((variant) => {
         const normalizedNameArray = normalizeText(variant.name).filter(
           (word) => !productNameWords.has(word)
@@ -428,6 +426,7 @@ function extractMentionedProducts(productMessage, menu) {
 
       console.log("filteredVariantMessageWords:", filteredVariantMessageWords);
 
+      let bestVariant = null;
       let highestVariantScore = 0;
 
       // Obtener el máximo número de palabras en los nombres de las variantes
@@ -475,25 +474,21 @@ function extractMentionedProducts(productMessage, menu) {
       }
     }
 
-    // **Nuevo código para extraer modificadores**
+    // **Nuevo código para buscar los modificadores**
     if (bestProduct.modifiers && bestProduct.modifiers.length > 0) {
-      // Obtener las palabras del nombre del producto y variante
       const productNameWords = new Set(normalizeText(bestProduct.name));
-      const variantNameWords = bestVariant
-        ? new Set(normalizeText(bestVariant.name))
-        : new Set();
-      const productAndVariantWords = new Set([
-        ...productNameWords,
-        ...variantNameWords,
-      ]);
-
-      // Eliminar las palabras del nombre del producto y variante de messageWords
+      const variantNameWords = new Set();
+      if (bestProduct.productVariants && bestProduct.productVariants.length > 0) {
+        const bestVariant = bestProduct.productVariants[0];
+        normalizeText(bestVariant.name).forEach((word) => variantNameWords.add(word));
+      }
+      // Filtrar las palabras del mensaje que no están en el nombre del producto ni de la variante
       const modifierMessageWords = messageWords.filter(
-        (word) => !productAndVariantWords.has(word)
+        (word) => !productNameWords.has(word) && !variantNameWords.has(word)
       );
 
       // Normalizar los nombres de los modificadores y construir el conjunto de palabras
-      const modifierWordsSet = new Set();
+      const modifierWordsSet = new Set<string>();
       const normalizedModifiers = bestProduct.modifiers.map((modifier) => {
         const normalizedNameArray = normalizeText(modifier.name);
         normalizedNameArray.forEach((word) => modifierWordsSet.add(word));
@@ -525,10 +520,9 @@ function extractMentionedProducts(productMessage, menu) {
         }
       );
 
-      console.log(
-        "filteredModifierMessageWords:",
-        filteredModifierMessageWords
-      );
+      console.log("filteredModifierMessageWords:", filteredModifierMessageWords);
+
+      let matchedModifiers = [];
 
       // Obtener el máximo número de palabras en los nombres de los modificadores
       const maxModifierNameWordCount = Math.max(
@@ -544,8 +538,6 @@ function extractMentionedProducts(productMessage, menu) {
       // Establecer un umbral de similitud para los n-gramas de modificadores
       const MODIFIER_SIMILARITY_THRESHOLD = 0.8; // Ajusta este valor según sea necesario
 
-      const matchedModifiers = [];
-
       // Comparar cada n-grama con los nombres de los modificadores
       for (const ngram of modifierMessageNGrams) {
         for (const modifier of normalizedModifiers) {
@@ -553,28 +545,36 @@ function extractMentionedProducts(productMessage, menu) {
             ngram,
             modifier.normalizedName
           );
+
           if (similarity >= MODIFIER_SIMILARITY_THRESHOLD) {
-            // Verificar si el modificador ya está en la lista
-            if (
-              !matchedModifiers.some(
-                (m) => m.modifierId === modifier.modifierId
-              )
-            ) {
-              matchedModifiers.push({
-                modifierId: modifier.modifierId,
-                name: modifier.name,
-                score: similarity,
-              });
-            }
+            matchedModifiers.push({
+              modifierId: modifier.modifierId,
+              name: modifier.name,
+              score: similarity,
+            });
           }
         }
       }
 
-      // Agregar los modificadores coincidentes al producto
-      bestProduct.modifiers = matchedModifiers;
-    } else {
-      // Si el producto no tiene modificadores, dejamos bestProduct.modifiers vacío
-      bestProduct.modifiers = [];
+      // Eliminar duplicados y mantener los modificadores con mayor similitud
+      const uniqueModifiersMap = new Map();
+      for (const modifier of matchedModifiers) {
+        if (
+          !uniqueModifiersMap.has(modifier.modifierId) ||
+          uniqueModifiersMap.get(modifier.modifierId).score < modifier.score
+        ) {
+          uniqueModifiersMap.set(modifier.modifierId, modifier);
+        }
+      }
+      matchedModifiers = Array.from(uniqueModifiersMap.values());
+
+      // Agregar los modificadores al producto si se encontraron
+      if (matchedModifiers.length > 0) {
+        bestProduct.modifiers = matchedModifiers;
+      } else {
+        // Si no se encontraron modificadores que cumplan con el umbral, dejamos modifiers vacío
+        bestProduct.modifiers = [];
+      }
     }
 
     console.log("bestProduct", JSON.stringify(bestProduct, null, 2));
@@ -584,6 +584,8 @@ function extractMentionedProducts(productMessage, menu) {
     return null;
   }
 }
+
+
 
 
 async function verifyOrderItems(
