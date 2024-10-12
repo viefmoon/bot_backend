@@ -320,18 +320,19 @@ function findPizzaIngredients(bestProduct, productMessage, errors) {
       ["con", "add"],
     ]);
 
-    const halfWords = new Map([
-      ["mitad", "half"],
-      ["izquierda", "left"],
-      ["derecha", "right"],
-      ["entera", "full"],
-      ["completa", "full"],
+    const halfWords = new Set([
+      "mitad",
+      "izquierda",
+      "derecha",
+      "entera",
+      "completa",
     ]);
 
     // Procesar mensaje secuencialmente
     const words = pizzaIngredientMessageWords;
     let actionState = "add";
     let halfState = "full";
+    let currentHalf = "first"; // Puede ser 'first' o 'second'
     let matchedIngredients = [];
     let i = 0;
 
@@ -347,20 +348,18 @@ function findPizzaIngredients(bestProduct, productMessage, errors) {
 
       // Actualizar mitad
       if (halfWords.has(word)) {
-        const halfValue = halfWords.get(word);
-        if (halfValue === "half") {
-          // Si es "mitad", verificar si la siguiente palabra indica cuál mitad
-          if (i + 1 < words.length && halfWords.has(words[i + 1])) {
-            halfState = halfWords.get(words[i + 1]);
-            i += 2;
-            continue;
-          } else {
-            halfState = "full"; // Por defecto si no se especifica
-            i++;
-            continue;
-          }
-        } else {
-          halfState = halfValue;
+        if (word === "mitad") {
+          // Alternar entre primera y segunda mitad
+          currentHalf = currentHalf === "first" ? "second" : "first";
+          halfState = currentHalf;
+          i++;
+          continue;
+        } else if (word === "izquierda" || word === "derecha") {
+          halfState = word;
+          i++;
+          continue;
+        } else if (word === "entera" || word === "completa") {
+          halfState = "full";
           i++;
           continue;
         }
@@ -394,30 +393,51 @@ function findPizzaIngredients(bestProduct, productMessage, errors) {
         i++;
       }
 
-      // Resetear estados después de procesar un ingrediente
+      // Resetear estado de acción después de procesar un ingrediente
       actionState = "add";
-      halfState = "full";
+      // No resetear halfState aquí para mantener la mitad actual
     }
 
-    // Eliminar duplicados y mantener el de mayor puntuación
-    const uniqueIngredientsMap = new Map();
-    for (const ingredient of matchedIngredients) {
-      const key = `${ingredient.pizzaIngredientId}-${ingredient.half}-${ingredient.action}`;
-      if (
-        !uniqueIngredientsMap.has(key) ||
-        uniqueIngredientsMap.get(key).score < ingredient.score
+    // Manejar asignación de mitades implícitas
+    // Si solo se detecta una mitad, asumimos que la otra mitad es "full" o sin modificaciones
+    const halves = {
+      first: [],
+      second: [],
+      left: [],
+      right: [],
+      full: [],
+    };
+
+    matchedIngredients.forEach((ingredient) => {
+      if (ingredient.half === "first" || ingredient.half === "second") {
+        halves[ingredient.half].push(ingredient);
+      } else if (
+        ingredient.half === "izquierda" ||
+        ingredient.half === "derecha"
       ) {
-        uniqueIngredientsMap.set(key, ingredient);
+        halves[ingredient.half].push(ingredient);
+      } else if (ingredient.half === "full") {
+        halves.full.push(ingredient);
+      }
+    });
+
+    // Convertir las mitades en el formato deseado
+    const selectedIngredients = [];
+    for (const [half, ingredients] of Object.entries(halves)) {
+      if (ingredients.length > 0) {
+        selectedIngredients.push({
+          half: half,
+          ingredients: ingredients,
+        });
       }
     }
-    matchedIngredients = Array.from(uniqueIngredientsMap.values());
 
-    if (matchedIngredients.length === 0) {
+    if (selectedIngredients.length === 0) {
       errors.push(
         `Lo siento, no pude identificar en el menú ingredientes para el producto "${productMessage}". 😕`
       );
     } else {
-      bestProduct.selectedPizzaIngredients = matchedIngredients;
+      bestProduct.selectedPizzaIngredients = selectedIngredients;
     }
   }
   return bestProduct;
