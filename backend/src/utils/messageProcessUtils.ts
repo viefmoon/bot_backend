@@ -1,26 +1,26 @@
 export function mapSynonym(normalizedWord: string): string | null {
   const synonyms: { [key: string]: string[] } = {
     grande: ["grandes"],
-      mediana: ["medianas"],
-      chica: ["chicas"],
-      orden: ["ordenes"],
-      media: ["1/2", "medias", "medio"],
-      bbq: ["barbacoa", "barbicue"],
-      picosas: ["picositas"],
-      alitas: ["alas"],
-      gajo: ["gajos"],
-      mixtas: ["mixtas"],
-      extra: ["adicional", "mas", "extras", "doble"],
-      doradas: ["doraditas"],
-      queso: ["gratinadas", "gratinado", "quesos"],
-      hamburguesa: ["hamburguesas", "burger"],
-      pizza: ["pizzas", "pizaa", "pozza"],
-      capuchino: ["cappuccino"],
-      frappe: ["frape"],
-    };
-  
-    for (const [mainWord, synonymList] of Object.entries(synonyms)) {
-      if (synonymList.includes(normalizedWord)) {
+    mediana: ["medianas"],
+    chica: ["chicas"],
+    orden: ["ordenes"],
+    media: ["1/2", "medias", "medio"],
+    bbq: ["barbacoa", "barbicue"],
+    picosas: ["picositas"],
+    alitas: ["alas"],
+    gajo: ["gajos"],
+    mixtas: ["mixtas"],
+    extra: ["adicional", "mas", "extras", "doble"],
+    doradas: ["doraditas"],
+    queso: ["gratinadas", "gratinado", "quesos"],
+    hamburguesa: ["hamburguesas", "burger"],
+    pizza: ["pizzas", "pizaa", "pozza"],
+    capuchino: ["cappuccino"],
+    frappe: ["frape"],
+  };
+
+  for (const [mainWord, synonymList] of Object.entries(synonyms)) {
+    if (synonymList.includes(normalizedWord)) {
       return mainWord;
     }
   }
@@ -42,7 +42,6 @@ export function removeScoreField(obj) {
   }
   return obj;
 }
-
 
 const actionKeywords = {
   add: ["añadir", "agregar", "con", "extra", "más", "adicional"],
@@ -141,6 +140,21 @@ export function normalizeText(text) {
   const filteredWords = words
     .filter((word) => !wordsToFilter.includes(word))
     .map((word) => mapSynonym(word) || word);
+
+  return filteredWords;
+}
+
+export function normalizeTextForIngredients(text) {
+  const normalized = text
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z\s]/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+
+  const words = normalized.split(/\s+/);
+  const filteredWords = words.map((word) => mapSynonym(word) || word);
 
   return filteredWords;
 }
