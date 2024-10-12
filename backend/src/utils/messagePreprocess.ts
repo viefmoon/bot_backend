@@ -476,7 +476,7 @@ export async function preprocessMessages(messages: any[]): Promise<
   const preprocessingMessages = [systemMessageForPreprocessing, ...messages];
 
   const response = await openai.chat.completions.create({
-    model: "gpt-4o-mini",
+    model: "gpt-4o",
     messages: preprocessingMessages,
     tools: [...preprocessOrderTool, ...sendMenuTool] as any,
     temperature: 0.2,
