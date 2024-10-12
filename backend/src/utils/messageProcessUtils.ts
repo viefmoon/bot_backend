@@ -100,9 +100,21 @@ export function detectActionAndHalf(phraseWords) {
   return { action, half };
 }
 
-export function splitMessageIntoPhrases(message) {
-  // Puedes ajustar esta expresión regular para adaptarse mejor a tus necesidades
-  return message.split(/,|y|con|pero|;/).map((phrase) => phrase.trim());
+export function splitMessageIntoPhrases(message: string | string[]): string[] {
+  if (Array.isArray(message)) {
+    // Si es un array, lo unimos en una cadena
+    return message
+      .join(" ")
+      .split(/,|y|con|pero|;/)
+      .map((phrase) => phrase.trim());
+  } else if (typeof message === "string") {
+    // Si es una cadena, procedemos como antes
+    return message.split(/,|y|con|pero|;/).map((phrase) => phrase.trim());
+  } else {
+    // Si no es ni array ni string, devolvemos un array vacío
+    console.error("El mensaje no es ni un array ni una cadena");
+    return [];
+  }
 }
 
 const wordsToFilter = [
