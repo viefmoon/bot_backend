@@ -83,6 +83,9 @@ function extractMentionedProduct(productMessage, menu) {
     bestProduct = findModifiers(bestProduct, messageWords, errors);
     bestProduct = findPizzaIngredients(bestProduct, messageWords, productMessage, errors);
     if (errors.length > 0) bestProduct.errors = errors;
+    delete bestProduct.productVariants;
+    delete bestProduct.modifierTypes;
+    delete bestProduct.pizzaIngredients;
     return removeScoreField(bestProduct);
   } else {
     errors.push(`Lo siento, no pude identificar dentro del menu un producto válido para "${productMessage}". 😕`);
