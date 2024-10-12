@@ -7,8 +7,6 @@ import getFullMenu from "src/data/menu";
 import * as stringSimilarity from "string-similarity";
 import {
   removeScoreField,
-  splitMessageIntoPhrases,
-  detectActionAndHalf,
   generateNGrams,
   normalizeText,
   normalizeTextForIngredients,
@@ -312,44 +310,96 @@ function findPizzaIngredients(bestProduct, productMessage, errors) {
       }
     );
 
-    const phrases = splitMessageIntoPhrases(pizzaIngredientMessageWords);
+    // Palabras de acción y mitad
+    const actionWords = new Map([
+      ["sin", "remove"],
+      ["quitar", "remove"],
+      ["no", "remove"],
+      ["extra", "add"],
+      ["agregar", "add"],
+      ["con", "add"],
+    ]);
 
-    console.log("phrases", phrases);
+    const halfWords = new Map([
+      ["mitad", "half"],
+      ["izquierda", "left"],
+      ["derecha", "right"],
+      ["entera", "full"],
+      ["completa", "full"],
+    ]);
 
+    // Procesar mensaje secuencialmente
+    const words = pizzaIngredientMessageWords;
+    let actionState = "add";
+    let halfState = "full";
     let matchedIngredients = [];
+    let i = 0;
 
-    for (const phrase of phrases) {
-      const phraseWords = normalizeText(phrase);
-      let { action, half } = detectActionAndHalf(phraseWords);
-      if (!action) action = "add";
-      if (!half) half = "full";
+    while (i < words.length) {
+      const word = words[i];
 
-      const maxIngredientNameWordCount = Math.max(
-        ...normalizedPizzaIngredients.map((ing) => ing.wordCount)
-      );
-      const ingredientPhraseNGrams = generateNGrams(
-        phraseWords,
-        maxIngredientNameWordCount
-      );
+      // Actualizar acción
+      if (actionWords.has(word)) {
+        actionState = actionWords.get(word);
+        i++;
+        continue;
+      }
 
-      for (const ngram of ingredientPhraseNGrams) {
-        for (const ingredient of normalizedPizzaIngredients) {
-          const similarity = stringSimilarity.compareTwoStrings(
-            ngram,
-            ingredient.normalizedName
-          );
-          if (similarity >= SIMILARITY_THRESHOLDS.INGREDIENT) {
-            matchedIngredients.push({
-              ...ingredient,
-              action,
-              half,
-              score: similarity,
-            });
+      // Actualizar mitad
+      if (halfWords.has(word)) {
+        const halfValue = halfWords.get(word);
+        if (halfValue === "half") {
+          // Si es "mitad", verificar si la siguiente palabra indica cuál mitad
+          if (i + 1 < words.length && halfWords.has(words[i + 1])) {
+            halfState = halfWords.get(words[i + 1]);
+            i += 2;
+            continue;
+          } else {
+            halfState = "full"; // Por defecto si no se especifica
+            i++;
+            continue;
           }
+        } else {
+          halfState = halfValue;
+          i++;
+          continue;
         }
       }
+
+      // Buscar ingredientes
+      let foundIngredient = false;
+      for (const ingredient of normalizedPizzaIngredients) {
+        const ingredientWords = ingredient.normalizedName.split(" ");
+        const messageSegment = words
+          .slice(i, i + ingredientWords.length)
+          .join(" ");
+        const similarity = stringSimilarity.compareTwoStrings(
+          messageSegment,
+          ingredient.normalizedName
+        );
+        if (similarity >= SIMILARITY_THRESHOLDS.INGREDIENT) {
+          matchedIngredients.push({
+            ...ingredient,
+            action: actionState,
+            half: halfState,
+            score: similarity,
+          });
+          i += ingredientWords.length;
+          foundIngredient = true;
+          break;
+        }
+      }
+
+      if (!foundIngredient) {
+        i++;
+      }
+
+      // Resetear estados después de procesar un ingrediente
+      actionState = "add";
+      halfState = "full";
     }
 
+    // Eliminar duplicados y mantener el de mayor puntuación
     const uniqueIngredientsMap = new Map();
     for (const ingredient of matchedIngredients) {
       const key = `${ingredient.pizzaIngredientId}-${ingredient.half}-${ingredient.action}`;
