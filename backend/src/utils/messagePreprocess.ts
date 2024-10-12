@@ -202,6 +202,69 @@ function removeScoreField(obj) {
   }
   return obj;
 }
+
+const actionKeywords = {
+  add: ["añadir", "agregar", "con", "extra", "más", "adicional"],
+  remove: ["quitar", "sin", "remover", "eliminar", "no"],
+};
+
+const halfKeywords = {
+  left: ["izquierda", "mitad izquierda"],
+  right: ["derecha", "mitad derecha"],
+  half: ["mitad", "medio"],
+  full: ["entera", "toda", "completa"],
+};
+
+// Función para detectar acciones y mitades en una frase
+function detectActionAndHalf(phraseWords) {
+  let action = null;
+  let half = null;
+
+  // Detectar acción
+  for (const [actionType, keywords] of Object.entries(actionKeywords)) {
+    for (const keyword of keywords) {
+      if (phraseWords.includes(keyword)) {
+        action = actionType;
+        break;
+      }
+    }
+    if (action) break;
+  }
+
+  // Detectar mitad
+  for (const [halfType, keywords] of Object.entries(halfKeywords)) {
+    for (const keyword of keywords) {
+      if (phraseWords.includes(keyword)) {
+        if (halfType === "half") {
+          // Si solo dice "mitad", necesitamos más contexto
+          half = null;
+        } else {
+          half = halfType;
+        }
+        break;
+      }
+    }
+    if (half) break;
+  }
+
+  // Si no se especifica mitad, asumimos "full"
+  if (!half) {
+    half = "full";
+  }
+
+  // Si no se especifica acción, asumimos "add"
+  if (!action) {
+    action = "add";
+  }
+
+  return { action, half };
+}
+
+function splitMessageIntoPhrases(message) {
+  // Puedes ajustar esta expresión regular para adaptarse mejor a tus necesidades
+  return message.split(/,|y|con|pero|;/).map((phrase) => phrase.trim());
+}
+
 function extractMentionedProduct(productMessage, menu) {
   console.log("menu", JSON.stringify(menu, null, 2));
   const wordsToFilter = [
@@ -608,7 +671,6 @@ function extractMentionedProduct(productMessage, menu) {
     ) {
       // Obtener las palabras normalizadas del nombre del producto
       const productNameWords = new Set(normalizeText(bestProduct.name));
-
       // Obtener las palabras normalizadas del nombre de la variante, si existe
       const variantNameWords = new Set();
       if (bestProduct.productVariant) {
@@ -678,52 +740,67 @@ function extractMentionedProduct(productMessage, menu) {
         filteredPizzaIngredientMessageWords
       );
 
+      const phrases = splitMessageIntoPhrases(productMessage);
+
       let matchedIngredients = [];
-
-      // Obtener el máximo número de palabras en los nombres de los ingredientes
-      const maxIngredientNameWordCount = Math.max(
-        ...normalizedPizzaIngredients.map((ing) => ing.wordCount)
-      );
-
-      // Generar n-gramas del mensaje filtrado para ingredientes
-      const ingredientMessageNGrams = generateNGrams(
-        filteredPizzaIngredientMessageWords,
-        maxIngredientNameWordCount
-      );
-
-      // Establecer un umbral de similitud para los n-gramas de ingredientes
-      const INGREDIENT_SIMILARITY_THRESHOLD = 0.8; // Ajusta este valor según sea necesario
-
-      // Comparar cada n-grama con los nombres de los ingredientes
-      for (const ngram of ingredientMessageNGrams) {
-        for (const ingredient of normalizedPizzaIngredients) {
-          const similarity = stringSimilarity.compareTwoStrings(
-            ngram,
-            ingredient.normalizedName
-          );
-          if (similarity >= INGREDIENT_SIMILARITY_THRESHOLD) {
-            matchedIngredients.push({
-              pizzaIngredientId: ingredient.pizzaIngredientId,
-              name: ingredient.name,
-              score: similarity,
-            });
+      
+      for (const phrase of phrases) {
+        const phraseWords = normalizeText(phrase);
+      
+        // Detectar acción y mitad en la frase
+        let { action, half } = detectActionAndHalf(phraseWords);
+      
+        // Si no se especifica acción o mitad, asignar valores por defecto
+        if (!action) action = 'add';
+        if (!half) half = 'full';
+      
+        // Generar n-gramas del mensaje filtrado para ingredientes
+        const maxIngredientNameWordCount = Math.max(
+          ...normalizedPizzaIngredients.map((ing) => ing.wordCount)
+        );
+      
+        const ingredientPhraseNGrams = generateNGrams(
+          phraseWords,
+          maxIngredientNameWordCount
+        );
+      
+        // Establecer un umbral de similitud para los n-gramas de ingredientes
+        const INGREDIENT_SIMILARITY_THRESHOLD = 0.8; // Ajusta este valor según sea necesario
+      
+        // Comparar cada n-grama con los nombres de los ingredientes
+        for (const ngram of ingredientPhraseNGrams) {
+          for (const ingredient of normalizedPizzaIngredients) {
+            const similarity = stringSimilarity.compareTwoStrings(
+              ngram,
+              ingredient.normalizedName
+            );
+            if (similarity >= INGREDIENT_SIMILARITY_THRESHOLD) {
+              // Añadir el ingrediente con acción y mitad detectadas
+              matchedIngredients.push({
+                pizzaIngredientId: ingredient.pizzaIngredientId,
+                name: ingredient.name,
+                action,
+                half,
+                score: similarity,
+              });
+            }
           }
         }
       }
-
+      
       // Eliminar duplicados y mantener los ingredientes con mayor similitud
       const uniqueIngredientsMap = new Map();
       for (const ingredient of matchedIngredients) {
+        const key = `${ingredient.pizzaIngredientId}-${ingredient.half}-${ingredient.action}`;
         if (
-          !uniqueIngredientsMap.has(ingredient.pizzaIngredientId) ||
-          uniqueIngredientsMap.get(ingredient.pizzaIngredientId).score <
-            ingredient.score
+          !uniqueIngredientsMap.has(key) ||
+          uniqueIngredientsMap.get(key).score < ingredient.score
         ) {
-          uniqueIngredientsMap.set(ingredient.pizzaIngredientId, ingredient);
+          uniqueIngredientsMap.set(key, ingredient);
         }
       }
       matchedIngredients = Array.from(uniqueIngredientsMap.values());
-
+      
       // Verificar si se encontraron ingredientes
       if (matchedIngredients.length === 0) {
         // Generar error si no se encontraron ingredientes en un producto que los requiere
