@@ -266,7 +266,6 @@ function splitMessageIntoPhrases(message) {
 }
 
 function extractMentionedProduct(productMessage, menu) {
-  console.log("menu", JSON.stringify(menu, null, 2));
   const wordsToFilter = [
     "del",
     "los",
