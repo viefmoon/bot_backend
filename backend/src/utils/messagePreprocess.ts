@@ -296,6 +296,9 @@ function findPizzaIngredients(bestProduct, productMessage, errors) {
         !modifierWords.has(word)
     );
 
+    // Console log
+    console.log("pizzaIngredientMessageWords", pizzaIngredientMessageWords);
+
     const pizzaIngredientWordsSet = new Set();
     const normalizedPizzaIngredients = bestProduct.pizzaIngredients.map(
       (ingredient) => {
