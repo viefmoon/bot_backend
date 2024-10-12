@@ -275,6 +275,7 @@ function findPizzaIngredients(bestProduct, productMessage, errors) {
       );
     }
 
+    // Recuerda que solo hay 3 valores posibles para half: full, left y right
     const modifierWords = new Set();
     if (bestProduct.modifierTypes && bestProduct.modifierTypes.length > 0) {
       for (const modifierType of bestProduct.modifierTypes) {
@@ -295,7 +296,7 @@ function findPizzaIngredients(bestProduct, productMessage, errors) {
         !modifierWords.has(word)
     );
 
-    const pizzaIngredientWordsSet = new Set<string>();
+    const pizzaIngredientWordsSet = new Set();
     const normalizedPizzaIngredients = bestProduct.pizzaIngredients.map(
       (ingredient) => {
         const normalizedNameArray = normalizeText(ingredient.name);
@@ -322,6 +323,8 @@ function findPizzaIngredients(bestProduct, productMessage, errors) {
 
     const halfWords = new Map([
       ["mitad", "half"],
+      ["otra", "other_half"],
+      ["la otra", "other_half"],
       ["izquierda", "left"],
       ["derecha", "right"],
       ["entera", "full"],
@@ -331,9 +334,17 @@ function findPizzaIngredients(bestProduct, productMessage, errors) {
     // Procesar mensaje secuencialmente
     const words = pizzaIngredientMessageWords;
     let actionState = "add";
-    let halfState = "full";
+    let currentHalf = "full";
+    let halfCounter = 0;
     let matchedIngredients = [];
     let i = 0;
+
+    // Variables para asignar automáticamente left y right
+    let autoAssignHalf = false;
+    let assignedHalves = {
+      left: false,
+      right: false,
+    };
 
     while (i < words.length) {
       const word = words[i];
@@ -349,18 +360,35 @@ function findPizzaIngredients(bestProduct, productMessage, errors) {
       if (halfWords.has(word)) {
         const halfValue = halfWords.get(word);
         if (halfValue === "half") {
-          // Si es "mitad", verificar si la siguiente palabra indica cuál mitad
-          if (i + 1 < words.length && halfWords.has(words[i + 1])) {
-            halfState = halfWords.get(words[i + 1]);
-            i += 2;
-            continue;
+          halfCounter++;
+          if (halfCounter === 1) {
+            currentHalf = "left"; // Asignar automáticamente a 'left' la primera mitad
+            autoAssignHalf = true;
+            assignedHalves.left = true;
+          } else if (halfCounter === 2) {
+            currentHalf = "right"; // Asignar automáticamente a 'right' la segunda mitad
+            assignedHalves.right = true;
+            autoAssignHalf = false;
           } else {
-            halfState = "full"; // Por defecto si no se especifica
-            i++;
-            continue;
+            currentHalf = "full"; // Por defecto si se mencionan más de dos mitades
+            autoAssignHalf = false;
           }
+          i++;
+          continue;
+        } else if (halfValue === "other_half") {
+          if (!assignedHalves.left) {
+            currentHalf = "left";
+            assignedHalves.left = true;
+          } else if (!assignedHalves.right) {
+            currentHalf = "right";
+            assignedHalves.right = true;
+          } else {
+            currentHalf = "full"; // Por defecto si ya ambas mitades están asignadas
+          }
+          i++;
+          continue;
         } else {
-          halfState = halfValue;
+          currentHalf = halfValue; // 'left', 'right', 'full'
           i++;
           continue;
         }
@@ -381,7 +409,7 @@ function findPizzaIngredients(bestProduct, productMessage, errors) {
           matchedIngredients.push({
             ...ingredient,
             action: actionState,
-            half: halfState,
+            half: currentHalf,
             score: similarity,
           });
           i += ingredientWords.length;
@@ -396,7 +424,12 @@ function findPizzaIngredients(bestProduct, productMessage, errors) {
 
       // Resetear estados después de procesar un ingrediente
       actionState = "add";
-      halfState = "full";
+    }
+
+    // Si se mencionaron dos mitades pero solo una está asignada, asignar la otra automáticamente
+    if (halfCounter === 2) {
+      const missingHalf = !assignedHalves.left ? "left" : "right";
+      // Opcional: agregar lógica para manejar la mitad faltante si es necesario
     }
 
     // Eliminar duplicados y mantener el de mayor puntuación
