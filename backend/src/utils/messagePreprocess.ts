@@ -203,7 +203,7 @@ function removeScoreField(obj) {
   return obj;
 }
 function extractMentionedProduct(productMessage, menu) {
-  console.log("menu", menu);
+  console.log("menu", JSON.stringify(menu, null, 2));
   const wordsToFilter = [
     "del",
     "los",
