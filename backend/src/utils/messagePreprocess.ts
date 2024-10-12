@@ -647,7 +647,7 @@ function extractMentionedProduct(productMessage, menu) {
           );
           const normalizedName = normalizedNameArray.join(" ");
           return {
-            ingredientId: ingredient.ingredientId,
+            pizzaIngredientId: ingredient.pizzaIngredientId,
             name: ingredient.name,
             normalizedName,
             wordCount: normalizedNameArray.length,
@@ -703,7 +703,7 @@ function extractMentionedProduct(productMessage, menu) {
           );
           if (similarity >= INGREDIENT_SIMILARITY_THRESHOLD) {
             matchedIngredients.push({
-              pizzaIngredientId: ingredient.ingredientId,
+              pizzaIngredientId: ingredient.pizzaIngredientId,
               name: ingredient.name,
               score: similarity,
             });
