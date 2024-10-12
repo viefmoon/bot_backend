@@ -275,15 +275,15 @@ function findPizzaIngredients(bestProduct, productMessage, errors) {
       );
     }
 
-    // Recuerda que solo hay 3 valores posibles para half: full, left y right
-    const modifierWords = new Set();
-    if (bestProduct.modifierTypes && bestProduct.modifierTypes.length > 0) {
-      for (const modifierType of bestProduct.modifierTypes) {
-        for (const modifier of modifierType.modifiers) {
-          normalizeText(modifier.name).forEach((word) =>
-            modifierWords.add(word)
-          );
-        }
+    const selectedModifierWords = new Set();
+    if (
+      bestProduct.selectedModifiers &&
+      bestProduct.selectedModifiers.length > 0
+    ) {
+      for (const modifier of bestProduct.selectedModifiers) {
+        normalizeText(modifier.name).forEach((word) =>
+          selectedModifierWords.add(word)
+        );
       }
     }
 
@@ -293,7 +293,7 @@ function findPizzaIngredients(bestProduct, productMessage, errors) {
       (word) =>
         !productNameWords.has(word) &&
         !variantNameWords.has(word) &&
-        !modifierWords.has(word)
+        !selectedModifierWords.has(word)
     );
 
     // Console log
