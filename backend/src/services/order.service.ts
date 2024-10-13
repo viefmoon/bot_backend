@@ -119,6 +119,8 @@ export class OrderService {
       scheduledDeliveryTime,
     } = createOrderDto;
 
+    console.log("orderDeliveryInfo", orderDeliveryInfo);
+
     const config = await RestaurantConfig.findOne();
     if (!config || !config.acceptingOrders) {
       throw new BadRequestException(
