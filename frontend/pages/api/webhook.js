@@ -2,7 +2,8 @@ import axios from "axios";
 
 export default async function handler(req, res) {
   const { method, body, headers, query } = req;
-  console.log("headers", headers);
+  console.log("Stripe-Signature:", headers["stripe-signature"]);
+  console.log("Request Body:", body);
 
   // Construye la URL del backend
   const backendUrl = `${process.env.NEXT_PUBLIC_BACKEND_BASE_URL}/webhook`;
