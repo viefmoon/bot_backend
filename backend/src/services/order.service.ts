@@ -183,6 +183,8 @@ export class OrderService {
       console.log("deliveryInfo", deliveryInfo);
 
       await OrderDeliveryInfo.create(deliveryInfo);
+
+      console.log("deliveryInfo created", deliveryInfo);
     }
 
     const createdItems = await Promise.all(
