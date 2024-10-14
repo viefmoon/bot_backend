@@ -14,7 +14,6 @@ export class WebhookController {
   @Post()
   async handleWebhook(@Req() req: Request, @Res() res: Response) {
     console.log("req.headers", req.headers);
-    console.log("stripe-signature", req.headers["stripe-signature"]);
     console.log("req.body", req.body);
     if (req.headers["stripe-signature"]) {
       return this.webhookService.handleStripeWebhook(req, res);
