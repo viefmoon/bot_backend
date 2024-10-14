@@ -37,11 +37,6 @@ export class WebhookService {
     let event: Stripe.Event;
 
     try {
-      // Asegúrate de que req.rawBody esté disponible
-      if (!req.rawBody) {
-        throw new Error("No se encontró el cuerpo raw de la solicitud");
-      }
-
       event = this.stripeClient.webhooks.constructEvent(
         req.rawBody,
         sig,
