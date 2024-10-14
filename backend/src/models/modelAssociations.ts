@@ -70,8 +70,6 @@ OrderItem.hasMany(SelectedModifier, {
   foreignKey: "orderItemId",
   as: "selectedModifiers",
 });
-OrderItem.belongsTo(PreOrder, { foreignKey: "preOrderId" });
-
 // OrderDeliveryInfo associations
 OrderDeliveryInfo.belongsTo(Order, { foreignKey: "orderId" });
 OrderDeliveryInfo.belongsTo(PreOrder, { foreignKey: "preOrderId" });
@@ -81,11 +79,6 @@ PreOrder.hasOne(OrderDeliveryInfo, {
   foreignKey: "preOrderId",
   as: "orderDeliveryInfo",
 });
-PreOrder.hasMany(OrderItem, {
-  foreignKey: "preOrderId",
-  as: "preOrderItems",
-});
-
 // SelectedModifier associations
 SelectedModifier.belongsTo(OrderItem, { foreignKey: "orderItemId" });
 SelectedModifier.belongsTo(Modifier, { foreignKey: "modifierId" });
