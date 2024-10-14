@@ -162,6 +162,7 @@ export class OrderService {
         ? new Date(scheduledDeliveryTime)
         : null,
     });
+    console.log("newOrder", newOrder);
 
     if (orderDeliveryInfo) {
       const deliveryInfo = {
