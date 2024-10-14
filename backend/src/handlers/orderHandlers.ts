@@ -68,6 +68,8 @@ async function createOrderFromPreOrder(
     const orderService = new OrderService();
     const { orden: newOrder } = await orderService.createOrder(orderData);
 
+    console.log("newOrder dddd", newOrder);
+
     const tipoOrdenTraducido =
       orderType === "delivery" ? "A domicilio 🚚" : "Recolección 🏪";
 
