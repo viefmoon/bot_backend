@@ -16,6 +16,8 @@ export class WebhookController {
     try {
       if (req.headers["stripe-signature"]) {
         console.log("Procesando webhook de Stripe");
+        console.log(req.body);
+        console.log(req.headers);
         return await this.webhookService.handleStripeWebhook(req, res);
       } else {
         console.log("Procesando webhook de WhatsApp");
