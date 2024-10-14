@@ -13,10 +13,6 @@ export class WebhookController {
 
   @Post()
   async handleWebhook(@Req() req: Request, @Res() res: Response) {
-    console.log("Webhook recibido");
-    console.log("Headers:", JSON.stringify(req.headers, null, 2));
-    console.log("Body:", JSON.stringify(req.body, null, 2));
-
     try {
       if (req.headers["stripe-signature"]) {
         console.log("Procesando webhook de Stripe");

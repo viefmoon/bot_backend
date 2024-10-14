@@ -1,17 +1,21 @@
 import axios from "axios";
+import getRawBody from "raw-body";
 
 export default async function handler(req, res) {
-  const { method, body, headers, query } = req;
+  const { method, headers, query } = req;
   console.log("Stripe-Signature:", headers["stripe-signature"]);
   // Construye la URL del backend
   const backendUrl = `${process.env.NEXT_PUBLIC_BACKEND_BASE_URL}/webhook`;
 
   try {
+    // Obtiene el cuerpo de la solicitud sin procesar
+    const rawBody = await getRawBody(req);
+
     // Realiza la solicitud al backend
     const backendResponse = await axios({
       method: method,
       url: backendUrl,
-      data: body,
+      data: rawBody,
       params: query,
       headers: {
         "Content-Type": "application/json",
