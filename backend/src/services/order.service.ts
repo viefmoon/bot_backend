@@ -180,6 +180,8 @@ export class OrderService {
         orderId: newOrder.id,
       };
 
+      console.log("deliveryInfo", deliveryInfo);
+
       await OrderDeliveryInfo.create(deliveryInfo);
     }
 
