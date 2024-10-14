@@ -7,7 +7,7 @@ import * as dotenv from "dotenv";
 dotenv.config();
 
 const stripeClient = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: "2024-06-20",
+  apiVersion: "2024-06-20", // Actualizada a la versión más reciente
 });
 
 export async function handleStripeWebhook(
@@ -25,13 +25,13 @@ export async function handleStripeWebhook(
     );
   } catch (err) {
     console.error(`Error de firma de webhook: ${(err as Error).message}`);
-    res.status(400).json({ error: `Webhook Error: ${(err as Error).message}` });
+    res.status(400).send(`Webhook Error: ${(err as Error).message}`);
     return;
   }
 
-  try {
-    if (event.type === "checkout.session.completed") {
-      const session = event.data.object as Stripe.Checkout.Session;
+  if (event.type === "checkout.session.completed") {
+    const session = event.data.object as Stripe.Checkout.Session;
+    try {
       const order = await Order.findOne({
         where: { stripeSessionId: session.id },
       });
@@ -47,13 +47,16 @@ export async function handleStripeWebhook(
           );
         }
       }
-    }
-
-    res.json({ received: true });
-  } catch (error) {
-    console.error("Error procesando el evento de Stripe:", error);
-    if (!res.headersSent) {
+      res.json({ received: true });
+    } catch (error) {
+      console.error(
+        "Error procesando el evento de checkout completado:",
+        error
+      );
       res.status(500).json({ error: "Error interno del servidor" });
     }
+  } else {
+    // Manejar otros tipos de eventos aquí si es necesario
+    res.json({ received: true });
   }
 }
