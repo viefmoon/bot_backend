@@ -1,21 +1,29 @@
 import axios from "axios";
 
 export default async function handler(req, res) {
+  const { method, body, query } = req;
+
+  // Construye la URL del backend
+  const backendUrl = `${process.env.NEXT_PUBLIC_BACKEND_BASE_URL}/webhook`;
+
   try {
+    // Realiza la solicitud al backend
     const backendResponse = await axios({
-      method: req.method,
-      url: `${process.env.NEXT_PUBLIC_BACKEND_BASE_URL}/webhook`,
-      data: req.body,
-      params: req.query,
-      headers: req.headers,
+      method: method,
+      url: backendUrl,
+      data: body,
+      params: query,
+      headers: {
+        "Content-Type": "application/json",
+      },
     });
 
+    // Envía la respuesta del backend al cliente
     res.status(backendResponse.status).json(backendResponse.data);
   } catch (error) {
     console.error("Error en la redirección del webhook:", error);
     res.status(error.response?.status || 500).json({
       error: "Error al procesar la solicitud del webhook",
-      details: error.response?.data || error.message,
     });
   }
 }
