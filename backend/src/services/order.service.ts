@@ -164,13 +164,22 @@ export class OrderService {
     });
 
     if (orderDeliveryInfo) {
-      const { preOrderId, id, ...deliveryInfoWithoutPreOrder } =
-        orderDeliveryInfo;
-
-      await OrderDeliveryInfo.create({
-        ...deliveryInfoWithoutPreOrder,
+      const deliveryInfo = {
+        streetAddress: orderDeliveryInfo.streetAddress,
+        neighborhood: orderDeliveryInfo.neighborhood,
+        postalCode: orderDeliveryInfo.postalCode,
+        city: orderDeliveryInfo.city,
+        state: orderDeliveryInfo.state,
+        country: orderDeliveryInfo.country,
+        latitude: orderDeliveryInfo.latitude,
+        longitude: orderDeliveryInfo.longitude,
+        pickupName: orderDeliveryInfo.pickupName,
+        geocodedAddress: orderDeliveryInfo.geocodedAddress,
+        additionalDetails: orderDeliveryInfo.additionalDetails,
         orderId: newOrder.id,
-      });
+      };
+
+      await OrderDeliveryInfo.create(deliveryInfo);
     }
 
     const createdItems = await Promise.all(
