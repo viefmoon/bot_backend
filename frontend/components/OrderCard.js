@@ -312,28 +312,11 @@ const translateStatus = (status) => {
 
 const translatePaymentStatus = (status) => {
   const translations = {
-    pending: "Pendiente",
+    pending: "Pago pendiente",
     paid: "Pagado",
     failed: "Fallido",
   };
   return translations[status] || status;
-};
-
-const translateHalf = (half) => {
-  const translations = {
-    left: "Izquierda",
-    right: "Derecha",
-    full: "Completa",
-  };
-  return translations[half] || half;
-};
-
-const translateAction = (action) => {
-  const translations = {
-    add: "Agregar",
-    remove: "Quitar",
-  };
-  return translations[action] || action;
 };
 
 const getStatusColor = (status) => {
