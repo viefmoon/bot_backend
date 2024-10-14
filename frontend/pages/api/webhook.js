@@ -17,15 +17,20 @@ export default async function handler(req, res) {
       headers: {
         ...headers,
         "Content-Type": "application/json",
+        "stripe-signature": headers["stripe-signature"],
       },
     });
 
     // Envía la respuesta del backend al cliente
     res.status(backendResponse.status).json(backendResponse.data);
   } catch (error) {
-    console.error("Error en la redirección del webhook:", error);
+    console.error(
+      "Error en la redirección del webhook:",
+      error.response?.data || error.message
+    );
     res.status(error.response?.status || 500).json({
       error: "Error al procesar la solicitud del webhook",
+      details: error.response?.data || error.message,
     });
   }
 }

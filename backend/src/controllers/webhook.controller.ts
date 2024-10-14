@@ -13,12 +13,21 @@ export class WebhookController {
 
   @Post()
   async handleWebhook(@Req() req: Request, @Res() res: Response) {
-    console.log("req.headers", req.headers);
-    console.log("req.body", req.body);
-    if (req.headers["stripe-signature"]) {
-      return this.webhookService.handleStripeWebhook(req, res);
-    } else {
-      return this.webhookService.handleWhatsAppWebhook(req, res);
+    console.log("Webhook recibido");
+    console.log("Headers:", JSON.stringify(req.headers, null, 2));
+    console.log("Body:", JSON.stringify(req.body, null, 2));
+
+    try {
+      if (req.headers["stripe-signature"]) {
+        console.log("Procesando webhook de Stripe");
+        return await this.webhookService.handleStripeWebhook(req, res);
+      } else {
+        console.log("Procesando webhook de WhatsApp");
+        return await this.webhookService.handleWhatsAppWebhook(req, res);
+      }
+    } catch (error) {
+      console.error("Error al procesar el webhook:", error);
+      res.status(500).json({ error: "Error interno del servidor" });
     }
   }
 }
