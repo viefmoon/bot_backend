@@ -1,6 +1,12 @@
 import axios from "axios";
 import getRawBody from "raw-body";
 
+export const config = {
+  api: {
+    bodyParser: false,
+  },
+};
+
 export default async function handler(req, res) {
   const { method, headers, query } = req;
   console.log("Stripe-Signature:", headers["stripe-signature"]);
