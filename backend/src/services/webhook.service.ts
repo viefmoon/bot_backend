@@ -5,6 +5,8 @@ import { handleWebhookVerification } from "../handlers/webhookVerificationHandle
 import { handleStripeWebhook } from "../handlers/stripeWebhookHandler";
 import { handleWhatsAppWebhook } from "../handlers/whatsAppWebhookHandler";
 import { OtpService } from "./otp.service";
+import { RawBodyRequest } from "@nestjs/common";
+
 @Injectable()
 export class WebhookService {
   constructor(
@@ -16,7 +18,7 @@ export class WebhookService {
     handleWebhookVerification(req, res);
   }
 
-  async handleStripeWebhook(req: Request, res: Response) {
+  async handleStripeWebhook(req: RawBodyRequest<Request>, res: Response) {
     await handleStripeWebhook(req, res);
   }
 
