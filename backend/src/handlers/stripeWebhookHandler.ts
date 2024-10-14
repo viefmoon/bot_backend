@@ -31,32 +31,22 @@ export async function handleStripeWebhook(
 
   if (event.type === "checkout.session.completed") {
     const session = event.data.object as Stripe.Checkout.Session;
-    try {
-      const order = await Order.findOne({
-        where: { stripeSessionId: session.id },
+    const order = await Order.findOne({
+      where: { stripeSessionId: session.id },
+    });
+    if (order) {
+      await order.update({ paymentStatus: "paid" });
+      const customer = await Customer.findOne({
+        where: { stripeCustomerId: session.customer as string },
       });
-      if (order) {
-        await order.update({ paymentStatus: "paid" });
-        const customer = await Customer.findOne({
-          where: { stripeCustomerId: session.customer as string },
-        });
-        if (customer) {
-          await sendWhatsAppMessage(
-            customer.clientId,
-            `¡Tu pago para la orden #${order.dailyOrderNumber} ha sido confirmado! Gracias por tu compra.`
-          );
-        }
+      if (customer) {
+        await sendWhatsAppMessage(
+          customer.clientId,
+          `¡Tu pago para la orden #${order.dailyOrderNumber} ha sido confirmado! Gracias por tu compra.`
+        );
       }
-      res.json({ received: true });
-    } catch (error) {
-      console.error(
-        "Error procesando el evento de checkout completado:",
-        error
-      );
-      res.status(500).json({ error: "Error interno del servidor" });
     }
-  } else {
-    // Manejar otros tipos de eventos aquí si es necesario
-    res.json({ received: true });
   }
+
+  res.json({ received: true });
 }
