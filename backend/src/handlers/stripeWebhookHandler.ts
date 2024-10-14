@@ -18,6 +18,7 @@ export async function handleStripeWebhook(
   let event: Stripe.Event;
 
   try {
+    // Asumimos que req.body es un Buffer o string sin procesar
     event = stripeClient.webhooks.constructEvent(
       req.body,
       sig,

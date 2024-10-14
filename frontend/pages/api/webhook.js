@@ -8,7 +8,7 @@ export const config = {
 };
 
 export default async function handler(req, res) {
-  const { method, headers, query } = req;
+  const { method, headers } = req;
   console.log("Stripe-Signature:", headers["stripe-signature"]);
   // Construye la URL del backend
   const backendUrl = `${process.env.NEXT_PUBLIC_BACKEND_BASE_URL}/webhook`;
@@ -21,8 +21,7 @@ export default async function handler(req, res) {
     const backendResponse = await axios({
       method: method,
       url: backendUrl,
-      data: rawBody,
-      params: query,
+      data: rawBody, // Enviamos el cuerpo sin procesar
       headers: {
         "Content-Type": "application/json",
         "stripe-signature": headers["stripe-signature"],
