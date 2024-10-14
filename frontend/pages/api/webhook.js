@@ -15,7 +15,6 @@ export default async function handler(req, res) {
       data: body,
       params: query,
       headers: {
-        ...headers,
         "Content-Type": "application/json",
         "stripe-signature": headers["stripe-signature"],
       },
