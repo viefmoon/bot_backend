@@ -173,8 +173,6 @@ async function handleOnlinePayment(
         },
       ],
       mode: "payment",
-      success_url: `https://example.com/success`,
-      cancel_url: `https://example.com/cancel`,
     });
 
     await order.update({
