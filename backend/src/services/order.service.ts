@@ -119,8 +119,6 @@ export class OrderService {
       scheduledDeliveryTime,
     } = createOrderDto;
 
-    console.log("orderDeliveryInfo", orderDeliveryInfo);
-
     const config = await RestaurantConfig.findOne();
     if (!config || !config.acceptingOrders) {
       throw new BadRequestException(
@@ -162,7 +160,6 @@ export class OrderService {
         ? new Date(scheduledDeliveryTime)
         : null,
     });
-    console.log("newOrder", newOrder);
 
     if (orderDeliveryInfo) {
       const deliveryInfo = {
@@ -180,11 +177,7 @@ export class OrderService {
         orderId: newOrder.id,
       };
 
-      console.log("deliveryInfo", deliveryInfo);
-
       await OrderDeliveryInfo.create(deliveryInfo);
-
-      console.log("deliveryInfo created", deliveryInfo);
     }
 
     const createdItems = await Promise.all(
@@ -300,8 +293,6 @@ export class OrderService {
       0
     );
     await newOrder.update({ totalCost });
-
-    console.log("newOrder updated", newOrder);
 
     return {
       orden: {
