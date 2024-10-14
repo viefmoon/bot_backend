@@ -301,6 +301,8 @@ export class OrderService {
     );
     await newOrder.update({ totalCost });
 
+    console.log("newOrder updated", newOrder);
+
     return {
       orden: {
         id: newOrder.dailyOrderNumber,
