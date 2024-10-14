@@ -1,4 +1,11 @@
-import { Controller, Get, Post, Req, Res } from "@nestjs/common";
+import {
+  Controller,
+  Get,
+  Post,
+  Req,
+  Res,
+  RawBodyRequest,
+} from "@nestjs/common";
 import { Request, Response } from "express";
 import { WebhookService } from "../services/webhook.service";
 
@@ -12,12 +19,13 @@ export class WebhookController {
   }
 
   @Post()
-  async handleWebhook(@Req() req: Request, @Res() res: Response) {
+  async handleWebhook(
+    @Req() req: RawBodyRequest<Request>,
+    @Res() res: Response
+  ) {
     try {
       if (req.headers["stripe-signature"]) {
         console.log("Procesando webhook de Stripe");
-        console.log(req.body);
-        console.log(req.headers);
         return await this.webhookService.handleStripeWebhook(req, res);
       } else {
         console.log("Procesando webhook de WhatsApp");

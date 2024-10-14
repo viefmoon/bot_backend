@@ -2,8 +2,9 @@ import Stripe from "stripe";
 import { Order, Customer } from "../models";
 import { sendWhatsAppMessage } from "../utils/whatsAppUtils";
 import { Request, Response } from "express";
-
 import * as dotenv from "dotenv";
+import { buffer } from "micro";
+
 dotenv.config();
 
 const stripeClient = new Stripe(process.env.STRIPE_SECRET_KEY!, {
@@ -18,9 +19,9 @@ export async function handleStripeWebhook(
   let event: Stripe.Event;
 
   try {
-    // Asumimos que req.body es un Buffer o string sin procesar
+    const rawBody = await buffer(req);
     event = stripeClient.webhooks.constructEvent(
-      req.body,
+      rawBody,
       sig,
       process.env.STRIPE_WEBHOOK_SECRET!
     );

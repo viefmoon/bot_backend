@@ -25,6 +25,7 @@
     "fuse.js": "^7.0.0",
     "fuzzball": "^2.1.2",
     "luxon": "^3.5.0",
+    "micro": "^10.0.1",
     "moment-timezone": "^0.5.45",
     "mysql2": "^3.11.3",
     "natural": "^8.0.1",
