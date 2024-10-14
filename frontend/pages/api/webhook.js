@@ -1,7 +1,8 @@
 import axios from "axios";
 
 export default async function handler(req, res) {
-  const { method, body, query } = req;
+  const { method, body, headers, query } = req;
+  console.log("headers", headers);
 
   // Construye la URL del backend
   const backendUrl = `${process.env.NEXT_PUBLIC_BACKEND_BASE_URL}/webhook`;
@@ -14,6 +15,7 @@ export default async function handler(req, res) {
       data: body,
       params: query,
       headers: {
+        ...headers,
         "Content-Type": "application/json",
       },
     });
