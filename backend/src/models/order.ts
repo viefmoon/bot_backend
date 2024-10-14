@@ -14,16 +14,16 @@ interface OrderAttributes {
     | "in_delivery"
     | "finished"
     | "canceled";
-  paymentStatus: "pending" | "paid" | "failed";
+  paymentStatus: "not_generated" | "pending" | "paid" | "failed";
   totalCost: number;
   clientId: string;
   estimatedTime: number;
   scheduledDeliveryTime?: Date;
   messageId?: string;
   stripeSessionId?: string;
-  finishedAt?: Date;  // Nuevo campo
-  createdAt: Date;  // Añadido
-  updatedAt: Date;  // Añadido
+  finishedAt?: Date; // Nuevo campo
+  createdAt: Date; // Añadido
+  updatedAt: Date; // Añadido
 }
 
 interface OrderCreationAttributes extends Optional<OrderAttributes, "id"> {}
@@ -43,14 +43,14 @@ class Order
     | "in_delivery"
     | "finished"
     | "canceled";
-  public paymentStatus!: "pending" | "paid" | "failed";
+  public paymentStatus!: "not_generated" | "pending" | "paid" | "failed";
   public totalCost!: number;
   public clientId!: string;
   public estimatedTime!: number;
   public scheduledDeliveryTime?: Date;
   public messageId?: string;
   public stripeSessionId?: string;
-  public finishedAt?: Date;  // Nuevo campo
+  public finishedAt?: Date; // Nuevo campo
 
   // Timestamps
   public readonly createdAt!: Date;
@@ -89,9 +89,9 @@ Order.init(
       defaultValue: "created",
     },
     paymentStatus: {
-      type: DataTypes.ENUM("pending", "paid", "failed"),
+      type: DataTypes.ENUM("not_generated", "pending", "paid", "failed"),
       allowNull: false,
-      defaultValue: "pending",
+      defaultValue: "not_generated",
     },
     totalCost: {
       type: DataTypes.FLOAT,

@@ -173,6 +173,8 @@ async function handleOnlinePayment(
         },
       ],
       mode: "payment",
+      success_url: `${process.env.FRONTEND_BASE_URL}/payment-success?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${process.env.FRONTEND_BASE_URL}/payment-cancel`,
     });
 
     await order.update({

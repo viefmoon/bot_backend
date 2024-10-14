@@ -312,6 +312,7 @@ const translateStatus = (status) => {
 
 const translatePaymentStatus = (status) => {
   const translations = {
+    not_generated: "No generado",
     pending: "Pago pendiente",
     paid: "Pagado",
     failed: "Fallido",
@@ -334,6 +335,7 @@ const getStatusColor = (status) => {
 
 const getPaymentStatusColor = (status) => {
   const colors = {
+    not_generated: "bg-gray-500",
     pending: "bg-yellow-500",
     paid: "bg-green-500",
     failed: "bg-red-500",
