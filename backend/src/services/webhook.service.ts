@@ -61,7 +61,7 @@ export class WebhookService {
         if (customer) {
           await sendWhatsAppMessage(
             customer.clientId,
-            `¡Tu pago para la orden #${order.dailyOrderNumber} ha sido confirmado! Gracias por tu compra.`
+            `¡Tu pago para la orden #${order.dailyOrderNumber} ha sido confirmado! 🎉✅ Gracias por tu compra. 🛍️😊`
           );
         }
       }

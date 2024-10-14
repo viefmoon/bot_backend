@@ -104,13 +104,22 @@ const OrderCard = ({ order, onUpdateStatus }) => {
               {formatDateToMexicoTime(order.createdAt, true)}
             </span>
           </div>
-          <span
-            className={`px-3 py-1 rounded-full text-sm lg:text-base font-semibold text-white ${getStatusColor(
-              order.status
-            )}`}
-          >
-            {translateStatus(order.status)}
-          </span>
+          <div className="flex items-center">
+            <span
+              className={`px-3 py-1 rounded-full text-sm lg:text-base font-semibold text-white mr-2 ${getStatusColor(
+                order.status
+              )}`}
+            >
+              {translateStatus(order.status)}
+            </span>
+            <span
+              className={`px-3 py-1 rounded-full text-sm lg:text-base font-semibold text-white ${getPaymentStatusColor(
+                order.paymentStatus
+              )}`}
+            >
+              {translatePaymentStatus(order.paymentStatus)}
+            </span>
+          </div>
         </div>
 
         <div className="grid grid-cols-2 gap-2 text-sm lg:text-base mb-2">
@@ -342,11 +351,11 @@ const getStatusColor = (status) => {
 
 const getPaymentStatusColor = (status) => {
   const colors = {
-    pending: "warning",
-    paid: "success",
-    failed: "danger",
+    pending: "bg-yellow-500",
+    paid: "bg-green-500",
+    failed: "bg-red-500",
   };
-  return colors[status] || "light";
+  return colors[status] || "bg-gray-500";
 };
 
 const formatDateToMexicoTime = (dateString, dateOnly = false) => {
