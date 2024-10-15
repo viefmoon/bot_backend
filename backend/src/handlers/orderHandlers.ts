@@ -425,7 +425,7 @@ export async function handleOrderModification(
       const filteredItem: any = {
         quantity: item.quantity,
         productId: item.productId,
-        productVariant: item.productVariant,
+        productVariantId: item.productVariant.id,
       };
 
       if (item.comments) filteredItem.comments = item.comments;
