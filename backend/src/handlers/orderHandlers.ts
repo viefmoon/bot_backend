@@ -337,7 +337,7 @@ export async function handleOrderModification(
           as: "orderItems",
           include: [
             { model: Product },
-            { model: ProductVariant },
+            { model: ProductVariant, as: "productVariant" },
             {
               model: SelectedPizzaIngredient,
               as: "selectedPizzaIngredients",
