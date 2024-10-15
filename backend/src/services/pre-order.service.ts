@@ -261,20 +261,24 @@ export class PreOrderService {
       })
     );
 
-    const estimatedTime = fullScheduledDeliveryTime
-      ? fullScheduledDeliveryTime.toLocaleString("es-MX", {
-          timeZone: "America/Mexico_City",
-          year: "numeric",
-          month: "2-digit",
-          day: "2-digit",
-          hour: "2-digit",
-          minute: "2-digit",
-          second: "2-digit",
-          hour12: true,
-        })
-      : orderType === "pickup"
-      ? `${config.estimatedPickupTime} minutos`
-      : `${config.estimatedDeliveryTime} minutos`;
+    let scheduledTime = null;
+    if (fullScheduledDeliveryTime) {
+      scheduledTime = fullScheduledDeliveryTime.toLocaleString("es-MX", {
+        timeZone: "America/Mexico_City",
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+        hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit",
+        hour12: true,
+      });
+    }
+
+    const estimatedTime =
+      orderType === "pickup"
+        ? `${config.estimatedPickupTime} minutos`
+        : `${config.estimatedDeliveryTime} minutos`;
 
     let messageContent =
       "Informame si tienes algun cambio o deseas agregar algun producto mas.\n\n";
@@ -294,7 +298,11 @@ export class PreOrderService {
     relevantMessageContent += `${
       orderType === "delivery" ? "Domicilio" : "Nombre recolección"
     }: ${deliveryInfo || "No disponible"}\n`;
-    messageContent += `⏱️ *Tiempo estimado*: ${estimatedTime}\n`;
+    if (scheduledTime) {
+      messageContent += `⏱️ *Tiempo programado*: ${scheduledTime}\n`;
+    } else {
+      messageContent += `⏱️ *Tiempo estimado*: ${estimatedTime}\n`;
+    }
 
     calculatedItems.forEach((item) => {
       messageContent += `- *${item.quantity}x ${item.nombre_producto}*: $${item.precio_total_orderItem}\n`;
