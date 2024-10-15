@@ -412,7 +412,7 @@ export class PreOrderService {
       status: 200,
       json: {
         sendToWhatsApp: false,
-        texto: relevantMessageContent,
+        text: relevantMessageContent,
       },
     };
   }
@@ -421,7 +421,7 @@ export class PreOrderService {
       status: 400,
       json: {
         sendToWhatsApp: true,
-        texto: error.message,
+        text: error.message,
       },
     };
   }

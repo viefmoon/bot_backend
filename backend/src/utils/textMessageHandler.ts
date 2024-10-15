@@ -213,8 +213,8 @@ async function processAndGenerateAIResponse(
 
     return [
       {
-        text: "No se pudo procesar la solicitud correctamente.",
-        sendToWhatsApp: false,
+        text: selectProductsResponse.json.texto,
+        sendToWhatsApp: selectProductsResponse.json.sendToWhatsApp,
         isRelevant: true,
       },
     ];
