@@ -213,7 +213,7 @@ async function processAndGenerateAIResponse(
 
     return [
       {
-        text: selectProductsResponse.json.texto,
+        text: selectProductsResponse.json.text,
         sendToWhatsApp: selectProductsResponse.json.sendToWhatsApp,
         isRelevant: true,
       },
