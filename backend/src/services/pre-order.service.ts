@@ -22,6 +22,7 @@ export class PreOrderService {
       orderData;
     let totalCost = 0;
     let fullScheduledDeliveryTime: Date | null = null;
+    console.log("scheduledDeliveryTime", scheduledDeliveryTime);
 
     const config = await RestaurantConfig.findOne();
 
