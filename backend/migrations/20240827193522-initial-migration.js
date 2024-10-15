@@ -301,7 +301,7 @@ module.exports = {
         defaultValue: "created",
       },
       paymentStatus: {
-        type: Sequelize.ENUM("unavailable", "pending", "paid"),
+        type: Sequelize.ENUM("pending", "paid", "unavailable"),
         allowNull: false,
         defaultValue: "unavailable",
       },
