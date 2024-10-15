@@ -210,12 +210,11 @@ async function processAndGenerateAIResponse(
       orderType: preprocessedContent.orderType,
       scheduledDeliveryTime: preprocessedContent.scheduledDeliveryTime,
     });
-    console.log("selectProductsResponse", selectProductsResponse);
 
     return [
       {
         text: "No se pudo procesar la solicitud correctamente.",
-        sendToWhatsApp: true,
+        sendToWhatsApp: false,
         isRelevant: true,
       },
     ];

@@ -8,9 +8,6 @@ import {
   PreOrder,
   CustomerDeliveryInfo,
   OrderDeliveryInfo,
-  OrderItem,
-  SelectedPizzaIngredient,
-  SelectedModifier,
 } from "../models";
 import { sendWhatsAppInteractiveMessage } from "../utils/whatsAppUtils";
 
@@ -23,7 +20,6 @@ export class PreOrderService {
   }) {
     const { orderItems, clientId, orderType, scheduledDeliveryTime } =
       orderData;
-    console.log("orderData", JSON.stringify(orderData));
     let totalCost = 0;
     let fullScheduledDeliveryTime: Date | null = null;
 
@@ -414,13 +410,19 @@ export class PreOrderService {
     });
     return {
       status: 200,
-      json: { mensaje: relevantMessageContent },
+      json: {
+        sendToWhatsApp: false,
+        texto: relevantMessageContent,
+      },
     };
   }
   catch(error) {
     return {
       status: 400,
-      json: { error: error.message },
+      json: {
+        sendToWhatsApp: true,
+        texto: error.message,
+      },
     };
   }
 
