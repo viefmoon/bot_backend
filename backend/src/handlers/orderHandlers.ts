@@ -356,7 +356,11 @@ export async function handleOrderModification(
     console.log("order", JSON.stringify(order));
 
     if (!order) {
-      throw new Error("Orden no encontrada");
+      const mensajeError =
+        "Lo sentimos, no se pudo encontrar tu orden para modificar, ya no esta disponible. 🔍😞";
+      console.error(`Orden no encontrada para messageId: ${messageId}`);
+      await sendWhatsAppMessage(clientId, mensajeError);
+      return;
     }
 
     let mensaje: string;
