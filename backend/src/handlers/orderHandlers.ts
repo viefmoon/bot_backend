@@ -426,7 +426,7 @@ export async function handleOrderModification(
         quantity: item.quantity,
         productId: item.productId,
         productVariant: {
-          id: item.productVariant.id,
+          productVariantId: item.productVariant.id,
         },
       };
 

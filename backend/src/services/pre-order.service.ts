@@ -92,8 +92,6 @@ export class PreOrderService {
     const orderDeliveryInfo = await OrderDeliveryInfo.create(deliveryInfoData);
 
     // Calcular items y precios
-
-    console.log("orderItems", JSON.stringify(orderItems));
     const calculatedItems = await Promise.all(
       orderItems.map(async (item) => {
         let product, productVariant;
