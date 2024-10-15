@@ -790,7 +790,7 @@ module.exports = {
     await queryInterface.dropTable("BannedCustomers");
     await queryInterface.dropTable("MessageRateLimits");
     await queryInterface.dropTable("NotificationPhones");
-    await queryInterface.dropTable("CustomerDeliveryInfo");
-    await queryInterface.dropTable("OrderDeliveryInfo");
+    await queryInterface.dropTable("CustomerDeliveryInfos");
+    await queryInterface.dropTable("OrderDeliveryInfos");
   },
 };
