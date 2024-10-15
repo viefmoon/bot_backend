@@ -450,7 +450,7 @@ export async function handleOrderModification(
 
       if (selectProductsResponse.status !== 200) {
         throw new Error(
-          selectProductsResponse.json.mensaje ||
+          selectProductsResponse.json.text ||
             "Error desconocido al crear la nueva preorden"
         );
       }
@@ -473,7 +473,7 @@ export async function handleOrderModification(
 
       const assistantMessage = {
         role: "assistant",
-        content: selectProductsResponse.json.mensaje,
+        content: selectProductsResponse.json.text,
       };
 
       relevantChatHistory.push(assistantMessage);
