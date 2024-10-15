@@ -14,7 +14,7 @@ interface OrderAttributes {
     | "in_delivery"
     | "finished"
     | "canceled";
-  paymentStatus: "pending" | "paid" | "unavailable";
+  paymentStatus?: "pending" | "paid";
   totalCost: number;
   clientId: string;
   estimatedTime: number;
@@ -43,7 +43,7 @@ class Order
     | "in_delivery"
     | "finished"
     | "canceled";
-  public paymentStatus!: "pending" | "paid" | "unavailable";
+  public paymentStatus?: "pending" | "paid";
   public totalCost!: number;
   public clientId!: string;
   public estimatedTime!: number;
@@ -89,9 +89,8 @@ Order.init(
       defaultValue: "created",
     },
     paymentStatus: {
-      type: DataTypes.ENUM("pending", "paid", "unavailable"),
-      allowNull: false,
-      defaultValue: "unavailable",
+      type: DataTypes.ENUM("pending", "paid"),
+      allowNull: true,
     },
     totalCost: {
       type: DataTypes.FLOAT,
