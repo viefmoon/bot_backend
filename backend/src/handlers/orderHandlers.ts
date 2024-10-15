@@ -355,6 +355,8 @@ export async function handleOrderModification(
       ],
     });
 
+    console.log("order", order);
+
     if (!order) {
       throw new Error("Orden no encontrada");
     }
