@@ -68,8 +68,6 @@ async function createOrderFromPreOrder(
     const orderService = new OrderService();
     const { orden: newOrder } = await orderService.createOrder(orderData);
 
-    console.log("newOrder dddd", newOrder);
-
     const tipoOrdenTraducido =
       orderType === "delivery" ? "A domicilio 🚚" : "Recolección 🏪";
 
@@ -355,7 +353,7 @@ export async function handleOrderModification(
       ],
     });
 
-    console.log("order", order);
+    console.log("order", JSON.stringify(order));
 
     if (!order) {
       throw new Error("Orden no encontrada");
