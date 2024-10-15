@@ -315,7 +315,6 @@ const translatePaymentStatus = (status) => {
     unavailable: "No disponible",
     pending: "Pago pendiente",
     paid: "Pagado",
-    failed: "Fallido",
   };
   return translations[status] || status;
 };
@@ -338,7 +337,6 @@ const getPaymentStatusColor = (status) => {
     unavailable: "bg-gray-500",
     pending: "bg-yellow-500",
     paid: "bg-green-500",
-    failed: "bg-red-500",
   };
   return colors[status] || "bg-gray-500";
 };
