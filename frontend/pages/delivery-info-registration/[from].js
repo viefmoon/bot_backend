@@ -298,10 +298,10 @@ export default function DeliveryInfoRegistration() {
 
         // Mensaje personalizado basado en si es una actualización de preorden o no
         const mensaje = preOrderId
-          ? `Hola ${formData.pickupName}, tu información de entrega para la preorden ha sido actualizada exitosamente. Tu dirección registrada es: ${response.data.streetAddress}. Gracias!`
+          ? `🎉 Hola ${formData.pickupName}, tu información de entrega para la preorden ha sido actualizada exitosamente. 📦 Tu dirección registrada es: ${response.data.streetAddress}. ¡Gracias! 🙌`
           : isUpdating
-          ? `Hola ${formData.pickupName}, tu información de entrega ha sido actualizada exitosamente. Tu dirección registrada es: ${response.data.streetAddress}. Gracias!`
-          : `Hola ${formData.pickupName}, tu información de entrega ha sido guardada exitosamente. Tu dirección registrada es: ${response.data.streetAddress}. Gracias!`;
+          ? `✅ Hola ${formData.pickupName}, tu información de entrega ha sido actualizada exitosamente. 📍 Tu dirección registrada es: ${response.data.streetAddress}. ¡Gracias! 😊`
+          : `🚚 Hola ${formData.pickupName}, tu información de entrega ha sido guardada exitosamente. 📫 Tu dirección registrada es: ${response.data.streetAddress}. ¡Gracias! 🎉`;
 
         // Solo enviamos el mensaje de WhatsApp si no es una actualización de preorden
         if (!preOrderId) {
