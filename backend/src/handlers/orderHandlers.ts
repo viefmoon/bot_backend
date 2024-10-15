@@ -422,6 +422,15 @@ export async function handleOrderModification(
     });
 
     const filteredOrderItems = orderItems.map((item) => {
+      if (!item) {
+        throw new Error("El item es undefined o null.");
+      }
+
+      if (!item.productVariantId) {
+        throw new Error(
+          `El item con ID ${item.id} no tiene productVariantId definido.`
+        );
+      }
       const filteredItem: any = {
         quantity: item.quantity,
         productId: item.productId,
