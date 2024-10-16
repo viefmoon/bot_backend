@@ -125,7 +125,7 @@ export class PreOrderService {
           .toString()
           .padStart(2, "0")}:${closingMinute.toString().padStart(2, "0")}`;
         throw new Error(
-          `⚠️ El tiempo programado está fuera del horario laborable. Por favor, programa tu pedido para después de las ${openingTimeFormatted} (30 minutos después de abrir) ⏰🔓 o antes de las ${closingTimeFormatted} (30 minutos antes de cerrar) ⏰🔒.`
+          `⚠️ El tiempo programado está fuera del horario laborable. Por favor, programa tu pedido para después de las ${openingTimeFormatted}⏰🔓 o antes de las ${closingTimeFormatted} ⏰🔒.`
         );
       }
 
