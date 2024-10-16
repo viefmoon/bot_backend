@@ -41,7 +41,7 @@ export class PreOrderService {
             `${today}T${scheduledDeliveryTime}:00-06:00`
           );
         }
-      } else {
+      } else if (scheduledDeliveryTime instanceof Date) {
         // Es un objeto Date
         fullScheduledDeliveryTime = scheduledDeliveryTime;
       }
