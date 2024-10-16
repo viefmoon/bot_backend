@@ -37,33 +37,89 @@ export class PreOrderService {
         } else {
           // Formato de solo horas
           // Obtener la fecha actual en la zona horaria de México
-          const formatter = new Intl.DateTimeFormat('en-US', {
-            timeZone: 'America/Mexico_City',
-            year: 'numeric',
-            month: '2-digit',
-            day: '2-digit',
+          const formatter = new Intl.DateTimeFormat("en-US", {
+            timeZone: "America/Mexico_City",
+            year: "numeric",
+            month: "2-digit",
+            day: "2-digit",
           });
-      
+
           const parts = formatter.formatToParts(new Date());
-          const year = parts.find(part => part.type === 'year')?.value;
-          const month = parts.find(part => part.type === 'month')?.value;
-          const day = parts.find(part => part.type === 'day')?.value;
-      
+          const year = parts.find((part) => part.type === "year")?.value;
+          const month = parts.find((part) => part.type === "month")?.value;
+          const day = parts.find((part) => part.type === "day")?.value;
+
           if (!year || !month || !day) {
             throw new Error("Error al obtener la fecha actual de México.");
           }
-      
-          const [hours, minutes] = scheduledDeliveryTime.split(':').map(Number);
-      
+
+          const [hours, minutes] = scheduledDeliveryTime.split(":").map(Number);
+
           // Crear una cadena de fecha y hora con la zona horaria de México
-          const scheduledDateTimeString = `${year}-${month}-${day}T${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:00-06:00`; // Ajusta el offset según corresponda (-05:00 o -06:00)
-      
+          const scheduledDateTimeString = `${year}-${month}-${day}T${hours
+            .toString()
+            .padStart(2, "0")}:${minutes.toString().padStart(2, "0")}:00-06:00`; // Ajusta el offset según corresponda (-05:00 o -06:00)
+
           fullScheduledDeliveryTime = new Date(scheduledDateTimeString);
           console.log("fullScheduledDeliveryTime", fullScheduledDeliveryTime);
         }
       } else if (scheduledDeliveryTime instanceof Date) {
         // Es un objeto Date
         fullScheduledDeliveryTime = scheduledDeliveryTime;
+      }
+
+      // Obtener día de la semana (0 = Domingo, 1 = Lunes, ..., 6 = Sábado)
+      const dayOfWeek = fullScheduledDeliveryTime.getDay();
+
+      // Obtener hora y minuto del tiempo programado
+      const scheduledHour = fullScheduledDeliveryTime.getHours();
+      const scheduledMinute = fullScheduledDeliveryTime.getMinutes();
+
+      // Definir horarios de apertura y cierre
+      let openingTime, closingTime;
+      if (dayOfWeek === 0) {
+        // Domingo
+        openingTime = process.env.OPENING_HOURS_SUN;
+        closingTime = process.env.CLOSING_HOURS_SUN;
+      } else {
+        // Martes a Sábado
+        openingTime = process.env.OPENING_HOURS_TUES_SAT;
+        closingTime = process.env.CLOSING_HOURS_TUES_SAT;
+      }
+
+      // Convertir horarios a minutos desde medianoche
+      const [openingHour, openingMinute] = openingTime.split(":").map(Number);
+      const [closingHour, closingMinute] = closingTime.split(":").map(Number);
+      const openingMinutes = openingHour * 60 + openingMinute;
+      const closingMinutes = closingHour * 60 + closingMinute;
+
+      // Aplicar períodos de gracia
+      const openingGracePeriod = parseInt(
+        process.env.OPENING_GRACE_PERIOD_MINUTES
+      );
+      const closingGracePeriod = parseInt(
+        process.env.CLOSING_GRACE_PERIOD_MINUTES
+      );
+      const adjustedOpeningMinutes = openingMinutes - openingGracePeriod;
+      const adjustedClosingMinutes = closingMinutes + closingGracePeriod;
+
+      // Convertir tiempo programado a minutos desde medianoche
+      const scheduledMinutes = scheduledHour * 60 + scheduledMinute;
+
+      // Verificar si el tiempo programado está dentro del horario laborable ajustado
+      if (
+        scheduledMinutes < adjustedOpeningMinutes ||
+        scheduledMinutes > adjustedClosingMinutes
+      ) {
+        const openingTimeFormatted = `${openingHour
+          .toString()
+          .padStart(2, "0")}:${openingMinute.toString().padStart(2, "0")}`;
+        const closingTimeFormatted = `${closingHour
+          .toString()
+          .padStart(2, "0")}:${closingMinute.toString().padStart(2, "0")}`;
+        throw new Error(
+          `El tiempo programado está fuera del horario laborable. Por favor, programa tu pedido para después de las ${openingTimeFormatted} (30 minutos después de abrir) o antes de las ${closingTimeFormatted} (30 minutos antes de cerrar).`
+        );
       }
 
       const minTimeRequired =
