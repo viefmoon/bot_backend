@@ -408,6 +408,9 @@ export async function handleOrderModification(
 
     // Extraer los datos necesarios antes de eliminar la orden
     const { orderType, scheduledDeliveryTime, orderItems } = order;
+    console.log("orderType", orderType);
+    console.log("scheduledDeliveryTime", scheduledDeliveryTime);
+    console.log("orderItems", orderItems);
 
     // Eliminar la orden existente en lugar de cancelarla
     await order.destroy();
