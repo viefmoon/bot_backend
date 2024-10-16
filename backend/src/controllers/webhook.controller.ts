@@ -27,20 +27,23 @@ export class WebhookController {
       if (req.headers["stripe-signature"]) {
         console.log("Procesando webhook de Stripe");
         return await this.webhookService.handleStripeWebhook(req, res);
-      }
-      const body = req.body;
-      if (
-        body.entry &&
-        body.entry[0].changes &&
-        body.entry[0].changes[0].value.messages
-      ) {
-        console.log("Procesando webhook de mensaje entrante de WhatsApp");
-        return await this.webhookService.handleWhatsAppWebhook(req, res);
       } else {
-        console.log(
-          "Ignorando webhook de WhatsApp que no es de mensaje entrante"
-        );
-        return res.sendStatus(200);
+        const body = req.body;
+        const events = body.entry?.[0]?.changes?.[0]?.value?.messages;
+
+        if (events && events.length > 0) {
+          console.log("Recibido webhook de mensaje entrante de WhatsApp");
+          res.sendStatus(200);
+          this.webhookService
+            .handleWhatsAppWebhook(req, body)
+            .catch((error) => {
+              console.error("Error al procesar el webhook de WhatsApp:", error);
+            });
+
+          return;
+        } else {
+          return res.sendStatus(200);
+        }
       }
     } catch (error) {
       console.error("Error al procesar el webhook:", error);
