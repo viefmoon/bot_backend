@@ -161,7 +161,7 @@ export class WebhookService {
 
     this.isProcessing = true;
 
-    while (!this.messageQueue.isEmpty) {
+    while (this.messageQueue.length > 0) {
       const message = this.messageQueue.dequeue();
       console.log(`Procesando mensaje ${message.id}`);
       await this.handleIncomingWhatsAppMessage(message);
