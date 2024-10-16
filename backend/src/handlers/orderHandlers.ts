@@ -415,15 +415,6 @@ export async function handleOrderModification(
     // Eliminar la orden existente en lugar de cancelarla
     await order.destroy();
 
-    const formattedScheduledDeliveryTime = new Date(
-      scheduledDeliveryTime
-    ).toLocaleString("es-MX", {
-      timeZone: "America/Mexico_City",
-      hour: "2-digit",
-      minute: "2-digit",
-      hour12: false,
-    });
-
     const filteredOrderItems = orderItems.map((item) => {
       const filteredItem: any = {
         quantity: item.quantity,
@@ -454,7 +445,7 @@ export async function handleOrderModification(
         orderItems: filteredOrderItems,
         clientId,
         orderType,
-        scheduledDeliveryTime: formattedScheduledDeliveryTime,
+        scheduledDeliveryTime,
       });
 
       if (selectProductsResponse.status !== 200) {
