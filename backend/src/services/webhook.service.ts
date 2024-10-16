@@ -20,6 +20,7 @@ import { BANNED_USER_MESSAGE } from "../config/predefinedMessages";
 import { handleTextMessage } from "../utils/textMessageHandler";
 import { handleInteractiveMessage } from "../utils/interactiveMessageHandler";
 import { handleAudioMessage } from "../utils/audioMessageHandler";
+import { Queue } from "queue-typescript";
 
 interface WhatsAppMessage {
   from: string;
@@ -45,6 +46,8 @@ interface WebhookBody {
 @Injectable()
 export class WebhookService {
   private stripeClient: Stripe;
+  private messageQueue: Queue<WhatsAppMessage> = new Queue<WhatsAppMessage>();
+  private isProcessing: boolean = false;
 
   constructor(
     private configService: ConfigService,
@@ -130,12 +133,15 @@ export class WebhookService {
 
     try {
       for (const message of messages) {
-        if (this.isMessageTooOld(message)) {
+        if (!this.isMessageTooOld(message)) {
+          this.messageQueue.enqueue(message);
+        } else {
           console.log(`Mensaje ${message.id} es demasiado antiguo, ignorando.`);
-          continue;
         }
-        console.log(`Procesando mensaje ${message.id}`);
-        await this.handleIncomingWhatsAppMessage(message);
+      }
+
+      if (!this.isProcessing) {
+        this.processMessageQueue();
       }
     } catch (error) {
       console.error("Error al procesar el webhook de WhatsApp:", error);
@@ -148,6 +154,20 @@ export class WebhookService {
     const differenceInMinutes =
       (currentTime.getTime() - messageTimestamp.getTime()) / (1000 * 60);
     return differenceInMinutes > 1; // Ignorar mensajes de más de 1 minuto
+  }
+
+  private async processMessageQueue(): Promise<void> {
+    if (this.isProcessing) return;
+
+    this.isProcessing = true;
+
+    while (this.messageQueue.length > 0) {
+      const message = this.messageQueue.dequeue();
+      console.log(`Procesando mensaje ${message.id}`);
+      await this.handleIncomingWhatsAppMessage(message);
+    }
+
+    this.isProcessing = false;
   }
 
   private async handleIncomingWhatsAppMessage(
