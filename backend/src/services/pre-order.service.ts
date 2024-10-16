@@ -68,12 +68,19 @@ export class PreOrderService {
         fullScheduledDeliveryTime = scheduledDeliveryTime;
       }
 
-      // Obtener día de la semana (0 = Domingo, 1 = Lunes, ..., 6 = Sábado)
-      const dayOfWeek = fullScheduledDeliveryTime.getDay();
+      // Convertir fullScheduledDeliveryTime a la zona horaria de México
+      const mexicoTime = new Date(
+        fullScheduledDeliveryTime.toLocaleString("en-US", {
+          timeZone: "America/Mexico_City",
+        })
+      );
 
-      // Obtener hora y minuto del tiempo programado
-      const scheduledHour = fullScheduledDeliveryTime.getHours();
-      const scheduledMinute = fullScheduledDeliveryTime.getMinutes();
+      // Obtener día de la semana (0 = Domingo, 1 = Lunes, ..., 6 = Sábado)
+      const dayOfWeek = mexicoTime.getDay();
+
+      // Obtener hora y minuto del tiempo programado en hora de México
+      const scheduledHour = mexicoTime.getHours();
+      const scheduledMinute = mexicoTime.getMinutes();
 
       // Definir horarios de apertura y cierre
       let openingTime, closingTime;
@@ -103,7 +110,7 @@ export class PreOrderService {
       const adjustedOpeningMinutes = openingMinutes - openingGracePeriod;
       const adjustedClosingMinutes = closingMinutes + closingGracePeriod;
 
-      // Convertir tiempo programado a minutos desde medianoche
+      // Convertir tiempo programado a minutos desde medianoche (usando hora de México)
       const scheduledMinutes = scheduledHour * 60 + scheduledMinute;
 
       // Verificar si el tiempo programado está dentro del horario laborable ajustado
