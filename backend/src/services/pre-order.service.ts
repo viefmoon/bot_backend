@@ -39,13 +39,9 @@ export class PreOrderService {
     const mexicoNow = new Date(new Date().toLocaleString("en-US", { timeZone: "America/Mexico_City" }));
     const [hours, minutes] = scheduledDeliveryTime.split(':');
     mexicoNow.setHours(parseInt(hours, 10), parseInt(minutes, 10), 0, 0);
-    
-    // Convertir la hora de México a UTC
-    const utcTime = new Date(mexicoNow.getTime() - mexicoNow.getTimezoneOffset() * 60000);
-    fullScheduledDeliveryTime = utcTime;
-    
-    console.log("Hora programada en México:", mexicoNow.toLocaleString("es-MX", { timeZone: "America/Mexico_City" }));
-          console.log("Hora programada en UTC:", fullScheduledDeliveryTime.toISOString());
+
+    // Convertir a UTC
+    fullScheduledDeliveryTime = new Date(mexicoNow.toISOString());
         }
       } else if (scheduledDeliveryTime instanceof Date) {
         // Es un objeto Date
