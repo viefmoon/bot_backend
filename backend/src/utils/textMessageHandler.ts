@@ -91,6 +91,7 @@ export async function handleTextMessage(
   from: string,
   text: string
 ): Promise<void> {
+  console.log("handleTextMessage", from, text);
   const customer = await Customer.findOne({
     where: { clientId: from },
   });
