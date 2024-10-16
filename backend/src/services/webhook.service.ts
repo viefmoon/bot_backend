@@ -200,7 +200,7 @@ export class WebhookService {
     if (!customer) {
       customer = await Customer.create({ clientId: from });
     }
-
+    console.log("customer", customer);
     await customer.update({ lastInteraction: new Date() });
 
     if (await this.checkBannedCustomer(from)) {
@@ -225,7 +225,6 @@ export class WebhookService {
       );
       return;
     }
-    console.log("customer", customer);
     if (!customer.customerDeliveryInfo) {
       const otp = this.otpService.generateOTP();
       await this.otpService.storeOTP(from, otp);
