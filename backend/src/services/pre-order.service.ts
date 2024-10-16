@@ -35,13 +35,30 @@ export class PreOrderService {
           // Formato completo
           fullScheduledDeliveryTime = new Date(scheduledDeliveryTime);
         } else {
-    // Formato de solo horas
-    const mexicoNow = new Date(new Date().toLocaleString("en-US", { timeZone: "America/Mexico_City" }));
-    const [hours, minutes] = scheduledDeliveryTime.split(':');
-    mexicoNow.setHours(parseInt(hours, 10), parseInt(minutes, 10), 0, 0);
-
-    // Convertir a UTC
-          fullScheduledDeliveryTime = new Date(mexicoNow.toISOString());
+          // Formato de solo horas
+          // Obtener la fecha actual en la zona horaria de México
+          const formatter = new Intl.DateTimeFormat('en-US', {
+            timeZone: 'America/Mexico_City',
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit',
+          });
+      
+          const parts = formatter.formatToParts(new Date());
+          const year = parts.find(part => part.type === 'year')?.value;
+          const month = parts.find(part => part.type === 'month')?.value;
+          const day = parts.find(part => part.type === 'day')?.value;
+      
+          if (!year || !month || !day) {
+            throw new Error("Error al obtener la fecha actual de México.");
+          }
+      
+          const [hours, minutes] = scheduledDeliveryTime.split(':').map(Number);
+      
+          // Crear una cadena de fecha y hora con la zona horaria de México
+          const scheduledDateTimeString = `${year}-${month}-${day}T${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:00-06:00`; // Ajusta el offset según corresponda (-05:00 o -06:00)
+      
+          fullScheduledDeliveryTime = new Date(scheduledDateTimeString);
           console.log("fullScheduledDeliveryTime", fullScheduledDeliveryTime);
         }
       } else if (scheduledDeliveryTime instanceof Date) {
