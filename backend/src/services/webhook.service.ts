@@ -173,8 +173,6 @@ export class WebhookService {
       return;
     }
 
-    console.log(`Procesando mensaje ${message.id}`);
-
     // Crear el registro de MessageLog antes de procesar
     await MessageLog.create({ messageId: message.id, processed: false });
 
@@ -204,11 +202,13 @@ export class WebhookService {
   ): Promise<void> {
     const { from, type, id } = message;
 
+    console.log("message", message);
     const config = await RestaurantConfig.findOne();
 
     if (await MessageLog.findOne({ where: { messageId: id } })) {
       return;
     }
+    console.log("messageId", id);
     await MessageLog.create({ messageId: id, processed: true });
 
     let customer = await Customer.findOne({
