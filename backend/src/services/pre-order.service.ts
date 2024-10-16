@@ -36,10 +36,10 @@ export class PreOrderService {
           fullScheduledDeliveryTime = new Date(scheduledDeliveryTime);
         } else {
           // Formato de solo horas
-          const mexicoNow = new Date(new Date().toLocaleString("en-US", { timeZone: "America/Mexico_City" }));
           const [hours, minutes] = scheduledDeliveryTime.split(':');
-          mexicoNow.setHours(parseInt(hours, 10), parseInt(minutes, 10), 0, 0);
-          fullScheduledDeliveryTime = mexicoNow;
+          const mexicoDate = new Date(new Date().toLocaleString("en-US", { timeZone: "America/Mexico_City" }));
+          mexicoDate.setHours(parseInt(hours, 10), parseInt(minutes, 10), 0, 0);
+          fullScheduledDeliveryTime = new Date(mexicoDate.toLocaleString("en-US", { timeZone: "America/Mexico_City" }));
           console.log("fullScheduledDeliveryTime", fullScheduledDeliveryTime);
         }
       } else if (scheduledDeliveryTime instanceof Date) {
