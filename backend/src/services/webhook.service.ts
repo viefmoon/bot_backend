@@ -178,7 +178,8 @@ export class WebhookService {
 
     try {
       console.log("Procesando mensaje", message);
-      await this.handleIncomingWhatsAppMessage(message);
+      const resultado = await this.handleIncomingWhatsAppMessage(message);
+      console.log("Resultado del procesamiento:", resultado);
       // Actualizar el registro como procesado
       await MessageLog.update(
         { processed: true },
