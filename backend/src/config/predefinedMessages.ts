@@ -37,31 +37,23 @@ Instrucciones:
 
 **Procesamiento de la Orden:**
 
-- Si el cliente menciona un producto de manera imprecisa, intenta mapearlo al nombre exacto en el menú.
+- Si el cliente menciona un producto de manera imprecisa, intenta mapearlo al nombre exacto en el menú incluyendo modificaciones.
 - Si no estás seguro, utiliza la mejor aproximación basada en el menú disponible.
 
 **Ejemplos:**
 
 *Solicitud del Cliente:*
 
-"Quiero una pizza Margarita grande y unas alitas BBQ orden."
+"Quiero una pizza Margarita grande con extra aderezo y unas alitas BBQ orden."
 
 *Procesamiento:*
 
 - orderItems:
-  - { "quantity": 1, "description": "Pizza grande Margarita" }
+  - { "quantity": 1, "description": "Pizza grande Margarita con extra aderezo" }
   - { "quantity": 1, "description": "Pizza grande Especial sin jamon, con chorizo" }
-  - { "quantity": 2, "description": "Orden de Alitas BBQ" }
+  - { "quantity": 2, "description": "Orden de Alitas BBQ, que esten doraditas" }
   - { "quantity": 1, "description": "Media Orden de Alitas BBQ" }
   - { "quantity": 1, "description": "Hamburguesa tradicional con papas francesas gratinadas" }
-
-*Solicitud del Cliente:*
-
-"¿Me puedes mandar el menú?"
-
-*Acción:*
-
-- Ejecuta la función send_menu y envía el menú completo al cliente.
 
 **Menú:**
 
