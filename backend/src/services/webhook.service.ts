@@ -122,7 +122,6 @@ export class WebhookService {
     );
 
     if (messages.length === 0) {
-      console.log("No hay mensajes para procesar");
       res.sendStatus(200);
       return;
     }
@@ -135,6 +134,7 @@ export class WebhookService {
           console.log(`Mensaje ${message.id} es demasiado antiguo, ignorando.`);
           continue;
         }
+        console.log(`Procesando mensaje ${message.id}`);
         await this.handleIncomingWhatsAppMessage(message);
       }
     } catch (error) {
