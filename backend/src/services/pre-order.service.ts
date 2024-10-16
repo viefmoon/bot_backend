@@ -35,12 +35,17 @@ export class PreOrderService {
           // Formato completo
           fullScheduledDeliveryTime = new Date(scheduledDeliveryTime);
         } else {
-          // Formato de solo horas
-          const [hours, minutes] = scheduledDeliveryTime.split(':');
-          const mexicoDate = new Date(new Date().toLocaleString("en-US", { timeZone: "America/Mexico_City" }));
-          mexicoDate.setHours(parseInt(hours, 10), parseInt(minutes, 10), 0, 0);
-          fullScheduledDeliveryTime = new Date(mexicoDate.toLocaleString("en-US", { timeZone: "America/Mexico_City" }));
-          console.log("fullScheduledDeliveryTime", fullScheduledDeliveryTime);
+    // Formato de solo horas
+    const mexicoNow = new Date(new Date().toLocaleString("en-US", { timeZone: "America/Mexico_City" }));
+    const [hours, minutes] = scheduledDeliveryTime.split(':');
+    mexicoNow.setHours(parseInt(hours, 10), parseInt(minutes, 10), 0, 0);
+    
+    // Convertir la hora de México a UTC
+    const utcTime = new Date(mexicoNow.getTime() - mexicoNow.getTimezoneOffset() * 60000);
+    fullScheduledDeliveryTime = utcTime;
+    
+    console.log("Hora programada en México:", mexicoNow.toLocaleString("es-MX", { timeZone: "America/Mexico_City" }));
+          console.log("Hora programada en UTC:", fullScheduledDeliveryTime.toISOString());
         }
       } else if (scheduledDeliveryTime instanceof Date) {
         // Es un objeto Date
