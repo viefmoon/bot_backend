@@ -169,7 +169,24 @@ export class WebhookService {
     while (queue.length > 0) {
       const message = queue.dequeue();
       console.log(`Procesando mensaje ${message.id} del cliente ${clientId}`);
-      await this.handleIncomingWhatsAppMessage(message);
+
+      try {
+        // Establecer un tiempo límite de 30 segundos para procesar cada mensaje
+        await Promise.race([
+          this.handleIncomingWhatsAppMessage(message),
+          new Promise((_, reject) =>
+            setTimeout(
+              () => reject(new Error("Tiempo de espera agotado")),
+              20000
+            )
+          ),
+        ]);
+      } catch (error) {
+        console.error(
+          `Error al procesar mensaje ${message.id}: ${error.message}`
+        );
+        // Aquí puedes agregar lógica adicional para manejar el error, como reintentar o notificar
+      }
     }
 
     this.processingClients.delete(clientId);
