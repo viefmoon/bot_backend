@@ -46,8 +46,8 @@ interface WebhookBody {
 @Injectable()
 export class WebhookService {
   private stripeClient: Stripe;
-  private messageQueue: Queue<WhatsAppMessage> = new Queue<WhatsAppMessage>();
-  private isProcessing: boolean = false;
+  private clientQueues: Map<string, Queue<WhatsAppMessage>> = new Map();
+  private processingClients: Set<string> = new Set();
 
   constructor(
     private configService: ConfigService,
@@ -134,18 +134,49 @@ export class WebhookService {
     try {
       for (const message of messages) {
         if (!this.isMessageTooOld(message)) {
-          this.messageQueue.enqueue(message);
+          this.enqueueMessage(message);
         } else {
           console.log(`Mensaje ${message.id} es demasiado antiguo, ignorando.`);
         }
       }
 
-      if (!this.isProcessing) {
-        this.processMessageQueue();
-      }
+      this.processClientQueues();
     } catch (error) {
       console.error("Error al procesar el webhook de WhatsApp:", error);
     }
+  }
+
+  private enqueueMessage(message: WhatsAppMessage): void {
+    const clientId = message.from;
+    if (!this.clientQueues.has(clientId)) {
+      this.clientQueues.set(clientId, new Queue<WhatsAppMessage>());
+    }
+    this.clientQueues.get(clientId).enqueue(message);
+  }
+
+  private async processClientQueues(): Promise<void> {
+    for (const [clientId, queue] of this.clientQueues.entries()) {
+      if (!this.processingClients.has(clientId) && queue.length > 0) {
+        this.processClientQueue(clientId);
+      }
+    }
+  }
+
+  private async processClientQueue(clientId: string): Promise<void> {
+    this.processingClients.add(clientId);
+
+    const queue = this.clientQueues.get(clientId);
+    while (queue.length > 0) {
+      const message = queue.dequeue();
+      console.log(`Procesando mensaje ${message.id} del cliente ${clientId}`);
+      await this.handleIncomingWhatsAppMessage(message);
+    }
+
+    this.processingClients.delete(clientId);
+    this.clientQueues.delete(clientId);
+
+    // Verificar si hay más colas para procesar
+    this.processClientQueues();
   }
 
   private isMessageTooOld(message: WhatsAppMessage): boolean {
@@ -154,19 +185,6 @@ export class WebhookService {
     const differenceInMinutes =
       (currentTime.getTime() - messageTimestamp.getTime()) / (1000 * 60);
     return differenceInMinutes > 1; // Ignorar mensajes de más de 1 minuto
-  }
-
-  private async processMessageQueue(): Promise<void> {
-    if (this.isProcessing) return;
-
-    this.isProcessing = true;
-
-    while (this.messageQueue.length > 0) {
-      const message = this.messageQueue.dequeue();
-      console.log(`Procesando mensaje ${message.id}`);
-      await this.handleIncomingWhatsAppMessage(message);
-    }
-    this.isProcessing = false;
   }
 
   private async handleIncomingWhatsAppMessage(
