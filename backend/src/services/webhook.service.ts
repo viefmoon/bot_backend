@@ -20,6 +20,7 @@ import { BANNED_USER_MESSAGE } from "../config/predefinedMessages";
 import { handleTextMessage } from "../utils/textMessageHandler";
 import { handleInteractiveMessage } from "../utils/interactiveMessageHandler";
 import { handleAudioMessage } from "../utils/audioMessageHandler";
+import { Queue } from "queue-typescript"; // Necesitarás instalar este paquete
 
 interface WhatsAppMessage {
   from: string;
@@ -45,6 +46,8 @@ interface WebhookBody {
 @Injectable()
 export class WebhookService {
   private stripeClient: Stripe;
+  private messageQueue: Queue<WhatsAppMessage> = new Queue<WhatsAppMessage>();
+  private isProcessing: boolean = false;
 
   constructor(
     private configService: ConfigService,
@@ -116,7 +119,6 @@ export class WebhookService {
       return;
     }
 
-    // Responder inmediatamente a WhatsApp
     res.sendStatus(200);
 
     const messages = body.entry.flatMap(
@@ -129,14 +131,30 @@ export class WebhookService {
       return;
     }
 
-    try {
-      // Procesar mensajes de forma síncrona
-      for (const message of messages) {
-        await this.processWhatsAppMessage(message);
-      }
-    } catch (error) {
-      console.error("Error al procesar el webhook de WhatsApp:", error);
+    // Agregar mensajes a la cola
+    messages.forEach((message) => this.messageQueue.enqueue(message));
+
+    // Iniciar el procesamiento si no está en curso
+    if (!this.isProcessing) {
+      this.processQueue();
     }
+  }
+
+  private async processQueue(): Promise<void> {
+    if (this.isProcessing) return;
+
+    this.isProcessing = true;
+
+    while (!this.messageQueue.isEmpty) {
+      const message = this.messageQueue.dequeue();
+      try {
+        await this.processWhatsAppMessage(message);
+      } catch (error) {
+        console.error(`Error al procesar el mensaje ${message.id}:`, error);
+      }
+    }
+
+    this.isProcessing = false;
   }
 
   private async processWhatsAppMessage(
