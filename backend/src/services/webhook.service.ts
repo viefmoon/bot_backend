@@ -102,20 +102,38 @@ export class WebhookService {
     res.json({ received: true });
   }
 
-  async handleWhatsAppWebhook(req: Request, body: WebhookBody): Promise<void> {
-    const { object, entry } = body;
+  async handleWhatsAppWebhook(req: Request, res: Response): Promise<void> {
+    const body = req.body as WebhookBody;
 
-    if (object === "whatsapp_business_account") {
-      for (const entryItem of entry) {
-        for (const change of entryItem.changes) {
-          const { value } = change;
-          if (value.messages && value.messages.length > 0) {
-            for (const message of value.messages) {
-              await this.handleIncomingWhatsAppMessage(message);
-            }
-          }
-        }
+    if (
+      body.object !== "whatsapp_business_account" ||
+      !body.entry ||
+      !Array.isArray(body.entry)
+    ) {
+      console.log("Webhook inválido o no es de WhatsApp Business");
+      res.sendStatus(400);
+      return;
+    }
+
+    const messages = body.entry.flatMap(
+      (entry) =>
+        entry.changes?.flatMap((change) => change.value?.messages || []) || []
+    );
+
+    if (messages.length === 0) {
+      console.log("No hay mensajes para procesar");
+      res.sendStatus(200);
+      return;
+    }
+
+    res.sendStatus(200);
+
+    try {
+      for (const message of messages) {
+        await this.handleIncomingWhatsAppMessage(message);
       }
+    } catch (error) {
+      console.error("Error al procesar el webhook de WhatsApp:", error);
     }
   }
 

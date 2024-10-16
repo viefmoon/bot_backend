@@ -28,22 +28,7 @@ export class WebhookController {
         console.log("Procesando webhook de Stripe");
         return await this.webhookService.handleStripeWebhook(req, res);
       } else {
-        const body = req.body;
-        const events = body.entry?.[0]?.changes?.[0]?.value?.messages;
-
-        if (events && events.length > 0) {
-          console.log("Recibido webhook de mensaje entrante de WhatsApp");
-          res.sendStatus(200);
-          this.webhookService
-            .handleWhatsAppWebhook(req, body)
-            .catch((error) => {
-              console.error("Error al procesar el webhook de WhatsApp:", error);
-            });
-
-          return;
-        } else {
-          return res.sendStatus(200);
-        }
+        return await this.webhookService.handleWhatsAppWebhook(req, res);
       }
     } catch (error) {
       console.error("Error al procesar el webhook:", error);
