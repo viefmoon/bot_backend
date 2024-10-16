@@ -116,29 +116,59 @@ export class WebhookService {
       return;
     }
 
+    // Responder inmediatamente a WhatsApp
+    res.sendStatus(200);
+
     const messages = body.entry.flatMap(
       (entry) =>
         entry.changes?.flatMap((change) => change.value?.messages || []) || []
     );
 
     if (messages.length === 0) {
-      res.sendStatus(200);
+      console.log("No hay mensajes para procesar");
       return;
     }
 
-    res.sendStatus(200);
-
     try {
+      // Procesar mensajes de forma síncrona
       for (const message of messages) {
-        if (this.isMessageTooOld(message)) {
-          console.log(`Mensaje ${message.id} es demasiado antiguo, ignorando.`);
-          continue;
-        }
-        console.log(`Procesando mensaje ${message.id}`);
-        await this.handleIncomingWhatsAppMessage(message);
+        await this.processWhatsAppMessage(message);
       }
     } catch (error) {
       console.error("Error al procesar el webhook de WhatsApp:", error);
+    }
+  }
+
+  private async processWhatsAppMessage(
+    message: WhatsAppMessage
+  ): Promise<void> {
+    if (this.isMessageTooOld(message)) {
+      console.log(`Mensaje ${message.id} es demasiado antiguo, ignorando.`);
+      return;
+    }
+
+    const existingMessage = await MessageLog.findOne({
+      where: { messageId: message.id },
+    });
+    if (existingMessage) {
+      console.log(`Mensaje ${message.id} ya procesado, ignorando.`);
+      return;
+    }
+
+    console.log(`Procesando mensaje ${message.id}`);
+
+    // Crear el registro de MessageLog antes de procesar
+    await MessageLog.create({ messageId: message.id, processed: false });
+
+    try {
+      await this.handleIncomingWhatsAppMessage(message);
+      // Actualizar el registro como procesado
+      await MessageLog.update(
+        { processed: true },
+        { where: { messageId: message.id } }
+      );
+    } catch (error) {
+      console.error(`Error al procesar el mensaje ${message.id}:`, error);
     }
   }
 
