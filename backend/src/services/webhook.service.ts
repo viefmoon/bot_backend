@@ -161,6 +161,7 @@ export class WebhookService {
     await MessageLog.create({ messageId: message.id, processed: false });
 
     try {
+      console.log("Procesando mensaje", message);
       await this.handleIncomingWhatsAppMessage(message);
       // Actualizar el registro como procesado
       await MessageLog.update(
@@ -224,7 +225,7 @@ export class WebhookService {
       );
       return;
     }
-
+    console.log("customer", customer);
     if (!customer.customerDeliveryInfo) {
       const otp = this.otpService.generateOTP();
       await this.otpService.storeOTP(from, otp);
