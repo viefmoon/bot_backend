@@ -76,7 +76,7 @@ const menu: any[] = [
     modifierTypes: [
       {
         id: "AM1",
-        name: "Extras Alitas",
+        name: "Modificadores Alitas",
         required: false,
         acceptsMultiple: true,
         modifiers: [
@@ -94,6 +94,11 @@ const menu: any[] = [
             id: "AM1-3",
             name: "Extra chile de aceite",
             price: 10,
+          },
+          {
+            id: "AM1-4",
+            name: "Extra doradas",
+            price: 0,
           },
         ],
       },
@@ -234,6 +239,24 @@ const menu: any[] = [
           },
         ],
       },
+      {
+        id: "EM2",
+        name: "Quitar ingredientes Ensalada",
+        required: false,
+        acceptsMultiple: true,
+        modifiers: [
+          { id: "EM2-1", name: "Sin pollo", price: 0 },
+          { id: "EM2-2", name: "Sin chile morrón", price: 0 },
+          { id: "EM2-3", name: "Sin elote", price: 0 },
+          { id: "EM2-4", name: "Sin lechuga", price: 0 },
+          { id: "EM2-5", name: "Sin jitomate", price: 0 },
+          { id: "EM2-6", name: "Sin zanahoria", price: 0 },
+          { id: "EM2-7", name: "Sin queso parmesano", price: 0 },
+          { id: "EM2-8", name: "Sin aderezo", price: 0 },
+          { id: "EM2-9", name: "Sin betabel crujiente", price: 0 },
+          { id: "EM2-10", name: "Sin jamón", price: 0 },
+        ],
+      },
     ],
   },
   {
@@ -253,42 +276,42 @@ const menu: any[] = [
         name: "Hamburguesa Especial",
         price: 95,
         ingredients:
-          "Carne de res, tocino, pierna, queso amarillo, queso asadero, cebolla, jitomate, lechuga, chile jalapeño, catsup, aderezo, crema, mostaza",
+          "Carne de res, tocino, pierna, queso amarillo, queso blanco, cebolla, jitomate, lechuga, chile jalapeño, catsup, aderezo, crema, mostaza",
       },
       {
         id: "HV3",
         name: "Hamburguesa Hawaiana",
         price: 95,
         ingredients:
-          "Carne de res, tocino, piña, jamon, queso amarillo, queso asadero, cebolla, jitomate, lechuga, chile jalapeño, catsup, aderezo, crema, mostaza",
+          "Carne de res, tocino, piña, jamon, queso amarillo, queso blanco, cebolla, jitomate, lechuga, chile jalapeño, catsup, aderezo, crema, mostaza",
       },
       {
         id: "HV4",
         name: "Hamburguesa Pollo",
         price: 100,
         ingredients:
-          "Pollo a la plancha, tocino, queso amarillo, queso asadero, cebolla, jitomate, lechuga, chile jalapeño, catsup, aderezo, crema, mostaza",
+          "Pollo a la plancha, tocino, queso amarillo, queso blanco, cebolla, jitomate, lechuga, chile jalapeño, catsup, aderezo, crema, mostaza",
       },
       {
         id: "HV5",
         name: "Hamburguesa BBQ",
         price: 100,
         ingredients:
-          "Carne de res, salsa bbq, tocino, queso amarillo, queso asadero, cebolla guisada, jitomate, lechuga, chile jalapeño, catsup, aderezo, crema, mostaza",
+          "Carne de res, salsa bbq, tocino, queso amarillo, queso blanco, cebolla guisada, jitomate, lechuga, chile jalapeño, catsup, aderezo, crema, mostaza",
       },
       {
         id: "HV6",
         name: "Hamburguesa Leñazo",
         price: 110,
         ingredients:
-          "Doble carne de sirlon, tocino, queso amarillo, queso asadero, cebolla guisada, jitomate, lechuga, chile jalapeño, catsup, aderezo, crema, mostaza",
+          "Doble carne de sirlon, tocino, queso amarillo, queso blanco, cebolla guisada, jitomate, lechuga, chile jalapeño, catsup, aderezo, crema, mostaza",
       },
       {
         id: "HV7",
         name: "Hamburguesa Cubana",
         price: 100,
         ingredients:
-          "Carne de res, tocino, pierna, salchicha, jamon, queso amarillo, cebolla, jitomate, lechuga, chile jalapeño, catsup, aderezo, crema, mostaza",
+          "Carne de res, tocino, pierna, salchicha, jamon, queso amarillo, queso blanco, cebolla, jitomate, lechuga, chile jalapeño, catsup, aderezo, crema, mostaza",
       },
     ],
     modifierTypes: [
@@ -346,6 +369,26 @@ const menu: any[] = [
             name: "Pollo en lugar de carne de res",
             price: 15,
           },
+        ],
+      },
+      {
+        id: "HM3",
+        name: "Quitar ingredientes Hamburguesa",
+        required: false,
+        acceptsMultiple: true,
+        modifiers: [
+          { id: "HM3-2", name: "Sin tocino", price: 0 },
+          { id: "HM3-3", name: "Sin queso amarillo", price: 0 },
+          { id: "HM3-4", name: "Sin queso blanco", price: 0 },
+          { id: "HM3-5", name: "Sin cebolla", price: 0 },
+          { id: "HM3-6", name: "Sin jitomate", price: 0 },
+          { id: "HM3-7", name: "Sin lechuga", price: 0 },
+          { id: "HM3-8", name: "Sin chile jalapeño", price: 0 },
+          { id: "HM3-9", name: "Sin catsup", price: 0 },
+          { id: "HM3-10", name: "Sin aderezo", price: 0 },
+          { id: "HM3-11", name: "Sin crema", price: 0 },
+          { id: "HM3-12", name: "Sin mostaza", price: 0 },
+          { id: "HM3-13", name: "Sin pierna", price: 0 },
         ],
       },
     ],
@@ -842,6 +885,21 @@ const menu: any[] = [
           {
             id: "PZ-M1-3",
             name: "Extra chile de aceite",
+            price: 0,
+          },
+          {
+            id: "PZ-M1-4",
+            name: "Extra dorada",
+            price: 0,
+          },
+          {
+            id: "PZ-M1-4",
+            name: "Menos dorada",
+            price: 0,
+          },
+          {
+            id: "PZ-M1-5",
+            name: "Sin salsa",
             price: 0,
           },
         ],

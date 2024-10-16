@@ -97,6 +97,7 @@ function extractMentionedProduct(productMessage, menu) {
     bestProduct = findBestVariant(bestProduct, messageWords, errors);
     bestProduct = findModifiers(bestProduct, messageWords, errors);
     bestProduct = findPizzaIngredients(bestProduct, productMessage, errors);
+    detectUnknownWords(productMessage, bestProduct, menu, errors);
     if (errors.length > 0) bestProduct.errors = errors;
     delete bestProduct.productVariants;
     delete bestProduct.modifierTypes;
@@ -457,6 +458,72 @@ function findPizzaIngredients(bestProduct, productMessage, errors) {
     }
   }
   return bestProduct;
+}
+
+// Función para detectar palabras desconocidas en el mensaje del producto
+function detectUnknownWords(productMessage, bestProduct, menu, errors) {
+  // Obtener todas las palabras conocidas del producto, variante, ingredientes y modificadores
+  const knownWords = new Set([
+    ...normalizeText(bestProduct.name),
+    ...(bestProduct.productVariant
+      ? normalizeText(bestProduct.productVariant.name)
+      : []),
+    ...(bestProduct.selectedModifiers
+      ? bestProduct.selectedModifiers.flatMap((mod) => normalizeText(mod.name))
+      : []),
+    ...(bestProduct.selectedPizzaIngredients
+      ? bestProduct.selectedPizzaIngredients.flatMap((ing) =>
+          normalizeText(ing.name)
+        )
+      : []),
+  ]);
+
+  // Normalizar el mensaje completo
+  const allMessageWords = normalizeText(productMessage);
+
+  // Filtrar las palabras que no son conocidas
+  const unknownWords = allMessageWords.filter((word) => !knownWords.has(word));
+
+  if (unknownWords.length > 0) {
+    // Puedes ajustar el umbral de similitud si es necesario
+    const SIMILARITY_THRESHOLD = 0.8;
+
+    // Obtener todos los ingredientes disponibles en el menú
+    const allAvailableIngredients = menu.flatMap((product) =>
+      product.pizzaIngredients ? product.pizzaIngredients : []
+    );
+
+    const unknownIngredients = [];
+
+    for (const word of unknownWords) {
+      let found = false;
+      for (const ingredient of allAvailableIngredients) {
+        const ingredientWords = normalizeText(ingredient.name);
+        for (const ingredientWord of ingredientWords) {
+          const similarity = stringSimilarity.compareTwoStrings(
+            word,
+            ingredientWord
+          );
+          if (similarity >= SIMILARITY_THRESHOLD) {
+            found = true;
+            break;
+          }
+        }
+        if (found) break;
+      }
+      if (!found) {
+        unknownIngredients.push(word);
+      }
+    }
+
+    if (unknownIngredients.length > 0) {
+      errors.push(
+        `Los siguientes ingredientes no están disponibles en el menú: ${unknownIngredients.join(
+          ", "
+        )}.`
+      );
+    }
+  }
 }
 
 export async function preprocessMessages(messages: any[]): Promise<
