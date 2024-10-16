@@ -26,6 +26,7 @@ interface WhatsAppMessage {
   type: string;
   id: string;
   text?: { body: string };
+  timestamp: string;
 }
 
 interface WebhookEntry {
@@ -130,11 +131,23 @@ export class WebhookService {
 
     try {
       for (const message of messages) {
+        if (this.isMessageTooOld(message)) {
+          console.log(`Mensaje ${message.id} es demasiado antiguo, ignorando.`);
+          continue;
+        }
         await this.handleIncomingWhatsAppMessage(message);
       }
     } catch (error) {
       console.error("Error al procesar el webhook de WhatsApp:", error);
     }
+  }
+
+  private isMessageTooOld(message: WhatsAppMessage): boolean {
+    const messageTimestamp = new Date(parseInt(message.timestamp) * 1000);
+    const currentTime = new Date();
+    const differenceInMinutes =
+      (currentTime.getTime() - messageTimestamp.getTime()) / (1000 * 60);
+    return differenceInMinutes > 1; // Ignorar mensajes de más de 1 minuto
   }
 
   private async handleIncomingWhatsAppMessage(
