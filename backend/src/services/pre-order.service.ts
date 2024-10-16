@@ -114,18 +114,37 @@ export class PreOrderService {
       const scheduledMinutes = scheduledHour * 60 + scheduledMinute;
 
       // Verificar si el tiempo programado está dentro del horario laborable ajustado
+      const adjustedOpeningTime = new Date(mexicoTime);
+      adjustedOpeningTime.setHours(
+        openingHour,
+        openingMinute - openingGracePeriod
+      );
+
+      const adjustedClosingTime = new Date(mexicoTime);
+      adjustedClosingTime.setHours(
+        closingHour,
+        closingMinute + closingGracePeriod
+      );
+
+      const adjustedOpeningTimeFormatted =
+        adjustedOpeningTime.toLocaleTimeString("es-MX", {
+          hour: "2-digit",
+          minute: "2-digit",
+          hour12: true,
+        });
+      const adjustedClosingTimeFormatted =
+        adjustedClosingTime.toLocaleTimeString("es-MX", {
+          hour: "2-digit",
+          minute: "2-digit",
+          hour12: true,
+        });
+
       if (
         scheduledMinutes < adjustedOpeningMinutes ||
         scheduledMinutes > adjustedClosingMinutes
       ) {
-        const openingTimeFormatted = `${openingHour
-          .toString()
-          .padStart(2, "0")}:${openingMinute.toString().padStart(2, "0")}`;
-        const closingTimeFormatted = `${closingHour
-          .toString()
-          .padStart(2, "0")}:${closingMinute.toString().padStart(2, "0")}`;
         throw new Error(
-          `⚠️ El tiempo programado está fuera del horario laborable. Por favor, programa tu pedido para después de las ${openingTimeFormatted}⏰🔓 o antes de las ${closingTimeFormatted} ⏰🔒.`
+          `⚠️ El tiempo programado está fuera del horario laborable. Por favor, programa tu pedido para después de las ${adjustedOpeningTimeFormatted}⏰🔓 o antes de las ${adjustedClosingTimeFormatted} ⏰🔒.`
         );
       }
 
