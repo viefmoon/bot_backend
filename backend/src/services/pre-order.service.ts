@@ -41,7 +41,8 @@ export class PreOrderService {
     mexicoNow.setHours(parseInt(hours, 10), parseInt(minutes, 10), 0, 0);
 
     // Convertir a UTC
-    fullScheduledDeliveryTime = new Date(mexicoNow.toISOString());
+          fullScheduledDeliveryTime = new Date(mexicoNow.toISOString());
+          console.log("fullScheduledDeliveryTime", fullScheduledDeliveryTime);
         }
       } else if (scheduledDeliveryTime instanceof Date) {
         // Es un objeto Date
