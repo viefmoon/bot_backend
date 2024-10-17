@@ -776,9 +776,9 @@ module.exports = {
 
     await queryInterface.createTable("Categories", {
       id: {
-        type: Sequelize.INTEGER,
+        type: Sequelize.STRING,
         primaryKey: true,
-        autoIncrement: true,
+        allowNull: false,
       },
       name: {
         type: Sequelize.STRING,
@@ -796,9 +796,9 @@ module.exports = {
 
     await queryInterface.createTable("Subcategories", {
       id: {
-        type: Sequelize.INTEGER,
+        type: Sequelize.STRING,
         primaryKey: true,
-        autoIncrement: true,
+        allowNull: false,
       },
       name: {
         type: Sequelize.STRING,
