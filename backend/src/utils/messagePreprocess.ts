@@ -24,13 +24,13 @@ interface MenuItem {
   productVariant?: ProductVariant;
   selectedModifiers?: Modifier[];
   selectedPizzaIngredients?: PizzaIngredient[];
-  errors?: string[];
 }
 
 interface PreprocessedContent {
   orderItems: {
     description: string;
     menuItem?: MenuItem;
+    errors?: string[];
   }[];
 }
 
@@ -562,8 +562,8 @@ export async function preprocessMessages(messages: any[]): Promise<
       console.log("preprocessedContent", JSON.stringify(preprocessedContent, null, 2));
 
       const allErrors = preprocessedContent.orderItems
-        .filter((item) => item.menuItem && item.menuItem.errors)
-        .flatMap((item) => item.menuItem.errors);
+      .filter((item) => item.errors)
+      .flatMap((item) => item.errors);
 
       if (allErrors.length > 0) {
         return {
