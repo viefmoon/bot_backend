@@ -564,7 +564,7 @@ export async function preprocessMessages(messages: any[]): Promise<
 
       const allErrors = preprocessedContent.orderItems
       .filter((item) => item.errors && item.errors.length > 0)
-      .map((item) => `Para "${item.description}": ${item.errors.join(", ")}`);
+      .map((item) => `Para "${item.description}": ${item.errors.join("")}`);
     
       if (allErrors.length > 0) {
         return {
