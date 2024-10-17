@@ -745,7 +745,7 @@ module.exports = {
         allowNull: true,
       },
       orderId: {
-        type: Sequelize.INTEGER.UNSIGNED,
+        type: Sequelize.INTEGER,
         allowNull: true,
         references: {
           model: "Orders",
@@ -755,7 +755,7 @@ module.exports = {
         onDelete: "SET NULL",
       },
       preOrderId: {
-        type: Sequelize.INTEGER.UNSIGNED,
+        type: Sequelize.INTEGER,
         allowNull: true,
         references: {
           model: "PreOrders",
@@ -805,7 +805,7 @@ module.exports = {
         allowNull: true,
       },
       categoryId: {
-        type: Sequelize.INTEGER,
+        type: Sequelize.STRING,
         allowNull: true,
         references: {
           model: "Categories",
