@@ -34,4 +34,17 @@ export class OrderController {
       updateStatusDto.status
     );
   }
+
+  @Get("unsynced")
+  async getUnsyncedOrders() {
+    return this.orderService.getUnsyncedOrders();
+  }
+
+  @Post("sync")
+  async syncOrder(@Body() syncData: { orderId: number; localId: number }) {
+    return this.orderService.updateOrderSyncStatus(
+      syncData.orderId,
+      syncData.localId
+    );
+  }
 }

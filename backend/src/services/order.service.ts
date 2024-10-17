@@ -450,4 +450,43 @@ export class OrderService {
     );
     return utcDate;
   }
+
+  async getUnsyncedOrders() {
+    return Order.findAll({
+      where: {
+        syncedWithLocal: false,
+      },
+      order: [["createdAt", "ASC"]],
+    });
+  }
+
+  async updateOrderSyncStatus(orderId: number, localId: number) {
+    const order = await Order.findByPk(orderId);
+    if (!order) {
+      throw new NotFoundException(`No se encontró la orden con ID ${orderId}`);
+    }
+
+    order.syncedWithLocal = true;
+    order.localId = localId;
+    await order.save();
+
+    return {
+      mensaje: `Orden ${orderId} sincronizada con éxito. ID local: ${localId}`,
+      orden: {
+        id: order.id,
+        localId: order.localId,
+        syncedWithLocal: order.syncedWithLocal,
+        fechaActualizacion: order.updatedAt.toLocaleString("es-MX", {
+          timeZone: "America/Mexico_City",
+          year: "numeric",
+          month: "2-digit",
+          day: "2-digit",
+          hour: "2-digit",
+          minute: "2-digit",
+          second: "2-digit",
+          hour12: true,
+        }),
+      },
+    };
+  }
 }
