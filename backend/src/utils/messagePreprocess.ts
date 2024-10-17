@@ -571,7 +571,7 @@ export async function preprocessMessages(messages: any[]): Promise<
 
       if (allErrors.length > 0) {
         return {
-          text: `❗ Hay algunos problemas con tu solicitud:\n\n${allErrors.join("\n\n")}\n\n🍽️ Recuerda que puedes solicitarme el menú disponible o revisar el catálogo en WhatsApp para ver los productos disponibles. 📱`,
+          text: `❗ Hay algunos problemas con tu solicitud:\n\n${allErrors.join("\n\n")}`,
           isDirectResponse: true,
           isRelevant: true,
         };
