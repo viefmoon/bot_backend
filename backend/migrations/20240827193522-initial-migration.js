@@ -112,6 +112,10 @@ module.exports = {
         type: Sequelize.STRING,
         allowNull: true,
       },
+      subcategoryId: {
+        type: Sequelize.STRING,
+        allowNull: false,
+      },
       createdAt: {
         allowNull: false,
         type: Sequelize.DATE,
@@ -769,6 +773,54 @@ module.exports = {
         type: Sequelize.DATE,
       },
     });
+
+    await queryInterface.createTable("Categories", {
+      id: {
+        type: Sequelize.INTEGER,
+        primaryKey: true,
+        autoIncrement: true,
+      },
+      name: {
+        type: Sequelize.STRING,
+        allowNull: true,
+      },
+      createdAt: {
+        allowNull: false,
+        type: Sequelize.DATE,
+      },
+      updatedAt: {
+        allowNull: false,
+        type: Sequelize.DATE,
+      },
+    });
+
+    await queryInterface.createTable("Subcategories", {
+      id: {
+        type: Sequelize.INTEGER,
+        primaryKey: true,
+        autoIncrement: true,
+      },
+      name: {
+        type: Sequelize.STRING,
+        allowNull: true,
+      },
+      categoryId: {
+        type: Sequelize.INTEGER,
+        allowNull: true,
+        references: {
+          model: "Categories",
+          key: "id",
+        },
+      },
+      createdAt: {
+        allowNull: false,
+        type: Sequelize.DATE,
+      },
+      updatedAt: {
+        allowNull: false,
+        type: Sequelize.DATE,
+      },
+    });
   },
 
   down: async (queryInterface, Sequelize) => {
@@ -791,5 +843,7 @@ module.exports = {
     await queryInterface.dropTable("NotificationPhones");
     await queryInterface.dropTable("CustomerDeliveryInfos");
     await queryInterface.dropTable("OrderDeliveryInfos");
+    await queryInterface.dropTable("Subcategories");
+    await queryInterface.dropTable("Categories");
   },
 };

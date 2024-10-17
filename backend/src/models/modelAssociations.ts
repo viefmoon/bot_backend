@@ -12,6 +12,8 @@ import Product from "./product";
 import ProductVariant from "./productVariant";
 import SelectedModifier from "./selectedModifier";
 import SelectedPizzaIngredient from "./selectedPizzaIngredient";
+import Category from "./category";
+import Subcategory from "./subcategory";
 
 // Customer associations
 Customer.hasOne(CustomerDeliveryInfo, {
@@ -151,4 +153,25 @@ Modifier.hasOne(Availability, {
   foreignKey: "id",
   constraints: false,
   scope: { type: "modifier" },
+});
+
+// Nuevas asociaciones para Category y Subcategory
+Category.hasMany(Subcategory, {
+  foreignKey: "categoryId",
+  as: "subcategories",
+});
+
+Subcategory.belongsTo(Category, {
+  foreignKey: "categoryId",
+  as: "category",
+});
+
+Subcategory.hasMany(Product, {
+  foreignKey: "subcategoryId",
+  as: "products",
+});
+
+Product.belongsTo(Subcategory, {
+  foreignKey: "subcategoryId",
+  as: "subcategory",
 });

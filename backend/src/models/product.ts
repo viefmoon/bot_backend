@@ -11,6 +11,7 @@ interface ProductAttributes {
   price?: number;
   category: string;
   ingredients?: string;
+  subcategoryId: string;
 }
 
 interface ProductCreationAttributes extends Optional<ProductAttributes, "id"> {}
@@ -24,6 +25,7 @@ class Product
   public price?: number;
   public category!: string;
   public ingredients?: string;
+  public subcategoryId: string;
   // Timestamps
   public readonly createdAt!: Date;
   public readonly updatedAt!: Date;
@@ -57,6 +59,10 @@ Product.init(
     ingredients: {
       type: DataTypes.STRING,
       allowNull: true,
+    },
+    subcategoryId: {
+      type: DataTypes.STRING,
+      allowNull: false,
     },
   },
   {
