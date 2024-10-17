@@ -171,8 +171,9 @@ function findBestVariant(bestProduct, messageWords, errors) {
     if (bestVariant && bestVariant.score >= SIMILARITY_THRESHOLDS.VARIANT) {
       bestProduct.productVariant = bestVariant;
     } else {
+      const variantesDisponibles = bestProduct.productVariants.map(v => v.name).join(", ");
       errors.push(
-        `Lo siento, no pude identificar en el menu una variante (requerida) válida para el producto.`
+        `Lo siento, en tu mensaje no identifico una variante válida para el producto "${bestProduct.name}". Las variantes disponibles son: ${variantesDisponibles}.`
       );
     }
   }
