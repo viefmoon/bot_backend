@@ -68,7 +68,11 @@ export class OrderService {
           attributes: ["quantity", "price", "comments"],
           include: [
             { model: Product, attributes: ["name", "price"] },
-            { model: ProductVariant, attributes: ["name", "price"] },
+            {
+              model: ProductVariant,
+              as: "productVariant",
+              attributes: ["name", "price"],
+            },
             {
               model: SelectedPizzaIngredient,
               as: "selectedPizzaIngredients",
