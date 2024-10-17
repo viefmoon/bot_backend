@@ -24,6 +24,8 @@ interface OrderAttributes {
   finishedAt?: Date; // Nuevo campo
   createdAt: Date; // Añadido
   updatedAt: Date; // Añadido
+  syncedWithLocal: boolean; // Nueva bandera
+  localId?: number; // Nuevo campo para ID local
 }
 
 interface OrderCreationAttributes extends Optional<OrderAttributes, "id"> {}
@@ -58,6 +60,9 @@ class Order
 
   //associations
   public orderItems?: OrderItem[];
+
+  public syncedWithLocal!: boolean; // Nueva bandera
+  public localId?: number; // Nuevo campo para ID local
 }
 
 Order.init(
@@ -119,6 +124,15 @@ Order.init(
     },
     finishedAt: {
       type: DataTypes.DATE,
+      allowNull: true,
+    },
+    syncedWithLocal: {
+      type: DataTypes.BOOLEAN,
+      allowNull: false,
+      defaultValue: false,
+    },
+    localId: {
+      type: DataTypes.INTEGER,
       allowNull: true,
     },
     createdAt: {

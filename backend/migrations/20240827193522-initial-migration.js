@@ -329,6 +329,15 @@ module.exports = {
         type: Sequelize.STRING,
         allowNull: true,
       },
+      syncedWithLocal: {
+        type: Sequelize.BOOLEAN,
+        allowNull: false,
+        defaultValue: false,
+      },
+      localId: {
+        type: Sequelize.INTEGER,
+        allowNull: true,
+      },
       createdAt: {
         allowNull: false,
         type: Sequelize.DATE,
