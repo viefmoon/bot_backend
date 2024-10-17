@@ -25,18 +25,25 @@ testConnection();
 
 const categories = [
   {
+    id: "COM",
     name: "Comida",
-    subcategories: ["Entradas", "Pizzas", "Hamburguesas", "Ensaladas"],
+    subcategories: [
+      { id: "COM-S1", name: "Entradas" },
+      { id: "COM-S2", name: "Pizzas" },
+      { id: "COM-S3", name: "Hamburguesas" },
+      { id: "COM-S4", name: "Ensaladas" },
+    ],
   },
   {
+    id: "BEB",
     name: "Bebida",
     subcategories: [
-      "Frappes y Postres",
-      "Jarras",
-      "Cocteleria",
-      "Bebidas",
-      "Cafe Caliente",
-      "Refrescos",
+      { id: "BEB-S1", name: "Frappes y Postres" },
+      { id: "BEB-S2", name: "Jarras" },
+      { id: "BEB-S3", name: "Cocteleria" },
+      { id: "BEB-S4", name: "Bebidas" },
+      { id: "BEB-S5", name: "Cafe Caliente" },
+      { id: "BEB-S6", name: "Refrescos" },
     ],
   },
 ];
@@ -852,10 +859,14 @@ const seedMenuItems = async (): Promise<void> => {
   try {
     // Crear categorías y subcategorías
     for (const category of categories) {
-      const createdCategory = await Category.create({ name: category.name });
-      for (const subcategoryName of category.subcategories) {
+      const createdCategory = await Category.create({
+        id: category.id,
+        name: category.name,
+      });
+      for (const subcategory of category.subcategories) {
         await Subcategory.create({
-          name: subcategoryName,
+          id: subcategory.id,
+          name: subcategory.name,
           categoryId: createdCategory.id,
         });
       }
