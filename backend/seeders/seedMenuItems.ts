@@ -837,12 +837,12 @@ const products = [
                 price: 0,
               },
               {
-                id: "PZ-M1-4",
+                id: "PZ-M1-5",
                 name: "Menos dorada",
                 price: 0,
               },
               {
-                id: "PZ-M1-5",
+                id: "PZ-M1-6",
                 name: "Sin salsa",
                 price: 0,
               },
