@@ -461,68 +461,51 @@ function findPizzaIngredients(bestProduct, productMessage, errors) {
 }
 
 // Función para detectar palabras desconocidas en el mensaje del producto
-function detectUnknownWords(productMessage, bestProduct, menu, errors) {
-  // Obtener todas las palabras conocidas del producto, variante, ingredientes y modificadores
-  const knownWords = new Set([
-    ...normalizeText(bestProduct.name),
-    ...(bestProduct.productVariant
-      ? normalizeText(bestProduct.productVariant.name)
-      : []),
-    ...(bestProduct.selectedModifiers
-      ? bestProduct.selectedModifiers.flatMap((mod) => normalizeText(mod.name))
-      : []),
-    ...(bestProduct.selectedPizzaIngredients
-      ? bestProduct.selectedPizzaIngredients.flatMap((ing) =>
-          normalizeText(ing.name)
-        )
-      : []),
-  ]);
-
-  // Normalizar el mensaje completo
-  const allMessageWords = normalizeText(productMessage);
-
-  // Filtrar las palabras que no son conocidas
-  const unknownWords = allMessageWords.filter((word) => !knownWords.has(word));
-
-  if (unknownWords.length > 0) {
-    // Puedes ajustar el umbral de similitud si es necesario
-    const SIMILARITY_THRESHOLD = 0.8;
-
-    // Obtener todos los ingredientes disponibles en el menú
-    const allAvailableIngredients = menu.flatMap((product) =>
-      product.pizzaIngredients ? product.pizzaIngredients : []
+function detectUnknownWords(productMessage, bestProduct, errors) {
+  const productNameWords = new Set(normalizeText(bestProduct.name));
+  const variantNameWords = new Set();
+  if (bestProduct.productVariant) {
+    normalizeText(bestProduct.productVariant.name).forEach((word) =>
+      variantNameWords.add(word)
     );
+  }
 
-    const unknownIngredients = [];
-
-    for (const word of unknownWords) {
-      let found = false;
-      for (const ingredient of allAvailableIngredients) {
-        const ingredientWords = normalizeText(ingredient.name);
-        for (const ingredientWord of ingredientWords) {
-          const similarity = stringSimilarity.compareTwoStrings(
-            word,
-            ingredientWord
-          );
-          if (similarity >= SIMILARITY_THRESHOLD) {
-            found = true;
-            break;
-          }
-        }
-        if (found) break;
-      }
-      if (!found) {
-        unknownIngredients.push(word);
-      }
-    }
-
-    if (unknownIngredients.length > 0) {
-      errors.push(
-        `Los siguientes ingredientes no están disponibles en el menú: ${unknownIngredients.join(
-          ", "
-        )}.`
+  const selectedModifierWords = new Set();
+  if (bestProduct.selectedModifiers && bestProduct.selectedModifiers.length > 0) {
+    for (const modifier of bestProduct.selectedModifiers) {
+      normalizeText(modifier.name).forEach((word) =>
+        selectedModifierWords.add(word)
       );
     }
+  }
+
+  const pizzaIngredientWords = new Set();
+  if (bestProduct.selectedPizzaIngredients && bestProduct.selectedPizzaIngredients.length > 0) {
+    for (const ingredient of bestProduct.selectedPizzaIngredients) {
+      normalizeText(ingredient.name).forEach((word) =>
+        pizzaIngredientWords.add(word)
+      );
+    }
+  }
+
+  const knownWords = new Set([
+    ...productNameWords,
+    ...variantNameWords,
+    ...selectedModifierWords,
+    ...pizzaIngredientWords,
+  ]);
+
+  const messageWords = normalizeText(productMessage);
+  const unknownWords = messageWords.filter(word => {
+    return !Array.from(knownWords).some(knownWord => 
+      stringSimilarity.compareTwoStrings(word, knownWord) >= SIMILARITY_THRESHOLDS.WORD
+    );
+  });
+
+  if (unknownWords.length > 0) {
+    errors.push(
+      `Las siguientes palabras no se reconocen en el menú: ${unknownWords.join(", ")}.`
+    );
   }
 }
 
