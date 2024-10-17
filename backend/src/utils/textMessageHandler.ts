@@ -205,7 +205,7 @@ async function processAndGenerateAIResponse(
     }
 
     if (preprocessedContent.warnings && preprocessedContent.warnings.length > 0) {
-      const warningMessage = "Advertencias:\n" + preprocessedContent.warnings.join("\n");
+      const warningMessage = "📝 Observaciones:\n" + preprocessedContent.warnings.join("\n");
       await sendWhatsAppMessage(conversationId, warningMessage);
     }
 
