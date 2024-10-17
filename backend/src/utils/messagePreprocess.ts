@@ -495,12 +495,17 @@ function detectUnknownWords(productMessage, bestProduct, errors) {
     ...pizzaIngredientWords,
   ]);
 
+
   const messageWords = normalizeText(productMessage);
+
+  console.log("knownWords", knownWords);
+  console.log("messageWords", messageWords);
   const unknownWords = messageWords.filter(word => {
     return !Array.from(knownWords).some(knownWord => 
       stringSimilarity.compareTwoStrings(word, knownWord as string) >= SIMILARITY_THRESHOLDS.WORD
     );
   });
+  console.log("unknownWords", unknownWords);  
 
   if (unknownWords.length > 0) {
     errors.push(
