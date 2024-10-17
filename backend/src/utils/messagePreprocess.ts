@@ -97,7 +97,7 @@ function extractMentionedProduct(productMessage, menu) {
     bestProduct = findBestVariant(bestProduct, messageWords, errors);
     bestProduct = findModifiers(bestProduct, messageWords, errors);
     bestProduct = findPizzaIngredients(bestProduct, productMessage, errors);
-    detectUnknownWords(productMessage, bestProduct, menu, errors);
+    detectUnknownWords(productMessage, bestProduct, errors);
     if (errors.length > 0) bestProduct.errors = errors;
     delete bestProduct.productVariants;
     delete bestProduct.modifierTypes;
