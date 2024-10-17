@@ -564,11 +564,11 @@ export async function preprocessMessages(messages: any[]): Promise<
 
       const allErrors = preprocessedContent.orderItems
       .filter((item) => item.errors && item.errors.length > 0)
-      .map((item) => `Para "${item.description}":\n${item.errors.join("\n")}`);
+      .map((item) => `Para "${item.description}": ${item.errors.join(", ")}`);
     
     if (allErrors.length > 0) {
       return {
-        text: `❗ Hay algunos problemas con tu solicitud:\n\n${allErrors.join(
+        text: `❗ Hay algunos problemas con tu solicitud:\n${allErrors.join(
           "\n"
         )}\n\n🍽️ Recuerda que puedes solicitarme el menú disponible o revisar el catálogo en WhatsApp para ver los productos disponibles. 📱`,
         isDirectResponse: true,
