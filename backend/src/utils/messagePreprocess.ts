@@ -559,6 +559,7 @@ export async function preprocessMessages(messages: any[]): Promise<
           Object.assign(item, extractedProduct);
         }
       }
+      console.log("preprocessedContent", JSON.stringify(preprocessedContent, null, 2));
 
       const allErrors = preprocessedContent.orderItems
         .filter((item) => item.menuItem && item.menuItem.errors)
