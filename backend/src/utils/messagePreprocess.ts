@@ -498,7 +498,7 @@ function detectUnknownWords(productMessage, bestProduct, errors) {
   const messageWords = normalizeText(productMessage);
   const unknownWords = messageWords.filter(word => {
     return !Array.from(knownWords).some(knownWord => 
-      stringSimilarity.compareTwoStrings(word, knownWord) >= SIMILARITY_THRESHOLDS.WORD
+      stringSimilarity.compareTwoStrings(word, knownWord as string) >= SIMILARITY_THRESHOLDS.WORD
     );
   });
 
