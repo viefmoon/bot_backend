@@ -98,10 +98,13 @@ function extractMentionedProduct(productMessage, menu) {
     bestProduct = findModifiers(bestProduct, messageWords, errors);
     bestProduct = findPizzaIngredients(bestProduct, productMessage, errors);
     detectUnknownWords(productMessage, bestProduct, errors);
-    if (errors.length > 0) bestProduct.errors = errors;
+    if (errors.length > 0){
+      bestProduct.errors = errors;
+    }
     delete bestProduct.productVariants;
     delete bestProduct.modifierTypes;
     delete bestProduct.pizzaIngredients;
+    console.log("bestProduct", bestProduct);
     return removeScoreField(bestProduct);
   } else {
     errors.push(
