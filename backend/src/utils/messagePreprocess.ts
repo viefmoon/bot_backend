@@ -519,7 +519,7 @@ function detectUnknownWords(productMessage, bestProduct, warnings) {
 
   if (unknownWords.length > 0) {
     warnings.push(
-      `Las siguientes palabras no se reconocen en el menú: ${unknownWords.join(", ")}.`
+      `No encontre los siguientes ingredientes: ${unknownWords.join(", ")}.`
     );
   }
 }
@@ -577,8 +577,14 @@ export async function preprocessMessages(messages: any[]): Promise<
         .map((item) => `Para "${item.description}": ${item.warnings.join("")}`);
 
       if (allErrors.length > 0) {
+        let message = `❗ Hay algunos problemas con tu solicitud:\n${allErrors.join(", ")}`;
+        
+        if (allWarnings.length > 0) {
+          message += `\n\n⚠️ Además, ten en cuenta lo siguiente:\n${allWarnings.join(", ")}`;
+        }
+        
         return {
-          text: `❗ Hay algunos problemas con tu solicitud:\n${allErrors.join(", ")}`,
+          text: message,
           isDirectResponse: true,
           isRelevant: true,
         };
