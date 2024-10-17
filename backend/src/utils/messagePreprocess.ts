@@ -31,7 +31,9 @@ interface PreprocessedContent {
     description: string;
     menuItem?: MenuItem;
     errors?: string[];
+    warnings?: string[];
   }[];
+  warnings?: string[]; // Añade esta línea
 }
 
 const SIMILARITY_THRESHOLDS = {
@@ -563,9 +565,13 @@ export async function preprocessMessages(messages: any[]): Promise<
       console.log("preprocessedContent", JSON.stringify(preprocessedContent, null, 2));
 
       const allErrors = preprocessedContent.orderItems
-      .filter((item) => item.errors && item.errors.length > 0)
-      .map((item) => `Para "${item.description}": ${item.errors.join("")}`);
-    
+        .filter((item) => item.errors && item.errors.length > 0)
+        .map((item) => `Para "${item.description}": ${item.errors.join("")}`);
+      
+      const allWarnings = preprocessedContent.orderItems
+        .filter((item) => item.warnings && item.warnings.length > 0)
+        .map((item) => `Para "${item.description}": ${item.warnings.join("")}`);
+
       if (allErrors.length > 0) {
         return {
           text: `❗ Hay algunos problemas con tu solicitud:\n${allErrors.join(", ")}`,
@@ -573,6 +579,11 @@ export async function preprocessMessages(messages: any[]): Promise<
           isRelevant: true,
         };
       }
+
+      if (allWarnings.length > 0) {
+        preprocessedContent.warnings = allWarnings;
+      }
+
       return preprocessedContent;
     } else if (toolCall.function.name === "send_menu") {
       const fullMenu = await getFullMenu();

@@ -35,6 +35,7 @@ interface PreprocessedContent {
   scheduledDeliveryTime?: string | Date;
   text: string;
   isRelevant: boolean;
+  warnings?: string[];
   confirmationMessage?: string;
 }
 
@@ -201,6 +202,11 @@ async function processAndGenerateAIResponse(
           confirmationMessage: preprocessedContent.confirmationMessage,
         },
       ];
+    }
+
+    if (preprocessedContent.warnings && preprocessedContent.warnings.length > 0) {
+      const warningMessage = "Advertencias:\n" + preprocessedContent.warnings.join("\n");
+      await sendWhatsAppMessage(conversationId, warningMessage);
     }
 
     const preOrderService = new PreOrderService();
