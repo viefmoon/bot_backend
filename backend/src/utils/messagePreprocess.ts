@@ -108,7 +108,7 @@ function extractMentionedProduct(productMessage, menu) {
     return removeScoreField(bestProduct);
   } else {
     errors.push(
-      `Lo siento, no pude identificar dentro del menu un producto válido para "${productMessage}". 😕`
+      `Lo siento, no pude identificar dentro del menu disponible. 😕`
     );
     return { errors };
   }
@@ -173,7 +173,7 @@ function findBestVariant(bestProduct, messageWords, errors) {
     } else {
       const variantesDisponibles = bestProduct.productVariants.map(v => v.name).join(", ");
       errors.push(
-        `Lo siento, en tu mensaje no identifico una variante válida para el producto "${bestProduct.name}" 😕. Las variantes disponibles son: ${variantesDisponibles} 📋.`
+        `No identifico una variante válida" 😕. Las variantes disponibles son: ${variantesDisponibles} 📋.`
       );
     }
   }
@@ -243,7 +243,7 @@ function findModifiers(bestProduct, messageWords, errors) {
 
       if (matchedModifiers.length === 0 && required) {
         errors.push(
-          `Lo siento, no pude identificar en el menu modificadores para el grupo requerido '${modifierTypeName}'. 😕`
+          `No pude identificar en el menu modificadores para el grupo requerido '${modifierTypeName}'. 😕`
         );
       } else if (matchedModifiers.length > 0) {
         if (!acceptsMultiple) {
@@ -455,7 +455,7 @@ function findPizzaIngredients(bestProduct, productMessage, errors) {
 
     if (matchedIngredients.length === 0) {
       errors.push(
-        `Lo siento, no pude identificar en el menú ingredientes para el producto "${productMessage}". 😕`
+        `No pude identificar ingredientes validos para tu pizza. 😕`
       );
     } else {
       bestProduct.selectedPizzaIngredients = matchedIngredients;
@@ -564,17 +564,17 @@ export async function preprocessMessages(messages: any[]): Promise<
 
       const allErrors = preprocessedContent.orderItems
       .filter((item) => item.errors)
-      .flatMap((item) => item.errors);
-
-      if (allErrors.length > 0) {
-        return {
-          text: `Se encontraron los siguientes problemas con tu pedido:\n${allErrors.join(
-            "\n"
-          )}\nRecuerda que puedes solicitarme el menú disponible o revisar el catálogo en WhatsApp para ver los productos disponibles.`,
-          isDirectResponse: true,
-          isRelevant: true,
-        };
-      }
+      .flatMap((item) => item.errors.map(error => `Para "${item.description}": ${error}`));
+    
+    if (allErrors.length > 0) {
+      return {
+        text: `❗ Hay algunos problemas con tu solicitud:\n\n${allErrors.join(
+          "\n"
+        )}\n\n🍽️ Recuerda que puedes solicitarme el menú disponible o revisar el catálogo en WhatsApp para ver los productos disponibles. 📱`,
+        isDirectResponse: true,
+        isRelevant: true,
+      };
+    }
       return preprocessedContent;
     } else if (toolCall.function.name === "send_menu") {
       const fullMenu = await getFullMenu();
