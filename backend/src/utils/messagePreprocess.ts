@@ -33,7 +33,7 @@ interface PreprocessedContent {
     errors?: string[];
     warnings?: string[];
   }[];
-  warnings?: string[]; // Añade esta línea
+  warnings?: string[];
 }
 
 const SIMILARITY_THRESHOLDS = {
@@ -48,6 +48,7 @@ function extractMentionedProduct(productMessage, menu) {
   console.log("productMessage", productMessage);
   const messageWords = normalizeText(productMessage);
   const errors = [];
+  const warnings = [];
   const productWordsSet = new Set<string>();
 
   const normalizedProducts = menu.map((product) => {
@@ -99,9 +100,12 @@ function extractMentionedProduct(productMessage, menu) {
     bestProduct = findBestVariant(bestProduct, messageWords, errors);
     bestProduct = findModifiers(bestProduct, messageWords, errors);
     bestProduct = findPizzaIngredients(bestProduct, productMessage, errors);
-    detectUnknownWords(productMessage, bestProduct, errors);
+    detectUnknownWords(productMessage, bestProduct, warnings);
     if (errors.length > 0){
       bestProduct.errors = errors;
+    }
+    if (warnings.length > 0){
+      bestProduct.warnings = warnings;
     }
     delete bestProduct.productVariants;
     delete bestProduct.modifierTypes;
@@ -467,7 +471,7 @@ function findPizzaIngredients(bestProduct, productMessage, errors) {
 }
 
 // Función para detectar palabras desconocidas en el mensaje del producto
-function detectUnknownWords(productMessage, bestProduct, errors) {
+function detectUnknownWords(productMessage, bestProduct, warnings) {
   const productNameWords = new Set(normalizeText(bestProduct.name));
   const variantNameWords = new Set();
   if (bestProduct.productVariant) {
@@ -514,7 +518,7 @@ function detectUnknownWords(productMessage, bestProduct, errors) {
   console.log("unknownWords", unknownWords);  
 
   if (unknownWords.length > 0) {
-    errors.push(
+    warnings.push(
       `Las siguientes palabras no se reconocen en el menú: ${unknownWords.join(", ")}.`
     );
   }
