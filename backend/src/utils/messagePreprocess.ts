@@ -563,18 +563,19 @@ export async function preprocessMessages(messages: any[]): Promise<
       console.log("preprocessedContent", JSON.stringify(preprocessedContent, null, 2));
 
       const allErrors = preprocessedContent.orderItems
-      .filter((item) => item.errors)
-      .flatMap((item) => item.errors.map(error => `Para "${item.description}": ${error}`));
-    
-    if (allErrors.length > 0) {
-      return {
-        text: `❗ Hay algunos problemas con tu solicitud:\n\n${allErrors.join(
-          "\n"
-        )}\n\n🍽️ Recuerda que puedes solicitarme el menú disponible o revisar el catálogo en WhatsApp para ver los productos disponibles. 📱`,
-        isDirectResponse: true,
-        isRelevant: true,
-      };
-    }
+        .filter((item) => item.errors && item.errors.length > 0)
+        .map((item) => {
+          const errorMessages = item.errors.join("\n");
+          return `Para "${item.description}":\n${errorMessages}`;
+        });
+
+      if (allErrors.length > 0) {
+        return {
+          text: `❗ Hay algunos problemas con tu solicitud:\n\n${allErrors.join("\n\n")}\n\n🍽️ Recuerda que puedes solicitarme el menú disponible o revisar el catálogo en WhatsApp para ver los productos disponibles. 📱`,
+          isDirectResponse: true,
+          isRelevant: true,
+        };
+      }
       return preprocessedContent;
     } else if (toolCall.function.name === "send_menu") {
       const fullMenu = await getFullMenu();
