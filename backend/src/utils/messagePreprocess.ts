@@ -173,7 +173,7 @@ function findBestVariant(bestProduct, messageWords, errors) {
     } else {
       const variantesDisponibles = bestProduct.productVariants.map(v => v.name).join(", ");
       errors.push(
-        `Lo siento, en tu mensaje no identifico una variante válida para el producto "${bestProduct.name}". Las variantes disponibles son: ${variantesDisponibles}.`
+        `Lo siento, en tu mensaje no identifico una variante válida para el producto "${bestProduct.name}" 😕. Las variantes disponibles son: ${variantesDisponibles} 📋.`
       );
     }
   }
