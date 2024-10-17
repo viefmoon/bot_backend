@@ -71,11 +71,11 @@ const products = [
         ],
       },
       {
-        id: "MC",
+        id: "MICH",
         name: "Michelada",
         productVariants: [
-          { id: "MCV1", name: "Michelada clara", price: 80 },
-          { id: "MCV2", name: "Michelada oscura", price: 80 },
+          { id: "MV1", name: "Michelada clara", price: 80 },
+          { id: "MV2", name: "Michelada oscura", price: 80 },
         ],
       },
       {
