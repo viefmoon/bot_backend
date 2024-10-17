@@ -9,7 +9,6 @@ interface ProductAttributes {
   id: string;
   name: string;
   price?: number;
-  category: string;
   ingredients?: string;
   subcategoryId: string;
 }
@@ -23,7 +22,6 @@ class Product
   public id!: string;
   public name!: string;
   public price?: number;
-  public category!: string;
   public ingredients?: string;
   public subcategoryId: string;
   // Timestamps
@@ -51,10 +49,6 @@ Product.init(
     price: {
       type: DataTypes.FLOAT,
       allowNull: true,
-    },
-    category: {
-      type: DataTypes.STRING,
-      allowNull: false,
     },
     ingredients: {
       type: DataTypes.STRING,

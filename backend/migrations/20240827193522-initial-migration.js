@@ -104,10 +104,6 @@ module.exports = {
         type: Sequelize.FLOAT,
         allowNull: true,
       },
-      category: {
-        type: Sequelize.STRING,
-        allowNull: false,
-      },
       ingredients: {
         type: Sequelize.STRING,
         allowNull: true,
