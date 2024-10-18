@@ -15,6 +15,12 @@ export class OrderController {
     return this.orderService.getOrders(date, status);
   }
 
+  @Get("unsynced")
+  async getUnsyncedOrders() {
+    console.log("getUnsyncedOrders");
+    return this.orderService.getUnsyncedOrders();
+  }
+
   @Get(":clientId")
   async getOrdersByClient(@Param("clientId") clientId: string) {
     return this.orderService.getOrdersByClient(clientId);
@@ -33,12 +39,6 @@ export class OrderController {
       updateStatusDto.orderId,
       updateStatusDto.status
     );
-  }
-
-  @Get("unsynced")
-  async getUnsyncedOrders() {
-    console.log("getUnsyncedOrders");
-    return this.orderService.getUnsyncedOrders();
   }
 
   @Post("sync")
