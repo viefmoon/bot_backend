@@ -37,6 +37,7 @@ export class OrderController {
 
   @Get("unsynced")
   async getUnsyncedOrders() {
+    console.log("getUnsyncedOrders");
     return this.orderService.getUnsyncedOrders();
   }
 
