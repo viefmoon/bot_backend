@@ -452,12 +452,43 @@ export class OrderService {
   }
 
   async getUnsyncedOrders() {
-    return Order.findAll({
+    const unsyncedOrders = await Order.findAll({
       where: {
         syncedWithLocal: false,
       },
       order: [["createdAt", "ASC"]],
+      include: [
+        {
+          model: OrderItem,
+          as: "orderItems",
+          include: [
+            { model: Product },
+            { model: ProductVariant, as: "productVariant" },
+            {
+              model: SelectedPizzaIngredient,
+              as: "selectedPizzaIngredients",
+              include: [{ model: PizzaIngredient }],
+            },
+            {
+              model: SelectedModifier,
+              as: "selectedModifiers",
+              include: [{ model: Modifier }],
+            },
+          ],
+        },
+        {
+          model: OrderDeliveryInfo,
+          as: "orderDeliveryInfo",
+        },
+      ],
     });
+
+    console.log(
+      "Órdenes no sincronizadas recuperadas:",
+      JSON.stringify(unsyncedOrders, null, 2)
+    );
+
+    return unsyncedOrders;
   }
 
   async updateOrderSyncStatus(orderId: number, localId: number) {
