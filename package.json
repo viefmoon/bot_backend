@@ -8,10 +8,8 @@
     "install:all": "npm install && npm --prefix backend install && npm --prefix frontend install"
   },
   "devDependencies": {
-    "concurrently": "^7.0.0"
+    "concurrently": "^7.0.0",
+    "eslint-config-next": "latest"
   },
-  "dependencies": {
-    "@nestjs/config": "^3.2.3",
-    "@nestjs/schedule": "^4.1.1"
-  }
+  "dependencies": {}
 }
