@@ -93,13 +93,6 @@ const OrderCard = ({ order, onUpdateStatus }) => {
             <h5 className="text-lg lg:text-xl font-bold text-gray-800 mr-4">
               Pedido #{order.dailyOrderNumber}
             </h5>
-            {/* Añadir información de sincronización y ID local */}
-            <span className="text-sm lg:text-base text-gray-600 mr-2">
-              {order.syncedWithLocal ? "Sincronizado" : "No sincronizado"}
-            </span>
-            <span className="text-sm lg:text-base text-gray-600">
-              ID Local: {order.localId || "N/A"}
-            </span>
             <span
               className={`px-2 py-1 rounded-full text-xs lg:text-sm font-semibold text-white mr-2 ${getOrderTypeColor(
                 order.orderType
@@ -194,6 +187,20 @@ const OrderCard = ({ order, onUpdateStatus }) => {
                 )}
               </div>
             )}
+          </div>
+          <div>
+            <p className="text-gray-600">ID Local:</p>
+            <p className="font-medium">{order.localId || "N/A"}</p>
+          </div>
+          <div>
+            <p className="text-gray-600">Sincronizado:</p>
+            <p
+              className={`font-medium ${
+                order.syncedWithLocal ? "text-green-600" : "text-red-600"
+              }`}
+            >
+              {order.syncedWithLocal ? "Sí" : "No"}
+            </p>
           </div>
         </div>
         {isExpanded && (
