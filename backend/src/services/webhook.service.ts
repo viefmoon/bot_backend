@@ -1,7 +1,5 @@
 import { Injectable } from "@nestjs/common";
 import { Request, Response } from "express";
-import { ConfigService } from "@nestjs/config";
-import { handleWebhookVerification } from "../handlers/webhookVerificationHandler";
 import { OtpService } from "./otp.service";
 import { RawBodyRequest } from "@nestjs/common";
 import Stripe from "stripe";
@@ -16,33 +14,16 @@ import {
 import { sendWhatsAppMessage } from "../utils/whatsAppUtils";
 import { getUTCTime, isBusinessOpen } from "../utils/timeUtils";
 import { checkMessageRateLimit } from "../utils/messageRateLimit";
-import { BANNED_USER_MESSAGE } from "../config/predefinedMessages";
+import { BANNED_USER_MESSAGE, DELIVERY_INFO_REGISTRATION_MESSAGE, PAYMENT_CONFIRMATION_MESSAGE, RESTAURANT_NOT_ACCEPTING_ORDERS_MESSAGE } from "../config/predefinedMessages";
 import { handleTextMessage } from "../utils/textMessageHandler";
 import { handleInteractiveMessage } from "../utils/interactiveMessageHandler";
 import { handleAudioMessage } from "../utils/audioMessageHandler";
 import { Queue } from "queue-typescript";
 import * as moment from "moment-timezone";
-
-interface WhatsAppMessage {
-  from: string;
-  type: string;
-  id: string;
-  text?: { body: string };
-  timestamp: string;
-}
-
-interface WebhookEntry {
-  changes: Array<{
-    value: {
-      messages?: WhatsAppMessage[];
-    };
-  }>;
-}
-
-interface WebhookBody {
-  object: string;
-  entry: WebhookEntry[];
-}
+import { RESTAURANT_CLOSED_MESSAGE } from "../config/predefinedMessages";
+import { WhatsAppMessage, WebhookBody } from "../types/webhook.types";
+import * as dotenv from "dotenv";
+dotenv.config();
 
 @Injectable()
 export class WebhookService {
@@ -51,11 +32,10 @@ export class WebhookService {
   private processingClients: Set<string> = new Set();
 
   constructor(
-    private configService: ConfigService,
     private otpService: OtpService
   ) {
     this.stripeClient = new Stripe(
-      this.configService.get<string>("STRIPE_SECRET_KEY")!,
+      process.env.STRIPE_SECRET_KEY!,
       {
         apiVersion: "2024-06-20",
       }
@@ -63,7 +43,28 @@ export class WebhookService {
   }
 
   async handleWebhookVerification(req: Request, res: Response) {
-    handleWebhookVerification(req, res);
+    try {
+      const {
+        "hub.mode": mode,
+        "hub.verify_token": token,
+        "hub.challenge": challenge,
+      } = req.query as { [key: string]: string };
+
+      console.log("Modo recibido:", mode);
+      console.log("Token recibido:", token);
+      console.log("Token esperado:", process.env.WHATSAPP_VERIFY_TOKEN);
+
+      if (mode === "subscribe" && token === process.env.WHATSAPP_VERIFY_TOKEN) {
+        console.log("Webhook verificado exitosamente");
+        res.status(200).send(challenge);
+      } else {
+        console.error("Fallo en la verificación del webhook");
+        res.status(403).end();
+      }
+    } catch (error) {
+      console.error("Error en la verificación del webhook:", error);
+      res.status(500).end();
+    }
   }
 
   async handleStripeWebhook(
@@ -77,7 +78,7 @@ export class WebhookService {
       event = this.stripeClient.webhooks.constructEvent(
         req.rawBody,
         sig,
-        this.configService.get<string>("STRIPE_WEBHOOK_SECRET")!
+        process.env.STRIPE_WEBHOOK_SECRET!
       );
     } catch (err) {
       console.error(`Error de firma de webhook: ${(err as Error).message}`);
@@ -86,21 +87,25 @@ export class WebhookService {
     }
 
     if (event.type === "checkout.session.completed") {
-      const session = event.data.object as Stripe.Checkout.Session;
-      const order = await Order.findOne({
-        where: { stripeSessionId: session.id },
-      });
-      if (order) {
-        await order.update({ paymentStatus: "paid" });
-        const customer = await Customer.findOne({
-          where: { stripeCustomerId: session.customer as string },
+      try {
+        const session = event.data.object as Stripe.Checkout.Session;
+        const order = await Order.findOne({
+          where: { stripeSessionId: session.id },
         });
-        if (customer) {
-          await sendWhatsAppMessage(
-            customer.clientId,
-            `¡Tu pago para la orden #${order.dailyOrderNumber} ha sido confirmado! 🎉✅ Gracias por tu compra. 🛍️😊`
-          );
+        if (order) {
+          await order.update({ paymentStatus: "paid" });
+          const customer = await Customer.findOne({
+            where: { stripeCustomerId: session.customer as string },
+          });
+          if (customer) {
+            await sendWhatsAppMessage(
+              customer.clientId,
+              PAYMENT_CONFIRMATION_MESSAGE(order.dailyOrderNumber)
+            );
+          }
         }
+      } catch (error) {
+        console.error("Error al procesar el evento de pago completado:", error);
       }
     }
 
@@ -172,7 +177,7 @@ export class WebhookService {
       console.log(`Procesando mensaje ${message.id} del cliente ${clientId}`);
 
       try {
-        // Establecer un tiempo límite de 30 segundos para procesar cada mensaje
+        // Establecer un tiempo límite de 20 segundos para procesar cada mensaje
         await Promise.race([
           this.handleIncomingWhatsAppMessage(message),
           new Promise((_, reject) =>
@@ -186,7 +191,14 @@ export class WebhookService {
         console.error(
           `Error al procesar mensaje ${message.id}: ${error.message}`
         );
-        // Aquí puedes agregar lógica adicional para manejar el error, como reintentar o notificar
+        try {
+          await sendWhatsAppMessage(
+            clientId,
+            "Lo siento, ha ocurrido un error al procesar tu mensaje. Por favor, intenta nuevamente más tarde."
+          );
+        } catch (sendError) {
+          console.error("Error al enviar mensaje de error:", sendError);
+        }
       }
     }
 
@@ -209,74 +221,81 @@ export class WebhookService {
   ): Promise<void> {
     const { from, type, id } = message;
 
-    const config = await RestaurantConfig.findOne();
+    try {
+      const config = await RestaurantConfig.findOne();
 
-    if (await MessageLog.findOne({ where: { messageId: id } })) {
-      return;
-    }
-    await MessageLog.create({ messageId: id, processed: true });
+      if (await MessageLog.findOne({ where: { messageId: id } })) {
+        return;
+      }
+      await MessageLog.create({ messageId: id, processed: true });
 
-    let customer = await Customer.findOne({
-      where: { clientId: from },
-      include: [{ model: CustomerDeliveryInfo, as: "customerDeliveryInfo" }],
-    });
-    if (!customer) {
-      customer = await Customer.create({ clientId: from });
-    }
+      let customer = await Customer.findOne({
+        where: { clientId: from },
+        include: [{ model: CustomerDeliveryInfo, as: "customerDeliveryInfo" }],
+      });
+      if (!customer) {
+        customer = await Customer.create({ clientId: from });
+      }
 
-    await customer.update({ lastInteraction: new Date() });
+      await customer.update({ lastInteraction: new Date() });
 
-    if (await this.checkBannedCustomer(from)) {
-      await this.sendBannedMessage(from);
-      return;
-    }
+      if (await this.checkBannedCustomer(from)) {
+        await this.sendBannedMessage(from);
+        return;
+      }
 
-    if (await checkMessageRateLimit(from)) return;
+      if (await checkMessageRateLimit(from)) return;
 
-    if (!isBusinessOpen()) {
-      await sendWhatsAppMessage(
-        from,
-        "Lo sentimos, el restaurante está cerrado en este momento."
-      );
-      return;
-    }
-
-    if (!config || !config.acceptingOrders) {
-      await sendWhatsAppMessage(
-        from,
-        "Lo sentimos, el restaurante no está aceptando pedidos en este momento, puedes intentar más tarde o llamar al restaurante."
-      );
-      return;
-    }
-
-    if (!customer.customerDeliveryInfo) {
-      const otp = this.otpService.generateOTP();
-      await this.otpService.storeOTP(from, otp);
-      const registrationLink = `${process.env.FRONTEND_BASE_URL}/delivery-info-registration/${from}?otp=${otp}`;
-
-      await sendWhatsAppMessage(
-        from,
-        `¡Hola! 👋 Antes de continuar, necesitamos que registres tu información de entrega. 📝\n\nPor favor, usa este enlace: 🔗 ${registrationLink}\n\n⚠️ Este enlace es válido por un tiempo limitado por razones de seguridad. 🔒`
-      );
-      return;
-    }
-
-    switch (type) {
-      case "text":
-        await handleTextMessage(from, message.text.body);
-        break;
-      case "interactive":
-        await handleInteractiveMessage(from, message);
-        break;
-      case "audio":
-        await handleAudioMessage(from, message);
-        break;
-      default:
-        console.log(`Tipo de mensaje no manejado: ${type}`);
+      if (!isBusinessOpen()) {
         await sendWhatsAppMessage(
           from,
-          "Lo siento, no puedo procesar este tipo de mensaje. Por favor, envía un mensaje de texto, interactivo o de audio."
+          RESTAURANT_CLOSED_MESSAGE
         );
+        return;
+      }
+
+      if (!config || !config.acceptingOrders) {
+        await sendWhatsAppMessage(
+          from,
+          RESTAURANT_NOT_ACCEPTING_ORDERS_MESSAGE
+        );
+        return;
+      }
+      if (!customer.customerDeliveryInfo) {
+        const otp = this.otpService.generateOTP();
+        await this.otpService.storeOTP(from, otp);
+        const registrationLink = `${process.env.FRONTEND_BASE_URL}/delivery-info-registration/${from}?otp=${otp}`;
+      
+        await sendWhatsAppMessage(
+          from,
+          DELIVERY_INFO_REGISTRATION_MESSAGE(registrationLink)
+        );
+        return;
+      }
+
+      switch (type) {
+        case "text":
+          await handleTextMessage(from, message.text.body);
+          break;
+        case "interactive":
+          await handleInteractiveMessage(from, message);
+          break;
+        case "audio":
+          await handleAudioMessage(from, message);
+          break;
+        default:
+          console.log(`Tipo de mensaje no manejado: ${type}`);
+          await sendWhatsAppMessage(
+            from,
+            "Lo siento, no puedo procesar este tipo de mensaje. Por favor, envía un mensaje de texto, interactivo o de audio."
+          );
+      }
+    } catch (error) {
+      console.error(`Error al procesar el mensaje de WhatsApp: ${error.message}`);
+      await sendWhatsAppMessage(
+        from,
+        "Lo siento, ha ocurrido un error al procesar tu mensaje. Por favor, intenta nuevamente más tarde."
+      );
     }
   }
 

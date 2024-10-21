@@ -76,7 +76,7 @@ async function handlePreOrderDeliveryModification(
     }
 
     const clientId = preOrder.clientId;
-    const preOrderId = preOrder.id; // Obtener el ID de la preorden
+    const preOrderId = preOrder.id;
 
     const otp = otpService.generateOTP();
     await otpService.storeOTP(clientId, otp);

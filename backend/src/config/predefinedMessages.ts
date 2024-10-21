@@ -175,3 +175,36 @@ export const CHANGE_DELIVERY_INFO_MESSAGE = (updateLink: string) => `
 🚚 ¡Actualiza tu información de entrega! 📝
 🔗 Por favor, utiliza este enlace para hacer cambios: ${updateLink}
 ⏳ ¡Ojo! Este enlace tiene validez limitada por motivos de seguridad. 🔒`;
+
+export const RESTAURANT_NOT_ACCEPTING_ORDERS_MESSAGE = `
+🚫🍽️ Lo sentimos, el restaurante no está aceptando pedidos en este momento. 😔
+
+⏳ Puedes intentar más tarde o llamar directamente al restaurante:
+📞 Teléfono fijo: 3919160126
+📱 Celular: 3338423316
+
+¡Gracias por tu comprensión! 🙏
+`;
+
+export const RESTAURANT_CLOSED_MESSAGE = `
+🚫🍕 Lo sentimos, el restaurante está cerrado en este momento. 😴
+
+🕒 Nuestro horario de atención es:
+   🗓️ Martes a sábado: 6:00 PM - 11:00 PM
+   🗓️ Domingos: 2:00 PM - 11:00 PM
+   🚫 Lunes: Cerrado
+
+🙏 Gracias por tu comprensión. ¡Esperamos atenderte pronto! 😊
+`;
+
+export const DELIVERY_INFO_REGISTRATION_MESSAGE = (registrationLink: string) => `
+¡Hola! 👋 Antes de continuar, necesitamos que registres tu información de entrega. 📝
+
+Por favor, usa este enlace: 🔗 ${registrationLink}
+
+⚠️ Este enlace es válido por un tiempo limitado por razones de seguridad. 🔒
+`;
+
+export const PAYMENT_CONFIRMATION_MESSAGE = (orderNumber: number) => `
+¡Tu pago para la orden #${orderNumber} ha sido confirmado! 🎉✅ Gracias por tu compra. 🛍️😊
+`;
