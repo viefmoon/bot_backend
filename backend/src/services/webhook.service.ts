@@ -14,7 +14,12 @@ import {
 import { sendWhatsAppMessage } from "../utils/whatsAppUtils";
 import { getUTCTime, isBusinessOpen } from "../utils/timeUtils";
 import { checkMessageRateLimit } from "../utils/messageRateLimit";
-import { BANNED_USER_MESSAGE, DELIVERY_INFO_REGISTRATION_MESSAGE, PAYMENT_CONFIRMATION_MESSAGE, RESTAURANT_NOT_ACCEPTING_ORDERS_MESSAGE } from "../config/predefinedMessages";
+import {
+  BANNED_USER_MESSAGE,
+  DELIVERY_INFO_REGISTRATION_MESSAGE,
+  PAYMENT_CONFIRMATION_MESSAGE,
+  RESTAURANT_NOT_ACCEPTING_ORDERS_MESSAGE,
+} from "../config/predefinedMessages";
 import { handleTextMessage } from "../utils/textMessageHandler";
 import { handleInteractiveMessage } from "../utils/interactiveMessageHandler";
 import { handleAudioMessage } from "../utils/audioMessageHandler";
@@ -23,7 +28,7 @@ import * as moment from "moment-timezone";
 import { RESTAURANT_CLOSED_MESSAGE } from "../config/predefinedMessages";
 import { WhatsAppMessage, WebhookBody } from "../types/webhook.types";
 import * as dotenv from "dotenv";
-import logger from '../utils/logger';
+import logger from "../utils/logger";
 dotenv.config();
 
 @Injectable()
@@ -32,15 +37,10 @@ export class WebhookService {
   private clientQueues: Map<string, Queue<WhatsAppMessage>> = new Map();
   private processingClients: Set<string> = new Set();
 
-  constructor(
-    private otpService: OtpService
-  ) {
-    this.stripeClient = new Stripe(
-      process.env.STRIPE_SECRET_KEY!,
-      {
-        apiVersion: "2024-06-20",
-      }
-    );
+  constructor(private otpService: OtpService) {
+    this.stripeClient = new Stripe(process.env.STRIPE_SECRET_KEY!, {
+      apiVersion: "2024-06-20",
+    });
   }
 
   async handleWebhookVerification(req: Request, res: Response) {
@@ -106,7 +106,9 @@ export class WebhookService {
           }
         }
       } catch (error) {
-        logger.error(`Error al procesar el evento de pago completado: ${error}`);
+        logger.error(
+          `Error al procesar el evento de pago completado: ${error}`
+        );
       }
     }
 
@@ -213,9 +215,9 @@ export class WebhookService {
   private isMessageTooOld(message: WhatsAppMessage): boolean {
     const messageTimestamp = moment(parseInt(message.timestamp) * 1000);
     const currentTime = getUTCTime();
-    const differenceInMinutes = currentTime.diff(messageTimestamp, 'minutes');
+    const differenceInMinutes = currentTime.diff(messageTimestamp, "minutes");
     return differenceInMinutes > 1; // Ignorar mensajes de más de 1 minuto
-  } 
+  }
 
   private async handleIncomingWhatsAppMessage(
     message: WhatsAppMessage
@@ -247,13 +249,13 @@ export class WebhookService {
 
       if (await checkMessageRateLimit(from)) return;
 
-      if (!isBusinessOpen()) {
-        await sendWhatsAppMessage(
-          from,
-          RESTAURANT_CLOSED_MESSAGE
-        );
-        return;
-      }
+      // if (!isBusinessOpen()) {
+      //   await sendWhatsAppMessage(
+      //     from,
+      //     RESTAURANT_CLOSED_MESSAGE
+      //   );
+      //   return;
+      // }
 
       if (!config || !config.acceptingOrders) {
         await sendWhatsAppMessage(
@@ -266,7 +268,7 @@ export class WebhookService {
         const otp = this.otpService.generateOTP();
         await this.otpService.storeOTP(from, otp);
         const registrationLink = `${process.env.FRONTEND_BASE_URL}/delivery-info-registration/${from}?otp=${otp}`;
-      
+
         await sendWhatsAppMessage(
           from,
           DELIVERY_INFO_REGISTRATION_MESSAGE(registrationLink)
@@ -292,7 +294,9 @@ export class WebhookService {
           );
       }
     } catch (error) {
-      logger.error(`Error al procesar el mensaje de WhatsApp: ${error.message}`);
+      logger.error(
+        `Error al procesar el mensaje de WhatsApp: ${error.message}`
+      );
       await sendWhatsAppMessage(
         from,
         "Lo siento, ha ocurrido un error al procesar tu mensaje. Por favor, intenta nuevamente más tarde."
