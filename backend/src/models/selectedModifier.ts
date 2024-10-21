@@ -19,7 +19,7 @@ class SelectedModifier
   public readonly updatedAt!: Date;
 
   // Asociación
-  public Modifier?: Modifier;
+  public modifier?: Modifier;
 }
 
 SelectedModifier.init(

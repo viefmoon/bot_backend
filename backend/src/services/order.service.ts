@@ -341,7 +341,7 @@ export class OrderService {
               : null;
             const selectedModifiers = await SelectedModifier.findAll({
               where: { orderItemId: item.id },
-              include: [{ model: Modifier }],
+              include: [{ model: Modifier, as: "modifier" }],
             });
             const selectedPizzaIngredients =
               await SelectedPizzaIngredient.findAll({
@@ -353,8 +353,8 @@ export class OrderService {
               cantidad: item.quantity,
               nombre: productVariant ? productVariant.name : product.name,
               modificadores: selectedModifiers.map((sm) => ({
-                nombre: sm.Modifier.name,
-                precio: sm.Modifier.price,
+                nombre: sm.modifier.name, // Cambiamos 'sm.Modifier.name' a 'sm.modifier.name'
+                precio: sm.modifier.price, // Cambiamos 'sm.Modifier.price' a 'sm.modifier.price'
               })),
               ingredientes_pizza: selectedPizzaIngredients.map((spi) => ({
                 nombre:
