@@ -345,7 +345,7 @@ export async function handleOrderModification(
             {
               model: SelectedModifier,
               as: "selectedModifiers",
-              include: [{ model: Modifier }],
+              include: [{ model: Modifier, as: "modifier" }],
             },
           ],
         },

@@ -476,7 +476,7 @@ export class OrderService {
             {
               model: SelectedModifier,
               as: "selectedModifiers",
-              include: [{ model: Modifier }],
+              include: [{ model: Modifier, as: "modifier" }],
             },
           ],
         },
