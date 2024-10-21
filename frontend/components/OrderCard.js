@@ -193,13 +193,15 @@ const OrderCard = ({ order, onUpdateStatus }) => {
             )}
           </div>
           <div>
-            <p className="text-gray-600">ID Local:</p>
+            <p className="text-gray-600">ID Servidor Local:</p>
             <p
               className={`font-medium ${getSyncStatusColor(
                 order.syncedWithLocal
               )}`}
             >
-              {order.syncedWithLocal ? `#${order.localId}` : "No sincronizado"}
+              {order.syncedWithLocal
+                ? `Pedido #${order.localId}`
+                : "No sincronizado"}
             </p>
           </div>
         </div>
