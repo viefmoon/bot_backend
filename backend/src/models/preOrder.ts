@@ -4,7 +4,7 @@ import OrderDeliveryInfo from "./orderDeliveryInfo";
 
 interface PreOrderAttributes {
   id: number;
-  orderItems: any; // Considera usar un tipo más específico si es posible
+  orderItems: any;
   orderType: "delivery" | "pickup";
   scheduledDeliveryTime?: Date;
   clientId: string;

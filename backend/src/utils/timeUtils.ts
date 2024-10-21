@@ -8,17 +8,12 @@ import logger from "./logger";
 
 const TIME_ZONE = process.env.TIME_ZONE;
 
-interface BusinessHours {
-  opening: number;
-  closing: number;
-}
-
 const parseTime = (timeString: string): number => {
   const [hours, minutes] = timeString.split(":").map(Number);
   return hours * 60 + minutes;
 };
 
-const businessHours: { [key: string]: BusinessHours } = {
+const businessHours: { [key: string]: { opening: number; closing: number } } = {
   weekdays: {
     opening: parseTime(process.env.OPENING_HOURS_TUES_SAT),
     closing: parseTime(process.env.CLOSING_HOURS_TUES_SAT),
@@ -42,7 +37,7 @@ const isBusinessOpen = (): boolean => {
   const dayOfWeek = now.day();
   const currentMinutes = now.hours() * 60 + now.minutes();
 
-  let hours: BusinessHours;
+  let hours: { opening: number; closing: number };
 
   if (dayOfWeek === 0) { // Sunday
     hours = businessHours.sunday;

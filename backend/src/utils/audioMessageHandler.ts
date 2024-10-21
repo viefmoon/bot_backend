@@ -11,17 +11,9 @@ import logger from "./logger";
 
 const unlinkAsync = promisify(unlink);
 
-interface AudioData {
-  url: string;
-}
-
-interface WhisperResponse {
-  text: string;
-}
-
 async function getAudioUrl(audioId: string): Promise<string | null> {
   try {
-    const { data } = await axios.get<AudioData>(
+    const { data } = await axios.get<{ url: string }>(
       `https://graph.facebook.com/v19.0/${audioId}`,
       {
         headers: {
@@ -61,7 +53,7 @@ async function transcribeAudio(audioUrl: string): Promise<string> {
     formData.append("file", createReadStream(audioPath));
     formData.append("model", "whisper-1");
 
-    const { data: whisperData } = await axios.post<WhisperResponse>(
+    const { data: whisperData } = await axios.post<{ text: string }>(
       "https://api.openai.com/v1/audio/transcriptions",
       formData,
       {

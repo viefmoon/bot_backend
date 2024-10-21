@@ -30,7 +30,6 @@ export class WebhookController {
         logger.info("Procesando webhook de Stripe");
         return await this.webhookService.handleStripeWebhook(req, res);
       } else {
-        logger.info("Procesando webhook de WhatsApp");
         return await this.webhookService.handleWhatsAppWebhook(req, res);
       }
     } catch (error) {
