@@ -249,8 +249,8 @@ const OrderCard = ({ order, onUpdateStatus }) => {
                             <ul className="list-disc list-inside pl-2">
                               {item.selectedModifiers.map((mod, modIndex) => (
                                 <li key={modIndex}>
-                                  {mod.modifier.name} (+$
-                                  {mod.modifier.price.toFixed(2)})
+                                  {mod.Modifier.name} (+$
+                                  {mod.Modifier.price.toFixed(2)})
                                 </li>
                               ))}
                             </ul>
@@ -297,12 +297,6 @@ const OrderCard = ({ order, onUpdateStatus }) => {
       </div>
     </div>
   );
-};
-
-const renderModifiers = (modifiers) => {
-  return modifiers
-    .map((mod) => `${mod.Modifier.name} (+$${mod.Modifier.price.toFixed(2)})`)
-    .join(", ");
 };
 
 const translateOrderType = (type) => {
