@@ -1,5 +1,6 @@
 import { Controller, Post, Body } from "@nestjs/common";
 import { sendWhatsAppMessage } from "../utils/whatsAppUtils";
+import logger from "../utils/logger";
 
 @Controller("whatsapp")
 export class WhatsAppController {
@@ -15,10 +16,11 @@ export class WhatsAppController {
           message: "Mensaje enviado con éxito",
         };
       } else {
+        logger.error("Error al enviar el mensaje de WhatsApp");
         return { success: false, message: "Error al enviar el mensaje" };
       }
     } catch (error) {
-      console.error("Error al enviar mensaje de WhatsApp:", error);
+      logger.error(`Error al enviar mensaje de WhatsApp: ${error.message}`, { error });
       return { success: false, message: "Error al enviar el mensaje" };
     }
   }

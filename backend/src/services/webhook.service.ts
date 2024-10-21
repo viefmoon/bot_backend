@@ -23,6 +23,7 @@ import * as moment from "moment-timezone";
 import { RESTAURANT_CLOSED_MESSAGE } from "../config/predefinedMessages";
 import { WhatsAppMessage, WebhookBody } from "../types/webhook.types";
 import * as dotenv from "dotenv";
+import logger from '../utils/logger';
 dotenv.config();
 
 @Injectable()
@@ -50,19 +51,19 @@ export class WebhookService {
         "hub.challenge": challenge,
       } = req.query as { [key: string]: string };
 
-      console.log("Modo recibido:", mode);
-      console.log("Token recibido:", token);
-      console.log("Token esperado:", process.env.WHATSAPP_VERIFY_TOKEN);
+      logger.info(`Modo recibido: ${mode}`);
+      logger.info(`Token recibido: ${token}`);
+      logger.info(`Token esperado: ${process.env.WHATSAPP_VERIFY_TOKEN}`);
 
       if (mode === "subscribe" && token === process.env.WHATSAPP_VERIFY_TOKEN) {
-        console.log("Webhook verificado exitosamente");
+        logger.info("Webhook verificado exitosamente");
         res.status(200).send(challenge);
       } else {
-        console.error("Fallo en la verificación del webhook");
+        logger.error("Fallo en la verificación del webhook");
         res.status(403).end();
       }
     } catch (error) {
-      console.error("Error en la verificación del webhook:", error);
+      logger.error(`Error en la verificación del webhook: ${error}`);
       res.status(500).end();
     }
   }
@@ -81,7 +82,7 @@ export class WebhookService {
         process.env.STRIPE_WEBHOOK_SECRET!
       );
     } catch (err) {
-      console.error(`Error de firma de webhook: ${(err as Error).message}`);
+      logger.error(`Error de firma de webhook: ${(err as Error).message}`);
       res.status(400).send(`Webhook Error: ${(err as Error).message}`);
       return;
     }
@@ -105,7 +106,7 @@ export class WebhookService {
           }
         }
       } catch (error) {
-        console.error("Error al procesar el evento de pago completado:", error);
+        logger.error(`Error al procesar el evento de pago completado: ${error}`);
       }
     }
 
@@ -120,7 +121,7 @@ export class WebhookService {
       !body.entry ||
       !Array.isArray(body.entry)
     ) {
-      console.log("Webhook inválido o no es de WhatsApp Business");
+      logger.warn("Webhook inválido o no es de WhatsApp Business");
       res.sendStatus(400);
       return;
     }
@@ -142,13 +143,13 @@ export class WebhookService {
         if (!this.isMessageTooOld(message)) {
           this.enqueueMessage(message);
         } else {
-          console.log(`Mensaje ${message.id} es demasiado antiguo, ignorando.`);
+          logger.info(`Mensaje ${message.id} es demasiado antiguo, ignorando.`);
         }
       }
 
       this.processClientQueues();
     } catch (error) {
-      console.error("Error al procesar el webhook de WhatsApp:", error);
+      logger.error(`Error al procesar el webhook de WhatsApp: ${error}`);
     }
   }
 
@@ -174,7 +175,7 @@ export class WebhookService {
     const queue = this.clientQueues.get(clientId);
     while (queue.length > 0) {
       const message = queue.dequeue();
-      console.log(`Procesando mensaje ${message.id} del cliente ${clientId}`);
+      logger.info(`Procesando mensaje ${message.id} del cliente ${clientId}`);
 
       try {
         // Establecer un tiempo límite de 20 segundos para procesar cada mensaje
@@ -188,7 +189,7 @@ export class WebhookService {
           ),
         ]);
       } catch (error) {
-        console.error(
+        logger.error(
           `Error al procesar mensaje ${message.id}: ${error.message}`
         );
         try {
@@ -197,7 +198,7 @@ export class WebhookService {
             "Lo siento, ha ocurrido un error al procesar tu mensaje. Por favor, intenta nuevamente más tarde."
           );
         } catch (sendError) {
-          console.error("Error al enviar mensaje de error:", sendError);
+          logger.error(`Error al enviar mensaje de error: ${sendError}`);
         }
       }
     }
@@ -284,14 +285,14 @@ export class WebhookService {
           await handleAudioMessage(from, message);
           break;
         default:
-          console.log(`Tipo de mensaje no manejado: ${type}`);
+          logger.info(`Tipo de webhook de WhatsApp no manejado: ${type}`);
           await sendWhatsAppMessage(
             from,
             "Lo siento, no puedo procesar este tipo de mensaje. Por favor, envía un mensaje de texto, interactivo o de audio."
           );
       }
     } catch (error) {
-      console.error(`Error al procesar el mensaje de WhatsApp: ${error.message}`);
+      logger.error(`Error al procesar el mensaje de WhatsApp: ${error.message}`);
       await sendWhatsAppMessage(
         from,
         "Lo siento, ha ocurrido un error al procesar tu mensaje. Por favor, intenta nuevamente más tarde."

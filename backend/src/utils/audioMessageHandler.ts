@@ -7,6 +7,7 @@ import FormData = require("form-data");
 import { sendWhatsAppMessage } from "./whatsAppUtils";
 import { handleTextMessage } from "./textMessageHandler";
 import { Readable } from "stream";
+import logger from "./logger";
 
 const unlinkAsync = promisify(unlink);
 
@@ -30,7 +31,7 @@ async function getAudioUrl(audioId: string): Promise<string | null> {
     );
     return data.url;
   } catch (error) {
-    console.error("Error al obtener la URL del audio:", error);
+    logger.error("Error al obtener la URL del audio:", error);
     return null;
   }
 }
@@ -73,10 +74,10 @@ async function transcribeAudio(audioUrl: string): Promise<string> {
 
     return whisperData.text;
   } catch (error) {
-    console.error("Error al transcribir el audio:", error);
+    logger.error("Error al transcribir el audio:", error);
     return "Lo siento, no pude transcribir el mensaje de audio.";
   } finally {
-    await unlinkAsync(audioPath).catch(console.error);
+    await unlinkAsync(audioPath).catch(logger.error);
   }
 }
 
@@ -91,7 +92,7 @@ export async function handleAudioMessage(
     const transcribedText = await transcribeAudio(audioUrl);
     await handleTextMessage(from, transcribedText);
   } catch (error) {
-    console.error("Error al procesar el mensaje de audio:", error);
+    logger.error("Error al procesar el mensaje de audio:", error);
     await sendWhatsAppMessage(
       from,
       "Hubo un problema al procesar tu mensaje de audio. Por favor, intenta nuevamente o envia un mensaje de texto.",

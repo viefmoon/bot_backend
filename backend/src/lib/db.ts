@@ -1,4 +1,5 @@
 import { Sequelize } from "sequelize";
+import logger from '../utils/logger';
 const dotenv = require("dotenv");
 dotenv.config();
 
@@ -29,9 +30,9 @@ const sequelize = new Sequelize(
 const connectDB = async (): Promise<void> => {
   try {
     await sequelize.authenticate();
-    console.log("Conexión a la base de datos establecida con éxito.");
+    logger.info("Conexión a la base de datos establecida con éxito.");
   } catch (error) {
-    console.error("No se pudo conectar a la base de datos:", error);
+    logger.error("No se pudo conectar a la base de datos:", error);
     process.exit(1);
   }
 };

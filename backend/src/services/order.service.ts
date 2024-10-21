@@ -15,12 +15,13 @@ import {
   OrderDeliveryInfo,
   RestaurantConfig,
 } from "../models";
-import { getNextDailyOrderNumber } from "../utils/orderUtils";
+import { getNextDailyOrderNumber } from "../utils/timeUtils";
 import { CreateOrderDto } from "../dto/create-order.dto";
 import { PizzaHalf, IngredientAction } from "../models/selectedPizzaIngredient";
 import { sendWhatsAppMessage } from "../utils/whatsAppUtils";
 import { Op } from "sequelize";
 import { DateTime } from "luxon";
+import logger from "../utils/logger";
 
 export type OrderStatus =
   | "created"
@@ -125,6 +126,7 @@ export class OrderService {
 
     const config = await RestaurantConfig.findOne();
     if (!config || !config.acceptingOrders) {
+      logger.warn("Intento de crear orden cuando el restaurante no está aceptando pedidos");
       throw new BadRequestException(
         "Lo sentimos, el restaurante no está aceptando pedidos en este momento, puedes intentar mas tarde o llamar al restaurante."
       );
@@ -378,9 +380,11 @@ export class OrderService {
   }
 
   async updateOrderStatus(orderId: number, newStatus: OrderStatus) {
+    logger.info(`Actualizando estado de la orden ${orderId} a ${newStatus}`);
     const order = await Order.findByPk(orderId);
 
     if (!order) {
+      logger.error(`No se encontró la orden con ID ${orderId}`);
       throw new NotFoundException(`No se encontró la orden con ID ${orderId}`);
     }
 
@@ -441,16 +445,6 @@ export class OrderService {
     }
   }
 
-  private convertToUTC(date: Date, fromTimeZone: string): Date {
-    const localDate = new Date(
-      date.toLocaleString("en-US", { timeZone: fromTimeZone })
-    );
-    const utcDate = new Date(
-      localDate.getTime() + localDate.getTimezoneOffset() * 60000
-    );
-    return utcDate;
-  }
-
   async getUnsyncedOrders() {
     const unsyncedOrders = await Order.findAll({
       where: {
@@ -482,11 +476,6 @@ export class OrderService {
         },
       ],
     });
-
-    console.log(
-      "Órdenes no sincronizadas recuperadas:",
-      JSON.stringify(unsyncedOrders, null, 2)
-    );
 
     return unsyncedOrders;
   }

@@ -7,6 +7,7 @@ import {
   Modifier,
   Availability,
 } from "../models";
+import logger from "../utils/logger";
 
 @Injectable()
 export class MenuService {
@@ -69,9 +70,7 @@ export class MenuService {
       });
       return menu;
     } catch (error) {
-      // Mejorar el manejo de errores
-      console.error("Error al recuperar el menú:", error);
-      console.error("Stack trace:", error.stack);
+      logger.error(`Error al recuperar el menú: ${error.message}`, { error });
       throw new Error(`Error al recuperar el menú: ${error.message}`);
     }
   }

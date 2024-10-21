@@ -22,7 +22,6 @@ export class PreOrderService {
       orderData;
     let totalCost = 0;
     let fullScheduledDeliveryTime: Date | null = null;
-    console.log("scheduledDeliveryTime", scheduledDeliveryTime);
 
     const config = await RestaurantConfig.findOne();
 
@@ -61,7 +60,6 @@ export class PreOrderService {
             .padStart(2, "0")}:${minutes.toString().padStart(2, "0")}:00-06:00`; // Ajusta el offset según corresponda (-05:00 o -06:00)
 
           fullScheduledDeliveryTime = new Date(scheduledDateTimeString);
-          console.log("fullScheduledDeliveryTime", fullScheduledDeliveryTime);
         }
       } else if (scheduledDeliveryTime instanceof Date) {
         // Es un objeto Date

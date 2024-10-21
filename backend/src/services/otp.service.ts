@@ -5,6 +5,7 @@ import {
   verifyOTP,
   cleanupExpiredOTPs,
 } from "../utils/otp";
+import logger from "../utils/logger";
 
 @Injectable()
 export class OtpService implements OnModuleInit, OnModuleDestroy {
@@ -26,7 +27,7 @@ export class OtpService implements OnModuleInit, OnModuleDestroy {
     // Ejecutar la limpieza cada 5 minutos
     this.cleanupInterval = setInterval(
       () => {
-        console.log("Limpiando OTPs expirados...");
+        logger.info("Limpiando OTPs expirados...");
         cleanupExpiredOTPs();
       },
       5 * 60 * 1000,

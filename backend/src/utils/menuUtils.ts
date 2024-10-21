@@ -6,7 +6,7 @@ import {
     ModifierType,
     Modifier,
   } from "../models";
-
+import logger from "./logger";
 interface ProductoInfo {
     productId: string;
     name: string;
@@ -40,7 +40,6 @@ interface ProductoInfo {
         !Modifier ||
         !Availability
       ) {
-        console.error("Uno o más modelos no están definidos");
         return { error: "Error en la configuración de los modelos" };
       }
   
@@ -75,7 +74,7 @@ interface ProductoInfo {
         });
     
         if (!products || products.length === 0) {
-          console.error("No se encontraron productos");
+          logger.error("No se encontraron productos");
           return { error: "No se encontraron productos en la base de datos" };
         }
     
@@ -120,7 +119,7 @@ interface ProductoInfo {
     
         return menuSimplificado as ProductoInfo[];
       } catch (error: any) {
-        console.error("Error al obtener la disponibilidad del menú:", error);
+        logger.error("Error al obtener la disponibilidad del menú:", error);
         return {
           error: "No se pudo obtener la disponibilidad del menú",
           detalles: error.message,

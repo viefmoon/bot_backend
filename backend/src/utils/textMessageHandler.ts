@@ -7,7 +7,7 @@ import * as dotenv from "dotenv";
 import { preprocessMessages } from "./messagePreprocess";
 import { Anthropic } from "@anthropic-ai/sdk";
 import { PreOrderService } from "../services/pre-order.service";
-
+import logger from "./logger";
 dotenv.config();
 
 const { selectProductsToolClaude } = require("../aiTools/aiTools");
@@ -225,7 +225,7 @@ async function processAndGenerateAIResponse(
       },
     ];
   } catch (error) {
-    console.error("Error general:", error);
+    logger.error("Error general:", error);
     return [
       {
         text: "Error al procesar la solicitud: " + (error as Error).message,

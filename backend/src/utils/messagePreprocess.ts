@@ -12,6 +12,7 @@ import {
   normalizeTextForIngredients,
 } from "../utils/messageProcessUtils";
 import { getMenuAvailability } from "./menuUtils";
+import logger from "./logger";
 dotenv.config();
 
 const openai = new OpenAI({
@@ -45,7 +46,7 @@ const SIMILARITY_THRESHOLDS = {
 };
 
 function extractMentionedProduct(productMessage, menu) {
-  console.log("productMessage", productMessage);
+  logger.info("productMessage", productMessage);
   const messageWords = normalizeText(productMessage);
   const errors = [];
   const warnings = [];
@@ -110,7 +111,7 @@ function extractMentionedProduct(productMessage, menu) {
     delete bestProduct.productVariants;
     delete bestProduct.modifierTypes;
     delete bestProduct.pizzaIngredients;
-    console.log("bestProduct", bestProduct);
+    logger.info("bestProduct", bestProduct);
     return removeScoreField(bestProduct);
   } else {
     errors.push(
@@ -308,7 +309,7 @@ function findPizzaIngredients(bestProduct, productMessage, errors) {
     );
 
     // Console log
-    console.log("pizzaIngredientMessageWords", pizzaIngredientMessageWords);
+    logger.info("pizzaIngredientMessageWords", pizzaIngredientMessageWords);
 
     const pizzaIngredientWordsSet = new Set();
     const normalizedPizzaIngredients = bestProduct.pizzaIngredients.map(
@@ -508,14 +509,14 @@ function detectUnknownWords(productMessage, bestProduct, warnings) {
 
   const messageWords = normalizeText(productMessage);
 
-  console.log("knownWords", knownWords);
-  console.log("messageWords", messageWords);
+  logger.info("knownWords", knownWords);
+  logger.info("messageWords", messageWords);
   const unknownWords = messageWords.filter(word => {
     return !Array.from(knownWords).some(knownWord => 
       stringSimilarity.compareTwoStrings(word, knownWord as string) >= SIMILARITY_THRESHOLDS.WORD
     );
   });
-  console.log("unknownWords", unknownWords);  
+  logger.info("unknownWords", unknownWords);  
 
   if (unknownWords.length > 0) {
     warnings.push(
@@ -566,7 +567,7 @@ export async function preprocessMessages(messages: any[]): Promise<
           Object.assign(item, extractedProduct);
         }
       }
-      console.log("preprocessedContent", JSON.stringify(preprocessedContent, null, 2));
+      logger.info("preprocessedContent", JSON.stringify(preprocessedContent, null, 2));
 
       const allErrors = preprocessedContent.orderItems
         .filter((item) => item.errors && item.errors.length > 0)

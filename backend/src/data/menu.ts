@@ -7,6 +7,8 @@ import {
   Availability,
 } from "../models";
 import { Op } from "sequelize";
+import logger from '../utils/logger';
+
 const menu: string = `
 🍽️ Menú 🍽️
 
@@ -171,7 +173,6 @@ async function getUnavailableItems(): Promise<string> {
         ],
       },
     });
-    console.log("productos no disponibles", JSON.stringify(products));
 
     let unavailableItemsText = "\n\n❌ Productos no disponibles:\n";
     let hasUnavailableItems = false;
@@ -238,7 +239,7 @@ async function getUnavailableItems(): Promise<string> {
       ? unavailableItemsText
       : "\n\nTodos los productos están disponibles.";
   } catch (error) {
-    console.error("Error al obtener los productos no disponibles:", error);
+    logger.error('Error al obtener los productos no disponibles:', error);
     return "\n\nError al obtener los productos no disponibles.";
   }
 }

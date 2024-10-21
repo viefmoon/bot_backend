@@ -18,6 +18,7 @@ import {
   CHANGE_DELIVERY_INFO_MESSAGE,
 } from "../config/predefinedMessages";
 import getFullMenu from "../data/menu";
+import logger from "./logger";
 
 const stripeClient = new Stripe(process.env.STRIPE_SECRET_KEY!, {
   apiVersion: "2024-06-20",
@@ -86,7 +87,7 @@ async function handlePreOrderDeliveryModification(
 
     await sendWhatsAppMessage(clientId, message);
   } catch (error) {
-    console.error("Error al manejar la modificación de entrega:", error);
+    logger.error("Error al manejar la modificación de entrega:", error);
     await sendWhatsAppMessage(
       from,
       "Hubo un error al procesar tu solicitud. Por favor, intenta nuevamente más tarde."
@@ -188,7 +189,7 @@ async function handleOnlinePayment(
       `Por favor, haz clic en el siguiente enlace para proceder con el pago: ${paymentLink}`
     );
   } catch (error) {
-    console.error("Error al procesar el pago en línea:", error);
+    logger.error("Error al procesar el pago en línea:", error);
     await sendWhatsAppMessage(
       clientId,
       "Hubo un error al procesar tu solicitud de pago. Por favor, intenta nuevamente o contacta con el restaurante."
@@ -202,7 +203,7 @@ async function sendMenu(phoneNumber: string): Promise<boolean> {
     await sendWhatsAppMessage(phoneNumber, fullMenu);
     return true;
   } catch (error) {
-    console.error("Error al enviar el menú:", error);
+    logger.error("Error al enviar el menú:", error);
     return false;
   }
 }

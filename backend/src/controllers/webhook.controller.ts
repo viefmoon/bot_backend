@@ -8,6 +8,7 @@ import {
 } from "@nestjs/common";
 import { Request, Response } from "express";
 import { WebhookService } from "../services/webhook.service";
+import logger from "../utils/logger";
 
 @Controller("webhook")
 export class WebhookController {
@@ -15,6 +16,7 @@ export class WebhookController {
 
   @Get()
   async handleWebhookVerification(@Req() req: Request, @Res() res: Response) {
+    logger.info("Manejando verificación de webhook");
     return this.webhookService.handleWebhookVerification(req, res);
   }
 
@@ -25,13 +27,14 @@ export class WebhookController {
   ) {
     try {
       if (req.headers["stripe-signature"]) {
-        console.log("Procesando webhook de Stripe");
+        logger.info("Procesando webhook de Stripe");
         return await this.webhookService.handleStripeWebhook(req, res);
       } else {
+        logger.info("Procesando webhook de WhatsApp");
         return await this.webhookService.handleWhatsAppWebhook(req, res);
       }
     } catch (error) {
-      console.error("Error al procesar el webhook:", error);
+      logger.error("Error al procesar el webhook:", error);
       res.status(500).json({ error: "Error interno del servidor" });
     }
   }

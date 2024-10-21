@@ -1,6 +1,7 @@
 import * as dotenv from "dotenv";
 dotenv.config();
 import axios from "axios";
+import logger from "./logger";
 
 interface WhatsAppMessage {
   messaging_product: string;
@@ -75,7 +76,7 @@ export async function sendWhatsAppMessage(
 
     return messageIds; // Retornar los IDs de todos los mensajes enviados
   } catch (error) {
-    console.error("Error al enviar mensaje de WhatsApp:", error);
+    logger.error("Error al enviar mensaje de WhatsApp:", error);
     return null;
   }
 }
@@ -106,7 +107,7 @@ export async function sendWhatsAppInteractiveMessage(
 
     return response.data.messages[0].id;
   } catch (error) {
-    console.error(
+    logger.error(
       "Error al enviar mensaje interactivo de WhatsApp:",
       (error as Error).message
     );

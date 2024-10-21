@@ -3,7 +3,7 @@ dotenv.config();
 import { sequelize } from "../src/lib/db";
 import Product from "../src/models/product";
 import ProductVariant from "../src/models/productVariant";
-import PizzaIngredient from "../src/models/pizzaIngredient";
+import PizzaIngredient from "../src/models/pizzaIngredient"; 
 import ModifierType from "../src/models/modifierType";
 import Modifier from "../src/models/modifier";
 import Subcategory from "../src/models/subcategory";
@@ -11,13 +11,14 @@ import Category from "../src/models/category";
 import Availability from "../src/models/availability";
 import RestaurantConfig from "../src/models/restaurantConfig";
 import NotificationPhone from "../src/models/notificationPhone";
+import logger from "../src/utils/logger";
 
 const testConnection = async (): Promise<void> => {
   try {
     await sequelize.authenticate();
-    console.log("Connection has been established successfully.");
+    logger.info("Conexión a la base de datos establecida con éxito.");
   } catch (error) {
-    console.error("Unable to connect to the database:", error);
+    logger.error("No se pudo conectar a la base de datos:", error);
   }
 };
 
@@ -977,14 +978,9 @@ const seedMenuItems = async (): Promise<void> => {
       isActive: true,
     });
 
-    console.log(
-      "Menu items, availability, and restaurant configuration have been seeded successfully."
-    );
+    logger.info("Los elementos del menú, la disponibilidad y la configuración del restaurante se han sembrado con éxito.");
   } catch (error) {
-    console.error(
-      "Error seeding menu items, availability, and restaurant configuration:",
-      error
-    );
+    logger.error("Error al sembrar los elementos del menú, la disponibilidad y la configuración del restaurante:", error);
   } finally {
     await sequelize.close();
   }

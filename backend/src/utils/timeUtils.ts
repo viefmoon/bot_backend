@@ -4,6 +4,7 @@ dotenv.config();
 
 import { Op } from "sequelize";
 import { Order } from "../models";
+import logger from "./logger";
 
 const TIME_ZONE = process.env.TIME_ZONE;
 
@@ -77,7 +78,7 @@ export async function getNextDailyOrderNumber(): Promise<number> {
 
     return lastOrder ? lastOrder.dailyOrderNumber + 1 : 1;
   } catch (error) {
-    console.error(
+    logger.error(
       "Error al obtener el siguiente número de orden diaria:",
       error
     );
