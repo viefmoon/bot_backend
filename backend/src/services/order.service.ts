@@ -126,7 +126,9 @@ export class OrderService {
 
     const config = await RestaurantConfig.findOne();
     if (!config || !config.acceptingOrders) {
-      logger.warn("Intento de crear orden cuando el restaurante no está aceptando pedidos");
+      logger.warn(
+        "Intento de crear orden cuando el restaurante no está aceptando pedidos"
+      );
       throw new BadRequestException(
         "Lo sentimos, el restaurante no está aceptando pedidos en este momento, puedes intentar mas tarde o llamar al restaurante."
       );

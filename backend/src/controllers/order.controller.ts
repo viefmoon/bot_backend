@@ -30,6 +30,14 @@ export class OrderController {
     return this.orderService.createOrder(createOrderDto);
   }
 
+  @Post("sync")
+  async syncOrder(@Body() syncData: { orderId: number; localId: number }) {
+    return this.orderService.updateOrderSyncStatus(
+      syncData.orderId,
+      syncData.localId
+    );
+  }
+
   @Put("update-status")
   async updateOrderStatus(
     @Body() updateStatusDto: { orderId: number; status: OrderStatus }
@@ -37,14 +45,6 @@ export class OrderController {
     return this.orderService.updateOrderStatus(
       updateStatusDto.orderId,
       updateStatusDto.status
-    );
-  }
-
-  @Post("sync")
-  async syncOrder(@Body() syncData: { orderId: number; localId: number }) {
-    return this.orderService.updateOrderSyncStatus(
-      syncData.orderId,
-      syncData.localId
     );
   }
 }
