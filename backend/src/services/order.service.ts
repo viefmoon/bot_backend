@@ -472,17 +472,17 @@ export class OrderService {
           model: OrderItem,
           as: "orderItems",
           include: [
-            { model: Product },
+            { model: Product, as: "product" },
             { model: ProductVariant, as: "productVariant" },
             {
               model: SelectedPizzaIngredient,
               as: "selectedPizzaIngredients",
-              include: [{ model: PizzaIngredient }],
+              include: [{ model: PizzaIngredient, as: "pizzaIngredient" }],
             },
             {
               model: SelectedModifier,
               as: "selectedModifiers",
-              include: [{ model: Modifier }],
+              include: [{ model: Modifier, as: "modifier" }],
             },
           ],
         },

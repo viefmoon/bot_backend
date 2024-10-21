@@ -86,7 +86,10 @@ PreOrder.hasOne(OrderDeliveryInfo, {
 });
 // SelectedModifier associations
 SelectedModifier.belongsTo(OrderItem, { foreignKey: "orderItemId" });
-SelectedModifier.belongsTo(Modifier, { foreignKey: "modifierId" });
+SelectedModifier.belongsTo(Modifier, {
+  foreignKey: "modifierId",
+  as: "modifier",
+});
 
 // SelectedPizzaIngredient associations
 SelectedPizzaIngredient.belongsTo(OrderItem, { foreignKey: "orderItemId" });
