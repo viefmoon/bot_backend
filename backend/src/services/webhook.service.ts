@@ -14,13 +14,15 @@ import {
   RestaurantConfig,
 } from "../models";
 import { sendWhatsAppMessage } from "../utils/whatsAppUtils";
-import { verificarHorarioAtencion } from "../utils/timeUtils";
+import { getUTCTime, isBusinessOpen } from "../utils/timeUtils";
 import { checkMessageRateLimit } from "../utils/messageRateLimit";
 import { BANNED_USER_MESSAGE } from "../config/predefinedMessages";
 import { handleTextMessage } from "../utils/textMessageHandler";
 import { handleInteractiveMessage } from "../utils/interactiveMessageHandler";
 import { handleAudioMessage } from "../utils/audioMessageHandler";
 import { Queue } from "queue-typescript";
+import moment from 'moment';
+
 
 interface WhatsAppMessage {
   from: string;
@@ -197,12 +199,11 @@ export class WebhookService {
   }
 
   private isMessageTooOld(message: WhatsAppMessage): boolean {
-    const messageTimestamp = new Date(parseInt(message.timestamp) * 1000);
-    const currentTime = new Date();
-    const differenceInMinutes =
-      (currentTime.getTime() - messageTimestamp.getTime()) / (1000 * 60);
+    const messageTimestamp = moment.unix(parseInt(message.timestamp));
+    const currentTime = getUTCTime();
+    const differenceInMinutes = currentTime.diff(messageTimestamp, 'minutes');
     return differenceInMinutes > 1; // Ignorar mensajes de más de 1 minuto
-  }
+  } 
 
   private async handleIncomingWhatsAppMessage(
     message: WhatsAppMessage
@@ -233,7 +234,7 @@ export class WebhookService {
 
     if (await checkMessageRateLimit(from)) return;
 
-    if (!(await verificarHorarioAtencion())) {
+    if (!isBusinessOpen()) {
       await sendWhatsAppMessage(
         from,
         "Lo sentimos, el restaurante está cerrado en este momento."

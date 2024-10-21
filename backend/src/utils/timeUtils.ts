@@ -1,91 +1,54 @@
 import * as moment from "moment-timezone";
-import axios from "axios";
+import * as dotenv from "dotenv";
+dotenv.config();
 
-let mexicoCityTime: moment.Moment | null = null;
-let lastFetch: number | null = null;
+const TIME_ZONE = process.env.TIME_ZONE;
 
-async function getMexicoCityTime(): Promise<moment.Moment> {
-  const now = Date.now();
-  if (!mexicoCityTime || !lastFetch || now - lastFetch > 3600000) {
-    // Actualizar cada hora
-    try {
-      const response = await axios.get(
-        "http://worldtimeapi.org/api/timezone/America/Mexico_City"
-      );
-      // Definir el tipo de respuesta
-      interface WorldTimeResponse {
-        datetime: string;
-      }
-      mexicoCityTime = moment.tz(
-        (response.data as WorldTimeResponse).datetime,
-        "America/Mexico_City"
-      );
-      lastFetch = now;
-    } catch (error) {
-      console.error("Error al obtener la hora de México:", error);
-      // En caso de error, usar la hora local del servidor ajustada a la zona de México
-      mexicoCityTime = moment().tz("America/Mexico_City");
-    }
-  } else {
-    // Ajustar la hora guardada al tiempo actual
-    mexicoCityTime = mexicoCityTime.add(now - lastFetch, "milliseconds");
-  }
-  return mexicoCityTime;
+interface BusinessHours {
+  opening: number;
+  closing: number;
 }
 
-async function verificarHorarioAtencion(): Promise<boolean> {
-  const intentos = 3;
-  const retrasoEntreIntentos = 1000; // 1 segundo
+const parseTime = (timeString: string): number => {
+  const [hours, minutes] = timeString.split(":").map(Number);
+  return hours * 60 + minutes;
+};
 
-  for (let i = 0; i < intentos; i++) {
-    const ahora = await getMexicoCityTime();
-    const diaSemana = ahora.day();
-    const tiempoActual = ahora.hours() * 60 + ahora.minutes();
+const businessHours: { [key: string]: BusinessHours } = {
+  weekdays: {
+    opening: parseTime(process.env.OPENING_HOURS_TUES_SAT),
+    closing: parseTime(process.env.CLOSING_HOURS_TUES_SAT),
+  },
+  sunday: {
+    opening: parseTime(process.env.OPENING_HOURS_SUN),
+    closing: parseTime(process.env.CLOSING_HOURS_SUN),
+  },
+};
 
-    const horarioNormal = {
-      apertura: 0 * 60, // 6:00 PM
-      cierre: 24 * 60, // 11:00 PM
-    };
+const getCurrentMexicoTime = (): moment.Moment => {
+  return moment().tz(TIME_ZONE);
+};
 
-    const horarioDomingo = {
-      apertura: 0 * 60, // 2:00 PM
-      cierre: 23 * 60, // 11:00 PM
-    };
+const getUTCTime = (): moment.Moment => {
+  return moment().utc();
+};
 
-    const estaAbierto = (() => {
-      switch (diaSemana) {
-        case 0: // Domingo
-          return (
-            tiempoActual >= horarioDomingo.apertura &&
-            tiempoActual < horarioDomingo.cierre
-          );
-        case 1: // Lunes
-        //return false; // Cerrado los lunes
-        case 2: // Martes
-        case 3: // Miércoles
-        case 4: // Jueves
-        case 5: // Viernes
-        case 6: // Sábado
-          return (
-            tiempoActual >= horarioNormal.apertura &&
-            tiempoActual < horarioNormal.cierre
-          );
-        default:
-          return false;
-      }
-    })();
+const isBusinessOpen = (): boolean => {
+  const now = getCurrentMexicoTime();
+  const dayOfWeek = now.day();
+  const currentMinutes = now.hours() * 60 + now.minutes();
 
-    if (estaAbierto) {
-      return true;
-    }
+  let hours: BusinessHours;
 
-    // Si no está abierto y no es el último intento, espera antes de intentar de nuevo
-    if (i < intentos - 1) {
-      await new Promise((resolve) => setTimeout(resolve, retrasoEntreIntentos));
-    }
+  if (dayOfWeek === 0) { // Sunday
+    hours = businessHours.sunday;
+  } else if (dayOfWeek >= 2 && dayOfWeek <= 6) { // Tuesday to Saturday
+    hours = businessHours.weekdays;
+  } else { // Monday (closed)
+    return false;
   }
 
-  return false;
-}
+  return currentMinutes >= hours.opening && currentMinutes < hours.closing;
+};
 
-export { verificarHorarioAtencion };
+export { getCurrentMexicoTime, isBusinessOpen, getUTCTime };
