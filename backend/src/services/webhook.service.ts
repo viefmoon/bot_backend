@@ -199,6 +199,11 @@ export class WebhookService {
   }
 
   private isMessageTooOld(message: WhatsAppMessage): boolean {
+    if (!message.timestamp || isNaN(parseInt(message.timestamp))) {
+        console.error(`Timestamp inválido para el mensaje ${message.id}`);
+        return true; // Considerar el mensaje como demasiado antiguo si el timestamp es inválido
+    }
+
     const messageTimestamp = moment.unix(parseInt(message.timestamp));
     const currentTime = getUTCTime();
     const differenceInMinutes = currentTime.diff(messageTimestamp, 'minutes');
