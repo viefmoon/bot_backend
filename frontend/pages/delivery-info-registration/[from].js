@@ -72,7 +72,7 @@ export default function DeliveryInfoRegistration() {
       const response = await axios.get(
         `/api/customer_delivery_info/${clientId}`
       );
-      if (response.data) {
+      if (response.data && Object.keys(response.data).length > 0) {
         const formattedData = {
           pickupName: response.data.pickupName || "",
           streetAddress: response.data.streetAddress || "",
@@ -97,12 +97,41 @@ export default function DeliveryInfoRegistration() {
         }
 
         setIsUpdating(true);
+      } else {
+        // Si no hay datos, inicializamos el formulario con valores vacíos
+        setFormData({
+          pickupName: "",
+          streetAddress: "",
+          neighborhood: "",
+          postalCode: "",
+          city: "",
+          state: "",
+          country: "",
+          latitude: "",
+          longitude: "",
+          additionalDetails: "",
+        });
+        setIsUpdating(false);
       }
     } catch (error) {
       console.error(
         "Error al cargar la información de entrega existente:",
         error
       );
+      // En caso de error, también inicializamos el formulario con valores vacíos
+      setFormData({
+        pickupName: "",
+        streetAddress: "",
+        neighborhood: "",
+        postalCode: "",
+        city: "",
+        state: "",
+        country: "",
+        latitude: "",
+        longitude: "",
+        additionalDetails: "",
+      });
+      setIsUpdating(false);
     }
   };
 
