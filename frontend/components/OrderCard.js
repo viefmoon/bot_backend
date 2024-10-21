@@ -249,8 +249,8 @@ const OrderCard = ({ order, onUpdateStatus }) => {
                             <ul className="list-disc list-inside pl-2">
                               {item.selectedModifiers.map((mod, modIndex) => (
                                 <li key={modIndex}>
-                                  {mod.Modifier.name} (+$
-                                  {mod.Modifier.price.toFixed(2)})
+                                  {mod.modifier.name} (+$
+                                  {mod.modifier.price.toFixed(2)})
                                 </li>
                               ))}
                             </ul>
