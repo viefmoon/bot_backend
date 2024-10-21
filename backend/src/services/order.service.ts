@@ -103,6 +103,8 @@ export class OrderService {
         "clientId",
         "estimatedTime",
         "scheduledDeliveryTime",
+        "syncedWithLocal",
+        "localId",
         "createdAt",
         "updatedAt",
       ],
