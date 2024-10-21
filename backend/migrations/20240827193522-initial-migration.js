@@ -826,6 +826,25 @@ module.exports = {
         type: Sequelize.DATE,
       },
     });
+
+    await queryInterface.createTable("SeederControls", {
+      id: {
+        type: Sequelize.STRING,
+        primaryKey: true,
+      },
+      lastRun: {
+        type: Sequelize.DATE,
+        allowNull: false,
+      },
+      createdAt: {
+        allowNull: false,
+        type: Sequelize.DATE,
+      },
+      updatedAt: {
+        allowNull: false,
+        type: Sequelize.DATE,
+      },
+    });
   },
 
   down: async (queryInterface, Sequelize) => {
@@ -850,5 +869,6 @@ module.exports = {
     await queryInterface.dropTable("OrderDeliveryInfos");
     await queryInterface.dropTable("Subcategories");
     await queryInterface.dropTable("Categories");
+    await queryInterface.dropTable("SeederControls");
   },
 };

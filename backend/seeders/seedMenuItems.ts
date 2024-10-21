@@ -12,6 +12,7 @@ import Availability from "../src/models/availability";
 import RestaurantConfig from "../src/models/restaurantConfig";
 import NotificationPhone from "../src/models/notificationPhone";
 import logger from "../src/utils/logger";
+import SeederControl from "../src/models/seederControl";
 
 const testConnection = async (): Promise<void> => {
   try {
@@ -856,8 +857,15 @@ const products = [
   },
 ];
 
-const seedMenuItems = async (): Promise<void> => {
+export const seedMenuItems = async (): Promise<void> => {
   try {
+    // Verificar si el seeder ya se ha ejecutado
+    const seederControl = await SeederControl.findOne({ where: { id: "menuItems" } });
+    if (seederControl) {
+      logger.info("El seeder de menú ya se ha ejecutado anteriormente. Saltando la ejecución.");
+      return;
+    }
+
     // Crear categorías y subcategorías
     for (const category of categories) {
       const createdCategory = await Category.create({
@@ -978,12 +986,14 @@ const seedMenuItems = async (): Promise<void> => {
       isActive: true,
     });
 
+    // Registrar que el seeder se ha ejecutado
+    await SeederControl.create({
+      id: "menuItems",
+      lastRun: new Date(),
+    });
+
     logger.info("Los elementos del menú, la disponibilidad y la configuración del restaurante se han sembrado con éxito.");
   } catch (error) {
     logger.error("Error al sembrar los elementos del menú, la disponibilidad y la configuración del restaurante:", error);
-  } finally {
-    await sequelize.close();
   }
 };
-
-seedMenuItems();
