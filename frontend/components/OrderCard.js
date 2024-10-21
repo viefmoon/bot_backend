@@ -221,7 +221,7 @@ const OrderCard = ({ order, onUpdateStatus }) => {
                       <div className="flex justify-between items-start">
                         <div>
                           <p className="font-medium">
-                            {item.ProductVariant.name || item.Product.name} (x
+                            {item.productVariant.name || item.product.name} (x
                             {item.quantity})
                             {item.selectedPizzaIngredients &&
                               item.selectedPizzaIngredients.length > 0 &&
@@ -232,8 +232,8 @@ const OrderCard = ({ order, onUpdateStatus }) => {
                           <p className="text-gray-600">
                             Precio base: $
                             {(
-                              item.ProductVariant.price ||
-                              item.Product.price ||
+                              item.productVariant.price ||
+                              item.product.price ||
                               0
                             ).toFixed(2)}
                           </p>
@@ -249,8 +249,8 @@ const OrderCard = ({ order, onUpdateStatus }) => {
                             <ul className="list-disc list-inside pl-2">
                               {item.selectedModifiers.map((mod, modIndex) => (
                                 <li key={modIndex}>
-                                  {mod.Modifier.name} (+$
-                                  {mod.Modifier.price.toFixed(2)})
+                                  {mod.modifier.name} (+$
+                                  {mod.modifier.price.toFixed(2)})
                                 </li>
                               ))}
                             </ul>
