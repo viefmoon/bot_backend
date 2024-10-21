@@ -11,11 +11,16 @@ export default async function handler(req, res) {
 
       res.status(200).json(getDeliveryInfoResponse.data);
     } catch (error) {
-      console.error("Error al obtener la información de entrega:", error);
-      res.status(error.response?.status || 500).json({
-        error:
-          "Error al procesar la solicitud de obtención de información de entrega",
-      });
+      if (error.response && error.response.status === 404) {
+        // Si el cliente no tiene información de entrega, devolvemos un objeto vacío
+        res.status(200).json({});
+      } else {
+        console.error("Error al obtener la información de entrega:", error);
+        res.status(error.response?.status || 500).json({
+          error:
+            "Error al procesar la solicitud de obtención de información de entrega",
+        });
+      }
     }
   } else if (req.method === "PUT") {
     try {
