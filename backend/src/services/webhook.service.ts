@@ -20,7 +20,7 @@ import { BANNED_USER_MESSAGE } from "../config/predefinedMessages";
 import { handleTextMessage } from "../utils/textMessageHandler";
 import { handleInteractiveMessage } from "../utils/interactiveMessageHandler";
 import { handleAudioMessage } from "../utils/audioMessageHandler";
-import { Queue } from "queue-typescript"; 
+import { Queue } from "queue-typescript";
 import moment from 'moment-timezone';
 
 
@@ -199,12 +199,7 @@ export class WebhookService {
   }
 
   private isMessageTooOld(message: WhatsAppMessage): boolean {
-    if (!message.timestamp || isNaN(parseInt(message.timestamp))) {
-        console.error(`Timestamp inválido para el mensaje ${message.id}`);
-        return true; // Considerar el mensaje como demasiado antiguo si el timestamp es inválido
-    }
-
-    const messageTimestamp = moment.unix(parseInt(message.timestamp));
+    const messageTimestamp = moment(parseInt(message.timestamp) * 1000);
     const currentTime = getUTCTime();
     const differenceInMinutes = currentTime.diff(messageTimestamp, 'minutes');
     return differenceInMinutes > 1; // Ignorar mensajes de más de 1 minuto
