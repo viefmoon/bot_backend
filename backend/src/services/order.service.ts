@@ -84,7 +84,13 @@ export class OrderService {
               model: SelectedModifier,
               as: "selectedModifiers",
               attributes: ["id"],
-              include: [{ model: Modifier, attributes: ["name", "price"] }],
+              include: [
+                {
+                  model: Modifier,
+                  as: "modifier",
+                  attributes: ["name", "price"],
+                },
+              ],
             },
           ],
         },
