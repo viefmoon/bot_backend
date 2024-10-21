@@ -21,8 +21,7 @@ import { handleTextMessage } from "../utils/textMessageHandler";
 import { handleInteractiveMessage } from "../utils/interactiveMessageHandler";
 import { handleAudioMessage } from "../utils/audioMessageHandler";
 import { Queue } from "queue-typescript";
-import moment from 'moment-timezone';
-
+import * as moment from "moment-timezone";
 
 interface WhatsAppMessage {
   from: string;
