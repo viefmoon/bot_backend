@@ -20,8 +20,8 @@ import { BANNED_USER_MESSAGE } from "../config/predefinedMessages";
 import { handleTextMessage } from "../utils/textMessageHandler";
 import { handleInteractiveMessage } from "../utils/interactiveMessageHandler";
 import { handleAudioMessage } from "../utils/audioMessageHandler";
-import { Queue } from "queue-typescript";
-import moment from 'moment';
+import { Queue } from "queue-typescript"; 
+import moment from 'moment-timezone';
 
 
 interface WhatsAppMessage {
