@@ -62,7 +62,7 @@ Order.hasOne(OrderDeliveryInfo, {
 
 // OrderItem associations
 OrderItem.belongsTo(Order, { foreignKey: "orderId" });
-OrderItem.belongsTo(Product, { foreignKey: "productId", as: "product" });
+OrderItem.belongsTo(Product, { foreignKey: "productId" });
 OrderItem.belongsTo(ProductVariant, {
   foreignKey: "productVariantId",
   as: "productVariant",
@@ -86,16 +86,12 @@ PreOrder.hasOne(OrderDeliveryInfo, {
 });
 // SelectedModifier associations
 SelectedModifier.belongsTo(OrderItem, { foreignKey: "orderItemId" });
-SelectedModifier.belongsTo(Modifier, {
-  foreignKey: "modifierId",
-  as: "modifier",
-});
+SelectedModifier.belongsTo(Modifier, { foreignKey: "modifierId" });
 
 // SelectedPizzaIngredient associations
 SelectedPizzaIngredient.belongsTo(OrderItem, { foreignKey: "orderItemId" });
 SelectedPizzaIngredient.belongsTo(PizzaIngredient, {
   foreignKey: "pizzaIngredientId",
-  as: "pizzaIngredient",
 });
 
 // Availability associations

@@ -68,7 +68,7 @@ export class OrderService {
           as: "orderItems",
           attributes: ["quantity", "price", "comments"],
           include: [
-            { model: Product, as: "product", attributes: ["name", "price"] },
+            { model: Product, attributes: ["name", "price"] },
             {
               model: ProductVariant,
               as: "productVariant",
@@ -78,25 +78,13 @@ export class OrderService {
               model: SelectedPizzaIngredient,
               as: "selectedPizzaIngredients",
               attributes: ["half", "action"],
-              include: [
-                {
-                  model: PizzaIngredient,
-                  as: "pizzaIngredient",
-                  attributes: ["name"],
-                },
-              ],
+              include: [{ model: PizzaIngredient, attributes: ["name"] }],
             },
             {
               model: SelectedModifier,
               as: "selectedModifiers",
               attributes: ["id"],
-              include: [
-                {
-                  model: Modifier,
-                  as: "modifier",
-                  attributes: ["name", "price"],
-                },
-              ],
+              include: [{ model: Modifier, attributes: ["name", "price"] }],
             },
           ],
         },
@@ -472,17 +460,17 @@ export class OrderService {
           model: OrderItem,
           as: "orderItems",
           include: [
-            { model: Product, as: "product" },
+            { model: Product },
             { model: ProductVariant, as: "productVariant" },
             {
               model: SelectedPizzaIngredient,
               as: "selectedPizzaIngredients",
-              include: [{ model: PizzaIngredient, as: "pizzaIngredient" }],
+              include: [{ model: PizzaIngredient }],
             },
             {
               model: SelectedModifier,
               as: "selectedModifiers",
-              include: [{ model: Modifier, as: "modifier" }],
+              include: [{ model: Modifier }],
             },
           ],
         },
