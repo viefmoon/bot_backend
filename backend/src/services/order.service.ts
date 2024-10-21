@@ -68,7 +68,7 @@ export class OrderService {
           as: "orderItems",
           attributes: ["quantity", "price", "comments"],
           include: [
-            { model: Product, attributes: ["name", "price"] },
+            { model: Product, as: "product", attributes: ["name", "price"] },
             {
               model: ProductVariant,
               as: "productVariant",
@@ -78,13 +78,25 @@ export class OrderService {
               model: SelectedPizzaIngredient,
               as: "selectedPizzaIngredients",
               attributes: ["half", "action"],
-              include: [{ model: PizzaIngredient, attributes: ["name"] }],
+              include: [
+                {
+                  model: PizzaIngredient,
+                  as: "pizzaIngredient",
+                  attributes: ["name"],
+                },
+              ],
             },
             {
               model: SelectedModifier,
               as: "selectedModifiers",
               attributes: ["id"],
-              include: [{ model: Modifier, attributes: ["name", "price"] }],
+              include: [
+                {
+                  model: Modifier,
+                  as: "modifier",
+                  attributes: ["name", "price"],
+                },
+              ],
             },
           ],
         },
