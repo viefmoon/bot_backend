@@ -85,6 +85,10 @@ const OrderCard = ({ order, onUpdateStatus }) => {
     )} / ${ingredientsByHalf.right.join(", ")})`;
   };
 
+  const getSyncStatusColor = (synced) => {
+    return synced ? "text-green-500" : "text-orange-500";
+  };
+
   return (
     <div className="bg-white shadow-md rounded-lg overflow-hidden mb-4 border border-gray-200">
       <div className="p-4 lg:p-6">
@@ -190,16 +194,12 @@ const OrderCard = ({ order, onUpdateStatus }) => {
           </div>
           <div>
             <p className="text-gray-600">ID Local:</p>
-            <p className="font-medium">{order.localId || "N/A"}</p>
-          </div>
-          <div>
-            <p className="text-gray-600">Sincronizado:</p>
             <p
-              className={`font-medium ${
-                order.syncedWithLocal ? "text-green-600" : "text-red-600"
-              }`}
+              className={`font-medium ${getSyncStatusColor(
+                order.syncedWithLocal
+              )}`}
             >
-              {order.syncedWithLocal ? "Sí" : "No"}
+              {order.syncedWithLocal ? `#${order.localId}` : "No sincronizado"}
             </p>
           </div>
         </div>
