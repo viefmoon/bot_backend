@@ -15,12 +15,14 @@ import {
   OrderDeliveryInfo,
   RestaurantConfig,
 } from "../models";
-import { getNextDailyOrderNumber } from "../utils/timeUtils";
+import {
+  getCurrentMexicoTime,
+  getNextDailyOrderNumber,
+} from "../utils/timeUtils";
 import { CreateOrderDto } from "../dto/create-order.dto";
 import { PizzaHalf, IngredientAction } from "../models/selectedPizzaIngredient";
 import { sendWhatsAppMessage } from "../utils/whatsAppUtils";
 import { Op } from "sequelize";
-import { DateTime } from "luxon";
 import logger from "../utils/logger";
 
 export type OrderStatus =
@@ -38,17 +40,16 @@ export class OrderService {
     let whereClause: any = {};
 
     if (date) {
+      console.log("date", date);
       // Parsear la fecha asumiendo que ya está en hora de México
-      const mexicoDate = DateTime.fromISO(date, {
-        zone: "America/Mexico_City",
-      });
+      const mexicoDate = getCurrentMexicoTime().startOf("day");
 
       // Definir el inicio y fin del día en UTC
-      const startDate = mexicoDate.startOf("day").toUTC();
-      const endDate = mexicoDate.endOf("day").toUTC();
+      const startDate = mexicoDate.clone().utc();
+      const endDate = mexicoDate.clone().endOf("day").utc();
 
       whereClause.createdAt = {
-        [Op.between]: [startDate.toJSDate(), endDate.toJSDate()],
+        [Op.between]: [startDate.toDate(), endDate.toDate()],
       };
     }
 
