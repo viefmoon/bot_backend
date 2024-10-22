@@ -410,7 +410,7 @@ export class PreOrderService {
       orderType === "delivery" ? "Domicilio" : "Nombre recolección"
     }: ${deliveryInfo || "No disponible"}\n`;
     if (scheduledTime) {
-      messageContent += `⏱️ *Tiempo programado*: ${scheduledTime}\n`;
+      messageContent += `⏱️ *Hora programada*: ${scheduledTime}\n`;
     } else {
       messageContent += `⏱️ *Tiempo estimado*: ${estimatedTime}\n`;
     }

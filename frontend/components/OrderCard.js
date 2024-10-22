@@ -43,6 +43,10 @@ const OrderCard = ({ order, onUpdateStatus }) => {
     ? `https://www.google.com/maps?q=${order.orderDeliveryInfo.latitude},${order.orderDeliveryInfo.longitude}`
     : null;
 
+  const scheduledDeliveryTime = order.scheduledDeliveryTime
+    ? formatDateToMexicoTime(order.scheduledDeliveryTime)
+    : null;
+
   const getOrderTypeColor = (type) => {
     return type === "delivery" ? "bg-blue-400" : "bg-purple-400";
   };
@@ -204,6 +208,12 @@ const OrderCard = ({ order, onUpdateStatus }) => {
                 : "No sincronizado"}
             </p>
           </div>
+          {scheduledDeliveryTime && (
+            <div>
+              <p className="text-gray-600">Entrega programada:</p>
+              <p className="font-medium">{scheduledDeliveryTime}</p>
+            </div>
+          )}
         </div>
         {isExpanded && (
           <>
