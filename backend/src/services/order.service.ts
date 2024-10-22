@@ -435,19 +435,19 @@ export class OrderService {
   ): string {
     switch (status) {
       case "accepted":
-        return `¡Buenas noticias! Tu orden #${dailyOrderNumber} ha sido aceptada y pronto comenzaremos a prepararla.`;
+        return `¡Buenas noticias! 🎉 Tu orden #${dailyOrderNumber} ha sido aceptada y pronto comenzaremos a prepararla. 👨‍🍳`;
       case "in_preparation":
-        return `Tu orden #${dailyOrderNumber} ya está siendo preparada.`;
+        return `Tu orden #${dailyOrderNumber} ya está siendo preparada. 🍕👨‍🍳`;
       case "prepared":
-        return `¡Tu orden #${dailyOrderNumber} está lista! Pronto saldrá para entrega o estará lista para recoger.`;
+        return `¡Tu orden #${dailyOrderNumber} está lista! 🍽️ Pronto saldrá para entrega o estará lista para recoger. 🚀`;
       case "in_delivery":
-        return `¡Tu orden #${dailyOrderNumber} está en camino! Estará contigo en breve.`;
+        return `¡Tu orden #${dailyOrderNumber} está en camino! 🚚💨 Estará contigo en breve.`;
       case "finished":
-        return `¡Tu orden #${dailyOrderNumber} está en camino! Estará contigo en breve, Muchas gracias por tu preferencia.`;
+        return `¡Tu orden #${dailyOrderNumber} ha sido entregada! 🎊 Muchas gracias por tu preferencia. ¡Buen provecho! 😋`;
       case "canceled":
-        return `Lo sentimos, tu orden #${dailyOrderNumber} ha sido cancelada. Si tienes alguna pregunta, por favor contáctanos.`;
+        return `Lo sentimos, tu orden #${dailyOrderNumber} ha sido cancelada. ❌ Si tienes alguna pregunta, por favor contáctanos. 📞`;
       default:
-        return `El estado de tu orden #${dailyOrderNumber} ha sido actualizado a: ${status}`;
+        return `El estado de tu orden #${dailyOrderNumber} ha sido actualizado a: ${status} 📝`;
     }
   }
 

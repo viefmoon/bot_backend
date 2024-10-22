@@ -29,7 +29,7 @@ export default function Home() {
   });
   const [menuItems, setMenuItems] = useState([]);
   const [menuOpen, setMenuOpen] = useState(false);
-  const [selectedStatus, setSelectedStatus] = useState("created");
+  const [selectedStatus, setSelectedStatus] = useState("");
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -120,7 +120,7 @@ export default function Home() {
         url += `?date=${formattedDate}`;
       }
       if (selectedStatus) {
-        url += `${date ? '&' : '?'}status=${selectedStatus}`;
+        url += `${date ? "&" : "?"}status=${selectedStatus}`;
       }
       const response = await axios.get(url);
       setOrders(response.data);
