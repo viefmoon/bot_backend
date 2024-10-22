@@ -70,7 +70,7 @@ async function createOrderFromPreOrder(
     const tipoOrdenTraducido =
       orderType === "delivery" ? "A domicilio 🚚" : "Recolección 🏪";
 
-    let orderSummary = `🎉 *¡Tu orden #${newOrder.id} ha sido creada exitosamente!* 🎉\n\n`;
+    let orderSummary = `🎉 *¡Tu orden #${newOrder.dailyOrderNumber} ha sido creada exitosamente!* 🎉\n\n`;
     orderSummary += `📞 *Telefono:* ${newOrder.telefono}\n`;
     orderSummary += `📅 *Fecha de creación:* ${newOrder.fecha_creacion}\n`;
     orderSummary += `🍽️ *Informacion de entrega :* ${tipoOrdenTraducido} - ${newOrder.informacion_entrega}\n`;
@@ -213,7 +213,7 @@ export async function handlePreOrderConfirmation(
     if (confirmationMessageId) {
       await Order.update(
         { messageId: confirmationMessageId },
-        { where: { dailyOrderNumber: newOrder.id } }
+        { where: { id: newOrder.id } }
       );
     }
 

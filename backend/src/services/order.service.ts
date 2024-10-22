@@ -308,7 +308,8 @@ export class OrderService {
 
     return {
       orden: {
-        id: newOrder.dailyOrderNumber,
+        id: newOrder.id,
+        dailyOrderNumber: newOrder.dailyOrderNumber,
         telefono: newOrder.clientId.startsWith("521")
           ? newOrder.clientId.slice(3)
           : newOrder.clientId,
