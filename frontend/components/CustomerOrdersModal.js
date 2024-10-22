@@ -139,7 +139,7 @@ const CustomerOrdersModal = ({ clientId, onClose }) => {
                           <div className="flex justify-between items-start">
                             <div>
                               <p className="font-medium">
-                                {item.ProductVariant.name || item.Product.name}{" "}
+                                {item.productVariant.name || item.Product.name}{" "}
                                 (x{item.quantity})
                                 {item.selectedPizzaIngredients &&
                                   item.selectedPizzaIngredients.length > 0 &&
@@ -150,7 +150,7 @@ const CustomerOrdersModal = ({ clientId, onClose }) => {
                               <p className="text-gray-600">
                                 Precio base: $
                                 {(
-                                  item.ProductVariant.price ||
+                                  item.productVariant.price ||
                                   item.Product.price ||
                                   0
                                 ).toFixed(2)}
@@ -168,8 +168,8 @@ const CustomerOrdersModal = ({ clientId, onClose }) => {
                                   {item.selectedModifiers.map(
                                     (mod, modIndex) => (
                                       <li key={modIndex}>
-                                        {mod.Modifier.name} (+$
-                                        {mod.Modifier.price.toFixed(2)})
+                                        {mod.modifier.name} (+$
+                                        {mod.modifier.price.toFixed(2)})
                                       </li>
                                     )
                                   )}
