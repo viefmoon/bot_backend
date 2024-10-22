@@ -21,15 +21,14 @@ export class OrderController {
     return this.orderService.getUnsyncedOrders();
   }
 
-  @Get(":clientId")
-  async getOrdersByClient(@Param("clientId") clientId: string) {
-    return this.orderService.getOrdersByClient(clientId);
-  }
-
   @Get("unfinished")
   async getUnfinishedOrders() {
     logger.info("getUnfinishedOrders");
     return this.orderService.getUnfinishedOrders();
+  }
+  @Get(":clientId")
+  async getOrdersByClient(@Param("clientId") clientId: string) {
+    return this.orderService.getOrdersByClient(clientId);
   }
 
   @Post()
