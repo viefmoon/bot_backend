@@ -68,12 +68,12 @@ async function createOrderFromPreOrder(
     const { orden: newOrder } = await orderService.createOrder(orderData);
 
     const tipoOrdenTraducido =
-      orderType === "delivery" ? "A domicilio 🚚" : "Recolección 🏪";
+      orderType === "delivery" ? "A domicilio" : "Recolección";
 
     let orderSummary = `🎉 *¡Tu orden #${newOrder.dailyOrderNumber} ha sido creada exitosamente!* 🎉\n\n`;
     orderSummary += `📞 *Telefono:* ${newOrder.telefono}\n`;
     orderSummary += `📅 *Fecha de creación:* ${newOrder.fecha_creacion}\n`;
-    orderSummary += `🍽️ *Informacion de entrega :* ${tipoOrdenTraducido} - ${newOrder.informacion_entrega}\n`;
+    orderSummary += `🚚 *Informacion de entrega :* ${tipoOrdenTraducido} - ${newOrder.informacion_entrega}\n`;
     orderSummary += `⏱️ *Tiempo estimado:* ${newOrder.tiempoEstimado} minutos\n`;
 
     if (newOrder.horario_entrega_programado) {

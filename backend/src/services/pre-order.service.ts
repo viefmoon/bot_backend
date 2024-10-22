@@ -398,7 +398,11 @@ export class PreOrderService {
 
     let deliveryInfo;
     if (orderType === "delivery") {
-      deliveryInfo = orderDeliveryInfo.streetAddress;
+      deliveryInfo =
+        orderDeliveryInfo.streetAddress +
+        (orderDeliveryInfo.additionalDetails
+          ? `, ${orderDeliveryInfo.additionalDetails}`
+          : "");
     } else if (orderType === "pickup") {
       deliveryInfo = orderDeliveryInfo.pickupName;
     }

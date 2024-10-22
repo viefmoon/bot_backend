@@ -318,7 +318,11 @@ export class OrderService {
         estado: newOrder.status,
         informacion_entrega:
           orderType === "delivery"
-            ? orderDeliveryInfo.streetAddress
+            ? `${orderDeliveryInfo.streetAddress}${
+                orderDeliveryInfo.additionalDetails
+                  ? `, ${orderDeliveryInfo.additionalDetails}`
+                  : ""
+              }`
             : orderDeliveryInfo.pickupName,
         precio_total: newOrder.totalCost,
         fecha_creacion: newOrder.createdAt.toLocaleString("es-MX", {
