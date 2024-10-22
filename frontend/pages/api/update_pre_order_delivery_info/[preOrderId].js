@@ -6,9 +6,16 @@ export default async function handler(req, res) {
 
   if (req.method === "PUT") {
     try {
+      // Actualizar la información de entrega
       const updateDeliveryInfoResponse = await axios.put(
         `${process.env.NEXT_PUBLIC_BACKEND_BASE_URL}/customer-delivery-info/${clientId}?preOrderId=${preOrderId}`,
         deliveryInfo
+      );
+
+      // Invalidar el OTP después de actualizar la información
+      await axios.post(
+        `${process.env.NEXT_PUBLIC_BACKEND_BASE_URL}/otp/invalidate`,
+        { clientId }
       );
 
       res.status(200).json(updateDeliveryInfoResponse.data);

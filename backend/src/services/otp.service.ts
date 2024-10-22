@@ -23,15 +23,16 @@ export class OtpService implements OnModuleInit, OnModuleDestroy {
     return verifyOTP(clientId, otp);
   }
 
+  invalidateOTP(clientId: string): void {
+    storeOTP(clientId, "");
+  }
+
   onModuleInit() {
     // Ejecutar la limpieza cada 5 minutos
-    this.cleanupInterval = setInterval(
-      () => {
-        logger.info("Limpiando OTPs expirados...");
-        cleanupExpiredOTPs();
-      },
-      5 * 60 * 1000,
-    ); // 5 minutos en milisegundos
+    this.cleanupInterval = setInterval(() => {
+      logger.info("Limpiando OTPs expirados...");
+      cleanupExpiredOTPs();
+    }, 5 * 60 * 1000); // 5 minutos en milisegundos
   }
 
   onModuleDestroy() {

@@ -10,4 +10,10 @@ export class OtpController {
     const { clientId, otp } = body;
     return this.otpService.verifyOTP(clientId, otp);
   }
+
+  @Post("invalidate")
+  invalidateOTP(@Body() body: { clientId: string }) {
+    const { clientId } = body;
+    return this.otpService.invalidateOTP(clientId);
+  }
 }
