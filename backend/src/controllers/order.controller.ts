@@ -23,7 +23,6 @@ export class OrderController {
 
   @Get("unfinished")
   async getUnfinishedOrders() {
-    logger.info("getUnfinishedOrders");
     return this.orderService.getUnfinishedOrders();
   }
   @Get(":clientId")

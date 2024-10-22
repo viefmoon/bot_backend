@@ -592,7 +592,6 @@ export class OrderService {
       order: [["createdAt", "ASC"]],
     });
 
-    logger.info("unfinishedOrders", unfinishedOrders);
     return unfinishedOrders;
   }
 }
