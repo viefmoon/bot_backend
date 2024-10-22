@@ -109,6 +109,7 @@ export class OrderService {
         "localId",
         "createdAt",
         "updatedAt",
+        "finishedAt",
       ],
     });
   }
