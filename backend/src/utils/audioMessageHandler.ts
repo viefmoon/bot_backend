@@ -19,7 +19,7 @@ async function getAudioUrl(audioId: string): Promise<string | null> {
         headers: {
           Authorization: `Bearer ${process.env.WHATSAPP_ACCESS_TOKEN}`,
         },
-      },
+      }
     );
     return data.url;
   } catch (error) {
@@ -61,7 +61,7 @@ async function transcribeAudio(audioUrl: string): Promise<string> {
           ...formData.getHeaders(),
           Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
         },
-      },
+      }
     );
 
     return whisperData.text;
@@ -75,7 +75,7 @@ async function transcribeAudio(audioUrl: string): Promise<string> {
 
 export async function handleAudioMessage(
   from: string,
-  message: any,
+  message: any
 ): Promise<void> {
   try {
     const audioUrl = await getAudioUrl(message.audio.id);
@@ -87,7 +87,7 @@ export async function handleAudioMessage(
     logger.error("Error al procesar el mensaje de audio:", error);
     await sendWhatsAppMessage(
       from,
-      "Hubo un problema al procesar tu mensaje de audio. Por favor, intenta nuevamente o envia un mensaje de texto.",
+      "🎤 Hubo un problema al procesar tu mensaje de audio. Por favor, intenta nuevamente o envía un mensaje de texto."
     );
   }
 }

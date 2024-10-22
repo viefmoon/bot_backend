@@ -197,7 +197,7 @@ export class WebhookService {
         try {
           await sendWhatsAppMessage(
             clientId,
-            "Lo siento, ha ocurrido un error al procesar tu mensaje. Por favor, intenta nuevamente más tarde."
+            "Lo siento, ha ocurrido un error al procesar tu mensaje. 😔 Por favor, intenta nuevamente más tarde. 🔄🕑"
           );
         } catch (sendError) {
           logger.error(`Error al enviar mensaje de error: ${sendError}`);
@@ -290,7 +290,7 @@ export class WebhookService {
           logger.info(`Tipo de webhook de WhatsApp no manejado: ${type}`);
           await sendWhatsAppMessage(
             from,
-            "Lo siento, no puedo procesar este tipo de mensaje. Por favor, envía un mensaje de texto, interactivo o de audio."
+            "Lo siento, no puedo procesar este tipo de mensaje. 😅 Por favor, envía un mensaje de texto 📝, interactivo 🔘 o de audio 🎤."
           );
       }
     } catch (error) {
@@ -299,7 +299,7 @@ export class WebhookService {
       );
       await sendWhatsAppMessage(
         from,
-        "Lo siento, ha ocurrido un error al procesar tu mensaje. Por favor, intenta nuevamente más tarde."
+        "Lo siento, ha ocurrido un error al procesar tu mensaje. 😔 Por favor, intenta nuevamente más tarde. 🔄🕑"
       );
     }
   }

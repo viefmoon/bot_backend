@@ -239,7 +239,7 @@ export async function handlePreOrderDiscard(
     if (!preOrder) {
       await sendWhatsAppMessage(
         clientId,
-        "Esta preorden ya no esta disponible."
+        "❌ Esta preorden ya no está disponible para descartar. 🚫🗑️"
       );
       return;
     }

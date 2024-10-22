@@ -71,7 +71,7 @@ async function handlePreOrderDeliveryModification(
     if (!preOrder) {
       await sendWhatsAppMessage(
         from,
-        "No se pudo encontrar la preorden para modificar la información de entrega."
+        "❌ No se pudo encontrar la preorden para modificar la información de entrega. 🚫🔍"
       );
       return;
     }
@@ -90,7 +90,7 @@ async function handlePreOrderDeliveryModification(
     logger.error("Error al manejar la modificación de entrega:", error);
     await sendWhatsAppMessage(
       from,
-      "Hubo un error al procesar tu solicitud. Por favor, intenta nuevamente más tarde."
+      "❌ Hubo un error al procesar tu solicitud de modificación de entrega. Por favor, intenta nuevamente más tarde. 🚫🔄"
     );
   }
 }
@@ -104,7 +104,7 @@ async function handleOnlinePayment(
     if (!order) {
       await sendWhatsAppMessage(
         clientId,
-        "Lo siento, no se pudo encontrar tu orden para procesar el pago."
+        "❌ Lo siento, no se pudo encontrar tu orden para procesar el pago. 🚫🔍"
       );
       return;
     }
@@ -118,27 +118,27 @@ async function handleOnlinePayment(
         break;
       case "in_preparation":
         mensaje =
-          "Esta orden ya está en preparación. Por favor, contacta con el restaurante para opciones de pago.";
+          "❌ Esta orden ya está en preparación. Por favor, contacta con el restaurante para opciones de pago.";
         break;
       case "prepared":
         mensaje =
-          "Esta orden ya está preparada. Por favor, contacta con el restaurante para opciones de pago.";
+          "❌ Esta orden ya está preparada. Por favor, contacta con el restaurante para opciones de pago.";
         break;
       case "in_delivery":
         mensaje =
-          "Esta orden ya está en camino. Por favor, paga al repartidor o contacta con el restaurante.";
+          "❌ Esta orden ya está en camino. Por favor, paga al repartidor o contacta con el restaurante.";
         break;
       case "canceled":
         mensaje =
-          "Esta orden ya ha sido cancelada y no se puede procesar el pago.";
+          "❌ Esta orden ya ha sido cancelada y no se puede procesar el pago.";
         break;
       case "finished":
         mensaje =
-          "Esta orden ya ha sido finalizada y no se puede procesar el pago.";
+          "❌ Esta orden ya ha sido finalizada y no se puede procesar el pago.";
         break;
       default:
         mensaje =
-          "Lo sentimos, pero no se puede procesar el pago en este momento debido al estado actual de la orden.";
+          "❌ Lo sentimos, pero no se puede procesar el pago en este momento debido al estado actual de la orden.";
     }
 
     if (mensaje) {
@@ -186,13 +186,13 @@ async function handleOnlinePayment(
     const paymentLink = session.url;
     await sendWhatsAppMessage(
       clientId,
-      `Por favor, haz clic en el siguiente enlace para proceder con el pago: ${paymentLink}`
+      `💳 Por favor, haz clic en el siguiente enlace para proceder con el pago: 🔗 ${paymentLink} 💰`
     );
   } catch (error) {
     logger.error("Error al procesar el pago en línea:", error);
     await sendWhatsAppMessage(
       clientId,
-      "Hubo un error al procesar tu solicitud de pago. Por favor, intenta nuevamente o contacta con el restaurante."
+      "❌ Hubo un error al procesar tu solicitud de pago. 😕 Por favor, intenta nuevamente o contacta con el restaurante. 🔄📞"
     );
   }
 }
@@ -204,6 +204,10 @@ async function sendMenu(phoneNumber: string): Promise<boolean> {
     return true;
   } catch (error) {
     logger.error("Error al enviar el menú:", error);
+    await sendWhatsAppMessage(
+      phoneNumber,
+      "❌ Hubo un error al enviar el menú. Por favor, intenta nuevamente. 🚫🔄"
+    );
     return false;
   }
 }
@@ -217,9 +221,11 @@ async function handleWaitTimes(clientId: string): Promise<void> {
     );
     await sendWhatsAppMessage(clientId, message);
   } catch (error) {
-    const errorMessage =
-      "Hubo un error al obtener los tiempos de espera. Por favor, intenta nuevamente más tarde.";
-    await sendWhatsAppMessage(clientId, errorMessage);
+    logger.error("Error al obtener los tiempos de espera:", error);
+    await sendWhatsAppMessage(
+      clientId,
+      "❌ Hubo un error al obtener los tiempos de espera. Por favor, intenta nuevamente. 🚫🔄"
+    );
   }
 }
 

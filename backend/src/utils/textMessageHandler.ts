@@ -5,15 +5,9 @@ import {
 import { Customer } from "../models";
 import * as dotenv from "dotenv";
 import { preprocessMessages } from "./messagePreprocess";
-import { Anthropic } from "@anthropic-ai/sdk";
 import { PreOrderService } from "../services/pre-order.service";
 import logger from "./logger";
 dotenv.config();
-
-const { selectProductsToolClaude } = require("../aiTools/aiTools");
-const anthropic = new Anthropic({
-  apiKey: process.env.ANTHROPIC_API_KEY,
-});
 
 interface ChatMessage {
   role: string;
@@ -204,8 +198,12 @@ async function processAndGenerateAIResponse(
       ];
     }
 
-    if (preprocessedContent.warnings && preprocessedContent.warnings.length > 0) {
-      const warningMessage = "📝 Observaciones:\n" + preprocessedContent.warnings.join("\n");
+    if (
+      preprocessedContent.warnings &&
+      preprocessedContent.warnings.length > 0
+    ) {
+      const warningMessage =
+        "📝 Observaciones:\n" + preprocessedContent.warnings.join("\n");
       await sendWhatsAppMessage(conversationId, warningMessage);
     }
 
