@@ -2,6 +2,7 @@ import { Controller, Get, Query, Param, Post, Body, Put } from "@nestjs/common";
 import { OrderService } from "../services/order.service";
 import { CreateOrderDto } from "src/dto/create-order.dto";
 import { OrderStatus } from "src/services/order.service";
+import logger from "src/utils/logger";
 
 @Controller("orders")
 export class OrderController {
@@ -27,6 +28,7 @@ export class OrderController {
 
   @Get("unfinished")
   async getUnfinishedOrders() {
+    logger.info("getUnfinishedOrders");
     return this.orderService.getUnfinishedOrders();
   }
 
