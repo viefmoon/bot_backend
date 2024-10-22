@@ -525,19 +525,17 @@ export class OrderService {
     };
   }
 
-  async completeOrdersByLocalId(
-    completions: { localId: number; completionDate: string }[]
-  ) {
-    logger.info(`Completando ${completions.length} órdenes`);
-    logger.info(completions);
+  async completeOrdersByLocalId(localIds: number[]) {
+    logger.info(`Completando ${localIds.length} órdenes`);
+    logger.info(localIds);
     const { startDate, endDate } = getMexicoDayRange(
       getCurrentMexicoTime().format("YYYY-MM-DD")
     );
 
-    for (const completion of completions) {
+    for (const localId of localIds) {
       const order = await Order.findOne({
         where: {
-          localId: completion.localId,
+          localId: localId,
           createdAt: {
             [Op.between]: [startDate, endDate],
           },
@@ -547,10 +545,9 @@ export class OrderService {
       if (order) {
         await order.update({
           status: "finished",
-          finishedAt: new Date(completion.completionDate),
+          finishedAt: new Date(),
         });
 
-        // Solo enviar mensaje de WhatsApp si es una orden de delivery
         if (order.orderType === "delivery") {
           const mensaje = this.getOrderStatusMessage(
             "finished",
@@ -567,14 +564,34 @@ export class OrderService {
         }
       } else {
         logger.warn(
-          `No se encontró orden con localId ${completion.localId} para la fecha actual`
+          `No se encontró orden con localId ${localId} para la fecha actual`
         );
       }
     }
 
     return {
-      mensaje: `${completions.length} órdenes marcadas como completadas`,
-      completadas: completions,
+      mensaje: `${localIds.length} órdenes marcadas como completadas`,
+      completadas: localIds,
     };
+  }
+
+  async getUnfinishedOrders() {
+    const { startDate, endDate } = getMexicoDayRange(
+      getCurrentMexicoTime().format("YYYY-MM-DD")
+    );
+
+    const unfinishedOrders = await Order.findAll({
+      where: {
+        status: {
+          [Op.ne]: "finished",
+        },
+        createdAt: {
+          [Op.between]: [startDate, endDate],
+        },
+      },
+      order: [["createdAt", "ASC"]],
+    });
+
+    return unfinishedOrders;
   }
 }

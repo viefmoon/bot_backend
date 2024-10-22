@@ -25,6 +25,11 @@ export class OrderController {
     return this.orderService.getOrdersByClient(clientId);
   }
 
+  @Get("unfinished")
+  async getUnfinishedOrders() {
+    return this.orderService.getUnfinishedOrders();
+  }
+
   @Post()
   async createOrder(@Body() createOrderDto: CreateOrderDto) {
     return this.orderService.createOrder(createOrderDto);
@@ -48,10 +53,10 @@ export class OrderController {
     );
   }
 
-  @Post("complete")
-  async completeOrders(
-    @Body() completions: { localId: number; completionDate: string }[]
-  ) {
-    return this.orderService.completeOrdersByLocalId(completions);
+  @Put("complete-orders")
+  async completeOrders(@Body() completions: { localId: number }[]) {
+    return this.orderService.completeOrdersByLocalId(
+      completions.map((c) => c.localId)
+    );
   }
 }
