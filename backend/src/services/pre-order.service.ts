@@ -200,26 +200,35 @@ export class PreOrderService {
 
         console.log("item", JSON.stringify(item, null, 2));
 
-        if (item.productId && item.productVariant.productVariantId) {
-          // Si ambos están presentes, buscar producto y variante
+        if (item.productId) {
+          // Buscar el producto
           product = await Product.findByPk(item.productId);
-          productVariant = await ProductVariant.findByPk(
-            item.productVariant.productVariantId
-          );
 
-          if (!product || !productVariant) {
+          if (!product) {
             throw new Error(
-              `Producto o variante no encontrado en el menú: Producto ${item.productId}, Variante ${item.productVariant.productVariantId}`
+              `Producto no encontrado en el menú: Producto ${item.productId}`
             );
           }
 
-          itemPrice = productVariant.price || 0;
-          productName = productVariant.name;
-          item.productVariantId = productVariant.id;
-          item.productId = product.id;
+          // Asignar valores directamente del producto si no hay variante
+          itemPrice = product.price || 0;
+          productName = product.name;
+
+          // Si existe productVariant y productVariantId, buscar la variante
+          if (item.productVariant && item.productVariant.productVariantId) {
+            productVariant = await ProductVariant.findByPk(
+              item.productVariant.productVariantId
+            );
+
+            if (productVariant) {
+              itemPrice = productVariant.price || itemPrice;
+              productName = productVariant.name || productName;
+              item.productVariantId = productVariant.id;
+            }
+          }
         } else {
           throw new Error(
-            `Producto o variante no encontrada en el menú: ${item.productId}, ${item.productVariant.id}`
+            `Producto no encontrado en el menú: ${item.productId}`
           );
         }
 
