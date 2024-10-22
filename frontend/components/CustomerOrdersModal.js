@@ -96,6 +96,15 @@ const CustomerOrdersModal = ({ clientId, onClose }) => {
                     </span>
                     <span className="text-sm text-gray-600">
                       {formatDateToMexicoTime(order.createdAt, true)}
+                      {order.finishedAt && (
+                        <>
+                          <br />
+                          <span className="text-green-600">
+                            Completado:{" "}
+                            {formatDateToMexicoTime(order.finishedAt, true)}
+                          </span>
+                        </>
+                      )}
                     </span>
                   </div>
                   <span

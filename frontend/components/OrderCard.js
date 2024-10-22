@@ -59,6 +59,10 @@ const OrderCard = ({ order, onUpdateStatus }) => {
     ? formatDateToMexicoTime(order.scheduledDeliveryTime)
     : null;
 
+  const finishedTime = order.finishedAt
+    ? formatDateToMexicoTime(order.finishedAt)
+    : null;
+
   const getOrderTypeColor = (type) => {
     return type === "delivery" ? "bg-blue-400" : "bg-purple-400";
   };
@@ -222,6 +226,12 @@ const OrderCard = ({ order, onUpdateStatus }) => {
                 : "No sincronizado"}
             </p>
           </div>
+          {finishedTime && (
+            <div>
+              <p className="text-gray-600">Finalizado:</p>
+              <p className="font-medium">{finishedTime}</p>
+            </div>
+          )}
           {scheduledDeliveryTime && (
             <div>
               <p className="text-gray-600">Entrega programada:</p>
