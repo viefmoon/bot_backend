@@ -120,13 +120,15 @@ const OrderCard = ({ order, onUpdateStatus }) => {
             >
               {translateStatus(order.status)}
             </span>
-            <span
-              className={`px-3 py-1 rounded-full text-sm lg:text-base font-semibold text-white ${getPaymentStatusColor(
-                order.paymentStatus
-              )}`}
-            >
-              {translatePaymentStatus(order.paymentStatus)}
-            </span>
+            {order.paymentStatus && (
+              <span
+                className={`px-3 py-1 rounded-full text-sm lg:text-base font-semibold text-white ${getPaymentStatusColor(
+                  order.paymentStatus
+                )}`}
+              >
+                {translatePaymentStatus(order.paymentStatus)}
+              </span>
+            )}
           </div>
         </div>
 

@@ -1,4 +1,4 @@
-import { DataTypes, Model, UUIDV4 } from "sequelize";
+import { DataTypes, Model } from "sequelize";
 import { sequelize } from "../lib/db";
 import PizzaIngredient from "./pizzaIngredient";
 
