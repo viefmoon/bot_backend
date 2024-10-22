@@ -6,6 +6,18 @@ const OrderCard = ({ order, onUpdateStatus }) => {
   const [showDetails, setShowDetails] = useState(false);
 
   const handleUpdateStatus = async (newStatus) => {
+    // Validación para pedidos sincronizados que se intentan cancelar
+    if (newStatus === "canceled" && order.syncedWithLocal) {
+      const confirmar = window.confirm(
+        "¡Advertencia! Este pedido ya está sincronizado con el servidor local. " +
+          "Si lo cancela, deberá eliminar el pedido manualmente del servidor local. " +
+          "¿Desea continuar con la cancelación?"
+      );
+      if (!confirmar) {
+        return;
+      }
+    }
+
     setIsLoading(true);
     try {
       const response = await fetch("/api/update_order_status", {
