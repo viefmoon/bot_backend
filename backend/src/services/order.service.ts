@@ -444,7 +444,7 @@ export class OrderService {
       case "in_delivery":
         return `¡Tu orden #${dailyOrderNumber} está en camino! 🚚💨 Estará contigo en breve.`;
       case "finished":
-        return `¡Tu orden #${dailyOrderNumber} ha sido entregada! 🎊 Muchas gracias por tu preferencia. ¡Buen provecho! 😋`;
+        return `¡Tu orden #${dailyOrderNumber} esta en camino a ser entregada! 🎊 Muchas gracias por tu preferencia. ¡Buen provecho! 😋`;
       case "canceled":
         return `Lo sentimos, tu orden #${dailyOrderNumber} ha sido cancelada. ❌ Si tienes alguna pregunta, por favor contáctanos. 📞`;
       default:
@@ -522,6 +522,59 @@ export class OrderService {
           hour12: true,
         }),
       },
+    };
+  }
+
+  async completeOrdersByLocalId(
+    completions: { localId: number; completionDate: string }[]
+  ) {
+    logger.info(`Completando ${completions.length} órdenes`);
+    logger.info(completions);
+    const { startDate, endDate } = getMexicoDayRange(
+      getCurrentMexicoTime().format("YYYY-MM-DD")
+    );
+
+    for (const completion of completions) {
+      const order = await Order.findOne({
+        where: {
+          localId: completion.localId,
+          createdAt: {
+            [Op.between]: [startDate, endDate],
+          },
+        },
+      });
+
+      if (order) {
+        await order.update({
+          status: "finished",
+          finishedAt: new Date(completion.completionDate),
+        });
+
+        // Solo enviar mensaje de WhatsApp si es una orden de delivery
+        if (order.orderType === "delivery") {
+          const mensaje = this.getOrderStatusMessage(
+            "finished",
+            order.dailyOrderNumber
+          );
+          try {
+            await sendWhatsAppMessage(order.clientId, mensaje);
+          } catch (error) {
+            logger.error(
+              `Error enviando mensaje WhatsApp para orden ${order.id}:`,
+              error
+            );
+          }
+        }
+      } else {
+        logger.warn(
+          `No se encontró orden con localId ${completion.localId} para la fecha actual`
+        );
+      }
+    }
+
+    return {
+      mensaje: `${completions.length} órdenes marcadas como completadas`,
+      completadas: completions,
     };
   }
 }

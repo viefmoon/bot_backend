@@ -47,4 +47,11 @@ export class OrderController {
       updateStatusDto.status
     );
   }
+
+  @Post("complete")
+  async completeOrders(
+    @Body() completions: { localId: number; completionDate: string }[]
+  ) {
+    return this.orderService.completeOrdersByLocalId(completions);
+  }
 }
