@@ -16,8 +16,9 @@ import {
   RestaurantConfig,
 } from "../models";
 import {
-  getCurrentMexicoTime,
   getNextDailyOrderNumber,
+  getMexicoDayRange,
+  getCurrentMexicoTime,
 } from "../utils/timeUtils";
 import { CreateOrderDto } from "../dto/create-order.dto";
 import { PizzaHalf, IngredientAction } from "../models/selectedPizzaIngredient";
@@ -40,16 +41,10 @@ export class OrderService {
     let whereClause: any = {};
 
     if (date) {
-      console.log("date", date);
-      // Parsear la fecha asumiendo que ya está en hora de México
-      const mexicoDate = getCurrentMexicoTime().startOf("day");
-
-      // Definir el inicio y fin del día en UTC
-      const startDate = mexicoDate.clone().utc();
-      const endDate = mexicoDate.clone().endOf("day").utc();
+      const { startDate, endDate } = getMexicoDayRange(date);
 
       whereClause.createdAt = {
-        [Op.between]: [startDate.toDate(), endDate.toDate()],
+        [Op.between]: [startDate, endDate],
       };
     }
 
@@ -457,9 +452,16 @@ export class OrderService {
   }
 
   async getUnsyncedOrders() {
+    const { startDate, endDate } = getMexicoDayRange(
+      getCurrentMexicoTime().format("YYYY-MM-DD")
+    );
+
     const unsyncedOrders = await Order.findAll({
       where: {
         syncedWithLocal: false,
+        createdAt: {
+          [Op.between]: [startDate, endDate],
+        },
       },
       order: [["createdAt", "ASC"]],
       include: [

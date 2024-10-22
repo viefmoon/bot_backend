@@ -39,11 +39,14 @@ const isBusinessOpen = (): boolean => {
 
   let hours: { opening: number; closing: number };
 
-  if (dayOfWeek === 0) { // Sunday
+  if (dayOfWeek === 0) {
+    // Sunday
     hours = businessHours.sunday;
-  } else if (dayOfWeek >= 2 && dayOfWeek <= 6) { // Tuesday to Saturday
+  } else if (dayOfWeek >= 2 && dayOfWeek <= 6) {
+    // Tuesday to Saturday
     hours = businessHours.weekdays;
-  } else { // Monday (closed)
+  } else {
+    // Monday (closed)
     return false;
   }
 
@@ -79,4 +82,16 @@ export async function getNextDailyOrderNumber(): Promise<number> {
     );
     throw error;
   }
+}
+
+export function getMexicoDayRange(dateString: string): {
+  startDate: Date;
+  endDate: Date;
+} {
+  const mexicoDate = moment.tz(dateString, TIME_ZONE).startOf("day");
+
+  const startDate = mexicoDate.clone().utc().toDate();
+  const endDate = mexicoDate.clone().endOf("day").utc().toDate();
+
+  return { startDate, endDate };
 }
