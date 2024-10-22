@@ -110,6 +110,14 @@ async function handleOnlinePayment(
       return;
     }
 
+    if (order.stripeSessionId || order.paymentStatus === "pending") {
+      await sendWhatsAppMessage(
+        clientId,
+        "⚠️ Ya existe un enlace de pago activo para esta orden. Por favor, utiliza el enlace enviado anteriormente o contacta al restaurante si necesitas ayuda. 🔄"
+      );
+      return;
+    }
+
     // Verificar el estado de la orden
     let mensaje;
     switch (order.status) {
