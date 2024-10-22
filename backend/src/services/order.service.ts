@@ -459,6 +459,7 @@ export class OrderService {
     const unsyncedOrders = await Order.findAll({
       where: {
         syncedWithLocal: false,
+        status: "accepted",
         createdAt: {
           [Op.between]: [startDate, endDate],
         },
