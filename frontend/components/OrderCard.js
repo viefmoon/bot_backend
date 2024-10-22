@@ -305,14 +305,22 @@ const OrderCard = ({ order, onUpdateStatus }) => {
             <button
               className="px-3 py-1 lg:px-4 lg:py-2 bg-green-500 text-white text-sm lg:text-base rounded hover:bg-green-600 disabled:opacity-50 disabled:cursor-not-allowed transition duration-300"
               onClick={() => handleUpdateStatus("accepted")}
-              disabled={order.status === "accepted" || isLoading}
+              disabled={
+                order.status === "accepted" ||
+                order.status === "finished" ||
+                isLoading
+              }
             >
               Aceptar
             </button>
             <button
               className="px-3 py-1 lg:px-4 lg:py-2 bg-red-500 text-white text-sm lg:text-base rounded hover:bg-red-600 disabled:opacity-50 disabled:cursor-not-allowed transition duration-300"
               onClick={() => handleUpdateStatus("canceled")}
-              disabled={order.status === "canceled" || isLoading}
+              disabled={
+                order.status === "canceled" ||
+                order.status === "finished" ||
+                isLoading
+              }
             >
               Rechazar
             </button>
