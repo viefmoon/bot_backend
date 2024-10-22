@@ -198,6 +198,8 @@ export class PreOrderService {
         let product, productVariant;
         let itemPrice, productName;
 
+        console.log("item", JSON.stringify(item, null, 2));
+
         if (item.productId && item.productVariant.productVariantId) {
           // Si ambos están presentes, buscar producto y variante
           product = await Product.findByPk(item.productId);
