@@ -278,155 +278,6 @@ export default function Home() {
     return groupedItems;
   };
 
-  const renderMenuItemCard = (item) => (
-    <div key={item.id} className="col-md-4 mb-3">
-      <div className="card h-100">
-        <div className="card-body">
-          <h5 className="card-title">{item.name}</h5>
-          <p className="card-text">Categoría: {item.category}</p>
-          <p className="card-text">
-            Precio:{" "}
-            {item.price
-              ? `$${item.price.toFixed(2)}`
-              : "Varía según la variante"}
-          </p>
-          <p className="card-text">
-            Disponible:{" "}
-            <span
-              className={`badge bg-${
-                item.Availability.available ? "success" : "danger"
-              }`}
-            >
-              {item.Availability.available ? "Sí" : "No"}
-            </span>
-          </p>
-
-          {item.productVariants && item.productVariants.length > 0 && (
-            <div className="mt-3">
-              <h6>Variantes:</h6>
-              <ul className="list-group">
-                {item.productVariants.map((variant) => (
-                  <li
-                    key={variant.id}
-                    className="list-group-item d-flex justify-content-between align-items-center"
-                  >
-                    {variant.name}
-                    <span
-                      className={`badge bg-${
-                        variant.Availability.available ? "success" : "danger"
-                      } rounded-pill`}
-                    >
-                      {variant.Availability.available
-                        ? "Disponible"
-                        : "No disponible"}
-                    </span>
-                    <button
-                      onClick={() =>
-                        toggleItemAvailability(variant.id, "productVariant")
-                      }
-                      className={`btn btn-${
-                        variant.Availability.available ? "danger" : "success"
-                      } btn-sm ms-2`}
-                    >
-                      {variant.Availability.available
-                        ? "Deshabilitar"
-                        : "Habilitar"}
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
-
-          {item.modifierTypes && item.modifierTypes.length > 0 && (
-            <div className="mt-3">
-              <h6>Modificadores:</h6>
-              {item.modifierTypes.map((modifierType) => (
-                <ul key={modifierType.id} className="list-group">
-                  {modifierType.modifiers.map((modifier) => (
-                    <li
-                      key={modifier.id}
-                      className="list-group-item d-flex justify-content-between align-items-center"
-                    >
-                      {modifier.name}
-                      <span
-                        className={`badge bg-${
-                          modifier.Availability.available ? "success" : "danger"
-                        } rounded-pill`}
-                      >
-                        {modifier.Availability.available
-                          ? "Disponible"
-                          : "No disponible"}
-                      </span>
-                      <button
-                        onClick={() =>
-                          toggleItemAvailability(modifier.id, "modifier")
-                        }
-                        className={`btn btn-${
-                          modifier.Availability.available ? "danger" : "success"
-                        } btn-sm ms-2`}
-                      >
-                        {modifier.Availability.available
-                          ? "Deshabilitar"
-                          : "Habilitar"}
-                      </button>
-                    </li>
-                  ))}
-                </ul>
-              ))}
-            </div>
-          )}
-
-          {item.pizzaIngredients && item.pizzaIngredients.length > 0 && (
-            <div className="mt-3">
-              <h6>Ingredientes de Pizza:</h6>
-              <ul className="list-group">
-                {item.pizzaIngredients.map((ingredient) => (
-                  <li
-                    key={ingredient.id}
-                    className="list-group-item d-flex justify-content-between align-items-center"
-                  >
-                    {ingredient.name}
-                    <span
-                      className={`badge bg-${
-                        ingredient.Availability.available ? "success" : "danger"
-                      } rounded-pill`}
-                    >
-                      {ingredient.Availability.available
-                        ? "Disponible"
-                        : "No disponible"}
-                    </span>
-                    <button
-                      onClick={() =>
-                        toggleItemAvailability(ingredient.id, "pizzaIngredient")
-                      }
-                      className={`btn btn-${
-                        ingredient.Availability.available ? "danger" : "success"
-                      } btn-sm ms-2`}
-                    >
-                      {ingredient.Availability.available
-                        ? "Deshabilitar"
-                        : "Habilitar"}
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
-
-          <button
-            onClick={() => toggleItemAvailability(item.id, "product")}
-            className={`btn btn-${
-              item.Availability.available ? "danger" : "success"
-            } btn-sm mt-2`}
-          >
-            {item.Availability.available ? "Deshabilitar" : "Habilitar"}
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-
   const refreshAll = async () => {
     try {
       await Promise.all([
@@ -806,188 +657,193 @@ export default function Home() {
                   </div>
                 )}
                 <div id="menu-list">
-                  {Object.entries(groupMenuItemsByCategory(menuItems)).map(
-                    ([category, items]) => (
-                      <div key={category} className="mb-8">
-                        <h3 className="text-xl font-semibold mb-4 text-gray-700 border-b pb-2">
-                          {category.charAt(0).toUpperCase() + category.slice(1)}
-                        </h3>
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                          {items.map((item) => (
-                            <div
-                              key={item.id}
-                              className="bg-gray-50 rounded-lg shadow-sm p-4 hover:shadow-md transition-shadow duration-300"
-                            >
-                              <h4 className="text-lg font-medium mb-2 text-gray-800">
-                                {item.name}
-                              </h4>
-                              <p className="text-sm text-gray-600 mb-2">
-                                Categoría: {item.category}
-                              </p>
-                              <p className="text-sm text-gray-600 mb-2">
-                                Precio:{" "}
-                                {item.price
-                                  ? `$${item.price.toFixed(2)}`
-                                  : "Varía según la variante"}
-                              </p>
-                              <p className="text-sm mb-3">
-                                Disponible:
-                                <span
-                                  className={`ml-2 px-2 py-1 rounded-full text-xs font-medium ${
-                                    item.Availability.available
-                                      ? "bg-green-100 text-green-800"
-                                      : "bg-red-100 text-red-800"
-                                  }`}
-                                >
-                                  {item.Availability.available ? "Sí" : "No"}
-                                </span>
-                              </p>
+                  {menuItems.map((category) => (
+                    <div key={category.id} className="mb-8">
+                      <h3 className="text-xl font-semibold mb-4 text-gray-700 border-b pb-2">
+                        {category.name}
+                      </h3>
+                      {category.subcategories.map((subcategory) => (
+                        <div key={subcategory.id} className="mb-6">
+                          <h4 className="text-lg font-medium mb-3 text-gray-600">
+                            {subcategory.name}
+                          </h4>
+                          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                            {subcategory.products.map((item) => (
+                              <div
+                                key={item.id}
+                                className="bg-gray-50 rounded-lg shadow-sm p-4 hover:shadow-md transition-shadow duration-300"
+                              >
+                                <h5 className="text-lg font-medium mb-2 text-gray-800">
+                                  {item.name}
+                                </h5>
+                                <p className="text-sm text-gray-600 mb-2">
+                                  Precio:{" "}
+                                  {item.price
+                                    ? `$${item.price.toFixed(2)}`
+                                    : "Varía según la variante"}
+                                </p>
+                                <p className="text-sm mb-3">
+                                  Disponible:
+                                  <span
+                                    className={`ml-2 px-2 py-1 rounded-full text-xs font-medium ${
+                                      item.Availability.available
+                                        ? "bg-green-100 text-green-800"
+                                        : "bg-red-100 text-red-800"
+                                    }`}
+                                  >
+                                    {item.Availability.available ? "Sí" : "No"}
+                                  </span>
+                                </p>
 
-                              {item.productVariants &&
-                                item.productVariants.length > 0 && (
-                                  <div className="mt-3">
-                                    <h5 className="font-medium text-sm mb-2 text-gray-700">
-                                      Variantes:
-                                    </h5>
-                                    <ul className="space-y-2">
-                                      {item.productVariants.map((variant) => (
-                                        <li
-                                          key={variant.id}
-                                          className="flex justify-between items-center text-sm"
-                                        >
-                                          <span>{variant.name}</span>
-                                          <button
-                                            onClick={() =>
-                                              toggleItemAvailability(
-                                                variant.id,
-                                                "productVariant"
-                                              )
-                                            }
-                                            className={`px-2 py-1 rounded text-xs font-medium ${
-                                              variant.Availability.available
-                                                ? "bg-red-100 text-red-800 hover:bg-red-200"
-                                                : "bg-green-100 text-green-800 hover:bg-green-200"
-                                            }`}
-                                          >
-                                            {variant.Availability.available
-                                              ? "Deshabilitar"
-                                              : "Habilitar"}
-                                          </button>
-                                        </li>
-                                      ))}
-                                    </ul>
-                                  </div>
-                                )}
-
-                              {item.modifierTypes &&
-                                item.modifierTypes.length > 0 && (
-                                  <div className="mt-3">
-                                    <h5 className="font-medium text-sm mb-2 text-gray-700">
-                                      Modificadores:
-                                    </h5>
-                                    {item.modifierTypes.map((modifierType) => (
-                                      <div
-                                        key={modifierType.id}
-                                        className="mb-2"
-                                      >
-                                        <h6 className="text-xs font-medium text-gray-600 mb-1">
-                                          {modifierType.name}:
-                                        </h6>
-                                        <ul className="space-y-2">
-                                          {modifierType.modifiers.map(
-                                            (modifier) => (
-                                              <li
-                                                key={modifier.id}
-                                                className="flex justify-between items-center text-sm"
-                                              >
-                                                <span>{modifier.name}</span>
-                                                <button
-                                                  onClick={() =>
-                                                    toggleItemAvailability(
-                                                      modifier.id,
-                                                      "modifier"
-                                                    )
-                                                  }
-                                                  className={`px-2 py-1 rounded text-xs font-medium ${
-                                                    modifier.Availability
-                                                      .available
-                                                      ? "bg-red-100 text-red-800 hover:bg-red-200"
-                                                      : "bg-green-100 text-green-800 hover:bg-green-200"
-                                                  }`}
-                                                >
-                                                  {modifier.Availability
-                                                    .available
-                                                    ? "Deshabilitar"
-                                                    : "Habilitar"}
-                                                </button>
-                                              </li>
-                                            )
-                                          )}
-                                        </ul>
-                                      </div>
-                                    ))}
-                                  </div>
-                                )}
-
-                              {item.pizzaIngredients &&
-                                item.pizzaIngredients.length > 0 && (
-                                  <div className="mt-3">
-                                    <h5 className="font-medium text-sm mb-2 text-gray-700">
-                                      Ingredientes de Pizza:
-                                    </h5>
-                                    <ul className="space-y-2">
-                                      {item.pizzaIngredients.map(
-                                        (ingredient) => (
+                                {item.productVariants &&
+                                  item.productVariants.length > 0 && (
+                                    <div className="mt-3">
+                                      <h6 className="font-medium text-sm mb-2 text-gray-700">
+                                        Variantes:
+                                      </h6>
+                                      <ul className="space-y-2">
+                                        {item.productVariants.map((variant) => (
                                           <li
-                                            key={ingredient.id}
+                                            key={variant.id}
                                             className="flex justify-between items-center text-sm"
                                           >
-                                            <span>{ingredient.name}</span>
+                                            <span>{variant.name}</span>
                                             <button
                                               onClick={() =>
                                                 toggleItemAvailability(
-                                                  ingredient.id,
-                                                  "pizzaIngredient"
+                                                  variant.id,
+                                                  "productVariant"
                                                 )
                                               }
                                               className={`px-2 py-1 rounded text-xs font-medium ${
-                                                ingredient.Availability
-                                                  .available
+                                                variant.Availability.available
                                                   ? "bg-red-100 text-red-800 hover:bg-red-200"
                                                   : "bg-green-100 text-green-800 hover:bg-green-200"
                                               }`}
                                             >
-                                              {ingredient.Availability.available
+                                              {variant.Availability.available
                                                 ? "Deshabilitar"
                                                 : "Habilitar"}
                                             </button>
                                           </li>
+                                        ))}
+                                      </ul>
+                                    </div>
+                                  )}
+
+                                {item.pizzaIngredients &&
+                                  item.pizzaIngredients.length > 0 && (
+                                    <div className="mt-3">
+                                      <h6 className="font-medium text-sm mb-2 text-gray-700">
+                                        Ingredientes de Pizza:
+                                      </h6>
+                                      <ul className="space-y-2">
+                                        {item.pizzaIngredients.map(
+                                          (ingredient) => (
+                                            <li
+                                              key={ingredient.id}
+                                              className="flex justify-between items-center text-sm"
+                                            >
+                                              <span>{ingredient.name}</span>
+                                              <button
+                                                onClick={() =>
+                                                  toggleItemAvailability(
+                                                    ingredient.id,
+                                                    "pizzaIngredient"
+                                                  )
+                                                }
+                                                className={`px-2 py-1 rounded text-xs font-medium ${
+                                                  ingredient.Availability
+                                                    .available
+                                                    ? "bg-red-100 text-red-800 hover:bg-red-200"
+                                                    : "bg-green-100 text-green-800 hover:bg-green-200"
+                                                }`}
+                                              >
+                                                {ingredient.Availability
+                                                  .available
+                                                  ? "Deshabilitar"
+                                                  : "Habilitar"}
+                                              </button>
+                                            </li>
+                                          )
+                                        )}
+                                      </ul>
+                                    </div>
+                                  )}
+
+                                {item.modifierTypes &&
+                                  item.modifierTypes.length > 0 && (
+                                    <div className="mt-3">
+                                      <h6 className="font-medium text-sm mb-2 text-gray-700">
+                                        Modificadores:
+                                      </h6>
+                                      {item.modifierTypes.map(
+                                        (modifierType) => (
+                                          <div
+                                            key={modifierType.id}
+                                            className="mb-2"
+                                          >
+                                            <h6 className="text-xs font-medium text-gray-600 mb-1">
+                                              {modifierType.name}:
+                                            </h6>
+                                            <ul className="space-y-2">
+                                              {modifierType.modifiers.map(
+                                                (modifier) => (
+                                                  <li
+                                                    key={modifier.id}
+                                                    className="flex justify-between items-center text-sm"
+                                                  >
+                                                    <span>{modifier.name}</span>
+                                                    <button
+                                                      onClick={() =>
+                                                        toggleItemAvailability(
+                                                          modifier.id,
+                                                          "modifier"
+                                                        )
+                                                      }
+                                                      className={`px-2 py-1 rounded text-xs font-medium ${
+                                                        modifier.Availability
+                                                          .available
+                                                          ? "bg-red-100 text-red-800 hover:bg-red-200"
+                                                          : "bg-green-100 text-green-800 hover:bg-green-200"
+                                                      }`}
+                                                    >
+                                                      {modifier.Availability
+                                                        .available
+                                                        ? "Deshabilitar"
+                                                        : "Habilitar"}
+                                                    </button>
+                                                  </li>
+                                                )
+                                              )}
+                                            </ul>
+                                          </div>
                                         )
                                       )}
-                                    </ul>
-                                  </div>
-                                )}
+                                    </div>
+                                  )}
 
-                              <button
-                                onClick={() =>
-                                  toggleItemAvailability(item.id, "product")
-                                }
-                                className={`mt-4 w-full py-2 px-4 rounded-lg text-sm font-medium ${
-                                  item.Availability.available
-                                    ? "bg-red-500 text-white hover:bg-red-600"
-                                    : "bg-green-500 text-white hover:bg-green-600"
-                                } transition-colors duration-300`}
-                              >
-                                {item.Availability.available
-                                  ? "Deshabilitar"
-                                  : "Habilitar"}
-                              </button>
-                            </div>
-                          ))}
+                                <button
+                                  onClick={() =>
+                                    toggleItemAvailability(item.id, "product")
+                                  }
+                                  className={`mt-4 w-full py-2 px-4 rounded-lg text-sm font-medium ${
+                                    item.Availability.available
+                                      ? "bg-red-500 text-white hover:bg-red-600"
+                                      : "bg-green-500 text-white hover:bg-green-600"
+                                  } transition-colors duration-300`}
+                                >
+                                  {item.Availability.available
+                                    ? "Deshabilitar"
+                                    : "Habilitar"}
+                                </button>
+                              </div>
+                            ))}
+                          </div>
                         </div>
-                      </div>
-                    )
-                  )}
+                      ))}
+                    </div>
+                  ))}
                 </div>
               </div>
             )}
