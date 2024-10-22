@@ -20,6 +20,8 @@ import MessageLog from "./messageLog";
 import NotificationPhone from "./notificationPhone";
 import CustomerDeliveryInfo from "./customerDeliveryInfo";
 import OrderDeliveryInfo from "./orderDeliveryInfo";
+import Category from "./category";
+import Subcategory from "./subcategory";
 
 // Importar las asociaciones
 import "./modelAssociations";
@@ -46,4 +48,6 @@ export {
   NotificationPhone,
   CustomerDeliveryInfo,
   OrderDeliveryInfo,
+  Category,
+  Subcategory,
 };

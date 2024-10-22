@@ -6,6 +6,8 @@ import {
   ModifierType,
   Modifier,
   Availability,
+  Category,
+  Subcategory,
 } from "../models";
 import logger from "../utils/logger";
 
@@ -13,54 +15,77 @@ import logger from "../utils/logger";
 export class MenuService {
   async getMenu() {
     try {
-      const menu = await Product.findAll({
+      const menu = await Category.findAll({
         attributes: {
-          exclude: ["createdAt", "updatedAt", "ingredients"],
+          exclude: ["createdAt", "updatedAt"],
         },
         include: [
           {
-            model: ProductVariant,
-            as: "productVariants",
+            model: Subcategory,
+            as: "subcategories",
             attributes: {
-              exclude: ["createdAt", "updatedAt", "ingredients"],
+              exclude: ["createdAt", "updatedAt", "categoryId"],
             },
             include: [
               {
-                model: Availability,
-                attributes: { exclude: ["createdAt", "updatedAt"] },
-              },
-            ],
-          },
-          {
-            model: Availability,
-            attributes: { exclude: ["createdAt", "updatedAt"] },
-          },
-          {
-            model: PizzaIngredient,
-            as: "pizzaIngredients",
-            attributes: {
-              exclude: ["createdAt", "updatedAt", "ingredients"],
-            },
-            include: [
-              {
-                model: Availability,
-                attributes: { exclude: ["createdAt", "updatedAt"] },
-              },
-            ],
-          },
-          {
-            model: ModifierType,
-            as: "modifierTypes",
-            attributes: { exclude: ["createdAt", "updatedAt"] },
-            include: [
-              {
-                model: Modifier,
-                as: "modifiers",
-                attributes: { exclude: ["createdAt", "updatedAt"] },
+                model: Product,
+                as: "products",
+                attributes: {
+                  exclude: [
+                    "createdAt",
+                    "updatedAt",
+                    "ingredients",
+                    "subcategoryId",
+                  ],
+                },
                 include: [
+                  {
+                    model: ProductVariant,
+                    as: "productVariants",
+                    attributes: {
+                      exclude: ["createdAt", "updatedAt", "ingredients"],
+                    },
+                    include: [
+                      {
+                        model: Availability,
+                        attributes: { exclude: ["createdAt", "updatedAt"] },
+                      },
+                    ],
+                  },
                   {
                     model: Availability,
                     attributes: { exclude: ["createdAt", "updatedAt"] },
+                  },
+                  {
+                    model: PizzaIngredient,
+                    as: "pizzaIngredients",
+                    attributes: {
+                      exclude: ["createdAt", "updatedAt", "ingredients"],
+                    },
+                    include: [
+                      {
+                        model: Availability,
+                        attributes: { exclude: ["createdAt", "updatedAt"] },
+                      },
+                    ],
+                  },
+                  {
+                    model: ModifierType,
+                    as: "modifierTypes",
+                    attributes: { exclude: ["createdAt", "updatedAt"] },
+                    include: [
+                      {
+                        model: Modifier,
+                        as: "modifiers",
+                        attributes: { exclude: ["createdAt", "updatedAt"] },
+                        include: [
+                          {
+                            model: Availability,
+                            attributes: { exclude: ["createdAt", "updatedAt"] },
+                          },
+                        ],
+                      },
+                    ],
                   },
                 ],
               },
