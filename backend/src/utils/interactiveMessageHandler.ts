@@ -19,6 +19,7 @@ import {
 } from "../config/predefinedMessages";
 import getFullMenu from "../data/menu";
 import logger from "./logger";
+import { getCurrentMexicoTime } from "./timeUtils";
 
 const stripeClient = new Stripe(process.env.STRIPE_SECRET_KEY!, {
   apiVersion: "2024-06-20",
@@ -166,7 +167,9 @@ async function handleOnlinePayment(
           price_data: {
             currency: "mxn",
             product_data: {
-              name: `Orden #${order.dailyOrderNumber}`,
+              name: `Orden #${
+                order.dailyOrderNumber
+              } - ${getCurrentMexicoTime().format("DD/MM/YYYY")}`,
             },
             unit_amount: Math.round(order.totalCost * 100),
           },
