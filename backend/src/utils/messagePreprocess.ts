@@ -702,7 +702,9 @@ export async function preprocessMessagesClaude(
 
     logger.info("requestPayload", requestPayload);
 
-    const response = await anthropic.beta.messages.create(requestPayload);
+    const response = await anthropic.beta.messages.create(
+      requestPayload as any
+    );
     const responses: AIResponse[] = [];
 
     // Registrar el uso de tokens
