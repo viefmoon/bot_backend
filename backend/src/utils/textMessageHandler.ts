@@ -152,6 +152,7 @@ export async function handleTextMessage(
     }
 
     if (item.interactiveMessage && item.sendToWhatsApp === true) {
+      console.log("item", item);
       const messageId = await sendWhatsAppInteractiveMessage(
         from,
         item.interactiveMessage
