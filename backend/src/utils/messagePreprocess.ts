@@ -694,6 +694,9 @@ export async function preprocessMessagesClaude(
       max_tokens: agent.maxTokens,
       messages: processedMessages,
       tool_choice: { type: "auto" } as any,
+      headers: {
+        "anthropic-beta": "prompt-caching-2024-07-31",
+      },
     };
 
     logger.info("requestPayload", requestPayload);
