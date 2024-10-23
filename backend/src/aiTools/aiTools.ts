@@ -107,7 +107,7 @@ const sendMenuToolClaude = {
   name: "send_menu",
   description: "Envía el menú completo al cliente cuando lo solicita explícitamente.",
   input_schema: {
-    type: "object" as const,
+    type: "object",
     properties: {},
     required: []
   }

@@ -653,7 +653,7 @@ export async function preprocessMessagesClaude(messages: any[]): Promise<
         content: msg.content
       })),
       system: SYSTEM_MESSAGE_PHASE_1,
-      tools: [sendMenuToolClaude, preprocessOrderToolClaude],
+      tools: [sendMenuToolClaude, preprocessOrderToolClaude] as any,
     });
 
     if (response.content[0].type === 'tool_use') {
