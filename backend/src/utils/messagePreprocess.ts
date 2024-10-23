@@ -649,7 +649,6 @@ export async function preprocessMessagesClaude(messages: any[]): Promise<
         role: msg.role,
         content: msg.content
       })),
-      disable_parallel_tool_use: true
     };
 
     // Modificar la forma en que se registra el payload
