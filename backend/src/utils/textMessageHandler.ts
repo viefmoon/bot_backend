@@ -4,7 +4,10 @@ import {
 } from "./whatsAppUtils";
 import { Customer } from "../models";
 import * as dotenv from "dotenv";
-import { preprocessMessagesClaude, preprocessMessagesGPT } from "./messagePreprocess";
+import {
+  preprocessMessagesClaude,
+  preprocessMessagesGPT,
+} from "./messagePreprocess";
 import { PreOrderService } from "../services/pre-order.service";
 import logger from "./logger";
 dotenv.config();
@@ -142,12 +145,12 @@ export async function handleTextMessage(
     true
   );
 
-  const response = await processAndGenerateAIResponse({
+  const responses = await processAndGenerateAIResponse({
     relevantMessages: relevantChatHistory,
     conversationId: from,
   });
 
-  for (const item of response) {
+  for (const item of responses) {
     if (item.text) {
       if (item.sendToWhatsApp == true) {
         await sendWhatsAppMessage(from, item.text);
@@ -183,45 +186,48 @@ async function processAndGenerateAIResponse(
   const { relevantMessages, conversationId } = req;
 
   try {
-    const preprocessedContent: PreprocessedContent = (await preprocessMessagesClaude(
-      relevantMessages
-    )) as any;
+    const aiResponses = await preprocessMessagesClaude(relevantMessages);
+    const responseItems: ResponseItem[] = [];
 
-    if (preprocessedContent.isDirectResponse) {
-      return [
-        {
-          text: preprocessedContent.text,
+    for (const response of aiResponses) {
+      if (response.text) {
+        // Si es una respuesta directa de texto
+        responseItems.push({
+          text: response.text,
           sendToWhatsApp: true,
-          isRelevant: preprocessedContent.isRelevant,
-          confirmationMessage: preprocessedContent.confirmationMessage,
-        },
-      ];
+          isRelevant: response.isRelevant,
+          confirmationMessage: response.confirmationMessage,
+        });
+      } else if (response.preprocessedContent) {
+        // Si es contenido preprocesado
+        if (
+          response.preprocessedContent.warnings &&
+          response.preprocessedContent.warnings.length > 0
+        ) {
+          const warningMessage =
+            "📝 Observaciones:\n" +
+            response.preprocessedContent.warnings.join("\n");
+          await sendWhatsAppMessage(conversationId, warningMessage);
+        }
+
+        const preOrderService = new PreOrderService();
+        const selectProductsResponse = await preOrderService.selectProducts({
+          orderItems: response.preprocessedContent.orderItems,
+          clientId: conversationId,
+          orderType: response.preprocessedContent.orderType,
+          scheduledDeliveryTime:
+            response.preprocessedContent.scheduledDeliveryTime,
+        });
+
+        responseItems.push({
+          text: selectProductsResponse.json.text,
+          sendToWhatsApp: selectProductsResponse.json.sendToWhatsApp,
+          isRelevant: true,
+        });
+      }
     }
 
-    if (
-      preprocessedContent.warnings &&
-      preprocessedContent.warnings.length > 0
-    ) {
-      const warningMessage =
-        "📝 Observaciones:\n" + preprocessedContent.warnings.join("\n");
-      await sendWhatsAppMessage(conversationId, warningMessage);
-    }
-
-    const preOrderService = new PreOrderService();
-    const selectProductsResponse = await preOrderService.selectProducts({
-      orderItems: preprocessedContent.orderItems,
-      clientId: conversationId,
-      orderType: preprocessedContent.orderType,
-      scheduledDeliveryTime: preprocessedContent.scheduledDeliveryTime,
-    });
-
-    return [
-      {
-        text: selectProductsResponse.json.text,
-        sendToWhatsApp: selectProductsResponse.json.sendToWhatsApp,
-        isRelevant: true,
-      },
-    ];
+    return responseItems;
   } catch (error) {
     logger.error("Error general:", error);
     return [

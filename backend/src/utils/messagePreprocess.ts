@@ -1,6 +1,11 @@
 import OpenAI from "openai";
-import Anthropic from '@anthropic-ai/sdk';
-import { preprocessOrderToolGPT, sendMenuToolGPT, preprocessOrderToolClaude, sendMenuToolClaude } from "../aiTools/aiTools";
+import Anthropic from "@anthropic-ai/sdk";
+import {
+  preprocessOrderToolGPT,
+  sendMenuToolGPT,
+  preprocessOrderToolClaude,
+  sendMenuToolClaude,
+} from "../aiTools/aiTools";
 import * as dotenv from "dotenv";
 import { SYSTEM_MESSAGE_PHASE_1 } from "../config/predefinedMessages";
 import getFullMenu from "src/data/menu";
@@ -38,6 +43,8 @@ interface PreprocessedContent {
     errors?: string[];
     warnings?: string[];
   }[];
+  orderType: string;
+  scheduledDeliveryTime?: string | Date;
   warnings?: string[];
 }
 
@@ -106,10 +113,10 @@ function extractMentionedProduct(productMessage, menu) {
     bestProduct = findModifiers(bestProduct, messageWords, errors);
     bestProduct = findPizzaIngredients(bestProduct, productMessage, errors);
     detectUnknownWords(productMessage, bestProduct, warnings);
-    if (errors.length > 0){
+    if (errors.length > 0) {
       bestProduct.errors = errors;
     }
-    if (warnings.length > 0){
+    if (warnings.length > 0) {
       bestProduct.warnings = warnings;
     }
     delete bestProduct.productVariants;
@@ -182,7 +189,9 @@ function findBestVariant(bestProduct, messageWords, errors) {
     if (bestVariant && bestVariant.score >= SIMILARITY_THRESHOLDS.VARIANT) {
       bestProduct.productVariant = bestVariant;
     } else {
-      const variantesDisponibles = bestProduct.productVariants.map(v => v.name).join(", ");
+      const variantesDisponibles = bestProduct.productVariants
+        .map((v) => v.name)
+        .join(", ");
       errors.push(
         `No identifico una variante válida" 😕. Las variantes disponibles son: ${variantesDisponibles} 📋.`
       );
@@ -465,9 +474,7 @@ function findPizzaIngredients(bestProduct, productMessage, errors) {
     matchedIngredients = Array.from(uniqueIngredientsMap.values());
 
     if (matchedIngredients.length === 0) {
-      errors.push(
-        `No pude identificar ingredientes validos para tu pizza. 😕`
-      );
+      errors.push(`No pude identificar ingredientes validos para tu pizza. 😕`);
     } else {
       bestProduct.selectedPizzaIngredients = matchedIngredients;
     }
@@ -486,7 +493,10 @@ function detectUnknownWords(productMessage, bestProduct, warnings) {
   }
 
   const selectedModifierWords = new Set();
-  if (bestProduct.selectedModifiers && bestProduct.selectedModifiers.length > 0) {
+  if (
+    bestProduct.selectedModifiers &&
+    bestProduct.selectedModifiers.length > 0
+  ) {
     for (const modifier of bestProduct.selectedModifiers) {
       normalizeText(modifier.name).forEach((word) =>
         selectedModifierWords.add(word)
@@ -495,7 +505,10 @@ function detectUnknownWords(productMessage, bestProduct, warnings) {
   }
 
   const pizzaIngredientWords = new Set();
-  if (bestProduct.selectedPizzaIngredients && bestProduct.selectedPizzaIngredients.length > 0) {
+  if (
+    bestProduct.selectedPizzaIngredients &&
+    bestProduct.selectedPizzaIngredients.length > 0
+  ) {
     for (const ingredient of bestProduct.selectedPizzaIngredients) {
       normalizeText(ingredient.name).forEach((word) =>
         pizzaIngredientWords.add(word)
@@ -510,23 +523,32 @@ function detectUnknownWords(productMessage, bestProduct, warnings) {
     ...pizzaIngredientWords,
   ]);
 
-
   const messageWords = normalizeText(productMessage);
 
   logger.info("knownWords", knownWords);
   logger.info("messageWords", messageWords);
-  const unknownWords = messageWords.filter(word => {
-    return !Array.from(knownWords).some(knownWord => 
-      stringSimilarity.compareTwoStrings(word, knownWord as string) >= SIMILARITY_THRESHOLDS.WORD
+  const unknownWords = messageWords.filter((word) => {
+    return !Array.from(knownWords).some(
+      (knownWord) =>
+        stringSimilarity.compareTwoStrings(word, knownWord as string) >=
+        SIMILARITY_THRESHOLDS.WORD
     );
   });
-  logger.info("unknownWords", unknownWords);  
+  logger.info("unknownWords", unknownWords);
 
   if (unknownWords.length > 0) {
     warnings.push(
       `No encontre los siguientes ingredientes: ${unknownWords.join(", ")}.`
     );
   }
+}
+
+interface AIResponse {
+  text?: string;
+  isDirectResponse: boolean;
+  isRelevant: boolean;
+  confirmationMessage?: string;
+  preprocessedContent?: PreprocessedContent;
 }
 
 export async function preprocessMessagesGPT(messages: any[]): Promise<
@@ -571,23 +593,30 @@ export async function preprocessMessagesGPT(messages: any[]): Promise<
           Object.assign(item, extractedProduct);
         }
       }
-      logger.info("preprocessedContent", JSON.stringify(preprocessedContent, null, 2));
+      logger.info(
+        "preprocessedContent",
+        JSON.stringify(preprocessedContent, null, 2)
+      );
 
       const allErrors = preprocessedContent.orderItems
         .filter((item) => item.errors && item.errors.length > 0)
         .map((item) => `Para "${item.description}": ${item.errors.join("")}`);
-      
+
       const allWarnings = preprocessedContent.orderItems
         .filter((item) => item.warnings && item.warnings.length > 0)
         .map((item) => `Para "${item.description}": ${item.warnings.join("")}`);
 
       if (allErrors.length > 0) {
-        let message = `❗ Hay algunos problemas con tu solicitud:\n${allErrors.join(", ")}`;
-        
+        let message = `❗ Hay algunos problemas con tu solicitud:\n${allErrors.join(
+          ", "
+        )}`;
+
         if (allWarnings.length > 0) {
-          message += `\n\n⚠️ Además, ten en cuenta lo siguiente:\n${allWarnings.join(", ")}`;
+          message += `\n\n⚠️ Además, ten en cuenta lo siguiente:\n${allWarnings.join(
+            ", "
+          )}`;
         }
-        
+
         return {
           text: message,
           isDirectResponse: true,
@@ -627,117 +656,117 @@ export async function preprocessMessagesGPT(messages: any[]): Promise<
   throw new Error("No se pudo procesar la respuesta");
 }
 
-export async function preprocessMessagesClaude(messages: any[]): Promise<
-  | PreprocessedContent
-  | {
-      text: string;
-      isDirectResponse: boolean;
-      isRelevant: boolean;
-      confirmationMessage?: string;
-    }
-> {
-
+export async function preprocessMessagesClaude(
+  messages: any[]
+): Promise<AIResponse[]> {
   try {
-
     const requestPayload = {
       model: "claude-3-5-sonnet-20241022",
       system: SYSTEM_MESSAGE_PHASE_1,
       tools: [preprocessOrderToolClaude, sendMenuToolClaude] as any,
       max_tokens: 8192,
-      messages: messages.map(msg => ({
+      messages: messages.map((msg) => ({
         role: msg.role,
-        content: msg.content
+        content: msg.content,
       })),
-      tool_choice: { type: "auto" } as any
+      tool_choice: { type: "auto" } as any,
     };
 
     const response = await anthropic.messages.create(requestPayload);
+    const responses: AIResponse[] = [];
 
-    console.log("response.content", response.content);
-
-
-    if (response.content[0].type === 'tool_use') {
-      const toolCall = response.content[0];
-
-      if (toolCall.name === "preprocess_order") {
-        const preprocessedContent: PreprocessedContent = typeof toolCall.input === 'string' 
-          ? JSON.parse(toolCall.input)
-          : toolCall.input as PreprocessedContent;
-        
-        const fullMenu = await getMenuAvailability();
-
-        for (const item of preprocessedContent.orderItems) {
-          if (item && typeof item.description === "string") {
-            const extractedProduct = await extractMentionedProduct(
-              item.description,
-              fullMenu
-            );
-            Object.assign(item, extractedProduct);
-          }
-        }
-        logger.info("preprocessedContent", JSON.stringify(preprocessedContent, null, 2));
-
-        const allErrors = preprocessedContent.orderItems
-          .filter((item) => item.errors && item.errors.length > 0)
-          .map((item) => `Para "${item.description}": ${item.errors.join("")}`);
-        
-        const allWarnings = preprocessedContent.orderItems
-          .filter((item) => item.warnings && item.warnings.length > 0)
-          .map((item) => `Para "${item.description}": ${item.warnings.join("")}`);
-
-        if (allErrors.length > 0) {
-          let message = `❗ Hay algunos problemas con tu solicitud:\n${allErrors.join(", ")}`;
-          
-          if (allWarnings.length > 0) {
-            message += `\n\n⚠️ Además, ten en cuenta lo siguiente:\n${allWarnings.join(", ")}`;
-          }
-          
-          return {
-            text: message,
-            isDirectResponse: true,
-            isRelevant: true,
-          };
-        }
-
-        if (allWarnings.length > 0) {
-          preprocessedContent.warnings = allWarnings;
-        }
-
-        return preprocessedContent;
-      } else if (toolCall.name === "send_menu") {
-        const fullMenu = await getFullMenu();
-        return {
-          text: fullMenu,
+    // Procesar cada contenido de la respuesta
+    for (const content of response.content) {
+      if (content.type === "text") {
+        responses.push({
+          text: content.text,
           isDirectResponse: true,
-          isRelevant: false,
-          confirmationMessage:
-            "El menú ha sido enviado. ¿Hay algo más en lo que pueda ayudarte?",
-        };
+          isRelevant: true,
+        });
+      } else if (content.type === "tool_use") {
+        const toolCall = content;
+
+        if (toolCall.name === "preprocess_order") {
+          const preprocessedContent: PreprocessedContent =
+            typeof toolCall.input === "string"
+              ? JSON.parse(toolCall.input)
+              : (toolCall.input as PreprocessedContent);
+
+          const fullMenu = await getMenuAvailability();
+
+          for (const item of preprocessedContent.orderItems) {
+            if (item && typeof item.description === "string") {
+              const extractedProduct = await extractMentionedProduct(
+                item.description,
+                fullMenu
+              );
+              Object.assign(item, extractedProduct);
+            }
+          }
+          logger.info(
+            "preprocessedContent",
+            JSON.stringify(preprocessedContent, null, 2)
+          );
+
+          const allErrors = preprocessedContent.orderItems
+            .filter((item) => item.errors && item.errors.length > 0)
+            .map(
+              (item) => `Para "${item.description}": ${item.errors.join("")}`
+            );
+
+          const allWarnings = preprocessedContent.orderItems
+            .filter((item) => item.warnings && item.warnings.length > 0)
+            .map(
+              (item) => `Para "${item.description}": ${item.warnings.join("")}`
+            );
+
+          if (allErrors.length > 0) {
+            let message = `❗ Hay algunos problemas con tu solicitud:\n${allErrors.join(
+              ", "
+            )}`;
+            if (allWarnings.length > 0) {
+              message += `\n\n⚠️ Además, ten en cuenta lo siguiente:\n${allWarnings.join(
+                ", "
+              )}`;
+            }
+
+            responses.push({
+              text: message,
+              isDirectResponse: true,
+              isRelevant: true,
+            });
+          } else {
+            if (allWarnings.length > 0) {
+              preprocessedContent.warnings = allWarnings;
+            }
+            responses.push({
+              isDirectResponse: false,
+              isRelevant: true,
+              preprocessedContent,
+            });
+          }
+        } else if (toolCall.name === "send_menu") {
+          const fullMenu = await getFullMenu();
+          responses.push({
+            text: fullMenu,
+            isDirectResponse: true,
+            isRelevant: false,
+            confirmationMessage:
+              "El menú ha sido enviado. ¿Hay algo más en lo que pueda ayudarte?",
+          });
+        }
       }
-    } else if (response.content[0].type === 'text') {
-      return {
-        text: response.content[0].text,
-        isDirectResponse: true,
-        isRelevant: true,
-      };
     }
+
+    return responses;
   } catch (error) {
     logger.error("Error en preprocessMessagesClaude:", error);
-    return {
-      text: "Error al preprocesar el mensaje",
-      isDirectResponse: true,
-      isRelevant: true,
-    };
+    return [
+      {
+        text: "Error al preprocesar el mensaje",
+        isDirectResponse: true,
+        isRelevant: true,
+      },
+    ];
   }
-
-  throw new Error("No se pudo procesar la respuesta");
 }
-
-
-
-
-
-
-
-
-
