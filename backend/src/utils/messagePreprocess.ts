@@ -653,7 +653,8 @@ export async function preprocessMessagesClaude(messages: any[]): Promise<
       })),
       system: SYSTEM_MESSAGE_PHASE_1,
       tools: [preprocessOrderToolClaude, sendMenuToolClaude] as any,
-      tool_choice: { type: "tool", name: "preprocess_order" }
+      //tool_choice: { type: "tool", name: "preprocess_order" }
+      tool_choice: { type: "any" }
     });
 
     if (response.content[0].type === 'tool_use') {
