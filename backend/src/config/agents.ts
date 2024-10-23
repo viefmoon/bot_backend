@@ -16,12 +16,7 @@ export const GENERAL_AGENT: Agent = {
         
         Si detectas que el cliente quiere hacer un pedido (menciona productos específicos o intención de ordenar), 
         debes transferir la conversación al agente de pedidos usando la función transfer_to_agent.
-      `,
-      cache_control: { type: "ephemeral" },
-    },
-    {
-      type: "text",
-      text: `
+
         **Menú:**
 
         **Entradas:**
