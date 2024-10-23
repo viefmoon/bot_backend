@@ -155,30 +155,46 @@ export async function handleTextMessage(
   for (const item of responses) {
     logger.info("item", item);
     if (item.text && item.sendToWhatsApp === true) {
-      // Enviar mensaje primero
-      await sendWhatsAppMessage(from, item.text);
-      // Añadir un pequeño retraso de 500ms
-      await new Promise((resolve) => setTimeout(resolve, 2000));
-      // Actualizar historial después
-      await updateChatHistory(
-        { role: "assistant", content: item.text, timestamp: new Date() },
-        item.isRelevant === true
-      );
+      try {
+        // Enviar mensaje y esperar a que se complete
+        const messageIds = await sendWhatsAppMessage(from, item.text);
+        // Esperar un poco más después del envío
+        await new Promise((resolve) => setTimeout(resolve, 2000));
+
+        if (messageIds) {
+          // Actualizar historial solo si el envío fue exitoso
+          await updateChatHistory(
+            { role: "assistant", content: item.text, timestamp: new Date() },
+            item.isRelevant === true
+          );
+        }
+      } catch (error) {
+        logger.error("Error procesando mensaje:", error);
+      }
     }
 
     if (item.confirmationMessage) {
-      // Añadir un pequeño retraso antes del mensaje de confirmación
-      await new Promise((resolve) => setTimeout(resolve, 2000));
-      // Enviar mensaje de confirmación después
-      await sendWhatsAppMessage(from, item.confirmationMessage);
-      await updateChatHistory(
-        {
-          role: "assistant",
-          content: item.confirmationMessage,
-          timestamp: new Date(),
-        },
-        true
-      );
+      try {
+        // Esperar antes del mensaje de confirmación
+        await new Promise((resolve) => setTimeout(resolve, 2000));
+        const messageIds = await sendWhatsAppMessage(
+          from,
+          item.confirmationMessage
+        );
+
+        if (messageIds) {
+          await updateChatHistory(
+            {
+              role: "assistant",
+              content: item.confirmationMessage,
+              timestamp: new Date(),
+            },
+            true
+          );
+        }
+      } catch (error) {
+        logger.error("Error procesando mensaje de confirmación:", error);
+      }
     }
   }
 
