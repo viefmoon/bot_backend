@@ -638,6 +638,9 @@ export async function preprocessMessagesClaude(messages: any[]): Promise<
 > {
 
   try {
+    // Agregar log para ver el contenido de messages
+    logger.info("Mensajes a enviar a Claude:", JSON.stringify(messages, null, 2));
+
     const response = await anthropic.messages.create({
       model: "claude-3-5-sonnet-20241022",
       max_tokens: 8192,
@@ -727,6 +730,7 @@ export async function preprocessMessagesClaude(messages: any[]): Promise<
 
   throw new Error("No se pudo procesar la respuesta");
 }
+
 
 
 
