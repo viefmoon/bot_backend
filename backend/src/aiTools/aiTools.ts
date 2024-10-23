@@ -85,7 +85,6 @@ const preprocessOrderToolClaude = {
             }
           },
           required: ["description", "quantity"],
-          additionalProperties: false
         }
       },
       orderType: {
@@ -99,7 +98,6 @@ const preprocessOrderToolClaude = {
       }
     },
     required: ["orderItems", "orderType", "scheduledDeliveryTime"],
-    additionalProperties: false
   }
 };
 
