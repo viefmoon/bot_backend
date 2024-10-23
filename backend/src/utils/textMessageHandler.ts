@@ -151,6 +151,7 @@ export async function handleTextMessage(
   });
 
   // Procesar las respuestas secuencialmente
+  logger.info("responses", responses);
   for (const item of responses) {
     if (item.text && item.sendToWhatsApp === true) {
       // Enviar mensaje primero
