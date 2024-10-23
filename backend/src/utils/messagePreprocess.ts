@@ -747,44 +747,8 @@ export async function preprocessMessagesClaude(
             });
           } else {
             if (allWarnings.length > 0) {
-              // Enviar warnings a Claude para corrección
-              const warningCorrection = await anthropic.messages.create({
-                model: "claude-3-haiku-20240307",
-                messages: [
-                  {
-                    role: "user",
-                    content: `Por favor corrige los siguientes problemas en el pedido:\n${allWarnings.join(
-                      "\n"
-                    )}\nContexto del pedido original: ${JSON.stringify(
-                      preprocessedContent
-                    )}`,
-                  },
-                ],
-                max_tokens: 4096,
-              });
-
-              // Procesar la respuesta de corrección
-              const correctionResponse = warningCorrection.content[0]?.text;
-              if (correctionResponse) {
-                try {
-                  // Intentar parsear la corrección como JSON si es posible
-                  const correctedContent = JSON.parse(correctionResponse);
-                  preprocessedContent = {
-                    ...preprocessedContent,
-                    ...correctedContent,
-                  };
-                } catch {
-                  // Si no es JSON, agregar como mensaje de warning
-                  preprocessedContent.warnings = [
-                    ...allWarnings,
-                    `Sugerencia de corrección: ${correctionResponse}`,
-                  ];
-                }
-              } else {
-                preprocessedContent.warnings = allWarnings;
-              }
+              preprocessedContent.warnings = allWarnings;
             }
-
             responses.push({
               isDirectResponse: false,
               isRelevant: true,
