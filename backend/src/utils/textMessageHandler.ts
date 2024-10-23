@@ -239,7 +239,7 @@ async function processAndGenerateAIResponse(
         responseItems.push({
           text: selectProductsResponse.json.text,
           sendToWhatsApp: selectProductsResponse.json.sendToWhatsApp,
-          isRelevant: true,
+          isRelevant: selectProductsResponse.json.isRelevant,
         });
 
         // Agregamos el mensaje interactivo si existe
