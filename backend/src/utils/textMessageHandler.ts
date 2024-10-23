@@ -45,7 +45,7 @@ async function resetChatHistory(customer) {
   await customer.update({ relevantChatHistory: [] });
   await sendWhatsAppMessage(
     customer.clientId,
-    "Entendido, he olvidado el contexto anterior. ��En qué puedo ayudarte ahora?"
+    "Entendido, he olvidado el contexto anterior. En qué puedo ayudarte ahora?"
   );
 }
 
@@ -150,9 +150,12 @@ export async function handleTextMessage(
     conversationId: from,
   });
 
-  // Procesar las respuestas secuencialmente
-  logger.info("responses", responses);
-  for (const item of responses) {
+  // Convertir responses a array y ordenar por índice
+  const sortedResponses = Object.entries(responses)
+    .sort(([a], [b]) => Number(a) - Number(b))
+    .map(([_, value]) => value);
+
+  for (const item of sortedResponses) {
     if (item.text && item.sendToWhatsApp === true) {
       // Enviar mensaje primero
       await sendWhatsAppMessage(from, item.text);
