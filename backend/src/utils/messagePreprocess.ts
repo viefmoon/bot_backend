@@ -673,6 +673,14 @@ export async function preprocessMessagesClaude(
     };
 
     const response = await anthropic.messages.create(requestPayload);
+
+    // Registrar el uso de tokens
+    logger.info("Token usage:", {
+      input_tokens: response.usage.input_tokens,
+      output_tokens: response.usage.output_tokens,
+      total_tokens: response.usage.input_tokens + response.usage.output_tokens,
+    });
+
     const responses: AIResponse[] = [];
 
     // Procesar cada contenido de la respuesta
