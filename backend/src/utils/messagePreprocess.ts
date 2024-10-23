@@ -636,6 +636,7 @@ export async function preprocessMessagesClaude(messages: any[]): Promise<
       confirmationMessage?: string;
     }
 > {
+  console.log("messages", messages);
 
   try {
     // Agregar log para ver el contenido de messages
