@@ -8,7 +8,7 @@ interface PreOrderAttributes {
   orderType: "delivery" | "pickup";
   scheduledDeliveryTime?: Date;
   clientId: string;
-  messageId: string;
+  messageId?: string;
   createdAt?: Date;
   updatedAt?: Date;
 }
@@ -25,7 +25,7 @@ class PreOrder
   public orderType!: "delivery" | "pickup";
   public scheduledDeliveryTime?: Date;
   public clientId!: string;
-  public messageId!: string;
+  public messageId?: string;
 
   public readonly createdAt!: Date;
   public readonly updatedAt!: Date;
@@ -59,7 +59,7 @@ PreOrder.init(
     },
     messageId: {
       type: DataTypes.STRING,
-      allowNull: false,
+      allowNull: true,
     },
   },
   {

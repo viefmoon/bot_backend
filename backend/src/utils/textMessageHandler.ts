@@ -2,7 +2,7 @@ import {
   sendWhatsAppMessage,
   sendWhatsAppInteractiveMessage,
 } from "./whatsAppUtils";
-import { Customer } from "../models";
+import { Customer, PreOrder } from "../models";
 import * as dotenv from "dotenv";
 import {
   preprocessMessagesClaude,
@@ -19,21 +19,12 @@ interface ChatMessage {
 }
 
 interface ResponseItem {
-  text: string;
+  text?: string;
   sendToWhatsApp?: boolean;
   isRelevant?: boolean;
   confirmationMessage?: string;
-}
-
-interface PreprocessedContent {
-  isDirectResponse: boolean;
-  orderItems: any[];
-  orderType: string;
-  scheduledDeliveryTime?: string | Date;
-  text: string;
-  isRelevant: boolean;
-  warnings?: string[];
-  confirmationMessage?: string;
+  interactiveMessage?: any;
+  preOrderId?: string;
 }
 
 interface ProcessRequest {
@@ -45,7 +36,7 @@ async function resetChatHistory(customer) {
   await customer.update({ relevantChatHistory: [] });
   await sendWhatsAppMessage(
     customer.clientId,
-    "Entendido, he olvidado el contexto anterior. ��En qué puedo ayudarte ahora?"
+    "Entendido, he olvidado el contexto anterior. En qué puedo ayudarte ahora?"
   );
 }
 
@@ -155,17 +146,38 @@ export async function handleTextMessage(
   for (const item of responses) {
     logger.info("item", item);
     if (item.text && item.sendToWhatsApp === true) {
-      // Enviar mensaje primero
       await sendWhatsAppMessage(from, item.text);
-      // Actualizar historial después
       await updateChatHistory(
         { role: "assistant", content: item.text, timestamp: new Date() },
         item.isRelevant === true
       );
     }
 
+    if (item.interactiveMessage && item.sendToWhatsApp === true) {
+      const messageId = await sendWhatsAppInteractiveMessage(
+        from,
+        item.interactiveMessage
+      );
+
+      // Si hay un preOrderId en la respuesta, actualizamos la orden con el messageId
+      if (item.preOrderId && messageId) {
+        const preOrder = await PreOrder.findByPk(item.preOrderId);
+        if (preOrder) {
+          await preOrder.update({ messageId });
+        }
+      }
+
+      await updateChatHistory(
+        {
+          role: "assistant",
+          content: JSON.stringify(item.interactiveMessage),
+          timestamp: new Date(),
+        },
+        item.isRelevant === true
+      );
+    }
+
     if (item.confirmationMessage) {
-      // Enviar mensaje de confirmación después
       await sendWhatsAppMessage(from, item.confirmationMessage);
       await updateChatHistory(
         {
@@ -223,11 +235,21 @@ async function processAndGenerateAIResponse(
             response.preprocessedContent.scheduledDeliveryTime,
         });
 
+        // Agregamos el mensaje de texto normal
         responseItems.push({
           text: selectProductsResponse.json.text,
           sendToWhatsApp: selectProductsResponse.json.sendToWhatsApp,
           isRelevant: true,
         });
+
+        // Agregamos el mensaje interactivo si existe
+        if (selectProductsResponse.json.interactiveMessage) {
+          responseItems.push({
+            interactiveMessage: selectProductsResponse.json.interactiveMessage,
+            sendToWhatsApp: true,
+            isRelevant: false,
+          });
+        }
       }
     }
 

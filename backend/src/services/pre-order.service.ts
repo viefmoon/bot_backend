@@ -480,43 +480,6 @@ export class PreOrderService {
 
     messageContent += `\n💰 *Total: $${totalCost}*`;
 
-    // Enviar mensaje interactivo
-    const messageId = await sendWhatsAppInteractiveMessage(clientId, {
-      type: "button",
-      header: {
-        type: "text",
-        text: "Resumen del Pedido",
-      },
-      body: {
-        text: messageContent,
-      },
-      action: {
-        buttons: [
-          {
-            type: "reply",
-            reply: {
-              id: "modify_delivery",
-              title: "Modificar Entrega",
-            },
-          },
-          {
-            type: "reply",
-            reply: {
-              id: "discard_order",
-              title: "Descartar Orden",
-            },
-          },
-          {
-            type: "reply",
-            reply: {
-              id: "confirm_order",
-              title: "Confirmar Orden",
-            },
-          },
-        ],
-      },
-    });
-
     // Borrar todas las preórdenes asociadas al cliente
     await PreOrder.destroy({ where: { clientId } });
 
@@ -525,18 +488,55 @@ export class PreOrderService {
       orderType: orderType as "delivery" | "pickup",
       scheduledDeliveryTime: fullScheduledDeliveryTime,
       clientId,
-      messageId,
     });
 
     // Actualizar información de entrega
     await orderDeliveryInfo.update({
       preOrderId: preOrder.id,
     });
+
+    // En lugar de enviar el mensaje interactivo, lo retornamos
     return {
       status: 200,
       json: {
         sendToWhatsApp: false,
         text: relevantMessageContent,
+        preOrderId: preOrder.id,
+        interactiveMessage: {
+          type: "button",
+          header: {
+            type: "text",
+            text: "Resumen del Pedido",
+          },
+          body: {
+            text: messageContent,
+          },
+          action: {
+            buttons: [
+              {
+                type: "reply",
+                reply: {
+                  id: "modify_delivery",
+                  title: "Modificar Entrega",
+                },
+              },
+              {
+                type: "reply",
+                reply: {
+                  id: "discard_order",
+                  title: "Descartar Orden",
+                },
+              },
+              {
+                type: "reply",
+                reply: {
+                  id: "confirm_order",
+                  title: "Confirmar Orden",
+                },
+              },
+            ],
+          },
+        },
       },
     };
   }
