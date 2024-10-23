@@ -155,29 +155,30 @@ export async function handleTextMessage(
   for (const item of responses) {
     logger.info("item", item);
     if (item.text && item.sendToWhatsApp === true) {
-      // Esperar a que se complete el envío del mensaje principal
-      await Promise.all([
-        sendWhatsAppMessage(from, item.text),
-        updateChatHistory(
-          { role: "assistant", content: item.text, timestamp: new Date() },
-          item.isRelevant === true
-        ),
-      ]);
+      // Enviar mensaje primero
+      await sendWhatsAppMessage(from, item.text);
+      // Añadir un pequeño retraso de 500ms
+      await new Promise((resolve) => setTimeout(resolve, 500));
+      // Actualizar historial después
+      await updateChatHistory(
+        { role: "assistant", content: item.text, timestamp: new Date() },
+        item.isRelevant === true
+      );
     }
 
     if (item.confirmationMessage) {
-      // Esperar a que se complete el envío del mensaje de confirmación
-      await Promise.all([
-        sendWhatsAppMessage(from, item.confirmationMessage),
-        updateChatHistory(
-          {
-            role: "assistant",
-            content: item.confirmationMessage,
-            timestamp: new Date(),
-          },
-          true
-        ),
-      ]);
+      // Añadir un pequeño retraso antes del mensaje de confirmación
+      await new Promise((resolve) => setTimeout(resolve, 500));
+      // Enviar mensaje de confirmación después
+      await sendWhatsAppMessage(from, item.confirmationMessage);
+      await updateChatHistory(
+        {
+          role: "assistant",
+          content: item.confirmationMessage,
+          timestamp: new Date(),
+        },
+        true
+      );
     }
   }
 
