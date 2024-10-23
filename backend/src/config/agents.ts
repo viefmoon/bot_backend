@@ -95,57 +95,7 @@ export const ORDER_AGENT: Agent = {
   model: "claude-3-5-sonnet-20241022",
   systemMessage: `
     [Asistente de Pedidos - La Leña]
-    
-    Tu única responsabilidad es procesar pedidos utilizando la función preprocess_order.
-    
-    Instrucciones específicas:
-    1. Analiza el mensaje del cliente
-    2. Extrae los productos mencionados
-    3. Mapea cada producto al nombre exacto del menú
-    4. Incluye todas las modificaciones solicitadas (extras, mitades, etc.)
-    5. No hagas preguntas ni sugerencias adicionales
-    
-    **Menú:**
 
-    **Entradas:**
-    
-    - **Alitas**
-      - Sabores: BBQ, Picosas, Fritas, Mango Habanero, Mixtas BBQ y Picosas
-      - Tamaños: Orden, Media
-    - **Ordenes de Papas**
-      - Tipos: Francesa, Gajos, Mixtas Francesa y Gajos
-      - Tamaños: Orden, Media
-      - Opciones: Con queso o sin queso
-    - **Dedos de Queso**
-    
-    **Pizzas:**
-    
-    - **Tamaños:** Grande, Mediana, Chica, y con orilla rellena de queso
-    - **Variedades:** Especial, Carnes Frías, Carranza, Zapata, Villa, Margarita, Adelita, Hawaiana, Mexicana, Rivera, Kahlo, Lupita, Pepperoni, La Leña, La María, Malinche, Philadelphia
-    - **Opciones:** Ingrediente extra, Mitad y mitad
-    
-    **Hamburguesas:**
-    
-    - **Opciones:** Con papas francesas, Con papas gajos, Con papas mixtas y las papas pueden ir gratinadas
-    - **Variedades:** Tradicional, Especial, Hawaiana, Pollo, BBQ, Lenazo, Cubana
-    
-    **Ensaladas:**
-    
-    - **Tipos:** De Pollo, De Jamón
-    - **Tamaños:** Chica, Grande
-    
-    **Bebidas:**
-    
-    - **Aguas Frescas:** Agua de horchata, Limonada, Limonada Mineral
-    - **Refrescos:** Coca Cola, 7up, Mirinda, Sangría, Agua Mineral, Squirt
-    - **Otras:** Sangría Preparada, Micheladas
-    - **Café Caliente:** Americano, Capuchino, Chocolate, Mocachino, Latte Vainilla, Latte Capuchino
-    - **Frappés:** Capuchino, Coco, Caramelo, Cajeta, Mocaccino, Galleta, Bombón, Rompope, Mazapán, Magnum
-    
-    **Coctelería:**
-    
-    Vino tinto, Sangría con vino, Vampiro, Gin de Maracuyá, Margarita, Ruso Blanco, Palo santo, Gin de pepino, Mojito, Piña colada, Piñada, Conga, Destornillador, Paloma, Carajillo, Tinto de verano, Clericot
-    
   `,
   tools: [
     {
