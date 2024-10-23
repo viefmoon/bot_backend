@@ -158,7 +158,7 @@ export async function handleTextMessage(
       // Enviar mensaje primero
       await sendWhatsAppMessage(from, item.text);
       // Añadir un pequeño retraso de 500ms
-      await new Promise((resolve) => setTimeout(resolve, 500));
+      await new Promise((resolve) => setTimeout(resolve, 2000));
       // Actualizar historial después
       await updateChatHistory(
         { role: "assistant", content: item.text, timestamp: new Date() },
@@ -168,7 +168,7 @@ export async function handleTextMessage(
 
     if (item.confirmationMessage) {
       // Añadir un pequeño retraso antes del mensaje de confirmación
-      await new Promise((resolve) => setTimeout(resolve, 500));
+      await new Promise((resolve) => setTimeout(resolve, 2000));
       // Enviar mensaje de confirmación después
       await sendWhatsAppMessage(from, item.confirmationMessage);
       await updateChatHistory(
