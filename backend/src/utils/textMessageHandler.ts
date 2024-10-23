@@ -142,9 +142,7 @@ export async function handleTextMessage(
   });
 
   // Procesar las respuestas secuencialmente
-  logger.info("responses", responses);
   for (const item of responses) {
-    logger.info("item", item);
     if (item.text && item.sendToWhatsApp === true) {
       await sendWhatsAppMessage(from, item.text);
       await updateChatHistory(
@@ -158,6 +156,7 @@ export async function handleTextMessage(
         from,
         item.interactiveMessage
       );
+      console.log("messageId interactive", messageId);
 
       // Si hay un preOrderId en la respuesta, actualizamos la orden con el messageId
       if (item.preOrderId && messageId) {
