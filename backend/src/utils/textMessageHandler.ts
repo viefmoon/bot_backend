@@ -151,7 +151,9 @@ export async function handleTextMessage(
   });
 
   // Procesar las respuestas secuencialmente
+  logger.info("responses", responses);
   for (const item of responses) {
+    logger.info("item", item);
     if (item.text && item.sendToWhatsApp === true) {
       // Esperar a que se complete el envío del mensaje principal
       await Promise.all([
