@@ -677,6 +677,7 @@ export async function preprocessMessagesClaude(
 
     // Procesar cada contenido de la respuesta
     for (const content of response.content) {
+      logger.info("content", content);
       if (content.type === "text") {
         responses.push({
           text: content.text,
