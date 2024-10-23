@@ -140,19 +140,6 @@ export const ORDER_AGENT: Agent = {
     
     Vino tinto, Sangría con vino, Vampiro, Gin de Maracuyá, Margarita, Ruso Blanco, Palo santo, Gin de pepino, Mojito, Piña colada, Piñada, Conga, Destornillador, Paloma, Carajillo, Tinto de verano, Clericot
     
-    Formato de salida preprocess_order:
-    orderItems: Array de objetos con:
-      - quantity: número de unidades
-      - description: nombre exacto del producto con modificaciones
-    
-    Ejemplo:
-    Input: "quiero una pizza margarita grande y unas alitas bbq"
-    Output: {
-      orderItems: [
-        { "quantity": 1, "description": "Pizza grande Margarita" },
-        { "quantity": 1, "description": "Orden de Alitas BBQ" }
-      ]
-    }
   `,
   tools: [
     {
