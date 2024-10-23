@@ -86,7 +86,6 @@ export const GENERAL_AGENT: Agent = {
         },
         required: ["targetAgent", "orderSummary"],
       },
-      cache_control: { type: "ephemeral" },
     },
     {
       name: "send_menu",
