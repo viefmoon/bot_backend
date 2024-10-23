@@ -661,10 +661,11 @@ export async function preprocessMessagesClaude(
 ): Promise<AIResponse[]> {
   try {
     const requestPayload = {
-      model: "claude-3-5-sonnet-20241022",
+      //model: "claude-3-5-sonnet-20241022",
+      model: "claude-3-haiku-20240307",
       system: SYSTEM_MESSAGE_PHASE_1,
       tools: [preprocessOrderToolClaude, sendMenuToolClaude] as any,
-      max_tokens: 8192,
+      max_tokens: 4096,
       messages: messages.map((msg) => ({
         role: msg.role,
         content: msg.content,
