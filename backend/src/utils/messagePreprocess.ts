@@ -671,6 +671,7 @@ export async function preprocessMessagesClaude(
             {
               role: "user",
               content: orderSummary,
+              cache_control: { type: "ephemeral" },
             },
           ]
         : messages.map((msg) => ({
@@ -679,12 +680,13 @@ export async function preprocessMessagesClaude(
               ? msg.content.map(({ type, text }) => ({
                   type,
                   text,
+                  cache_control: { type: "ephemeral" },
                 }))
               : [
                   {
                     type: "text",
                     text: msg.content,
-                  },
+                    cache_control: { type: "ephemeral" },
                 ],
           }));
 
