@@ -45,7 +45,7 @@ async function resetChatHistory(customer) {
   await customer.update({ relevantChatHistory: [] });
   await sendWhatsAppMessage(
     customer.clientId,
-    "Entendido, he olvidado el contexto anterior. ¿En qué puedo ayudarte ahora?"
+    "Entendido, he olvidado el contexto anterior. ��En qué puedo ayudarte ahora?"
   );
 }
 
@@ -150,20 +150,22 @@ export async function handleTextMessage(
     conversationId: from,
   });
 
+  // Procesar las respuestas secuencialmente
   for (const item of responses) {
-    if (item.text) {
-      if (item.sendToWhatsApp == true) {
-        await sendWhatsAppMessage(from, item.text);
-      }
-      updateChatHistory(
+    if (item.text && item.sendToWhatsApp === true) {
+      // Enviar mensaje primero
+      await sendWhatsAppMessage(from, item.text);
+      // Actualizar historial después
+      await updateChatHistory(
         { role: "assistant", content: item.text, timestamp: new Date() },
-        item.isRelevant == true
+        item.isRelevant === true
       );
     }
 
     if (item.confirmationMessage) {
+      // Enviar mensaje de confirmación después
       await sendWhatsAppMessage(from, item.confirmationMessage);
-      updateChatHistory(
+      await updateChatHistory(
         {
           role: "assistant",
           content: item.confirmationMessage,
@@ -189,21 +191,16 @@ async function processAndGenerateAIResponse(
     const aiResponses = await preprocessMessagesClaude(relevantMessages);
     const responseItems: ResponseItem[] = [];
 
-    // Primero procesamos las respuestas directas de texto
     for (const response of aiResponses) {
       if (response.text) {
+        // Si es una respuesta directa de texto
         responseItems.push({
           text: response.text,
           sendToWhatsApp: true,
           isRelevant: response.isRelevant,
           confirmationMessage: response.confirmationMessage,
         });
-      }
-    }
-
-    // Luego procesamos el contenido preprocesado
-    for (const response of aiResponses) {
-      if (response.preprocessedContent) {
+      } else if (response.preprocessedContent) {
         // Si es contenido preprocesado
         if (
           response.preprocessedContent.warnings &&
