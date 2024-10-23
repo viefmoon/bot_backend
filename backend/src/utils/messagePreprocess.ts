@@ -652,26 +652,7 @@ export async function preprocessMessagesClaude(messages: any[]): Promise<
         content: msg.content
       })),
       system: SYSTEM_MESSAGE_PHASE_1,
-      tools: [
-        {
-          name: "preprocess_order",
-          description: preprocessOrderToolClaude.description,
-          input_schema: {
-            type: "object" as const,
-            properties: preprocessOrderToolClaude.input_schema.properties,
-            required: preprocessOrderToolClaude.input_schema.required
-          }
-        },
-        {
-          name: "send_menu",
-          description: sendMenuToolClaude.description,
-          input_schema: {
-            type: "object" as const,
-            properties: sendMenuToolClaude.input_schema.properties,
-            required: sendMenuToolClaude.input_schema.required
-          }
-        }
-      ],
+      tools: [preprocessOrderToolClaude, sendMenuToolClaude] as any,
       tool_choice: { type: "tool", name: "preprocess_order" }
     });
 
