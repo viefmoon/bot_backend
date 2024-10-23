@@ -701,15 +701,6 @@ export async function preprocessMessagesClaude(
 
     logger.info("requestPayload", requestPayload);
 
-    // Agregar un log más detallado
-    // logger.info("Anthropic Request Details", {
-    //   clientConfig: {
-    //     headers: anthropic.headers,
-    //     baseURL: anthropic.baseURL,
-    //   },
-    //   requestPayload: requestPayload,
-    // });
-
     const response = await anthropic.beta.messages.create(requestPayload);
     const responses: AIResponse[] = [];
 
