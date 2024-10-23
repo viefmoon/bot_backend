@@ -7,7 +7,10 @@ import {
   sendMenuToolClaude,
 } from "../aiTools/aiTools";
 import * as dotenv from "dotenv";
-import { SYSTEM_MESSAGE_PHASE_1 } from "../config/predefinedMessages";
+import {
+  SYSTEM_MESSAGE_CHAIN_OF_THOUGHT_1,
+  SYSTEM_MESSAGE_PHASE_1,
+} from "../config/predefinedMessages";
 import getFullMenu from "src/data/menu";
 import * as stringSimilarity from "string-similarity";
 import {
@@ -663,7 +666,8 @@ export async function preprocessMessagesClaude(
     const requestPayload = {
       //model: "claude-3-5-sonnet-20241022",
       model: "claude-3-haiku-20240307",
-      system: SYSTEM_MESSAGE_PHASE_1,
+      system: SYSTEM_MESSAGE_CHAIN_OF_THOUGHT_1,
+      //system: SYSTEM_MESSAGE_PHASE_1,
       tools: [preprocessOrderToolClaude, sendMenuToolClaude] as any,
       max_tokens: 4096,
       messages: messages.map((msg) => ({
