@@ -17,7 +17,7 @@ export const GENERAL_AGENT: Agent = {
         Si detectas que el cliente quiere hacer un pedido (menciona productos específicos o intención de ordenar), 
         debes transferir la conversación al agente de pedidos usando la función transfer_to_agent.
       `,
-      cache_control: { type: "ephemeral" },
+      //cache_control: { type: "ephemeral" },
     },
     {
       type: "text",
@@ -63,7 +63,7 @@ export const GENERAL_AGENT: Agent = {
         
         Vino tinto, Sangría con vino, Vampiro, Gin de Maracuyá, Margarita, Ruso Blanco, Palo santo, Gin de pepino, Mojito, Piña colada, Piñada, Conga, Destornillador, Paloma, Carajillo, Tinto de verano, Clericot
       `,
-      cache_control: { type: "ephemeral" },
+      //cache_control: { type: "ephemeral" },
     },
   ],
   tools: [
@@ -111,7 +111,7 @@ export const ORDER_AGENT: Agent = {
         [Asistente de Pedidos - La Leña]
         // Add your specific instructions for the order agent here
       `,
-      cache_control: { type: "ephemeral" },
+      //cache_control: { type: "ephemeral" },
     },
   ],
   tools: [
