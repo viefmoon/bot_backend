@@ -672,7 +672,7 @@ export async function preprocessMessagesClaude(messages: any[]): Promise<
           }
         }
       ],
-      tool_choice: { type: "auto" },
+      tool_choice: { type: "tool", name: "preprocess_order" }
     });
 
     if (response.content[0].type === 'tool_use') {
