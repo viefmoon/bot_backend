@@ -24,7 +24,7 @@ interface ResponseItem {
   isRelevant?: boolean;
   confirmationMessage?: string;
   interactiveMessage?: any;
-  preOrderId?: string;
+  preOrderId?: number;
 }
 
 interface ProcessRequest {
