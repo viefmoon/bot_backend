@@ -408,7 +408,7 @@ function findPizzaIngredients(bestProduct, productMessage, errors) {
             currentHalf = "right";
             assignedHalves.right = true;
           } else {
-            currentHalf = "full"; // Por defecto si ya ambas mitades están asignadas
+            currentHalf = "full"; // Por defecto si ya ambas mitades estn asignadas
           }
           i++;
           continue;
@@ -668,25 +668,37 @@ export async function preprocessMessagesClaude(
             {
               role: "user",
               content: orderSummary,
+              cache_control: { type: "ephemeral" },
             },
           ]
-        : messages;
+        : messages.map((msg) => ({
+            ...msg,
+            content: Array.isArray(msg.content)
+              ? msg.content.map((c) => ({
+                  ...c,
+                  cache_control: { type: "ephemeral" },
+                }))
+              : [
+                  {
+                    type: "text",
+                    text: msg.content,
+                    cache_control: { type: "ephemeral" },
+                  },
+                ],
+          }));
 
     const requestPayload = {
       model: agent.model,
       system: agent.systemMessage,
       tools: agent.tools,
       max_tokens: agent.maxTokens,
-      messages: processedMessages.map((msg) => ({
-        role: msg.role,
-        content: msg.content,
-      })),
+      messages: processedMessages,
       tool_choice: { type: "auto" } as any,
     };
 
     logger.info("requestPayload", requestPayload);
 
-    const response = await anthropic.messages.create(requestPayload);
+    const response = await anthropic.beta.messages.create(requestPayload);
     const responses: AIResponse[] = [];
 
     // Registrar el uso de tokens
@@ -694,6 +706,8 @@ export async function preprocessMessagesClaude(
       input_tokens: response.usage.input_tokens,
       output_tokens: response.usage.output_tokens,
       total_tokens: response.usage.input_tokens + response.usage.output_tokens,
+      cache_creation_input_tokens: response.usage.cache_creation_input_tokens,
+      cache_read_input_tokens: response.usage.cache_read_input_tokens,
     });
 
     logger.info("response.content", response.content);
