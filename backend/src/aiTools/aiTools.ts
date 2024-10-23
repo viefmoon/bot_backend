@@ -67,7 +67,7 @@ const preprocessOrderToolClaude = {
   name: "preprocess_order",
   description: "Preprocesa la orden del cliente en una lista estructurada de productos y detalles de entrega.",
   input_schema: {
-    type: "object" as const,
+    type: "object",
     properties: {
       orderItems: {
         type: "array",
