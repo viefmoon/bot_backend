@@ -662,6 +662,19 @@ export async function preprocessMessagesClaude(messages: any[]): Promise<
 
     const response = await anthropic.messages.create(requestPayload);
 
+    // Obtener la cadena de pensamiento si existe
+    const thoughtProcess = response.content
+      .filter(item => item.type === 'text')
+      .map(item => item.text)
+      .join('\n');
+
+    if (thoughtProcess) {
+      logger.info({
+        message: "Cadena de pensamiento de Claude",
+        thought: thoughtProcess
+      });
+    }
+
     if (response.content[0].type === 'tool_use') {
       const toolCall = response.content[0];
 
@@ -738,6 +751,7 @@ export async function preprocessMessagesClaude(messages: any[]): Promise<
 
   throw new Error("No se pudo procesar la respuesta");
 }
+
 
 
 
