@@ -502,6 +502,7 @@ export class PreOrderService {
         sendToWhatsApp: false,
         text: relevantMessageContent,
         preOrderId: preOrder.id,
+        isRelevant: true,
         interactiveMessage: {
           type: "button",
           header: {

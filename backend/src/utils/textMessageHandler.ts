@@ -246,8 +246,9 @@ async function processAndGenerateAIResponse(
         if (selectProductsResponse.json.interactiveMessage) {
           responseItems.push({
             interactiveMessage: selectProductsResponse.json.interactiveMessage,
-            sendToWhatsApp: true,
-            isRelevant: false,
+            sendToWhatsApp: selectProductsResponse.json.sendToWhatsApp,
+            isRelevant: selectProductsResponse.json.isRelevant,
+            preOrderId: selectProductsResponse.json.preOrderId.toString(),
           });
         }
       }
