@@ -651,7 +651,13 @@ export async function preprocessMessagesClaude(messages: any[]): Promise<
       tools: [preprocessOrderToolClaude, sendMenuToolClaude] as any,
     };
 
-    logger.info("Petición a Claude:", JSON.stringify(requestPayload, null, 2));
+    // Modificar la forma en que se registra el payload
+    logger.info("Petición a Claude: " + JSON.stringify(requestPayload));
+    // O alternativamente:
+    logger.info({
+      message: "Petición a Claude",
+      payload: requestPayload
+    });
 
     const response = await anthropic.messages.create(requestPayload);
 
@@ -731,6 +737,7 @@ export async function preprocessMessagesClaude(messages: any[]): Promise<
 
   throw new Error("No se pudo procesar la respuesta");
 }
+
 
 
 

@@ -7,8 +7,17 @@ const logger = winston.createLogger({
   level: process.env.NODE_ENV === 'production' ? 'info' : 'debug',
   format: winston.format.combine(
     winston.format.timestamp(),
-    winston.format.printf(({ timestamp, level, message }) => {
-      return `${timestamp} [${level}]: ${message}`;
+    winston.format.json(), // Agregar formato JSON
+    winston.format.printf(({ timestamp, level, message, ...meta }) => {
+      // Si el mensaje es un objeto, convertirlo a string
+      const formattedMessage = typeof message === 'object' 
+        ? JSON.stringify(message)
+        : message;
+      
+      // Si hay metadata adicional, incluirla en el log
+      const metadata = Object.keys(meta).length ? ` ${JSON.stringify(meta)}` : '';
+      
+      return `${timestamp} [${level}]: ${formattedMessage}${metadata}`;
     })
   ),
   transports: [
