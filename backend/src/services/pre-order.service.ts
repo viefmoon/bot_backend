@@ -9,7 +9,6 @@ import {
   CustomerDeliveryInfo,
   OrderDeliveryInfo,
 } from "../models";
-import { sendWhatsAppInteractiveMessage } from "../utils/whatsAppUtils";
 
 export class PreOrderService {
   async selectProducts(orderData: {
@@ -499,7 +498,7 @@ export class PreOrderService {
     return {
       status: 200,
       json: {
-        sendToWhatsApp: false,
+        sendToWhatsApp: true,
         text: relevantMessageContent,
         preOrderId: preOrder.id,
         isRelevant: true,
