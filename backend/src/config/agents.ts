@@ -58,7 +58,8 @@ export const GENERAL_AGENT: Agent = {
   tools: [
     {
       name: "transfer_to_agent",
-      description: "Transfiere la conversación a otro agente especializado",
+      description:
+        "Transfiere la conversación a otro agente especializado con un resumen del pedido",
       input_schema: {
         type: "object",
         properties: {
@@ -66,8 +67,13 @@ export const GENERAL_AGENT: Agent = {
             type: "string",
             enum: Object.values(AgentType),
           },
+          orderSummary: {
+            type: "string",
+            description:
+              "Resumen conciso del pedido del cliente, incluyendo productos y modificaciones",
+          },
         },
-        required: ["targetAgent"],
+        required: ["targetAgent", "orderSummary"],
       },
     },
     {

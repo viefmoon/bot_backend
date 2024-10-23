@@ -655,17 +655,29 @@ export async function preprocessMessagesGPT(messages: any[]): Promise<
 
 export async function preprocessMessagesClaude(
   messages: any[],
-  currentAgent: AgentType = AgentType.GENERAL
+  currentAgent: AgentType = AgentType.GENERAL,
+  orderSummary?: string
 ): Promise<AIResponse[]> {
   try {
     const agent = AGENTS[currentAgent];
+
+    // Si es el agente de órdenes, solo usar el resumen del pedido
+    const processedMessages =
+      currentAgent === AgentType.ORDER && orderSummary
+        ? [
+            {
+              role: "user",
+              content: orderSummary,
+            },
+          ]
+        : messages;
 
     const requestPayload = {
       model: agent.model,
       system: agent.systemMessage,
       tools: agent.tools,
       max_tokens: agent.maxTokens,
-      messages: messages.map((msg) => ({
+      messages: processedMessages.map((msg) => ({
         role: msg.role,
         content: msg.content,
       })),
@@ -696,15 +708,16 @@ export async function preprocessMessagesClaude(
 
         if (toolCall.name === "transfer_to_agent") {
           logger.info("toolCall", toolCall);
-          const { targetAgent } =
+          const { targetAgent, orderSummary } =
             typeof toolCall.input === "string"
               ? JSON.parse(toolCall.input)
               : toolCall.input;
 
-          // Recursivamente procesa el mismo mensaje con el nuevo agente
+          // Pasar el resumen del pedido al agente de órdenes
           const targetResponses = await preprocessMessagesClaude(
             messages,
-            targetAgent as AgentType
+            targetAgent as AgentType,
+            orderSummary
           );
 
           responses.push(...targetResponses);
