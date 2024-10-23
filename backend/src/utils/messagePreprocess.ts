@@ -686,6 +686,7 @@ export async function preprocessMessagesClaude(
                   {
                     type: "text",
                     text: msg.content,
+                    cache_control: { type: "ephemeral" },
                   },
                 ],
           }));
