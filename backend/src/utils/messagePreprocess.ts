@@ -664,7 +664,7 @@ export async function preprocessMessagesClaude(
   try {
     const agent = AGENTS[currentAgent];
 
-    // Si es el agente de órdenes, solo usar el resumen del pedido
+    // Limpiar los mensajes eliminando los timestamps
     const processedMessages =
       currentAgent === AgentType.ORDER && orderSummary
         ? [
@@ -674,10 +674,11 @@ export async function preprocessMessagesClaude(
             },
           ]
         : messages.map((msg) => ({
-            ...msg,
+            role: msg.role,
             content: Array.isArray(msg.content)
-              ? msg.content.map((c) => ({
-                  ...c,
+              ? msg.content.map(({ type, text }) => ({
+                  type,
+                  text,
                 }))
               : [
                   {
