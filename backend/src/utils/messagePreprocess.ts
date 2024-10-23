@@ -638,7 +638,6 @@ export async function preprocessMessagesClaude(messages: any[]): Promise<
 > {
 
   try {
-    // Agregar log para ver el contenido de messages
 
     const requestPayload = {
       model: "claude-3-5-sonnet-20241022",
@@ -649,30 +648,13 @@ export async function preprocessMessagesClaude(messages: any[]): Promise<
         role: msg.role,
         content: msg.content
       })),
+      tool_choice: { type: "auto" } as any
     };
-
-    // Modificar la forma en que se registra el payload
-    logger.info("Petición a Claude: " + JSON.stringify(requestPayload));
-    // O alternativamente:
-    logger.info({
-      message: "Petición a Claude",
-      payload: requestPayload
-    });
 
     const response = await anthropic.messages.create(requestPayload);
 
-    // Obtener la cadena de pensamiento si existe
-    const thoughtProcess = response.content
-      .filter(item => item.type === 'text')
-      .map(item => item.text)
-      .join('\n');
+    console.log("response.content", response.content);
 
-    if (thoughtProcess) {
-      logger.info({
-        message: "Cadena de pensamiento de Claude",
-        thought: thoughtProcess
-      });
-    }
 
     if (response.content[0].type === 'tool_use') {
       const toolCall = response.content[0];
