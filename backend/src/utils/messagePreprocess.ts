@@ -23,6 +23,9 @@ const openai = new OpenAI({
 
 const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY,
+  defaultHeaders: {
+    "anthropic-beta": "prompt-caching-2024-07-31",
+  },
 });
 
 interface MenuItem {
@@ -694,12 +697,18 @@ export async function preprocessMessagesClaude(
       max_tokens: agent.maxTokens,
       messages: processedMessages,
       tool_choice: { type: "auto" } as any,
-      headers: {
-        "anthropic-beta": "prompt-caching-2024-07-31",
-      },
     };
 
     logger.info("requestPayload", requestPayload);
+
+    // Agregar un log más detallado
+    // logger.info("Anthropic Request Details", {
+    //   clientConfig: {
+    //     headers: anthropic.headers,
+    //     baseURL: anthropic.baseURL,
+    //   },
+    //   requestPayload: requestPayload,
+    // });
 
     const response = await anthropic.beta.messages.create(requestPayload);
     const responses: AIResponse[] = [];
