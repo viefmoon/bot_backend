@@ -23,9 +23,6 @@ const openai = new OpenAI({
 
 const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY,
-  defaultHeaders: {
-    "anthropic-beta": "prompt-caching-2024-07-31",
-  },
 });
 
 interface MenuItem {
@@ -708,7 +705,7 @@ export async function preprocessMessagesClaude(
 
     logger.info("requestPayload", requestPayload);
 
-    const response = await anthropic.beta.messages.create(
+    const response = await anthropic.beta.promptCaching.messages.create(
       requestPayload as any
     );
     const responses: AIResponse[] = [];
