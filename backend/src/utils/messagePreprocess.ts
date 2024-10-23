@@ -668,7 +668,7 @@ export async function preprocessMessagesClaude(
             {
               role: "user",
               content: orderSummary,
-              cache_control: { type: "ephemeral" },
+              //cache_control: { type: "ephemeral" },
             },
           ]
         : messages.map((msg, index) => ({
@@ -678,18 +678,20 @@ export async function preprocessMessagesClaude(
                   type,
                   text,
                   // Solo aplicar cache_control al último mensaje
-                  ...(index === messages.length - 1 && {
-                    cache_control: { type: "ephemeral" },
-                  }),
+                  ...(index === messages.length - 1 &&
+                    {
+                      //cache_control: { type: "ephemeral" },
+                    }),
                 }))
               : [
                   {
                     type: "text",
                     text: msg.content,
                     // Solo aplicar cache_control al último mensaje
-                    ...(index === messages.length - 1 && {
-                      cache_control: { type: "ephemeral" },
-                    }),
+                    ...(index === messages.length - 1 &&
+                      {
+                        //cache_control: { type: "ephemeral" },
+                      }),
                   },
                 ],
           }));
