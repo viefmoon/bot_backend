@@ -189,16 +189,21 @@ async function processAndGenerateAIResponse(
     const aiResponses = await preprocessMessagesClaude(relevantMessages);
     const responseItems: ResponseItem[] = [];
 
+    // Primero procesamos las respuestas directas de texto
     for (const response of aiResponses) {
       if (response.text) {
-        // Si es una respuesta directa de texto
         responseItems.push({
           text: response.text,
           sendToWhatsApp: true,
           isRelevant: response.isRelevant,
           confirmationMessage: response.confirmationMessage,
         });
-      } else if (response.preprocessedContent) {
+      }
+    }
+
+    // Luego procesamos el contenido preprocesado
+    for (const response of aiResponses) {
+      if (response.preprocessedContent) {
         // Si es contenido preprocesado
         if (
           response.preprocessedContent.warnings &&
