@@ -45,7 +45,7 @@ async function resetChatHistory(customer) {
   await customer.update({ relevantChatHistory: [] });
   await sendWhatsAppMessage(
     customer.clientId,
-    "Entendido, he olvidado el contexto anterior. En qué puedo ayudarte ahora?"
+    "Entendido, he olvidado el contexto anterior. ��En qué puedo ayudarte ahora?"
   );
 }
 
@@ -155,46 +155,26 @@ export async function handleTextMessage(
   for (const item of responses) {
     logger.info("item", item);
     if (item.text && item.sendToWhatsApp === true) {
-      try {
-        // Enviar mensaje y esperar a que se complete
-        const messageIds = await sendWhatsAppMessage(from, item.text);
-        // Esperar un poco más después del envío
-        await new Promise((resolve) => setTimeout(resolve, 2000));
-
-        if (messageIds) {
-          // Actualizar historial solo si el envío fue exitoso
-          await updateChatHistory(
-            { role: "assistant", content: item.text, timestamp: new Date() },
-            item.isRelevant === true
-          );
-        }
-      } catch (error) {
-        logger.error("Error procesando mensaje:", error);
-      }
+      // Enviar mensaje primero
+      await sendWhatsAppMessage(from, item.text);
+      // Actualizar historial después
+      await updateChatHistory(
+        { role: "assistant", content: item.text, timestamp: new Date() },
+        item.isRelevant === true
+      );
     }
 
     if (item.confirmationMessage) {
-      try {
-        // Esperar antes del mensaje de confirmación
-        await new Promise((resolve) => setTimeout(resolve, 2000));
-        const messageIds = await sendWhatsAppMessage(
-          from,
-          item.confirmationMessage
-        );
-
-        if (messageIds) {
-          await updateChatHistory(
-            {
-              role: "assistant",
-              content: item.confirmationMessage,
-              timestamp: new Date(),
-            },
-            true
-          );
-        }
-      } catch (error) {
-        logger.error("Error procesando mensaje de confirmación:", error);
-      }
+      // Enviar mensaje de confirmación después
+      await sendWhatsAppMessage(from, item.confirmationMessage);
+      await updateChatHistory(
+        {
+          role: "assistant",
+          content: item.confirmationMessage,
+          timestamp: new Date(),
+        },
+        true
+      );
     }
   }
 

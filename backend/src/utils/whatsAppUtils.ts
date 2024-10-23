@@ -22,13 +22,15 @@ export async function sendWhatsAppMessage(
   phoneNumber: string,
   message: string
 ): Promise<string[] | null> {
-  // Cambiar el tipo de retorno a un array de strings
   try {
-    const messageIds: string[] = []; // Array para almacenar los IDs de los mensajes enviados
+    const messageIds: string[] = [];
+
+    const sleep = (ms: number) =>
+      new Promise((resolve) => setTimeout(resolve, ms));
 
     while (message.length > 4096) {
-      const part = message.slice(0, 4096); // Obtener la primera parte del mensaje
-      message = message.slice(4096); // Reducir el mensaje original
+      const part = message.slice(0, 4096);
+      message = message.slice(4096);
 
       const payload: WhatsAppMessage = {
         messaging_product: "whatsapp",
@@ -48,10 +50,11 @@ export async function sendWhatsAppMessage(
         }
       );
 
-      messageIds.push(response.data.messages[0].id); // Almacenar el ID del mensaje enviado
+      messageIds.push(response.data.messages[0].id);
+      // Esperar 500ms después de cada envío
+      await sleep(500);
     }
 
-    // Enviar el mensaje restante si hay
     if (message.length > 0) {
       const payload: WhatsAppMessage = {
         messaging_product: "whatsapp",
@@ -72,9 +75,11 @@ export async function sendWhatsAppMessage(
       );
 
       messageIds.push(response.data.messages[0].id);
+      // Esperar 500ms después del último envío
+      await sleep(500);
     }
 
-    return messageIds; // Retornar los IDs de todos los mensajes enviados
+    return messageIds;
   } catch (error) {
     logger.error("Error al enviar mensaje de WhatsApp:", error);
     return null;
