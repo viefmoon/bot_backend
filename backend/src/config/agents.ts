@@ -86,7 +86,7 @@ export const GENERAL_AGENT: Agent = {
 
 export const ORDER_AGENT: Agent = {
   type: AgentType.ORDER,
-  model: "claude-3-sonnet-20241022",
+  model: "claude-3-5-sonnet-20241022",
   systemMessage: `
     [Asistente de Pedidos - La Leña]
     
