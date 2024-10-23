@@ -636,18 +636,12 @@ export async function preprocessMessagesClaude(messages: any[]): Promise<
       confirmationMessage?: string;
     }
 > {
-  const systemMessageForPreprocessing = {
-    role: "system",
-    content: SYSTEM_MESSAGE_PHASE_1,
-  };
-
-  const preprocessingMessages = [systemMessageForPreprocessing, ...messages];
 
   try {
     const response = await anthropic.messages.create({
       model: "claude-3-5-sonnet-20241022",
       max_tokens: 8192,
-      messages: preprocessingMessages.map(msg => ({
+      messages: messages.map(msg => ({
         role: msg.role === 'assistant' ? 'assistant' : 'user',
         content: msg.content
       })),
