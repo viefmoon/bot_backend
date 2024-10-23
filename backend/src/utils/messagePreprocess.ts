@@ -652,7 +652,26 @@ export async function preprocessMessagesClaude(messages: any[]): Promise<
         content: msg.content
       })),
       system: SYSTEM_MESSAGE_PHASE_1,
-      tools: [preprocessOrderToolClaude, sendMenuToolClaude],
+      tools: [
+        {
+          name: "preprocess_order",
+          description: preprocessOrderToolClaude.description,
+          input_schema: {
+            type: "object" as const,
+            properties: preprocessOrderToolClaude.input_schema.properties,
+            required: preprocessOrderToolClaude.input_schema.required
+          }
+        },
+        {
+          name: "send_menu",
+          description: sendMenuToolClaude.description,
+          input_schema: {
+            type: "object" as const,
+            properties: sendMenuToolClaude.input_schema.properties,
+            required: sendMenuToolClaude.input_schema.required
+          }
+        }
+      ],
       tool_choice: { type: "auto" },
     });
 
@@ -731,5 +750,7 @@ export async function preprocessMessagesClaude(messages: any[]): Promise<
 
   throw new Error("No se pudo procesar la respuesta");
 }
+
+
 
 
