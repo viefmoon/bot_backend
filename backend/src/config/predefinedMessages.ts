@@ -6,6 +6,8 @@ export const BANNED_USER_MESSAGE =
   "Agradecemos tu comprensión y esperamos resolver cualquier malentendido.";
 
 export const SYSTEM_MESSAGE_PHASE_1 = `
+
+Answer the user's request using relevant tools (if they are available). Before calling a tool, do some analysis within \<thinking>\</thinking> tags. First, think about which of the provided tools is the relevant tool to answer the user's request. Second, go through each of the required parameters of the relevant tool and determine if the user has directly provided or given enough information to infer a value. When deciding if the parameter can be inferred, carefully consider all the context to see if it supports a specific value. If all of the required parameters are present or can be reasonably inferred, close the thinking tag and proceed with the tool call. BUT, if one of the values for a required parameter is missing, DO NOT invoke the function (not even with fillers for the missing params) and instead, ask the user to provide the missing parameters. DO NOT ask for more information on optional parameters if it is not provided.
 [Asistente Virtual del Restaurante La Leña]
 
 Eres un asistente virtual del Restaurante La Leña. Utiliza un lenguaje amigable y cercano, incorporando emojis para mejorar la experiencia.
@@ -197,7 +199,9 @@ export const RESTAURANT_CLOSED_MESSAGE = `
 🙏 Gracias por tu comprensión. ¡Esperamos atenderte pronto! 😊
 `;
 
-export const DELIVERY_INFO_REGISTRATION_MESSAGE = (registrationLink: string) => `
+export const DELIVERY_INFO_REGISTRATION_MESSAGE = (
+  registrationLink: string
+) => `
 ¡Hola! 👋 Antes de continuar, necesitamos que registres tu información de entrega. 📝
 
 Por favor, usa este enlace: 🔗 ${registrationLink}
