@@ -4,7 +4,7 @@ import {
 } from "./whatsAppUtils";
 import { Customer } from "../models";
 import * as dotenv from "dotenv";
-import { preprocessMessages } from "./messagePreprocess";
+import { preprocessMessagesClaude, preprocessMessagesGPT } from "./messagePreprocess";
 import { PreOrderService } from "../services/pre-order.service";
 import logger from "./logger";
 dotenv.config();
@@ -183,7 +183,7 @@ async function processAndGenerateAIResponse(
   const { relevantMessages, conversationId } = req;
 
   try {
-    const preprocessedContent: PreprocessedContent = (await preprocessMessages(
+    const preprocessedContent: PreprocessedContent = (await preprocessMessagesClaude(
       relevantMessages
     )) as any;
 

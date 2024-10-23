@@ -1,6 +1,6 @@
-import { ProductVariant, PizzaIngredient, Modifier } from "../models";
 import OpenAI from "openai";
-import { preprocessOrderTool, sendMenuTool } from "../aiTools/aiTools";
+import Anthropic from '@anthropic-ai/sdk';
+import { preprocessOrderToolGPT, sendMenuToolGPT, preprocessOrderToolClaude, sendMenuToolClaude } from "../aiTools/aiTools";
 import * as dotenv from "dotenv";
 import { SYSTEM_MESSAGE_PHASE_1 } from "../config/predefinedMessages";
 import getFullMenu from "src/data/menu";
@@ -13,10 +13,14 @@ import {
 } from "../utils/messageProcessUtils";
 import { getMenuAvailability } from "./menuUtils";
 import logger from "./logger";
+import { Modifier, PizzaIngredient, ProductVariant } from "src/models";
 dotenv.config();
-
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
+});
+
+const anthropic = new Anthropic({
+  apiKey: process.env.ANTHROPIC_API_KEY,
 });
 
 interface MenuItem {
@@ -525,7 +529,7 @@ function detectUnknownWords(productMessage, bestProduct, warnings) {
   }
 }
 
-export async function preprocessMessages(messages: any[]): Promise<
+export async function preprocessMessagesGPT(messages: any[]): Promise<
   | PreprocessedContent
   | {
       text: string;
@@ -544,7 +548,7 @@ export async function preprocessMessages(messages: any[]): Promise<
   const response = await openai.chat.completions.create({
     model: "gpt-4o",
     messages: preprocessingMessages,
-    tools: [...preprocessOrderTool, ...sendMenuTool] as any,
+    tools: [...preprocessOrderToolGPT, ...sendMenuToolGPT] as any,
     temperature: 0.2,
     parallel_tool_calls: false,
   });
@@ -622,3 +626,109 @@ export async function preprocessMessages(messages: any[]): Promise<
 
   throw new Error("No se pudo procesar la respuesta");
 }
+
+export async function preprocessMessagesClaude(messages: any[]): Promise<
+  | PreprocessedContent
+  | {
+      text: string;
+      isDirectResponse: boolean;
+      isRelevant: boolean;
+      confirmationMessage?: string;
+    }
+> {
+  const systemMessageForPreprocessing = {
+    role: "system",
+    content: SYSTEM_MESSAGE_PHASE_1,
+  };
+
+  const preprocessingMessages = [systemMessageForPreprocessing, ...messages];
+
+  try {
+    const response = await anthropic.messages.create({
+      model: "claude-3-sonnet",
+      max_tokens: 10000,
+      messages: preprocessingMessages.map(msg => ({
+        role: msg.role === 'assistant' ? 'assistant' : 'user',
+        content: msg.content
+      })),
+      system: SYSTEM_MESSAGE_PHASE_1,
+      tools: [sendMenuToolClaude, preprocessOrderToolClaude],
+    });
+
+    if (response.content[0].type === 'tool_use') {
+      const toolCall = response.content[0];
+
+      if (toolCall.name === "preprocess_order") {
+        const preprocessedContent: PreprocessedContent = JSON.parse(
+          toolCall.input as string
+        );
+        const fullMenu = await getMenuAvailability();
+
+        for (const item of preprocessedContent.orderItems) {
+          if (item && typeof item.description === "string") {
+            const extractedProduct = await extractMentionedProduct(
+              item.description,
+              fullMenu
+            );
+            Object.assign(item, extractedProduct);
+          }
+        }
+        logger.info("preprocessedContent", JSON.stringify(preprocessedContent, null, 2));
+
+        const allErrors = preprocessedContent.orderItems
+          .filter((item) => item.errors && item.errors.length > 0)
+          .map((item) => `Para "${item.description}": ${item.errors.join("")}`);
+        
+        const allWarnings = preprocessedContent.orderItems
+          .filter((item) => item.warnings && item.warnings.length > 0)
+          .map((item) => `Para "${item.description}": ${item.warnings.join("")}`);
+
+        if (allErrors.length > 0) {
+          let message = `❗ Hay algunos problemas con tu solicitud:\n${allErrors.join(", ")}`;
+          
+          if (allWarnings.length > 0) {
+            message += `\n\n⚠️ Además, ten en cuenta lo siguiente:\n${allWarnings.join(", ")}`;
+          }
+          
+          return {
+            text: message,
+            isDirectResponse: true,
+            isRelevant: true,
+          };
+        }
+
+        if (allWarnings.length > 0) {
+          preprocessedContent.warnings = allWarnings;
+        }
+
+        return preprocessedContent;
+      } else if (toolCall.name === "send_menu") {
+        const fullMenu = await getFullMenu();
+        return {
+          text: fullMenu,
+          isDirectResponse: true,
+          isRelevant: false,
+          confirmationMessage:
+            "El menú ha sido enviado. ¿Hay algo más en lo que pueda ayudarte?",
+        };
+      }
+    } else if (response.content[0].type === 'text') {
+      return {
+        text: response.content[0].text,
+        isDirectResponse: true,
+        isRelevant: true,
+      };
+    }
+  } catch (error) {
+    logger.error("Error en preprocessMessagesClaude:", error);
+    return {
+      text: "Error al preprocesar el mensaje",
+      isDirectResponse: true,
+      isRelevant: true,
+    };
+  }
+
+  throw new Error("No se pudo procesar la respuesta");
+}
+
+
