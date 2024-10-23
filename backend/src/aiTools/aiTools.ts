@@ -66,13 +66,13 @@ const sendMenuToolGPT = [
 const preprocessOrderToolClaude = {
   name: "preprocess_order",
   description:
-    "Generar una lista detallada de los productos mencionados por el cliente, mapeándolos a los nombres exactos del menú, incluyendo modificaciones, ingredientes extra, etc. o mitad y mitad de pizza si el cliente las menciona.",
+    "Generar una lista detallada de los productos mencionados por el cliente.",
   input_schema: {
     type: "object",
     properties: {
       orderItems: {
         type: "array",
-        description: "Productos y cantidades solicitados por el cliente.",
+        description: "Productos y cantidades.",
         items: {
           type: "object",
           properties: {
@@ -82,7 +82,8 @@ const preprocessOrderToolClaude = {
             },
             description: {
               type: "string",
-              description: "Descripción detallada del producto.",
+              description:
+                "Descripción detallada del producto, mapeándolos a los nombres exactos del menú, incluyendo modificaciones, ingredientes extra, etc. o mitad y mitad de pizza si el cliente las menciona",
             },
           },
           required: ["description", "quantity"],

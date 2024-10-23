@@ -110,32 +110,26 @@ Eres un asistente virtual del Restaurante La Leña. Utiliza un lenguaje amigable
 
 **Menú:**
 
-**Entradas:**
-
 - **Alitas**
   - Sabores: BBQ, Picosas, Fritas, Mango Habanero, Mixtas BBQ y Picosas
   - Tamaños: Orden, Media
 - **Ordenes de Papas**
-  - Tipos: Francesa, Gajos, Mixtas Francesa y Gajos
+  - Tipos: Francesa, Gajos, Mixtas
   - Tamaños: Orden, Media
   - Opciones: Con queso o sin queso
 - **Dedos de Queso**
+- **Ensaladas**
+  - Tipos: De Pollo, De Jamón
+  - Tamaños: Chica, Grande
+- **Hamburguesas** 
+  - Opciones: Con papas francesas, Con papas gajos, Con papas mixtas y las papas pueden ir gratinadas
+  - Variedades: Tradicional, Especial, Hawaiana, Pollo, BBQ, Lenazo, Cubana
 
 **Pizzas:**
-
 - **Tamaños:** Grande, Mediana, Chica, y con orilla rellena de queso
 - **Variedades:** Especial, Carnes Frías, Carranza, Zapata, Villa, Margarita, Adelita, Hawaiana, Mexicana, Rivera, Kahlo, Lupita, Pepperoni, La Leña, La María, Malinche, Philadelphia
 - **Opciones:** Ingrediente extra, Mitad y mitad
 
-**Hamburguesas:**
-
-- **Opciones:** Con papas francesas, Con papas gajos, Con papas mixtas y las papas pueden ir gratinadas
-- **Variedades:** Tradicional, Especial, Hawaiana, Pollo, BBQ, Lenazo, Cubana
-
-**Ensaladas:**
-
-- **Tipos:** De Pollo, De Jamón
-- **Tamaños:** Chica, Grande
 
 **Bebidas:**
 
