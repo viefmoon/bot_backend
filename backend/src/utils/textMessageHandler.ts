@@ -45,7 +45,7 @@ async function resetChatHistory(customer) {
   await customer.update({ relevantChatHistory: [] });
   await sendWhatsAppMessage(
     customer.clientId,
-    "Entendido, he olvidado el contexto anterior. ��En qué puedo ayudarte ahora?"
+    "Entendido, he olvidado el contexto anterior. En qué puedo ayudarte ahora?"
   );
 }
 
@@ -151,30 +151,31 @@ export async function handleTextMessage(
   });
 
   // Procesar las respuestas secuencialmente
-  logger.info("responses", responses);
   for (const item of responses) {
-    logger.info("item", item);
     if (item.text && item.sendToWhatsApp === true) {
-      // Enviar mensaje primero
-      await sendWhatsAppMessage(from, item.text);
-      // Actualizar historial después
-      await updateChatHistory(
-        { role: "assistant", content: item.text, timestamp: new Date() },
-        item.isRelevant === true
-      );
+      // Esperar a que se complete el envío del mensaje principal
+      await Promise.all([
+        sendWhatsAppMessage(from, item.text),
+        updateChatHistory(
+          { role: "assistant", content: item.text, timestamp: new Date() },
+          item.isRelevant === true
+        ),
+      ]);
     }
 
     if (item.confirmationMessage) {
-      // Enviar mensaje de confirmación después
-      await sendWhatsAppMessage(from, item.confirmationMessage);
-      await updateChatHistory(
-        {
-          role: "assistant",
-          content: item.confirmationMessage,
-          timestamp: new Date(),
-        },
-        true
-      );
+      // Esperar a que se complete el envío del mensaje de confirmación
+      await Promise.all([
+        sendWhatsAppMessage(from, item.confirmationMessage),
+        updateChatHistory(
+          {
+            role: "assistant",
+            content: item.confirmationMessage,
+            timestamp: new Date(),
+          },
+          true
+        ),
+      ]);
     }
   }
 
