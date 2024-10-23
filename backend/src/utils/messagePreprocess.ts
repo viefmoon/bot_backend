@@ -664,8 +664,8 @@ export async function preprocessMessagesClaude(
   try {
     const agent = AGENTS[currentAgent];
 
-    // Limpiar los mensajes eliminando los timestamps
-    const processedMessages =
+    // Limitar los mensajes a los últimos 4 y procesarlos
+    const limitedMessages =
       currentAgent === AgentType.ORDER && orderSummary
         ? [
             {
@@ -674,10 +674,10 @@ export async function preprocessMessagesClaude(
               cache_control: { type: "ephemeral" },
             },
           ]
-        : messages.map((msg) => ({
+        : messages.slice(-4).map((msg) => ({
             role: msg.role,
             content: Array.isArray(msg.content)
-              ? msg.content.map(({ type, text }) => ({
+              ? msg.content.slice(0, 4).map(({ type, text }) => ({
                   type,
                   text,
                   cache_control: { type: "ephemeral" },
@@ -696,7 +696,7 @@ export async function preprocessMessagesClaude(
       system: agent.systemMessage,
       tools: agent.tools,
       max_tokens: agent.maxTokens,
-      messages: processedMessages,
+      messages: limitedMessages,
       tool_choice: { type: "auto" } as any,
     };
 
