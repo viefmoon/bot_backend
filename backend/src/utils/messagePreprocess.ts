@@ -642,13 +642,13 @@ export async function preprocessMessagesClaude(messages: any[]): Promise<
 
     const requestPayload = {
       model: "claude-3-5-sonnet-20241022",
+      system: SYSTEM_MESSAGE_PHASE_1,
+      tools: [preprocessOrderToolClaude, sendMenuToolClaude] as any,
       max_tokens: 8192,
       messages: messages.map(msg => ({
         role: msg.role,
         content: msg.content
       })),
-      system: SYSTEM_MESSAGE_PHASE_1,
-      tools: [preprocessOrderToolClaude, sendMenuToolClaude] as any,
     };
 
     // Modificar la forma en que se registra el payload
