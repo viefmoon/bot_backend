@@ -679,9 +679,10 @@ export async function preprocessMessagesClaude(messages: any[]): Promise<
       const toolCall = response.content[0];
 
       if (toolCall.name === "preprocess_order") {
-        const preprocessedContent: PreprocessedContent = JSON.parse(
-          toolCall.input as string
-        );
+        const preprocessedContent: PreprocessedContent = typeof toolCall.input === 'string' 
+          ? JSON.parse(toolCall.input)
+          : toolCall.input as PreprocessedContent;
+        
         const fullMenu = await getMenuAvailability();
 
         for (const item of preprocessedContent.orderItems) {
@@ -750,6 +751,7 @@ export async function preprocessMessagesClaude(messages: any[]): Promise<
 
   throw new Error("No se pudo procesar la respuesta");
 }
+
 
 
 
