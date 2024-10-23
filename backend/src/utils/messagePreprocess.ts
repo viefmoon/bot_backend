@@ -647,7 +647,7 @@ export async function preprocessMessagesClaude(messages: any[]): Promise<
     const response = await anthropic.messages.create({
       model: "claude-3-5-sonnet-20241022",
       //model: "claude-3-5-haiku",
-      max_tokens: 10000,
+      max_tokens: 8192,
       messages: preprocessingMessages.map(msg => ({
         role: msg.role === 'assistant' ? 'assistant' : 'user',
         content: msg.content
