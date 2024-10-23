@@ -1,16 +1,8 @@
 import OpenAI from "openai";
 import Anthropic from "@anthropic-ai/sdk";
-import {
-  preprocessOrderToolGPT,
-  sendMenuToolGPT,
-  preprocessOrderToolClaude,
-  sendMenuToolClaude,
-} from "../aiTools/aiTools";
+import { preprocessOrderToolGPT, sendMenuToolGPT } from "../aiTools/aiTools";
 import * as dotenv from "dotenv";
-import {
-  SYSTEM_MESSAGE_CHAIN_OF_THOUGHT_1,
-  SYSTEM_MESSAGE_PHASE_1,
-} from "../config/predefinedMessages";
+import { SYSTEM_MESSAGE_PHASE_1 } from "../config/predefinedMessages";
 import getFullMenu from "src/data/menu";
 import * as stringSimilarity from "string-similarity";
 import {
@@ -22,6 +14,8 @@ import {
 import { getMenuAvailability } from "./menuUtils";
 import logger from "./logger";
 import { Modifier, PizzaIngredient, ProductVariant } from "src/models";
+import { AgentType, Agent } from "../types/agents";
+import { AGENTS } from "../config/agents";
 dotenv.config();
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
@@ -660,16 +654,17 @@ export async function preprocessMessagesGPT(messages: any[]): Promise<
 }
 
 export async function preprocessMessagesClaude(
-  messages: any[]
+  messages: any[],
+  currentAgent: AgentType = AgentType.GENERAL
 ): Promise<AIResponse[]> {
   try {
+    const agent = AGENTS[currentAgent];
+
     const requestPayload = {
-      model: "claude-3-5-sonnet-20241022",
-      //model: "claude-3-haiku-20240307",
-      system: SYSTEM_MESSAGE_CHAIN_OF_THOUGHT_1,
-      //system: SYSTEM_MESSAGE_PHASE_1,
-      tools: [preprocessOrderToolClaude, sendMenuToolClaude] as any,
-      max_tokens: 4096,
+      model: agent.model,
+      system: agent.systemMessage,
+      tools: agent.tools,
+      max_tokens: agent.maxTokens,
       messages: messages.map((msg) => ({
         role: msg.role,
         content: msg.content,
@@ -678,6 +673,7 @@ export async function preprocessMessagesClaude(
     };
 
     const response = await anthropic.messages.create(requestPayload);
+    const responses: AIResponse[] = [];
 
     // Registrar el uso de tokens
     logger.info("Token usage:", {
@@ -685,8 +681,6 @@ export async function preprocessMessagesClaude(
       output_tokens: response.usage.output_tokens,
       total_tokens: response.usage.input_tokens + response.usage.output_tokens,
     });
-
-    const responses: AIResponse[] = [];
 
     // Procesar cada contenido de la respuesta
     for (const content of response.content) {
@@ -700,7 +694,22 @@ export async function preprocessMessagesClaude(
       } else if (content.type === "tool_use") {
         const toolCall = content;
 
-        if (toolCall.name === "preprocess_order") {
+        if (toolCall.name === "transfer_to_agent") {
+          logger.info("toolCall", toolCall);
+          const { targetAgent } =
+            typeof toolCall.input === "string"
+              ? JSON.parse(toolCall.input)
+              : toolCall.input;
+
+          // Recursivamente procesa el mismo mensaje con el nuevo agente
+          const targetResponses = await preprocessMessagesClaude(
+            messages,
+            targetAgent as AgentType
+          );
+
+          responses.push(...targetResponses);
+          return responses;
+        } else if (toolCall.name === "preprocess_order") {
           const preprocessedContent: PreprocessedContent =
             typeof toolCall.input === "string"
               ? JSON.parse(toolCall.input)
@@ -774,10 +783,13 @@ export async function preprocessMessagesClaude(
 
     return responses;
   } catch (error) {
-    logger.error("Error en preprocessMessagesClaude:", error);
+    logger.error(
+      `Error en preprocessMessagesClaude con agente ${currentAgent}:`,
+      error
+    );
     return [
       {
-        text: "Error al preprocesar el mensaje",
+        text: "Error al procesar el mensaje",
         isDirectResponse: true,
         isRelevant: true,
       },
