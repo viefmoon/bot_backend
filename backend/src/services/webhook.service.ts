@@ -177,7 +177,7 @@ export class WebhookService {
     const queue = this.clientQueues.get(clientId);
     while (queue.length > 0) {
       const message = queue.dequeue();
-      logger.info(`Procesando mensaje ${message.id} del cliente ${clientId}`);
+      //logger.info(`Procesando mensaje ${message.id} del cliente ${clientId}`);
 
       try {
         // Establecer un tiempo límite de 20 segundos para procesar cada mensaje

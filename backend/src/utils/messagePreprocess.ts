@@ -684,6 +684,8 @@ export async function preprocessMessagesClaude(
       tool_choice: { type: "auto" } as any,
     };
 
+    logger.info("requestPayload", requestPayload);
+
     const response = await anthropic.messages.create(requestPayload);
     const responses: AIResponse[] = [];
 
@@ -694,9 +696,10 @@ export async function preprocessMessagesClaude(
       total_tokens: response.usage.input_tokens + response.usage.output_tokens,
     });
 
+    logger.info("response.content", response.content);
+
     // Procesar cada contenido de la respuesta
     for (const content of response.content) {
-      logger.info("content", content);
       if (content.type === "text") {
         responses.push({
           text: content.text,
@@ -707,7 +710,6 @@ export async function preprocessMessagesClaude(
         const toolCall = content;
 
         if (toolCall.name === "transfer_to_agent") {
-          logger.info("toolCall", toolCall);
           const { targetAgent, orderSummary } =
             typeof toolCall.input === "string"
               ? JSON.parse(toolCall.input)
