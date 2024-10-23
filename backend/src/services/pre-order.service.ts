@@ -498,7 +498,7 @@ export class PreOrderService {
     return {
       status: 200,
       json: {
-        sendToWhatsApp: true,
+        sendToWhatsApp: false,
         text: relevantMessageContent,
         preOrderId: preOrder.id,
         isRelevant: true,
