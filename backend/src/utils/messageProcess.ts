@@ -474,10 +474,24 @@ const handleAgentTransfer = async (
   {
     targetAgent,
     orderSummary,
-  }: { targetAgent: AgentTypeGemini; orderSummary: string },
+  }: { targetAgent: AgentTypeGemini | AgentTypeClaude; orderSummary: string },
   messages: any[]
 ): Promise<AIResponse[]> => {
-  return await preProcessMessagesGemini(messages, targetAgent, orderSummary);
+  if (targetAgent in AGENTS_GEMINI) {
+    return await preProcessMessagesGemini(
+      messages,
+      targetAgent as AgentTypeGemini,
+      orderSummary
+    );
+  } else if (targetAgent in AGENTS_CLAUDE) {
+    return await preProcessMessagesClaude(
+      messages,
+      targetAgent as AgentTypeClaude,
+      orderSummary
+    );
+  } else {
+    throw new Error("Tipo de agente no soportado");
+  }
 };
 
 // Manejar preprocesamiento de orden
