@@ -275,7 +275,9 @@ export const prepareModelGemini = async (agent: AgentGemini) => ({
   toolConfig: {
     functionCallingConfig: {
       mode: agent.functionCallingMode,
-      allowedFunctionNames: agent.allowedFunctionNames,
+      ...(agent.functionCallingMode === "ANY" && {
+        allowedFunctionNames: agent.allowedFunctionNames,
+      }),
     },
   },
 });
