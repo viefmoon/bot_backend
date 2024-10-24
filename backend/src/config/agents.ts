@@ -196,7 +196,13 @@ export const GENERAL_AGENT_GEMINI: AgentGemini = {
             "Envía el menú completo al cliente cuando lo solicita explícitamente.",
           parameters: {
             type: "object",
-            properties: {},
+            properties: {
+              sendMenu: {
+                type: "boolean",
+                description:
+                  "Campo opcional para cumplir con el esquema, no es necesario enviarlo.",
+              },
+            },
             required: [],
           },
         },
