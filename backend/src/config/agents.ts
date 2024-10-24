@@ -146,7 +146,7 @@ export const ORDER_AGENT_CLAUDE: AgentClaude = {
 
 export const GENERAL_AGENT_GEMINI: AgentGemini = {
   type: AgentType.GENERAL_GEMINI,
-  model: "gemini-pro",
+  model: "gemini-1.5-flash",
   systemMessage: async () => `
     [Asistente Virtual del Restaurante La Leña]
 
@@ -207,7 +207,7 @@ export const GENERAL_AGENT_GEMINI: AgentGemini = {
 
 export const ORDER_AGENT_GEMINI: AgentGemini = {
   type: AgentType.ORDER_GEMINI,
-  model: "gemini-pro",
+  model: "gemini-1.5-flash",
   systemMessage: async () => `
     [Asistente de Pedidos - La Leña]
 
