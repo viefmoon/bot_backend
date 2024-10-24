@@ -198,11 +198,9 @@ interface ProductoInfo {
         }),
       };
 
-      // Convertir a string y reemplazar los caracteres escapados
-      const jsonString = JSON.stringify(menuForAI);
-      const cleanJson = jsonString.replace(/\\/g, '');
-      
-      return cleanJson;
+      // Limpiar el JSON de caracteres de escape
+      const cleanJson = JSON.parse(JSON.stringify(menuForAI));
+      return JSON.stringify(cleanJson);
     
   } catch (error: any) {
     logger.error("Error al obtener el menú para IA:", error);

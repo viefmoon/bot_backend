@@ -713,7 +713,7 @@ export async function preprocessMessagesClaude(
 
     const requestPayload = await prepareRequestPayload(agent, processedMessages);
 
-    console.log("requestPayload", JSON.stringify(requestPayload, null, 2));
+    console.log("requestPayload", JSON.stringify(requestPayload));
 
     const response = await anthropic.beta.promptCaching.messages.create(
       requestPayload as any
