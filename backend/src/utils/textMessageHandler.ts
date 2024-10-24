@@ -4,10 +4,7 @@ import {
 } from "./whatsAppUtils";
 import { Customer, PreOrder } from "../models";
 import * as dotenv from "dotenv";
-import {
-  preprocessMessagesClaude,
-  preprocessMessagesGPT,
-} from "./messagePreprocess";
+import { preProcessMessagesClaude } from "./messageProcess";
 import { PreOrderService } from "../services/pre-order.service";
 import logger from "./logger";
 dotenv.config();
@@ -200,9 +197,19 @@ async function processAndGenerateAIResponse(
   req: ProcessRequest
 ): Promise<ResponseItem[]> {
   const { relevantMessages, conversationId } = req;
-  console.log("relevantMessages", relevantMessages);
+
+  // Eliminar el campo timestamp de cada mensaje
+  const messagesWithoutTimestamp = relevantMessages.map(
+    ({ role, content }) => ({
+      role,
+      content,
+    })
+  );
+
   try {
-    const aiResponses = await preprocessMessagesClaude(relevantMessages);
+    const aiResponses = await preProcessMessagesClaude(
+      messagesWithoutTimestamp
+    );
     const responseItems: ResponseItem[] = [];
 
     for (const response of aiResponses) {

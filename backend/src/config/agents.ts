@@ -1,8 +1,8 @@
-import { Agent, AgentType } from "../types/agents";
+import { AgentClaude, AgentType } from "../types/agents";
 import { getMenuForAI } from "../utils/menuUtils";
 
-export const GENERAL_AGENT: Agent = {
-  type: AgentType.GENERAL,
+export const GENERAL_AGENT_CLAUDE: AgentClaude = {
+  type: AgentType.GENERAL_CLAUDE,
   model: "claude-3-haiku-20240307",
   systemMessage: async () => [
     {
@@ -62,10 +62,11 @@ ${await getMenuForAI()}`,
     },
   ],
   maxTokens: 1024,
+  temperature: 0.5,
 };
 
-export const ORDER_AGENT: Agent = {
-  type: AgentType.ORDER,
+export const ORDER_AGENT_CLAUDE: AgentClaude = {
+  type: AgentType.ORDER_CLAUDE,
   model: "claude-3-5-sonnet-20241022",
   systemMessage: async () => [
     {
@@ -140,9 +141,10 @@ export const ORDER_AGENT: Agent = {
     },
   ],
   maxTokens: 4096,
+  temperature: 0.5,
 };
 
-export const AGENTS = {
-  [AgentType.GENERAL]: GENERAL_AGENT,
-  [AgentType.ORDER]: ORDER_AGENT,
+export const AGENTS_CLAUDE = {
+  [AgentType.GENERAL_CLAUDE]: GENERAL_AGENT_CLAUDE,
+  [AgentType.ORDER_CLAUDE]: ORDER_AGENT_CLAUDE,
 };

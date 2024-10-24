@@ -1,8 +1,6 @@
 import OpenAI from "openai";
 import Anthropic from "@anthropic-ai/sdk";
-import { preprocessOrderToolGPT, sendMenuToolGPT } from "../aiTools/aiTools";
 import * as dotenv from "dotenv";
-import { SYSTEM_MESSAGE_PHASE_1 } from "../config/predefinedMessages";
 import getFullMenu from "src/data/menu";
 import * as stringSimilarity from "string-similarity";
 import {
@@ -10,12 +8,19 @@ import {
   generateNGrams,
   normalizeText,
   normalizeTextForIngredients,
+  getErrorsAndWarnings,
+  logTokenUsageClaude,
+  PreprocessedContent,
+  MenuItem,
+  SIMILARITY_THRESHOLDS,
+  AIResponse,
+  prepareRequestPayloadClaude,
+  detectUnknownWords,
 } from "../utils/messageProcessUtils";
 import { getMenuAvailability } from "./menuUtils";
 import logger from "./logger";
-import { Modifier, PizzaIngredient, ProductVariant } from "src/models";
-import { AgentType, Agent } from "../types/agents";
-import { AGENTS } from "../config/agents";
+import { AgentType } from "../types/agents";
+import { AGENTS_CLAUDE } from "../config/agents";
 dotenv.config();
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
@@ -24,34 +29,6 @@ const openai = new OpenAI({
 const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY,
 });
-
-interface MenuItem {
-  productId?: string;
-  name: string;
-  productVariant?: ProductVariant;
-  selectedModifiers?: Modifier[];
-  selectedPizzaIngredients?: PizzaIngredient[];
-}
-
-interface PreprocessedContent {
-  orderItems: {
-    description: string;
-    menuItem?: MenuItem;
-    errors?: string[];
-    warnings?: string[];
-  }[];
-  orderType: string;
-  scheduledDeliveryTime?: string | Date;
-  warnings?: string[];
-}
-
-const SIMILARITY_THRESHOLDS = {
-  WORD: 0.8,
-  PRODUCT: 0.8,
-  VARIANT: 0.8,
-  MODIFIER: 0.8,
-  INGREDIENT: 0.8,
-};
 
 function extractMentionedProduct(productMessage, menu) {
   logger.info("productMessage", productMessage);
@@ -479,349 +456,110 @@ function findPizzaIngredients(bestProduct, productMessage, errors) {
   return bestProduct;
 }
 
-// Función para detectar palabras desconocidas en el mensaje del producto
-function detectUnknownWords(productMessage, bestProduct, warnings) {
-  const productNameWords = new Set(normalizeText(bestProduct.name));
-  const variantNameWords = new Set();
-  if (bestProduct.productVariant) {
-    normalizeText(bestProduct.productVariant.name).forEach((word) =>
-      variantNameWords.add(word)
-    );
-  }
+// Manejar respuesta de texto simple
+const handleTextResponse = (text: string): AIResponse => ({
+  text,
+  isDirectResponse: true,
+  isRelevant: true,
+});
 
-  const selectedModifierWords = new Set();
-  if (
-    bestProduct.selectedModifiers &&
-    bestProduct.selectedModifiers.length > 0
-  ) {
-    for (const modifier of bestProduct.selectedModifiers) {
-      normalizeText(modifier.name).forEach((word) =>
-        selectedModifierWords.add(word)
+// Manejar transferencia a otro agente
+const handleAgentTransfer = async (
+  toolCall: any,
+  messages: any[]
+): Promise<AIResponse[]> => {
+  const { targetAgent, orderSummary } =
+    typeof toolCall.input === "string"
+      ? JSON.parse(toolCall.input)
+      : toolCall.input;
+
+  return await preProcessMessagesClaude(
+    messages,
+    targetAgent as AgentType,
+    orderSummary
+  );
+};
+
+// Manejar preprocesamiento de orden
+const handleOrderPreprocess = async (toolCall: any): Promise<AIResponse> => {
+  const preprocessedContent: PreprocessedContent =
+    typeof toolCall.input === "string"
+      ? JSON.parse(toolCall.input)
+      : toolCall.input;
+
+  const fullMenu = await getMenuAvailability();
+
+  // Procesar cada item del pedido
+  for (const item of preprocessedContent.orderItems) {
+    if (item?.description) {
+      const extractedProduct = await extractMentionedProduct(
+        item.description,
+        fullMenu
       );
+      Object.assign(item, extractedProduct);
     }
   }
 
-  const pizzaIngredientWords = new Set();
-  if (
-    bestProduct.selectedPizzaIngredients &&
-    bestProduct.selectedPizzaIngredients.length > 0
-  ) {
-    for (const ingredient of bestProduct.selectedPizzaIngredients) {
-      normalizeText(ingredient.name).forEach((word) =>
-        pizzaIngredientWords.add(word)
-      );
-    }
+  const { errorMessage, hasErrors } = getErrorsAndWarnings(preprocessedContent);
+
+  if (hasErrors) {
+    return handleTextResponse(errorMessage);
   }
-
-  const knownWords = new Set([
-    ...productNameWords,
-    ...variantNameWords,
-    ...selectedModifierWords,
-    ...pizzaIngredientWords,
-  ]);
-
-  const messageWords = normalizeText(productMessage);
-
-  logger.info("knownWords", knownWords);
-  logger.info("messageWords", messageWords);
-  const unknownWords = messageWords.filter((word) => {
-    return !Array.from(knownWords).some(
-      (knownWord) =>
-        stringSimilarity.compareTwoStrings(word, knownWord as string) >=
-        SIMILARITY_THRESHOLDS.WORD
-    );
-  });
-  logger.info("unknownWords", unknownWords);
-
-  if (unknownWords.length > 0) {
-    warnings.push(
-      `No encontre los siguientes ingredientes: ${unknownWords.join(", ")}.`
-    );
-  }
-}
-
-interface AIResponse {
-  text?: string;
-  isDirectResponse: boolean;
-  isRelevant: boolean;
-  confirmationMessage?: string;
-  preprocessedContent?: PreprocessedContent;
-}
-
-export async function preprocessMessagesGPT(messages: any[]): Promise<
-  | PreprocessedContent
-  | {
-      text: string;
-      isDirectResponse: boolean;
-      isRelevant: boolean;
-      confirmationMessage?: string;
-    }
-> {
-  const systemMessageForPreprocessing = {
-    role: "system",
-    content: SYSTEM_MESSAGE_PHASE_1,
-  };
-
-  const preprocessingMessages = [systemMessageForPreprocessing, ...messages];
-
-  const response = await openai.chat.completions.create({
-    model: "gpt-4o",
-    messages: preprocessingMessages,
-    tools: [...preprocessOrderToolGPT, ...sendMenuToolGPT] as any,
-    temperature: 0.2,
-    parallel_tool_calls: false,
-  });
-
-  if (response.choices[0].message.tool_calls) {
-    const toolCall = response.choices[0].message.tool_calls[0];
-
-    if (toolCall.function.name === "preprocess_order") {
-      const preprocessedContent: PreprocessedContent = JSON.parse(
-        toolCall.function.arguments
-      );
-      const fullMenu = await getMenuAvailability();
-
-      for (const item of preprocessedContent.orderItems) {
-        if (item && typeof item.description === "string") {
-          const extractedProduct = await extractMentionedProduct(
-            item.description,
-            fullMenu
-          );
-          Object.assign(item, extractedProduct);
-        }
-      }
-      logger.info(
-        "preprocessedContent",
-        JSON.stringify(preprocessedContent, null, 2)
-      );
-
-      const allErrors = preprocessedContent.orderItems
-        .filter((item) => item.errors && item.errors.length > 0)
-        .map((item) => `Para "${item.description}": ${item.errors.join("")}`);
-
-      const allWarnings = preprocessedContent.orderItems
-        .filter((item) => item.warnings && item.warnings.length > 0)
-        .map((item) => `Para "${item.description}": ${item.warnings.join("")}`);
-
-      if (allErrors.length > 0) {
-        let message = `❗ Hay algunos problemas con tu solicitud:\n${allErrors.join(
-          ", "
-        )}`;
-
-        if (allWarnings.length > 0) {
-          message += `\n\n⚠️ Además, ten en cuenta lo siguiente:\n${allWarnings.join(
-            ", "
-          )}`;
-        }
-
-        return {
-          text: message,
-          isDirectResponse: true,
-          isRelevant: true,
-        };
-      }
-
-      if (allWarnings.length > 0) {
-        preprocessedContent.warnings = allWarnings;
-      }
-
-      return preprocessedContent;
-    } else if (toolCall.function.name === "send_menu") {
-      const fullMenu = await getFullMenu();
-      return {
-        text: fullMenu,
-        isDirectResponse: true,
-        isRelevant: false,
-        confirmationMessage:
-          "El menú ha sido enviado. ¿Hay algo más en lo que pueda ayudarte?",
-      };
-    }
-  } else if (response.choices[0].message.content) {
-    return {
-      text: response.choices[0].message.content,
-      isDirectResponse: true,
-      isRelevant: true,
-    };
-  } else {
-    return {
-      text: "Error al preprocesar el mensaje",
-      isDirectResponse: true,
-      isRelevant: true,
-    };
-  }
-
-  throw new Error("No se pudo procesar la respuesta");
-}
-
-const prepareRequestPayload = async (
-  agent: Agent,
-  processedMessages: any[]
-) => {
-  const systemMessage = await (typeof agent.systemMessage === "function"
-    ? agent.systemMessage()
-    : agent.systemMessage);
 
   return {
-    model: agent.model,
-    system: systemMessage,
-    tools: agent.tools,
-    max_tokens: agent.maxTokens,
-    messages: processedMessages,
-    tool_choice: { type: "auto" } as any,
+    isDirectResponse: false,
+    isRelevant: true,
+    preprocessedContent,
   };
 };
 
-export async function preprocessMessagesClaude(
+// Manejar envío de menú
+const handleMenuSend = async (): Promise<AIResponse> => ({
+  text: await getFullMenu(),
+  isDirectResponse: true,
+  isRelevant: false,
+  confirmationMessage:
+    "El menú ha sido enviado. ¿Hay algo más en lo que pueda ayudarte?",
+});
+
+// Función principal
+export async function preProcessMessagesClaude(
   messages: any[],
-  currentAgent: AgentType = AgentType.GENERAL,
+  currentAgent: AgentType = AgentType.GENERAL_CLAUDE,
   orderSummary?: string
 ): Promise<AIResponse[]> {
   try {
-    const agent = AGENTS[currentAgent];
-
-    // Solo aplicar cache_control al último mensaje
+    const agent = AGENTS_CLAUDE[currentAgent];
     const processedMessages =
-      currentAgent === AgentType.ORDER && orderSummary
-        ? [
-            {
-              role: "user",
-              content: orderSummary,
-            },
-          ]
-        : messages.map((msg, index) => ({
-            role: msg.role,
-            content: Array.isArray(msg.content)
-              ? msg.content.map(({ type, text }) => ({
-                  type,
-                  text,
-                  // Solo aplicar cache_control al último mensaje
-                  ...(index === messages.length - 1 && {}),
-                }))
-              : [
-                  {
-                    type: "text",
-                    text: msg.content,
-                    // Solo aplicar cache_control al último mensaje
-                    ...(index === messages.length - 1 && {}),
-                  },
-                ],
-          }));
+      currentAgent === AgentType.ORDER_CLAUDE && orderSummary
+        ? [{ role: "user", content: orderSummary }]
+        : messages;
 
-    const requestPayload = await prepareRequestPayload(
-      agent,
-      processedMessages
-    );
-
-    console.log("requestPayload", requestPayload);
-
-    const response = await anthropic.beta.promptCaching.messages.create(
-      requestPayload as any
-    );
-    const responses: AIResponse[] = [];
-
-    // Registrar el uso de tokens
-    logger.info("Token usage:", {
-      input_tokens: response.usage.input_tokens,
-      output_tokens: response.usage.output_tokens,
-      total_tokens: response.usage.input_tokens + response.usage.output_tokens,
-      cache_creation_input_tokens: response.usage.cache_creation_input_tokens,
-      cache_read_input_tokens: response.usage.cache_read_input_tokens,
+    const response = await anthropic.beta.promptCaching.messages.create({
+      ...(await prepareRequestPayloadClaude(agent, processedMessages)),
+      tool_choice: { type: "auto", disable_parallel_tool_use: false },
     });
 
-    // Procesar cada contenido de la respuesta
+    logTokenUsageClaude(response.usage);
+
+    const responses: AIResponse[] = [];
+
     for (const content of response.content) {
       if (content.type === "text") {
-        responses.push({
-          text: content.text,
-          isDirectResponse: true,
-          isRelevant: true,
-        });
-      } else if (content.type === "tool_use") {
-        const toolCall = content;
+        responses.push(handleTextResponse(content.text));
+        continue;
+      }
 
-        if (toolCall.name === "transfer_to_agent") {
-          const { targetAgent, orderSummary } =
-            typeof toolCall.input === "string"
-              ? JSON.parse(toolCall.input)
-              : toolCall.input;
-
-          // Pasar el resumen del pedido al agente de órdenes
-          const targetResponses = await preprocessMessagesClaude(
-            messages,
-            targetAgent as AgentType,
-            orderSummary
-          );
-
-          responses.push(...targetResponses);
-          return responses;
-        } else if (toolCall.name === "preprocess_order") {
-          const preprocessedContent: PreprocessedContent =
-            typeof toolCall.input === "string"
-              ? JSON.parse(toolCall.input)
-              : (toolCall.input as PreprocessedContent);
-
-          const fullMenu = await getMenuAvailability();
-
-          for (const item of preprocessedContent.orderItems) {
-            if (item && typeof item.description === "string") {
-              const extractedProduct = await extractMentionedProduct(
-                item.description,
-                fullMenu
-              );
-              Object.assign(item, extractedProduct);
-            }
-          }
-          logger.info(
-            "preprocessedContent",
-            JSON.stringify(preprocessedContent, null, 2)
-          );
-
-          const allErrors = preprocessedContent.orderItems
-            .filter((item) => item.errors && item.errors.length > 0)
-            .map(
-              (item) => `Para "${item.description}": ${item.errors.join("")}`
-            );
-
-          const allWarnings = preprocessedContent.orderItems
-            .filter((item) => item.warnings && item.warnings.length > 0)
-            .map(
-              (item) => `Para "${item.description}": ${item.warnings.join("")}`
-            );
-
-          if (allErrors.length > 0) {
-            let message = `❗ Hay algunos problemas con tu solicitud:\n${allErrors.join(
-              ", "
-            )}`;
-            if (allWarnings.length > 0) {
-              message += `\n\n⚠️ Además, ten en cuenta lo siguiente:\n${allWarnings.join(
-                ", "
-              )}`;
-            }
-
-            responses.push({
-              text: message,
-              isDirectResponse: true,
-              isRelevant: true,
-            });
-          } else {
-            if (allWarnings.length > 0) {
-              preprocessedContent.warnings = allWarnings;
-            }
-            responses.push({
-              isDirectResponse: false,
-              isRelevant: true,
-              preprocessedContent,
-            });
-          }
-        } else if (toolCall.name === "send_menu") {
-          const fullMenu = await getFullMenu();
-          responses.push({
-            text: fullMenu,
-            isDirectResponse: true,
-            isRelevant: false,
-            confirmationMessage:
-              "El menú ha sido enviado. ¿Hay algo más en lo que pueda ayudarte?",
-          });
+      if (content.type === "tool_use") {
+        switch (content.name) {
+          case "transfer_to_agent":
+            return await handleAgentTransfer(content, messages);
+          case "preprocess_order":
+            responses.push(await handleOrderPreprocess(content));
+            break;
+          case "send_menu":
+            responses.push(await handleMenuSend());
+            break;
         }
       }
     }
@@ -832,12 +570,6 @@ export async function preprocessMessagesClaude(
       `Error en preprocessMessagesClaude con agente ${currentAgent}:`,
       error
     );
-    return [
-      {
-        text: "Error al procesar el mensaje",
-        isDirectResponse: true,
-        isRelevant: true,
-      },
-    ];
+    return [handleTextResponse("Error al procesar el mensaje")];
   }
 }

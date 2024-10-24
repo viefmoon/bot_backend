@@ -1,3 +1,8 @@
+import { Modifier, PizzaIngredient, ProductVariant } from "src/models";
+import logger from "./logger";
+import stringSimilarity from "string-similarity";
+import { AgentClaude } from "src/types/agents";
+
 export function mapSynonym(normalizedWord: string): string | null {
   const synonyms: { [key: string]: string[] } = {
     grande: ["grandes"],
@@ -107,3 +112,148 @@ export function generateNGrams(words: string[], maxN: number): string[] {
   }
   return ngrams;
 }
+
+export function getErrorsAndWarnings(preprocessedContent: PreprocessedContent) {
+  const allErrors = preprocessedContent.orderItems
+    .filter((item) => item.errors?.length > 0)
+    .map((item) => `Para "${item.description}": ${item.errors.join("")}`);
+
+  const allWarnings = preprocessedContent.orderItems
+    .filter((item) => item.warnings?.length > 0)
+    .map((item) => `Para "${item.description}": ${item.warnings.join("")}`);
+
+  let errorMessage = "";
+  if (allErrors.length > 0) {
+    errorMessage = `❗ Hay algunos problemas con tu solicitud:\n${allErrors.join(
+      ", "
+    )}`;
+    if (allWarnings.length > 0) {
+      errorMessage += `\n\n⚠️ Además, ten en cuenta lo siguiente:\n${allWarnings.join(
+        ", "
+      )}`;
+    }
+  }
+
+  if (allWarnings.length > 0) {
+    preprocessedContent.warnings = allWarnings;
+  }
+
+  return { errorMessage, hasErrors: allErrors.length > 0 };
+}
+
+export function logTokenUsageClaude(usage: any) {
+  logger.info("Token usage:", {
+    input_tokens: usage.input_tokens,
+    output_tokens: usage.output_tokens,
+    total_tokens: usage.input_tokens + usage.output_tokens,
+    cache_creation_input_tokens: usage.cache_creation_input_tokens,
+    cache_read_input_tokens: usage.cache_read_input_tokens,
+  });
+}
+
+export interface PreprocessedContent {
+  orderItems: {
+    description: string;
+    menuItem?: MenuItem;
+    errors?: string[];
+    warnings?: string[];
+  }[];
+  orderType: string;
+  scheduledDeliveryTime?: string | Date;
+  warnings?: string[];
+}
+
+export interface MenuItem {
+  productId?: string;
+  name: string;
+  productVariant?: ProductVariant;
+  selectedModifiers?: Modifier[];
+  selectedPizzaIngredients?: PizzaIngredient[];
+}
+
+export const SIMILARITY_THRESHOLDS = {
+  WORD: 0.8,
+  PRODUCT: 0.8,
+  VARIANT: 0.8,
+  MODIFIER: 0.8,
+  INGREDIENT: 0.8,
+};
+
+export function detectUnknownWords(productMessage, bestProduct, warnings) {
+  const productNameWords = new Set(normalizeText(bestProduct.name));
+  const variantNameWords = new Set();
+  if (bestProduct.productVariant) {
+    normalizeText(bestProduct.productVariant.name).forEach((word) =>
+      variantNameWords.add(word)
+    );
+  }
+
+  const selectedModifierWords = new Set();
+  if (bestProduct.selectedModifiers?.length > 0) {
+    for (const modifier of bestProduct.selectedModifiers) {
+      normalizeText(modifier.name).forEach((word) =>
+        selectedModifierWords.add(word)
+      );
+    }
+  }
+
+  const pizzaIngredientWords = new Set();
+  if (bestProduct.selectedPizzaIngredients?.length > 0) {
+    for (const ingredient of bestProduct.selectedPizzaIngredients) {
+      normalizeText(ingredient.name).forEach((word) =>
+        pizzaIngredientWords.add(word)
+      );
+    }
+  }
+
+  const knownWords = new Set([
+    ...productNameWords,
+    ...variantNameWords,
+    ...selectedModifierWords,
+    ...pizzaIngredientWords,
+  ]);
+
+  const messageWords = normalizeText(productMessage);
+  const unknownWords = messageWords.filter((word) => {
+    return !Array.from(knownWords).some(
+      (knownWord) =>
+        stringSimilarity.compareTwoStrings(word, knownWord as string) >=
+        SIMILARITY_THRESHOLDS.WORD
+    );
+  });
+
+  if (unknownWords.length > 0) {
+    warnings.push(
+      `No encontre los siguientes ingredientes: ${unknownWords.join(", ")}.`
+    );
+  }
+}
+
+export const handleTextResponse = (text: string): AIResponse => ({
+  text,
+  isDirectResponse: true,
+  isRelevant: true,
+});
+
+export interface AIResponse {
+  text?: string;
+  isDirectResponse: boolean;
+  isRelevant: boolean;
+  confirmationMessage?: string;
+  preprocessedContent?: PreprocessedContent;
+}
+
+export const prepareRequestPayloadClaude = async (
+  agent: AgentClaude,
+  messages: any[]
+) => ({
+  model: agent.model,
+  system:
+    typeof agent.systemMessage === "function"
+      ? await agent.systemMessage()
+      : agent.systemMessage,
+  tools: agent.tools,
+  max_tokens: agent.maxTokens,
+  temperature: agent.temperature,
+  messages,
+});
