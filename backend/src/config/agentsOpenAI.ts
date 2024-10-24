@@ -22,6 +22,7 @@ ${await getMenuForAI()}`,
   }),
   tools: [
     {
+      type: "function",
       name: "transfer_to_agent",
       description:
         "Transfiere la conversación a otro agente especializado con un resumen del pedido",
@@ -42,6 +43,7 @@ ${await getMenuForAI()}`,
       },
     },
     {
+      type: "function",
       name: "send_menu",
       description:
         "Envía el menú completo al cliente cuando lo solicita explícitamente.",
@@ -85,6 +87,7 @@ export const ORDER_AGENT_OPENAI: AgentOpenAI = {
   }),
   tools: [
     {
+      type: "function",
       name: "preprocess_order",
       description:
         "Generar una lista detallada de los productos mencionados por el cliente.",
