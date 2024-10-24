@@ -6,7 +6,7 @@ export enum AgentType {
 export interface Agent {
   type: AgentType;
   model: string;
-  systemMessage: any[];
+  systemMessage: any[] | (() => Promise<any[]>);
   tools: any[];
   maxTokens: number;
 }
