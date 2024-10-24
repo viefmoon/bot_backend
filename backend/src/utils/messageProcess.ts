@@ -566,7 +566,11 @@ export async function preProcessMessagesClaude(
       if (content.type === "tool_use") {
         switch (content.name) {
           case "transfer_to_agent":
-            return await handleAgentTransfer(content.input as any, messages);
+            const transferResponses = await handleAgentTransfer(
+              content.input as any,
+              messages
+            );
+            return [...responses, ...transferResponses]; // Combina las respuestas antes de retornar
           case "preprocess_order":
             responses.push(
               await handleOrderPreprocess({ args: content.input as any })
