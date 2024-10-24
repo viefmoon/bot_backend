@@ -11,7 +11,7 @@ import {
   normalizeText,
   normalizeTextForIngredients,
 } from "../utils/messageProcessUtils";
-import { getMenuAvailability } from "./menuUtils";
+import { getMenuAvailability, getMenuSimple } from "./menuUtils";
 import logger from "./logger";
 import { Modifier, PizzaIngredient, ProductVariant } from "src/models";
 import { AgentType, Agent } from "../types/agents";
@@ -710,7 +710,7 @@ export async function preprocessMessagesClaude(
     );
     const responses: AIResponse[] = [];
 
-    const fullMenu = await getMenuAvailability();
+    const fullMenu = await getMenuSimple();
     console.log("fullMenu", fullMenu);
 
     // Registrar el uso de tokens

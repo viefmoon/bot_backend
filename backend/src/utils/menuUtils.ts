@@ -7,6 +7,7 @@ import {
     Modifier,
   } from "../models";
 import logger from "./logger";
+
 interface ProductoInfo {
     productId: string;
     name: string;
@@ -128,3 +129,52 @@ interface ProductoInfo {
       }
     }
     
+export async function getMenuSimple(): Promise<string[] | { error: string; detalles?: string }> {
+  try {
+    const menuCompleto = await getMenuAvailability();
+    
+    if ('error' in menuCompleto) {
+      return menuCompleto;
+    }
+
+    const menuSimple: string[] = [];
+
+    menuCompleto.forEach(producto => {
+      // Agregar el nombre del producto base
+      menuSimple.push(producto.name);
+
+      // Agregar variantes si existen
+      if (producto.productVariants) {
+        producto.productVariants.forEach(variante => {
+          menuSimple.push(`${producto.name} ${variante.name}`);
+        });
+      }
+
+      // Agregar modificadores disponibles
+      if (producto.modifierTypes) {
+        producto.modifierTypes.forEach(tipoMod => {
+          if (tipoMod.modifiers) {
+            tipoMod.modifiers.forEach(mod => {
+              menuSimple.push(`${tipoMod.name}: ${mod.name}`);
+            });
+          }
+        });
+      }
+
+      // Agregar ingredientes de pizza si existen
+      if (producto.pizzaIngredients) {
+        producto.pizzaIngredients.forEach(ingrediente => {
+          menuSimple.push(`Ingrediente de Pizza: ${ingrediente.name}`);
+        });
+      }
+    });
+
+    return [...new Set(menuSimple)]; // Eliminar duplicados
+  } catch (error: any) {
+    logger.error("Error al obtener el menú simplificado:", error);
+    return {
+      error: "No se pudo obtener el menú simplificado",
+      detalles: error.message
+    };
+  }
+}
