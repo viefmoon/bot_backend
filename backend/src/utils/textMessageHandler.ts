@@ -210,9 +210,9 @@ async function processAndGenerateAIResponse(
   try {
     const aiResponses = await preProcessMessages(
       messagesWithoutTimestamp,
-      AgentTypeGemini.GENERAL_GEMINI,
+      AgentTypeClaude.GENERAL_CLAUDE,
       undefined,
-      "gemini"
+      "claude"
     );
     const responseItems: ResponseItem[] = [];
 
