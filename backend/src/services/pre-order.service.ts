@@ -157,6 +157,9 @@ export class PreOrderService {
           `La hora programada debe ser al menos ${minTimeRequired} minutos después de la hora actual.`
         );
       }
+    } else {
+      // Si scheduledDeliveryTime es null, puedes manejarlo aquí
+      fullScheduledDeliveryTime = null;
     }
 
     // Obtener información de entrega del cliente
