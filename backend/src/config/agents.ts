@@ -87,7 +87,7 @@ Vino tinto, Sangría con vino, Vampiro, Gin de Maracuyá, Margarita, Ruso Blanco
       cache_control: { type: "ephemeral" },
     },
   ],
-  maxTokens: 4096,
+  maxTokens: 200,
 };
 
 export const ORDER_AGENT: Agent = {
