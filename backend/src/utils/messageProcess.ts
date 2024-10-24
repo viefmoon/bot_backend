@@ -20,7 +20,7 @@ import {
 } from "../utils/messageProcessUtils";
 import { getMenuAvailability } from "./menuUtils";
 import logger from "./logger";
-import { AgentType } from "../types/agents";
+import { AgentTypeClaude, AgentTypeGemini } from "../types/agents";
 import { AGENTS_CLAUDE } from "../config/agents";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { AGENTS_GEMINI } from "../config/agents";
@@ -481,7 +481,7 @@ const handleAgentTransfer = async (
 
   return await preProcessMessagesClaude(
     messages,
-    targetAgent as AgentType,
+    targetAgent as AgentTypeClaude,
     orderSummary
   );
 };
@@ -531,13 +531,13 @@ const handleMenuSend = async (): Promise<AIResponse> => ({
 // Función principal
 export async function preProcessMessagesClaude(
   messages: any[],
-  currentAgent: AgentType = AgentType.GENERAL_CLAUDE,
+  currentAgent: AgentTypeClaude = AgentTypeClaude.GENERAL_CLAUDE,
   orderSummary?: string
 ): Promise<AIResponse[]> {
   try {
     const agent = AGENTS_CLAUDE[currentAgent];
     const processedMessages =
-      currentAgent === AgentType.ORDER_CLAUDE && orderSummary
+      currentAgent === AgentTypeClaude.ORDER_CLAUDE && orderSummary
         ? [{ role: "user", content: orderSummary }]
         : messages;
 
@@ -582,13 +582,13 @@ export async function preProcessMessagesClaude(
 
 export async function preProcessMessagesGemini(
   messages: any[],
-  currentAgent: AgentType = AgentType.GENERAL_GEMINI,
+  currentAgent: AgentTypeGemini = AgentTypeGemini.GENERAL_GEMINI,
   orderSummary?: string
 ): Promise<AIResponse[]> {
   try {
     const agent = AGENTS_GEMINI[currentAgent];
     const processedMessages =
-      currentAgent === AgentType.ORDER_GEMINI && orderSummary
+      currentAgent === AgentTypeGemini.ORDER_GEMINI && orderSummary
         ? [{ role: "user", parts: [{ text: orderSummary }] }]
         : messages.map((message) => ({
             role: message.role === "assistant" ? "model" : message.role,
@@ -636,13 +636,21 @@ export async function preProcessMessagesGemini(
 // Función para elegir qué API usar
 export async function preProcessMessages(
   messages: any[],
-  currentAgent: AgentType,
+  currentAgent: AgentTypeClaude | AgentTypeGemini,
   orderSummary?: string,
   apiChoice: "claude" | "gemini" = "gemini"
 ): Promise<AIResponse[]> {
   if (apiChoice === "gemini") {
-    return preProcessMessagesGemini(messages, currentAgent, orderSummary);
+    return preProcessMessagesGemini(
+      messages,
+      currentAgent as AgentTypeGemini,
+      orderSummary
+    );
   } else {
-    return preProcessMessagesClaude(messages, currentAgent, orderSummary);
+    return preProcessMessagesClaude(
+      messages,
+      currentAgent as AgentTypeClaude,
+      orderSummary
+    );
   }
 }

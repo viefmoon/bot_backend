@@ -1,8 +1,13 @@
-import { AgentClaude, AgentGemini, AgentType } from "../types/agents";
+import {
+  AgentClaude,
+  AgentGemini,
+  AgentTypeClaude,
+  AgentTypeGemini,
+} from "../types/agents";
 import { getMenuForAI } from "../utils/menuUtils";
 
 export const GENERAL_AGENT_CLAUDE: AgentClaude = {
-  type: AgentType.GENERAL_CLAUDE,
+  type: AgentTypeClaude.GENERAL_CLAUDE,
   model: "claude-3-haiku-20240307",
   systemMessage: async () => [
     {
@@ -38,7 +43,7 @@ ${await getMenuForAI()}`,
         properties: {
           targetAgent: {
             type: "string",
-            enum: Object.values(AgentType),
+            enum: Object.values(AgentTypeClaude),
           },
           orderSummary: {
             type: "string",
@@ -66,7 +71,7 @@ ${await getMenuForAI()}`,
 };
 
 export const ORDER_AGENT_CLAUDE: AgentClaude = {
-  type: AgentType.ORDER_CLAUDE,
+  type: AgentTypeClaude.ORDER_CLAUDE,
   model: "claude-3-5-sonnet-20241022",
   systemMessage: async () => [
     {
@@ -145,7 +150,7 @@ export const ORDER_AGENT_CLAUDE: AgentClaude = {
 };
 
 export const GENERAL_AGENT_GEMINI: AgentGemini = {
-  type: AgentType.GENERAL_GEMINI,
+  type: AgentTypeGemini.GENERAL_GEMINI,
   model: "gemini-1.5-flash",
   systemMessage: async () => `
     [Asistente Virtual del Restaurante La Leña]
@@ -179,7 +184,7 @@ export const GENERAL_AGENT_GEMINI: AgentGemini = {
             properties: {
               targetAgent: {
                 type: "string",
-                enum: Object.values(AgentType),
+                enum: Object.values(AgentTypeGemini),
               },
               orderSummary: {
                 type: "string",
@@ -212,7 +217,7 @@ export const GENERAL_AGENT_GEMINI: AgentGemini = {
 };
 
 export const ORDER_AGENT_GEMINI: AgentGemini = {
-  type: AgentType.ORDER_GEMINI,
+  type: AgentTypeGemini.ORDER_GEMINI,
   model: "gemini-1.5-flash",
   systemMessage: async () => `
     [Asistente de Pedidos - La Leña]
@@ -287,12 +292,12 @@ export const ORDER_AGENT_GEMINI: AgentGemini = {
 };
 
 export const AGENTS_GEMINI = {
-  [AgentType.GENERAL_GEMINI]: GENERAL_AGENT_GEMINI,
-  [AgentType.ORDER_GEMINI]: ORDER_AGENT_GEMINI,
+  [AgentTypeGemini.GENERAL_GEMINI]: GENERAL_AGENT_GEMINI,
+  [AgentTypeGemini.ORDER_GEMINI]: ORDER_AGENT_GEMINI,
 };
 
 // Actualiza el objeto AGENTS_CLAUDE existente
 export const AGENTS_CLAUDE = {
-  [AgentType.GENERAL_CLAUDE]: GENERAL_AGENT_CLAUDE,
-  [AgentType.ORDER_CLAUDE]: ORDER_AGENT_CLAUDE,
+  [AgentTypeClaude.GENERAL_CLAUDE]: GENERAL_AGENT_CLAUDE,
+  [AgentTypeClaude.ORDER_CLAUDE]: ORDER_AGENT_CLAUDE,
 };

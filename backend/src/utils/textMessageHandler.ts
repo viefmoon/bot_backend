@@ -7,7 +7,7 @@ import * as dotenv from "dotenv";
 import { preProcessMessages, preProcessMessagesClaude } from "./messageProcess";
 import { PreOrderService } from "../services/pre-order.service";
 import logger from "./logger";
-import { AgentType } from "src/types/agents";
+import { AgentTypeClaude, AgentTypeGemini } from "src/types/agents";
 dotenv.config();
 
 interface ChatMessage {
@@ -210,7 +210,7 @@ async function processAndGenerateAIResponse(
   try {
     const aiResponses = await preProcessMessages(
       messagesWithoutTimestamp,
-      AgentType.GENERAL_GEMINI,
+      AgentTypeGemini.GENERAL_GEMINI,
       undefined,
       "gemini"
     );
