@@ -495,7 +495,11 @@ const handleAgentTransfer = async (
 };
 
 // Manejar preprocesamiento de orden
-const handleOrderPreprocess = async (args: any): Promise<AIResponse> => {
+const handleOrderPreprocess = async ({
+  args,
+}: {
+  args: any;
+}): Promise<AIResponse> => {
   const preprocessedContent: PreprocessedContent = args;
 
   const fullMenu = await getMenuAvailability();
@@ -568,7 +572,9 @@ export async function preProcessMessagesClaude(
           case "transfer_to_agent":
             return await handleAgentTransfer(content.input as any, messages);
           case "preprocess_order":
-            responses.push(await handleOrderPreprocess(content));
+            responses.push(
+              await handleOrderPreprocess({ args: content.input as any })
+            );
             break;
           case "send_menu":
             responses.push(await handleMenuSend());
@@ -623,7 +629,9 @@ export async function preProcessMessagesGemini(
               messages
             );
           case "preprocess_order":
-            responses.push(await handleOrderPreprocess(part.functionCall.args));
+            responses.push(
+              await handleOrderPreprocess({ args: part.functionCall.args })
+            );
             break;
           case "send_menu":
             responses.push(await handleMenuSend());
