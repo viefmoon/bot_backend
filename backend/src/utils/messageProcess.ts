@@ -9,9 +9,7 @@ import {
   normalizeText,
   normalizeTextForIngredients,
   getErrorsAndWarnings,
-  logTokenUsageClaude,
   PreprocessedContent,
-  MenuItem,
   SIMILARITY_THRESHOLDS,
   AIResponse,
   prepareRequestPayloadClaude,
@@ -556,8 +554,6 @@ export async function preProcessMessagesClaude(
     });
 
     console.log("response claude", JSON.stringify(response, null, 2));
-
-    logTokenUsageClaude(response.usage);
 
     const responses: AIResponse[] = [];
 

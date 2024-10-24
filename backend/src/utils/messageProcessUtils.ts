@@ -142,16 +142,6 @@ export function getErrorsAndWarnings(preprocessedContent: PreprocessedContent) {
   return { errorMessage, hasErrors: allErrors.length > 0 };
 }
 
-export function logTokenUsageClaude(usage: any) {
-  logger.info("Token usage:", {
-    input_tokens: usage.input_tokens,
-    output_tokens: usage.output_tokens,
-    total_tokens: usage.input_tokens + usage.output_tokens,
-    cache_creation_input_tokens: usage.cache_creation_input_tokens,
-    cache_read_input_tokens: usage.cache_read_input_tokens,
-  });
-}
-
 export interface PreprocessedContent {
   orderItems: {
     description: string;
