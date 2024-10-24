@@ -4,9 +4,10 @@ import {
 } from "./whatsAppUtils";
 import { Customer, PreOrder } from "../models";
 import * as dotenv from "dotenv";
-import { preProcessMessagesClaude } from "./messageProcess";
+import { preProcessMessages, preProcessMessagesClaude } from "./messageProcess";
 import { PreOrderService } from "../services/pre-order.service";
 import logger from "./logger";
+import { AgentType } from "src/types/agents";
 dotenv.config();
 
 interface ChatMessage {
@@ -207,8 +208,11 @@ async function processAndGenerateAIResponse(
   );
 
   try {
-    const aiResponses = await preProcessMessagesClaude(
-      messagesWithoutTimestamp
+    const aiResponses = await preProcessMessages(
+      messagesWithoutTimestamp,
+      AgentType.GENERAL_GEMINI,
+      undefined,
+      "gemini"
     );
     const responseItems: ResponseItem[] = [];
 
