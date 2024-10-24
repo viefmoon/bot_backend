@@ -470,23 +470,6 @@ const handleTextResponse = (text: string): AIResponse => ({
 });
 
 // Manejar transferencia a otro agente
-const handleAgentTransferClaude = async (
-  toolCall: any,
-  messages: any[]
-): Promise<AIResponse[]> => {
-  const { targetAgent, orderSummary } =
-    typeof toolCall.input === "string"
-      ? JSON.parse(toolCall.input)
-      : toolCall.input;
-
-  return await preProcessMessagesClaude(
-    messages,
-    targetAgent as AgentTypeClaude,
-    orderSummary
-  );
-};
-
-// Manejar transferencia a otro agente
 const handleAgentTransfer = async (
   toolCall: any,
   messages: any[]
@@ -557,6 +540,8 @@ export async function preProcessMessagesClaude(
       tool_choice: { type: "auto", disable_parallel_tool_use: false },
     });
 
+    console.log("response claude", JSON.stringify(response, null, 2));
+
     logTokenUsageClaude(response.usage);
 
     const responses: AIResponse[] = [];
@@ -570,7 +555,7 @@ export async function preProcessMessagesClaude(
       if (content.type === "tool_use") {
         switch (content.name) {
           case "transfer_to_agent":
-            return await handleAgentTransferClaude(content, messages);
+            return await handleAgentTransfer(content, messages);
           case "preprocess_order":
             responses.push(await handleOrderPreprocess(content));
             break;
