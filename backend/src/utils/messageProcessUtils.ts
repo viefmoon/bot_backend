@@ -220,15 +220,8 @@ export function detectUnknownWords(productMessage, bestProduct, warnings) {
   }
 }
 
-export const handleTextResponse = (text: string): AIResponse => ({
-  text,
-  isDirectResponse: true,
-  isRelevant: true,
-});
-
 export interface AIResponse {
   text?: string;
-  isDirectResponse: boolean;
   isRelevant: boolean;
   confirmationMessage?: string;
   preprocessedContent?: PreprocessedContent;

@@ -7,7 +7,7 @@ import * as dotenv from "dotenv";
 import { preProcessMessages, preProcessMessagesClaude } from "./messageProcess";
 import { PreOrderService } from "../services/pre-order.service";
 import logger from "./logger";
-import { AgentTypeClaude, AgentTypeGemini } from "src/types/agents";
+import { AgentClaude, AgentConfig, AgentType } from "src/types/agents";
 dotenv.config();
 
 interface ChatMessage {
@@ -150,13 +150,10 @@ export async function handleTextMessage(
     }
 
     if (item.interactiveMessage && item.sendToWhatsApp === true) {
-      console.log("item", item);
       const messageId = await sendWhatsAppInteractiveMessage(
         from,
         item.interactiveMessage
       );
-      console.log("messageId interactive", messageId);
-
       // Si hay un preOrderId en la respuesta, actualizamos la orden con el messageId
       if (item.preOrderId && messageId) {
         const preOrder = await PreOrder.findByPk(item.preOrderId);
@@ -207,18 +204,23 @@ async function processAndGenerateAIResponse(
     })
   );
 
+  // Definimos la configuración de agentes
+  const agentConfig: AgentConfig = {
+    generalAgent: { type: AgentType.GENERAL, provider: "CLAUDE" },
+    orderAgent: { type: AgentType.ORDER, provider: "GEMINI" },
+  };
+
   try {
     const aiResponses = await preProcessMessages(
       messagesWithoutTimestamp,
-      AgentTypeClaude.GENERAL_CLAUDE,
-      undefined,
-      "claude"
+      agentConfig.generalAgent, //agente actual
+      agentConfig
     );
     const responseItems: ResponseItem[] = [];
 
     for (const response of aiResponses) {
       if (response.text) {
-        // Si es una respuesta directa de texto
+        // Si es un texto
         responseItems.push({
           text: response.text,
           sendToWhatsApp: true,

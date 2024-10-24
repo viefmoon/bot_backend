@@ -18,10 +18,10 @@ import {
 } from "../utils/messageProcessUtils";
 import { getMenuAvailability } from "./menuUtils";
 import logger from "./logger";
-import { AgentTypeClaude, AgentTypeGemini } from "../types/agents";
 import { AGENTS_CLAUDE } from "../config/agents";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { AGENTS_GEMINI } from "../config/agents";
+import { AgentConfig, AgentMapping, AgentType } from "src/types/agents";
 dotenv.config();
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
@@ -460,40 +460,30 @@ function findPizzaIngredients(bestProduct, productMessage, errors) {
   return bestProduct;
 }
 
-// Manejar respuesta de texto simple
-const handleTextResponse = (text: string): AIResponse => ({
-  text,
-  isDirectResponse: true,
-  isRelevant: true,
-});
-
 // Manejar transferencia a otro agente
 const handleAgentTransfer = async (
   {
     targetAgent,
     orderSummary,
-  }: { targetAgent: AgentTypeGemini | AgentTypeClaude; orderSummary: string },
-  messages: any[]
+  }: { targetAgent: AgentType; orderSummary: string },
+  messages: any[],
+  agentConfig: AgentConfig
 ): Promise<AIResponse[]> => {
-  if (targetAgent in AGENTS_GEMINI) {
-    return await preProcessMessagesGemini(
-      messages,
-      targetAgent as AgentTypeGemini,
-      orderSummary
-    );
-  } else if (targetAgent in AGENTS_CLAUDE) {
-    return await preProcessMessagesClaude(
-      messages,
-      targetAgent as AgentTypeClaude,
-      orderSummary
-    );
-  } else {
-    throw new Error("Tipo de agente no soportado");
-  }
+  const targetAgentMapping =
+    targetAgent === AgentType.ORDER
+      ? agentConfig.orderAgent
+      : agentConfig.generalAgent;
+
+  return preProcessMessages(
+    messages,
+    targetAgentMapping,
+    agentConfig,
+    orderSummary
+  );
 };
 
 // Manejar preprocesamiento de orden
-const handleOrderPreprocess = async ({
+const handlePreProcessOrderTool = async ({
   args,
 }: {
   args: any;
@@ -515,12 +505,15 @@ const handleOrderPreprocess = async ({
 
   const { errorMessage, hasErrors } = getErrorsAndWarnings(preprocessedContent);
 
+  //Si tiene errores se retorna un texto con el error, no el contenido preprocesado
   if (hasErrors) {
-    return handleTextResponse(errorMessage);
+    return {
+      text: errorMessage,
+      isRelevant: true,
+    };
   }
 
   return {
-    isDirectResponse: false,
     isRelevant: true,
     preprocessedContent,
   };
@@ -529,7 +522,6 @@ const handleOrderPreprocess = async ({
 // Manejar envío de menú
 const handleMenuSend = async (): Promise<AIResponse> => ({
   text: await getFullMenu(),
-  isDirectResponse: true,
   isRelevant: false,
   confirmationMessage:
     "El menú ha sido enviado. ¿Hay algo más en lo que pueda ayudarte?",
@@ -538,13 +530,14 @@ const handleMenuSend = async (): Promise<AIResponse> => ({
 // Función principal
 export async function preProcessMessagesClaude(
   messages: any[],
-  currentAgent: AgentTypeClaude = AgentTypeClaude.GENERAL_CLAUDE,
+  currentAgent: AgentMapping,
+  agentConfig: AgentConfig,
   orderSummary?: string
 ): Promise<AIResponse[]> {
   try {
-    const agent = AGENTS_CLAUDE[currentAgent];
+    const agent = AGENTS_CLAUDE[currentAgent.type];
     const processedMessages =
-      currentAgent === AgentTypeClaude.ORDER_CLAUDE && orderSummary
+      currentAgent.type === AgentType.ORDER && orderSummary
         ? [{ role: "user", content: orderSummary }]
         : messages;
 
@@ -559,22 +552,25 @@ export async function preProcessMessagesClaude(
 
     for (const content of response.content) {
       if (content.type === "text") {
-        responses.push(handleTextResponse(content.text));
+        responses.push({
+          text: content.text,
+          isRelevant: true,
+        });
         continue;
       }
 
       if (content.type === "tool_use") {
         switch (content.name) {
           case "transfer_to_agent":
-            // const transferResponses = await handleAgentTransfer(
-            //   content.input as any,
-            //   messages
-            // );
-            // return [...responses, ...transferResponses]; // Combina las respuestas antes de retornar
-            return await handleAgentTransfer(content.input as any, messages);
+            // Nota: Aquí también necesitarás pasar agentConfig.
+            return await handleAgentTransfer(
+              content.input as any,
+              messages,
+              agentConfig
+            );
           case "preprocess_order":
             responses.push(
-              await handleOrderPreprocess({ args: content.input as any })
+              await handlePreProcessOrderTool({ args: content.input as any })
             );
             break;
           case "send_menu":
@@ -587,22 +583,28 @@ export async function preProcessMessagesClaude(
     return responses;
   } catch (error) {
     logger.error(
-      `Error en preprocessMessagesClaude con agente ${currentAgent}:`,
+      `Error en preprocessMessagesClaude con agente ${currentAgent.type}:`,
       error
     );
-    return [handleTextResponse("Error al procesar el mensaje")];
+    return [
+      {
+        text: "Error al procesar el mensaje",
+        isRelevant: true,
+      },
+    ];
   }
 }
 
 export async function preProcessMessagesGemini(
   messages: any[],
-  currentAgent: AgentTypeGemini = AgentTypeGemini.GENERAL_GEMINI,
+  currentAgent: AgentMapping,
+  agentConfig: AgentConfig,
   orderSummary?: string
 ): Promise<AIResponse[]> {
   try {
-    const agent = AGENTS_GEMINI[currentAgent];
+    const agent = AGENTS_GEMINI[currentAgent.type];
     const processedMessages =
-      currentAgent === AgentTypeGemini.ORDER_GEMINI && orderSummary
+      currentAgent.type === AgentType.ORDER && orderSummary
         ? [{ role: "user", parts: [{ text: orderSummary }] }]
         : messages.map((message) => ({
             role: message.role === "assistant" ? "model" : message.role,
@@ -621,17 +623,23 @@ export async function preProcessMessagesGemini(
 
     for (const part of response.response.candidates[0].content.parts) {
       if (part.text) {
-        responses.push(handleTextResponse(part.text));
+        responses.push({
+          text: part.text,
+          isRelevant: true,
+        });
       } else if (part.functionCall) {
         switch (part.functionCall.name) {
           case "transfer_to_agent":
+            // Nota: Aquí necesitarás pasar agentConfig, que no está disponible en este scope.
+            // Considera pasar agentConfig como un parámetro adicional a esta función.
             return await handleAgentTransfer(
               part.functionCall.args as any,
-              messages
+              messages,
+              agentConfig
             );
           case "preprocess_order":
             responses.push(
-              await handleOrderPreprocess({ args: part.functionCall.args })
+              await handlePreProcessOrderTool({ args: part.functionCall.args })
             );
             break;
           case "send_menu":
@@ -644,31 +652,43 @@ export async function preProcessMessagesGemini(
     return responses;
   } catch (error) {
     logger.error(
-      `Error en preProcessMessagesGemini con agente ${currentAgent}:`,
+      `Error en preProcessMessagesGemini con agente ${currentAgent.type}:`,
       error
     );
-    return [handleTextResponse("Error al procesar el mensaje")];
+    return [
+      {
+        text: "Error al procesar el mensaje",
+        isRelevant: true,
+      },
+    ];
   }
 }
 
 // Función para elegir qué API usar
 export async function preProcessMessages(
   messages: any[],
-  currentAgent: AgentTypeClaude | AgentTypeGemini,
-  orderSummary?: string,
-  apiChoice: "claude" | "gemini" = "gemini"
+  currentAgent: AgentMapping,
+  agentConfig: AgentConfig,
+  orderSummary?: string
 ): Promise<AIResponse[]> {
-  if (apiChoice === "gemini") {
+  const agentProvider = currentAgent.provider;
+  const agentType = currentAgent.type;
+
+  if (agentProvider === "GEMINI") {
     return preProcessMessagesGemini(
       messages,
-      currentAgent as AgentTypeGemini,
+      currentAgent,
+      agentConfig,
+      orderSummary
+    );
+  } else if (agentProvider === "CLAUDE") {
+    return preProcessMessagesClaude(
+      messages,
+      currentAgent,
+      agentConfig,
       orderSummary
     );
   } else {
-    return preProcessMessagesClaude(
-      messages,
-      currentAgent as AgentTypeClaude,
-      orderSummary
-    );
+    throw new Error("Proveedor de agente no soportado");
   }
 }
