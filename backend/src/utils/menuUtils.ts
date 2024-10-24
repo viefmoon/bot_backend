@@ -198,8 +198,9 @@ interface ProductoInfo {
         }),
       };
 
-      // Convertir el objeto a JSON sin formato (en una sola línea)
-      return JSON.stringify(menuForAI);
+      // Limpiar el JSON de caracteres de escape
+      const cleanJson = JSON.parse(JSON.stringify(menuForAI));
+      return JSON.stringify(cleanJson);
     
   } catch (error: any) {
     logger.error("Error al obtener el menú para IA:", error);
