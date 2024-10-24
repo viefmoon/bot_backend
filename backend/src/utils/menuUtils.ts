@@ -144,33 +144,31 @@ export async function getMenuSimple(): Promise<string> {
     const menuCompleto = await getMenuAvailability();
     
     if ('error' in menuCompleto) {
-      return `Error: ${menuCompleto.error}`;
+      return JSON.stringify({ error: menuCompleto.error }, null, 2);
     }
 
-    const menuSimple = menuCompleto.map(producto => {
-      let itemText = `\n${producto.name}`;
+    const menuSimple = menuCompleto.map(producto => ({
+      nombre: producto.name,
+      ...(producto.productVariants?.length > 0 && {
+        variantes: producto.productVariants.map(v => v.name)
+      }),
+      ...(producto.modifierTypes?.length > 0 && {
+        modificadores: producto.modifierTypes.map(tipo => ({
+          tipo: tipo.name,
+          opciones: tipo.modifiers.map(mod => mod.name)
+        }))
+      }),
+      ...(producto.pizzaIngredients?.length > 0 && {
+        ingredientes: producto.pizzaIngredients.map(ing => ing.name)
+      })
+    }));
 
-      if (producto.productVariants?.length > 0) {
-        itemText += `\n   Variantes: ${producto.productVariants.map(v => v.name).join(', ')}`;
-      }
-
-      if (producto.modifierTypes?.length > 0) {
-        producto.modifierTypes.forEach(tipo => {
-          itemText += `\n   ${tipo.name}: ${tipo.modifiers.map(mod => mod.name).join(', ')}`;
-        });
-      }
-
-      if (producto.pizzaIngredients?.length > 0) {
-        itemText += `\n   Ingredientes: ${producto.pizzaIngredients.map(ing => ing.name).join(', ')}`;
-      }
-
-      return itemText;
-    });
-
-    return `Menú La Leña:\n${menuSimple.join('\n')}`;
+    return JSON.stringify({ menu: menuSimple }, null, 2);
 
   } catch (error: any) {
-    logger.error("Error al obtener el menú simplificado:", error);
-    return `Error: No se pudo obtener el menú simplificado - ${error.message}`;
+    return JSON.stringify({
+      error: "No se pudo obtener el menú simplificado",
+      detalles: error.message
+    }, null, 2);
   }
 }
