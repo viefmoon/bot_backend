@@ -589,12 +589,15 @@ export async function preProcessMessagesGemini(
     const agent = AGENTS_GEMINI[currentAgent];
     const processedMessages =
       currentAgent === AgentType.ORDER_GEMINI && orderSummary
-        ? [{ role: "user", content: orderSummary }]
-        : messages;
+        ? [{ role: "user", parts: [{ text: orderSummary }] }]
+        : messages.map((message) => ({
+            role: message.role === "assistant" ? "model" : message.role,
+            parts: [{ text: message.content }],
+          }));
 
     const model = googleAI.getGenerativeModel(await prepareModelGemini(agent));
 
-    const response = await model.generateContent(processedMessages);
+    const response = await model.generateContent(processedMessages as any);
     //logTokenUsageGemini(response.usage);
 
     console.log("response gemini", JSON.stringify(response, null, 2));
