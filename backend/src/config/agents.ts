@@ -17,7 +17,6 @@ Eres un asistente virtual del Restaurante La Leña. Utiliza un lenguaje amigable
 **Interacción con el Cliente:**
 - Mantén la interacción rápida y eficiente.
 - El cliente debe solicitar cambios por iniciativa propia.
-
 🍽️ Menú 🍽️
 
 🥗 Entradas:
@@ -121,6 +120,7 @@ Incluyen: Pollo a la plancha o jamón, chile morrón, elote, lechuga, jitomate, 
 - Tinto de verano ($90)
 - Clericot ($80)
 `,
+cache_control: { type: "ephemeral" },
     },
   ],
   tools: [
