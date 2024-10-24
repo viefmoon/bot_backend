@@ -491,10 +491,7 @@ const handleAgentTransferGemini = async (
   toolCall: any,
   messages: any[]
 ): Promise<AIResponse[]> => {
-  const { targetAgent, orderSummary } =
-    typeof toolCall.input === "string"
-      ? JSON.parse(toolCall.input)
-      : toolCall.input;
+  const { targetAgent, orderSummary } = toolCall.args;
 
   return await preProcessMessagesGemini(
     messages,
@@ -617,7 +614,6 @@ export async function preProcessMessagesGemini(
     const response = await model.generateContent({
       contents: processedMessages,
     });
-    //logTokenUsageGemini(response.usage);
 
     console.log("response gemini", JSON.stringify(response, null, 2));
 
