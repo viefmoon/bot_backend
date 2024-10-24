@@ -1,7 +1,7 @@
 import { Modifier, PizzaIngredient, ProductVariant } from "src/models";
 import logger from "./logger";
 import * as stringSimilarity from "string-similarity";
-import { AgentClaude, AgentGemini } from "src/types/agents";
+import { AgentClaude, AgentGemini, AgentOpenAI } from "src/types/agents";
 import { FunctionCallingMode } from "@google/generative-ai";
 
 export function mapSynonym(normalizedWord: string): string | null {
@@ -241,6 +241,23 @@ export const prepareRequestPayloadClaude = async (
   temperature: agent.temperature,
   messages,
 });
+
+export const prepareRequestPayloadOpenAI = async (
+  agent: AgentOpenAI,
+  messages: any[]
+) => {
+  const systemMessage =
+    typeof agent.systemMessage === "function"
+      ? await agent.systemMessage()
+      : agent.systemMessage;
+
+  return {
+    model: agent.model,
+    tools: agent.tools,
+    temperature: agent.temperature,
+    messages: [{ role: "system", content: systemMessage }, ...messages],
+  };
+};
 
 export const prepareModelGemini = async (agent: AgentGemini) => ({
   model: agent.model,

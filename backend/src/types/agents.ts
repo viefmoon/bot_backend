@@ -21,13 +21,19 @@ export interface AgentGemini {
   functionCallingMode: FunctionCallingMode;
 }
 
+export interface AgentOpenAI {
+  model: string;
+  systemMessage: string | (() => Promise<{ role: string; content: string }>);
+  tools: any[];
+  temperature?: number;
+}
+
 export interface AgentConfig {
   generalAgent: AgentMapping;
   orderAgent: AgentMapping;
 }
 
-export type AgentProvider = "CLAUDE" | "GEMINI";
-
+export type AgentProvider = "CLAUDE" | "GEMINI" | "OPENAI";
 export interface AgentMapping {
   type: AgentType;
   provider: AgentProvider;
