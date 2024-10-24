@@ -25,7 +25,7 @@ export class PreOrderService {
     const config = await RestaurantConfig.findOne();
 
     // Validar tiempo de entrega programado
-    if (scheduledDeliveryTime) {
+    if (scheduledDeliveryTime && scheduledDeliveryTime !== "null") {
       const now = new Date();
 
       if (typeof scheduledDeliveryTime === "string") {
@@ -158,7 +158,6 @@ export class PreOrderService {
         );
       }
     } else {
-      // Si scheduledDeliveryTime es null, puedes manejarlo aquí
       fullScheduledDeliveryTime = null;
     }
 
