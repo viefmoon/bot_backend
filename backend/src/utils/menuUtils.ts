@@ -139,50 +139,38 @@ interface SimpleMenuItem {
   ingredientes?: string[];
 }
 
-export async function getMenuSimple(): Promise<SimpleMenuItem[] | { error: string; detalles?: string }> {
+export async function getMenuSimple(): Promise<string> {
   try {
     const menuCompleto = await getMenuAvailability();
     
     if ('error' in menuCompleto) {
-      return menuCompleto;
+      return `Error: ${menuCompleto.error}`;
     }
 
-    const menuSimple: SimpleMenuItem[] = menuCompleto.map(producto => {
-      const itemMenu: SimpleMenuItem = {
-        nombre: producto.name
-      };
+    const menuSimple = menuCompleto.map(producto => {
+      let itemText = `\n${producto.name}`;
 
-      // Agregar variantes si existen
-      if (producto.productVariants && producto.productVariants.length > 0) {
-        itemMenu.variantes = producto.productVariants.map(v => v.name);
+      if (producto.productVariants?.length > 0) {
+        itemText += `\n   Variantes: ${producto.productVariants.map(v => v.name).join(', ')}`;
       }
 
-      // Agregar modificadores disponibles
-      if (producto.modifierTypes && producto.modifierTypes.length > 0) {
-        itemMenu.modificadores = producto.modifierTypes.map(tipoMod => ({
-          tipo: tipoMod.name,
-          opciones: tipoMod.modifiers.map(mod => mod.name)
-        }));
+      if (producto.modifierTypes?.length > 0) {
+        producto.modifierTypes.forEach(tipo => {
+          itemText += `\n   ${tipo.name}: ${tipo.modifiers.map(mod => mod.name).join(', ')}`;
+        });
       }
 
-      // Agregar ingredientes de pizza si existen
-      if (producto.pizzaIngredients && producto.pizzaIngredients.length > 0) {
-        itemMenu.ingredientes = producto.pizzaIngredients.map(ing => ing.name);
+      if (producto.pizzaIngredients?.length > 0) {
+        itemText += `\n   Ingredientes: ${producto.pizzaIngredients.map(ing => ing.name).join(', ')}`;
       }
 
-      return itemMenu;
+      return itemText;
     });
 
-    // Filtrar elementos vacíos y ordenar por nombre
-    return menuSimple
-      .filter(item => item.nombre)
-      .sort((a, b) => a.nombre.localeCompare(b.nombre));
+    return `Menú La Leña:\n${menuSimple.join('\n')}`;
 
   } catch (error: any) {
     logger.error("Error al obtener el menú simplificado:", error);
-    return {
-      error: "No se pudo obtener el menú simplificado",
-      detalles: error.message
-    };
+    return `Error: No se pudo obtener el menú simplificado - ${error.message}`;
   }
 }
