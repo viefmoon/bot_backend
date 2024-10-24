@@ -171,7 +171,6 @@ interface ProductoInfo {
       }
 
       const menuForAI = {
-        descripcion: "Menú completo del restaurante con productos disponibles",
         productos: products.map((producto) => {
           const productoInfo: any = {
             nombre: producto.name,
@@ -183,15 +182,13 @@ interface ProductoInfo {
 
           if (producto.modifierTypes?.length > 0) {
             productoInfo.personalizacion = producto.modifierTypes.map((mt) => ({
-              tipo: mt.name,
-              obligatorio: mt.required,
-              permiteMultiples: mt.acceptsMultiple,
+              modificador: mt.name,
               opciones: mt.modifiers?.map((m) => m.name) || [],
             }));
           }
 
           if (producto.pizzaIngredients?.length > 0) {
-            productoInfo.ingredientesDisponibles = producto.pizzaIngredients.map((i) => i.name);
+            productoInfo.ingredientesPizza = producto.pizzaIngredients.map((i) => i.name);
           }
 
           return productoInfo;
