@@ -16,11 +16,14 @@ import {
   AIResponse,
   prepareRequestPayloadClaude,
   detectUnknownWords,
+  prepareModelGemini,
 } from "../utils/messageProcessUtils";
 import { getMenuAvailability } from "./menuUtils";
 import logger from "./logger";
 import { AgentType } from "../types/agents";
 import { AGENTS_CLAUDE } from "../config/agents";
+import { GoogleGenerativeAI } from "@google/generative-ai";
+import { AGENTS_GEMINI } from "../config/agents";
 dotenv.config();
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
@@ -29,6 +32,9 @@ const openai = new OpenAI({
 const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY,
 });
+
+// Inicializa el cliente de Gemini
+const googleAI = new GoogleGenerativeAI(process.env.GOOGLE_AI_API_KEY);
 
 function extractMentionedProduct(productMessage, menu) {
   logger.info("productMessage", productMessage);
@@ -571,5 +577,67 @@ export async function preProcessMessagesClaude(
       error
     );
     return [handleTextResponse("Error al procesar el mensaje")];
+  }
+}
+
+export async function preProcessMessagesGemini(
+  messages: any[],
+  currentAgent: AgentType = AgentType.GENERAL_GEMINI,
+  orderSummary?: string
+): Promise<AIResponse[]> {
+  try {
+    const agent = AGENTS_GEMINI[currentAgent];
+    const processedMessages =
+      currentAgent === AgentType.ORDER_GEMINI && orderSummary
+        ? [{ role: "user", content: orderSummary }]
+        : messages;
+
+    const model = googleAI.getGenerativeModel(await prepareModelGemini(agent));
+
+    const response = await model.generateContent(processedMessages);
+    //logTokenUsageGemini(response.usage);
+
+    console.log("response gemini", JSON.stringify(response, null, 2));
+
+    const responses: AIResponse[] = [];
+
+    for (const part of response.response.candidates[0].content.parts) {
+      if (part.text) {
+        responses.push(handleTextResponse(part.text));
+      } else if (part.functionCall) {
+        switch (part.functionCall.name) {
+          case "transfer_to_agent":
+            return await handleAgentTransfer(part.functionCall, messages);
+          case "preprocess_order":
+            responses.push(await handleOrderPreprocess(part.functionCall));
+            break;
+          case "send_menu":
+            responses.push(await handleMenuSend());
+            break;
+        }
+      }
+    }
+
+    return responses;
+  } catch (error) {
+    logger.error(
+      `Error en preProcessMessagesGemini con agente ${currentAgent}:`,
+      error
+    );
+    return [handleTextResponse("Error al procesar el mensaje")];
+  }
+}
+
+// Función para elegir qué API usar
+export async function preProcessMessages(
+  messages: any[],
+  currentAgent: AgentType,
+  orderSummary?: string,
+  apiChoice: "claude" | "gemini" = "gemini"
+): Promise<AIResponse[]> {
+  if (apiChoice === "gemini") {
+    return preProcessMessagesGemini(messages, currentAgent, orderSummary);
+  } else {
+    return preProcessMessagesClaude(messages, currentAgent, orderSummary);
   }
 }
