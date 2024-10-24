@@ -471,16 +471,13 @@ const handleTextResponse = (text: string): AIResponse => ({
 
 // Manejar transferencia a otro agente
 const handleAgentTransfer = async (
-  toolCall: any,
+  {
+    targetAgent,
+    orderSummary,
+  }: { targetAgent: AgentTypeGemini; orderSummary: string },
   messages: any[]
 ): Promise<AIResponse[]> => {
-  const { targetAgent, orderSummary } = toolCall.args;
-
-  return await preProcessMessagesGemini(
-    messages,
-    targetAgent as AgentTypeGemini,
-    orderSummary
-  );
+  return await preProcessMessagesGemini(messages, targetAgent, orderSummary);
 };
 
 // Manejar preprocesamiento de orden
@@ -555,7 +552,7 @@ export async function preProcessMessagesClaude(
       if (content.type === "tool_use") {
         switch (content.name) {
           case "transfer_to_agent":
-            return await handleAgentTransfer(content, messages);
+            return await handleAgentTransfer(content.input as any, messages);
           case "preprocess_order":
             responses.push(await handleOrderPreprocess(content));
             break;
@@ -607,7 +604,10 @@ export async function preProcessMessagesGemini(
       } else if (part.functionCall) {
         switch (part.functionCall.name) {
           case "transfer_to_agent":
-            return await handleAgentTransfer(part.functionCall, messages);
+            return await handleAgentTransfer(
+              part.functionCall.args as any,
+              messages
+            );
           case "preprocess_order":
             responses.push(await handleOrderPreprocess(part.functionCall.args));
             break;
