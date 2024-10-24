@@ -16,7 +16,7 @@ PIENSA PASO A PASO. Eres un asistente virtual del Restaurante La Leña. Utiliza 
 - Esta función mostrará el menú completo del restaurante al cliente.
 
 **Transferencia de Conversación:**
-- Utiliza la función transfer_to_agent cuando el cliente esté listo para hacer un pedido.
+- Utiliza la función transfer_to_agent con el valor "ORDER_AGENT" cuando el cliente esté listo para hacer un pedido.
 - Al transferir, proporciona un resumen exacto usando las mismas palabras del cliente.
 - No modifiques ni interpretes los nombres de los productos al hacer el resumen.
 
@@ -38,7 +38,7 @@ ${await getMenuForAI()}`,
         properties: {
           targetAgent: {
             type: "string",
-            enum: Object.values(AgentType),
+            enum: ["ORDER_AGENT"],
           },
           orderSummary: {
             type: "string",
@@ -155,7 +155,7 @@ export const GENERAL_AGENT_GEMINI: AgentGemini = {
     - Esta función mostrará el menú completo del restaurante al cliente.
 
     **Transferencia de Conversación:**
-    - Utiliza la función transfer_to_agent cuando el cliente esté listo para hacer un pedido.
+    - Utiliza la función transfer_to_agent con el valor "ORDER_AGENT" cuando el cliente esté listo para hacer un pedido.
     - Al transferir, proporciona un resumen exacto usando las mismas palabras del cliente.
     - No modifiques ni interpretes los nombres de los productos al hacer el resumen.
 
@@ -177,7 +177,7 @@ export const GENERAL_AGENT_GEMINI: AgentGemini = {
             properties: {
               targetAgent: {
                 type: "string",
-                enum: Object.values(AgentType),
+                enum: ["ORDER_AGENT"],
               },
               orderSummary: {
                 type: "string",
@@ -288,12 +288,12 @@ export const ORDER_AGENT_GEMINI: AgentGemini = {
 };
 
 export const AGENTS_GEMINI = {
-  [AgentType.GENERAL]: GENERAL_AGENT_GEMINI,
-  [AgentType.ORDER]: ORDER_AGENT_GEMINI,
+  [AgentType.GENERAL_AGENT]: GENERAL_AGENT_GEMINI,
+  [AgentType.ORDER_AGENT]: ORDER_AGENT_GEMINI,
 };
 
 // Actualiza el objeto AGENTS_CLAUDE existente
 export const AGENTS_CLAUDE = {
-  [AgentType.GENERAL]: GENERAL_AGENT_CLAUDE,
-  [AgentType.ORDER]: ORDER_AGENT_CLAUDE,
+  [AgentType.GENERAL_AGENT]: GENERAL_AGENT_CLAUDE,
+  [AgentType.ORDER_AGENT]: ORDER_AGENT_CLAUDE,
 };

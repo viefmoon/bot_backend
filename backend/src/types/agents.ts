@@ -1,8 +1,8 @@
 import { FunctionCallingMode } from "@google/generative-ai";
 
 export enum AgentType {
-  GENERAL = "GENERAL",
-  ORDER = "ORDER",
+  GENERAL_AGENT = "GENERAL_AGENT",
+  ORDER_AGENT = "ORDER_AGENT",
 }
 
 export interface AgentClaude {

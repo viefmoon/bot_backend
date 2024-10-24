@@ -470,7 +470,7 @@ const handleAgentTransfer = async (
   agentConfig: AgentConfig
 ): Promise<AIResponse[]> => {
   const targetAgentMapping =
-    targetAgent === AgentType.ORDER
+    targetAgent === AgentType.ORDER_AGENT
       ? agentConfig.orderAgent
       : agentConfig.generalAgent;
 
@@ -537,7 +537,7 @@ export async function preProcessMessagesClaude(
   try {
     const agent = AGENTS_CLAUDE[currentAgent.type];
     const processedMessages =
-      currentAgent.type === AgentType.ORDER && orderSummary
+      currentAgent.type === AgentType.ORDER_AGENT && orderSummary
         ? [{ role: "user", content: orderSummary }]
         : messages;
 
@@ -604,7 +604,7 @@ export async function preProcessMessagesGemini(
   try {
     const agent = AGENTS_GEMINI[currentAgent.type];
     const processedMessages =
-      currentAgent.type === AgentType.ORDER && orderSummary
+      currentAgent.type === AgentType.ORDER_AGENT && orderSummary
         ? [{ role: "user", parts: [{ text: orderSummary }] }]
         : messages.map((message) => ({
             role: message.role === "assistant" ? "model" : message.role,
