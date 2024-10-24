@@ -171,31 +171,36 @@ interface ProductoInfo {
       }
 
       const menuForAI = {
-        descripcion: "Menú completo del restaurante con productos disponibles",
-        productos: products.map((producto) => {
-          const productoInfo: any = {
-            nombre: producto.name,
-          };
+        menu: {
+          type: "text",
+          text: JSON.stringify({
+            descripcion: "Menú completo del restaurante con productos disponibles",
+            productos: products.map((producto) => {
+              const productoInfo: any = {
+                nombre: producto.name,
+              };
 
-          if (producto.productVariants?.length > 0) {
-            productoInfo.variantes = producto.productVariants.map((v) => v.name);
-          }
+              if (producto.productVariants?.length > 0) {
+                productoInfo.variantes = producto.productVariants.map((v) => v.name);
+              }
 
-          if (producto.modifierTypes?.length > 0) {
-            productoInfo.personalizacion = producto.modifierTypes.map((mt) => ({
-              tipo: mt.name,
-              obligatorio: mt.required,
-              permiteMultiples: mt.acceptsMultiple,
-              opciones: mt.modifiers?.map((m) => m.name) || [],
-            }));
-          }
+              if (producto.modifierTypes?.length > 0) {
+                productoInfo.personalizacion = producto.modifierTypes.map((mt) => ({
+                  tipo: mt.name,
+                  obligatorio: mt.required,
+                  permiteMultiples: mt.acceptsMultiple,
+                  opciones: mt.modifiers?.map((m) => m.name) || [],
+                }));
+              }
 
-          if (producto.pizzaIngredients?.length > 0) {
-            productoInfo.ingredientesDisponibles = producto.pizzaIngredients.map((i) => i.name);
-          }
+              if (producto.pizzaIngredients?.length > 0) {
+                productoInfo.ingredientesDisponibles = producto.pizzaIngredients.map((i) => i.name);
+              }
 
-          return productoInfo;
-        }),
+              return productoInfo;
+            }),
+          })
+        }
       };
 
       return menuForAI;
