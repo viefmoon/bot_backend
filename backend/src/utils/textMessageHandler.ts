@@ -200,7 +200,7 @@ async function processAndGenerateAIResponse(
   req: ProcessRequest
 ): Promise<ResponseItem[]> {
   const { relevantMessages, conversationId } = req;
-
+  console.log("relevantMessages", relevantMessages);
   try {
     const aiResponses = await preprocessMessagesClaude(relevantMessages);
     const responseItems: ResponseItem[] = [];

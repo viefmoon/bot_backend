@@ -11,7 +11,7 @@ import {
   normalizeText,
   normalizeTextForIngredients,
 } from "../utils/messageProcessUtils";
-import { getMenuAvailability} from "./menuUtils";
+import { getMenuAvailability } from "./menuUtils";
 import logger from "./logger";
 import { Modifier, PizzaIngredient, ProductVariant } from "src/models";
 import { AgentType, Agent } from "../types/agents";
@@ -653,9 +653,12 @@ export async function preprocessMessagesGPT(messages: any[]): Promise<
   throw new Error("No se pudo procesar la respuesta");
 }
 
-const prepareRequestPayload = async (agent: Agent, processedMessages: any[]) => {
-  const systemMessage = await (typeof agent.systemMessage === 'function' 
-    ? agent.systemMessage() 
+const prepareRequestPayload = async (
+  agent: Agent,
+  processedMessages: any[]
+) => {
+  const systemMessage = await (typeof agent.systemMessage === "function"
+    ? agent.systemMessage()
     : agent.systemMessage);
 
   return {
@@ -683,7 +686,6 @@ export async function preprocessMessagesClaude(
             {
               role: "user",
               content: orderSummary,
-              //cache_control: { type: "ephemeral" },
             },
           ]
         : messages.map((msg, index) => ({
@@ -693,33 +695,29 @@ export async function preprocessMessagesClaude(
                   type,
                   text,
                   // Solo aplicar cache_control al último mensaje
-                  ...(index === messages.length - 1 &&
-                    {
-                      //cache_control: { type: "ephemeral" },
-                    }),
+                  ...(index === messages.length - 1 && {}),
                 }))
               : [
                   {
                     type: "text",
                     text: msg.content,
                     // Solo aplicar cache_control al último mensaje
-                    ...(index === messages.length - 1 &&
-                      {
-                        //cache_control: { type: "ephemeral" },
-                      }),
+                    ...(index === messages.length - 1 && {}),
                   },
                 ],
           }));
 
-    const requestPayload = await prepareRequestPayload(agent, processedMessages);
+    const requestPayload = await prepareRequestPayload(
+      agent,
+      processedMessages
+    );
 
-    console.log("requestPayload", (requestPayload));
+    console.log("requestPayload", requestPayload);
 
     const response = await anthropic.beta.promptCaching.messages.create(
       requestPayload as any
     );
     const responses: AIResponse[] = [];
-
 
     // Registrar el uso de tokens
     logger.info("Token usage:", {
