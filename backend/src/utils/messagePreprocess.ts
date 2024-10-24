@@ -705,12 +705,13 @@ export async function preprocessMessagesClaude(
       tool_choice: { type: "auto" } as any,
     };
 
-    logger.info("requestPayload", requestPayload);
-
     const response = await anthropic.beta.promptCaching.messages.create(
       requestPayload as any
     );
     const responses: AIResponse[] = [];
+
+    const fullMenu = await getMenuAvailability();
+    console.log("fullMenu", fullMenu);
 
     // Registrar el uso de tokens
     logger.info("Token usage:", {
@@ -720,8 +721,6 @@ export async function preprocessMessagesClaude(
       cache_creation_input_tokens: response.usage.cache_creation_input_tokens,
       cache_read_input_tokens: response.usage.cache_read_input_tokens,
     });
-
-    logger.info("response.content", response.content);
 
     // Procesar cada contenido de la respuesta
     for (const content of response.content) {
