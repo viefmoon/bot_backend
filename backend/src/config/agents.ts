@@ -1,5 +1,5 @@
 import { Agent, AgentType } from "../types/agents";
-import { getMenuSimple } from "../utils/menuUtils";
+import { getMenuForAI } from "../utils/menuUtils";
 
 export const GENERAL_AGENT: Agent = {
   type: AgentType.GENERAL,
@@ -19,7 +19,7 @@ Eres un asistente virtual del Restaurante La Leña. Utiliza un lenguaje amigable
 - Mantén la interacción rápida y eficiente.
 - El cliente debe solicitar cambios por iniciativa propia.
 
-${await getMenuSimple()}`,
+${await getMenuForAI()}`,
       cache_control: { type: "ephemeral" },
     },
   ],

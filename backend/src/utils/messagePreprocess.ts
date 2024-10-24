@@ -11,7 +11,7 @@ import {
   normalizeText,
   normalizeTextForIngredients,
 } from "../utils/messageProcessUtils";
-import { getMenuAvailability, getMenuSimple } from "./menuUtils";
+import { getMenuAvailability} from "./menuUtils";
 import logger from "./logger";
 import { Modifier, PizzaIngredient, ProductVariant } from "src/models";
 import { AgentType, Agent } from "../types/agents";
