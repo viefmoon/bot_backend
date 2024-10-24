@@ -255,7 +255,16 @@ export const prepareRequestPayloadOpenAI = async (
     model: agent.model,
     tools: agent.tools,
     temperature: agent.temperature,
-    messages: [{ role: "system", content: systemMessage }, ...messages],
+    messages: [
+      {
+        role: "system",
+        content:
+          typeof systemMessage === "string"
+            ? systemMessage
+            : systemMessage.content,
+      },
+      ...messages,
+    ],
   };
 };
 
