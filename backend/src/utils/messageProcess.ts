@@ -597,7 +597,9 @@ export async function preProcessMessagesGemini(
 
     const model = googleAI.getGenerativeModel(await prepareModelGemini(agent));
 
-    const response = await model.generateContent(processedMessages as any);
+    const response = await model.generateContent({
+      contents: processedMessages,
+    });
     //logTokenUsageGemini(response.usage);
 
     console.log("response gemini", JSON.stringify(response, null, 2));
