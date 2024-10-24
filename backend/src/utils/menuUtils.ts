@@ -198,13 +198,14 @@ interface ProductoInfo {
         }),
       };
 
-      // Convertir el objeto a JSON formateado
-      return JSON.stringify(menuForAI, null, 2);
-    } catch (error: any) {
-      logger.error("Error al obtener el menú para IA:", error);
-      return {
-        error: "No se pudo obtener el menú",
-        detalles: error.message,
-      };
-    }
+      // Convertir el objeto a JSON sin formato (en una sola línea)
+      return JSON.stringify(menuForAI);
+    
+  } catch (error: any) {
+    logger.error("Error al obtener el menú para IA:", error);
+    return {
+      error: "No se pudo obtener el menú",
+      detalles: error.message,
+    };
   }
+}
