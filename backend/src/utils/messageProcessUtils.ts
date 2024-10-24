@@ -1,6 +1,6 @@
 import { Modifier, PizzaIngredient, ProductVariant } from "src/models";
 import logger from "./logger";
-import stringSimilarity from "string-similarity";
+import * as stringSimilarity from "string-similarity";
 import { AgentClaude } from "src/types/agents";
 
 export function mapSynonym(normalizedWord: string): string | null {
