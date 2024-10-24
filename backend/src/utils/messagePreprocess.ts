@@ -653,6 +653,21 @@ export async function preprocessMessagesGPT(messages: any[]): Promise<
   throw new Error("No se pudo procesar la respuesta");
 }
 
+const prepareRequestPayload = async (agent: Agent, processedMessages: any[]) => {
+  const systemMessage = await (typeof agent.systemMessage === 'function' 
+    ? agent.systemMessage() 
+    : agent.systemMessage);
+
+  return {
+    model: agent.model,
+    system: systemMessage,
+    tools: agent.tools,
+    max_tokens: agent.maxTokens,
+    messages: processedMessages,
+    tool_choice: { type: "auto" } as any,
+  };
+};
+
 export async function preprocessMessagesClaude(
   messages: any[],
   currentAgent: AgentType = AgentType.GENERAL,
@@ -696,14 +711,7 @@ export async function preprocessMessagesClaude(
                 ],
           }));
 
-    const requestPayload = {
-      model: agent.model,
-      system: agent.systemMessage,
-      tools: agent.tools,
-      max_tokens: agent.maxTokens,
-      messages: processedMessages,
-      tool_choice: { type: "auto" } as any,
-    };
+    const requestPayload = await prepareRequestPayload(agent, processedMessages);
 
     console.log("requestPayload", requestPayload);
 
