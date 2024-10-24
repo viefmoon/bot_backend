@@ -1,3 +1,5 @@
+import { FunctionCallingMode } from "@google/generative-ai";
+
 export enum AgentTypeClaude {
   GENERAL_CLAUDE = "GENERAL_CLAUDE",
   ORDER_CLAUDE = "ORDER_CLAUDE",
@@ -22,4 +24,6 @@ export interface AgentGemini {
   model: string;
   systemMessage: string | (() => Promise<string>);
   tools: any[];
+  allowedFunctionNames: string[];
+  functionCallingMode: FunctionCallingMode;
 }

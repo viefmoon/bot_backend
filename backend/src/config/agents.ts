@@ -1,3 +1,4 @@
+import { FunctionCallingMode } from "@google/generative-ai";
 import {
   AgentClaude,
   AgentGemini,
@@ -214,6 +215,8 @@ export const GENERAL_AGENT_GEMINI: AgentGemini = {
       ],
     },
   ],
+  allowedFunctionNames: ["transfer_to_agent", "send_menu"],
+  functionCallingMode: FunctionCallingMode.AUTO,
 };
 
 export const ORDER_AGENT_GEMINI: AgentGemini = {
@@ -289,6 +292,8 @@ export const ORDER_AGENT_GEMINI: AgentGemini = {
       ],
     },
   ],
+  allowedFunctionNames: ["preprocess_order"],
+  functionCallingMode: FunctionCallingMode.ANY,
 };
 
 export const AGENTS_GEMINI = {
