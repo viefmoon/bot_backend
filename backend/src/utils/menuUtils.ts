@@ -129,7 +129,17 @@ interface ProductoInfo {
       }
     }
     
-export async function getMenuSimple(): Promise<string[] | { error: string; detalles?: string }> {
+interface SimpleMenuItem {
+  nombre: string;
+  variantes?: string[];
+  modificadores?: {
+    tipo: string;
+    opciones: string[];
+  }[];
+  ingredientes?: string[];
+}
+
+export async function getMenuSimple(): Promise<SimpleMenuItem[] | { error: string; detalles?: string }> {
   try {
     const menuCompleto = await getMenuAvailability();
     
@@ -137,39 +147,37 @@ export async function getMenuSimple(): Promise<string[] | { error: string; detal
       return menuCompleto;
     }
 
-    const menuSimple: string[] = [];
-
-    menuCompleto.forEach(producto => {
-      // Agregar el nombre del producto base
-      menuSimple.push(producto.name);
+    const menuSimple: SimpleMenuItem[] = menuCompleto.map(producto => {
+      const itemMenu: SimpleMenuItem = {
+        nombre: producto.name
+      };
 
       // Agregar variantes si existen
-      if (producto.productVariants) {
-        producto.productVariants.forEach(variante => {
-          menuSimple.push(`${producto.name} ${variante.name}`);
-        });
+      if (producto.productVariants && producto.productVariants.length > 0) {
+        itemMenu.variantes = producto.productVariants.map(v => v.name);
       }
 
       // Agregar modificadores disponibles
-      if (producto.modifierTypes) {
-        producto.modifierTypes.forEach(tipoMod => {
-          if (tipoMod.modifiers) {
-            tipoMod.modifiers.forEach(mod => {
-              menuSimple.push(`${tipoMod.name}: ${mod.name}`);
-            });
-          }
-        });
+      if (producto.modifierTypes && producto.modifierTypes.length > 0) {
+        itemMenu.modificadores = producto.modifierTypes.map(tipoMod => ({
+          tipo: tipoMod.name,
+          opciones: tipoMod.modifiers.map(mod => mod.name)
+        }));
       }
 
       // Agregar ingredientes de pizza si existen
-      if (producto.pizzaIngredients) {
-        producto.pizzaIngredients.forEach(ingrediente => {
-          menuSimple.push(`Ingrediente de Pizza: ${ingrediente.name}`);
-        });
+      if (producto.pizzaIngredients && producto.pizzaIngredients.length > 0) {
+        itemMenu.ingredientes = producto.pizzaIngredients.map(ing => ing.name);
       }
+
+      return itemMenu;
     });
 
-    return [...new Set(menuSimple)]; // Eliminar duplicados
+    // Filtrar elementos vacíos y ordenar por nombre
+    return menuSimple
+      .filter(item => item.nombre)
+      .sort((a, b) => a.nombre.localeCompare(b.nombre));
+
   } catch (error: any) {
     logger.error("Error al obtener el menú simplificado:", error);
     return {
