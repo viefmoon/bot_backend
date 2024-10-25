@@ -8,8 +8,16 @@ import { sendWhatsAppMessage } from "./whatsAppUtils";
 import { handleTextMessage } from "./textMessageHandler";
 import { Readable } from "stream";
 import logger from "./logger";
+import { GoogleAIFileManager } from "@google/generative-ai/server";
+import { GoogleGenerativeAI } from "@google/generative-ai";
 
 const unlinkAsync = promisify(unlink);
+
+// Añadir esta enumeración al inicio del archivo
+export enum TranscriptionModel {
+  WHISPER = 'whisper',
+  GEMINI = 'gemini'
+}
 
 async function getAudioUrl(audioId: string): Promise<string | null> {
   try {
@@ -28,7 +36,10 @@ async function getAudioUrl(audioId: string): Promise<string | null> {
   }
 }
 
-async function transcribeAudio(audioUrl: string): Promise<string> {
+async function transcribeAudio(
+  audioUrl: string, 
+  model: TranscriptionModel = TranscriptionModel.WHISPER
+): Promise<string> {
   const audioPath = `/tmp/audio.ogg`;
   try {
     const { data } = await axios.get(audioUrl, {
@@ -49,22 +60,47 @@ async function transcribeAudio(audioUrl: string): Promise<string> {
       }
     });
 
-    const formData = new FormData();
-    formData.append("file", createReadStream(audioPath));
-    formData.append("model", "whisper-1");
+    if (model === TranscriptionModel.WHISPER) {
+      const formData = new FormData();
+      formData.append("file", createReadStream(audioPath));
+      formData.append("model", "whisper-1");
 
-    const { data: whisperData } = await axios.post<{ text: string }>(
-      "https://api.openai.com/v1/audio/transcriptions",
-      formData,
-      {
-        headers: {
-          ...formData.getHeaders(),
-          Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
+      const { data: whisperData } = await axios.post<{ text: string }>(
+        "https://api.openai.com/v1/audio/transcriptions",
+        formData,
+        {
+          headers: {
+            ...formData.getHeaders(),
+            Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
+          },
+        }
+      );
+      return whisperData.text;
+    } else {
+      // Implementación de Gemini
+      const fileManager = new GoogleAIFileManager(process.env.GOOGLE_AI_API_KEY);
+      const audioFile = await fileManager.uploadFile(audioPath, {
+        mimeType: "audio/ogg",
+      });
+
+      const genAI = new GoogleGenerativeAI(process.env.GOOGLE_AI_API_KEY);
+      const genModel = genAI.getGenerativeModel({
+        model: "gemini-1.5-flash",
+      });
+
+      const result = await genModel.generateContent([
+        {
+          fileData: {
+            mimeType: audioFile.file.mimeType,
+            fileUri: audioFile.file.uri
+          }
         },
-      }
-    );
+        { text: "Generate a transcript of the speech." },
+      ]);
+      console.log("result", JSON.stringify(result, null, 2));
 
-    return whisperData.text;
+      return result.response.text();
+    }
   } catch (error) {
     logger.error("Error al transcribir el audio:", error);
     return "Lo siento, no pude transcribir el mensaje de audio.";
@@ -75,13 +111,14 @@ async function transcribeAudio(audioUrl: string): Promise<string> {
 
 export async function handleAudioMessage(
   from: string,
-  message: any
+  message: any,
+  model: TranscriptionModel = TranscriptionModel.WHISPER
 ): Promise<void> {
   try {
     const audioUrl = await getAudioUrl(message.audio.id);
     if (!audioUrl) throw new Error("No se pudo obtener la URL del audio.");
 
-    const transcribedText = await transcribeAudio(audioUrl);
+    const transcribedText = await transcribeAudio(audioUrl, model);
     await handleTextMessage(from, transcribedText);
   } catch (error) {
     logger.error("Error al procesar el mensaje de audio:", error);

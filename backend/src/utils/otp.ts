@@ -1,7 +1,4 @@
-interface OTPRecord {
-  otp: string;
-  expiresAt: number;
-}
+import { OTPRecord } from '../types/otp.types';
 
 const otpStore: Map<string, OTPRecord> = new Map();
 

@@ -22,7 +22,7 @@ import {
 } from "../config/predefinedMessages";
 import { handleTextMessage } from "../utils/textMessageHandler";
 import { handleInteractiveMessage } from "../utils/interactiveMessageHandler";
-import { handleAudioMessage } from "../utils/audioMessageHandler";
+import { handleAudioMessage, TranscriptionModel } from "../utils/audioMessageHandler";
 import { Queue } from "queue-typescript";
 import * as moment from "moment-timezone";
 import { RESTAURANT_CLOSED_MESSAGE } from "../config/predefinedMessages";
@@ -284,7 +284,7 @@ export class WebhookService {
           await handleInteractiveMessage(from, message);
           break;
         case "audio":
-          await handleAudioMessage(from, message);
+          await handleAudioMessage(from, message, TranscriptionModel.GEMINI);
           break;
         default:
           logger.info(`Tipo de webhook de WhatsApp no manejado: ${type}`);

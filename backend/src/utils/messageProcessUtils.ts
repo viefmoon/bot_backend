@@ -1,8 +1,6 @@
 import { Modifier, PizzaIngredient, ProductVariant } from "src/models";
-import logger from "./logger";
 import * as stringSimilarity from "string-similarity";
 import { AgentClaude, AgentGemini, AgentOpenAI } from "src/types/agents";
-import { FunctionCallingMode } from "@google/generative-ai";
 
 export function mapSynonym(normalizedWord: string): string | null {
   const synonyms: { [key: string]: string[] } = {
