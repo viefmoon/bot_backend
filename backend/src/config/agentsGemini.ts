@@ -3,7 +3,8 @@ import { AgentGemini, AgentType } from "../types/agents";
 import { getMenuForAI } from "../utils/menuUtils";
 
 export const GENERAL_AGENT_GEMINI: AgentGemini = {
-  model: "gemini-1.5-flash-002",
+  //model: "gemini-1.5-flash-002",
+  model: "gemini-1.5-flash-8b",
   systemMessage: async () => `
     [Asistente Virtual del Restaurante La Leña]
 
@@ -72,6 +73,8 @@ export const GENERAL_AGENT_GEMINI: AgentGemini = {
 
 export const ORDER_AGENT_GEMINI: AgentGemini = {
   model: "gemini-1.5-flash-002",
+  //model: "gemini-1.5-exp-0827",
+  //model: "gemini-1.5-flash-8b",
   systemMessage: async () => `
     [Asistente de Pedidos - La Leña]
 
