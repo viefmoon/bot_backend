@@ -97,9 +97,7 @@ async function transcribeAudio(
         },
         { text: "Generate a transcript of the speech." },
       ]);
-      console.log("result", JSON.stringify(result, null, 2));
-
-      return result.response.text();
+      return result.response.candidates[0].content.parts[0].text;
     }
   } catch (error) {
     logger.error("Error al transcribir el audio:", error);
