@@ -10,18 +10,18 @@ import {
   SelectedModifier,
   Modifier,
   OrderDeliveryInfo,
-} from "../models";
-import logger from "../utils/logger";
+} from "src/models";
+import logger from "src/utils/logger";
 import {
   sendWhatsAppMessage,
   sendWhatsAppInteractiveMessage,
-} from "../utils/whatsAppUtils";
-import { OrderService } from "../services/order.service";
-import { PreOrderService } from "../services/pre-order.service";
+} from "src/utils/whatsAppUtils";
+import { OrderService } from "src/services/order.service";
+import { PreOrderService } from "src/services/pre-order.service";
 
 import * as dotenv from "dotenv";
 import { CreateOrderDto } from "src/dto/create-order.dto";
-import { OrderSummaryResult } from "../types/order.types";
+import { OrderSummaryResult } from "src/types/order.types";
 dotenv.config();
 
 // Función auxiliar para generar el resumen de productos
@@ -33,7 +33,9 @@ function generateProductSummary(producto: any): string {
   }
 
   if (producto.modificadores.length > 0) {
-    summary += `  🔸 Modificadores: ${producto.modificadores.map(mod => mod.nombre).join(", ")}\n`;
+    summary += `  🔸 Modificadores: ${producto.modificadores
+      .map((mod) => mod.nombre)
+      .join(", ")}\n`;
   }
 
   if (producto.comments) {
@@ -46,11 +48,17 @@ function generateProductSummary(producto: any): string {
 // Función auxiliar para generar el resumen de ingredientes de pizza
 function generatePizzaIngredientsSummary(ingredientes: any[]): string {
   let summary = "  🔸 Ingredientes de pizza:\n";
-  
+
   const ingredientesPorMitad = {
-    left: ingredientes.filter(ing => ing.mitad === "left").map(ing => ing.nombre),
-    right: ingredientes.filter(ing => ing.mitad === "right").map(ing => ing.nombre),
-    full: ingredientes.filter(ing => ing.mitad === "full").map(ing => ing.nombre)
+    left: ingredientes
+      .filter((ing) => ing.mitad === "left")
+      .map((ing) => ing.nombre),
+    right: ingredientes
+      .filter((ing) => ing.mitad === "right")
+      .map((ing) => ing.nombre),
+    full: ingredientes
+      .filter((ing) => ing.mitad === "full")
+      .map((ing) => ing.nombre),
   };
 
   const leftIngredients = [
@@ -62,8 +70,7 @@ function generatePizzaIngredientsSummary(ingredientes: any[]): string {
     ...ingredientesPorMitad.full,
   ];
 
-  const formatIngredients = (ingredients: string[]) =>
-    ingredients.join(", ");
+  const formatIngredients = (ingredients: string[]) => ingredients.join(", ");
 
   if (
     ingredientesPorMitad.full.length > 0 &&
@@ -81,10 +88,15 @@ function generatePizzaIngredientsSummary(ingredientes: any[]): string {
 
 // Objeto con mensajes de estado de orden
 const ORDER_STATUS_MESSAGES = {
-  created: "Tu orden ha sido eliminada exitosamente. ✅",  accepted: "Lo sentimos, pero esta orden ya no se puede cancelar porque ya fue aceptada por el restaurante. ⚠️",
-  in_preparation: "Lo sentimos, pero esta orden ya está en preparación y no se puede cancelar. 👨‍🍳",
-  prepared: "Lo sentimos, pero esta orden ya está preparada y no se puede cancelar. 🍽️",
-  in_delivery: "Lo sentimos, pero esta orden ya está en camino y no se puede cancelar. 🚚",
+  created: "Tu orden ha sido eliminada exitosamente. ✅",
+  accepted:
+    "Lo sentimos, pero esta orden ya no se puede cancelar porque ya fue aceptada por el restaurante. ⚠️",
+  in_preparation:
+    "Lo sentimos, pero esta orden ya está en preparación y no se puede cancelar. 👨‍🍳",
+  prepared:
+    "Lo sentimos, pero esta orden ya está preparada y no se puede cancelar. 🍽️",
+  in_delivery:
+    "Lo sentimos, pero esta orden ya está en camino y no se puede cancelar. 🚚",
   finished: "Esta orden ya ha sido finalizada y no se puede cancelar. ✨",
   canceled: "Esta orden ya ha sido cancelada previamente. ❌",
 };
@@ -258,11 +270,15 @@ export async function handleOrderCancellation(
   try {
     const order = await Order.findOne({ where: { messageId } });
     if (!order) {
-      await sendWhatsAppMessage(clientId, "Lo siento, no se pudo encontrar tu orden para cancelar 🔍❌");
+      await sendWhatsAppMessage(
+        clientId,
+        "Lo siento, no se pudo encontrar tu orden para cancelar 🔍❌"
+      );
       return;
     }
 
-    const mensaje = ORDER_STATUS_MESSAGES[order.status] || 
+    const mensaje =
+      ORDER_STATUS_MESSAGES[order.status] ||
       "Lo sentimos, pero no podemos procesar tu solicitud de cancelación en este momento ⚠️";
 
     if (order.status === "created") {
@@ -272,7 +288,10 @@ export async function handleOrderCancellation(
     await sendWhatsAppMessage(clientId, mensaje);
   } catch (error) {
     logger.error("Error al eliminar la orden:", error);
-    await sendWhatsAppMessage(clientId, "Hubo un error al procesar tu solicitud de eliminación ❌🚫");
+    await sendWhatsAppMessage(
+      clientId,
+      "Hubo un error al procesar tu solicitud de eliminación ❌🚫"
+    );
   }
 }
 
@@ -450,4 +469,3 @@ export async function handleOrderModification(
     );
   }
 }
-
