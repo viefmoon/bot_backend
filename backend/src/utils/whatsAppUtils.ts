@@ -6,8 +6,7 @@ import {
   WhatsAppMessage,
   WhatsAppInteractiveMessage,
   WhatsAppInteractiveContent,
-  WhatsAppApiResponse
-} from "../types/whatsApp.types";
+} from "../types/whatsapp.types";
 
 export async function sendWhatsAppMessage(
   phoneNumber: string,
