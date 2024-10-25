@@ -5,6 +5,16 @@ import { json } from "express";
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
+  // Agregar el prefijo global /api
+  app.setGlobalPrefix("api");
+
+  // Habilitar CORS si es necesario
+  app.enableCors({
+    origin: ["https://pizzatototlan.store", "http://localhost:3000"],
+    methods: "GET,HEAD,PUT,PATCH,POST,DELETE",
+    credentials: true,
+  });
+
   // Configurar el middleware para el cuerpo raw
   app.use(
     json({
