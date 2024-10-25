@@ -20,7 +20,14 @@ export interface WhatsAppInteractiveMessage {
 // Interfaces para las opciones interactivas
 export interface WhatsAppInteractiveOptions {
   type: 'button' | 'list';
+  header?: {
+    type: string;
+    text: string;
+  };
   body: {
+    text: string;
+  };
+  footer?: {
     text: string;
   };
   action: WhatsAppButtonAction | WhatsAppListAction;
