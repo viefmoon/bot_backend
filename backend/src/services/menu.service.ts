@@ -12,6 +12,7 @@ import {
   Subcategory,
 } from "../models";
 import logger from "../utils/logger";
+import { ProductoInfo } from "src/types/menu";
 
 @Injectable()
 export class MenuService {
@@ -339,5 +340,192 @@ Incluyen: Pollo a la plancha o jamón, chile morrón, elote, lechuga, jitomate, 
   public async getFullMenu(): Promise<string> {
     const unavailableItems = await this.getUnavailableItems();
     return unavailableItems + this.menuText;
+  }
+
+  async getMenuAvailability(): Promise<
+    ProductoInfo[] | { error: string; detalles?: string; stack?: string }
+  > {
+    try {
+      if (
+        !Product ||
+        !ProductVariant ||
+        !PizzaIngredient ||
+        !ModifierType ||
+        !Modifier ||
+        !Availability
+      ) {
+        return { error: "Error en la configuración de los modelos" };
+      }
+
+      const products = await Product.findAll({
+        include: [
+          {
+            model: ProductVariant,
+            as: "productVariants",
+            include: [{ model: Availability, where: { available: true } }],
+          },
+          {
+            model: PizzaIngredient,
+            as: "pizzaIngredients",
+            include: [{ model: Availability, where: { available: true } }],
+          },
+          {
+            model: ModifierType,
+            as: "modifierTypes",
+            include: [
+              {
+                model: Modifier,
+                as: "modifiers",
+                include: [{ model: Availability, where: { available: true } }],
+              },
+            ],
+          },
+          { model: Availability, where: { available: true } },
+        ],
+        where: {
+          "$Availability.available$": true,
+        },
+      });
+
+      if (!products || products.length === 0) {
+        logger.error("No se encontraron productos");
+        return { error: "No se encontraron productos en la base de datos" };
+      }
+
+      const menuSimplificado = products.map((producto) => {
+        const productoInfo: ProductoInfo = {
+          productId: producto.id.toString(),
+          name: producto.name,
+        };
+
+        if (producto.productVariants?.length > 0) {
+          productoInfo.productVariants = producto.productVariants.map((v) => ({
+            productVariantId: v.id,
+            name: v.name,
+          }));
+        }
+
+        if (producto.modifierTypes?.length > 0) {
+          productoInfo.modifierTypes = producto.modifierTypes.map((mt) => ({
+            modifierTypeId: mt.id,
+            name: mt.name,
+            acceptsMultiple: mt.acceptsMultiple,
+            required: mt.required,
+            modifiers:
+              mt.modifiers?.map((m) => ({
+                modifierId: m.id,
+                name: m.name,
+              })) || [],
+          }));
+        }
+
+        if (producto.pizzaIngredients?.length > 0) {
+          productoInfo.pizzaIngredients = producto.pizzaIngredients.map(
+            (i) => ({
+              pizzaIngredientId: i.id,
+              name: i.name,
+            })
+          );
+        }
+
+        return productoInfo;
+      });
+
+      return menuSimplificado as ProductoInfo[];
+    } catch (error: any) {
+      logger.error("Error al obtener la disponibilidad del menú:", error);
+      return {
+        error: "No se pudo obtener la disponibilidad del menú",
+        detalles: error.message,
+        stack: error.stack,
+      };
+    }
+  }
+
+  async getMenuForAI(): Promise<string | { error: string; detalles?: string }> {
+    try {
+      if (
+        !Product ||
+        !ProductVariant ||
+        !PizzaIngredient ||
+        !ModifierType ||
+        !Modifier ||
+        !Availability
+      ) {
+        return { error: "Error en la configuración de los modelos" };
+      }
+
+      const products = await Product.findAll({
+        include: [
+          {
+            model: ProductVariant,
+            as: "productVariants",
+            include: [{ model: Availability, where: { available: true } }],
+          },
+          {
+            model: PizzaIngredient,
+            as: "pizzaIngredients",
+            include: [{ model: Availability, where: { available: true } }],
+          },
+          {
+            model: ModifierType,
+            as: "modifierTypes",
+            include: [
+              {
+                model: Modifier,
+                as: "modifiers",
+                include: [{ model: Availability, where: { available: true } }],
+              },
+            ],
+          },
+          { model: Availability, where: { available: true } },
+        ],
+        where: {
+          "$Availability.available$": true,
+        },
+      });
+
+      if (!products || products.length === 0) {
+        logger.error("No se encontraron productos");
+        return { error: "No se encontraron productos en la base de datos" };
+      }
+
+      const menuForAI = {
+        productos: products.map((producto) => {
+          const productoInfo: any = {
+            nombre: producto.name,
+          };
+
+          if (producto.productVariants?.length > 0) {
+            productoInfo.variantes = producto.productVariants.map(
+              (v) => v.name
+            );
+          }
+
+          if (producto.modifierTypes?.length > 0) {
+            productoInfo.personalizacion = producto.modifierTypes.map((mt) => ({
+              modificador: mt.name,
+              opciones: mt.modifiers?.map((m) => m.name) || [],
+            }));
+          }
+
+          if (producto.pizzaIngredients?.length > 0) {
+            productoInfo.ingredientesPizza = producto.pizzaIngredients.map(
+              (i) => i.name
+            );
+          }
+
+          return productoInfo;
+        }),
+      };
+
+      return JSON.stringify(menuForAI);
+    } catch (error: any) {
+      logger.error("Error al obtener el menú para IA:", error);
+      return {
+        error: "No se pudo obtener el menú",
+        detalles: error.message,
+      };
+    }
   }
 }

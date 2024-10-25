@@ -15,8 +15,8 @@ const unlinkAsync = promisify(unlink);
 
 // Añadir esta enumeración al inicio del archivo
 export enum TranscriptionModel {
-  WHISPER = 'whisper',
-  GEMINI = 'gemini'
+  WHISPER = "whisper",
+  GEMINI = "gemini",
 }
 
 async function getAudioUrl(audioId: string): Promise<string | null> {
@@ -37,7 +37,7 @@ async function getAudioUrl(audioId: string): Promise<string | null> {
 }
 
 async function transcribeAudio(
-  audioUrl: string, 
+  audioUrl: string,
   model: TranscriptionModel = TranscriptionModel.WHISPER
 ): Promise<string> {
   const audioPath = `/tmp/audio.ogg`;
@@ -78,22 +78,24 @@ async function transcribeAudio(
       return whisperData.text;
     } else {
       // Implementación de Gemini
-      const fileManager = new GoogleAIFileManager(process.env.GOOGLE_AI_API_KEY);
+      const fileManager = new GoogleAIFileManager(
+        process.env.GOOGLE_AI_API_KEY
+      );
       const audioFile = await fileManager.uploadFile(audioPath, {
         mimeType: "audio/ogg",
       });
 
       const genAI = new GoogleGenerativeAI(process.env.GOOGLE_AI_API_KEY);
       const genModel = genAI.getGenerativeModel({
-        model: "gemini-1.5-flash",
+        model: "gemini-1.5-flash-002",
       });
 
       const result = await genModel.generateContent([
         {
           fileData: {
             mimeType: audioFile.file.mimeType,
-            fileUri: audioFile.file.uri
-          }
+            fileUri: audioFile.file.uri,
+          },
         },
         { text: "Generate a transcript of the speech." },
       ]);
