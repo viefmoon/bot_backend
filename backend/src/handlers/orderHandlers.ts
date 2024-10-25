@@ -366,8 +366,6 @@ export async function handleOrderModification(
     // Eliminar la orden existente en lugar de cancelarla
     await order.destroy();
 
-    console.log("orderItems", orderItems);
-
     const filteredOrderItems = orderItems.map((item) => {
       const filteredItem: any = {
         quantity: item.quantity,
@@ -401,6 +399,7 @@ export async function handleOrderModification(
         orderType,
         scheduledDeliveryTime,
       });
+      console.log("selectProductsResponse", selectProductsResponse);
 
       if (selectProductsResponse.status !== 200) {
         throw new Error(
