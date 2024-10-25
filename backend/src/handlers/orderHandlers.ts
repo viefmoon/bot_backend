@@ -21,30 +21,73 @@ import { PreOrderService } from "../services/pre-order.service";
 
 import * as dotenv from "dotenv";
 import { CreateOrderDto } from "src/dto/create-order.dto";
+import { OrderSummaryResult } from "../types/order.types";
 dotenv.config();
 
-interface NewOrder {
-  id: number;
-  telefono: string;
-  informacion_entrega: string;
-  precio_total: number;
-  fecha_creacion: string;
-  horario_entrega_programado: string | null;
-  tiempoEstimado: number;
-  productos: {
-    nombre: string;
-    cantidad: number;
-    precio: number;
-    modificadores: { nombre: string; precio: number }[];
-    ingredientes_pizza?: { mitad: string; nombre: string }[];
-    comments?: string;
-  }[];
+// Función auxiliar para generar el resumen de productos
+function generateProductSummary(producto: any): string {
+  let summary = `- *${producto.cantidad}x ${producto.nombre}*: $${producto.precio}\n`;
+
+  if (producto.ingredientes_pizza?.length > 0) {
+    summary += generatePizzaIngredientsSummary(producto.ingredientes_pizza);
+  }
+
+  if (producto.modificadores.length > 0) {
+    summary += `  🔸 Modificadores: ${producto.modificadores.map(mod => mod.nombre).join(", ")}\n`;
+  }
+
+  if (producto.comments) {
+    summary += `  💬 Comentarios: ${producto.comments}\n`;
+  }
+
+  return summary;
 }
 
-interface OrderSummaryResult {
-  newOrder: NewOrder;
-  orderSummary: string;
+// Función auxiliar para generar el resumen de ingredientes de pizza
+function generatePizzaIngredientsSummary(ingredientes: any[]): string {
+  let summary = "  🔸 Ingredientes de pizza:\n";
+  
+  const ingredientesPorMitad = {
+    left: ingredientes.filter(ing => ing.mitad === "left").map(ing => ing.nombre),
+    right: ingredientes.filter(ing => ing.mitad === "right").map(ing => ing.nombre),
+    full: ingredientes.filter(ing => ing.mitad === "full").map(ing => ing.nombre)
+  };
+
+  const leftIngredients = [
+    ...ingredientesPorMitad.left,
+    ...ingredientesPorMitad.full,
+  ];
+  const rightIngredients = [
+    ...ingredientesPorMitad.right,
+    ...ingredientesPorMitad.full,
+  ];
+
+  const formatIngredients = (ingredients: string[]) =>
+    ingredients.join(", ");
+
+  if (
+    ingredientesPorMitad.full.length > 0 &&
+    leftIngredients.length === rightIngredients.length
+  ) {
+    summary += `    ${formatIngredients(leftIngredients)}\n`;
+  } else {
+    summary += `    (${formatIngredients(
+      leftIngredients
+    )} / ${formatIngredients(rightIngredients)})\n`;
+  }
+
+  return summary;
 }
+
+// Objeto con mensajes de estado de orden
+const ORDER_STATUS_MESSAGES = {
+  created: "Tu orden ha sido eliminada exitosamente. ✅",  accepted: "Lo sentimos, pero esta orden ya no se puede cancelar porque ya fue aceptada por el restaurante. ⚠️",
+  in_preparation: "Lo sentimos, pero esta orden ya está en preparación y no se puede cancelar. 👨‍🍳",
+  prepared: "Lo sentimos, pero esta orden ya está preparada y no se puede cancelar. 🍽️",
+  in_delivery: "Lo sentimos, pero esta orden ya está en camino y no se puede cancelar. 🚚",
+  finished: "Esta orden ya ha sido finalizada y no se puede cancelar. ✨",
+  canceled: "Esta orden ya ha sido cancelada previamente. ❌",
+};
 
 async function createOrderFromPreOrder(
   preOrder: PreOrder,
@@ -81,59 +124,7 @@ async function createOrderFromPreOrder(
     }
     orderSummary += `\n🛒 *Productos:*\n`;
     newOrder.productos.forEach((producto) => {
-      orderSummary += `- *${producto.cantidad}x ${producto.nombre}*: $${producto.precio}\n`;
-
-      if (
-        producto.ingredientes_pizza &&
-        producto.ingredientes_pizza.length > 0
-      ) {
-        orderSummary += "  🔸 Ingredientes de pizza:\n";
-
-        const ingredientesPorMitad = {
-          left: producto.ingredientes_pizza
-            .filter((ing) => ing.mitad === "left")
-            .map((ing) => ing.nombre),
-          right: producto.ingredientes_pizza
-            .filter((ing) => ing.mitad === "right")
-            .map((ing) => ing.nombre),
-          full: producto.ingredientes_pizza
-            .filter((ing) => ing.mitad === "full")
-            .map((ing) => ing.nombre),
-        };
-
-        const leftIngredients = [
-          ...ingredientesPorMitad.left,
-          ...ingredientesPorMitad.full,
-        ];
-        const rightIngredients = [
-          ...ingredientesPorMitad.right,
-          ...ingredientesPorMitad.full,
-        ];
-
-        const formatIngredients = (ingredients: string[]) =>
-          ingredients.join(", ");
-
-        if (
-          ingredientesPorMitad.full.length > 0 &&
-          leftIngredients.length === rightIngredients.length
-        ) {
-          orderSummary += `    ${formatIngredients(leftIngredients)}\n`;
-        } else {
-          orderSummary += `    (${formatIngredients(
-            leftIngredients
-          )} / ${formatIngredients(rightIngredients)})\n`;
-        }
-      }
-
-      if (producto.modificadores.length > 0) {
-        orderSummary += `  🔸 Modificadores: ${producto.modificadores
-          .map((mod) => mod.nombre)
-          .join(", ")}\n`;
-      }
-
-      if (producto.comments) {
-        orderSummary += `  💬 Comentarios: ${producto.comments}\n`;
-      }
+      orderSummary += generateProductSummary(producto);
     });
 
     orderSummary += `\n💰 *Total: $${newOrder.precio_total}*`;
@@ -249,7 +240,7 @@ export async function handlePreOrderDiscard(
     await customer.update({ relevantChatHistory: [] });
 
     const confirmationMessage =
-      "Tu preorden ha sido descartada y el historial de conversación reciente ha sido borrado. ¿En qué más puedo ayudarte? 😊";
+      "Tu preorden ha sido descartada y el historial de conversación reciente ha sido borrado. ¿En qué más puedo ayudarte? ����";
     await sendWhatsAppMessage(clientId, confirmationMessage);
   } catch (error) {
     logger.error("Error al descartar la preorden:", error);
@@ -266,57 +257,22 @@ export async function handleOrderCancellation(
 ): Promise<void> {
   try {
     const order = await Order.findOne({ where: { messageId } });
-    const customer = await Customer.findOne({ where: { clientId } });
-    await customer.update({ relevantChatHistory: [] });
     if (!order) {
-      logger.error(`No se encontró orden para el messageId: ${messageId}`);
-      await sendWhatsAppMessage(
-        clientId,
-        "Lo siento, no se pudo encontrar tu orden para cancelar. Por favor, contacta con el restaurante si necesitas ayuda."
-      );
+      await sendWhatsAppMessage(clientId, "Lo siento, no se pudo encontrar tu orden para cancelar.");
       return;
     }
-    let mensaje: string;
-    switch (order.status) {
-      case "created":
-        await order.destroy();
-        mensaje = `Tu orden #${order.dailyOrderNumber} ha sido eliminada exitosamente. ✅ Si tienes alguna pregunta, por favor contacta con el restaurante. 📞`;
-        break;
-      case "accepted":
-        mensaje =
-          "Lo sentimos, pero esta orden ya no se puede cancelar porque ya fue aceptada por el restaurante. ⚠️ Por favor, contacta directamente con el restaurante si necesitas hacer cambios. 📞";
-        break;
-      case "in_preparation":
-        mensaje =
-          "Lo sentimos, pero esta orden ya está en preparación y no se puede cancelar. 👨‍🍳 Por favor, contacta directamente con el restaurante si tienes alguna inquietud. 📞";
-        break;
-      case "prepared":
-        mensaje =
-          "Lo sentimos, pero esta orden ya está preparada y no se puede cancelar. 🍽️ Por favor, contacta directamente con el restaurante para resolver cualquier problema. 📞";
-        break;
-      case "in_delivery":
-        mensaje =
-          "Lo sentimos, pero esta orden ya está en camino y no se puede cancelar. 🚚 Por favor, contacta directamente con el restaurante o el repartidor si necesitas hacer algún cambio. 📞";
-        break;
-      case "finished":
-        mensaje =
-          "Esta orden ya ha sido finalizada y no se puede cancelar. ✨ Si tienes algún problema con tu pedido, por favor contacta directamente con el restaurante. 📞";
-        break;
-      case "canceled":
-        mensaje =
-          "Esta orden ya ha sido cancelada previamente. ❌ No es necesario realizar ninguna acción adicional.";
-        break;
-      default:
-        mensaje =
-          "Lo sentimos, pero no podemos procesar tu solicitud de cancelación en este momento. ⚠️ Por favor, contacta directamente con el restaurante para obtener ayuda. 📞";
+
+    const mensaje = ORDER_STATUS_MESSAGES[order.status] || 
+      "Lo sentimos, pero no podemos procesar tu solicitud de cancelación en este momento.";
+
+    if (order.status === "created") {
+      await order.destroy();
     }
+
     await sendWhatsAppMessage(clientId, mensaje);
   } catch (error) {
     logger.error("Error al eliminar la orden:", error);
-    await sendWhatsAppMessage(
-      clientId,
-      "Hubo un error al procesar tu solicitud de eliminación. Por favor, intenta nuevamente o contacta con el restaurante."
-    );
+    await sendWhatsAppMessage(clientId, "Hubo un error al procesar tu solicitud de eliminación.");
   }
 }
 
@@ -493,3 +449,4 @@ export async function handleOrderModification(
     );
   }
 }
+
