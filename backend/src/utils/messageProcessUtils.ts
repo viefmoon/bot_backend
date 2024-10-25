@@ -274,8 +274,6 @@ export const prepareModelGemini = async (agent: AgentGemini) => ({
       : agent.systemMessage,
   generationConfig: {
     candidateCount: 1,
-    stopSequences: ["x"],
-    maxOutputTokens: 1024,
     temperature: 1.0,
   },
   tools: agent.tools,
