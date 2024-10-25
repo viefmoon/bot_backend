@@ -146,7 +146,7 @@ export default function Home() {
 
   const fetchNotificationPhones = async () => {
     try {
-      const response = await axios.get("/api/notification_phones");
+      const response = await axios.get("/api/notification-phones");
       setNotificationPhones(response.data);
     } catch (error) {
       console.error("Error al obtener teléfonos de notificación:", error);
@@ -163,7 +163,7 @@ export default function Home() {
   const addNotificationPhone = async (e) => {
     e.preventDefault();
     try {
-      await axios.post("/api/notification_phones", {
+      await axios.post("/api/notification-phones", {
         phoneNumber: newPhoneNumber,
         isActive: true,
       });
@@ -179,7 +179,7 @@ export default function Home() {
 
   const deleteNotificationPhone = async (phoneId) => {
     try {
-      await axios.delete(`/api/notification_phones/${phoneId}`);
+      await axios.delete(`/api/notification-phones/${phoneId}`);
       fetchNotificationPhones();
     } catch (error) {
       console.error("Error al eliminar teléfono de notificación:", error);
@@ -191,7 +191,7 @@ export default function Home() {
 
   const togglePhoneStatus = async (phoneId, currentStatus) => {
     try {
-      await axios.put(`/api/notification_phones/${phoneId}`, {
+      await axios.put(`/api/notification-phones/${phoneId}`, {
         isActive: !currentStatus,
       });
       fetchNotificationPhones();
