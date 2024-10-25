@@ -4,7 +4,7 @@ import {
 } from "./whatsAppUtils";
 import { Customer, PreOrder } from "../models";
 import * as dotenv from "dotenv";
-import { preProcessMessages} from "./messageProcess";
+import { preProcessMessages } from "./messageProcess";
 import { PreOrderService } from "../services/pre-order.service";
 import logger from "./logger";
 import { AgentConfig, AgentType } from "src/types/agents";
@@ -13,7 +13,7 @@ dotenv.config();
 interface ChatMessage {
   role: string;
   content: string;
-  timestamp: Date;
+  timestamp?: Date;
 }
 
 interface ResponseItem {
@@ -34,7 +34,7 @@ async function resetChatHistory(customer) {
   await customer.update({ relevantChatHistory: [] });
   await sendWhatsAppMessage(
     customer.clientId,
-    "Entendido, he olvidado el contexto anterior. En qué puedo ayudarte ahora?"
+    "🔄 Entendido, he olvidado el contexto anterior. ¿En qué puedo ayudarte ahora? 😊"
   );
 }
 
@@ -63,7 +63,7 @@ async function sendWelcomeMessage(phoneNumber) {
             { id: "chatbot_help", title: "¿Cómo usar el bot?" },
             {
               id: "change_delivery_info",
-              title: "Act. info de entrega",
+              title: "Actualizar entrega",
             },
           ],
         },
@@ -82,19 +82,16 @@ export async function handleTextMessage(
     where: { clientId: from },
   });
 
-  let fullChatHistory: ChatMessage[] = [];
-  if (Array.isArray(customer.fullChatHistory)) {
-    fullChatHistory = customer.fullChatHistory;
-  } else if (typeof customer.fullChatHistory === "string") {
-    fullChatHistory = JSON.parse(customer.fullChatHistory);
-  }
+  const fullChatHistory: ChatMessage[] = Array.isArray(customer.fullChatHistory)
+    ? customer.fullChatHistory
+    : JSON.parse(customer.fullChatHistory || "[]");
 
-  let relevantChatHistory: ChatMessage[] = [];
-  if (Array.isArray(customer.relevantChatHistory)) {
-    relevantChatHistory = customer.relevantChatHistory;
-  } else if (typeof customer.relevantChatHistory === "string") {
-    relevantChatHistory = JSON.parse(customer.relevantChatHistory);
-  }
+  const relevantChatHistory: ChatMessage[] = Array.isArray(
+    customer.relevantChatHistory
+  )
+    ? customer.relevantChatHistory
+    : JSON.parse(customer.relevantChatHistory || "[]");
+
   const restartPhrases = [
     "olvida lo anterior",
     "reinicia la conversación",
@@ -109,23 +106,18 @@ export async function handleTextMessage(
     return;
   }
 
-  if (
+  const isNewConversation =
     new Date().getTime() - new Date(customer.lastInteraction).getTime() >
-      60 * 60 * 1000 ||
-    relevantChatHistory.length === 0
-  ) {
-    relevantChatHistory = [];
+      60 * 60 * 1000 || relevantChatHistory.length === 0;
+
+  if (isNewConversation) {
+    relevantChatHistory.length = 0;
     await sendWelcomeMessage(from);
   }
 
-  // Función para actualizar el historial de chat completo y relevante
-  const updateChatHistory = (
-    message: ChatMessage,
-    isRelevant: boolean = true
-  ): void => {
-    // Agrega el mensaje al historial completo del chat
+  // Función simplificada para actualizar historiales
+  const updateChatHistory = (message: ChatMessage, isRelevant = true) => {
     fullChatHistory.push(message);
-    // Si el mensaje es relevante, también se agrega al historial relevante
     if (isRelevant) relevantChatHistory.push(message);
   };
 
@@ -196,7 +188,6 @@ async function processAndGenerateAIResponse(
 ): Promise<ResponseItem[]> {
   const { relevantMessages, conversationId } = req;
 
-  // Eliminar el campo timestamp de cada mensaje
   const messagesWithoutTimestamp = relevantMessages.map(
     ({ role, content }) => ({
       role,
@@ -204,7 +195,6 @@ async function processAndGenerateAIResponse(
     })
   );
 
-  // Definimos la configuración de agentes
   const agentConfig: AgentConfig = {
     generalAgent: { type: AgentType.GENERAL_AGENT, provider: "CLAUDE" },
     orderAgent: { type: AgentType.ORDER_AGENT, provider: "CLAUDE" },
@@ -213,7 +203,7 @@ async function processAndGenerateAIResponse(
   try {
     const aiResponses = await preProcessMessages(
       messagesWithoutTimestamp,
-      agentConfig.generalAgent, //agente actual
+      agentConfig.generalAgent,
       agentConfig
     );
     const responseItems: ResponseItem[] = [];

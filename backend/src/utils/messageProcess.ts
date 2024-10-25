@@ -17,7 +17,6 @@ import {
   prepareModelGemini,
   prepareRequestPayloadOpenAI,
 } from "../utils/messageProcessUtils";
-import { getMenuAvailability } from "./menuUtils";
 import logger from "./logger";
 import { AGENTS_CLAUDE } from "../config/agentsClaude";
 import { GoogleGenerativeAI } from "@google/generative-ai";
@@ -493,7 +492,7 @@ const handlePreProcessOrderTool = async ({
 }): Promise<AIResponse> => {
   const preprocessedContent: PreprocessedContent = args;
 
-  const fullMenu = await getMenuAvailability();
+  const fullMenu = await menuService.getMenuAvailability();
 
   // Procesar cada item del pedido
   for (const item of preprocessedContent.orderItems) {
