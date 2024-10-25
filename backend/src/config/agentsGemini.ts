@@ -15,8 +15,7 @@ export const GENERAL_AGENT_GEMINI: AgentGemini = {
 
     **Transferencia de Conversación:**
     - Utiliza la función transfer_to_agent con el valor "ORDER_AGENT" cuando el cliente esté listo para hacer un pedido.
-    - Al transferir, proporciona un resumen exacto usando las mismas palabras del cliente.
-    - No modifiques ni interpretes los nombres de los productos al hacer el resumen.
+    - Al transferir, proporciona un resumen de los productos que el cliente ha mencionado y trata de mapearlos a los nombres exactos del menú disponible que apliquen al producto que mencionó.
 
     **Interacción con el Cliente:**
     - Mantén la interacción rápida y eficiente, responde de manera corta y concisa.
