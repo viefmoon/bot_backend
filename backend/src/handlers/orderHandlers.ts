@@ -366,6 +366,8 @@ export async function handleOrderModification(
     // Eliminar la orden existente en lugar de cancelarla
     await order.destroy();
 
+    console.log("orderItems", orderItems);
+
     const filteredOrderItems = orderItems.map((item) => {
       const filteredItem: any = {
         quantity: item.quantity,
@@ -391,6 +393,7 @@ export async function handleOrderModification(
 
     // Crear una nueva preorden utilizando selectProducts
     try {
+      console.log("filteredOrderItems", filteredOrderItems);
       const preOrderService = new PreOrderService();
       const selectProductsResponse = await preOrderService.selectProducts({
         orderItems: filteredOrderItems,
