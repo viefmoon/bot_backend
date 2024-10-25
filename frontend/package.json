@@ -11,6 +11,7 @@
   "dependencies": {
     "@react-google-maps/api": "^2.19.3",
     "axios": "^1.7.7",
+    "bot_app": "file:..",
     "date-fns": "^4.1.0",
     "dotenv": "^16.4.5",
     "next": "^14.2.13",
