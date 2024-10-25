@@ -2,7 +2,7 @@
   "name": "bot_app",
   "version": "1.0.0",
   "scripts": {
-    "dev": "concurrently \"cd frontend && npm run dev\" \"cd backend && npm run dev\"",
+    "dev": "concurrently \"npm run dev --prefix frontend\" \"npm run dev --prefix backend\"",
     "build": "cd frontend && npm run build && cd ../backend && npm run build",
     "start": "cd backend && npm start",
     "install:all": "npm install && npm --prefix backend install && npm --prefix frontend install"
