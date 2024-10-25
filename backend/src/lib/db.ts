@@ -1,5 +1,5 @@
 import { Sequelize } from "sequelize";
-import logger from '../utils/logger';
+import logger from "../utils/logger";
 const dotenv = require("dotenv");
 dotenv.config();
 
@@ -12,12 +12,14 @@ const sequelize = new Sequelize(
     port: parseInt(process.env.PGPORT!),
     dialect: "postgres",
     logging: false,
-    dialectOptions: {
-      ssl: {
-        require: true,
-        rejectUnauthorized: false,
+    ...(process.env.PGSSLMODE === "require" && {
+      dialectOptions: {
+        ssl: {
+          require: true,
+          rejectUnauthorized: false,
+        },
       },
-    },
+    }),
     pool: {
       max: 5,
       min: 0,
