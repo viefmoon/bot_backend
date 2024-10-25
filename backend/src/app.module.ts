@@ -15,7 +15,6 @@ import { OrderService } from "./services/order.service";
 import { PreOrderService } from "./services/pre-order.service";
 import { NotificationPhoneService } from "./services/notification-phone.service";
 import { RestaurantConfigService } from "./services/restaurant-config.service";
-import { WhatsAppController } from "./controllers/whatsapp.controller";
 import { AvailabilityService } from "./services/availability.service";
 import { WebhookService } from "./services/webhook.service";
 import { OtpService } from "./services/otp.service";
@@ -33,7 +32,6 @@ import { SeederService } from "./services/seeder.service";
     NotificationPhoneController,
     RestaurantConfigController,
     CustomerDeliveryInfoController,
-    WhatsAppController,
     AvailabilityController,
     WebhookController,
     OtpController,

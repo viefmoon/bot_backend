@@ -1,5 +1,7 @@
 import { AgentType, AgentOpenAI } from "../types/agents";
-import { getMenuForAI } from "../utils/menuUtils";
+import { MenuService } from "../services/menu.service";
+
+const menuService = new MenuService();
 
 export const GENERAL_AGENT_OPENAI: AgentOpenAI = {
   model: "gpt-4o-mini",
@@ -18,7 +20,7 @@ PIENSA PASO A PASO. Eres un asistente virtual del Restaurante La Leña. Utiliza 
 - Al transferir, proporciona un resumen exacto usando las mismas palabras del cliente.
 - No modifiques ni interpretes los nombres de los productos al hacer el resumen.
 
-${await getMenuForAI()}`,
+${await menuService.getMenuForAI()}`,
   }),
   tools: [
     {
@@ -86,7 +88,7 @@ export const ORDER_AGENT_OPENAI: AgentOpenAI = {
       - No sugieras ni preguntes sobre ingredientes adicionales o modificaciones.
       - El cliente debe solicitar estos cambios por iniciativa propia.
 
-      ${await getMenuForAI()}
+      ${await menuService.getMenuForAI()}
     `,
   }),
   tools: [

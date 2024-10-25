@@ -1,6 +1,8 @@
 import { FunctionCallingMode } from "@google/generative-ai";
 import { AgentGemini, AgentType } from "../types/agents";
-import { getMenuForAI } from "../utils/menuUtils";
+import { MenuService } from "../services/menu.service";
+
+const menuService = new MenuService();
 
 export const GENERAL_AGENT_GEMINI: AgentGemini = {
   model: "gemini-1.5-flash-002",
@@ -21,7 +23,7 @@ export const GENERAL_AGENT_GEMINI: AgentGemini = {
     - Mantén la interacción rápida y eficiente, responde de manera corta y concisa.
     - El cliente debe solicitar cambios por iniciativa propia.
 
-    ${await getMenuForAI()}
+    ${await menuService.getMenuForAI()}
   `,
   tools: [
     {
@@ -80,7 +82,7 @@ export const ORDER_AGENT_GEMINI: AgentGemini = {
     - Si el cliente menciona un producto de manera imprecisa, intenta mapearlo al nombre exacto en el menú incluyendo modificaciones.
     - Si no estás seguro, utiliza la mejor aproximación basada en el menú disponible.
 
-    ${await getMenuForAI()}
+    ${await menuService.getMenuForAI()}
   `,
   tools: [
     {
@@ -137,4 +139,3 @@ export const AGENTS_GEMINI = {
   [AgentType.GENERAL_AGENT]: GENERAL_AGENT_GEMINI,
   [AgentType.ORDER_AGENT]: ORDER_AGENT_GEMINI,
 };
-

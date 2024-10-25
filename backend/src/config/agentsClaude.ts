@@ -1,6 +1,7 @@
-
 import { AgentClaude, AgentType } from "../types/agents";
-import { getMenuForAI } from "../utils/menuUtils";
+import { MenuService } from "../services/menu.service";
+
+const menuService = new MenuService();
 
 export const GENERAL_AGENT_CLAUDE: AgentClaude = {
   model: "claude-3-haiku-20240307",
@@ -24,7 +25,7 @@ PIENSA PASO A PASO. Eres un asistente virtual del Restaurante La Leña. Utiliza 
 - Mantén la interacción rápida y eficiente, responde de manera corta y concisa.
 - El cliente debe solicitar cambios por iniciativa propia.
 
-${await getMenuForAI()}`,
+${await menuService.getMenuForAI()}`,
       cache_control: { type: "ephemeral" },
     },
   ],
@@ -76,7 +77,7 @@ export const ORDER_AGENT_CLAUDE: AgentClaude = {
     - Si el cliente menciona un producto de manera imprecisa, intenta mapearlo al nombre exacto en el menú incluyendo modificaciones.
     - Si no estás seguro, utiliza la mejor aproximación basada en el menú disponible.
 
-        ${await getMenuForAI()}
+        ${await menuService.getMenuForAI()}
       `,
       cache_control: { type: "ephemeral" },
     },
