@@ -20,12 +20,12 @@ import {
   PAYMENT_CONFIRMATION_MESSAGE,
   RESTAURANT_NOT_ACCEPTING_ORDERS_MESSAGE,
 } from "../config/predefinedMessages";
-import { handleTextMessage } from "../utils/textMessageHandler";
-import { handleInteractiveMessage } from "../utils/interactiveMessageHandler";
+import { handleTextMessage } from "../utils/handlers/textMessageHandler";
+import { handleInteractiveMessage } from "../utils/handlers/interactiveMessageHandler";
 import {
   handleAudioMessage,
   TranscriptionModel,
-} from "../utils/audioMessageHandler";
+} from "../utils/handlers/audioMessageHandler";
 import { Queue } from "queue-typescript";
 import * as moment from "moment-timezone";
 import { RESTAURANT_CLOSED_MESSAGE } from "../config/predefinedMessages";

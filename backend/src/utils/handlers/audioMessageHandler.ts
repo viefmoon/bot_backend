@@ -4,10 +4,10 @@ import axios from "axios";
 import { createWriteStream, createReadStream, unlink } from "fs";
 import { promisify } from "util";
 import FormData = require("form-data");
-import { sendWhatsAppMessage } from "./whatsAppUtils";
-import { handleTextMessage } from "./textMessageHandler";
+import { sendWhatsAppMessage } from "../whatsAppUtils";
+import { handleTextMessage } from "../handlers/textMessageHandler";
 import { Readable } from "stream";
-import logger from "./logger";
+import logger from "../logger";
 import { GoogleAIFileManager } from "@google/generative-ai/server";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 

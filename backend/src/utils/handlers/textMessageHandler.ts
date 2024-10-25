@@ -1,12 +1,12 @@
 import {
   sendWhatsAppMessage,
   sendWhatsAppInteractiveMessage,
-} from "./whatsAppUtils";
-import { Customer, PreOrder } from "../models";
+} from "../whatsAppUtils";
+import { Customer, PreOrder } from "src/models";
 import * as dotenv from "dotenv";
-import { preProcessMessages } from "./messageProcess";
-import { PreOrderService } from "../services/pre-order.service";
-import logger from "./logger";
+import { preProcessMessages } from "../messageProcess";
+import { PreOrderService } from "src/services/pre-order.service";
+import logger from "../logger";
 import { AgentConfig, AgentType } from "src/types/agents";
 dotenv.config();
 
