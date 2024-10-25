@@ -240,7 +240,7 @@ export async function handlePreOrderDiscard(
     await customer.update({ relevantChatHistory: [] });
 
     const confirmationMessage =
-      "Tu preorden ha sido descartada y el historial de conversación reciente ha sido borrado. ¿En qué más puedo ayudarte? ����";
+      "Tu preorden ha sido descartada y el historial de conversación reciente ha sido borrado. ¿En qué más puedo ayudarte? ";
     await sendWhatsAppMessage(clientId, confirmationMessage);
   } catch (error) {
     logger.error("Error al descartar la preorden:", error);
@@ -258,12 +258,12 @@ export async function handleOrderCancellation(
   try {
     const order = await Order.findOne({ where: { messageId } });
     if (!order) {
-      await sendWhatsAppMessage(clientId, "Lo siento, no se pudo encontrar tu orden para cancelar.");
+      await sendWhatsAppMessage(clientId, "Lo siento, no se pudo encontrar tu orden para cancelar 🔍❌");
       return;
     }
 
     const mensaje = ORDER_STATUS_MESSAGES[order.status] || 
-      "Lo sentimos, pero no podemos procesar tu solicitud de cancelación en este momento.";
+      "Lo sentimos, pero no podemos procesar tu solicitud de cancelación en este momento ⚠️";
 
     if (order.status === "created") {
       await order.destroy();
@@ -272,7 +272,7 @@ export async function handleOrderCancellation(
     await sendWhatsAppMessage(clientId, mensaje);
   } catch (error) {
     logger.error("Error al eliminar la orden:", error);
-    await sendWhatsAppMessage(clientId, "Hubo un error al procesar tu solicitud de eliminación.");
+    await sendWhatsAppMessage(clientId, "Hubo un error al procesar tu solicitud de eliminación ❌🚫");
   }
 }
 
