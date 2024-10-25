@@ -14,7 +14,7 @@ export async function checkMessageRateLimit(
     process.env.RATE_LIMIT_TIME_WINDOW_MINUTES || "5",
     10
   );
-  const RATE_LIMIT_TIME_WINDOW = RATE_LIMIT_TIME_WINDOW_MINUTES * 60 * 1000; // Convertir minutos a milisegundos
+  const RATE_LIMIT_TIME_WINDOW = RATE_LIMIT_TIME_WINDOW_MINUTES * 60 * 1000;
 
   let rateLimit = await MessageRateLimit.findOne({ where: { clientId } });
 

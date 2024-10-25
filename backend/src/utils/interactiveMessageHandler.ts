@@ -17,7 +17,7 @@ import {
   CHATBOT_HELP_MESSAGE,
   CHANGE_DELIVERY_INFO_MESSAGE,
 } from "../config/predefinedMessages";
-import getFullMenu from "../data/menu";
+import { MenuService } from "../services/menu.service";
 import logger from "./logger";
 import { getCurrentMexicoTime } from "./timeUtils";
 
@@ -26,39 +26,39 @@ const stripeClient = new Stripe(process.env.STRIPE_SECRET_KEY!, {
 });
 
 const otpService = new OtpService();
+const menuService = new MenuService();
+
+const BUTTON_ACTIONS = {
+  confirm_order: handlePreOrderConfirmation,
+  discard_order: handlePreOrderDiscard,
+  modify_delivery: handlePreOrderDeliveryModification,
+} as const;
+
+const LIST_ACTIONS = {
+  cancel_order: handleOrderCancellation,
+  modify_order: handleOrderModification,
+  pay_online: handleOnlinePayment,
+  wait_times: handleWaitTimes,
+  view_menu: sendMenu,
+  restaurant_info: handleRestaurantInfo,
+  chatbot_help: handleChatbotHelp,
+  change_delivery_info: handleChangeDeliveryInfo,
+} as const;
 
 export async function handleInteractiveMessage(
   from: string,
   message: any
 ): Promise<void> {
-  if (message.interactive.type === "button_reply") {
-    const buttonId = message.interactive.button_reply!.id;
-    if (buttonId === "confirm_order") {
-      await handlePreOrderConfirmation(from, message.context.id);
-    } else if (buttonId === "discard_order") {
-      await handlePreOrderDiscard(from, message.context.id);
-    } else if (buttonId === "modify_delivery") {
-      await handlePreOrderDeliveryModification(from, message.context.id);
-    }
-  } else if (message.interactive.type === "list_reply") {
-    const listReplyId = message.interactive.list_reply!.id;
-    if (listReplyId === "cancel_order") {
-      await handleOrderCancellation(from, message.context.id);
-    } else if (listReplyId === "modify_order") {
-      await handleOrderModification(from, message.context.id);
-    } else if (listReplyId === "pay_online") {
-      await handleOnlinePayment(from, message.context.id);
-    } else if (listReplyId === "wait_times") {
-      await handleWaitTimes(from);
-    } else if (listReplyId === "view_menu") {
-      await sendMenu(from);
-    } else if (listReplyId === "restaurant_info") {
-      await handleRestaurantInfo(from);
-    } else if (listReplyId === "chatbot_help") {
-      await handleChatbotHelp(from);
-    } else if (listReplyId === "change_delivery_info") {
-      await handleChangeDeliveryInfo(from);
-    }
+  const { type, button_reply, list_reply } = message.interactive;
+  const messageId = message.context.id;
+
+  if (type === "button_reply") {
+    const action =
+      BUTTON_ACTIONS[button_reply.id as keyof typeof BUTTON_ACTIONS];
+    if (action) await action(from, messageId);
+  } else if (type === "list_reply") {
+    const action = LIST_ACTIONS[list_reply.id as keyof typeof LIST_ACTIONS];
+    if (action) await action(from, messageId);
   }
 }
 
@@ -210,7 +210,7 @@ async function handleOnlinePayment(
 
 async function sendMenu(phoneNumber: string): Promise<boolean> {
   try {
-    const fullMenu = await getFullMenu();
+    const fullMenu = await menuService.getFullMenu();
     await sendWhatsAppMessage(phoneNumber, fullMenu);
     return true;
   } catch (error) {

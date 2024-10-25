@@ -22,7 +22,10 @@ import {
 } from "../config/predefinedMessages";
 import { handleTextMessage } from "../utils/textMessageHandler";
 import { handleInteractiveMessage } from "../utils/interactiveMessageHandler";
-import { handleAudioMessage, TranscriptionModel } from "../utils/audioMessageHandler";
+import {
+  handleAudioMessage,
+  TranscriptionModel,
+} from "../utils/audioMessageHandler";
 import { Queue } from "queue-typescript";
 import * as moment from "moment-timezone";
 import { RESTAURANT_CLOSED_MESSAGE } from "../config/predefinedMessages";
@@ -177,7 +180,7 @@ export class WebhookService {
     const queue = this.clientQueues.get(clientId);
     while (queue.length > 0) {
       const message = queue.dequeue();
-      //logger.info(`Procesando mensaje ${message.id} del cliente ${clientId}`);
+      logger.info(`Procesando mensaje ${message.id} del cliente ${clientId}`);
 
       try {
         // Establecer un tiempo límite de 20 segundos para procesar cada mensaje

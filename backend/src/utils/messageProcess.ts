@@ -1,7 +1,7 @@
 import OpenAI from "openai";
 import Anthropic from "@anthropic-ai/sdk";
 import * as dotenv from "dotenv";
-import getFullMenu from "src/data/menu";
+import { MenuService } from "src/services/menu.service";
 import * as stringSimilarity from "string-similarity";
 import {
   removeScoreField,
@@ -34,6 +34,8 @@ const anthropic = new Anthropic({
 });
 
 const googleAI = new GoogleGenerativeAI(process.env.GOOGLE_AI_API_KEY);
+
+const menuService = new MenuService();
 
 function extractMentionedProduct(productMessage, menu) {
   logger.info("productMessage", productMessage);
@@ -522,7 +524,7 @@ const handlePreProcessOrderTool = async ({
 
 // Manejar envío de menú
 const handleMenuSend = async (): Promise<AIResponse> => ({
-  text: await getFullMenu(),
+  text: await menuService.getFullMenu(),
   isRelevant: false,
   confirmationMessage:
     "El menú ha sido enviado. ¿Hay algo más en lo que pueda ayudarte?",
