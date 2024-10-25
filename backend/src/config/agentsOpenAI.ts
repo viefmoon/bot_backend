@@ -23,34 +23,38 @@ ${await getMenuForAI()}`,
   tools: [
     {
       type: "function",
-      name: "transfer_to_agent",
-      description:
-        "Transfiere la conversación a otro agente especializado con un resumen del pedido",
-      parameters: {
-        type: "object",
-        properties: {
-          targetAgent: {
-            type: "string",
-            enum: ["ORDER_AGENT"],
+      function: {
+        name: "transfer_to_agent",
+        description:
+          "Transfiere la conversación a otro agente especializado con un resumen del pedido",
+        parameters: {
+          type: "object",
+          properties: {
+            targetAgent: {
+              type: "string",
+              enum: ["ORDER_AGENT"],
+            },
+            orderSummary: {
+              type: "string",
+              description:
+                "Resumen del pedido usando exactamente las mismas palabras que usó el cliente, sin intentar mapear o modificar los nombres de los productos",
+            },
           },
-          orderSummary: {
-            type: "string",
-            description:
-              "Resumen del pedido usando exactamente las mismas palabras que usó el cliente, sin intentar mapear o modificar los nombres de los productos",
-          },
+          required: ["targetAgent", "orderSummary"],
         },
-        required: ["targetAgent", "orderSummary"],
       },
     },
     {
       type: "function",
-      name: "send_menu",
-      description:
-        "Envía el menú completo al cliente cuando lo solicita explícitamente.",
-      parameters: {
-        type: "object",
-        properties: {},
-        required: [],
+      function: {
+        name: "send_menu",
+        description:
+          "Envía el menú completo al cliente cuando lo solicita explícitamente.",
+        parameters: {
+          type: "object",
+          properties: {},
+          required: [],
+        },
       },
     },
   ],
@@ -88,44 +92,46 @@ export const ORDER_AGENT_OPENAI: AgentOpenAI = {
   tools: [
     {
       type: "function",
-      name: "preprocess_order",
-      description:
-        "Generar una lista detallada de los productos mencionados por el cliente.",
-      parameters: {
-        type: "object",
-        properties: {
-          orderItems: {
-            type: "array",
-            description: "Productos y cantidades.",
-            items: {
-              type: "object",
-              properties: {
-                quantity: {
-                  type: "integer",
-                  description: "Cantidad del producto (mínimo 1).",
+      function: {
+        name: "preprocess_order",
+        description:
+          "Generar una lista detallada de los productos mencionados por el cliente.",
+        parameters: {
+          type: "object",
+          properties: {
+            orderItems: {
+              type: "array",
+              description: "Productos y cantidades.",
+              items: {
+                type: "object",
+                properties: {
+                  quantity: {
+                    type: "integer",
+                    description: "Cantidad del producto (mínimo 1).",
+                  },
+                  description: {
+                    type: "string",
+                    description:
+                      "Descripción detallada del producto, mapeándolos a los nombres exactos del menú, incluyendo modificaciones, ingredientes extra, etc. o mitad y mitad de pizza si el cliente las menciona",
+                  },
                 },
-                description: {
-                  type: "string",
-                  description:
-                    "Descripción detallada del producto, mapeándolos a los nombres exactos del menú, incluyendo modificaciones, ingredientes extra, etc. o mitad y mitad de pizza si el cliente las menciona",
-                },
+                required: ["description", "quantity"],
               },
-              required: ["description", "quantity"],
+            },
+            orderType: {
+              type: "string",
+              enum: ["delivery", "pickup"],
+              description:
+                "Tipo de orden: entrega a domicilio o recolección en restaurante, por defecto, asume que el orderType es 'delivery'.",
+            },
+            scheduledDeliveryTime: {
+              type: "string",
+              description:
+                "Hora programada para el pedido (opcional, en formato de 24 horas), por defecto, asume que la scheduledDeliveryTime es null (entrega inmediata).",
             },
           },
-          orderType: {
-            type: "string",
-            enum: ["delivery", "pickup"],
-            description:
-              "Tipo de orden: entrega a domicilio o recolección en restaurante, por defecto, asume que el orderType es 'delivery'.",
-          },
-          scheduledDeliveryTime: {
-            type: "string",
-            description:
-              "Hora programada para el pedido (opcional, en formato de 24 horas), por defecto, asume que la scheduledDeliveryTime es null (entrega inmediata).",
-          },
+          required: ["orderItems", "orderType", "scheduledDeliveryTime"],
         },
-        required: ["orderItems", "orderType", "scheduledDeliveryTime"],
       },
     },
   ],
