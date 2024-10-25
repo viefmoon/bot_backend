@@ -196,8 +196,8 @@ async function processAndGenerateAIResponse(
   );
 
   const agentConfig: AgentConfig = {
-    generalAgent: { type: AgentType.GENERAL_AGENT, provider: "CLAUDE" },
-    orderAgent: { type: AgentType.ORDER_AGENT, provider: "CLAUDE" },
+    generalAgent: { type: AgentType.GENERAL_AGENT, provider: "GEMINI" },
+    orderAgent: { type: AgentType.ORDER_AGENT, provider: "GEMINI" },
   };
 
   try {
