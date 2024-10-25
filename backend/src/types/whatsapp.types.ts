@@ -3,8 +3,41 @@ export interface WhatsAppMessage {
   messaging_product: string;
   to: string;
   type: string;
-  text: {
-    body: string;
+  text: { body: string };
+}
+
+// Interfaz para el contenido interactivo
+export interface WhatsAppInteractiveContent {
+  header?: {
+    type: string;
+    text?: string;
+    image?: {
+      link: string;
+    };
+  };
+  body: {
+    text: string;
+  };
+  footer?: {
+    text: string;
+  };
+  action: {
+    button?: string;
+    buttons?: Array<{
+      type: string;
+      reply: {
+        id: string;
+        title: string;
+      };
+    }>;
+    sections?: Array<{
+      title?: string;
+      rows: Array<{
+        id: string;
+        title: string;
+        description?: string;
+      }>;
+    }>;
   };
 }
 
@@ -14,45 +47,7 @@ export interface WhatsAppInteractiveMessage {
   recipient_type: string;
   to: string;
   type: string;
-  interactive: WhatsAppInteractiveOptions;
-}
-
-// Interfaces para las opciones interactivas
-export interface WhatsAppInteractiveOptions {
-  type: 'button' | 'list';
-  header?: {
-    type: string;
-    text: string;
-  };
-  body: {
-    text: string;
-  };
-  footer?: {
-    text: string;
-  };
-  action: WhatsAppButtonAction | WhatsAppListAction;
-}
-
-export interface WhatsAppButtonAction {
-  buttons: Array<{
-    type: 'reply';
-    reply: {
-      id: string;
-      title: string;
-    };
-  }>;
-}
-
-export interface WhatsAppListAction {
-  button: string;
-  sections: Array<{
-    title: string;
-    rows: Array<{
-      id: string;
-      title: string;
-      description?: string;
-    }>;
-  }>;
+  interactive: WhatsAppInteractiveContent;
 }
 
 // Interfaz para la respuesta de la API

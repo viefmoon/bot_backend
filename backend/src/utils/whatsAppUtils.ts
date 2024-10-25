@@ -5,9 +5,9 @@ import logger from "./logger";
 import {
   WhatsAppMessage,
   WhatsAppInteractiveMessage,
-  WhatsAppInteractiveOptions,
+  WhatsAppInteractiveContent,
   WhatsAppApiResponse
-} from '../types/whatsapp.types';
+} from "../types/whatsApp.types";
 
 export async function sendWhatsAppMessage(
   phoneNumber: string,
@@ -74,7 +74,7 @@ export async function sendWhatsAppMessage(
 
 export async function sendWhatsAppInteractiveMessage(
   phoneNumber: string,
-  interactiveOptions: WhatsAppInteractiveOptions // Reemplazado 'any' por la interfaz específica
+  interactiveOptions: WhatsAppInteractiveContent // Reemplazamos 'any' por la interfaz específica
 ): Promise<string | null> {
   try {
     const payload: WhatsAppInteractiveMessage = {
@@ -85,7 +85,7 @@ export async function sendWhatsAppInteractiveMessage(
       interactive: interactiveOptions,
     };
 
-    const response = await axios.post<WhatsAppApiResponse>(
+    const response = await axios.post<{ messages: [{ id: string }] }>(
       `https://graph.facebook.com/v19.0/${process.env.WHATSAPP_PHONE_NUMBER_ID}/messages`,
       payload,
       {
