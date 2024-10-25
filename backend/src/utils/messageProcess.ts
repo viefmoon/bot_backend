@@ -33,7 +33,6 @@ const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY,
 });
 
-// Inicializa el cliente de Gemini
 const googleAI = new GoogleGenerativeAI(process.env.GOOGLE_AI_API_KEY);
 
 function extractMentionedProduct(productMessage, menu) {
@@ -695,6 +694,8 @@ export async function preProcessMessagesOpenAI(
       processedMessages
     );
     const response = await openai.chat.completions.create(requestPayload);
+
+    console.log("response openai", JSON.stringify(response, null, 2));
 
     const responses: AIResponse[] = [];
 

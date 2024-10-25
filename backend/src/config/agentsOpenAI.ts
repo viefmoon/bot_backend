@@ -2,7 +2,7 @@ import { AgentType, AgentOpenAI } from "../types/agents";
 import { getMenuForAI } from "../utils/menuUtils";
 
 export const GENERAL_AGENT_OPENAI: AgentOpenAI = {
-  model: "gpt-4",
+  model: "gpt-4o-mini",
   systemMessage: async () => ({
     role: "system",
     content: `[Asistente Virtual del Restaurante La Leña]
