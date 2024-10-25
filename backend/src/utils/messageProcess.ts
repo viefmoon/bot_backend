@@ -19,9 +19,9 @@ import {
 } from "../utils/messageProcessUtils";
 import { getMenuAvailability } from "./menuUtils";
 import logger from "./logger";
-import { AGENTS_CLAUDE } from "../config/agents";
+import { AGENTS_CLAUDE } from "../config/agentsClaude";
 import { GoogleGenerativeAI } from "@google/generative-ai";
-import { AGENTS_GEMINI } from "../config/agents";
+import { AGENTS_GEMINI } from "../config/agentsGemini";
 import { AgentConfig, AgentMapping, AgentType } from "src/types/agents";
 import { AGENTS_OPENAI } from "src/config/agentsOpenAI";
 dotenv.config();

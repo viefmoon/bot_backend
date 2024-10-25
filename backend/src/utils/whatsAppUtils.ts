@@ -2,21 +2,12 @@ import * as dotenv from "dotenv";
 dotenv.config();
 import axios from "axios";
 import logger from "./logger";
-
-interface WhatsAppMessage {
-  messaging_product: string;
-  to: string;
-  type: string;
-  text: { body: string };
-}
-
-interface WhatsAppInteractiveMessage {
-  messaging_product: string;
-  recipient_type: string;
-  to: string;
-  type: string;
-  interactive: any; // Tipo 'any' usado aquí, pero se podría definir una interfaz más específica si se conoce la estructura exacta
-}
+import {
+  WhatsAppMessage,
+  WhatsAppInteractiveMessage,
+  WhatsAppInteractiveOptions,
+  WhatsAppApiResponse
+} from '../types/whatsapp.types';
 
 export async function sendWhatsAppMessage(
   phoneNumber: string,
@@ -83,7 +74,7 @@ export async function sendWhatsAppMessage(
 
 export async function sendWhatsAppInteractiveMessage(
   phoneNumber: string,
-  interactiveOptions: any // Tipo 'any' usado aquí, pero se podría definir un tipo más específico si se conoce la estructura exacta
+  interactiveOptions: WhatsAppInteractiveOptions // Reemplazado 'any' por la interfaz específica
 ): Promise<string | null> {
   try {
     const payload: WhatsAppInteractiveMessage = {
@@ -94,7 +85,7 @@ export async function sendWhatsAppInteractiveMessage(
       interactive: interactiveOptions,
     };
 
-    const response = await axios.post<{ messages: [{ id: string }] }>(
+    const response = await axios.post<WhatsAppApiResponse>(
       `https://graph.facebook.com/v19.0/${process.env.WHATSAPP_PHONE_NUMBER_ID}/messages`,
       payload,
       {
