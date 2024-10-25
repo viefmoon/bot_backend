@@ -5,21 +5,21 @@ import {
   handlePreOrderDiscard,
   handleOrderCancellation,
   handleOrderModification,
-} from "../handlers/orderHandlers";
+} from "src/utils/handlers/orderHandlers";
 
-import { Order, Customer, RestaurantConfig, PreOrder } from "../models";
-import { sendWhatsAppMessage } from "../utils/whatsAppUtils";
+import { Order, Customer, RestaurantConfig, PreOrder } from "src/models";
+import { sendWhatsAppMessage } from "src/utils/whatsAppUtils";
 import Stripe from "stripe";
-import { OtpService } from "../services/otp.service";
+import { OtpService } from "src/services/otp.service";
 import {
   WAIT_TIMES_MESSAGE,
   RESTAURANT_INFO_MESSAGE,
   CHATBOT_HELP_MESSAGE,
   CHANGE_DELIVERY_INFO_MESSAGE,
-} from "../config/predefinedMessages";
-import { MenuService } from "../services/menu.service";
-import logger from "./logger";
-import { getCurrentMexicoTime } from "./timeUtils";
+} from "src/config/predefinedMessages";
+import { MenuService } from "src/services/menu.service";
+import logger from "src/utils/logger";
+import { getCurrentMexicoTime } from "src/utils/timeUtils";
 
 const stripeClient = new Stripe(process.env.STRIPE_SECRET_KEY!, {
   apiVersion: "2024-06-20",
