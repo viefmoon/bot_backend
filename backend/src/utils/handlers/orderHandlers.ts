@@ -252,13 +252,13 @@ export async function handlePreOrderDiscard(
     await customer.update({ relevantChatHistory: [] });
 
     const confirmationMessage =
-      "Tu preorden ha sido descartada y el historial de conversación reciente ha sido borrado. ¿En qué más puedo ayudarte? ";
+      "✅ Tu preorden ha sido descartada y el historial de conversación reciente ha sido borrado. 🗑️ ¿En qué más puedo ayudarte? 😊";
     await sendWhatsAppMessage(clientId, confirmationMessage);
   } catch (error) {
     logger.error("Error al descartar la preorden:", error);
     await sendWhatsAppMessage(
       clientId,
-      "Hubo un error al procesar tu solicitud. Por favor, intenta nuevamente o contacta con el restaurante."
+      "❌ Hubo un error al procesar tu solicitud. 🚫 Por favor, intenta nuevamente o contacta con el restaurante. 📞"
     );
   }
 }
@@ -469,3 +469,4 @@ export async function handleOrderModification(
     );
   }
 }
+
