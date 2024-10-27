@@ -145,9 +145,9 @@ export default function DeliveryInfoRegistration() {
           Swal.fire({
             title: '¡Permisos de ubicación bloqueados!',
             html: `
-              <div class="text-left">
-                <p class="mb-3">Para acceder a tu ubicación, necesitas habilitar los permisos:</p>
-                <ol class="list-decimal pl-5">
+              <div class="text-left text-sm">
+                <p class="mb-2">Para acceder a tu ubicación, necesitas habilitar los permisos:</p>
+                <ol class="list-decimal pl-4">
                   <li>Haz clic en el ícono del candado en la barra de direcciones</li>
                   <li>Busca 'Ubicación' en la configuración</li>
                   <li>Cambia el permiso a 'Permitir'</li>
@@ -158,11 +158,7 @@ export default function DeliveryInfoRegistration() {
             icon: 'warning',
             confirmButtonText: 'Entendido',
             confirmButtonColor: '#3085d6',
-            customClass: {
-              container: 'custom-swal-container',
-              popup: 'custom-swal-popup',
-              content: 'custom-swal-content'
-            }
+            width: '320px',
           });
           setLocationError("Por favor, ingresa tu dirección manualmente o habilita los permisos de ubicación.");
           return;
@@ -410,10 +406,10 @@ export default function DeliveryInfoRegistration() {
       title: '¡Dirección Registrada!',
       html: `
         <div class="text-center">
-          <div class="text-lg font-semibold mb-2">
+          <div class="text-base font-semibold mb-1">
             ¡Gracias por registrar tu dirección!
           </div>
-          <div class="text-sm text-gray-500">
+          <div class="text-xs text-gray-500">
             Te redirigiremos a WhatsApp en unos segundos...
           </div>
         </div>
@@ -421,7 +417,8 @@ export default function DeliveryInfoRegistration() {
       icon: 'success',
       showConfirmButton: false,
       timer: 5000,
-      timerProgressBar: true
+      timerProgressBar: true,
+      width: '300px'
     }).then(() => {
       const whatsappNumber = process.env.NEXT_PUBLIC_BOT_WHATSAPP_NUMBER;
       window.location.href = `https://wa.me/${whatsappNumber}`;
@@ -478,7 +475,7 @@ export default function DeliveryInfoRegistration() {
           </button>
         </div>
       </div>
-      {locationError && <p className="text-red-600">{locationError}</p>}
+      {locationError && <p className="text-red-600 text-sm">{locationError}</p>}
       <form onSubmit={handleSubmit}>
         <AddressForm
           clientId={clientId}
