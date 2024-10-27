@@ -124,76 +124,54 @@ Incluyen: Pollo a la plancha o jamón, chile morrón, elote, lechuga, jitomate, 
   async getMenu() {
     try {
       const menu = await Category.findAll({
-        attributes: {
-          exclude: ["createdAt", "updatedAt"],
-        },
         include: [
           {
             model: Subcategory,
             as: "subcategories",
-            attributes: {
-              exclude: ["createdAt", "updatedAt", "categoryId"],
-            },
             include: [
               {
                 model: Product,
                 as: "products",
-                attributes: {
-                  exclude: [
-                    "createdAt",
-                    "updatedAt",
-                    "ingredients",
-                    "subcategoryId",
-                  ],
-                },
                 include: [
                   {
                     model: ProductVariant,
                     as: "productVariants",
-                    attributes: {
-                      exclude: ["createdAt", "updatedAt", "ingredients"],
-                    },
                     include: [
                       {
                         model: Availability,
                         as: "productVariantAvailability",
-                        attributes: ["id", "available"],
+                        //attributes: ["id", "available"],
                       },
                     ],
                   },
                   {
                     model: Availability,
                     as: "productAvailability",
-                    attributes: ["id", "available"],
+                    //attributes: ["id", "available"],
                   },
                   {
                     model: PizzaIngredient,
                     as: "pizzaIngredients",
-                    attributes: {
-                      exclude: ["createdAt", "updatedAt", "ingredients"],
-                    },
                     include: [
                       {
                         model: Availability,
                         as: "pizzaIngredientAvailability",
-                        attributes: ["id", "available"],
+                        //attributes: ["id", "available"],
                       },
                     ],
                   },
                   {
                     model: ModifierType,
                     as: "modifierTypes",
-                    attributes: { exclude: ["createdAt", "updatedAt"] },
                     include: [
                       {
                         model: Modifier,
                         as: "modifiers",
-                        attributes: { exclude: ["createdAt", "updatedAt"] },
                         include: [
                           {
                             model: Availability,
                             as: "modifierAvailability",
-                            attributes: ["id", "available"],
+                            //attributes: ["id", "available"],
                           },
                         ],
                       },
