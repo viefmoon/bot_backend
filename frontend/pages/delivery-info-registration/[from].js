@@ -139,18 +139,32 @@ export default function DeliveryInfoRegistration() {
   const requestLocation = async () => {
     if ("geolocation" in navigator) {
       try {
-        // Primero verificamos el estado de los permisos
         const permissionStatus = await navigator.permissions.query({ name: 'geolocation' });
         
         if (permissionStatus.state === 'denied') {
-          setLocationError(
-            "Los permisos de ubicación están bloqueados, ingresa la dirección manualmente o habilita los permisos:\n\n" +
-            "1. Habilitar los permisos de ubicación:\n" +
-            "   • Haz clic en el ícono del candado en la barra de direcciones\n" +
-            "   • Busca 'Ubicación' en la configuración\n" +
-            "   • Cambia el permiso a 'Permitir'\n" +
-            "   • Recarga la página e intenta nuevamente\n\n" 
-          );
+          Swal.fire({
+            title: '¡Permisos de ubicación bloqueados!',
+            html: `
+              <div class="text-left">
+                <p class="mb-3">Para acceder a tu ubicación, necesitas habilitar los permisos:</p>
+                <ol class="list-decimal pl-5">
+                  <li>Haz clic en el ícono del candado en la barra de direcciones</li>
+                  <li>Busca 'Ubicación' en la configuración</li>
+                  <li>Cambia el permiso a 'Permitir'</li>
+                  <li>Recarga la página e intenta nuevamente</li>
+                </ol>
+              </div>
+            `,
+            icon: 'warning',
+            confirmButtonText: 'Entendido',
+            confirmButtonColor: '#3085d6',
+            customClass: {
+              container: 'custom-swal-container',
+              popup: 'custom-swal-popup',
+              content: 'custom-swal-content'
+            }
+          });
+          setLocationError("Por favor, ingresa tu dirección manualmente o habilita los permisos de ubicación.");
           return;
         }
 
@@ -193,12 +207,10 @@ export default function DeliveryInfoRegistration() {
         );
       } catch (error) {
         console.error("Error al verificar permisos:", error);
-        setLocationError(
-          "Hubo un error al verificar los permisos de ubicación. Por favor, ingrese su dirección manualmente."
-        );
+        setLocationError("Por favor, ingresa tu dirección manualmente.");
       }
     } else {
-      setLocationError("Geolocalización no está soportada en este navegador.");
+      setLocationError("Por favor, ingresa tu dirección manualmente.");
     }
   };
 
