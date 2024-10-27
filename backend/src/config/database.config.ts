@@ -15,12 +15,6 @@ const baseConfig = {
     charset: 'utf8',
     collate: 'utf8_general_ci',
   },
-  dialectOptions: {
-    ssl: process.env.PGSSLMODE === 'require' ? {
-      require: true,
-      rejectUnauthorized: false,
-    } : undefined,
-  },
   pool: {
     max: 5,
     min: 0,
