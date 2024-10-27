@@ -3,7 +3,7 @@ dotenv.config();
 import { sequelize } from "../src/lib/db";
 import Product from "../src/models/product";
 import ProductVariant from "../src/models/productVariant";
-import PizzaIngredient from "../src/models/pizzaIngredient"; 
+import PizzaIngredient from "../src/models/pizzaIngredient";
 import ModifierType from "../src/models/modifierType";
 import Modifier from "../src/models/modifier";
 import Subcategory from "../src/models/subcategory";
@@ -860,9 +860,13 @@ const products = [
 export const seedMenuItems = async (): Promise<void> => {
   try {
     // Verificar si el seeder ya se ha ejecutado
-    const seederControl = await SeederControl.findOne({ where: { id: "menuItems" } });
+    const seederControl = await SeederControl.findOne({
+      where: { id: "menuItems" },
+    });
     if (seederControl) {
-      logger.info("El seeder de menú ya se ha ejecutado anteriormente. Saltando la ejecución.");
+      logger.info(
+        "El seeder de menú ya se ha ejecutado anteriormente. Saltando la ejecución."
+      );
       return;
     }
 
@@ -992,8 +996,13 @@ export const seedMenuItems = async (): Promise<void> => {
       lastRun: new Date(),
     });
 
-    logger.info("Los elementos del menú, la disponibilidad y la configuración del restaurante se han sembrado con éxito.");
+    logger.info(
+      "Los elementos del menú, la disponibilidad y la configuración del restaurante se han sembrado con éxito."
+    );
   } catch (error) {
-    logger.error("Error al sembrar los elementos del menú, la disponibilidad y la configuración del restaurante:", error);
+    logger.error(
+      "Error al sembrar los elementos del menú, la disponibilidad y la configuración del restaurante:",
+      error
+    );
   }
 };

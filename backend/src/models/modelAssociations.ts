@@ -134,18 +134,6 @@ PizzaIngredient.hasOne(Availability, {
   scope: { type: "pizzaIngredient" },
 });
 
-Availability.belongsTo(ModifierType, {
-  foreignKey: "id",
-  constraints: false,
-  scope: { type: "modifierType" },
-});
-
-ModifierType.hasOne(Availability, {
-  foreignKey: "id",
-  constraints: false,
-  scope: { type: "modifierType" },
-});
-
 Availability.belongsTo(Modifier, {
   foreignKey: "id",
   constraints: false,
