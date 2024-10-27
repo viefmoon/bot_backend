@@ -140,14 +140,15 @@ Incluyen: Pollo a la plancha o jamón, chile morrón, elote, lechuga, jitomate, 
                       {
                         model: Availability,
                         as: "productVariantAvailability",
-                        //attributes: ["id", "available"],
+                        // Corregir el nombre del campo
+                        attributes: ["id", "entityId", "entityType", "available"]
                       },
                     ],
                   },
                   {
                     model: Availability,
                     as: "productAvailability",
-                    //attributes: ["id", "available"],
+                    attributes: ["id", "entityId", "entityType", "available"]
                   },
                   {
                     model: PizzaIngredient,
@@ -156,7 +157,7 @@ Incluyen: Pollo a la plancha o jamón, chile morrón, elote, lechuga, jitomate, 
                       {
                         model: Availability,
                         as: "pizzaIngredientAvailability",
-                        //attributes: ["id", "available"],
+                        attributes: ["id", "entityId", "entityType", "available"]
                       },
                     ],
                   },
@@ -171,7 +172,7 @@ Incluyen: Pollo a la plancha o jamón, chile morrón, elote, lechuga, jitomate, 
                           {
                             model: Availability,
                             as: "modifierAvailability",
-                            //attributes: ["id", "available"],
+                            attributes: ["id", "entityId", "entityType", "available"]
                           },
                         ],
                       },
