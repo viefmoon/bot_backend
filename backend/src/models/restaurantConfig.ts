@@ -46,6 +46,7 @@ RestaurantConfig.init(
   {
     sequelize,
     modelName: "RestaurantConfig",
+    tableName: "RestaurantConfigs",
     timestamps: false,
   }
 );

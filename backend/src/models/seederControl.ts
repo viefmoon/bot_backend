@@ -20,6 +20,7 @@ SeederControl.init(
   {
     sequelize,
     modelName: "SeederControl",
+    tableName: "SeederControls",
     timestamps: false,
   }
 );

@@ -77,6 +77,7 @@ Customer.init(
   {
     sequelize,
     modelName: "Customer",
+    tableName: "Customers",
     timestamps: true,
   }
 );

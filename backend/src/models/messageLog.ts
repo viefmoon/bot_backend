@@ -29,6 +29,7 @@ MessageLog.init(
   {
     sequelize,
     modelName: "MessageLog",
+    tableName: "MessageLogs",
     timestamps: false,
   }
 );

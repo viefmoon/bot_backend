@@ -65,6 +65,7 @@ PreOrder.init(
   {
     sequelize,
     modelName: "PreOrder",
+    tableName: "PreOrders",
     timestamps: true,
   }
 );

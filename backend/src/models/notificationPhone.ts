@@ -31,6 +31,7 @@ NotificationPhone.init(
   {
     sequelize,
     modelName: "NotificationPhone",
+    tableName: "NotificationPhones",
     timestamps: false,
   }
 );

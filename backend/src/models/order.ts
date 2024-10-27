@@ -147,6 +147,7 @@ Order.init(
   {
     sequelize,
     modelName: "Order",
+    tableName: "Orders",
     timestamps: true,
   }
 );

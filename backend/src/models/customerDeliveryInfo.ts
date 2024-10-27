@@ -106,6 +106,7 @@ CustomerDeliveryInfo.init(
   },
   {
     sequelize,
+    modelName: "CustomerDeliveryInfo",
     tableName: "CustomerDeliveryInfos",
     timestamps: true,
   }

@@ -54,6 +54,7 @@ Modifier.init(
   {
     sequelize,
     modelName: "Modifier",
+    tableName: "Modifiers",
     timestamps: false,
   }
 );

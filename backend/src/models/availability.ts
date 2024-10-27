@@ -41,6 +41,7 @@ Availability.init(
   {
     sequelize,
     modelName: "Availability",
+    tableName: "Availabilities",
     timestamps: false,
   }
 );

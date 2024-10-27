@@ -36,6 +36,7 @@ MessageRateLimit.init(
   {
     sequelize,
     modelName: "MessageRateLimit",
+    tableName: "MessageRateLimits",
     timestamps: false,
   }
 );

@@ -60,6 +60,7 @@ ModifierType.init(
   {
     sequelize,
     modelName: "ModifierType",
+    tableName: "ModifierTypes",
     timestamps: false,
   }
 );

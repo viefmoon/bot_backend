@@ -112,6 +112,7 @@ OrderDeliveryInfo.init(
   },
   {
     sequelize,
+    modelName: "OrderDeliveryInfo",
     tableName: "OrderDeliveryInfos",
     timestamps: true,
   }

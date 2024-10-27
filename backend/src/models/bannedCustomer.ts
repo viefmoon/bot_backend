@@ -29,6 +29,7 @@ BannedCustomer.init(
   {
     sequelize,
     modelName: "BannedCustomer",
+    tableName: "BannedCustomers",
     timestamps: true,
   }
 );

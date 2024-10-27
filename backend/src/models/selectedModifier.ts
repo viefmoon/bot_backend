@@ -40,6 +40,7 @@ SelectedModifier.init(
   {
     sequelize,
     modelName: "SelectedModifier",
+    tableName: "SelectedModifiers",
     timestamps: false,
   }
 );

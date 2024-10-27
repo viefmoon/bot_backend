@@ -101,6 +101,7 @@ OrderItem.init(
   {
     sequelize,
     modelName: "OrderItem",
+    tableName: "OrderItems",
     timestamps: true,
   }
 );

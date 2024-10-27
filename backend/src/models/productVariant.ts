@@ -56,6 +56,7 @@ ProductVariant.init(
   {
     sequelize,
     modelName: "ProductVariant",
+    tableName: "ProductVariants",
     timestamps: false,
   }
 );

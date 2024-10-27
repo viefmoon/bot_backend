@@ -59,6 +59,7 @@ PizzaIngredient.init(
   {
     sequelize,
     modelName: "PizzaIngredient",
+    tableName: "PizzaIngredients",
     timestamps: false,
   }
 );
