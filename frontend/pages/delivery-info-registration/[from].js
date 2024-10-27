@@ -142,13 +142,13 @@ export default function DeliveryInfoRegistration() {
         const permissionStatus = await navigator.permissions.query({ name: 'geolocation' });
         
         if (permissionStatus.state === 'denied') {
-          // Si los permisos están bloqueados, mostramos instrucciones al usuario
           setLocationError(
-            "Los permisos de ubicación están bloqueados. Por favor, sigue estos pasos para habilitarlos:\n" +
-            "1. Haz clic en el ícono del candado en la barra de direcciones\n" +
-            "2. Busca 'Ubicación' en la configuración\n" +
-            "3. Cambia el permiso a 'Permitir'\n" +
-            "4. Recarga la página e intenta nuevamente"
+            "Los permisos de ubicación están bloqueados, ingresa la dirección manualmente o habilita los permisos:\n\n" +
+            "1. Habilitar los permisos de ubicación:\n" +
+            "   • Haz clic en el ícono del candado en la barra de direcciones\n" +
+            "   • Busca 'Ubicación' en la configuración\n" +
+            "   • Cambia el permiso a 'Permitir'\n" +
+            "   • Recarga la página e intenta nuevamente\n\n" 
           );
           return;
         }
