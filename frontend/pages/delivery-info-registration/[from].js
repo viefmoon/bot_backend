@@ -137,43 +137,72 @@ export default function DeliveryInfoRegistration() {
 
   const requestLocation = () => {
     if ("geolocation" in navigator) {
-      navigator.geolocation.getCurrentPosition(
-        async (position) => {
-          const { latitude, longitude } = position.coords;
-          const location = { lat: latitude, lng: longitude };
-
-          setSelectedLocation(location);
-
-          const addressDetails = await getAddressFromCoordinates(location);
-          setAddress(addressDetails.streetAddress);
-          setFormData((prev) => ({
-            ...prev,
-            ...addressDetails,
-            latitude: location.lat,
-            longitude: location.lng,
-          }));
-
-          const inputElement = document.querySelector('input[type="text"]');
-          if (inputElement) {
-            inputElement.value = addressDetails.streetAddress;
-          }
-
-          if (!isLocationAllowed(location)) {
-            setLocationError(
-              "La ubicación actual está fuera del área permitida."
-            );
-          } else {
-            setLocationError(null);
-          }
-        },
-        (error) => {
-          console.error("Error obteniendo la ubicación:", error);
-          // Cambiamos setError por setLocationError para no bloquear la interfaz
+      // Primero verificamos el estado de los permisos
+      navigator.permissions.query({ name: 'geolocation' }).then(permissionStatus => {
+        if (permissionStatus.state === 'denied') {
+          // Si los permisos están denegados, mostramos instrucciones al usuario
           setLocationError(
-            "No se pudo obtener la ubicación actual. Por favor, ingrese su dirección manualmente o intente compartir su ubicación nuevamente."
+            "Los permisos de ubicación están bloqueados. Por favor, habilita el acceso a la ubicación en la configuración de tu navegador y vuelve a intentarlo."
+          );
+        } else {
+          // Si los permisos no están denegados, solicitamos la ubicación
+          navigator.geolocation.getCurrentPosition(
+            async (position) => {
+              const { latitude, longitude } = position.coords;
+              const location = { lat: latitude, lng: longitude };
+
+              setSelectedLocation(location);
+
+              const addressDetails = await getAddressFromCoordinates(location);
+              setAddress(addressDetails.streetAddress);
+              setFormData((prev) => ({
+                ...prev,
+                ...addressDetails,
+                latitude: location.lat,
+                longitude: location.lng,
+              }));
+
+              const inputElement = document.querySelector('input[type="text"]');
+              if (inputElement) {
+                inputElement.value = addressDetails.streetAddress;
+              }
+
+              if (!isLocationAllowed(location)) {
+                setLocationError(
+                  "La ubicación actual está fuera del área permitida."
+                );
+              } else {
+                setLocationError(null);
+              }
+            },
+            (error) => {
+              console.error("Error obteniendo la ubicación:", error);
+              let errorMessage = "";
+              
+              switch (error.code) {
+                case error.PERMISSION_DENIED:
+                  errorMessage = "Has denegado el acceso a la ubicación. Por favor, habilita los permisos en la configuración de tu navegador y vuelve a intentarlo.";
+                  break;
+                case error.POSITION_UNAVAILABLE:
+                  errorMessage = "La información de ubicación no está disponible.";
+                  break;
+                case error.TIMEOUT:
+                  errorMessage = "Se agotó el tiempo de espera para obtener la ubicación.";
+                  break;
+                default:
+                  errorMessage = "No se pudo obtener la ubicación actual. Por favor, ingrese su dirección manualmente o intente nuevamente.";
+              }
+              
+              setLocationError(errorMessage);
+            },
+            {
+              enableHighAccuracy: true,
+              timeout: 5000,
+              maximumAge: 0
+            }
           );
         }
-      );
+      });
     } else {
       setLocationError("Geolocalización no está soportada en este navegador.");
     }
