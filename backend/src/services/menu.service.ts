@@ -189,6 +189,7 @@ Incluyen: Pollo a la plancha o jamón, chile morrón, elote, lechuga, jitomate, 
                         include: [
                           {
                             model: Availability,
+                            as: "availability",
                             attributes: ["id", "available"],
                           },
                         ],
