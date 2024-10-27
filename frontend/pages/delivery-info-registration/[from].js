@@ -168,13 +168,14 @@ export default function DeliveryInfoRegistration() {
         },
         (error) => {
           console.error("Error obteniendo la ubicación:", error);
-          setError(
-            "No se pudo obtener la ubicación actual. Por favor, ingrese su dirección manualmente."
+          // Cambiamos setError por setLocationError para no bloquear la interfaz
+          setLocationError(
+            "No se pudo obtener la ubicación actual. Por favor, ingrese su dirección manualmente o intente compartir su ubicación nuevamente."
           );
         }
       );
     } else {
-      setError("Geolocalización no está soportada en este navegador.");
+      setLocationError("Geolocalización no está soportada en este navegador.");
     }
   };
 
@@ -379,11 +380,7 @@ export default function DeliveryInfoRegistration() {
     );
   if (!isLoaded) return <div className="text-gray-600">Cargando...</div>;
   if (loading) return <p className="text-gray-600">Verificando enlace...</p>;
-  if (error) return <p className="text-red-600">{error}</p>;
-  if (!isValidOtp)
-    return (
-      <p className="text-red-600">El enlace ha expirado o no es válido.</p>
-    );
+  if (error && !isValidOtp) return <p className="text-red-600">{error}</p>;
 
   return (
     <div className="container mx-auto px-1 py-1">
