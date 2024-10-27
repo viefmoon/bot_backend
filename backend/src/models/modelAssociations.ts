@@ -154,3 +154,79 @@ Product.belongsTo(Subcategory, {
   foreignKey: "subcategoryId",
   as: "subcategory",
 });
+
+// Asociaciones de Availability
+
+// Relaciones existentes
+Product.hasOne(Availability, {
+  foreignKey: "entityId",
+  as: "productAvailability",
+  constraints: false,
+  scope: {
+    entityType: 'product'
+  }
+});
+
+ProductVariant.hasOne(Availability, {
+  foreignKey: "entityId",
+  as: "productVariantAvailability",
+  constraints: false,
+  scope: {
+    entityType: 'productVariant'
+  }
+});
+
+PizzaIngredient.hasOne(Availability, {
+  foreignKey: "entityId",
+  as: "pizzaIngredientAvailability",
+  constraints: false,
+  scope: {
+    entityType: 'pizzaIngredient'
+  }
+});
+
+Modifier.hasOne(Availability, {
+  foreignKey: "entityId",
+  as: "modifierAvailability",
+  constraints: false,
+  scope: {
+    entityType: 'modifier'
+  }
+});
+
+// Relaciones inversas añadidas
+Availability.belongsTo(Product, {
+  foreignKey: "entityId",
+  as: "product",
+  constraints: false,
+  scope: {
+    entityType: 'product'
+  }
+});
+
+Availability.belongsTo(ProductVariant, {
+  foreignKey: "entityId",
+  as: "productVariant",
+  constraints: false,
+  scope: {
+    entityType: 'productVariant'
+  }
+});
+
+Availability.belongsTo(PizzaIngredient, {
+  foreignKey: "entityId",
+  as: "pizzaIngredient",
+  constraints: false,
+  scope: {
+    entityType: 'pizzaIngredient'
+  }
+});
+
+Availability.belongsTo(Modifier, {
+  foreignKey: "entityId",
+  as: "modifier",
+  constraints: false,
+  scope: {
+    entityType: 'modifier'
+  }
+});
