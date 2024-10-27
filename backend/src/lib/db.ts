@@ -12,6 +12,16 @@ const sequelize = new Sequelize(
     port: parseInt(process.env.PGPORT!),
     dialect: "postgres",
     logging: false,
+    define: {
+      // Configuración global para todos los modelos
+      underscored: false,
+      freezeTableName: true,
+      // Previene que Sequelize modifique los nombres de las tablas
+      timestamps: true,
+      // Asegura que los nombres de atributos se mantengan como los defines
+      charset: "utf8",
+      collate: "utf8_general_ci",
+    },
     ...(process.env.PGSSLMODE === "require" && {
       dialectOptions: {
         ssl: {
