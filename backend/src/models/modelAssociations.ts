@@ -102,36 +102,42 @@ Availability.belongsTo(Product, {
   foreignKey: "id",
   constraints: false,
   scope: { type: "product" },
+  as: "availability"
 });
 
 Product.hasOne(Availability, {
   foreignKey: "id",
   constraints: false,
   scope: { type: "product" },
+  as: "availability"
 });
 
 Availability.belongsTo(ProductVariant, {
   foreignKey: "id",
   constraints: false,
   scope: { type: "productVariant" },
+  as: "availability"
 });
 
 ProductVariant.hasOne(Availability, {
   foreignKey: "id",
   constraints: false,
   scope: { type: "productVariant" },
+  as: "availability"
 });
 
 Availability.belongsTo(PizzaIngredient, {
   foreignKey: "id",
   constraints: false,
   scope: { type: "pizzaIngredient" },
+  as: "availability"
 });
 
 PizzaIngredient.hasOne(Availability, {
   foreignKey: "id",
   constraints: false,
   scope: { type: "pizzaIngredient" },
+  as: "availability"
 });
 
 Availability.belongsTo(Modifier, {
