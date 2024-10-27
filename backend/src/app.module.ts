@@ -21,6 +21,7 @@ import { OtpService } from "./services/otp.service";
 import { OtpController } from "./controllers/otp.controller";
 import { CustomerDeliveryInfoService } from "./services/customer-delivery-info.service";
 import { SeederService } from "./services/seeder.service";
+import { WhatsAppController } from "./controllers/whatsapp.controller";
 
 @Module({
   imports: [ConfigModule.forRoot()],
@@ -35,6 +36,7 @@ import { SeederService } from "./services/seeder.service";
     AvailabilityController,
     WebhookController,
     OtpController,
+    WhatsAppController,
   ],
   providers: [
     MenuService,
