@@ -97,43 +97,6 @@ SelectedPizzaIngredient.belongsTo(PizzaIngredient, {
   foreignKey: "pizzaIngredientId",
 });
 
-// Availability associations
-Product.hasOne(Availability, {
-  foreignKey: "entityId",
-  as: "productAvailability",
-  constraints: false,
-  scope: {
-    entityType: 'product'
-  }
-});
-
-ProductVariant.hasOne(Availability, {
-  foreignKey: "entityId",
-  as: "productVariantAvailability",
-  constraints: false,
-  scope: {
-    entityType: 'productVariant'
-  }
-});
-
-PizzaIngredient.hasOne(Availability, {
-  foreignKey: "entityId",
-  as: "pizzaIngredientAvailability",
-  constraints: false,
-  scope: {
-    entityType: 'pizzaIngredient'
-  }
-});
-
-Modifier.hasOne(Availability, {
-  foreignKey: "entityId",
-  as: "modifierAvailability",
-  constraints: false,
-  scope: {
-    entityType: 'modifier'
-  }
-});
-
 // Nuevas asociaciones para Category y Subcategory
 Category.hasMany(Subcategory, {
   foreignKey: "categoryId",
