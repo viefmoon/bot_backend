@@ -185,13 +185,11 @@ Incluyen: Pollo a la plancha o jamón, chile morrón, elote, lechuga, jitomate, 
                       {
                         model: Modifier,
                         as: "modifiers",
-                        attributes: {
-                          exclude: ["createdAt", "updatedAt", "modifierTypeId"],
-                        },
+                        attributes: { exclude: ["createdAt", "updatedAt"] },
                         include: [
                           {
                             model: Availability,
-                            //attributes: ["id", "available"], // Agregamos 'available'
+                            attributes: ["id", "available"],
                           },
                         ],
                       },
@@ -203,30 +201,7 @@ Incluyen: Pollo a la plancha o jamón, chile morrón, elote, lechuga, jitomate, 
           },
         ],
       });
-
-      // Agregamos logging para debug
-      logger.debug("Datos de modificadores del menú:", {
-        modifiers: menu.map((category) => ({
-          categoryName: category.name,
-          subcategories: category.subcategories.map((sub) => ({
-            subcategoryName: sub.name,
-            products: sub.products.map((prod) => ({
-              productName: prod.name,
-              modifierTypes: prod.modifierTypes.map((mt) => ({
-                typeName: mt.name,
-                modifiers: mt.modifiers.map((m) => ({
-                  id: m.id,
-                  name: m.name,
-                  available: m.Availability?.available,
-                })),
-              })),
-            })),
-          })),
-        })),
-      });
-
       console.log("menu", JSON.stringify(menu, null, 2));
-
       return menu;
     } catch (error) {
       logger.error(`Error al recuperar el menú: ${error.message}`, { error });
