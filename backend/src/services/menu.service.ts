@@ -185,11 +185,13 @@ Incluyen: Pollo a la plancha o jamón, chile morrón, elote, lechuga, jitomate, 
                       {
                         model: Modifier,
                         as: "modifiers",
-                        attributes: { exclude: ["createdAt", "updatedAt"] },
+                        attributes: {
+                          exclude: ["createdAt", "updatedAt", "modifierTypeId"],
+                        },
                         include: [
                           {
                             model: Availability,
-                            attributes: ["id", "available"],
+                            attributes: ["id", "available"], // Agregamos 'available'
                           },
                         ],
                       },
@@ -201,6 +203,28 @@ Incluyen: Pollo a la plancha o jamón, chile morrón, elote, lechuga, jitomate, 
           },
         ],
       });
+
+      // Agregamos logging para debug
+      logger.debug(
+        "Modifiers data:",
+        JSON.stringify(
+          menu.map((category) =>
+            category.subcategories.map((sub) =>
+              sub.products.map((prod) =>
+                prod.modifierTypes.map((mt) =>
+                  mt.modifiers.map((m) => ({
+                    id: m.id,
+                    availability: m.Availability,
+                  }))
+                )
+              )
+            )
+          ),
+          null,
+          2
+        )
+      );
+
       console.log("menu", JSON.stringify(menu, null, 2));
       return menu;
     } catch (error) {
