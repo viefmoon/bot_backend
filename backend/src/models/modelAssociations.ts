@@ -102,54 +102,56 @@ Availability.belongsTo(Product, {
   foreignKey: "id",
   constraints: false,
   scope: { type: "product" },
-  as: "availability"
+  as: "product"
 });
 
 Product.hasOne(Availability, {
   foreignKey: "id",
   constraints: false,
   scope: { type: "product" },
-  as: "availability"
+  as: "productAvailability"
 });
 
 Availability.belongsTo(ProductVariant, {
   foreignKey: "id",
   constraints: false,
   scope: { type: "productVariant" },
-  as: "availability"
+  as: "productVariant"
 });
 
 ProductVariant.hasOne(Availability, {
   foreignKey: "id",
   constraints: false,
   scope: { type: "productVariant" },
-  as: "availability"
+  as: "productVariantAvailability"
 });
 
 Availability.belongsTo(PizzaIngredient, {
   foreignKey: "id",
   constraints: false,
   scope: { type: "pizzaIngredient" },
-  as: "availability"
+  as: "pizzaIngredient"
 });
 
 PizzaIngredient.hasOne(Availability, {
   foreignKey: "id",
   constraints: false,
   scope: { type: "pizzaIngredient" },
-  as: "availability"
+  as: "pizzaIngredientAvailability"
 });
 
 Availability.belongsTo(Modifier, {
   foreignKey: "id",
   constraints: false,
   scope: { type: "modifier" },
+  as: "modifier"
 });
 
 Modifier.hasOne(Availability, {
   foreignKey: "id",
   constraints: false,
   scope: { type: "modifier" },
+  as: "modifierAvailability"
 });
 
 // Nuevas asociaciones para Category y Subcategory
