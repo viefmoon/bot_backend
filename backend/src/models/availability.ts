@@ -45,8 +45,6 @@ Availability.init(
   {
     sequelize,
     modelName: "Availability",
-    underscored: false,
-    freezeTableName: true,
   }
 );
 
