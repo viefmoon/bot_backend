@@ -417,7 +417,6 @@ export async function handleOrderModification(
         orderType,
         scheduledDeliveryTime,
       });
-      console.log("selectProductsResponse", selectProductsResponse);
 
       if (selectProductsResponse.status !== 200) {
         throw new Error(
@@ -426,6 +425,7 @@ export async function handleOrderModification(
         );
       }
 
+      // Actualizar el historial del chat
       const customer = await Customer.findOne({ where: { clientId } });
       if (!customer) {
         throw new Error("No se pudo encontrar el cliente");
@@ -442,11 +442,11 @@ export async function handleOrderModification(
           : "[]"
       );
 
+      // Agregar el mensaje de texto al historial
       const assistantMessage = {
         role: "assistant",
         content: selectProductsResponse.json.text,
       };
-
       relevantChatHistory.push(assistantMessage);
       fullChatHistory.push(assistantMessage);
 
@@ -454,6 +454,24 @@ export async function handleOrderModification(
         relevantChatHistory: relevantChatHistory,
         fullChatHistory: fullChatHistory,
       });
+
+      // Enviar mensaje interactivo si existe
+      if (selectProductsResponse.json.interactiveMessage) {
+        const messageId = await sendWhatsAppInteractiveMessage(
+          clientId,
+          selectProductsResponse.json.interactiveMessage
+        );
+
+        // Actualizar la preorden con el messageId si existe
+        if (selectProductsResponse.json.preOrderId && messageId) {
+          const preOrder = await PreOrder.findByPk(
+            selectProductsResponse.json.preOrderId
+          );
+          if (preOrder) {
+            await preOrder.update({ messageId });
+          }
+        }
+      }
     } catch (error) {
       logger.error("Error al crear la nueva preorden:", error);
       const errorMessage =
@@ -469,4 +487,3 @@ export async function handleOrderModification(
     );
   }
 }
-
