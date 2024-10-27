@@ -23,10 +23,6 @@ class ModifierType
   public required!: boolean;
   public productId!: string;
 
-  // Timestamps
-  public readonly createdAt!: Date;
-  public readonly updatedAt!: Date;
-
   // Associations
   public modifiers?: Modifier[];
 }
@@ -64,7 +60,7 @@ ModifierType.init(
   {
     sequelize,
     modelName: "ModifierType",
-    timestamps: true,
+    timestamps: false,
   }
 );
 

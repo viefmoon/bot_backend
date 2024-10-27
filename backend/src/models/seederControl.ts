@@ -20,8 +20,8 @@ SeederControl.init(
   {
     sequelize,
     modelName: "SeederControl",
+    timestamps: false,
   }
 );
 
 export default SeederControl;
-

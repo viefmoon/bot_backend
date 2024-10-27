@@ -7,8 +7,6 @@ interface ProductVariantAttributes {
   price: number;
   productId: string;
   ingredients?: string;
-  createdAt?: Date;
-  updatedAt?: Date;
 }
 
 interface ProductVariantCreationAttributes
@@ -23,9 +21,6 @@ class ProductVariant
   public price!: number;
   public productId!: string;
   public ingredients?: string;
-
-  public readonly createdAt!: Date;
-  public readonly updatedAt!: Date;
 
   public Availability?: Availability;
 }
@@ -61,7 +56,7 @@ ProductVariant.init(
   {
     sequelize,
     modelName: "ProductVariant",
-    timestamps: true,
+    timestamps: false,
   }
 );
 

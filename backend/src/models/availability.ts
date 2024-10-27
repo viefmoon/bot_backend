@@ -16,10 +16,6 @@ class Availability
   public id!: string;
   public type!: "product" | "productVariant" | "modifier" | "pizzaIngredient";
   public available!: boolean;
-
-  // Timestamps
-  public readonly createdAt!: Date;
-  public readonly updatedAt!: Date;
 }
 
 Availability.init(
@@ -45,6 +41,7 @@ Availability.init(
   {
     sequelize,
     modelName: "Availability",
+    timestamps: false,
   }
 );
 

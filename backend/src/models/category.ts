@@ -17,10 +17,6 @@ class Category
   public id!: string;
   public name!: string;
 
-  // Timestamps
-  public readonly createdAt!: Date;
-  public readonly updatedAt!: Date;
-
   // Associations
   public subcategories?: Subcategory[];
 }
@@ -41,7 +37,7 @@ Category.init(
   {
     sequelize,
     modelName: "Category",
-    timestamps: true,
+    timestamps: false,
   }
 );
 

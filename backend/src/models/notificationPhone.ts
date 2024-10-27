@@ -5,8 +5,6 @@ interface NotificationPhoneAttributes {
   id?: number;
   phoneNumber: string;
   isActive: boolean;
-  createdAt?: Date;
-  updatedAt?: Date;
 }
 
 class NotificationPhone
@@ -16,8 +14,6 @@ class NotificationPhone
   public id!: number;
   public phoneNumber!: string;
   public isActive!: boolean;
-  public readonly createdAt!: Date;
-  public readonly updatedAt!: Date;
 }
 
 NotificationPhone.init(
@@ -35,7 +31,7 @@ NotificationPhone.init(
   {
     sequelize,
     modelName: "NotificationPhone",
-    timestamps: true,
+    timestamps: false,
   }
 );
 

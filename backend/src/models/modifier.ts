@@ -22,10 +22,6 @@ class Modifier
   public price!: number;
   public modifierTypeId!: string;
 
-  // Timestamps
-  public readonly createdAt!: Date;
-  public readonly updatedAt!: Date;
-
   // Associations
   public modifierType?: ModifierType;
   public Availability?: Availability;
@@ -58,7 +54,7 @@ Modifier.init(
   {
     sequelize,
     modelName: "Modifier",
-    timestamps: true,
+    timestamps: false,
   }
 );
 

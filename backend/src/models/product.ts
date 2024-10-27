@@ -24,10 +24,6 @@ class Product
   public price?: number;
   public ingredients?: string;
   public subcategoryId: string;
-  // Timestamps
-  public readonly createdAt!: Date;
-  public readonly updatedAt!: Date;
-
   //associations
   public Availability?: Availability;
   public productVariants?: ProductVariant[];
@@ -62,7 +58,7 @@ Product.init(
   {
     sequelize,
     modelName: "Product",
-    timestamps: true,
+    timestamps: false,
   }
 );
 

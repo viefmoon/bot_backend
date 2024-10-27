@@ -14,10 +14,6 @@ class SelectedModifier
   public orderItemId!: number;
   public modifierId!: string;
 
-  // Timestamps
-  public readonly createdAt!: Date;
-  public readonly updatedAt!: Date;
-
   // Asociación
   public modifier?: Modifier;
 }
@@ -44,7 +40,7 @@ SelectedModifier.init(
   {
     sequelize,
     modelName: "SelectedModifier",
-    timestamps: true,
+    timestamps: false,
   }
 );
 

@@ -18,8 +18,6 @@ interface SelectedPizzaIngredientAttributes {
   pizzaIngredientId: string;
   orderItemId: number;
   action: IngredientAction;
-  createdAt: Date;
-  updatedAt: Date;
 }
 
 class SelectedPizzaIngredient
@@ -30,10 +28,6 @@ class SelectedPizzaIngredient
   public pizzaIngredientId!: string;
   public orderItemId!: number;
   public action!: IngredientAction;
-
-  // Timestamps
-  public readonly createdAt!: Date;
-  public readonly updatedAt!: Date;
 
   public PizzaIngredient?: PizzaIngredient;
 }
@@ -66,19 +60,11 @@ SelectedPizzaIngredient.init(
       allowNull: false,
       defaultValue: IngredientAction.add,
     },
-    createdAt: {
-      type: DataTypes.DATE,
-      allowNull: false,
-    },
-    updatedAt: {
-      type: DataTypes.DATE,
-      allowNull: false,
-    },
   },
   {
     sequelize,
     tableName: "SelectedPizzaIngredients",
-    timestamps: true,
+    timestamps: false,
   }
 );
 

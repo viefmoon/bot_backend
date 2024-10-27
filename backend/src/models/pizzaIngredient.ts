@@ -23,10 +23,6 @@ class PizzaIngredient
   public productId!: string;
   public ingredients?: string;
 
-  // Timestamps
-  public readonly createdAt!: Date;
-  public readonly updatedAt!: Date;
-
   // Associations
   public Availability?: Availability;
 }
@@ -63,7 +59,7 @@ PizzaIngredient.init(
   {
     sequelize,
     modelName: "PizzaIngredient",
-    timestamps: true,
+    timestamps: false,
   }
 );
 

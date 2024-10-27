@@ -20,10 +20,6 @@ class Subcategory
   public name!: string;
   public categoryId!: string;
 
-  // Timestamps
-  public readonly createdAt!: Date;
-  public readonly updatedAt!: Date;
-
   // Associations
   public category?: Category;
   public products?: Product[];
@@ -53,7 +49,7 @@ Subcategory.init(
   {
     sequelize,
     modelName: "Subcategory",
-    timestamps: true,
+    timestamps: false,
   }
 );
 
