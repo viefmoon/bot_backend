@@ -16,8 +16,6 @@ const sequelize = new Sequelize(
       // Configuración global para todos los modelos
       underscored: false,
       freezeTableName: true,
-      // Previene que Sequelize modifique los nombres de las tablas
-      timestamps: true,
       // Asegura que los nombres de atributos se mantengan como los defines
       charset: "utf8",
       collate: "utf8_general_ci",
