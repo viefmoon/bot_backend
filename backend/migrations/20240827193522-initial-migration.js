@@ -41,7 +41,7 @@ module.exports = {
     });
 
     await queryInterface.createTable("Customers", {
-      clientId: {
+      customerId: {
         type: Sequelize.STRING,
         allowNull: false,
         primaryKey: true,
@@ -252,7 +252,7 @@ module.exports = {
         type: Sequelize.FLOAT,
         allowNull: false,
       },
-      clientId: {
+      customerId: {
         type: Sequelize.STRING,
         allowNull: false,
       },
@@ -459,7 +459,7 @@ module.exports = {
         type: Sequelize.DATE,
         allowNull: true,
       },
-      clientId: {
+      customerId: {
         type: Sequelize.STRING,
         allowNull: false,
       },
@@ -483,7 +483,7 @@ module.exports = {
         primaryKey: true,
         autoIncrement: true,
       },
-      clientId: {
+      customerId: {
         type: Sequelize.STRING,
         allowNull: false,
       },
@@ -507,7 +507,7 @@ module.exports = {
         primaryKey: true,
         autoIncrement: true,
       },
-      clientId: {
+      customerId: {
         type: Sequelize.STRING,
         allowNull: false,
         unique: true,
@@ -545,7 +545,7 @@ module.exports = {
         primaryKey: true,
         autoIncrement: true,
       },
-      clientId: {
+      customerId: {
         type: Sequelize.STRING,
         allowNull: false,
       },

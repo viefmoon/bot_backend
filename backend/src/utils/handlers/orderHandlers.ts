@@ -103,7 +103,7 @@ const ORDER_STATUS_MESSAGES = {
 
 async function createOrderFromPreOrder(
   preOrder: PreOrder,
-  clientId: string
+  customerId: string
 ): Promise<OrderSummaryResult> {
   try {
     const { orderItems, orderType, scheduledDeliveryTime, orderDeliveryInfo } =
@@ -115,7 +115,7 @@ async function createOrderFromPreOrder(
       scheduledDeliveryTime: scheduledDeliveryTime
         ? scheduledDeliveryTime.toISOString()
         : null,
-      clientId,
+      customerId,
       orderDeliveryInfo: orderDeliveryInfo.dataValues,
     };
 
@@ -154,7 +154,7 @@ async function createOrderFromPreOrder(
 }
 
 export async function handlePreOrderConfirmation(
-  clientId: string,
+  customerId: string,
   messageId: string
 ): Promise<void> {
   try {
@@ -165,7 +165,7 @@ export async function handlePreOrderConfirmation(
 
     if (!preOrder) {
       await sendWhatsAppMessage(
-        clientId,
+        customerId,
         "Lo siento, esa preorden ya no se encuentra disponible. Solo puede haber una preorden activa por cliente."
       );
       return;
@@ -173,7 +173,7 @@ export async function handlePreOrderConfirmation(
 
     const { newOrder, orderSummary } = await createOrderFromPreOrder(
       preOrder,
-      clientId
+      customerId
     );
 
     const interactiveOptions = {
@@ -209,7 +209,7 @@ export async function handlePreOrderConfirmation(
     };
 
     const confirmationMessageId = await sendWhatsAppInteractiveMessage(
-      clientId,
+      customerId,
       interactiveOptions
     );
 
@@ -221,19 +221,19 @@ export async function handlePreOrderConfirmation(
     }
 
     await preOrder.destroy();
-    const customer = await Customer.findOne({ where: { clientId } });
+    const customer = await Customer.findOne({ where: { customerId } });
     await customer.update({ relevantChatHistory: [] });
   } catch (error) {
     logger.error("Error al confirmar la orden:", error);
     await sendWhatsAppMessage(
-      clientId,
+      customerId,
       "Hubo un error al procesar tu orden. Por favor, intenta nuevamente o contacta con el restaurante."
     );
   }
 }
 
 export async function handlePreOrderDiscard(
-  clientId: string,
+  customerId: string,
   messageId: string
 ): Promise<void> {
   try {
@@ -241,37 +241,37 @@ export async function handlePreOrderDiscard(
 
     if (!preOrder) {
       await sendWhatsAppMessage(
-        clientId,
+        customerId,
         "❌ Esta preorden ya no está disponible para descartar. 🚫🗑️"
       );
       return;
     }
     await preOrder.destroy();
 
-    const customer = await Customer.findOne({ where: { clientId } });
+    const customer = await Customer.findOne({ where: { customerId } });
     await customer.update({ relevantChatHistory: [] });
 
     const confirmationMessage =
       "✅ Tu preorden ha sido descartada y el historial de conversación reciente ha sido borrado. 🗑️ ¿En qué más puedo ayudarte? 😊";
-    await sendWhatsAppMessage(clientId, confirmationMessage);
+    await sendWhatsAppMessage(customerId, confirmationMessage);
   } catch (error) {
     logger.error("Error al descartar la preorden:", error);
     await sendWhatsAppMessage(
-      clientId,
+      customerId,
       "❌ Hubo un error al procesar tu solicitud. 🚫 Por favor, intenta nuevamente o contacta con el restaurante. 📞"
     );
   }
 }
 
 export async function handleOrderCancellation(
-  clientId: string,
+  customerId: string,
   messageId: string
 ): Promise<void> {
   try {
     const order = await Order.findOne({ where: { messageId } });
     if (!order) {
       await sendWhatsAppMessage(
-        clientId,
+        customerId,
         "Lo siento, no se pudo encontrar tu orden para cancelar 🔍❌"
       );
       return;
@@ -285,21 +285,21 @@ export async function handleOrderCancellation(
       await order.destroy();
     }
 
-    await sendWhatsAppMessage(clientId, mensaje);
+    await sendWhatsAppMessage(customerId, mensaje);
   } catch (error) {
     logger.error("Error al eliminar la orden:", error);
     await sendWhatsAppMessage(
-      clientId,
+      customerId,
       "Hubo un error al procesar tu solicitud de eliminación ❌🚫"
     );
   }
 }
 
 export async function handleOrderModification(
-  clientId: string,
+  customerId: string,
   messageId: string
 ): Promise<void> {
-  const customer = await Customer.findOne({ where: { clientId } });
+  const customer = await Customer.findOne({ where: { customerId } });
   await customer.update({ relevantChatHistory: [] });
 
   try {
@@ -333,7 +333,7 @@ export async function handleOrderModification(
       const mensajeError =
         "Lo sentimos, no se pudo encontrar tu orden para modificar, ya no esta disponible. 🔍😞";
       logger.error(`Orden no encontrada para messageId: ${messageId}`);
-      await sendWhatsAppMessage(clientId, mensajeError);
+      await sendWhatsAppMessage(customerId, mensajeError);
       return;
     }
 
@@ -374,7 +374,7 @@ export async function handleOrderModification(
           "Lo sentimos, pero no podemos procesar tu solicitud de modificación en este momento. ⚠️ Por favor, contacta directamente con el restaurante para obtener ayuda. 📞";
     }
 
-    await sendWhatsAppMessage(clientId, mensaje);
+    await sendWhatsAppMessage(customerId, mensaje);
 
     if (!canModify) {
       return;
@@ -413,7 +413,7 @@ export async function handleOrderModification(
       const preOrderService = new PreOrderService();
       const selectProductsResponse = await preOrderService.selectProducts({
         orderItems: filteredOrderItems,
-        clientId,
+        customerId,
         orderType,
         scheduledDeliveryTime,
       });
@@ -426,7 +426,7 @@ export async function handleOrderModification(
       }
 
       // Actualizar el historial del chat
-      const customer = await Customer.findOne({ where: { clientId } });
+      const customer = await Customer.findOne({ where: { customerId } });
       if (!customer) {
         throw new Error("No se pudo encontrar el cliente");
       }
@@ -458,7 +458,7 @@ export async function handleOrderModification(
       // Enviar mensaje interactivo si existe
       if (selectProductsResponse.json.interactiveMessage) {
         const messageId = await sendWhatsAppInteractiveMessage(
-          clientId,
+          customerId,
           selectProductsResponse.json.interactiveMessage
         );
 
@@ -477,12 +477,12 @@ export async function handleOrderModification(
       const errorMessage =
         error.message ||
         "Error al procesar tu solicitud de modificación. Por favor, inténtalo de nuevo o contacta con el restaurante.";
-      await sendWhatsAppMessage(clientId, errorMessage);
+      await sendWhatsAppMessage(customerId, errorMessage);
     }
   } catch (error) {
     logger.error("Error al modificar la orden:", error);
     await sendWhatsAppMessage(
-      clientId,
+      customerId,
       "Hubo un error al procesar tu solicitud de modificación. Por favor, intenta nuevamente o contacta con el restaurante."
     );
   }

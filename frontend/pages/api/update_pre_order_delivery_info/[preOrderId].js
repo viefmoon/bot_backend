@@ -2,20 +2,20 @@ import axios from "axios";
 
 export default async function handler(req, res) {
   const { preOrderId } = req.query;
-  const { clientId, ...deliveryInfo } = req.body;
+  const { customerId, ...deliveryInfo } = req.body;
 
   if (req.method === "PUT") {
     try {
       // Actualizar la información de entrega
       const updateDeliveryInfoResponse = await axios.put(
-        `${process.env.NEXT_PUBLIC_BACKEND_BASE_URL}/customer-delivery-info/${clientId}?preOrderId=${preOrderId}`,
+        `${process.env.NEXT_PUBLIC_BACKEND_BASE_URL}/customer-delivery-info/${customerId}?preOrderId=${preOrderId}`,
         deliveryInfo
       );
 
       // Invalidar el OTP después de actualizar la información
       await axios.post(
         `${process.env.NEXT_PUBLIC_BACKEND_BASE_URL}/otp/invalidate`,
-        { clientId }
+        { customerId }
       );
 
       res.status(200).json(updateDeliveryInfoResponse.data);

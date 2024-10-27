@@ -11,12 +11,12 @@ export class PreOrderController {
 
   @Post("select-products")
   async selectProducts(@Request() req, @Response() res) {
-    const { orderItems, clientId, orderType, scheduledDeliveryTime } = req.body;
+    const { orderItems, customerId, orderType, scheduledDeliveryTime } = req.body;
 
     try {
       const result = await this.preOrderService.selectProducts({
         orderItems,
-        clientId,
+        customerId,
         orderType,
         scheduledDeliveryTime,
       });

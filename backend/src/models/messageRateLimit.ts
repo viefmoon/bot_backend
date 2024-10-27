@@ -2,7 +2,8 @@ import { DataTypes, Model } from "sequelize";
 import { sequelize } from "../lib/db";
 
 interface MessageRateLimitAttributes {
-  clientId: string;
+  id: number;
+  customerId: string;
   messageCount: number;
   lastMessageTime: Date;
 }
@@ -11,14 +12,20 @@ class MessageRateLimit
   extends Model<MessageRateLimitAttributes>
   implements MessageRateLimitAttributes
 {
-  public clientId!: string;
+  public id!: number;
+  public customerId!: string;
   public messageCount!: number;
   public lastMessageTime!: Date;
 }
 
 MessageRateLimit.init(
   {
-    clientId: {
+    id: {
+      type: DataTypes.INTEGER,
+      primaryKey: true,
+      autoIncrement: true,
+    },
+    customerId: {
       type: DataTypes.STRING,
       allowNull: false,
       unique: true,

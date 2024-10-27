@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 
-const ChatHistoryModal = ({ clientId, onClose }) => {
+const ChatHistoryModal = ({ customerId, onClose }) => {
   const [chatHistory, setChatHistory] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -10,7 +10,7 @@ const ChatHistoryModal = ({ clientId, onClose }) => {
     const fetchChatHistory = async () => {
       try {
         const response = await axios.get(
-          `/api/customer_chat_history?clientId=${clientId}`
+          `/api/customer_chat_history?customerId=${customerId}`
         );
         setChatHistory(response.data);
         setLoading(false);
@@ -22,7 +22,7 @@ const ChatHistoryModal = ({ clientId, onClose }) => {
     };
 
     fetchChatHistory();
-  }, [clientId]);
+  }, [customerId]);
 
   const renderMessage = (message, index) => {
     const isUser = message.role === "user";

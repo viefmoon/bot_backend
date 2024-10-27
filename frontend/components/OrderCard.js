@@ -151,7 +151,7 @@ const OrderCard = ({ order, onUpdateStatus }) => {
         <div className="grid grid-cols-2 gap-2 text-sm lg:text-base mb-2">
           <div>
             <p className="text-gray-600">Cliente:</p>
-            <p className="font-medium">{order.clientId}</p>
+            <p className="font-medium">{order.customerId}</p>
           </div>
           <div>
             <p className="text-gray-600">Total:</p>

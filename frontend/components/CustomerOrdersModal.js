@@ -7,15 +7,15 @@ import {
 import { formatDateToMexicoTime } from "../utils/dateUtils";
 import axios from "axios";
 
-const CustomerOrdersModal = ({ clientId, onClose }) => {
+const CustomerOrdersModal = ({ customerId, onClose }) => {
   const [orders, setOrders] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const fetchClientOrders = async () => {
+    const fetchCustomerOrders = async () => {
       try {
         const response = await axios.get(
-          `/api/customer_orders?clientId=${clientId}`
+          `/api/customer_orders?customerId=${customerId}`
         );
         setOrders(response.data);
       } catch (error) {
@@ -25,8 +25,8 @@ const CustomerOrdersModal = ({ clientId, onClose }) => {
       }
     };
 
-    fetchClientOrders();
-  }, [clientId]);
+    fetchCustomerOrders();
+  }, [customerId]);
 
   const renderPizzaIngredients = (ingredients) => {
     const ingredientsByHalf = { left: [], right: [], full: [] };

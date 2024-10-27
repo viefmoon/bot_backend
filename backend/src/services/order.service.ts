@@ -102,7 +102,7 @@ export class OrderService {
         "status",
         "paymentStatus",
         "totalCost",
-        "clientId",
+        "customerId",
         "estimatedTime",
         "scheduledDeliveryTime",
         "syncedWithLocal",
@@ -114,9 +114,9 @@ export class OrderService {
     });
   }
 
-  async getOrdersByClient(clientId: string) {
+  async getOrdersByCustomer(customerId: string) {
     return this.getOrders().then((orders) =>
-      orders.filter((order) => order.clientId === clientId)
+      orders.filter((order) => order.customerId === customerId)
     );
   }
 
@@ -125,7 +125,7 @@ export class OrderService {
       orderType,
       orderItems,
       orderDeliveryInfo,
-      clientId,
+      customerId,
       scheduledDeliveryTime,
     } = createOrderDto;
 
@@ -167,7 +167,7 @@ export class OrderService {
       orderType: orderType as "delivery" | "pickup",
       status: "created",
       totalCost: 0,
-      clientId,
+      customerId,
       estimatedTime,
       scheduledDeliveryTime: scheduledDeliveryTime
         ? new Date(scheduledDeliveryTime)
@@ -311,9 +311,9 @@ export class OrderService {
       orden: {
         id: newOrder.id,
         dailyOrderNumber: newOrder.dailyOrderNumber,
-        telefono: newOrder.clientId.startsWith("521")
-          ? newOrder.clientId.slice(3)
-          : newOrder.clientId,
+        telefono: newOrder.customerId.startsWith("521")
+          ? newOrder.customerId.slice(3)
+          : newOrder.customerId,
         tipo: newOrder.orderType,
         estado: newOrder.status,
         informacion_entrega:
@@ -414,7 +414,7 @@ export class OrderService {
       newStatus,
       order.dailyOrderNumber
     );
-    await sendWhatsAppMessage(order.clientId, mensaje);
+    await sendWhatsAppMessage(order.customerId, mensaje);
 
     return {
       mensaje: `Estado de la orden ${orderId} actualizado a ${newStatus}`,
@@ -559,7 +559,7 @@ export class OrderService {
             order.dailyOrderNumber
           );
           try {
-            await sendWhatsAppMessage(order.clientId, mensaje);
+            await sendWhatsAppMessage(order.customerId, mensaje);
           } catch (error) {
             logger.error(
               `Error enviando mensaje WhatsApp para orden ${order.id}:`,

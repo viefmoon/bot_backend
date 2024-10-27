@@ -17,10 +17,10 @@ import Subcategory from "./subcategory";
 
 // Customer associations
 Customer.hasOne(CustomerDeliveryInfo, {
-  foreignKey: "clientId",
+  foreignKey: "customerId",
   as: "customerDeliveryInfo",
 });
-CustomerDeliveryInfo.belongsTo(Customer, { foreignKey: "clientId" });
+CustomerDeliveryInfo.belongsTo(Customer, { foreignKey: "customerId" });
 
 // Product associations
 Product.hasMany(ProductVariant, {

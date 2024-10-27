@@ -23,20 +23,20 @@ export class CustomerDeliveryInfoController {
     return this.customerDeliveryInfoService.createDeliveryInfo(deliveryInfo);
   }
 
-  @Put(":clientId")
+  @Put(":customerId")
   async updateCustomerDeliveryInfo(
-    @Param("clientId") clientId: string,
+    @Param("customerId") customerId: string,
     @Body() deliveryInfo: any,
     @Query("preOrderId") preOrderId?: string
   ) {
     const updatedInfo =
       await this.customerDeliveryInfoService.updateDeliveryInfo(
-        clientId,
+        customerId,
         deliveryInfo
       );
     if (!updatedInfo) {
       throw new NotFoundException(
-        `No se encontró información de entrega para el cliente con ID ${clientId}`
+        `No se encontró información de entrega para el cliente con ID ${customerId}`
       );
     }
 
@@ -54,7 +54,7 @@ export class CustomerDeliveryInfoController {
       // Regenerar la preorden utilizando select-products
       const regeneratedPreOrder = await this.preOrderService.selectProducts({
         orderItems: existingPreOrder.orderItems,
-        clientId: clientId,
+        customerId: customerId,
         orderType: existingPreOrder.orderType,
         scheduledDeliveryTime: existingPreOrder.scheduledDeliveryTime,
       });
@@ -65,14 +65,14 @@ export class CustomerDeliveryInfoController {
     return updatedInfo;
   }
 
-  @Get(":clientId")
-  async getCustomerDeliveryInfo(@Param("clientId") clientId: string) {
+  @Get(":customerId")
+  async getCustomerDeliveryInfo(@Param("customerId") customerId: string) {
     const deliveryInfo = await this.customerDeliveryInfoService.getDeliveryInfo(
-      clientId
+      customerId
     );
     if (!deliveryInfo) {
       throw new NotFoundException(
-        `No se encontró información de entrega para el cliente con ID ${clientId}`
+        `No se encontró información de entrega para el cliente con ID ${customerId}`
       );
     }
     return deliveryInfo;

@@ -124,7 +124,7 @@ export class CreateOrderDto {
   orderDeliveryInfo?: OrderDeliveryInfoDto;
 
   @IsString()
-  clientId: string;
+  customerId: string;
 
   @IsOptional()
   @IsDateString()

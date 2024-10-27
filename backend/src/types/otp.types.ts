@@ -9,6 +9,6 @@ export interface OTPGenerateResponse {
 }
 
 export interface OTPVerifyRequest {
-  clientId: string;
+  customerId: string;
   otp: string;
 }

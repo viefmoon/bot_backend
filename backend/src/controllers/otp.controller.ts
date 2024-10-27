@@ -6,14 +6,14 @@ export class OtpController {
   constructor(private readonly otpService: OtpService) {}
 
   @Post("verify")
-  verifyOTP(@Body() body: { clientId: string; otp: string }) {
-    const { clientId, otp } = body;
-    return this.otpService.verifyOTP(clientId, otp);
+  verifyOTP(@Body() body: { customerId: string; otp: string }) {
+    const { customerId, otp } = body;
+    return this.otpService.verifyOTP(customerId, otp);
   }
 
   @Post("invalidate")
-  invalidateOTP(@Body() body: { clientId: string }) {
-    const { clientId } = body;
-    return this.otpService.invalidateOTP(clientId);
+  invalidateOTP(@Body() body: { customerId: string }) {
+    const { customerId } = body;
+    return this.otpService.invalidateOTP(customerId);
   }
 }

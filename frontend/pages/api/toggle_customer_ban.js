@@ -2,13 +2,13 @@ import axios from "axios";
 
 export default async function handler(req, res) {
   if (req.method === "POST") {
-    const { clientId, action } = req.body;
+    const { customerId, action } = req.body;
 
     try {
       const response = await axios.post(
         `${process.env.NEXT_PUBLIC_BACKEND_BASE_URL}/customers/ban`,
         {
-          clientId,
+          customerId,
           action,
         }
       );

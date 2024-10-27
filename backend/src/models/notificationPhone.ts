@@ -2,7 +2,7 @@ import { DataTypes, Model } from "sequelize";
 import { sequelize } from "../lib/db";
 
 interface NotificationPhoneAttributes {
-  id?: number;
+  id: number;
   phoneNumber: string;
   isActive: boolean;
 }
@@ -18,6 +18,11 @@ class NotificationPhone
 
 NotificationPhone.init(
   {
+    id: {
+      type: DataTypes.INTEGER,
+      primaryKey: true,
+      autoIncrement: true,
+    },
     phoneNumber: {
       type: DataTypes.STRING,
       allowNull: false,

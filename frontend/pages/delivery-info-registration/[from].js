@@ -10,7 +10,7 @@ const libraries = ["places"];
 
 export default function DeliveryInfoRegistration() {
   const router = useRouter();
-  const { from: clientId, otp, preOrderId } = router.query;
+  const { from: customerId, otp, preOrderId } = router.query;
   const [isValidOtp, setIsValidOtp] = useState(false);
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -40,22 +40,22 @@ export default function DeliveryInfoRegistration() {
   });
 
   useEffect(() => {
-    if (router.isReady && clientId && otp) {
-      verifyOtp(clientId, otp);
+    if (router.isReady && customerId && otp) {
+      verifyOtp(customerId, otp);
     } else if (router.isReady) {
       setLoading(false);
       setError("El enlace no es válido. Falta información necesaria.");
     }
-  }, [router.isReady, clientId, otp]);
+  }, [router.isReady, customerId, otp]);
 
-  const verifyOtp = async (clientId, otp) => {
+  const verifyOtp = async (customerId, otp) => {
     try {
-      const response = await axios.post("/api/verify_otp", { clientId, otp });
+      const response = await axios.post("/api/verify_otp", { customerId, otp });
       setLoading(false);
       setIsValidOtp(response.data);
       if (response.data) {
         // Si el OTP es válido, intentamos cargar la información existente
-        loadExistingDeliveryInfo(clientId);
+        loadExistingDeliveryInfo(customerId);
       } else {
         setError(`El enlace ha expirado o no es válido.`);
       }
@@ -68,10 +68,10 @@ export default function DeliveryInfoRegistration() {
     }
   };
 
-  const loadExistingDeliveryInfo = async (clientId) => {
+  const loadExistingDeliveryInfo = async (customerId) => {
     try {
       const response = await axios.get(
-        `/api/customer_delivery_info/${clientId}`
+        `/api/customer_delivery_info/${customerId}`
       );
       if (response.data && Object.keys(response.data).length > 0) {
         const formattedData = {
@@ -337,21 +337,21 @@ export default function DeliveryInfoRegistration() {
             `/api/update_pre_order_delivery_info/${preOrderId}`,
             {
               ...formData,
-              clientId,
+              customerId,
             }
           );
         } else if (isUpdating) {
           response = await axios.put(
-            `/api/customer_delivery_info/${clientId}`,
+            `/api/customer_delivery_info/${customerId}`,
             {
               ...formData,
-              clientId,
+              customerId,
             }
           );
         } else {
           response = await axios.post("/api/customer_delivery_info", {
             ...formData,
-            clientId,
+            customerId,
           });
         }
 
@@ -366,7 +366,7 @@ export default function DeliveryInfoRegistration() {
 
         // Solo enviamos el mensaje de WhatsApp si no es una actualización de preorden
         if (!preOrderId) {
-          await sendWhatsAppMessage(clientId, mensaje);
+          await sendWhatsAppMessage(customerId, mensaje);
         }
 
         showSuccessMessage(mensaje);
@@ -463,7 +463,7 @@ export default function DeliveryInfoRegistration() {
         </span>
       </h1>
       <p className="text-center text-gray-600 mb-1 text-sm">
-        ID del cliente: {clientId}
+        ID del cliente: {customerId}
       </p>
       <div className="mb-2 p-2 bg-white rounded-lg shadow-md">
         <h2 className="text-base font-semibold mb-1 text-gray-800">
@@ -494,7 +494,7 @@ export default function DeliveryInfoRegistration() {
       {locationError && <p className="text-red-600 text-sm">{locationError}</p>}
       <form onSubmit={handleSubmit}>
         <AddressForm
-          clientId={clientId}
+          customerId={customerId}
           selectedLocation={selectedLocation}
           address={address}
           formData={formData}

@@ -3,15 +3,15 @@ import { BannedCustomer, Customer, CustomerDeliveryInfo } from "../models";
 
 @Injectable()
 export class CustomerService {
-  async banCustomer(clientId: string, action: "ban" | "unban") {
-    const customer = await Customer.findOne({ where: { clientId } });
+  async banCustomer(customerId: string, action: "ban" | "unban") {
+    const customer = await Customer.findOne({ where: { customerId } });
     if (!customer) {
       throw new Error("Cliente no encontrado");
     }
 
     if (action === "ban") {
       const [bannedCustomer, created] = await BannedCustomer.findOrCreate({
-        where: { clientId },
+        where: { customerId },
       });
       return {
         message: created
@@ -21,7 +21,7 @@ export class CustomerService {
       };
     } else if (action === "unban") {
       const deletedCount = await BannedCustomer.destroy({
-        where: { clientId },
+        where: { customerId },
       });
       return {
         message:
@@ -38,7 +38,7 @@ export class CustomerService {
   async getCustomers() {
     const customers = await Customer.findAll({
       attributes: [
-        "clientId",
+        "customerId",
         "stripeCustomerId",
         "lastInteraction",
         "createdAt",
@@ -55,7 +55,7 @@ export class CustomerService {
     return Promise.all(
       customers.map(async (customer) => {
         const bannedCustomer = await BannedCustomer.findOne({
-          where: { clientId: customer.clientId },
+          where: { customerId: customer.customerId },
         });
         return {
           ...customer.toJSON(),
@@ -64,9 +64,9 @@ export class CustomerService {
       })
     );
   }
-  async getCustomerChatHistory(clientId: string) {
+  async getCustomerChatHistory(customerId: string) {
     const customer = await Customer.findOne({
-      where: { clientId },
+      where: { customerId },
       attributes: ["fullChatHistory"],
     });
 

@@ -2,12 +2,12 @@ import axios from "axios";
 
 export default async function handler(req, res) {
   if (req.method === "POST") {
-    const { clientId, ...deliveryInfo } = req.body;
+    const { customerId, ...deliveryInfo } = req.body;
 
     try {
       const createDeliveryInfoResponse = await axios.post(
         `${process.env.NEXT_PUBLIC_BACKEND_BASE_URL}/customer-delivery-info`,
-        { clientId, ...deliveryInfo }
+        { customerId, ...deliveryInfo }
       );
 
       res.status(201).json(createDeliveryInfoResponse.data);

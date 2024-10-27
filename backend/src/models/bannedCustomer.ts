@@ -2,7 +2,8 @@ import { DataTypes, Model } from "sequelize";
 import { sequelize } from "../lib/db";
 
 interface BannedCustomerAttributes {
-  clientId: string;
+  id: number;
+  customerId: string;
   bannedAt: Date;
 }
 
@@ -10,13 +11,19 @@ class BannedCustomer
   extends Model<BannedCustomerAttributes>
   implements BannedCustomerAttributes
 {
-  public clientId!: string;
+  public id!: number;
+  public customerId!: string;
   public bannedAt!: Date;
 }
 
 BannedCustomer.init(
   {
-    clientId: {
+    id: {
+      type: DataTypes.INTEGER,
+      primaryKey: true,
+      autoIncrement: true,
+    },
+    customerId: {
       type: DataTypes.STRING,
       allowNull: false,
       unique: true,

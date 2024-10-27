@@ -2,12 +2,12 @@ import axios from "axios";
 
 export default async function handler(req, res) {
   if (req.method === "POST") {
-    const { clientId, otp } = req.body;
+    const { customerId, otp } = req.body;
 
     try {
       const response = await axios.post(
         `${process.env.NEXT_PUBLIC_BACKEND_BASE_URL}/otp/verify`,
-        { clientId, otp }
+        { customerId, otp }
       );
 
       res.status(200).json(response.data);

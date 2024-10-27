@@ -2,6 +2,7 @@ import { DataTypes, Model } from "sequelize";
 import { sequelize } from "../lib/db";
 
 interface MessageLogAttributes {
+  id: number;
   messageId: string;
   processed: boolean;
 }
@@ -10,12 +11,18 @@ class MessageLog
   extends Model<MessageLogAttributes>
   implements MessageLogAttributes
 {
+  public id!: number;
   public messageId!: string;
   public processed!: boolean;
 }
 
 MessageLog.init(
   {
+    id: {
+      type: DataTypes.INTEGER,
+      primaryKey: true,
+      autoIncrement: true,
+    },
     messageId: {
       type: DataTypes.STRING,
       allowNull: false,

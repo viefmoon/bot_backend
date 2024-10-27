@@ -25,9 +25,9 @@ export class OrderController {
   async getUnfinishedOrders() {
     return this.orderService.getUnfinishedOrders();
   }
-  @Get(":clientId")
-  async getOrdersByClient(@Param("clientId") clientId: string) {
-    return this.orderService.getOrdersByClient(clientId);
+  @Get(":customerId")
+  async getOrdersByCustomer(@Param("customerId") customerId: string) {
+    return this.orderService.getOrdersByCustomer(customerId);
   }
 
   @Post()

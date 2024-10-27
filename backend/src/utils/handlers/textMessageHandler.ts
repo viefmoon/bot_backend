@@ -33,7 +33,7 @@ interface ProcessRequest {
 async function resetChatHistory(customer) {
   await customer.update({ relevantChatHistory: [] });
   await sendWhatsAppMessage(
-    customer.clientId,
+    customer.customerId,
     "🔄 Entendido, he olvidado el contexto anterior. ¿En qué puedo ayudarte ahora? 😊"
   );
 }
@@ -79,7 +79,7 @@ export async function handleTextMessage(
   text: string
 ): Promise<void> {
   const customer = await Customer.findOne({
-    where: { clientId: from },
+    where: { customerId: from },
   });
 
   const fullChatHistory: ChatMessage[] = Array.isArray(customer.fullChatHistory)
@@ -232,7 +232,7 @@ async function processAndGenerateAIResponse(
         const preOrderService = new PreOrderService();
         const selectProductsResponse = await preOrderService.selectProducts({
           orderItems: response.preprocessedContent.orderItems,
-          clientId: conversationId,
+          customerId: conversationId,
           orderType: response.preprocessedContent.orderType,
           scheduledDeliveryTime:
             response.preprocessedContent.scheduledDeliveryTime,

@@ -12,13 +12,13 @@ export class CustomerController {
 
   @Post("ban")
   async banCustomer(
-    @Body() body: { clientId: string; action: "ban" | "unban" }
+    @Body() body: { customerId: string; action: "ban" | "unban" }
   ) {
-    return this.customerService.banCustomer(body.clientId, body.action);
+    return this.customerService.banCustomer(body.customerId, body.action);
   }
 
-  @Get(":clientId/chat-history")
-  async getCustomerChatHistory(@Param("clientId") clientId: string) {
-    return this.customerService.getCustomerChatHistory(clientId);
+  @Get(":customerId/chat-history")
+  async getCustomerChatHistory(@Param("customerId") customerId: string) {
+    return this.customerService.getCustomerChatHistory(customerId);
   }
 }

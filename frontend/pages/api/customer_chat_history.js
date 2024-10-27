@@ -5,13 +5,13 @@ dotenv.config();
 
 export default async function handler(req, res) {
   const { query } = req;
-  const { clientId } = query;
+  const { customerId } = query;
 
-  if (!clientId) {
-    return res.status(400).json({ error: "Se requiere el parámetro clientId" });
+  if (!customerId) {
+    return res.status(400).json({ error: "Se requiere el parámetro customerId" });
   }
 
-  const url = `${process.env.NEXT_PUBLIC_BACKEND_BASE_URL}/customers/${clientId}/chat-history`;
+  const url = `${process.env.NEXT_PUBLIC_BACKEND_BASE_URL}/customers/${customerId}/chat-history`;
 
   try {
     const response = await axios.get(url);

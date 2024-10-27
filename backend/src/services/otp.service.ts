@@ -15,16 +15,16 @@ export class OtpService implements OnModuleInit, OnModuleDestroy {
     return generateOTP();
   }
 
-  storeOTP(clientId: string, otp: string): void {
-    storeOTP(clientId, otp);
+  storeOTP(customerId: string, otp: string): void {
+    storeOTP(customerId, otp);
   }
 
-  verifyOTP(clientId: string, otp: string): boolean {
-    return verifyOTP(clientId, otp);
+  verifyOTP(customerId: string, otp: string): boolean {
+    return verifyOTP(customerId, otp);
   }
 
-  invalidateOTP(clientId: string): void {
-    storeOTP(clientId, "");
+  invalidateOTP(customerId: string): void {
+    storeOTP(customerId, "");
   }
 
   onModuleInit() {

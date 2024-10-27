@@ -37,8 +37,8 @@ dotenv.config();
 @Injectable()
 export class WebhookService {
   private stripeClient: Stripe;
-  private clientQueues: Map<string, Queue<WhatsAppMessage>> = new Map();
-  private processingClients: Set<string> = new Set();
+  private customerQueues: Map<string, Queue<WhatsAppMessage>> = new Map();
+  private processingCustomers: Set<string> = new Set();
 
   constructor(private otpService: OtpService) {
     this.stripeClient = new Stripe(process.env.STRIPE_SECRET_KEY!, {
@@ -103,7 +103,7 @@ export class WebhookService {
           });
           if (customer) {
             await sendWhatsAppMessage(
-              customer.clientId,
+              customer.customerId,
               PAYMENT_CONFIRMATION_MESSAGE(order.dailyOrderNumber)
             );
           }
@@ -152,35 +152,35 @@ export class WebhookService {
         }
       }
 
-      this.processClientQueues();
+      this.processCustomerQueues();
     } catch (error) {
       logger.error(`Error al procesar el webhook de WhatsApp: ${error}`);
     }
   }
 
   private enqueueMessage(message: WhatsAppMessage): void {
-    const clientId = message.from;
-    if (!this.clientQueues.has(clientId)) {
-      this.clientQueues.set(clientId, new Queue<WhatsAppMessage>());
+    const customerId = message.from;
+    if (!this.customerQueues.has(customerId)) {
+      this.customerQueues.set(customerId, new Queue<WhatsAppMessage>());
     }
-    this.clientQueues.get(clientId).enqueue(message);
+    this.customerQueues.get(customerId).enqueue(message);
   }
 
-  private async processClientQueues(): Promise<void> {
-    for (const [clientId, queue] of this.clientQueues.entries()) {
-      if (!this.processingClients.has(clientId) && queue.length > 0) {
-        this.processClientQueue(clientId);
+  private async processCustomerQueues(): Promise<void> {
+    for (const [customerId, queue] of this.customerQueues.entries()) {
+      if (!this.processingCustomers.has(customerId) && queue.length > 0) {
+        this.processCustomerQueue(customerId);
       }
     }
   }
 
-  private async processClientQueue(clientId: string): Promise<void> {
-    this.processingClients.add(clientId);
+  private async processCustomerQueue(customerId: string): Promise<void> {
+    this.processingCustomers.add(customerId);
 
-    const queue = this.clientQueues.get(clientId);
+    const queue = this.customerQueues.get(customerId);
     while (queue.length > 0) {
       const message = queue.dequeue();
-      logger.info(`Procesando mensaje ${message.id} del cliente ${clientId}`);
+      logger.info(`Procesando mensaje ${message.id} del cliente ${customerId}`);
 
       try {
         // Establecer un tiempo límite de 20 segundos para procesar cada mensaje
@@ -199,7 +199,7 @@ export class WebhookService {
         );
         try {
           await sendWhatsAppMessage(
-            clientId,
+            customerId,
             "Lo siento, ha ocurrido un error al procesar tu mensaje. 😔 Por favor, intenta nuevamente más tarde. 🔄🕑"
           );
         } catch (sendError) {
@@ -208,11 +208,11 @@ export class WebhookService {
       }
     }
 
-    this.processingClients.delete(clientId);
-    this.clientQueues.delete(clientId);
+    this.processingCustomers.delete(customerId);
+    this.customerQueues.delete(customerId);
 
     // Verificar si hay más colas para procesar
-    this.processClientQueues();
+    this.processCustomerQueues();
   }
 
   private isMessageTooOld(message: WhatsAppMessage): boolean {
@@ -236,11 +236,11 @@ export class WebhookService {
       await MessageLog.create({ messageId: id, processed: true });
 
       let customer = await Customer.findOne({
-        where: { clientId: from },
+        where: { customerId: from },
         include: [{ model: CustomerDeliveryInfo, as: "customerDeliveryInfo" }],
       });
       if (!customer) {
-        customer = await Customer.create({ clientId: from });
+        customer = await Customer.create({ customerId: from });
       }
 
       await customer.update({ lastInteraction: new Date() });
@@ -307,11 +307,11 @@ export class WebhookService {
     }
   }
 
-  private async checkBannedCustomer(clientId: string): Promise<boolean> {
-    return !!(await BannedCustomer.findOne({ where: { clientId } }));
+  private async checkBannedCustomer(customerId: string): Promise<boolean> {
+    return !!(await BannedCustomer.findOne({ where: { customerId } }));
   }
 
-  private async sendBannedMessage(clientId: string): Promise<void> {
-    await sendWhatsAppMessage(clientId, BANNED_USER_MESSAGE);
+  private async sendBannedMessage(customerId: string): Promise<void> {
+    await sendWhatsAppMessage(customerId, BANNED_USER_MESSAGE);
   }
 }

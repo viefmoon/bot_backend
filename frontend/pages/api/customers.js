@@ -16,8 +16,8 @@ export default async function handler(req, res) {
     }
 
     // Elimina propiedades no deseadas antes de enviar la respuesta
-    data.forEach((client) => {
-      delete client.fullChatHistory;
+    data.forEach((customer) => {
+      delete customer.fullChatHistory;
     });
 
     // Responde con los datos obtenidos

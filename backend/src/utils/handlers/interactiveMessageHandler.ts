@@ -77,16 +77,16 @@ async function handlePreOrderDeliveryModification(
       return;
     }
 
-    const clientId = preOrder.clientId;
+    const customerId = preOrder.customerId;
     const preOrderId = preOrder.id;
 
     const otp = otpService.generateOTP();
-    await otpService.storeOTP(clientId, otp);
+    await otpService.storeOTP(customerId, otp);
 
-    const updateLink = `${process.env.FRONTEND_BASE_URL}/delivery-info-registration/${clientId}?otp=${otp}&preOrderId=${preOrderId}`;
+    const updateLink = `${process.env.FRONTEND_BASE_URL}/delivery-info-registration/${customerId}?otp=${otp}&preOrderId=${preOrderId}`;
     const message = CHANGE_DELIVERY_INFO_MESSAGE(updateLink);
 
-    await sendWhatsAppMessage(clientId, message);
+    await sendWhatsAppMessage(customerId, message);
   } catch (error) {
     logger.error("Error al manejar la modificación de entrega:", error);
     await sendWhatsAppMessage(
@@ -97,14 +97,14 @@ async function handlePreOrderDeliveryModification(
 }
 
 async function handleOnlinePayment(
-  clientId: string,
+  customerId: string,
   messageId: string
 ): Promise<void> {
   try {
     const order = await Order.findOne({ where: { messageId } });
     if (!order) {
       await sendWhatsAppMessage(
-        clientId,
+        customerId,
         "❌ Lo siento, no se pudo encontrar tu orden para procesar el pago. 🚫🔍"
       );
       return;
@@ -112,7 +112,7 @@ async function handleOnlinePayment(
 
     if (order.stripeSessionId || order.paymentStatus === "pending") {
       await sendWhatsAppMessage(
-        clientId,
+        customerId,
         "⚠️ Ya existe un enlace de pago activo para esta orden. Por favor, utiliza el enlace enviado anteriormente o contacta al restaurante si necesitas ayuda. 🔄"
       );
       return;
@@ -151,17 +151,17 @@ async function handleOnlinePayment(
     }
 
     if (mensaje) {
-      await sendWhatsAppMessage(clientId, mensaje);
+      await sendWhatsAppMessage(customerId, mensaje);
       return;
     }
 
-    let customer = await Customer.findOne({ where: { clientId } });
+    let customer = await Customer.findOne({ where: { customerId } });
     let stripeCustomerId = customer.stripeCustomerId;
 
     if (!stripeCustomerId) {
       const stripeCustomer = await stripeClient.customers.create({
-        phone: clientId,
-        metadata: { whatsappId: clientId },
+        phone: customerId,
+        metadata: { whatsappId: customerId },
       });
       stripeCustomerId = stripeCustomer.id;
       await customer.update({ stripeCustomerId });
@@ -196,13 +196,13 @@ async function handleOnlinePayment(
 
     const paymentLink = session.url;
     await sendWhatsAppMessage(
-      clientId,
+      customerId,
       `💳 Por favor, haz clic en el siguiente enlace para proceder con el pago: 🔗 ${paymentLink} 💰`
     );
   } catch (error) {
     logger.error("Error al procesar el pago en línea:", error);
     await sendWhatsAppMessage(
-      clientId,
+      customerId,
       "❌ Hubo un error al procesar tu solicitud de pago. 😕 Por favor, intenta nuevamente o contacta con el restaurante. 🔄📞"
     );
   }
@@ -223,29 +223,29 @@ async function sendMenu(phoneNumber: string): Promise<boolean> {
   }
 }
 
-async function handleWaitTimes(clientId: string): Promise<void> {
+async function handleWaitTimes(customerId: string): Promise<void> {
   try {
     const config = await RestaurantConfig.findOne();
     const message = WAIT_TIMES_MESSAGE(
       config.estimatedPickupTime,
       config.estimatedDeliveryTime
     );
-    await sendWhatsAppMessage(clientId, message);
+    await sendWhatsAppMessage(customerId, message);
   } catch (error) {
     logger.error("Error al obtener los tiempos de espera:", error);
     await sendWhatsAppMessage(
-      clientId,
+      customerId,
       "❌ Hubo un error al obtener los tiempos de espera. Por favor, intenta nuevamente. 🚫🔄"
     );
   }
 }
 
-async function handleRestaurantInfo(clientId: string): Promise<void> {
-  await sendWhatsAppMessage(clientId, RESTAURANT_INFO_MESSAGE);
+async function handleRestaurantInfo(customerId: string): Promise<void> {
+  await sendWhatsAppMessage(customerId, RESTAURANT_INFO_MESSAGE);
 }
 
-async function handleChatbotHelp(clientId: string): Promise<void> {
-  await sendWhatsAppMessage(clientId, CHATBOT_HELP_MESSAGE);
+async function handleChatbotHelp(customerId: string): Promise<void> {
+  await sendWhatsAppMessage(customerId, CHATBOT_HELP_MESSAGE);
 }
 
 async function handleChangeDeliveryInfo(from: string): Promise<void> {

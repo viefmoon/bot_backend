@@ -14,6 +14,7 @@ export enum IngredientAction {
 }
 
 interface SelectedPizzaIngredientAttributes {
+  id: number;
   half: PizzaHalf;
   pizzaIngredientId: string;
   orderItemId: number;
@@ -24,6 +25,7 @@ class SelectedPizzaIngredient
   extends Model<SelectedPizzaIngredientAttributes>
   implements SelectedPizzaIngredientAttributes
 {
+  public id!: number;
   public half!: PizzaHalf;
   public pizzaIngredientId!: string;
   public orderItemId!: number;
@@ -34,6 +36,11 @@ class SelectedPizzaIngredient
 
 SelectedPizzaIngredient.init(
   {
+    id: {
+      type: DataTypes.INTEGER,
+      primaryKey: true,
+      autoIncrement: true,
+    },
     half: {
       type: DataTypes.ENUM(...Object.values(PizzaHalf)),
       allowNull: false,

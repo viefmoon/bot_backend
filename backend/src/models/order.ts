@@ -16,7 +16,7 @@ interface OrderAttributes {
     | "canceled";
   paymentStatus?: "pending" | "paid";
   totalCost: number;
-  clientId: string;
+  customerId: string;
   estimatedTime: number;
   scheduledDeliveryTime?: Date;
   messageId?: string;
@@ -47,7 +47,7 @@ class Order
     | "canceled";
   public paymentStatus?: "pending" | "paid";
   public totalCost!: number;
-  public clientId!: string;
+  public customerId!: string;
   public estimatedTime!: number;
   public scheduledDeliveryTime?: Date;
   public messageId?: string;
@@ -101,7 +101,7 @@ Order.init(
       type: DataTypes.FLOAT,
       allowNull: false,
     },
-    clientId: {
+    customerId: {
       type: DataTypes.STRING,
       allowNull: false,
     },

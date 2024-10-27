@@ -3,7 +3,7 @@ import { sequelize } from "../lib/db";
 
 interface CustomerDeliveryInfoAttributes {
   id: number;
-  clientId: string;
+  customerId: string;
   streetAddress: string;
   neighborhood: string;
   postalCode: string;
@@ -30,7 +30,7 @@ class CustomerDeliveryInfo
   implements CustomerDeliveryInfoAttributes
 {
   public id!: number;
-  public clientId!: string;
+  public customerId!: string;
   public streetAddress!: string;
   public neighborhood!: string;
   public postalCode!: string;
@@ -55,7 +55,7 @@ CustomerDeliveryInfo.init(
       autoIncrement: true,
       primaryKey: true,
     },
-    clientId: {
+    customerId: {
       type: DataTypes.STRING,
       allowNull: false,
     },

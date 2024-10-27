@@ -16,7 +16,7 @@ export default function Home() {
 
   // Otros estados existentes
   const [orders, setOrders] = useState([]);
-  const [clients, setClients] = useState([]);
+  const [customers, setCustomers] = useState([]);
   const [error, setError] = useState(null);
   const [selectedDate, setSelectedDate] = useState(new Date()); // Por defecto a la fecha actual
   const [activeView, setActiveView] = useState("orders"); // Nueva estado para controlar la vista activa
@@ -34,7 +34,7 @@ export default function Home() {
   useEffect(() => {
     if (isAuthenticated) {
       fetchOrders(selectedDate);
-      fetchClients();
+      fetchCustomers();
       fetchMenu();
       fetchRestaurantConfig();
       fetchNotificationPhones();
@@ -132,10 +132,10 @@ export default function Home() {
     }
   };
 
-  const fetchClients = async () => {
+  const fetchCustomers = async () => {
     try {
       const response = await axios.get("/api/customers");
-      setClients(response.data);
+      setCustomers(response.data);
     } catch (error) {
       console.error("Error al obtener clientes:", error);
       setError(
@@ -282,7 +282,7 @@ export default function Home() {
     try {
       await Promise.all([
         fetchOrders(selectedDate),
-        fetchClients(),
+        fetchCustomers(),
         fetchMenu(),
         fetchRestaurantConfig(),
         fetchNotificationPhones(),
@@ -315,7 +315,7 @@ export default function Home() {
             <div className="hidden sm:ml-6 sm:flex sm:items-center">
               {[
                 "orders",
-                "clients",
+                "customers",
                 "notificationPhones",
                 "restaurantConfig",
                 "menu",
@@ -388,7 +388,7 @@ export default function Home() {
           <div className="px-2 pt-2 pb-3 space-y-1">
             {[
               "orders",
-              "clients",
+              "customers",
               "notificationPhones",
               "restaurantConfig",
               "menu",
@@ -490,15 +490,15 @@ export default function Home() {
               </div>
             )}
 
-            {activeView === "clients" && (
+            {activeView === "customers" && (
               <div>
                 {error && <div className="alert alert-danger">{error}</div>}
-                <div id="client-list">
-                  {clients.length === 0 ? (
+                <div id="customer-list">
+                  {customers.length === 0 ? (
                     <p className="text-center">No se encontraron clientes.</p>
                   ) : (
-                    clients.map((client) => (
-                      <CustomerCard key={client.clientId} client={client} />
+                    customers.map((customer) => (
+                      <CustomerCard key={customer.customerId} customer={customer} />
                     ))
                   )}
                 </div>
@@ -858,7 +858,7 @@ export default function Home() {
 function getViewTitle(view) {
   const titles = {
     orders: "Órdenes",
-    clients: "Clientes",
+    customers: "Clientes",
     notificationPhones: "Teléfonos de Notificación",
     restaurantConfig: "Configuración del Restaurante",
     menu: "Menú",

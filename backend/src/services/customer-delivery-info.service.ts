@@ -4,17 +4,17 @@ import { Customer, CustomerDeliveryInfo } from "../models";
 @Injectable()
 export class CustomerDeliveryInfoService {
   async createDeliveryInfo(deliveryInfo: any) {
-    const { clientId, ...info } = deliveryInfo;
+    const { customerId, ...info } = deliveryInfo;
 
     const [customer] = await Customer.findOrCreate({
-      where: { clientId },
-      defaults: { clientId },
+      where: { customerId },
+      defaults: { customerId },
     });
 
     const [customerDeliveryInfo, created] =
       await CustomerDeliveryInfo.findOrCreate({
-        where: { clientId: customer.clientId },
-        defaults: { ...info, clientId: customer.clientId },
+        where: { customerId: customer.customerId },
+        defaults: { ...info, customerId: customer.customerId },
       });
 
     if (!created) {
@@ -24,9 +24,9 @@ export class CustomerDeliveryInfoService {
     return customerDeliveryInfo;
   }
 
-  async updateDeliveryInfo(clientId: string, deliveryInfo: any) {
+  async updateDeliveryInfo(customerId: string, deliveryInfo: any) {
     const customerDeliveryInfo = await CustomerDeliveryInfo.findOne({
-      where: { clientId },
+      where: { customerId },
     });
 
     if (!customerDeliveryInfo) {
@@ -37,9 +37,9 @@ export class CustomerDeliveryInfoService {
     return customerDeliveryInfo;
   }
 
-  async getDeliveryInfo(clientId: string) {
+  async getDeliveryInfo(customerId: string) {
     const customerDeliveryInfo = await CustomerDeliveryInfo.findOne({
-      where: { clientId },
+      where: { customerId },
     });
 
     if (!customerDeliveryInfo) {

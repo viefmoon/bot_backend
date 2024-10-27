@@ -3,10 +3,10 @@ import { formatDateToMexicoTime } from "../utils/dateUtils";
 import ChatHistoryModal from "./ChatHistoryModal";
 import CustomerOrdersModal from "./CustomerOrdersModal";
 
-const CustomerCard = ({ client, onToggleBan }) => {
+const CustomerCard = ({ customer, onToggleBan }) => {
   const [showChatHistory, setShowChatHistory] = useState(false);
   const [showCustomerOrders, setShowCustomerOrders] = useState(false);
-  const [isBanned, setIsBanned] = useState(client.isBanned);
+  const [isBanned, setIsBanned] = useState(customer.isBanned);
 
   const toggleChatHistoryModal = () => {
     setShowChatHistory(!showChatHistory);
@@ -24,7 +24,7 @@ const CustomerCard = ({ client, onToggleBan }) => {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ clientId: client.clientId, action }),
+        body: JSON.stringify({ customerId: customer.customerId, action }),
       });
 
       if (!response.ok) {
@@ -32,7 +32,7 @@ const CustomerCard = ({ client, onToggleBan }) => {
       }
 
       setIsBanned(!isBanned);
-      onToggleBan(client.clientId, !isBanned);
+      onToggleBan(customer.customerId, !isBanned);
     } catch (error) {
       console.error("Error:", error);
     }
@@ -42,19 +42,19 @@ const CustomerCard = ({ client, onToggleBan }) => {
     <div className="bg-white shadow-sm rounded-lg overflow-hidden mb-4">
       <div className="p-4">
         <h5 className="text-lg font-semibold mb-2">
-          Cliente ID: {client.clientId}
+          Cliente ID: {customer.customerId}
         </h5>
         <div className="text-sm text-gray-600 space-y-1">
-          <p>Nombre: {client.customerDeliveryInfo?.pickupName || "N/A"}</p>
+          <p>Nombre: {customer.customerDeliveryInfo?.pickupName || "N/A"}</p>
           <p>
             Dirección de entrega:{" "}
-            {client.customerDeliveryInfo?.streetAddress || "N/A"}
+            {customer.customerDeliveryInfo?.streetAddress || "N/A"}
           </p>
-          <p>Stripe ID: {client.stripeCustomerId || "N/A"}</p>
+          <p>Stripe ID: {customer.stripeCustomerId || "N/A"}</p>
           <p>
-            Última interacción: {formatDateToMexicoTime(client.lastInteraction)}
+            Última interacción: {formatDateToMexicoTime(customer.lastInteraction)}
           </p>
-          <p>Creado: {formatDateToMexicoTime(client.createdAt)}</p>
+          <p>Creado: {formatDateToMexicoTime(customer.createdAt)}</p>
         </div>
         <div className="mt-2 flex items-center">
           <span className="text-sm mr-2">Estado:</span>
@@ -95,13 +95,13 @@ const CustomerCard = ({ client, onToggleBan }) => {
       </div>
       {showChatHistory && (
         <ChatHistoryModal
-          clientId={client.clientId}
+          customerId={customer.customerId}
           onClose={toggleChatHistoryModal}
         />
       )}
       {showCustomerOrders && (
         <CustomerOrdersModal
-          clientId={client.clientId}
+          customerId={customer.customerId}
           onClose={toggleCustomerOrdersModal}
         />
       )}

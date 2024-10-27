@@ -10,7 +10,7 @@ export interface ChatMessage {
 }
 
 interface CustomerAttributes {
-  clientId: string;
+  customerId: string;
   fullChatHistory?: ChatMessage[] | string | null;
   relevantChatHistory?: ChatMessage[] | string | null;
   stripeCustomerId?: string | null;
@@ -34,7 +34,7 @@ class Customer
   extends Model<CustomerAttributes, CustomerCreationAttributes>
   implements CustomerAttributes
 {
-  public clientId!: string;
+  public customerId!: string;
   public fullChatHistory!: ChatMessage[] | string | null;
   public relevantChatHistory!: ChatMessage[] | string | null;
   public stripeCustomerId!: string | null;
@@ -50,7 +50,7 @@ class Customer
 
 Customer.init(
   {
-    clientId: {
+    customerId: {
       type: DataTypes.STRING,
       allowNull: false,
       primaryKey: true,

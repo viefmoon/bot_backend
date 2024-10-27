@@ -13,11 +13,11 @@ import {
 export class PreOrderService {
   async selectProducts(orderData: {
     orderItems: any[];
-    clientId: string;
+    customerId: string;
     orderType: string;
     scheduledDeliveryTime?: string | Date;
   }) {
-    const { orderItems, clientId, orderType, scheduledDeliveryTime } =
+    const { orderItems, customerId, orderType, scheduledDeliveryTime } =
       orderData;
     let totalCost = 0;
     let fullScheduledDeliveryTime: Date | null = null;
@@ -163,7 +163,7 @@ export class PreOrderService {
 
     // Obtener información de entrega del cliente
     const customerDeliveryInfo = await CustomerDeliveryInfo.findOne({
-      where: { clientId },
+      where: { customerId },
     });
     if (!customerDeliveryInfo) {
       throw new Error("Información de entrega del cliente no encontrada.");
@@ -482,13 +482,13 @@ export class PreOrderService {
     messageContent += `\n💰 *Total: $${totalCost}*`;
 
     // Borrar todas las preórdenes asociadas al cliente
-    await PreOrder.destroy({ where: { clientId } });
+    await PreOrder.destroy({ where: { customerId } });
 
     const preOrder = await PreOrder.create({
       orderItems,
       orderType: orderType as "delivery" | "pickup",
       scheduledDeliveryTime: fullScheduledDeliveryTime,
-      clientId,
+      customerId,
     });
 
     // Actualizar información de entrega

@@ -4,7 +4,7 @@ import * as dotenv from "dotenv";
 dotenv.config();
 
 export async function checkMessageRateLimit(
-  clientId: string
+  customerId: string
 ): Promise<boolean> {
   const RATE_LIMIT_MAX_MESSAGES = parseInt(
     process.env.RATE_LIMIT_MAX_MESSAGES || "30",
@@ -16,11 +16,13 @@ export async function checkMessageRateLimit(
   );
   const RATE_LIMIT_TIME_WINDOW = RATE_LIMIT_TIME_WINDOW_MINUTES * 60 * 1000;
 
-  let rateLimit = await MessageRateLimit.findOne({ where: { clientId } });
+  let rateLimit = await MessageRateLimit.findOne({
+    where: { customerId },
+  });
 
   if (!rateLimit) {
     await MessageRateLimit.create({
-      clientId,
+      customerId,
       messageCount: 1,
       lastMessageTime: new Date(),
     });
@@ -40,7 +42,7 @@ export async function checkMessageRateLimit(
     const timeRemaining = Math.ceil(
       (RATE_LIMIT_TIME_WINDOW - timeSinceLastMessage) / 1000
     );
-    await sendRateLimitMessage(clientId, timeRemaining);
+    await sendRateLimitMessage(customerId, timeRemaining);
     return true; // Limitado
   }
 
@@ -52,7 +54,7 @@ export async function checkMessageRateLimit(
 }
 
 async function sendRateLimitMessage(
-  clientId: string,
+  customerId: string,
   timeRemaining: number
 ): Promise<void> {
   const minutes = Math.floor(timeRemaining / 60);
@@ -65,7 +67,7 @@ async function sendRateLimitMessage(
       : `${seconds} segundo${seconds !== 1 ? "s" : ""}`;
 
   await sendWhatsAppMessage(
-    clientId,
+    customerId,
     `⚠️ Por motivos de seguridad, has alcanzado el límite de mensajes permitidos. 🛑 Por favor, espera ${timeMessage} antes de enviar más mensajes. ⏳ Agradecemos tu comprensión. 🙏`
   );
 }
