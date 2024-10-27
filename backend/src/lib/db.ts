@@ -1,16 +1,27 @@
 import { Sequelize } from "sequelize";
 import logger from "../utils/logger";
-import { dbConfig } from '../config/database.config';
 
-const env = process.env.NODE_ENV || 'development';
-const config = dbConfig[env];
-
-const sequelize = new Sequelize(
-  config.database!,
-  config.username!,
-  config.password!,
-  config
-);
+const sequelize = new Sequelize({
+  dialect: 'postgres',
+  host: process.env.PGHOST || 'localhost',
+  port: parseInt(process.env.PGPORT || '5432'),
+  database: process.env.PGDATABASE,
+  username: process.env.PGUSER,
+  password: process.env.PGPASSWORD,
+  logging: false,
+  define: {
+    underscored: false,
+    freezeTableName: true,
+    charset: 'utf8',
+    collate: 'utf8_general_ci',
+  },
+  pool: {
+    max: 5,
+    min: 0,
+    acquire: 30000,
+    idle: 10000,
+  }
+});
 
 const connectDB = async (): Promise<void> => {
   try {
@@ -22,7 +33,6 @@ const connectDB = async (): Promise<void> => {
   }
 };
 
-// Ejecuta la conexión inmediatamente
 connectDB();
 
 export { sequelize };
