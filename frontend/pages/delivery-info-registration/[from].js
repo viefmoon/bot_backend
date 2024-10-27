@@ -135,74 +135,67 @@ export default function DeliveryInfoRegistration() {
     }
   };
 
-  const requestLocation = () => {
+  const requestLocation = async () => {
     if ("geolocation" in navigator) {
-      // Primero verificamos el estado de los permisos
-      navigator.permissions.query({ name: 'geolocation' }).then(permissionStatus => {
+      try {
+        // Primero verificamos el estado de los permisos
+        const permissionStatus = await navigator.permissions.query({ name: 'geolocation' });
+        
         if (permissionStatus.state === 'denied') {
-          // Si los permisos están denegados, mostramos instrucciones al usuario
+          // Si los permisos están bloqueados, mostramos instrucciones al usuario
           setLocationError(
-            "Los permisos de ubicación están bloqueados. Por favor, habilita el acceso a la ubicación en la configuración de tu navegador y vuelve a intentarlo."
+            "Los permisos de ubicación están bloqueados. Por favor, sigue estos pasos para habilitarlos:\n" +
+            "1. Haz clic en el ícono del candado en la barra de direcciones\n" +
+            "2. Busca 'Ubicación' en la configuración\n" +
+            "3. Cambia el permiso a 'Permitir'\n" +
+            "4. Recarga la página e intenta nuevamente"
           );
-        } else {
-          // Si los permisos no están denegados, solicitamos la ubicación
-          navigator.geolocation.getCurrentPosition(
-            async (position) => {
-              const { latitude, longitude } = position.coords;
-              const location = { lat: latitude, lng: longitude };
-
-              setSelectedLocation(location);
-
-              const addressDetails = await getAddressFromCoordinates(location);
-              setAddress(addressDetails.streetAddress);
-              setFormData((prev) => ({
-                ...prev,
-                ...addressDetails,
-                latitude: location.lat,
-                longitude: location.lng,
-              }));
-
-              const inputElement = document.querySelector('input[type="text"]');
-              if (inputElement) {
-                inputElement.value = addressDetails.streetAddress;
-              }
-
-              if (!isLocationAllowed(location)) {
-                setLocationError(
-                  "La ubicación actual está fuera del área permitida."
-                );
-              } else {
-                setLocationError(null);
-              }
-            },
-            (error) => {
-              console.error("Error obteniendo la ubicación:", error);
-              let errorMessage = "";
-              
-              switch (error.code) {
-                case error.PERMISSION_DENIED:
-                  errorMessage = "Has denegado el acceso a la ubicación. Por favor, habilita los permisos en la configuración de tu navegador y vuelve a intentarlo.";
-                  break;
-                case error.POSITION_UNAVAILABLE:
-                  errorMessage = "La información de ubicación no está disponible.";
-                  break;
-                case error.TIMEOUT:
-                  errorMessage = "Se agotó el tiempo de espera para obtener la ubicación.";
-                  break;
-                default:
-                  errorMessage = "No se pudo obtener la ubicación actual. Por favor, ingrese su dirección manualmente o intente nuevamente.";
-              }
-              
-              setLocationError(errorMessage);
-            },
-            {
-              enableHighAccuracy: true,
-              timeout: 5000,
-              maximumAge: 0
-            }
-          );
+          return;
         }
-      });
+
+        // Si los permisos no están bloqueados, procedemos normalmente
+        navigator.geolocation.getCurrentPosition(
+          async (position) => {
+            const { latitude, longitude } = position.coords;
+            const location = { lat: latitude, lng: longitude };
+
+            setSelectedLocation(location);
+
+            const addressDetails = await getAddressFromCoordinates(location);
+            setAddress(addressDetails.streetAddress);
+            setFormData((prev) => ({
+              ...prev,
+              ...addressDetails,
+              latitude: location.lat,
+              longitude: location.lng,
+            }));
+
+            const inputElement = document.querySelector('input[type="text"]');
+            if (inputElement) {
+              inputElement.value = addressDetails.streetAddress;
+            }
+
+            if (!isLocationAllowed(location)) {
+              setLocationError(
+                "La ubicación actual está fuera del área permitida."
+              );
+            } else {
+              setLocationError(null);
+            }
+          },
+          (error) => {
+            console.error("Error obteniendo la ubicación:", error);
+            setLocationError(
+              "No se pudo obtener la ubicación actual. Por favor, ingrese su dirección manualmente o intente compartir su ubicación nuevamente."
+            );
+          }
+        );
+      } catch (error) {
+        console.error("Error al verificar permisos:", error);
+        setLocationError(
+          "Hubo un error al verificar los permisos de ubicación. Por favor, ingrese su dirección manualmente."
+        );
+      }
     } else {
       setLocationError("Geolocalización no está soportada en este navegador.");
     }
