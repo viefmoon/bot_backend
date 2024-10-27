@@ -393,21 +393,15 @@ export default function DeliveryInfoRegistration() {
     }
   };
 
-  const showSuccessMessage = (mensaje) => {
+  const showSuccessMessage = () => {
     Swal.fire({
       title: '¡Dirección Registrada!',
       html: `
-        <div class="flex flex-col items-center">
-          <div class="mb-4">
-            <i class="fas fa-check-circle text-5xl text-green-500"></i>
-          </div>
+        <div class="text-center">
           <div class="text-lg font-semibold mb-2">
-            ¡Hola ${formData.pickupName}!
+            ¡Gracias por registrar tu dirección!
           </div>
-          <div class="text-gray-600 text-center">
-            ${mensaje}
-          </div>
-          <div class="mt-3 text-sm text-gray-500">
+          <div class="text-sm text-gray-500">
             Te redirigiremos a WhatsApp en unos segundos...
           </div>
         </div>
@@ -415,11 +409,7 @@ export default function DeliveryInfoRegistration() {
       icon: 'success',
       showConfirmButton: false,
       timer: 5000,
-      timerProgressBar: true,
-      customClass: {
-        popup: 'animated fadeInDown',
-        container: 'custom-swal-container'
-      }
+      timerProgressBar: true
     }).then(() => {
       const whatsappNumber = process.env.NEXT_PUBLIC_BOT_WHATSAPP_NUMBER;
       window.location.href = `https://wa.me/${whatsappNumber}`;
