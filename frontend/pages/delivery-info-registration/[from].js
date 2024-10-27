@@ -143,24 +143,24 @@ export default function DeliveryInfoRegistration() {
         
         if (permissionStatus.state === 'denied') {
           Swal.fire({
-            title: '¡Permisos de ubicación bloqueados!',
+            title: '¡Permisos bloqueados!',
             html: `
-              <div class="text-left text-sm">
-                <p class="mb-2">Para acceder a tu ubicación, necesitas habilitar los permisos:</p>
-                <ol class="list-decimal pl-4">
-                  <li>Haz clic en el ícono del candado en la barra de direcciones</li>
-                  <li>Busca 'Ubicación' en la configuración</li>
-                  <li>Cambia el permiso a 'Permitir'</li>
-                  <li>Recarga la página e intenta nuevamente</li>
+              <div class="text-sm">
+                <p>Para acceder a tu ubicación:</p>
+                <ol class="text-left pl-4 mt-1">
+                  <li>1. Clic en el candado</li>
+                  <li>2. Busca 'Ubicación'</li>
+                  <li>3. Selecciona 'Permitir'</li>
+                  <li>4. Recarga la página</li>
                 </ol>
               </div>
             `,
             icon: 'warning',
-            confirmButtonText: 'Entendido',
+            confirmButtonText: 'OK',
             confirmButtonColor: '#3085d6',
-            width: '320px',
+            width: '280px',
           });
-          setLocationError("Por favor, ingresa tu dirección manualmente o habilita los permisos de ubicación.");
+          setLocationError("Ingresa tu dirección manualmente o habilita los permisos.");
           return;
         }
 
@@ -433,7 +433,23 @@ export default function DeliveryInfoRegistration() {
     );
   if (!isLoaded) return <div className="text-gray-600">Cargando...</div>;
   if (loading) return <p className="text-gray-600">Verificando enlace...</p>;
-  if (error && !isValidOtp) return <p className="text-red-600">{error}</p>;
+  if (error && !isValidOtp) return (
+    <div className="min-h-screen flex items-center justify-center p-4">
+      <div className="bg-white p-6 rounded-lg shadow-lg max-w-sm w-full text-center">
+        <div className="text-red-500 text-5xl mb-4">
+          <i className="fas fa-exclamation-circle"></i>
+        </div>
+        <h2 className="text-xl font-bold text-gray-800 mb-2">¡Enlace no válido!</h2>
+        <p className="text-gray-600 mb-4">{error}</p>
+        <a 
+          href={`https://wa.me/${process.env.NEXT_PUBLIC_BOT_WHATSAPP_NUMBER}`}
+          className="inline-block bg-green-500 text-white px-6 py-2 rounded-lg hover:bg-green-600 transition-colors"
+        >
+          Volver a WhatsApp
+        </a>
+      </div>
+    </div>
+  );
 
   return (
     <div className="container mx-auto px-1 py-1">
