@@ -4,6 +4,35 @@
 
 /* Puedes agregar estilos personalizados aquí si es necesario */
 
+@keyframes fadeInDown {
+  from {
+    opacity: 0;
+    transform: translate3d(0, -20%, 0);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+.animated {
+  animation-duration: 0.5s;
+  animation-fill-mode: both;
+}
+
+.fadeInDown {
+  animation-name: fadeInDown;
+}
+
+.custom-swal-container {
+  padding: 1.5rem;
+}
+
+.swal2-popup {
+  border-radius: 1rem !important;
+  padding: 2rem !important;
+}
+
 .order-card {
   transition: all 0.3s ease;
   margin-bottom: 0.25rem;

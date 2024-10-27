@@ -4,6 +4,7 @@ import axios from "axios";
 import { useLoadScript, Autocomplete } from "@react-google-maps/api";
 import AddressForm from "../../components/AddressForm";
 import Map from "../../components/Map";
+import Swal from 'sweetalert2';
 
 const libraries = ["places"];
 
@@ -360,9 +361,7 @@ export default function DeliveryInfoRegistration() {
           await sendWhatsAppMessage(clientId, mensaje);
         }
 
-        alert(mensaje);
-        const whatsappNumber = process.env.NEXT_PUBLIC_BOT_WHATSAPP_NUMBER;
-        window.location.href = `https://wa.me/${whatsappNumber}`;
+        showSuccessMessage(mensaje);
       } catch (error) {
         console.error("Error al guardar la información de entrega:", error);
         alert("Error al guardar la dirección. Por favor, inténtelo de nuevo.");
@@ -392,6 +391,39 @@ export default function DeliveryInfoRegistration() {
     } catch (error) {
       console.error("Error al enviar mensaje de WhatsApp:", error);
     }
+  };
+
+  const showSuccessMessage = (mensaje) => {
+    Swal.fire({
+      title: '¡Dirección Registrada!',
+      html: `
+        <div class="flex flex-col items-center">
+          <div class="mb-4">
+            <i class="fas fa-check-circle text-5xl text-green-500"></i>
+          </div>
+          <div class="text-lg font-semibold mb-2">
+            ¡Hola ${formData.pickupName}!
+          </div>
+          <div class="text-gray-600 text-center">
+            ${mensaje}
+          </div>
+          <div class="mt-3 text-sm text-gray-500">
+            Te redirigiremos a WhatsApp en unos segundos...
+          </div>
+        </div>
+      `,
+      icon: 'success',
+      showConfirmButton: false,
+      timer: 5000,
+      timerProgressBar: true,
+      customClass: {
+        popup: 'animated fadeInDown',
+        container: 'custom-swal-container'
+      }
+    }).then(() => {
+      const whatsappNumber = process.env.NEXT_PUBLIC_BOT_WHATSAPP_NUMBER;
+      window.location.href = `https://wa.me/${whatsappNumber}`;
+    });
   };
 
   if (loadError)
