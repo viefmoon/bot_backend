@@ -902,8 +902,8 @@ export const seedMenuItems = async (): Promise<void> => {
 
         // Crear disponibilidad para el producto
         await Availability.create({
-          id: item.id,
-          type: "product",
+          entityId: item.id,
+          entityType: "product",
           available: true,
         });
 
@@ -919,8 +919,8 @@ export const seedMenuItems = async (): Promise<void> => {
 
             // Crear disponibilidad para la variante del producto
             await Availability.create({
-              id: variant.id,
-              type: "productVariant",
+              entityId: variant.id,
+              entityType: "productVariant",
               available: true,
             });
           }
@@ -938,8 +938,8 @@ export const seedMenuItems = async (): Promise<void> => {
 
             // Crear disponibilidad para el ingrediente de pizza
             await Availability.create({
-              id: ingredient.id,
-              type: "pizzaIngredient",
+              entityId: ingredient.id,
+              entityType: "pizzaIngredient",
               available: true,
             });
           }
@@ -966,8 +966,8 @@ export const seedMenuItems = async (): Promise<void> => {
 
                 // Crear disponibilidad para el modificador
                 await Availability.create({
-                  id: modifier.id,
-                  type: "modifier",
+                  entityId: modifier.id,
+                  entityType: "modifier",
                   available: true,
                 });
               }

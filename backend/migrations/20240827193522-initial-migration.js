@@ -21,10 +21,15 @@ module.exports = {
 
     await queryInterface.createTable("Availabilities", {
       id: {
-        type: Sequelize.STRING,
+        type: Sequelize.INTEGER,
         primaryKey: true,
+        autoIncrement: true,
       },
-      type: {
+      entityId: {
+        type: Sequelize.STRING,
+        allowNull: false,
+      },
+      entityType: {
         type: Sequelize.ENUM(
           "product",
           "productVariant",

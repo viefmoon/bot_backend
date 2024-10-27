@@ -3,8 +3,9 @@ import { sequelize } from "../lib/db";
 
 // Definimos una interfaz para los atributos de Availability
 interface AvailabilityAttributes {
-  id: string;
-  type: "product" | "productVariant" | "modifier" | "pizzaIngredient";
+  id: number;
+  entityId: string;
+  entityType: "product" | "productVariant" | "modifier" | "pizzaIngredient";
   available: boolean;
 }
 
@@ -13,18 +14,24 @@ class Availability
   extends Model<AvailabilityAttributes>
   implements AvailabilityAttributes
 {
-  public id!: string;
-  public type!: "product" | "productVariant" | "modifier" | "pizzaIngredient";
+  public id!: number;
+  public entityId!: string;
+  public entityType!: "product" | "productVariant" | "modifier" | "pizzaIngredient";
   public available!: boolean;
 }
 
 Availability.init(
   {
     id: {
-      type: DataTypes.STRING,
+      type: DataTypes.INTEGER,
       primaryKey: true,
+      autoIncrement: true,
     },
-    type: {
+    entityId: {
+      type: DataTypes.STRING,
+      allowNull: false,
+    },
+    entityType: {
       type: DataTypes.ENUM(
         "product",
         "productVariant",
@@ -36,7 +43,7 @@ Availability.init(
     available: {
       type: DataTypes.BOOLEAN,
       defaultValue: true,
-    },
+    }
   },
   {
     sequelize,

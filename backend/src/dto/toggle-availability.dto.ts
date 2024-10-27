@@ -1,9 +1,9 @@
-import { IsEnum, IsNotEmpty, IsString } from "class-validator";
+import { IsEnum, IsNotEmpty, IsNumber } from "class-validator";
 
 export class ToggleAvailabilityDto {
   @IsNotEmpty()
-  @IsString()
-  id: string;
+  @IsNumber()
+  id: number;
 
   @IsNotEmpty()
   @IsEnum([
@@ -13,5 +13,5 @@ export class ToggleAvailabilityDto {
     "modifierType",
     "pizzaIngredient",
   ])
-  type: string;
+  entityType: string;
 }

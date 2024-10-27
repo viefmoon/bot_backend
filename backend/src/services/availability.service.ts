@@ -13,10 +13,10 @@ import { Op } from "sequelize";
 @Injectable()
 export class AvailabilityService {
   async toggleAvailability(toggleAvailabilityDto: ToggleAvailabilityDto) {
-    const { id, type } = toggleAvailabilityDto;
+    const { id, entityType } = toggleAvailabilityDto;
 
     const availability = await Availability.findOne({
-      where: { id, type },
+      where: { id, entityType },
     });
 
     if (!availability) {
@@ -27,7 +27,7 @@ export class AvailabilityService {
     await availability.save();
 
     // Si es un producto, actualizar la disponibilidad de sus relaciones
-    if (type === "product") {
+    if (entityType === "product") {
       const product = await Product.findByPk(id);
       if (product) {
         // Obtener IDs de todas las relaciones
@@ -86,7 +86,7 @@ export class AvailabilityService {
 
     return {
       id: availability.id,
-      type: availability.type,
+      entityType: availability.entityType,
       available: availability.available,
     };
   }

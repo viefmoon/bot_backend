@@ -98,59 +98,23 @@ SelectedPizzaIngredient.belongsTo(PizzaIngredient, {
 });
 
 // Availability associations
-Availability.belongsTo(Product, {
-  foreignKey: "id",
-  constraints: false,
-  scope: { type: "product" },
-  as: "product"
-});
-
 Product.hasOne(Availability, {
-  foreignKey: "id",
-  constraints: false,
-  scope: { type: "product" },
+  foreignKey: "entityId",
   as: "productAvailability"
 });
 
-Availability.belongsTo(ProductVariant, {
-  foreignKey: "id",
-  constraints: false,
-  scope: { type: "productVariant" },
-  as: "productVariant"
-});
-
 ProductVariant.hasOne(Availability, {
-  foreignKey: "id",
-  constraints: false,
-  scope: { type: "productVariant" },
+  foreignKey: "entityId",
   as: "productVariantAvailability"
 });
 
-Availability.belongsTo(PizzaIngredient, {
-  foreignKey: "id",
-  constraints: false,
-  scope: { type: "pizzaIngredient" },
-  as: "pizzaIngredient"
-});
-
 PizzaIngredient.hasOne(Availability, {
-  foreignKey: "id",
-  constraints: false,
-  scope: { type: "pizzaIngredient" },
+  foreignKey: "entityId",
   as: "pizzaIngredientAvailability"
 });
 
-Availability.belongsTo(Modifier, {
-  foreignKey: "id",
-  constraints: false,
-  scope: { type: "modifier" },
-  as: "modifier"
-});
-
 Modifier.hasOne(Availability, {
-  foreignKey: "id",
-  constraints: false,
-  scope: { type: "modifier" },
+  foreignKey: "entityId",
   as: "modifierAvailability"
 });
 
