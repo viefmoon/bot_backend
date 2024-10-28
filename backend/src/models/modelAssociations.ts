@@ -123,7 +123,7 @@ Product.belongsTo(Subcategory, {
 // Relaciones existentes
 Product.hasOne(Availability, {
   foreignKey: "entityId",
-  as: "pAvailability",
+  as: "pAv",
   constraints: false,
   scope: {
     entityType: 'product'
@@ -132,7 +132,7 @@ Product.hasOne(Availability, {
 
 ProductVariant.hasOne(Availability, {
   foreignKey: "entityId",
-  as: "pvAvailability",
+  as: "pvAv",
   constraints: false,
   scope: {
     entityType: 'productVariant'
@@ -141,7 +141,7 @@ ProductVariant.hasOne(Availability, {
 
 PizzaIngredient.hasOne(Availability, {
   foreignKey: "entityId",
-  as: "piAvailability",
+  as: "piAv",
   constraints: false,
   scope: {
     entityType: 'pizzaIngredient'
@@ -150,7 +150,7 @@ PizzaIngredient.hasOne(Availability, {
 
 Modifier.hasOne(Availability, {
   foreignKey: "entityId",
-  as: "mAvailability",
+  as: "mAv",
   constraints: false,
   scope: {
     entityType: 'modifier'
