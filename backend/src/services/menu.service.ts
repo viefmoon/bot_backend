@@ -547,7 +547,6 @@ Incluyen: Pollo a la plancha o jamón, chile morrón, elote, lechuga, jitomate, 
           return productoInfo;
         }),
       };
-      console.log("menuForAI", JSON.stringify(menuForAI, null, 2));
       return JSON.stringify(menuForAI);
     } catch (error: any) {
       logger.error("Error al obtener el menú para IA:", error);
