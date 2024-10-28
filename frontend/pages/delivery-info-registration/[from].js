@@ -377,8 +377,21 @@ export default function DeliveryInfoRegistration() {
         setIsSubmitting(false);
       }
     } else {
-      const errorMessages = Object.values(errors).join("\n");
-      alert(`Por favor, complete los siguientes campos:\n\n${errorMessages}`);
+      Swal.fire({
+        title: '¡Campos Requeridos!',
+        html: `
+          <div class="text-left">
+            <p class="font-semibold mb-2">Por favor, completa los siguientes campos:</p>
+            <ul class="text-red-500">
+              ${Object.values(errors).map(error => `<li>• ${error}</li>`).join('')}
+            </ul>
+          </div>
+        `,
+        icon: 'warning',
+        confirmButtonText: 'Entendido',
+        confirmButtonColor: '#3085d6',
+        width: '320px'
+      });
     }
   };
 
