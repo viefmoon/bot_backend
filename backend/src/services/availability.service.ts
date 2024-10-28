@@ -31,6 +31,7 @@ export class AvailabilityService {
       // Buscar el producto usando el entityId de la disponibilidad
       const product = await Product.findByPk(availability.entityId);
       if (product) {
+        console.log("product", product);
         // Obtener IDs de todas las relaciones
         const productVariantIds = (
           await ProductVariant.findAll({
