@@ -38,6 +38,7 @@ export class CustomerDeliveryInfoService {
   }
 
   async getDeliveryInfo(customerId: string) {
+    console.log("customerId", customerId);
     const customerDeliveryInfo = await CustomerDeliveryInfo.findOne({
       where: { customerId },
     });
