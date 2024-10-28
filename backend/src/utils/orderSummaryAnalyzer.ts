@@ -73,6 +73,21 @@ export async function analyzeOrderSummary(orderSummary: string) {
         }
       }
 
+      // Buscar ingredientes de pizza mencionados
+      if (product.pizzaIngredients) {
+        for (const ingredient of product.pizzaIngredients) {
+          const normalizedIngredient = normalizeText(ingredient.name);
+          const ingredientSimilarity = stringSimilarity.compareTwoStrings(
+            normalizedSummary.join(" "),
+            normalizedIngredient.join(" ")
+          );
+
+          if (ingredientSimilarity >= SIMILARITY_THRESHOLDS.MODIFIER) {
+            itemDescription += `, ${ingredient.name}`;
+          }
+        }
+      }
+
       mentionedItems.push(itemDescription);
     }
   }
