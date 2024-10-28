@@ -28,26 +28,27 @@ export class AvailabilityService {
 
     // Si es un producto, actualizar la disponibilidad de sus relaciones
     if (entityType === "product") {
-      const product = await Product.findByPk(id);
+      // Buscar el producto usando el entityId de la disponibilidad
+      const product = await Product.findByPk(availability.entityId);
       if (product) {
         // Obtener IDs de todas las relaciones
         const productVariantIds = (
           await ProductVariant.findAll({
-            where: { productId: id },
+            where: { productId: availability.entityId },
             attributes: ["id"],
           })
         ).map((pv) => pv.id);
 
         const pizzaIngredientIds = (
           await PizzaIngredient.findAll({
-            where: { productId: id },
+            where: { productId: availability.entityId },
             attributes: ["id"],
           })
         ).map((pi) => pi.id);
 
         const modifierTypeIds = (
           await ModifierType.findAll({
-            where: { productId: id },
+            where: { productId: availability.entityId },
             attributes: ["id"],
           })
         ).map((mt) => mt.id);
