@@ -267,17 +267,6 @@ export default function Home() {
     }
   };
 
-  const groupMenuItemsByCategory = (menuItems) => {
-    const groupedItems = {};
-    menuItems.forEach((item) => {
-      if (!groupedItems[item.category]) {
-        groupedItems[item.category] = [];
-      }
-      groupedItems[item.category].push(item);
-    });
-    return groupedItems;
-  };
-
   const refreshAll = async () => {
     try {
       await Promise.all([
@@ -686,12 +675,12 @@ export default function Home() {
                                   Disponible:
                                   <span
                                     className={`ml-2 px-2 py-1 rounded-full text-xs font-medium ${
-                                      item.Availability.available
+                                      item.pAv.available
                                         ? "bg-green-100 text-green-800"
                                         : "bg-red-100 text-red-800"
                                     }`}
                                   >
-                                    {item.Availability.available ? "Sí" : "No"}
+                                    {item.pAv.available ? "Sí" : "No"}
                                   </span>
                                 </p>
 
@@ -716,12 +705,12 @@ export default function Home() {
                                                 )
                                               }
                                               className={`px-2 py-1 rounded text-xs font-medium ${
-                                                variant.Availability.available
+                                                variant.pvAv.available
                                                   ? "bg-red-100 text-red-800 hover:bg-red-200"
                                                   : "bg-green-100 text-green-800 hover:bg-green-200"
                                               }`}
                                             >
-                                              {variant.Availability.available
+                                              {variant.pvAv.available
                                                 ? "Deshabilitar"
                                                 : "Habilitar"}
                                             </button>
@@ -753,14 +742,12 @@ export default function Home() {
                                                   )
                                                 }
                                                 className={`px-2 py-1 rounded text-xs font-medium ${
-                                                  ingredient.Availability
-                                                    .available
+                                                  ingredient.piAv.available
                                                     ? "bg-red-100 text-red-800 hover:bg-red-200"
                                                     : "bg-green-100 text-green-800 hover:bg-green-200"
                                                 }`}
                                               >
-                                                {ingredient.Availability
-                                                  .available
+                                                {ingredient.piAv.available
                                                   ? "Deshabilitar"
                                                   : "Habilitar"}
                                               </button>
@@ -802,14 +789,12 @@ export default function Home() {
                                                         )
                                                       }
                                                       className={`px-2 py-1 rounded text-xs font-medium ${
-                                                        modifier.Availability
-                                                          .available
+                                                        modifier.mAv.available
                                                           ? "bg-red-100 text-red-800 hover:bg-red-200"
                                                           : "bg-green-100 text-green-800 hover:bg-green-200"
                                                       }`}
                                                     >
-                                                      {modifier.Availability
-                                                        .available
+                                                      {modifier.mAv.available
                                                         ? "Deshabilitar"
                                                         : "Habilitar"}
                                                     </button>
@@ -828,12 +813,12 @@ export default function Home() {
                                     toggleItemAvailability(item.id, "product")
                                   }
                                   className={`mt-4 w-full py-2 px-4 rounded-lg text-sm font-medium ${
-                                    item.Availability.available
+                                    item.pAv.available
                                       ? "bg-red-500 text-white hover:bg-red-600"
                                       : "bg-green-500 text-white hover:bg-green-600"
                                   } transition-colors duration-300`}
                                 >
-                                  {item.Availability.available
+                                  {item.pAv.available
                                     ? "Deshabilitar"
                                     : "Habilitar"}
                                 </button>
