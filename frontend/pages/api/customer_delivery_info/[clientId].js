@@ -2,6 +2,7 @@ import axios from "axios";
 
 export default async function handler(req, res) {
   const { customerId } = req.query;
+  console.log("customerId frontend", customerId);
 
   if (req.method === "GET") {
     try {

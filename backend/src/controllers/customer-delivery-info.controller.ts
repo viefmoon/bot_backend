@@ -67,6 +67,7 @@ export class CustomerDeliveryInfoController {
 
   @Get(":customerId")
   async getCustomerDeliveryInfo(@Param("customerId") customerId: string) {
+    console.log("customerId", customerId);
     const deliveryInfo = await this.customerDeliveryInfoService.getDeliveryInfo(
       customerId
     );
