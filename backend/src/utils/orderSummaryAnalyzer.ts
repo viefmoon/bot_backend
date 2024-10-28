@@ -6,7 +6,7 @@ const menuService = new MenuService();
 
 export async function analyzeOrderSummary(orderSummary: string) {
   const fullMenuResult = await menuService.getMenuAvailability();
-  
+
   if ("error" in fullMenuResult) {
     return "";
   }
@@ -17,25 +17,40 @@ export async function analyzeOrderSummary(orderSummary: string) {
 
   // Buscar productos mencionados
   for (const product of fullMenu) {
-    const normalizedProductName = normalizeText(product.name).join(" ");
-    const similarity = stringSimilarity.compareTwoStrings(
-      normalizedSummary.join(" "),
-      normalizedProductName
-    );
+    const normalizedProductName = normalizeText(product.name);
 
-    if (similarity >= SIMILARITY_THRESHOLDS.WORD) {
+    // Comparar palabra por palabra
+    let maxWordSimilarity = 0;
+    for (const summaryWord of normalizedSummary) {
+      for (const productWord of normalizedProductName) {
+        const similarity = stringSimilarity.compareTwoStrings(
+          summaryWord,
+          productWord
+        );
+        maxWordSimilarity = Math.max(maxWordSimilarity, similarity);
+      }
+    }
+
+    if (maxWordSimilarity >= SIMILARITY_THRESHOLDS.WORD) {
       let itemDescription = `Producto: ${product.name}`;
-      
+
       // Buscar variantes mencionadas
       if (product.productVariants) {
         for (const variant of product.productVariants) {
-          const normalizedVariant = normalizeText(variant.name).join(" ");
-          const variantSimilarity = stringSimilarity.compareTwoStrings(
-            normalizedSummary.join(" "),
-            normalizedVariant
-          );
-          
-          if (variantSimilarity >= SIMILARITY_THRESHOLDS.VARIANT) {
+          const normalizedVariant = normalizeText(variant.name);
+
+          let maxVariantSimilarity = 0;
+          for (const summaryWord of normalizedSummary) {
+            for (const variantWord of normalizedVariant) {
+              const similarity = stringSimilarity.compareTwoStrings(
+                summaryWord,
+                variantWord
+              );
+              maxVariantSimilarity = Math.max(maxVariantSimilarity, similarity);
+            }
+          }
+
+          if (maxVariantSimilarity >= SIMILARITY_THRESHOLDS.VARIANT) {
             itemDescription += ` (${variant.name})`;
           }
         }
@@ -45,7 +60,7 @@ export async function analyzeOrderSummary(orderSummary: string) {
       if (product.modifierTypes) {
         for (const modifierType of product.modifierTypes) {
           for (const modifier of modifierType.modifiers) {
-            const normalizedModifier = normalizeText(modifier.name).join(" ");
+            const normalizedModifier = normalizeText(modifier.name);
             const modifierSimilarity = stringSimilarity.compareTwoStrings(
               normalizedSummary.join(" "),
               normalizedModifier
@@ -66,5 +81,7 @@ export async function analyzeOrderSummary(orderSummary: string) {
     return "No he podido identificar productos específicos en el resumen anterior.";
   }
 
-  return `Basado en la conversación anterior, identifico los siguientes elementos: ${mentionedItems.join(". ")}. ¿Puedo ayudarte a confirmar o modificar alguno de estos detalles?`;
+  return `Basado en la conversación anterior, identifico los siguientes elementos: ${mentionedItems.join(
+    ". "
+  )}. ¿Puedo ayudarte a confirmar o modificar alguno de estos detalles?`;
 }
