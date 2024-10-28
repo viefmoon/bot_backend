@@ -13,14 +13,16 @@ export async function analyzeOrderSummary(orderSummary: string) {
 
   const menu = JSON.parse(menuResult as string).productos;
   const normalizedSummary = normalizeText(orderSummary);
-  const mentionedItems = [];
+  const mentionedItems = {
+    productos: [],
+  };
 
   // Buscar productos mencionados
   for (const product of menu) {
     const normalizedProductName = normalizeText(product.nombre);
+    let maxWordSimilarity = 0;
 
     // Comparar palabra por palabra
-    let maxWordSimilarity = 0;
     for (const summaryWord of normalizedSummary) {
       for (const productWord of normalizedProductName) {
         const similarity = stringSimilarity.compareTwoStrings(
@@ -32,14 +34,20 @@ export async function analyzeOrderSummary(orderSummary: string) {
     }
 
     if (maxWordSimilarity >= SIMILARITY_THRESHOLDS.WORD) {
-      let itemDescription = `Producto: ${product.nombre}`;
+      const itemObject = {
+        nombre: product.nombre,
+        variantes: [],
+        personalizacion: [],
+        ingredientesPizza: [],
+      };
 
       // Buscar variantes mencionadas
       if (product.variantes) {
         for (const variant of product.variantes) {
           const normalizedVariant = normalizeText(variant);
-
           let maxVariantSimilarity = 0;
+
+          // Comparar palabra por palabra
           for (const summaryWord of normalizedSummary) {
             for (const variantWord of normalizedVariant) {
               const similarity = stringSimilarity.compareTwoStrings(
@@ -51,7 +59,7 @@ export async function analyzeOrderSummary(orderSummary: string) {
           }
 
           if (maxVariantSimilarity >= SIMILARITY_THRESHOLDS.VARIANT) {
-            itemDescription += ` (${variant})`;
+            itemObject.variantes.push(variant);
           }
         }
       }
@@ -59,6 +67,7 @@ export async function analyzeOrderSummary(orderSummary: string) {
       // Buscar modificadores mencionados
       if (product.personalizacion) {
         for (const modifierType of product.personalizacion) {
+          const matchedOpciones = [];
           for (const modifier of modifierType.opciones) {
             const normalizedModifier = normalizeText(modifier);
             const modifierSimilarity = stringSimilarity.compareTwoStrings(
@@ -67,8 +76,14 @@ export async function analyzeOrderSummary(orderSummary: string) {
             );
 
             if (modifierSimilarity >= SIMILARITY_THRESHOLDS.MODIFIER) {
-              itemDescription += `, ${modifier}`;
+              matchedOpciones.push(modifier);
             }
+          }
+          if (matchedOpciones.length > 0) {
+            itemObject.personalizacion.push({
+              modificador: modifierType.modificador,
+              opciones: matchedOpciones,
+            });
           }
         }
       }
@@ -83,19 +98,18 @@ export async function analyzeOrderSummary(orderSummary: string) {
           );
 
           if (ingredientSimilarity >= SIMILARITY_THRESHOLDS.MODIFIER) {
-            itemDescription += `, ${ingredient}`;
+            itemObject.ingredientesPizza.push(ingredient);
           }
         }
       }
 
-      mentionedItems.push(itemDescription);
+      mentionedItems.productos.push(itemObject);
     }
   }
 
-  if (mentionedItems.length === 0) {
+  if (mentionedItems.productos.length === 0) {
     return "";
   }
 
-  // Convertir el array de items en un solo string con saltos de línea
-  return mentionedItems.join("\n");
+  return JSON.stringify(mentionedItems);
 }
