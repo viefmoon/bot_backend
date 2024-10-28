@@ -72,6 +72,7 @@ export default function DeliveryInfoRegistration() {
 
   const loadExistingDeliveryInfo = async (customerId) => {
     try {
+      console.log("customerId loadExistingDeliveryInfo", customerId);
       const response = await axios.get(
         `/api/customer_delivery_info/${customerId}`
       );
