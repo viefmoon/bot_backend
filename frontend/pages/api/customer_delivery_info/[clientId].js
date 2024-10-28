@@ -6,6 +6,7 @@ export default async function handler(req, res) {
 
   if (req.method === "GET") {
     try {
+      console.log("customerId frontend GET", customerId);
       const getDeliveryInfoResponse = await axios.get(
         `${process.env.NEXT_PUBLIC_BACKEND_BASE_URL}/customer-delivery-info/${customerId}`
       );
