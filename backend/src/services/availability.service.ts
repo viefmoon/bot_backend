@@ -16,7 +16,7 @@ export class AvailabilityService {
     const { id, entityType } = toggleAvailabilityDto;
 
     const availability = await Availability.findOne({
-      where: { id, entityType },
+      where: { id },
     });
 
     if (!availability) {
