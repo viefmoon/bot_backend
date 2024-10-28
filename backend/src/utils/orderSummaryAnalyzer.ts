@@ -125,6 +125,17 @@ export async function analyzeOrderSummary(orderSummary: string) {
         }
       }
 
+      // Antes de agregar el itemObject al array de productos, limpiamos los arrays vacíos
+      if (itemObject.variantes.length === 0) {
+        delete itemObject.variantes;
+      }
+      if (itemObject.personalizacion.length === 0) {
+        delete itemObject.personalizacion;
+      }
+      if (itemObject.ingredientesPizza.length === 0) {
+        delete itemObject.ingredientesPizza;
+      }
+
       mentionedItems.productos.push(itemObject);
     }
   }
