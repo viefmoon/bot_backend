@@ -700,7 +700,7 @@ export default function Home() {
                                             <button
                                               onClick={() =>
                                                 toggleItemAvailability(
-                                                  variant.id,
+                                                  variant.pvAv.id,
                                                   "productVariant"
                                                 )
                                               }
@@ -737,7 +737,7 @@ export default function Home() {
                                               <button
                                                 onClick={() =>
                                                   toggleItemAvailability(
-                                                    ingredient.id,
+                                                    ingredient.piAv.id,
                                                     "pizzaIngredient"
                                                   )
                                                 }
@@ -784,7 +784,7 @@ export default function Home() {
                                                     <button
                                                       onClick={() =>
                                                         toggleItemAvailability(
-                                                          modifier.id,
+                                                          modifier.mAv.id,
                                                           "modifier"
                                                         )
                                                       }
@@ -810,7 +810,7 @@ export default function Home() {
 
                                 <button
                                   onClick={() =>
-                                    toggleItemAvailability(item.id, "product")
+                                    toggleItemAvailability(item.pAv.id, "product")
                                   }
                                   className={`mt-4 w-full py-2 px-4 rounded-lg text-sm font-medium ${
                                     item.pAv.available
