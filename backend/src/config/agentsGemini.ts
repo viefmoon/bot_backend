@@ -75,14 +75,11 @@ export const ORDER_AGENT_GEMINI: AgentGemini = {
   model: "gemini-1.5-flash-002",
   //model: "gemini-1.5-exp-0827",
   //model: "gemini-1.5-flash-8b",
-  systemMessage: async () => `
-
+  systemMessage: `
     Tu tarea:
     En base al mensaje del usuario, usa la función preprocess_order para generar una lista detallada de los productos mencionados, mapeándolos a los nombres exactos del menú disponible.
     - Si el cliente menciona un producto de manera imprecisa, intenta mapearlo al nombre exacto en el menú incluyendo modificaciones.
     - Si no estás seguro, utiliza la mejor aproximación basada en el menú disponible.
-
-    ${await menuService.getMenuForAI()}
   `,
   tools: [
     {
