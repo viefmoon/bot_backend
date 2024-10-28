@@ -70,12 +70,23 @@ export async function analyzeOrderSummary(orderSummary: string) {
           const matchedOpciones = [];
           for (const modifier of modifierType.opciones) {
             const normalizedModifier = normalizeText(modifier);
-            const modifierSimilarity = stringSimilarity.compareTwoStrings(
-              normalizedSummary.join(" "),
-              normalizedModifier.join(" ")
-            );
+            let maxModifierSimilarity = 0;
 
-            if (modifierSimilarity >= SIMILARITY_THRESHOLDS.MODIFIER) {
+            // Comparar palabra por palabra, similar a productos y variantes
+            for (const summaryWord of normalizedSummary) {
+              for (const modifierWord of normalizedModifier) {
+                const similarity = stringSimilarity.compareTwoStrings(
+                  summaryWord,
+                  modifierWord
+                );
+                maxModifierSimilarity = Math.max(
+                  maxModifierSimilarity,
+                  similarity
+                );
+              }
+            }
+
+            if (maxModifierSimilarity >= SIMILARITY_THRESHOLDS.MODIFIER) {
               matchedOpciones.push(modifier);
             }
           }
@@ -92,12 +103,23 @@ export async function analyzeOrderSummary(orderSummary: string) {
       if (product.ingredientesPizza) {
         for (const ingredient of product.ingredientesPizza) {
           const normalizedIngredient = normalizeText(ingredient);
-          const ingredientSimilarity = stringSimilarity.compareTwoStrings(
-            normalizedSummary.join(" "),
-            normalizedIngredient.join(" ")
-          );
+          let maxIngredientSimilarity = 0;
 
-          if (ingredientSimilarity >= SIMILARITY_THRESHOLDS.MODIFIER) {
+          // Comparar palabra por palabra, similar a productos y variantes
+          for (const summaryWord of normalizedSummary) {
+            for (const ingredientWord of normalizedIngredient) {
+              const similarity = stringSimilarity.compareTwoStrings(
+                summaryWord,
+                ingredientWord
+              );
+              maxIngredientSimilarity = Math.max(
+                maxIngredientSimilarity,
+                similarity
+              );
+            }
+          }
+
+          if (maxIngredientSimilarity >= SIMILARITY_THRESHOLDS.MODIFIER) {
             itemObject.ingredientesPizza.push(ingredient);
           }
         }
