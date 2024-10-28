@@ -63,7 +63,7 @@ export async function analyzeOrderSummary(orderSummary: string) {
             const normalizedModifier = normalizeText(modifier.name);
             const modifierSimilarity = stringSimilarity.compareTwoStrings(
               normalizedSummary.join(" "),
-              normalizedModifier
+              normalizedModifier.join(" ")
             );
 
             if (modifierSimilarity >= SIMILARITY_THRESHOLDS.MODIFIER) {
