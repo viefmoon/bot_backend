@@ -77,9 +77,8 @@ export const ORDER_AGENT_GEMINI: AgentGemini = {
   //model: "gemini-1.5-flash-8b",
   systemMessage: `
     Tu tarea:
-    En base al mensaje del usuario, usa la función preprocess_order para generar una lista detallada de los productos mencionados, mapeándolos a los nombres exactos del menú disponible.
-    - Si el cliente menciona un producto de manera imprecisa, intenta mapearlo al nombre exacto en el menú incluyendo modificaciones.
-    - Si no estás seguro, utiliza la mejor aproximación basada en el menú disponible.
+    - Si el cliente menciona un producto de manera imprecisa, intenta mapearlo al nombre exacto en el menu proporcionado en el mensaje del asistente, incluyendo modificaciones.
+    - Utiliza la mejor aproximación basada en el menú disponible.
   `,
   tools: [
     {
@@ -104,7 +103,7 @@ export const ORDER_AGENT_GEMINI: AgentGemini = {
                     description: {
                       type: "string",
                       description:
-                        "Descripción detallada del producto, mapeándolos a los nombres exactos del menú, incluyendo modificaciones, ingredientes extra, etc. o mitad y mitad de pizza si el cliente las menciona",
+                        "Descripción detallada del producto, mapeándolos a los nombres exactos del menú proporcionado en el mensaje del asistente, incluyendo modificaciones, ingredientes extra, etc. o mitad y mitad de pizza si el cliente las menciona",
                     },
                   },
                   required: ["description", "quantity"],
