@@ -5,19 +5,19 @@ import * as stringSimilarity from "string-similarity";
 const menuService = new MenuService();
 
 export async function analyzeOrderSummary(orderSummary: string) {
-  const fullMenuResult = await menuService.getMenuAvailability();
+  const menuResult = await menuService.getMenuForAI();
 
-  if ("error" in fullMenuResult) {
+  if (typeof menuResult === "object" && "error" in menuResult) {
     return "";
   }
 
-  const fullMenu = fullMenuResult;
+  const menu = JSON.parse(menuResult as string).productos;
   const normalizedSummary = normalizeText(orderSummary);
   const mentionedItems = [];
 
   // Buscar productos mencionados
-  for (const product of fullMenu) {
-    const normalizedProductName = normalizeText(product.name);
+  for (const product of menu) {
+    const normalizedProductName = normalizeText(product.nombre);
 
     // Comparar palabra por palabra
     let maxWordSimilarity = 0;
@@ -32,12 +32,12 @@ export async function analyzeOrderSummary(orderSummary: string) {
     }
 
     if (maxWordSimilarity >= SIMILARITY_THRESHOLDS.WORD) {
-      let itemDescription = `Producto: ${product.name}`;
+      let itemDescription = `Producto: ${product.nombre}`;
 
       // Buscar variantes mencionadas
-      if (product.productVariants) {
-        for (const variant of product.productVariants) {
-          const normalizedVariant = normalizeText(variant.name);
+      if (product.variantes) {
+        for (const variant of product.variantes) {
+          const normalizedVariant = normalizeText(variant);
 
           let maxVariantSimilarity = 0;
           for (const summaryWord of normalizedSummary) {
@@ -51,39 +51,39 @@ export async function analyzeOrderSummary(orderSummary: string) {
           }
 
           if (maxVariantSimilarity >= SIMILARITY_THRESHOLDS.VARIANT) {
-            itemDescription += ` (${variant.name})`;
+            itemDescription += ` (${variant})`;
           }
         }
       }
 
       // Buscar modificadores mencionados
-      if (product.modifierTypes) {
-        for (const modifierType of product.modifierTypes) {
-          for (const modifier of modifierType.modifiers) {
-            const normalizedModifier = normalizeText(modifier.name);
+      if (product.personalizacion) {
+        for (const modifierType of product.personalizacion) {
+          for (const modifier of modifierType.opciones) {
+            const normalizedModifier = normalizeText(modifier);
             const modifierSimilarity = stringSimilarity.compareTwoStrings(
               normalizedSummary.join(" "),
               normalizedModifier.join(" ")
             );
 
             if (modifierSimilarity >= SIMILARITY_THRESHOLDS.MODIFIER) {
-              itemDescription += `, ${modifier.name}`;
+              itemDescription += `, ${modifier}`;
             }
           }
         }
       }
 
       // Buscar ingredientes de pizza mencionados
-      if (product.pizzaIngredients) {
-        for (const ingredient of product.pizzaIngredients) {
-          const normalizedIngredient = normalizeText(ingredient.name);
+      if (product.ingredientesPizza) {
+        for (const ingredient of product.ingredientesPizza) {
+          const normalizedIngredient = normalizeText(ingredient);
           const ingredientSimilarity = stringSimilarity.compareTwoStrings(
             normalizedSummary.join(" "),
             normalizedIngredient.join(" ")
           );
 
           if (ingredientSimilarity >= SIMILARITY_THRESHOLDS.MODIFIER) {
-            itemDescription += `, ${ingredient.name}`;
+            itemDescription += `, ${ingredient}`;
           }
         }
       }
@@ -93,10 +93,8 @@ export async function analyzeOrderSummary(orderSummary: string) {
   }
 
   if (mentionedItems.length === 0) {
-    return "No he podido identificar productos específicos en el resumen anterior.";
+    return [];
   }
 
-  return `Basado en la conversación anterior, identifico los siguientes elementos: ${mentionedItems.join(
-    ". "
-  )}. ¿Puedo ayudarte a confirmar o modificar alguno de estos detalles?`;
+  return mentionedItems;
 }
