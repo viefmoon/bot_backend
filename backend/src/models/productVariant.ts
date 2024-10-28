@@ -22,7 +22,7 @@ class ProductVariant
   public productId!: string;
   public ingredients?: string;
 
-  public Availability?: Availability;
+  public pvAv?: Availability;
 }
 
 ProductVariant.init(

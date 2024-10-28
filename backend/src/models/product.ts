@@ -25,7 +25,7 @@ class Product
   public ingredients?: string;
   public subcategoryId: string;
   //associations
-  public Availability?: Availability;
+  public pAv?: Availability;
   public productVariants?: ProductVariant[];
   public modifierTypes?: ModifierType[];
   public pizzaIngredients?: PizzaIngredient[];

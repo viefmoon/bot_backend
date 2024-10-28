@@ -24,7 +24,7 @@ class PizzaIngredient
   public ingredients?: string;
 
   // Associations
-  public Availability?: Availability;
+  public piAv?: Availability;
 }
 
 PizzaIngredient.init(

@@ -24,7 +24,7 @@ class Modifier
 
   // Associations
   public modifierType?: ModifierType;
-  public Availability?: Availability;
+  public mAv?: Availability;
 }
 
 Modifier.init(
