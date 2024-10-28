@@ -139,17 +139,17 @@ Incluyen: Pollo a la plancha o jamón, chile morrón, elote, lechuga, jitomate, 
                     include: [
                       {
                         model: Availability,
-                        as: "productVariantAvailability", // Aseguramos el alias completo
+                        as: "productVariantAvailability",
                         attributes: ["id", "entityId", "entityType", "available"],
-                        required: false
+                        required: false,
                       },
                     ],
                   },
                   {
                     model: Availability,
-                    as: "productAvailability", // Aseguramos el alias completo
+                    as: "productAvailability",
                     attributes: ["id", "entityId", "entityType", "available"],
-                    required: false
+                    required: false,
                   },
                   {
                     model: PizzaIngredient,
@@ -157,9 +157,9 @@ Incluyen: Pollo a la plancha o jamón, chile morrón, elote, lechuga, jitomate, 
                     include: [
                       {
                         model: Availability,
-                        as: "pizzaIngredientAvailability", // Aseguramos el alias completo
+                        as: "pizzaIngredientAvailability",
                         attributes: ["id", "entityId", "entityType", "available"],
-                        required: false
+                        required: false,
                       },
                     ],
                   },
@@ -173,9 +173,9 @@ Incluyen: Pollo a la plancha o jamón, chile morrón, elote, lechuga, jitomate, 
                         include: [
                           {
                             model: Availability,
-                            as: "modifierAvailability", // Aseguramos el alias completo
+                            as: "modifierAvailability",
                             attributes: ["id", "entityId", "entityType", "available"],
-                            required: false
+                            required: false,
                           },
                         ],
                       },
@@ -186,11 +186,49 @@ Incluyen: Pollo a la plancha o jamón, chile morrón, elote, lechuga, jitomate, 
             ],
           },
         ],
-        raw: false, // Aseguramos que no se devuelvan resultados raw
-        nest: true // Anidamos los resultados
+        raw: false,
+        nest: false,
       });
 
-      return menu;
+      // Función recursiva para procesar las relaciones
+      const processRelations = (obj: any) => {
+        if (!obj) return obj;
+        
+        // Si es un array, procesa cada elemento
+        if (Array.isArray(obj)) {
+          return obj.map(item => processRelations(item));
+        }
+
+        // Si es un objeto, procesa sus propiedades
+        if (typeof obj === 'object') {
+          const processed: any = {};
+          
+          for (const [key, value] of Object.entries(obj)) {
+            // Maneja específicamente las relaciones de disponibilidad
+            if (key.includes('Availabil')) {
+              const fullKey = {
+                'productVariantAvailabili': 'productVariantAvailability',
+                'pizzaIngredientAvailabi': 'pizzaIngredientAvailability',
+                'modifierAvailabi': 'modifierAvailability',
+                'productAvailabili': 'productAvailability'
+              }[key] || key;
+              
+              processed[fullKey] = value;
+            } else {
+              processed[key] = processRelations(value);
+            }
+          }
+          
+          return processed;
+        }
+
+        return obj;
+      };
+
+      // Procesa el resultado
+      const processedMenu = processRelations(menu);
+
+      return processedMenu;
     } catch (error) {
       logger.error(`Error al recuperar el menú: ${error.message}`, { error });
       throw new Error(`Error al recuperar el menú: ${error.message}`);
