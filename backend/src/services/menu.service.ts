@@ -190,7 +190,6 @@ Incluyen: Pollo a la plancha o jamón, chile morrón, elote, lechuga, jitomate, 
           },
         ],
       });
-      console.log("menu", JSON.stringify(menu, null, 2));
       return menu;
     } catch (error) {
       logger.error(`Error al recuperar el menú: ${error.message}`, { error });
