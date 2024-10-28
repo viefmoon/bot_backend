@@ -66,8 +66,8 @@ export async function analyzeOrderSummary(orderSummary: string) {
 
       // Buscar modificadores mencionados
       if (product.personalizacion) {
+        const matchedOpciones = [];
         for (const modifierType of product.personalizacion) {
-          const matchedOpciones = [];
           for (const modifier of modifierType.opciones) {
             const normalizedModifier = normalizeText(modifier);
             let maxModifierSimilarity = 0;
@@ -90,12 +90,9 @@ export async function analyzeOrderSummary(orderSummary: string) {
               matchedOpciones.push(modifier);
             }
           }
-          if (matchedOpciones.length > 0) {
-            itemObject.personalizacion.push({
-              modificador: modifierType.modificador,
-              opciones: matchedOpciones,
-            });
-          }
+        }
+        if (matchedOpciones.length > 0) {
+          itemObject.personalizacion = matchedOpciones;
         }
       }
 
