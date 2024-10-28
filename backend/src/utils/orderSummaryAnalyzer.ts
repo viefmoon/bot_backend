@@ -93,8 +93,9 @@ export async function analyzeOrderSummary(orderSummary: string) {
   }
 
   if (mentionedItems.length === 0) {
-    return [];
+    return "";
   }
 
-  return mentionedItems;
+  // Convertir el array de items en un solo string con saltos de línea
+  return mentionedItems.join("\n");
 }
