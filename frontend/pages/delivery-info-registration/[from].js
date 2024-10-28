@@ -54,6 +54,7 @@ export default function DeliveryInfoRegistration() {
       setLoading(false);
       setIsValidOtp(response.data);
       if (response.data) {
+        console.log("response.datassss", response.data);
         // Si el OTP es válido, intentamos cargar la información existente
         loadExistingDeliveryInfo(customerId);
       } else {
