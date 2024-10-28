@@ -4,7 +4,7 @@ import axios from "axios";
 import { useLoadScript, Autocomplete } from "@react-google-maps/api";
 import AddressForm from "../../components/AddressForm";
 import Map from "../../components/Map";
-import Swal from 'sweetalert2';
+import Swal from "sweetalert2";
 
 const libraries = ["places"];
 
@@ -73,6 +73,7 @@ export default function DeliveryInfoRegistration() {
       const response = await axios.get(
         `/api/customer_delivery_info/${customerId}`
       );
+      console.log("response.data", response.data);
       if (response.data && Object.keys(response.data).length > 0) {
         const formattedData = {
           pickupName: response.data.pickupName || "",
@@ -139,11 +140,13 @@ export default function DeliveryInfoRegistration() {
   const requestLocation = async () => {
     if ("geolocation" in navigator) {
       try {
-        const permissionStatus = await navigator.permissions.query({ name: 'geolocation' });
-        
-        if (permissionStatus.state === 'denied') {
+        const permissionStatus = await navigator.permissions.query({
+          name: "geolocation",
+        });
+
+        if (permissionStatus.state === "denied") {
           Swal.fire({
-            title: '¡Permisos bloqueados!',
+            title: "¡Permisos bloqueados!",
             html: `
               <div class="text-sm">
                 <p>Para acceder a tu ubicación:</p>
@@ -155,12 +158,14 @@ export default function DeliveryInfoRegistration() {
                 </ol>
               </div>
             `,
-            icon: 'warning',
-            confirmButtonText: 'OK',
-            confirmButtonColor: '#3085d6',
-            width: '280px',
+            icon: "warning",
+            confirmButtonText: "OK",
+            confirmButtonColor: "#3085d6",
+            width: "280px",
           });
-          setLocationError("Ingresa tu dirección manualmente o habilita los permisos.");
+          setLocationError(
+            "Ingresa tu dirección manualmente o habilita los permisos."
+          );
           return;
         }
 
@@ -378,19 +383,21 @@ export default function DeliveryInfoRegistration() {
       }
     } else {
       Swal.fire({
-        title: '¡Campos Requeridos!',
+        title: "¡Campos Requeridos!",
         html: `
           <div class="text-left">
             <p class="font-semibold mb-2">Por favor, completa los siguientes campos:</p>
             <ul class="text-red-500">
-              ${Object.values(errors).map(error => `<li>• ${error}</li>`).join('')}
+              ${Object.values(errors)
+                .map((error) => `<li>• ${error}</li>`)
+                .join("")}
             </ul>
           </div>
         `,
-        icon: 'warning',
-        confirmButtonText: 'Entendido',
-        confirmButtonColor: '#3085d6',
-        width: '320px'
+        icon: "warning",
+        confirmButtonText: "Entendido",
+        confirmButtonColor: "#3085d6",
+        width: "320px",
       });
     }
   };
@@ -416,7 +423,7 @@ export default function DeliveryInfoRegistration() {
 
   const showSuccessMessage = () => {
     Swal.fire({
-      title: '¡Dirección Registrada!',
+      title: "¡Dirección Registrada!",
       html: `
         <div class="text-center">
           <div class="text-base font-semibold mb-1">
@@ -427,11 +434,11 @@ export default function DeliveryInfoRegistration() {
           </div>
         </div>
       `,
-      icon: 'success',
+      icon: "success",
       showConfirmButton: false,
       timer: 5000,
       timerProgressBar: true,
-      width: '300px'
+      width: "300px",
     }).then(() => {
       const whatsappNumber = process.env.NEXT_PUBLIC_BOT_WHATSAPP_NUMBER;
       window.location.href = `https://wa.me/${whatsappNumber}`;
@@ -446,23 +453,26 @@ export default function DeliveryInfoRegistration() {
     );
   if (!isLoaded) return <div className="text-gray-600">Cargando...</div>;
   if (loading) return <p className="text-gray-600">Verificando enlace...</p>;
-  if (error && !isValidOtp) return (
-    <div className="min-h-screen flex items-center justify-center p-4">
-      <div className="bg-white p-6 rounded-lg shadow-lg max-w-sm w-full text-center">
-        <div className="text-red-500 text-5xl mb-4">
-          <i className="fas fa-exclamation-circle"></i>
+  if (error && !isValidOtp)
+    return (
+      <div className="min-h-screen flex items-center justify-center p-4">
+        <div className="bg-white p-6 rounded-lg shadow-lg max-w-sm w-full text-center">
+          <div className="text-red-500 text-5xl mb-4">
+            <i className="fas fa-exclamation-circle"></i>
+          </div>
+          <h2 className="text-xl font-bold text-gray-800 mb-2">
+            ¡Enlace no válido!
+          </h2>
+          <p className="text-gray-600 mb-4">{error}</p>
+          <a
+            href={`https://wa.me/${process.env.NEXT_PUBLIC_BOT_WHATSAPP_NUMBER}`}
+            className="inline-block bg-green-500 text-white px-6 py-2 rounded-lg hover:bg-green-600 transition-colors"
+          >
+            Volver a WhatsApp
+          </a>
         </div>
-        <h2 className="text-xl font-bold text-gray-800 mb-2">¡Enlace no válido!</h2>
-        <p className="text-gray-600 mb-4">{error}</p>
-        <a 
-          href={`https://wa.me/${process.env.NEXT_PUBLIC_BOT_WHATSAPP_NUMBER}`}
-          className="inline-block bg-green-500 text-white px-6 py-2 rounded-lg hover:bg-green-600 transition-colors"
-        >
-          Volver a WhatsApp
-        </a>
       </div>
-    </div>
-  );
+    );
 
   return (
     <div className="container mx-auto px-1 py-1">
