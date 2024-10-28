@@ -72,11 +72,9 @@ export default function DeliveryInfoRegistration() {
 
   const loadExistingDeliveryInfo = async (customerId) => {
     try {
-      console.log("customerId loadExistingDeliveryInfo", customerId);
       const response = await axios.get(
         `/api/customer_delivery_info/${customerId}`
       );
-      console.log("response.data", response.data);
       if (response.data && Object.keys(response.data).length > 0) {
         const formattedData = {
           pickupName: response.data.pickupName || "",
