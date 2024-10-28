@@ -190,45 +190,37 @@ Incluyen: Pollo a la plancha o jamón, chile morrón, elote, lechuga, jitomate, 
         nest: false,
       });
 
-      // Función recursiva para procesar las relaciones
-      const processRelations = (obj: any) => {
-        if (!obj) return obj;
-        
-        // Si es un array, procesa cada elemento
-        if (Array.isArray(obj)) {
-          return obj.map(item => processRelations(item));
+      // Función para convertir el modelo Sequelize a un objeto plano
+      const toPlainObject = (instance: any) => {
+        if (!instance) return instance;
+        if (Array.isArray(instance)) {
+          return instance.map(item => toPlainObject(item));
         }
-
-        // Si es un objeto, procesa sus propiedades
-        if (typeof obj === 'object') {
-          const processed: any = {};
-          
-          for (const [key, value] of Object.entries(obj)) {
-            // Maneja específicamente las relaciones de disponibilidad
-            if (key.includes('Availabil')) {
-              const fullKey = {
-                'productVariantAvailabili': 'productVariantAvailability',
-                'pizzaIngredientAvailabi': 'pizzaIngredientAvailability',
-                'modifierAvailabi': 'modifierAvailability',
-                'productAvailabili': 'productAvailability'
-              }[key] || key;
-              
-              processed[fullKey] = value;
+        if (typeof instance === 'object' && instance !== null) {
+          if (instance.constructor.name === 'Model') {
+            instance = instance.get({ plain: true });
+          }
+          const result: any = {};
+          for (const [key, value] of Object.entries(instance)) {
+            // Corrige los nombres truncados de availability
+            if (key.startsWith('productVariantAvailabili')) {
+              result['productVariantAvailability'] = toPlainObject(value);
+            } else if (key.startsWith('pizzaIngredientAvailabi')) {
+              result['pizzaIngredientAvailability'] = toPlainObject(value);
+            } else if (key.startsWith('modifierAvailabi')) {
+              result['modifierAvailability'] = toPlainObject(value);
+            } else if (key.startsWith('productAvailabili')) {
+              result['productAvailability'] = toPlainObject(value);
             } else {
-              processed[key] = processRelations(value);
+              result[key] = toPlainObject(value);
             }
           }
-          
-          return processed;
+          return result;
         }
-
-        return obj;
+        return instance;
       };
 
-      // Procesa el resultado
-      const processedMenu = processRelations(menu);
-
-      return processedMenu;
+      return toPlainObject(menu);
     } catch (error) {
       logger.error(`Error al recuperar el menú: ${error.message}`, { error });
       throw new Error(`Error al recuperar el menú: ${error.message}`);
