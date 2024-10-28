@@ -186,41 +186,63 @@ Incluyen: Pollo a la plancha o jamón, chile morrón, elote, lechuga, jitomate, 
             ],
           },
         ],
-        raw: false,
-        nest: false,
       });
 
-      // Función para convertir el modelo Sequelize a un objeto plano
-      const toPlainObject = (instance: any) => {
-        if (!instance) return instance;
-        if (Array.isArray(instance)) {
-          return instance.map(item => toPlainObject(item));
-        }
-        if (typeof instance === 'object' && instance !== null) {
-          if (instance.constructor.name === 'Model') {
-            instance = instance.get({ plain: true });
-          }
-          const result: any = {};
-          for (const [key, value] of Object.entries(instance)) {
-            // Corrige los nombres truncados de availability
-            if (key.startsWith('productVariantAvailabili')) {
-              result['productVariantAvailability'] = toPlainObject(value);
-            } else if (key.startsWith('pizzaIngredientAvailabi')) {
-              result['pizzaIngredientAvailability'] = toPlainObject(value);
-            } else if (key.startsWith('modifierAvailabi')) {
-              result['modifierAvailability'] = toPlainObject(value);
-            } else if (key.startsWith('productAvailabili')) {
-              result['productAvailability'] = toPlainObject(value);
-            } else {
-              result[key] = toPlainObject(value);
+      // Función auxiliar para manejar la serialización segura
+      const safeStringify = (obj: any, cache = new Set()) => {
+        return JSON.stringify(obj, (key, value) => {
+          if (typeof value === 'object' && value !== null) {
+            if (cache.has(value)) {
+              return '[Circular]';
             }
+            cache.add(value);
           }
-          return result;
-        }
-        return instance;
+          return value;
+        });
       };
 
-      return toPlainObject(menu);
+      // Función para procesar el modelo
+      const processModel = (model: any) => {
+        if (!model) return null;
+
+        // Si es un array, procesa cada elemento
+        if (Array.isArray(model)) {
+          return model.map(item => processModel(item));
+        }
+
+        // Si es un modelo Sequelize, conviértelo a JSON
+        if (model.constructor.name === 'Model') {
+          const json = model.toJSON();
+          return processModel(json);
+        }
+
+        // Si es un objeto regular, procesa sus propiedades
+        if (typeof model === 'object') {
+          const result: any = {};
+          
+          for (const [key, value] of Object.entries(model)) {
+            // Maneja los nombres truncados
+            const fullKey = {
+              'productVariantAvailabili': 'productVariantAvailability',
+              'pizzaIngredientAvailabi': 'pizzaIngredientAvailability',
+              'modifierAvailabi': 'modifierAvailability',
+              'productAvailabili': 'productAvailability'
+            }[key] || key;
+
+            result[fullKey] = processModel(value);
+          }
+          
+          return result;
+        }
+
+        return model;
+      };
+
+      // Procesa el menú y lo serializa de forma segura
+      const processedMenu = processModel(menu);
+      const safeMenu = JSON.parse(safeStringify(processedMenu));
+
+      return safeMenu;
     } catch (error) {
       logger.error(`Error al recuperar el menú: ${error.message}`, { error });
       throw new Error(`Error al recuperar el menú: ${error.message}`);
