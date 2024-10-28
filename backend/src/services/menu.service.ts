@@ -507,10 +507,10 @@ Incluyen: Pollo a la plancha o jamón, chile morrón, elote, lechuga, jitomate, 
               },
             ],
           },
-          { model: Availability, where: { available: true } },
+          { model: Availability, as: "pAv", where: { available: true } },
         ],
         where: {
-          "$Availability.available$": true,
+          "$pAv.available$": true,
         },
       });
 
