@@ -21,20 +21,27 @@ export async function preProcessMessagesGemini(
 ): Promise<AIResponse[]> {
   try {
     const agent = AGENTS_GEMINI[currentAgent.type];
-    const processedMessages = currentAgent.type === AgentType.ORDER_AGENT && orderSummary
-      ? [
-          { role: "assistant", parts: [{ text: await analyzeOrderSummary(orderSummary) }] },
-          { role: "user", parts: [{ text: orderSummary }] }
-        ]
-      : messages.map((message) => ({
-          role: message.role === "assistant" ? "model" : message.role,
-          parts: [{ text: message.content }],
-        }));
-    
+    const processedMessages =
+      currentAgent.type === AgentType.ORDER_AGENT && orderSummary
+        ? [
+            {
+              role: "assistant",
+              parts: [{ text: await analyzeOrderSummary(orderSummary) }],
+            },
+            { role: "user", parts: [{ text: orderSummary }] },
+          ]
+        : messages.map((message) => ({
+            role: message.role === "assistant" ? "model" : message.role,
+            parts: [{ text: message.content }],
+          }));
 
     const model = googleAI.getGenerativeModel(await prepareModelGemini(agent));
 
-    console.log("processedMessages", JSON.stringify(processedMessages, null, 2));
+    console.log("model", JSON.stringify(model, null, 2));
+    console.log(
+      "processedMessages",
+      JSON.stringify(processedMessages, null, 2)
+    );
     const response = await model.generateContent({
       contents: processedMessages,
     });
