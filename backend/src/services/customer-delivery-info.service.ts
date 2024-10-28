@@ -41,6 +41,7 @@ export class CustomerDeliveryInfoService {
     const customerDeliveryInfo = await CustomerDeliveryInfo.findOne({
       where: { customerId },
     });
+    console.log("customerDeliveryInfo", customerDeliveryInfo);
 
     if (!customerDeliveryInfo) {
       return null;
