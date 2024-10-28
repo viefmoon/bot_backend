@@ -72,7 +72,7 @@ export class AvailabilityService {
             { available: availability.available },
             {
               where: {
-                id: {
+                entityId: {
                   [Op.or]: [
                     ...productVariantIds,
                     ...pizzaIngredientIds,
