@@ -255,9 +255,9 @@ export default function Home() {
     }
   };
 
-  const toggleItemAvailability = async (id, type) => {
+  const toggleItemAvailability = async (id, entityType) => {
     try {
-      await axios.post("/api/menu", { id, type });
+      await axios.post("/api/menu", { id, entityType });
       fetchMenu();
     } catch (error) {
       console.error("Error al cambiar la disponibilidad:", error);
