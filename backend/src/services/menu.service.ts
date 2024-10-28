@@ -351,12 +351,20 @@ Incluyen: Pollo a la plancha o jamón, chile morrón, elote, lechuga, jitomate, 
           {
             model: ProductVariant,
             as: "productVariants",
-            include: [{ model: Availability, where: { available: true } }],
+            include: [{ 
+              model: Availability,
+              as: "pvAv",  // Añadido el alias
+              where: { available: true } 
+            }],
           },
           {
             model: PizzaIngredient,
             as: "pizzaIngredients",
-            include: [{ model: Availability, where: { available: true } }],
+            include: [{ 
+              model: Availability,
+              as: "piAv",  // Añadido el alias
+              where: { available: true } 
+            }],
           },
           {
             model: ModifierType,
@@ -365,14 +373,22 @@ Incluyen: Pollo a la plancha o jamón, chile morrón, elote, lechuga, jitomate, 
               {
                 model: Modifier,
                 as: "modifiers",
-                include: [{ model: Availability, where: { available: true } }],
+                include: [{ 
+                  model: Availability,
+                  as: "mAv",  // Añadido el alias
+                  where: { available: true } 
+                }],
               },
             ],
           },
-          { model: Availability, where: { available: true } },
+          { 
+            model: Availability,
+            as: "pAv",  // Añadido el alias
+            where: { available: true } 
+          },
         ],
         where: {
-          "$Availability.available$": true,
+          "$pAv.available$": true,  // Actualizado para usar el alias
         },
       });
 
