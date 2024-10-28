@@ -139,16 +139,17 @@ Incluyen: Pollo a la plancha o jamón, chile morrón, elote, lechuga, jitomate, 
                     include: [
                       {
                         model: Availability,
-                        as: "productVariantAvailability",
-                        // Corregir el nombre del campo
-                        attributes: ["id", "entityId", "entityType", "available"]
+                        as: "productVariantAvailability", // Aseguramos el alias completo
+                        attributes: ["id", "entityId", "entityType", "available"],
+                        required: false
                       },
                     ],
                   },
                   {
                     model: Availability,
-                    as: "productAvailability",
-                    attributes: ["id", "entityId", "entityType", "available"]
+                    as: "productAvailability", // Aseguramos el alias completo
+                    attributes: ["id", "entityId", "entityType", "available"],
+                    required: false
                   },
                   {
                     model: PizzaIngredient,
@@ -156,8 +157,9 @@ Incluyen: Pollo a la plancha o jamón, chile morrón, elote, lechuga, jitomate, 
                     include: [
                       {
                         model: Availability,
-                        as: "pizzaIngredientAvailability",
-                        attributes: ["id", "entityId", "entityType", "available"]
+                        as: "pizzaIngredientAvailability", // Aseguramos el alias completo
+                        attributes: ["id", "entityId", "entityType", "available"],
+                        required: false
                       },
                     ],
                   },
@@ -171,8 +173,9 @@ Incluyen: Pollo a la plancha o jamón, chile morrón, elote, lechuga, jitomate, 
                         include: [
                           {
                             model: Availability,
-                            as: "modifierAvailability",
-                            attributes: ["id", "entityId", "entityType", "available"]
+                            as: "modifierAvailability", // Aseguramos el alias completo
+                            attributes: ["id", "entityId", "entityType", "available"],
+                            required: false
                           },
                         ],
                       },
@@ -183,8 +186,10 @@ Incluyen: Pollo a la plancha o jamón, chile morrón, elote, lechuga, jitomate, 
             ],
           },
         ],
+        raw: false, // Aseguramos que no se devuelvan resultados raw
+        nest: true // Anidamos los resultados
       });
-      console.log("menu", JSON.stringify(menu, null, 2));
+
       return menu;
     } catch (error) {
       logger.error(`Error al recuperar el menú: ${error.message}`, { error });
