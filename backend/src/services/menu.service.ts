@@ -155,6 +155,7 @@ Incluyen: Pollo a la plancha o jamón, chile morrón, elote, lechuga, jitomate, 
                   {
                     model: PizzaIngredient,
                     as: "pizzaIngredients",
+                    attributes: ["id","name"],
                     include: [
                       {
                         model: Availability,
@@ -166,7 +167,7 @@ Incluyen: Pollo a la plancha o jamón, chile morrón, elote, lechuga, jitomate, 
                   {
                     model: ModifierType,
                     as: "modifierTypes",
-                    attributes: ["id",],
+                    attributes: ["id","name"],
                     include: [
                       {
                         model: Modifier,
