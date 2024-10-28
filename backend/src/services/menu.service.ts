@@ -139,17 +139,16 @@ Incluyen: Pollo a la plancha o jamón, chile morrón, elote, lechuga, jitomate, 
                     include: [
                       {
                         model: Availability,
-                        as: "productVariantAvailability",
-                        attributes: ["id", "entityId", "entityType", "available"],
-                        required: false,
+                        as: "pvAvailability",
+                        // Corregir el nombre del campo
+                        attributes: ["id", "entityId", "entityType", "available"]
                       },
                     ],
                   },
                   {
                     model: Availability,
-                    as: "productAvailability",
-                    attributes: ["id", "entityId", "entityType", "available"],
-                    required: false,
+                    as: "pAvailability",
+                    attributes: ["id", "entityId", "entityType", "available"]
                   },
                   {
                     model: PizzaIngredient,
@@ -157,9 +156,8 @@ Incluyen: Pollo a la plancha o jamón, chile morrón, elote, lechuga, jitomate, 
                     include: [
                       {
                         model: Availability,
-                        as: "pizzaIngredientAvailability",
-                        attributes: ["id", "entityId", "entityType", "available"],
-                        required: false,
+                        as: "piAvailability",
+                        attributes: ["id", "entityId", "entityType", "available"]
                       },
                     ],
                   },
@@ -173,9 +171,8 @@ Incluyen: Pollo a la plancha o jamón, chile morrón, elote, lechuga, jitomate, 
                         include: [
                           {
                             model: Availability,
-                            as: "modifierAvailability",
-                            attributes: ["id", "entityId", "entityType", "available"],
-                            required: false,
+                            as: "mAvailability",
+                            attributes: ["id", "entityId", "entityType", "available"]
                           },
                         ],
                       },
@@ -187,62 +184,8 @@ Incluyen: Pollo a la plancha o jamón, chile morrón, elote, lechuga, jitomate, 
           },
         ],
       });
-
-      // Función auxiliar para manejar la serialización segura
-      const safeStringify = (obj: any, cache = new Set()) => {
-        return JSON.stringify(obj, (key, value) => {
-          if (typeof value === 'object' && value !== null) {
-            if (cache.has(value)) {
-              return '[Circular]';
-            }
-            cache.add(value);
-          }
-          return value;
-        });
-      };
-
-      // Función para procesar el modelo
-      const processModel = (model: any) => {
-        if (!model) return null;
-
-        // Si es un array, procesa cada elemento
-        if (Array.isArray(model)) {
-          return model.map(item => processModel(item));
-        }
-
-        // Si es un modelo Sequelize, conviértelo a JSON
-        if (model.constructor.name === 'Model') {
-          const json = model.toJSON();
-          return processModel(json);
-        }
-
-        // Si es un objeto regular, procesa sus propiedades
-        if (typeof model === 'object') {
-          const result: any = {};
-          
-          for (const [key, value] of Object.entries(model)) {
-            // Maneja los nombres truncados
-            const fullKey = {
-              'productVariantAvailabili': 'productVariantAvailability',
-              'pizzaIngredientAvailabi': 'pizzaIngredientAvailability',
-              'modifierAvailabi': 'modifierAvailability',
-              'productAvailabili': 'productAvailability'
-            }[key] || key;
-
-            result[fullKey] = processModel(value);
-          }
-          
-          return result;
-        }
-
-        return model;
-      };
-
-      // Procesa el menú y lo serializa de forma segura
-      const processedMenu = processModel(menu);
-      const safeMenu = JSON.parse(safeStringify(processedMenu));
-
-      return safeMenu;
+      console.log("menu", JSON.stringify(menu, null, 2));
+      return menu;
     } catch (error) {
       logger.error(`Error al recuperar el menú: ${error.message}`, { error });
       throw new Error(`Error al recuperar el menú: ${error.message}`);
