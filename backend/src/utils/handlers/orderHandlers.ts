@@ -289,13 +289,13 @@ export async function handleOrderCancellation(
     }
 
     await sendWhatsAppMessage(customerId, mensaje);
+    await sendWhatsAppNotification("Se ha cancelado un pedido");
   } catch (error) {
     logger.error("Error al eliminar la orden:", error);
     await sendWhatsAppMessage(
       customerId,
       "Hubo un error al procesar tu solicitud de eliminación ❌🚫"
     );
-    await sendWhatsAppNotification("Se ha cancelado un pedido");
   }
 }
 
