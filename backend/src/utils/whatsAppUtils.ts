@@ -12,7 +12,6 @@ export async function sendWhatsAppMessage(
   phoneNumber: string,
   message: string
 ): Promise<string[] | null> {
-  // Cambiar el tipo de retorno a un array de strings
   try {
     const messageIds: string[] = []; // Array para almacenar los IDs de los mensajes enviados
 
@@ -66,14 +65,16 @@ export async function sendWhatsAppMessage(
 
     return messageIds; // Retornar los IDs de todos los mensajes enviados
   } catch (error) {
-    logger.error("Error al enviar mensaje de WhatsApp:", error);
+    logger.error("Error al enviar mensaje de WhatsApp:", {
+      message: error instanceof Error ? error.message : String(error),
+    });
     return null;
   }
 }
 
 export async function sendWhatsAppInteractiveMessage(
   phoneNumber: string,
-  interactiveOptions: WhatsAppInteractiveContent // Reemplazamos 'any' por la interfaz específica
+  interactiveOptions: WhatsAppInteractiveContent
 ): Promise<string | null> {
   try {
     const payload: WhatsAppInteractiveMessage = {
@@ -97,10 +98,9 @@ export async function sendWhatsAppInteractiveMessage(
 
     return response.data.messages[0].id;
   } catch (error) {
-    logger.error(
-      "Error al enviar mensaje interactivo de WhatsApp:",
-      (error as Error).message
-    );
+    logger.error("Error al enviar mensaje interactivo de WhatsApp:", {
+      message: error instanceof Error ? error.message : String(error),
+    });
     return null;
   }
 }
@@ -161,7 +161,9 @@ export async function sendWhatsAppNotification(
 
     return messageIds;
   } catch (error) {
-    logger.error("Error al enviar notificación de WhatsApp:", error);
+    logger.error("Error al enviar notificación de WhatsApp:", {
+      message: error instanceof Error ? error.message : String(error),
+    });
     return null;
   }
 }
@@ -192,10 +194,9 @@ export async function sendWhatsAppInteractiveNotification(
 
     return response.data.messages[0].id;
   } catch (error) {
-    logger.error(
-      "Error al enviar mensaje interactivo de WhatsApp:",
-      (error as Error).message
-    );
+    logger.error("Error al enviar mensaje interactivo de WhatsApp:", {
+      message: error instanceof Error ? error.message : String(error),
+    });
     return null;
   }
 }
