@@ -170,7 +170,7 @@ export async function sendWhatsAppNotification(
 
           try {
             const response = await axios.post<{ messages: [{ id: string }] }>(
-              `https://graph.facebook.com/v21.0/${process.env.WHATSAPP_PHONE_NUMBER_NOTIFICATION_ID}/messages`,
+              `https://graph.facebook.com/v21.0/${process.env.WHATSAPP_PHONE_NUMBER_MESSAGING_ID}/messages`,
               payload,
               {
                 headers: {
