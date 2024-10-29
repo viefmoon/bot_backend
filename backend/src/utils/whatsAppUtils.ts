@@ -28,7 +28,7 @@ export async function sendWhatsAppMessage(
       };
 
       const response = await axios.post<{ messages: [{ id: string }] }>(
-        `https://graph.facebook.com/v19.0/${process.env.WHATSAPP_PHONE_NUMBER_MESSAGING_ID}/messages`,
+        `https://graph.facebook.com/v21.0/${process.env.WHATSAPP_PHONE_NUMBER_MESSAGING_ID}/messages`,
         payload,
         {
           headers: {
@@ -51,7 +51,7 @@ export async function sendWhatsAppMessage(
       };
 
       const response = await axios.post<{ messages: [{ id: string }] }>(
-        `https://graph.facebook.com/v19.0/${process.env.WHATSAPP_PHONE_NUMBER_MESSAGING_ID}/messages`,
+        `https://graph.facebook.com/v21.0/${process.env.WHATSAPP_PHONE_NUMBER_MESSAGING_ID}/messages`,
         payload,
         {
           headers: {
@@ -85,7 +85,7 @@ export async function sendWhatsAppInteractiveMessage(
     };
 
     const response = await axios.post<{ messages: [{ id: string }] }>(
-      `https://graph.facebook.com/v19.0/${process.env.WHATSAPP_PHONE_NUMBER_MESSAGING_ID}/messages`,
+      `https://graph.facebook.com/v21.0/${process.env.WHATSAPP_PHONE_NUMBER_MESSAGING_ID}/messages`,
       payload,
       {
         headers: {
@@ -124,7 +124,7 @@ export async function sendWhatsAppNotification(
       };
 
       const response = await axios.post<{ messages: [{ id: string }] }>(
-        `https://graph.facebook.com/v19.0/${process.env.WHATSAPP_PHONE_NUMBER_NOTIFICATION_ID}/messages`,
+        `https://graph.facebook.com/v21.0/${process.env.WHATSAPP_PHONE_NUMBER_NOTIFICATION_ID}/messages`,
         payload,
         {
           headers: {
@@ -146,7 +146,7 @@ export async function sendWhatsAppNotification(
       };
 
       const response = await axios.post<{ messages: [{ id: string }] }>(
-        `https://graph.facebook.com/v19.0/${process.env.WHATSAPP_PHONE_NUMBER_NOTIFICATION_ID}/messages`,
+        `https://graph.facebook.com/v21.0/${process.env.WHATSAPP_PHONE_NUMBER_NOTIFICATION_ID}/messages`,
         payload,
         {
           headers: {
@@ -180,7 +180,7 @@ export async function sendWhatsAppInteractiveNotification(
     };
 
     const response = await axios.post<{ messages: [{ id: string }] }>(
-      `https://graph.facebook.com/v19.0/${process.env.WHATSAPP_PHONE_NUMBER_NOTIFICATION_ID}/messages`,
+      `https://graph.facebook.com/v21.0/${process.env.WHATSAPP_PHONE_NUMBER_NOTIFICATION_ID}/messages`,
       payload,
       {
         headers: {
