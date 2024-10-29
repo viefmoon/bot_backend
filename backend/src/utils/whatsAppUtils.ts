@@ -114,6 +114,7 @@ export async function sendWhatsAppNotification(
       where: { isActive: true },
       attributes: ["phoneNumber"],
     });
+    console.log("activePhones", activePhones);
 
     const results = await Promise.all(
       activePhones.map(async (phone) => {
