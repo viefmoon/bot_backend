@@ -114,10 +114,13 @@ export async function sendWhatsAppNotification(
       where: { isActive: true },
       attributes: ["phoneNumber"],
     });
-    console.log("activePhones", activePhones);
+    logger.info(
+      `Teléfonos activos encontrados: ${JSON.stringify(activePhones)}`
+    );
 
     const results = await Promise.all(
       activePhones.map(async (phone) => {
+        logger.info(`Intentando enviar mensaje a: ${phone.phoneNumber}`);
         const messageIds: string[] = [];
         let remainingMessage = message;
 
@@ -132,18 +135,29 @@ export async function sendWhatsAppNotification(
             text: { body: part },
           };
 
-          const response = await axios.post<{ messages: [{ id: string }] }>(
-            `https://graph.facebook.com/v21.0/${process.env.WHATSAPP_PHONE_NUMBER_NOTIFICATION_ID}/messages`,
-            payload,
-            {
-              headers: {
-                Authorization: `Bearer ${process.env.WHATSAPP_ACCESS_TOKEN}`,
-                "Content-Type": "application/json",
-              },
-            }
-          );
+          try {
+            const response = await axios.post<{ messages: [{ id: string }] }>(
+              `https://graph.facebook.com/v21.0/${process.env.WHATSAPP_PHONE_NUMBER_NOTIFICATION_ID}/messages`,
+              payload,
+              {
+                headers: {
+                  Authorization: `Bearer ${process.env.WHATSAPP_ACCESS_TOKEN}`,
+                  "Content-Type": "application/json",
+                },
+              }
+            );
 
-          messageIds.push(response.data.messages[0].id);
+            logger.info(
+              `Respuesta de WhatsApp API: ${JSON.stringify(response.data)}`
+            );
+            messageIds.push(response.data.messages[0].id);
+          } catch (error) {
+            logger.error(
+              `Error al enviar mensaje a ${phone.phoneNumber}:`,
+              error.response?.data || error
+            );
+            return { phoneNumber: phone.phoneNumber, messageIds: null };
+          }
         }
 
         if (remainingMessage.length > 0) {
@@ -154,18 +168,29 @@ export async function sendWhatsAppNotification(
             text: { body: remainingMessage },
           };
 
-          const response = await axios.post<{ messages: [{ id: string }] }>(
-            `https://graph.facebook.com/v21.0/${process.env.WHATSAPP_PHONE_NUMBER_NOTIFICATION_ID}/messages`,
-            payload,
-            {
-              headers: {
-                Authorization: `Bearer ${process.env.WHATSAPP_ACCESS_TOKEN}`,
-                "Content-Type": "application/json",
-              },
-            }
-          );
+          try {
+            const response = await axios.post<{ messages: [{ id: string }] }>(
+              `https://graph.facebook.com/v21.0/${process.env.WHATSAPP_PHONE_NUMBER_NOTIFICATION_ID}/messages`,
+              payload,
+              {
+                headers: {
+                  Authorization: `Bearer ${process.env.WHATSAPP_ACCESS_TOKEN}`,
+                  "Content-Type": "application/json",
+                },
+              }
+            );
 
-          messageIds.push(response.data.messages[0].id);
+            logger.info(
+              `Respuesta de WhatsApp API: ${JSON.stringify(response.data)}`
+            );
+            messageIds.push(response.data.messages[0].id);
+          } catch (error) {
+            logger.error(
+              `Error al enviar mensaje a ${phone.phoneNumber}:`,
+              error.response?.data || error
+            );
+            return { phoneNumber: phone.phoneNumber, messageIds: null };
+          }
         }
 
         return { phoneNumber: phone.phoneNumber, messageIds };
