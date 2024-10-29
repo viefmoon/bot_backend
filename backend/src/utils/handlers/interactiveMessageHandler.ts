@@ -8,7 +8,10 @@ import {
 } from "src/utils/handlers/orderHandlers";
 
 import { Order, Customer, RestaurantConfig, PreOrder } from "src/models";
-import { sendWhatsAppMessage } from "src/utils/whatsAppUtils";
+import {
+  sendWhatsAppMessage,
+  sendWhatsAppNotification,
+} from "src/utils/whatsAppUtils";
 import Stripe from "stripe";
 import { OtpService } from "src/services/otp.service";
 import {
@@ -199,6 +202,7 @@ async function handleOnlinePayment(
       customerId,
       `💳 Por favor, haz clic en el siguiente enlace para proceder con el pago: 🔗 ${paymentLink} 💰`
     );
+    await sendWhatsAppNotification("Se ha generado un link de pago");
   } catch (error) {
     logger.error("Error al procesar el pago en línea:", error);
     await sendWhatsAppMessage(

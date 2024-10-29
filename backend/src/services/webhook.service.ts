@@ -11,7 +11,10 @@ import {
   CustomerDeliveryInfo,
   RestaurantConfig,
 } from "../models";
-import { sendWhatsAppMessage } from "../utils/whatsAppUtils";
+import {
+  sendWhatsAppMessage,
+  sendWhatsAppNotification,
+} from "../utils/whatsAppUtils";
 import { getUTCTime, isBusinessOpen } from "../utils/timeUtils";
 import { checkMessageRateLimit } from "../utils/messageRateLimit";
 import {
@@ -105,6 +108,9 @@ export class WebhookService {
             await sendWhatsAppMessage(
               customer.customerId,
               PAYMENT_CONFIRMATION_MESSAGE(order.dailyOrderNumber)
+            );
+            await sendWhatsAppNotification(
+              "Se ha realizado el pago de un pedido"
             );
           }
         }

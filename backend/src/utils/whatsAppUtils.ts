@@ -7,6 +7,7 @@ import {
   WhatsAppInteractiveMessage,
   WhatsAppInteractiveContent,
 } from "../types/whatsapp.types";
+import NotificationPhone from "../models/notificationPhone";
 
 export async function sendWhatsAppMessage(
   phoneNumber: string,
@@ -106,96 +107,120 @@ export async function sendWhatsAppInteractiveMessage(
 }
 
 export async function sendWhatsAppNotification(
-  phoneNumber: string,
   message: string
-): Promise<string[] | null> {
+): Promise<Array<{ phoneNumber: string; messageIds: string[] | null }>> {
   try {
-    const messageIds: string[] = [];
+    const activePhones = await NotificationPhone.findAll({
+      where: { isActive: true },
+      attributes: ["phoneNumber"],
+    });
 
-    while (message.length > 4096) {
-      const part = message.slice(0, 4096);
-      message = message.slice(4096);
+    const results = await Promise.all(
+      activePhones.map(async (phone) => {
+        const messageIds: string[] = [];
+        let remainingMessage = message;
 
-      const payload: WhatsAppMessage = {
-        messaging_product: "whatsapp",
-        to: phoneNumber,
-        type: "text",
-        text: { body: part },
-      };
+        while (remainingMessage.length > 4096) {
+          const part = remainingMessage.slice(0, 4096);
+          remainingMessage = remainingMessage.slice(4096);
 
-      const response = await axios.post<{ messages: [{ id: string }] }>(
-        `https://graph.facebook.com/v21.0/${process.env.WHATSAPP_PHONE_NUMBER_NOTIFICATION_ID}/messages`,
-        payload,
-        {
-          headers: {
-            Authorization: `Bearer ${process.env.WHATSAPP_ACCESS_TOKEN}`,
-            "Content-Type": "application/json",
-          },
+          const payload: WhatsAppMessage = {
+            messaging_product: "whatsapp",
+            to: phone.phoneNumber,
+            type: "text",
+            text: { body: part },
+          };
+
+          const response = await axios.post<{ messages: [{ id: string }] }>(
+            `https://graph.facebook.com/v21.0/${process.env.WHATSAPP_PHONE_NUMBER_NOTIFICATION_ID}/messages`,
+            payload,
+            {
+              headers: {
+                Authorization: `Bearer ${process.env.WHATSAPP_ACCESS_TOKEN}`,
+                "Content-Type": "application/json",
+              },
+            }
+          );
+
+          messageIds.push(response.data.messages[0].id);
         }
-      );
 
-      messageIds.push(response.data.messages[0].id);
-    }
+        if (remainingMessage.length > 0) {
+          const payload: WhatsAppMessage = {
+            messaging_product: "whatsapp",
+            to: phone.phoneNumber,
+            type: "text",
+            text: { body: remainingMessage },
+          };
 
-    if (message.length > 0) {
-      const payload: WhatsAppMessage = {
-        messaging_product: "whatsapp",
-        to: phoneNumber,
-        type: "text",
-        text: { body: message },
-      };
+          const response = await axios.post<{ messages: [{ id: string }] }>(
+            `https://graph.facebook.com/v21.0/${process.env.WHATSAPP_PHONE_NUMBER_NOTIFICATION_ID}/messages`,
+            payload,
+            {
+              headers: {
+                Authorization: `Bearer ${process.env.WHATSAPP_ACCESS_TOKEN}`,
+                "Content-Type": "application/json",
+              },
+            }
+          );
 
-      const response = await axios.post<{ messages: [{ id: string }] }>(
-        `https://graph.facebook.com/v21.0/${process.env.WHATSAPP_PHONE_NUMBER_NOTIFICATION_ID}/messages`,
-        payload,
-        {
-          headers: {
-            Authorization: `Bearer ${process.env.WHATSAPP_ACCESS_TOKEN}`,
-            "Content-Type": "application/json",
-          },
+          messageIds.push(response.data.messages[0].id);
         }
-      );
 
-      messageIds.push(response.data.messages[0].id);
-    }
+        return { phoneNumber: phone.phoneNumber, messageIds };
+      })
+    );
 
-    return messageIds;
+    return results;
   } catch (error) {
     logger.error("Error al enviar notificación de WhatsApp:", error);
-    return null;
+    return [];
   }
 }
 
 export async function sendWhatsAppInteractiveNotification(
-  phoneNumber: string,
   interactiveOptions: WhatsAppInteractiveContent
-): Promise<string | null> {
+): Promise<Array<{ phoneNumber: string; messageId: string | null }>> {
   try {
-    const payload: WhatsAppInteractiveMessage = {
-      messaging_product: "whatsapp",
-      recipient_type: "individual",
-      to: phoneNumber,
-      type: "interactive",
-      interactive: interactiveOptions,
-    };
+    const activePhones = await NotificationPhone.findAll({
+      where: { isActive: true },
+      attributes: ["phoneNumber"],
+    });
 
-    const response = await axios.post<{ messages: [{ id: string }] }>(
-      `https://graph.facebook.com/v21.0/${process.env.WHATSAPP_PHONE_NUMBER_NOTIFICATION_ID}/messages`,
-      payload,
-      {
-        headers: {
-          Authorization: `Bearer ${process.env.WHATSAPP_ACCESS_TOKEN}`,
-          "Content-Type": "application/json",
-        },
-      }
+    const results = await Promise.all(
+      activePhones.map(async (phone) => {
+        const payload: WhatsAppInteractiveMessage = {
+          messaging_product: "whatsapp",
+          recipient_type: "individual",
+          to: phone.phoneNumber,
+          type: "interactive",
+          interactive: interactiveOptions,
+        };
+
+        const response = await axios.post<{ messages: [{ id: string }] }>(
+          `https://graph.facebook.com/v21.0/${process.env.WHATSAPP_PHONE_NUMBER_NOTIFICATION_ID}/messages`,
+          payload,
+          {
+            headers: {
+              Authorization: `Bearer ${process.env.WHATSAPP_ACCESS_TOKEN}`,
+              "Content-Type": "application/json",
+            },
+          }
+        );
+
+        return {
+          phoneNumber: phone.phoneNumber,
+          messageId: response.data.messages[0].id,
+        };
+      })
     );
 
-    return response.data.messages[0].id;
+    return results;
   } catch (error) {
     logger.error(
       "Error al enviar mensaje interactivo de WhatsApp:",
       (error as Error).message
     );
-    return null;
+    return [];
   }
 }
