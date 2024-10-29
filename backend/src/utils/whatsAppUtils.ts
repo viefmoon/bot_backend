@@ -12,6 +12,7 @@ export async function sendWhatsAppMessage(
   phoneNumber: string,
   message: string
 ): Promise<string[] | null> {
+  // Cambiar el tipo de retorno a un array de strings
   try {
     const messageIds: string[] = []; // Array para almacenar los IDs de los mensajes enviados
 
@@ -27,7 +28,7 @@ export async function sendWhatsAppMessage(
       };
 
       const response = await axios.post<{ messages: [{ id: string }] }>(
-        `https://graph.facebook.com/v21.0/${process.env.WHATSAPP_PHONE_NUMBER_MESSAGING_ID}/messages`,
+        `https://graph.facebook.com/v19.0/${process.env.WHATSAPP_PHONE_NUMBER_MESSAGING_ID}/messages`,
         payload,
         {
           headers: {
@@ -50,7 +51,7 @@ export async function sendWhatsAppMessage(
       };
 
       const response = await axios.post<{ messages: [{ id: string }] }>(
-        `https://graph.facebook.com/v21.0/${process.env.WHATSAPP_PHONE_NUMBER_MESSAGING_ID}/messages`,
+        `https://graph.facebook.com/v19.0/${process.env.WHATSAPP_PHONE_NUMBER_MESSAGING_ID}/messages`,
         payload,
         {
           headers: {
@@ -65,16 +66,14 @@ export async function sendWhatsAppMessage(
 
     return messageIds; // Retornar los IDs de todos los mensajes enviados
   } catch (error) {
-    logger.error("Error al enviar mensaje de WhatsApp:", {
-      message: error instanceof Error ? error.message : String(error),
-    });
+    logger.error("Error al enviar mensaje de WhatsApp:", error);
     return null;
   }
 }
 
 export async function sendWhatsAppInteractiveMessage(
   phoneNumber: string,
-  interactiveOptions: WhatsAppInteractiveContent
+  interactiveOptions: WhatsAppInteractiveContent // Reemplazamos 'any' por la interfaz específica
 ): Promise<string | null> {
   try {
     const payload: WhatsAppInteractiveMessage = {
@@ -86,7 +85,7 @@ export async function sendWhatsAppInteractiveMessage(
     };
 
     const response = await axios.post<{ messages: [{ id: string }] }>(
-      `https://graph.facebook.com/v21.0/${process.env.WHATSAPP_PHONE_NUMBER_MESSAGING_ID}/messages`,
+      `https://graph.facebook.com/v19.0/${process.env.WHATSAPP_PHONE_NUMBER_MESSAGING_ID}/messages`,
       payload,
       {
         headers: {
@@ -98,9 +97,10 @@ export async function sendWhatsAppInteractiveMessage(
 
     return response.data.messages[0].id;
   } catch (error) {
-    logger.error("Error al enviar mensaje interactivo de WhatsApp:", {
-      message: error instanceof Error ? error.message : String(error),
-    });
+    logger.error(
+      "Error al enviar mensaje interactivo de WhatsApp:",
+      (error as Error).message
+    );
     return null;
   }
 }
@@ -124,7 +124,7 @@ export async function sendWhatsAppNotification(
       };
 
       const response = await axios.post<{ messages: [{ id: string }] }>(
-        `https://graph.facebook.com/v21.0/${process.env.WHATSAPP_PHONE_NUMBER_NOTIFICATION_ID}/messages`,
+        `https://graph.facebook.com/v19.0/${process.env.WHATSAPP_PHONE_NUMBER_NOTIFICATION_ID}/messages`,
         payload,
         {
           headers: {
@@ -146,7 +146,7 @@ export async function sendWhatsAppNotification(
       };
 
       const response = await axios.post<{ messages: [{ id: string }] }>(
-        `https://graph.facebook.com/v21.0/${process.env.WHATSAPP_PHONE_NUMBER_NOTIFICATION_ID}/messages`,
+        `https://graph.facebook.com/v19.0/${process.env.WHATSAPP_PHONE_NUMBER_NOTIFICATION_ID}/messages`,
         payload,
         {
           headers: {
@@ -161,9 +161,7 @@ export async function sendWhatsAppNotification(
 
     return messageIds;
   } catch (error) {
-    logger.error("Error al enviar notificación de WhatsApp:", {
-      message: error instanceof Error ? error.message : String(error),
-    });
+    logger.error("Error al enviar notificación de WhatsApp:", error);
     return null;
   }
 }
@@ -182,7 +180,7 @@ export async function sendWhatsAppInteractiveNotification(
     };
 
     const response = await axios.post<{ messages: [{ id: string }] }>(
-      `https://graph.facebook.com/v21.0/${process.env.WHATSAPP_PHONE_NUMBER_NOTIFICATION_ID}/messages`,
+      `https://graph.facebook.com/v19.0/${process.env.WHATSAPP_PHONE_NUMBER_NOTIFICATION_ID}/messages`,
       payload,
       {
         headers: {
@@ -194,9 +192,10 @@ export async function sendWhatsAppInteractiveNotification(
 
     return response.data.messages[0].id;
   } catch (error) {
-    logger.error("Error al enviar mensaje interactivo de WhatsApp:", {
-      message: error instanceof Error ? error.message : String(error),
-    });
+    logger.error(
+      "Error al enviar mensaje interactivo de WhatsApp:",
+      (error as Error).message
+    );
     return null;
   }
 }
