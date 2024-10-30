@@ -54,7 +54,7 @@ export const GENERAL_AGENT_GEMINI: AgentGemini = {
               orderSummary: {
                 type: "string",
                 description:
-                  "Resumen del pedido usando exactamente las mismas palabras que usó el cliente, sin intentar mapear o modificar los nombres de los productos",
+                  "Resumen detallado del pedido que incluye: 1) Las palabras exactas que usó el cliente al ordenar, y 2) El mapeo sugerido de cada producto mencionado con los nombres exactos del menú, incluyendo cantidades",
               },
             },
             required: ["targetAgent", "orderSummary"],
