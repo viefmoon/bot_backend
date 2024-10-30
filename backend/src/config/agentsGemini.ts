@@ -22,7 +22,7 @@ export const GENERAL_AGENT_GEMINI: AgentGemini = {
     - Es muy importante no transferir sin antes verificar que el producto ordenado se encuentre en el menú y esté disponible.
     - Solo incluye en el resumen si el cliente lo menciona explícitamente:
       * Hora programada para el pedido
-      * Tipo de pedido (delivery/pickup)
+      * Tipo de pedido entrega a domicilio o recolección en restaurante
 
     **Interacción con el Cliente:**
     - IMPORTANTE: NO preguntes sobre el tipo de pedido (delivery/pickup) ni sobre la hora de entrega. Solo incluye esta información si el cliente la menciona por iniciativa propia.
