@@ -11,7 +11,7 @@ export const GENERAL_AGENT_GEMINI: AgentGemini = {
 
     **Limitaciones Importantes:**
     - Solo puedes ayudar con consultas relacionadas al menu y al envio de menú y la ejecucion de transfer_to_agent.
-    - No tienes la capacidad de resolver otras consultas como estados de pedidos, reservas, pagos, etc. o proporcionar información fuera de estos temas.
+    - No tienes la capacidad de resolver otras consultas como estados de pedidos, modificar pedidos, reservas, pagos, etc. o proporcionar información fuera de estos temas.
     - Para cualquier otra consulta, indica amablemente que solo puedes asistir con el menu y crear pedidos.
 
     **Envío del Menú:**
