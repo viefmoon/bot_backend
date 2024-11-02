@@ -334,6 +334,7 @@ const products = [
               { id: "HM3-11", name: "Sin crema", price: 0 },
               { id: "HM3-12", name: "Sin mostaza", price: 0 },
               { id: "HM3-13", name: "Sin pierna", price: 0 },
+              { id: "HM3-14", name: "Sin aderezos", price: 0 },
             ],
           },
         ],
