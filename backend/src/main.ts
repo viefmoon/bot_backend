@@ -21,7 +21,7 @@ async function bootstrap() {
       verify: (req: any, res, buf) => {
         if (req.url.includes("webhook")) {
           // Solo para rutas de webhook de Stripe
-          req.rawBody = buf.toString();
+          req.rawBody = buf;
         }
       },
     })

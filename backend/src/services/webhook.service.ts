@@ -79,7 +79,6 @@ export class WebhookService {
     res: Response
   ): Promise<void> {
     const sig = req.headers["stripe-signature"] as string;
-    let event: Stripe.Event;
 
     try {
       if (!req.rawBody) {
@@ -87,9 +86,8 @@ export class WebhookService {
         res.status(400).send("No raw body found");
         return;
       }
-      console.log("req.rawBody", req.rawBody);
 
-      event = this.stripeClient.webhooks.constructEvent(
+      const event = this.stripeClient.webhooks.constructEvent(
         req.rawBody,
         sig,
         process.env.STRIPE_WEBHOOK_SECRET!
