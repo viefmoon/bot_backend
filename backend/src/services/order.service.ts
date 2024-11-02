@@ -580,10 +580,11 @@ export class OrderService {
     };
   }
 
-  async getUnfinishedOrders() {
-    const { startDate, endDate } = getMexicoDayRange(
-      getCurrentMexicoTime().format("YYYY-MM-DD")
-    );
+  async getUnfinishedOrders(date?: string) {
+    // Si no se proporciona fecha, usar la fecha actual en México
+    const targetDate = date || getCurrentMexicoTime().format("YYYY-MM-DD");
+
+    const { startDate, endDate } = getMexicoDayRange(targetDate);
 
     const unfinishedOrders = await Order.findAll({
       where: {

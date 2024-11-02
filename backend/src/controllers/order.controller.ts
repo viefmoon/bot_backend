@@ -22,9 +22,10 @@ export class OrderController {
   }
 
   @Get("unfinished")
-  async getUnfinishedOrders() {
-    return this.orderService.getUnfinishedOrders();
+  async getUnfinishedOrders(@Query("date") date?: string) {
+    return this.orderService.getUnfinishedOrders(date);
   }
+
   @Get(":customerId")
   async getOrdersByCustomer(@Param("customerId") customerId: string) {
     return this.orderService.getOrdersByCustomer(customerId);
