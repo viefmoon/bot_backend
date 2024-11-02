@@ -312,6 +312,7 @@ const products = [
                 name: "Pollo en lugar de carne de res",
                 price: 15,
               },
+              { id: "HM2-3", name: "Partida", price: 0 },
             ],
           },
           {
@@ -320,6 +321,7 @@ const products = [
             required: false,
             acceptsMultiple: true,
             modifiers: [
+              { id: "HM3-1", name: "Sin verduras", price: 0 },
               { id: "HM3-2", name: "Sin tocino", price: 0 },
               { id: "HM3-3", name: "Sin queso amarillo", price: 0 },
               { id: "HM3-4", name: "Sin queso blanco", price: 0 },
