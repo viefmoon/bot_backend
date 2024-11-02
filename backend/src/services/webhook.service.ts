@@ -87,6 +87,7 @@ export class WebhookService {
         res.status(400).send("No raw body found");
         return;
       }
+      console.log("req.rawBody", req.rawBody);
 
       event = this.stripeClient.webhooks.constructEvent(
         req.rawBody,
