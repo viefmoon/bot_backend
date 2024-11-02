@@ -35,6 +35,8 @@ import { RESTAURANT_CLOSED_MESSAGE } from "../config/predefinedMessages";
 import { WhatsAppMessage, WebhookBody } from "../types/webhook.types";
 import * as dotenv from "dotenv";
 import logger from "../utils/logger";
+import { buffer } from "micro";
+
 dotenv.config();
 
 @Injectable()
@@ -74,9 +76,15 @@ export class WebhookService {
     }
   }
 
+  config = {
+    api: {
+      bodyParser: false,
+    },
+  };
+
   async handleStripeWebhook(req: Request, res: Response): Promise<void> {
-    const rawBody = await req.text();
     const sig = req.headers["stripe-signature"] as string;
+    const rawBody = await buffer(req);
     console.log("rawBody", rawBody);
 
     try {

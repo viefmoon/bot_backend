@@ -29,6 +29,7 @@
     "openai": "^4.29.1",
     "pg": "^8.13.0",
     "queue-typescript": "^1.0.1",
+    "raw-body": "^3.0.0",
     "rxjs": "^7.8.1",
     "sequelize": "^6.37.3",
     "string-similarity": "^4.0.4",
