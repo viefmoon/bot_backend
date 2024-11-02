@@ -1,6 +1,7 @@
 import {
   sendWhatsAppMessage,
   sendWhatsAppInteractiveMessage,
+  sendWelcomeMessage,
 } from "../whatsAppUtils";
 import { Customer, PreOrder } from "src/models";
 import * as dotenv from "dotenv";
@@ -36,42 +37,6 @@ async function resetChatHistory(customer) {
     customer.customerId,
     "🔄 Entendido, he olvidado el contexto anterior. ¿En qué puedo ayudarte ahora? 😊"
   );
-}
-
-async function sendWelcomeMessage(phoneNumber) {
-  const listOptions = {
-    type: "list",
-    header: {
-      type: "text",
-      text: "Bienvenido a La Leña 🪵🔥",
-    },
-    body: {
-      text: "¿Cómo podemos ayudarte hoy? 😊",
-    },
-    footer: {
-      text: "Selecciona una opción:",
-    },
-    action: {
-      button: "Ver opciones",
-      sections: [
-        {
-          title: "Acciones",
-          rows: [
-            { id: "view_menu", title: "Ver Menú" },
-            { id: "wait_times", title: "Tiempos de espera" },
-            { id: "restaurant_info", title: "Información y horarios" },
-            { id: "chatbot_help", title: "¿Cómo usar el bot?" },
-            {
-              id: "change_delivery_info",
-              title: "Actualizar entrega",
-            },
-          ],
-        },
-      ],
-    },
-  };
-
-  await sendWhatsAppInteractiveMessage(phoneNumber, listOptions);
 }
 
 export async function handleTextMessage(
