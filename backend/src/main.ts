@@ -1,18 +1,19 @@
 import { NestFactory } from "@nestjs/core";
 import { AppModule } from "./app.module";
 import { json } from "express";
+import express from "express";
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
-  // Agregar middleware para raw body en rutas de Stripe
+  // Modificar el middleware para raw body en rutas de Stripe
   app.use(
     "/backend/webhook",
-    json({
+    express.raw({
+      type: "application/json",
       verify: (req: any, res, buf) => {
         req.rawBody = buf;
       },
-      type: "application/json",
     })
   );
 
