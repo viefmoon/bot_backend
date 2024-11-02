@@ -78,17 +78,12 @@ export class WebhookService {
     req: RawBodyRequest<Request>,
     res: Response
   ): Promise<void> {
+    const body = await req.text();
     const sig = req.headers["stripe-signature"] as string;
 
     try {
-      if (!req.rawBody) {
-        logger.error("No se encontró el cuerpo raw de la solicitud");
-        res.status(400).send("No raw body found");
-        return;
-      }
-
       const event = this.stripeClient.webhooks.constructEvent(
-        req.rawBody,
+        body,
         sig,
         process.env.STRIPE_WEBHOOK_SECRET!
       );

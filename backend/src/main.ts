@@ -15,18 +15,6 @@ async function bootstrap() {
     credentials: true,
   });
 
-  // Configurar el middleware para el cuerpo raw
-  app.use(
-    json({
-      verify: (req: any, res, buf) => {
-        if (req.url.includes("webhook")) {
-          // Solo para rutas de webhook de Stripe
-          req.rawBody = buf;
-        }
-      },
-    })
-  );
-
   await app.listen(5000);
 }
 bootstrap();
