@@ -82,46 +82,54 @@ export class WebhookService {
     let event: Stripe.Event;
 
     try {
+      if (!req.rawBody) {
+        logger.error("No se encontró el cuerpo raw de la solicitud");
+        res.status(400).send("No raw body found");
+        return;
+      }
+
       event = this.stripeClient.webhooks.constructEvent(
         req.rawBody,
         sig,
         process.env.STRIPE_WEBHOOK_SECRET!
       );
+
+      logger.info(`Evento de Stripe recibido: ${event.type}`);
+
+      if (event.type === "checkout.session.completed") {
+        try {
+          const session = event.data.object as Stripe.Checkout.Session;
+          const order = await Order.findOne({
+            where: { stripeSessionId: session.id },
+          });
+          if (order) {
+            await order.update({ paymentStatus: "paid" });
+            const customer = await Customer.findOne({
+              where: { stripeCustomerId: session.customer as string },
+            });
+            if (customer) {
+              await sendWhatsAppMessage(
+                customer.customerId,
+                PAYMENT_CONFIRMATION_MESSAGE(order.dailyOrderNumber)
+              );
+              await sendWhatsAppNotification(
+                "Se ha realizado el pago de un pedido"
+              );
+            }
+          }
+        } catch (error) {
+          logger.error(
+            `Error al procesar el evento de pago completado: ${error}`
+          );
+        }
+      }
+
+      res.json({ received: true });
     } catch (err) {
       logger.error(`Error de firma de webhook: ${(err as Error).message}`);
       res.status(400).send(`Webhook Error: ${(err as Error).message}`);
       return;
     }
-
-    if (event.type === "checkout.session.completed") {
-      try {
-        const session = event.data.object as Stripe.Checkout.Session;
-        const order = await Order.findOne({
-          where: { stripeSessionId: session.id },
-        });
-        if (order) {
-          await order.update({ paymentStatus: "paid" });
-          const customer = await Customer.findOne({
-            where: { stripeCustomerId: session.customer as string },
-          });
-          if (customer) {
-            await sendWhatsAppMessage(
-              customer.customerId,
-              PAYMENT_CONFIRMATION_MESSAGE(order.dailyOrderNumber)
-            );
-            await sendWhatsAppNotification(
-              "Se ha realizado el pago de un pedido"
-            );
-          }
-        }
-      } catch (error) {
-        logger.error(
-          `Error al procesar el evento de pago completado: ${error}`
-        );
-      }
-    }
-
-    res.json({ received: true });
   }
 
   async handleWhatsAppWebhook(req: Request, res: Response): Promise<void> {

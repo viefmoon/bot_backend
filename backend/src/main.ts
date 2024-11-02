@@ -19,9 +19,7 @@ async function bootstrap() {
   app.use(
     json({
       verify: (req: any, res, buf) => {
-        if (req.url.includes("backend/webhook")) {
-          req.rawBody = buf.toString();
-        }
+        req.rawBody = buf;
       },
     })
   );
