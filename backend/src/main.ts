@@ -19,7 +19,10 @@ async function bootstrap() {
   app.use(
     json({
       verify: (req: any, res, buf) => {
-        req.rawBody = buf;
+        if (req.url.includes("/webhook")) {
+          // Solo para rutas de webhook
+          req.rawBody = buf.toString();
+        }
       },
     })
   );
