@@ -74,16 +74,13 @@ export class WebhookService {
     }
   }
 
-  async handleStripeWebhook(
-    req: RawBodyRequest<Request>,
-    res: Response
-  ): Promise<void> {
-    const body = await req.text();
+  async handleStripeWebhook(req: Request, res: Response): Promise<void> {
+    const rawBody = await req.text();
     const sig = req.headers["stripe-signature"] as string;
 
     try {
       const event = this.stripeClient.webhooks.constructEvent(
-        body,
+        rawBody,
         sig,
         process.env.STRIPE_WEBHOOK_SECRET!
       );
