@@ -25,7 +25,7 @@ import logger from "src/utils/logger";
 import { getCurrentMexicoTime } from "src/utils/timeUtils";
 
 const stripeClient = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: "2024-06-20",
+  apiVersion: "2024-10-28.acacia",
 });
 
 const otpService = new OtpService();
