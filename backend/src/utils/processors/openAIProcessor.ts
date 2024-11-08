@@ -9,6 +9,7 @@ import {
 import { AgentConfig, AgentMapping, AgentType } from "src/types/agents";
 import { AIResponse } from "src/utils/messageProcessUtils";
 import logger from "src/utils/logger";
+import { analyzeOrderSummary } from "../orderSummaryAnalyzer";
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
@@ -33,7 +34,13 @@ export async function preProcessMessagesOpenAI(
     const processedMessages = [
       systemMessage,
       ...(currentAgent.type === AgentType.ORDER_AGENT && orderSummary
-        ? [{ role: "user", content: orderSummary }]
+        ? [
+            {
+              role: "assistant",
+              content: await analyzeOrderSummary(orderSummary),
+            },
+            { role: "user", content: orderSummary },
+          ]
         : messages),
     ];
 
