@@ -93,7 +93,7 @@ ${await menuService.getMenuForAI()}`,
 };
 
 export const ORDER_AGENT_OPENAI: AgentOpenAI = {
-  model: "gpt-4o",
+  model: "gpt-4o-mini",
   systemMessage: async () => ({
     role: "system",
     content: `
