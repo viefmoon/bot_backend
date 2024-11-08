@@ -97,10 +97,11 @@ export const ORDER_AGENT_OPENAI: AgentOpenAI = {
   systemMessage: async () => ({
     role: "system",
     content: `
-    Tu tarea:
-    - Si el cliente menciona un producto de manera imprecisa, intenta mapearlo al nombre exacto en el menu proporcionado en el mensaje del asistente, incluyendo personalizaciones del producto.
-    - Utiliza la mejor aproximación basada en el menú disponible, considera el producto que mas se parece a la solicitud del cliente.
-    `,
+Tu tarea:
+- Si el cliente menciona un producto de manera imprecisa, intenta mapearlo al nombre exacto en el menú proporcionado en el mensaje del asistente, incluyendo personalizaciones del producto.
+- Analiza una a una las opciones antes de elegir la opción del menú.
+- Elige la mejor aproximación basada en el menú disponible, considera el producto que más se parece a la solicitud del cliente.
+`,
   }),
   tools: [
     {
