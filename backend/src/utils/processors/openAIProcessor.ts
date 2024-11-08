@@ -30,9 +30,9 @@ export async function preProcessMessagesOpenAI(
         ? await agent.systemMessage()
         : { role: "system", content: agent.systemMessage };
 
-    // Construir los mensajes procesados incluyendo el mensaje del sistema
+    const hasSystemMessage = messages.some((msg) => msg.role === "system");
     const processedMessages = [
-      systemMessage,
+      ...(hasSystemMessage ? [] : [systemMessage]),
       ...(currentAgent.type === AgentType.ORDER_AGENT && orderSummary
         ? [
             {
