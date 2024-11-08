@@ -35,7 +35,6 @@ import { RESTAURANT_CLOSED_MESSAGE } from "../config/predefinedMessages";
 import { WhatsAppMessage, WebhookBody } from "../types/webhook.types";
 import * as dotenv from "dotenv";
 import logger from "../utils/logger";
-import { buffer } from "micro";
 
 dotenv.config();
 
@@ -267,13 +266,10 @@ export class WebhookService {
 
       if (await checkMessageRateLimit(from)) return;
 
-      // if (!isBusinessOpen()) {
-      //   await sendWhatsAppMessage(
-      //     from,
-      //     RESTAURANT_CLOSED_MESSAGE
-      //   );
-      //   return;
-      // }
+      if (!isBusinessOpen()) {
+        await sendWhatsAppMessage(from, RESTAURANT_CLOSED_MESSAGE);
+        return;
+      }
 
       if (!config || !config.acceptingOrders) {
         await sendWhatsAppMessage(

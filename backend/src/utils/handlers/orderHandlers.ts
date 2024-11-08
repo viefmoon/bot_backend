@@ -199,10 +199,10 @@ export async function handlePreOrderConfirmation(
                 id: "modify_order",
                 title: "Modificar Pedido",
               },
-              {
-                id: "pay_online",
-                title: "Pagar en línea",
-              },
+              // {
+              //   id: "pay_online",
+              //   title: "Pagar en línea",
+              // },
             ],
           },
         ],
