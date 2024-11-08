@@ -8,6 +8,7 @@ interface ModifierAttributes {
   name: string;
   price: number;
   modifierTypeId: string;
+  shortName?: string;
 }
 
 interface ModifierCreationAttributes
@@ -21,7 +22,7 @@ class Modifier
   public name!: string;
   public price!: number;
   public modifierTypeId!: string;
-
+  public shortName?: string;
   // Associations
   public modifierType?: ModifierType;
   public mAv?: Availability;
@@ -37,6 +38,10 @@ Modifier.init(
     name: {
       type: DataTypes.STRING,
       allowNull: false,
+    },
+    shortName: {
+      type: DataTypes.STRING,
+      allowNull: true,
     },
     price: {
       type: DataTypes.FLOAT,

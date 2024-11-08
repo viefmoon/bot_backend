@@ -89,6 +89,10 @@ module.exports = {
         type: Sequelize.STRING,
         allowNull: false,
       },
+      shortName: {
+        type: Sequelize.STRING,
+        allowNull: true,
+      },
       price: {
         type: Sequelize.FLOAT,
         allowNull: true,
@@ -112,6 +116,10 @@ module.exports = {
       name: {
         type: Sequelize.STRING,
         allowNull: false,
+      },
+      shortName: {
+        type: Sequelize.STRING,
+        allowNull: true,
       },
       price: {
         type: Sequelize.FLOAT,
@@ -174,6 +182,10 @@ module.exports = {
       name: {
         type: Sequelize.STRING,
         allowNull: false,
+      },
+      shortName: {
+        type: Sequelize.STRING,
+        allowNull: true,
       },
       price: {
         type: Sequelize.FLOAT,

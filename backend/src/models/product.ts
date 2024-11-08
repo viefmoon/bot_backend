@@ -8,6 +8,7 @@ import Availability from "./availability";
 interface ProductAttributes {
   id: string;
   name: string;
+  shortName?: string;
   price?: number;
   ingredients?: string;
   subcategoryId: string;
@@ -21,6 +22,7 @@ class Product
 {
   public id!: string;
   public name!: string;
+  public shortName?: string;
   public price?: number;
   public ingredients?: string;
   public subcategoryId: string;
@@ -41,6 +43,10 @@ Product.init(
     name: {
       type: DataTypes.STRING,
       allowNull: false,
+    },
+    shortName: {
+      type: DataTypes.STRING,
+      allowNull: true,
     },
     price: {
       type: DataTypes.FLOAT,
