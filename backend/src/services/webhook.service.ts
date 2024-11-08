@@ -266,10 +266,10 @@ export class WebhookService {
 
       if (await checkMessageRateLimit(from)) return;
 
-      if (!isBusinessOpen()) {
-        await sendWhatsAppMessage(from, RESTAURANT_CLOSED_MESSAGE);
-        return;
-      }
+      // if (!isBusinessOpen()) {
+      //   await sendWhatsAppMessage(from, RESTAURANT_CLOSED_MESSAGE);
+      //   return;
+      // }
 
       if (!config || !config.acceptingOrders) {
         await sendWhatsAppMessage(
