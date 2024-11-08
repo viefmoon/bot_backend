@@ -97,12 +97,11 @@ export const ORDER_AGENT_OPENAI: AgentOpenAI = {
   systemMessage: async () => ({
     role: "system",
     content: `
-      [Asistente de Pedidos - La Leña]
-
       Tu tarea:
-      - Si el cliente menciona un producto de manera imprecisa, intenta mapearlo al nombre exacto en el menu proporcionado en el mensaje del asistente, incluyendo modificaciones.
-      - Utiliza la mejor aproximación basada en el menú disponible.
-
+      - Si el cliente menciona un producto de manera imprecisa, intenta mapearlo al nombre exacto en el menú proporcionado en el mensaje del asistente, incluyendo modificaciones.
+      - Prioriza las opciones que mejor se aproximen a la solicitud del cliente, evitando seleccionar alternativas que se alejen del contexto original.
+      - Si existen múltiples opciones cercanas, selecciona la que mejor se adapte según popularidad o disponibilidad.
+      - Utiliza la mejor aproximación basada en el menú disponible sin omitir detalles importantes.
       ${await menuService.getMenuForAI()}
     `,
   }),
