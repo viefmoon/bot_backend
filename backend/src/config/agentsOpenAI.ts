@@ -8,6 +8,8 @@ export const ROUTER_AGENT_OPENAI: AgentOpenAI = {
   systemMessage: async () => ({
     role: "system",
     content: `
+IMPORTANTE: Considera ÚNICAMENTE el último mensaje del usuario para determinar el agente apropiado.
+
 - Si la conversación está relacionada con realizar un pedido, modificar orden o menciona productos específicos → "ORDER_MAPPER_AGENT"
   - Primero, analiza detalladamente el mensaje para identificar:
     * Productos individuales y sus cantidades
