@@ -24,16 +24,7 @@ export async function preProcessMessagesOpenAI(
   try {
     const agent = AGENTS_OPENAI[currentAgent.type];
 
-    // Obtener el mensaje del sistema
-    const systemMessage =
-      typeof agent.systemMessage === "function"
-        ? await agent.systemMessage()
-        : { role: "system", content: agent.systemMessage };
-
-    console.log("systemMessage", JSON.stringify(systemMessage, null, 2));
-
     const processedMessages = [
-      systemMessage,
       ...(currentAgent.type === AgentType.ORDER_MAPPER_AGENT && orderDetails
         ? [
             {
