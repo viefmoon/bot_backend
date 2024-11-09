@@ -26,7 +26,7 @@ export async function preProcessMessagesGemini(
         ? [
             {
               role: "user",
-              parts: [{ text: await findMenuMatches(orderDetails) }]
+              parts: [{ text: JSON.stringify(await findMenuMatches(orderDetails)) }]
             }
           ]
         : messages.map((message) => ({
