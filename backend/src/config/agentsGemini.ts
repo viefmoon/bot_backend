@@ -4,7 +4,7 @@ import { MenuService } from "../services/menu.service";
 
 const menuService = new MenuService();
 
-export const GENERAL_AGENT_GEMINI: AgentGemini = {
+export const ROUTER_AGENT_GEMINI: AgentGemini = {
   model: "gemini-1.5-flash-002",
   systemMessage: async () => `
     Eres el asistente virtual del Restaurante La Leña. Utiliza un lenguaje amigable y cercano, incluyendo emojis en tus respuestas para hacerlas más atractivas y agradables.
@@ -97,7 +97,7 @@ export const GENERAL_AGENT_GEMINI: AgentGemini = {
   functionCallingMode: FunctionCallingMode.AUTO,
 };
 
-export const ORDER_AGENT_GEMINI: AgentGemini = {
+export const ORDER_MAPPER_AGENT_GEMINI: AgentGemini = {
   model: "gemini-1.5-flash-002",
   //model: "gemini-1.5-exp-0827",
   //model: "gemini-1.5-flash-8b",
@@ -158,6 +158,6 @@ export const ORDER_AGENT_GEMINI: AgentGemini = {
 };
 
 export const AGENTS_GEMINI = {
-  [AgentType.GENERAL_AGENT]: GENERAL_AGENT_GEMINI,
-  [AgentType.ORDER_AGENT]: ORDER_AGENT_GEMINI,
+  [AgentType.ROUTER_AGENT]: ROUTER_AGENT_GEMINI,
+  [AgentType.ORDER_MAPPER_AGENT]: ORDER_MAPPER_AGENT_GEMINI,
 };

@@ -3,7 +3,7 @@ import { MenuService } from "../services/menu.service";
 
 const menuService = new MenuService();
 
-export const GENERAL_AGENT_CLAUDE: AgentClaude = {
+export const ROUTER_AGENT_CLAUDE: AgentClaude = {
   model: "claude-3-haiku-20240307",
   systemMessage: async () => [
     {
@@ -79,7 +79,7 @@ ${await menuService.getMenuForAI()}`,
   temperature: 0.5,
 };
 
-export const ORDER_AGENT_CLAUDE: AgentClaude = {
+export const ORDER_MAPPER_AGENT_CLAUDE: AgentClaude = {
   model: "claude-3-5-sonnet-20241022",
   systemMessage: async () => [
     {
@@ -140,6 +140,6 @@ ${await menuService.getMenuForAI()}`,
 };
 
 export const AGENTS_CLAUDE = {
-  [AgentType.GENERAL_AGENT]: GENERAL_AGENT_CLAUDE,
-  [AgentType.ORDER_AGENT]: ORDER_AGENT_CLAUDE,
+  [AgentType.ROUTER_AGENT]: ROUTER_AGENT_CLAUDE,
+  [AgentType.ORDER_MAPPER_AGENT]: ORDER_MAPPER_AGENT_CLAUDE,
 };
