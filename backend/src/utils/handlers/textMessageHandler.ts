@@ -161,14 +161,15 @@ async function processAndGenerateAIResponse(
   );
 
   const agentConfig: AgentConfig = {
-    generalAgent: { type: AgentType.GENERAL_AGENT, provider: "OPENAI" },
-    orderAgent: { type: AgentType.ORDER_AGENT, provider: "OPENAI" },
+    routerAgent: { type: AgentType.ROUTER_AGENT, provider: "OPENAI" },
+    orderMapperAgent: { type: AgentType.ORDER_MAPPER_AGENT, provider: "OPENAI" },
+    queryAgent: { type: AgentType.QUERY_AGENT, provider: "OPENAI" },
   };
 
   try {
     const aiResponses = await preProcessMessages(
       messagesWithoutTimestamp,
-      agentConfig.generalAgent,
+      agentConfig.routerAgent,
       agentConfig
     );
     const responseItems: ResponseItem[] = [];
