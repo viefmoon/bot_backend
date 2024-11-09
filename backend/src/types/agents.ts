@@ -28,6 +28,7 @@ export interface AgentOpenAI {
   tools: any[];
   temperature?: number;
   tool_choice?: { type: string; function: { name: string } };
+  parallel_tool_calls?: boolean;
 }
 
 export interface AgentConfig {

@@ -254,6 +254,7 @@ export const prepareRequestPayloadOpenAI = async (
     tools: agent.tools,
     tool_choice: agent.tool_choice,
     temperature: agent.temperature,
+    parallel_tool_calls: agent.parallel_tool_calls,
     messages: [
       {
         role: "system",

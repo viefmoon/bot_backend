@@ -62,6 +62,7 @@ Eres el agente router, tu función es analizar la conversación completa entre e
   ],
   temperature: 0.5,
   tool_choice: { type: "function", function: { name: "route_to_agent" } },
+  parallel_tool_calls: false,
 };
 
 export const QUERY_AGENT_OPENAI: AgentOpenAI = {
@@ -99,6 +100,7 @@ ${await menuService.getMenuForAI()}`,
     },
   ],
   temperature: 0.5,
+  parallel_tool_calls: false,
 };
 
 export const ORDER_MAPPER_AGENT_OPENAI: AgentOpenAI = {
@@ -175,7 +177,8 @@ Eres un agente especializado en mapear pedidos a los nombres exactos del menú.
       }
     }
   ],
-  temperature: 0.5
+  temperature: 0.5,
+  parallel_tool_calls: false,
 };
 
 export const AGENTS_OPENAI = {
