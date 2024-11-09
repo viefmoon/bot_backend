@@ -26,12 +26,12 @@ export async function preProcessMessagesGemini(
         ? [
             {
               role: "user",
-              parts: { text: await findMenuMatches(orderDetails) },
+              parts: [{ text: await findMenuMatches(orderDetails) }]
             }
           ]
         : messages.map((message) => ({
             role: message.role === "assistant" ? "model" : message.role,
-            parts: { text: message.content },
+            parts: [{ text: message.content }]
           }));
 
     const model = googleAI.getGenerativeModel(await prepareModelGemini(agent));
