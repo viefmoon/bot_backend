@@ -49,7 +49,7 @@ export async function preProcessMessagesOpenAI(
       processedMessages
     );
 
-    const response = await openai.chat.completions.create(requestPayload);
+    const response = await openai.chat.completions.create(requestPayload as any);
     console.log("requestPayload", JSON.stringify(requestPayload, null, 2));
     console.log("response openai", JSON.stringify(response, null, 2));
 

@@ -252,6 +252,7 @@ export const prepareRequestPayloadOpenAI = async (
   return {
     model: agent.model,
     tools: agent.tools,
+    tool_choice: agent.tool_choice,
     temperature: agent.temperature,
     messages: [
       {

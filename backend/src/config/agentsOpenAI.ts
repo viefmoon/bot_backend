@@ -61,6 +61,7 @@ Eres el agente router, tu función es analizar la conversación completa entre e
     },
   ],
   temperature: 0.5,
+  tool_choice: { type: "function", function: { name: "route_to_agent" } },
 };
 
 export const QUERY_AGENT_OPENAI: AgentOpenAI = {

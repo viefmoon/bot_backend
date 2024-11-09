@@ -27,6 +27,7 @@ export interface AgentOpenAI {
   systemMessage: string | (() => Promise<{ role: string; content: string }>);
   tools: any[];
   temperature?: number;
+  tool_choice?: { type: string; function: { name: string } };
 }
 
 export interface AgentConfig {
