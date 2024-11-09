@@ -26,12 +26,12 @@ export async function preProcessMessagesGemini(
         ? [
             {
               role: "user",
-              parts: [{ text: await findMenuMatches(orderDetails) }],
+              parts: { text: await findMenuMatches(orderDetails) },
             }
           ]
         : messages.map((message) => ({
             role: message.role === "assistant" ? "model" : message.role,
-            parts: [{ text: message.content }],
+            parts: { text: message.content },
           }));
 
     const model = googleAI.getGenerativeModel(await prepareModelGemini(agent));
@@ -42,7 +42,7 @@ export async function preProcessMessagesGemini(
       JSON.stringify(processedMessages, null, 2)
     );
     const response = await model.generateContent({
-      contents: processedMessages,
+      contents: processedMessages as any,
     });
 
     console.log("response gemini", JSON.stringify(response, null, 2));
