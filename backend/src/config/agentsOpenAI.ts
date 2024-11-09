@@ -4,22 +4,15 @@ import { MenuService } from "../services/menu.service";
 const menuService = new MenuService();
 
 export const ROUTER_AGENT_OPENAI: AgentOpenAI = {
-  model: "gpt-4o-mini",
+  model: "gpt-4o",
   systemMessage: async () => ({
     role: "system",
     content: `
-Eres el agente router, tu función es analizar la conversación completa entre el cliente y el asistente para transferir al agente apropiado.
-
 **Reglas de transferencia:**
 - Si la conversación está relacionada con realizar un pedido, modificar orden o menciona productos específicos → "ORDER_MAPPER_AGENT"
   - En este caso, debes extraer y estructurar los productos mencionados en el campo orderDetails
   - Cada producto debe incluir cantidad y descripción exacta mencionada por el usuario
 - Si la conversación es sobre consultas del menú, precios, disponibilidad o información general → "QUERY_AGENT"
-
-**Importante:**
-- No respondas directamente al cliente
-- Solo realiza la transferencia al agente correspondiente
-- Para ORDER_MAPPER_AGENT, siempre incluye los detalles del pedido en orderDetails
 `,
   }),
   tools: [
