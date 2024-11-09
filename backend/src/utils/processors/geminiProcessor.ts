@@ -9,7 +9,7 @@ import {
 import { AgentConfig, AgentMapping, AgentType } from "src/types/agents";
 import { AIResponse } from "src/utils/messageProcessUtils";
 import logger from "src/utils/logger";
-import { analyzeOrderSummary } from "../orderSummaryAnalyzer";
+import { findMenuMatches } from "../orderSummaryAnalyzer";
 
 const googleAI = new GoogleGenerativeAI(process.env.GOOGLE_AI_API_KEY);
 
@@ -17,18 +17,18 @@ export async function preProcessMessagesGemini(
   messages: any[],
   currentAgent: AgentMapping,
   agentConfig: AgentConfig,
-  orderSummary?: string
+  orderDetails?: { quantity: number; description: string }[]
 ): Promise<AIResponse[]> {
   try {
     const agent = AGENTS_GEMINI[currentAgent.type];
     const processedMessages =
-      currentAgent.type === AgentType.ORDER_AGENT && orderSummary
+      currentAgent.type === AgentType.ORDER_MAPPER_AGENT && orderDetails
         ? [
             {
               role: "assistant",
-              parts: [{ text: await analyzeOrderSummary(orderSummary) }],
+              parts: [{ text: await findMenuMatches(orderDetails) }],
             },
-            { role: "user", parts: [{ text: orderSummary }] },
+            { role: "user", parts: [{ text: orderDetails }] },
           ]
         : messages.map((message) => ({
             role: message.role === "assistant" ? "model" : message.role,

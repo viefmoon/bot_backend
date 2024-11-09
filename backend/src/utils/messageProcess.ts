@@ -10,7 +10,7 @@ export async function preProcessMessages(
   messages: any[],
   currentAgent: AgentMapping,
   agentConfig: AgentConfig,
-  orderSummary?: string
+  orderDetails?: { quantity: number; description: string }[]
 ): Promise<AIResponse[]> {
   const agentProvider = currentAgent.provider;
 
@@ -20,21 +20,21 @@ export async function preProcessMessages(
         messages,
         currentAgent,
         agentConfig,
-        orderSummary
+        orderDetails
       );
     case "CLAUDE":
       return preProcessMessagesClaude(
         messages,
         currentAgent,
         agentConfig,
-        orderSummary
+        orderDetails
       );
     case "OPENAI":
       return preProcessMessagesOpenAI(
         messages,
         currentAgent,
         agentConfig,
-        orderSummary
+        orderDetails
       );
     default:
       throw new Error("Proveedor de agente no soportado");

@@ -9,7 +9,7 @@ import {
 import { AgentConfig, AgentMapping, AgentType } from "src/types/agents";
 import { AIResponse } from "src/utils/messageProcessUtils";
 import logger from "src/utils/logger";
-import { analyzeOrderSummary } from "../orderSummaryAnalyzer";
+import { findMenuMatches } from "../orderSummaryAnalyzer";
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
@@ -19,7 +19,7 @@ export async function preProcessMessagesOpenAI(
   messages: any[],
   currentAgent: AgentMapping,
   agentConfig: AgentConfig,
-  orderSummary?: string
+  orderDetails?: { quantity: number; description: string }[]
 ): Promise<AIResponse[]> {
   try {
     const agent = AGENTS_OPENAI[currentAgent.type];
@@ -30,16 +30,16 @@ export async function preProcessMessagesOpenAI(
         ? await agent.systemMessage()
         : { role: "system", content: agent.systemMessage };
 
-    const hasSystemMessage = messages.some((msg) => msg.role === "system");
     const processedMessages = [
-      ...(hasSystemMessage ? [] : [systemMessage]),
-      ...(currentAgent.type === AgentType.ORDER_AGENT && orderSummary
+      systemMessage,
+      ...(currentAgent.type === AgentType.ORDER_MAPPER_AGENT && orderDetails
         ? [
             {
-              role: "assistant",
-              content: await analyzeOrderSummary(orderSummary),
-            },
-            { role: "user", content: orderSummary },
+              role: "user",
+              content: JSON.stringify(
+                await findMenuMatches(orderDetails)
+              ),
+            }
           ]
         : messages),
     ];
@@ -61,7 +61,7 @@ export async function preProcessMessagesOpenAI(
         const args = JSON.parse(toolCall.function.arguments);
 
         switch (toolCall.function.name) {
-          case "transfer_to_agent":
+          case "route_to_agent":
             return await handleAgentTransfer(args, messages, agentConfig);
           case "preprocess_order":
             responses.push(await handlePreProcessOrderTool({ args }));

@@ -13,21 +13,40 @@ const menuService = new MenuService();
 export async function handleAgentTransfer(
   {
     targetAgent,
-    orderSummary,
-  }: { targetAgent: AgentType; orderSummary: string },
+    conversationSummary,
+    orderDetails
+  }: { 
+    targetAgent: AgentType; 
+    conversationSummary: string;
+    orderDetails?: { quantity: number; description: string; }[]
+  },
   messages: any[],
   agentConfig: AgentConfig
 ): Promise<AIResponse[]> {
-  const targetAgentMapping =
-    targetAgent === AgentType.ORDER_AGENT
-      ? agentConfig.orderAgent
-      : agentConfig.generalAgent;
+  let targetAgentMapping;
+  
+  switch (targetAgent) {
+    case AgentType.ORDER_MAPPER_AGENT:
+      if (!orderDetails) {
+        throw new Error('orderDetails es requerido para ORDER_MAPPER_AGENT');
+      }
+      targetAgentMapping = agentConfig.orderMapperAgent;
+      break;
+    case AgentType.ROUTER_AGENT:
+      targetAgentMapping = agentConfig.routerAgent;
+      break;
+    case AgentType.QUERY_AGENT:
+      targetAgentMapping = agentConfig.queryAgent;
+      break;
+    default:
+      throw new Error(`Tipo de agente no soportado: ${targetAgent}`);
+  }
 
   return preProcessMessages(
     messages,
     targetAgentMapping,
     agentConfig,
-    orderSummary
+    orderDetails
   );
 }
 
