@@ -30,6 +30,8 @@ export async function preProcessMessagesOpenAI(
         ? await agent.systemMessage()
         : { role: "system", content: agent.systemMessage };
 
+    console.log("systemMessage", JSON.stringify(systemMessage, null, 2));
+
     const processedMessages = [
       systemMessage,
       ...(currentAgent.type === AgentType.ORDER_MAPPER_AGENT && orderDetails
