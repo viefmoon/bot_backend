@@ -4,14 +4,21 @@ import { MenuService } from "../services/menu.service";
 const menuService = new MenuService();
 
 export const ROUTER_AGENT_OPENAI: AgentOpenAI = {
-  model: "gpt-4o",
+  model: "gpt-4o-mini",
   systemMessage: async () => ({
     role: "system",
     content: `
-**Reglas de transferencia:**
 - Si la conversación está relacionada con realizar un pedido, modificar orden o menciona productos específicos → "ORDER_MAPPER_AGENT"
-  - En este caso, debes extraer y estructurar los productos mencionados en el campo orderDetails
-  - Cada producto debe incluir cantidad y descripción exacta mencionada por el usuario
+  - Primero, analiza detalladamente el mensaje para identificar:
+    * Productos individuales y sus cantidades
+    * Pizzas con opciones de mitad y mitad
+    * Personalizaciones específicas para cada producto
+    * Modificaciones o extras solicitados
+  - Luego, extrae y estructura los productos en el campo orderDetails
+  - Cada producto debe incluir:
+    * Cantidad exacta
+    * Descripción completa incluyendo todas las personalizaciones
+    * Para pizzas divididas: especificar claramente cada mitad
 - Si la conversación es sobre consultas del menú, precios, disponibilidad o información general → "QUERY_AGENT"
 `,
   }),
