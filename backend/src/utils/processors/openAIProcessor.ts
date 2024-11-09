@@ -29,9 +29,7 @@ export async function preProcessMessagesOpenAI(
         ? [
             {
               role: "user",
-              content: JSON.stringify(
-                await findMenuMatches(orderDetails)
-              ),
+              content: await findMenuMatches(orderDetails),
             }
           ]
         : messages),
@@ -56,7 +54,7 @@ export async function preProcessMessagesOpenAI(
         switch (toolCall.function.name) {
           case "route_to_agent":
             return await handleAgentTransfer(args, messages, agentConfig);
-          case "preprocess_order":
+          case "map_order_items":
             responses.push(await handlePreProcessOrderTool({ args }));
             break;
           case "send_menu":

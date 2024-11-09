@@ -161,9 +161,12 @@ async function processAndGenerateAIResponse(
   );
 
   const agentConfig: AgentConfig = {
-    routerAgent: { type: AgentType.ROUTER_AGENT, provider: "OPENAI" },
-    orderMapperAgent: { type: AgentType.ORDER_MAPPER_AGENT, provider: "OPENAI" },
-    queryAgent: { type: AgentType.QUERY_AGENT, provider: "OPENAI" },
+    routerAgent: { type: AgentType.ROUTER_AGENT, provider: "GEMINI" },
+    orderMapperAgent: {
+      type: AgentType.ORDER_MAPPER_AGENT,
+      provider: "GEMINI",
+    },
+    queryAgent: { type: AgentType.QUERY_AGENT, provider: "GEMINI" },
   };
 
   try {

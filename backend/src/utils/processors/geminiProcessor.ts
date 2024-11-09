@@ -25,10 +25,9 @@ export async function preProcessMessagesGemini(
       currentAgent.type === AgentType.ORDER_MAPPER_AGENT && orderDetails
         ? [
             {
-              role: "assistant",
+              role: "user",
               parts: [{ text: await findMenuMatches(orderDetails) }],
-            },
-            { role: "user", parts: [{ text: orderDetails }] },
+            }
           ]
         : messages.map((message) => ({
             role: message.role === "assistant" ? "model" : message.role,
@@ -58,7 +57,7 @@ export async function preProcessMessagesGemini(
         });
       } else if (part.functionCall) {
         switch (part.functionCall.name) {
-          case "transfer_to_agent":
+          case "route_to_agent":
             // Nota: Aquí necesitarás pasar agentConfig, que no está disponible en este scope.
             // Considera pasar agentConfig como un parámetro adicional a esta función.
             return await handleAgentTransfer(
@@ -66,7 +65,7 @@ export async function preProcessMessagesGemini(
               messages,
               agentConfig
             );
-          case "preprocess_order":
+          case "map_order_items":
             responses.push(
               await handlePreProcessOrderTool({ args: part.functionCall.args })
             );

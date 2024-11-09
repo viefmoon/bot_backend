@@ -180,6 +180,7 @@ Eres un agente especializado en mapear pedidos a los nombres exactos del menú.
     }
   ],
   temperature: 0.5,
+  tool_choice: { type: "function", function: { name: "map_order_items" } },
   parallel_tool_calls: false,
 };
 
