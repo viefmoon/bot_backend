@@ -29,7 +29,7 @@ export async function preProcessMessagesOpenAI(
         ? [
             {
               role: "user",
-              content: await findMenuMatches(orderDetails),
+              content: JSON.stringify(await findMenuMatches(orderDetails)),
             }
           ]
         : messages),
