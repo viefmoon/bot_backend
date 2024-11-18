@@ -68,7 +68,8 @@ IMPORTANTE: Considera ÚNICAMENTE el último mensaje del usuario para determinar
 };
 
 export const QUERY_AGENT_GEMINI: AgentGemini = {
-  model: "gemini-1.5-flash-002",
+  //model: "gemini-1.5-flash-002",
+  model: "gemini-exp-1114",
   systemMessage: async () => `
 Eres el asistente virtual del Restaurante La Leña. Usa un lenguaje amigable y cercano, incluyendo emojis en tus respuestas para hacerlas más atractivas.
 
