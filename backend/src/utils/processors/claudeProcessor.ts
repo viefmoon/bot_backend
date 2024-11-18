@@ -18,13 +18,13 @@ export async function preProcessMessagesClaude(
   messages: any[],
   currentAgent: AgentMapping,
   agentConfig: AgentConfig,
-  orderSummary?: string
+  orderDetails?: { quantity: number; description: string }[]
 ): Promise<AIResponse[]> {
   try {
     const agent = AGENTS_CLAUDE[currentAgent.type];
     const processedMessages =
-      currentAgent.type === AgentType.ORDER_AGENT && orderSummary
-        ? [{ role: "user", content: orderSummary }]
+      currentAgent.type === AgentType.ORDER_MAPPER_AGENT && orderDetails
+        ? [{ role: "user", content: orderDetails }]
         : messages;
 
     const response = await anthropic.beta.promptCaching.messages.create({

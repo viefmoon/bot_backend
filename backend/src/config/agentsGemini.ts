@@ -4,134 +4,162 @@ import { MenuService } from "../services/menu.service";
 
 const menuService = new MenuService();
 
-export const GENERAL_AGENT_GEMINI: AgentGemini = {
-  //model: "gemini-1.5-flash-002",
-  model: "gemini-exp-1114",
+export const ROUTER_AGENT_GEMINI: AgentGemini = {
+  model: "gemini-1.5-flash-002",
   systemMessage: async () => `
-    Eres el asistente virtual del Restaurante La Leña. Utiliza un lenguaje amigable y cercano, incluyendo emojis en tus respuestas para hacerlas más atractivas y agradables.
+IMPORTANTE: Considera ÚNICAMENTE el último mensaje del usuario para determinar el agente apropiado.
 
-    **Limitaciones Importantes:**
-    - Solo puedes ayudar con consultas relacionadas al menu y al envio de menú y la ejecucion de transfer_to_agent.
-    - No tienes la capacidad de resolver otras consultas como estados de pedidos, modificar pedidos, reservas, pagos, etc. o proporcionar información fuera de estos temas.
-    - Para cualquier otra consulta, indica amablemente que solo puedes asistir con el menu y crear pedidos.
-
-    **Envío del Menú:**
-    - Envía el menú completo solo cuando el cliente lo solicite explícitamente utilizando la función send_menu.
-
-    **Transferencia de Conversación para Pedido:**
-    - Utiliza la función transfer_to_agent("ORDER_AGENT") en los siguientes casos:
-      * Cuando el cliente mencione productos para ordenar
-      * Cuando agregue nuevos productos a su orden
-      * Cuando modifique cantidades de productos
-      * Cuando solicite cambios en su pedido
-    - Proporciona un resumen de los productos mencionados, identificando paso a paso y exactamente cada uno de los artículos del menú definido del restaurante que coinciden con lo que el cliente menciona.
-    - Es muy importante no transferir sin antes verificar que el producto ordenado se encuentre en el menú y esté disponible.
-    - Solo incluye en el resumen si el cliente lo menciona explícitamente:
-      * Hora programada para el pedido
-      * Tipo de pedido entrega a domicilio o recolección en restaurante
-
-    **Interacción con el Cliente:**
-    - IMPORTANTE: NO preguntes sobre el tipo de pedido (Entrega a domicilio / Recolección en restaurante) ni sobre la hora de entrega. Solo incluye esta información si el cliente la menciona por iniciativa propia.
-    - Responde de forma breve y directa. Usa un tono amigable y utiliza varios emojis para hacer la conversación más dinámica y cálida. 😊🔥
-    - Procura no sugerir cambios al pedido; espera a que el cliente los solicite explícitamente.
-
-    # Output Format
-    - Mensajes breves, amigables con emojis.
-    - Incluir en el resumen del pedido:
-      * Productos y cantidades
-      * Tipo de pedido (Entrega a domicilio / Recolección en restaurante) - solo si el cliente lo menciona
-      * Hora programada - solo si el cliente la especifica
-
-    # Notas
-    - Siempre verifica que lo que el cliente menciona esté dentro del menú antes de proceder.
-    - Es muy importante no transferir sin antes verificar que el menú esté disponible.
-    - No extender las respuestas más de lo necesario.
-    - Nunca preguntes por el tipo de pedido ni la hora de entrega.
-    - No puedes resolver consultas fuera de los temas del menu y la ejecucion de transfer_to_agent.
-
-
-    ${await menuService.getMenuForAI()}
-  `,
+- Si la conversación está relacionada con realizar un pedido, modificar orden o menciona productos específicos → "ORDER_MAPPER_AGENT"
+  - Primero, analiza detalladamente el mensaje para identificar:
+    * Productos individuales y sus cantidades
+    * Pizzas con opciones de mitad y mitad
+    * Personalizaciones específicas para cada producto
+    * Modificaciones o extras solicitados
+  - Luego, extrae y estructura los productos en el campo orderDetails
+  - Cada producto debe incluir:
+    * Cantidad exacta
+    * Descripción completa incluyendo todas las personalizaciones
+    * Para pizzas divididas: especificar claramente cada mitad
+- Si la conversación es sobre consultas del menú, precios, disponibilidad o información general → "QUERY_AGENT"
+`,
   tools: [
     {
       function_declarations: [
         {
-          name: "transfer_to_agent",
-          description:
-            "Transfiere la conversación a otro agente especializado con un resumen del pedido",
+          name: "route_to_agent",
+          description: "Transfiere la conversación al agente especializado",
           parameters: {
             type: "object",
             properties: {
               targetAgent: {
                 type: "string",
-                enum: ["ORDER_AGENT"],
+                enum: ["ORDER_MAPPER_AGENT", "QUERY_AGENT"],
+                description: "Agente al que se transferirá la conversación",
               },
-              orderSummary: {
-                type: "string",
-                description:
-                  "Resumen detallado del pedido que incluye: 1) Las palabras exactas que usó el cliente al ordenar, y 2) El mapeo sugerido de cada producto mencionado con los nombres exactos del menú, incluyendo cantidades",
-              },
-            },
-            required: ["targetAgent", "orderSummary"],
-          },
-        },
-        {
-          name: "send_menu",
-          description:
-            "Envía el menú completo solo cuando el cliente lo solicita explícitamente.",
-          parameters: {
-            type: "object",
-            properties: {
-              sendMenu: {
-                type: "boolean",
-                description:
-                  "Campo opcional para cumplir con el esquema, no es necesario enviarlo.",
-              },
-            },
-            required: [],
-          },
-        },
-      ],
-    },
-  ],
-  allowedFunctionNames: ["transfer_to_agent", "send_menu"],
-  functionCallingMode: FunctionCallingMode.AUTO,
-};
-
-export const ORDER_AGENT_GEMINI: AgentGemini = {
-  //model: "gemini-1.5-flash-002",
-  model: "gemini-exp-1114",
-  //model: "gemini-1.5-exp-0827",
-  //model: "gemini-1.5-flash-8b",
-  systemMessage: `
-    Tu tarea:
-    - Si el cliente menciona un producto de manera imprecisa, intenta mapearlo al nombre exacto en el menu proporcionado en el mensaje del asistente, incluyendo modificaciones.
-    - Utiliza la mejor aproximación basada en el menú disponible.
-  `,
-  tools: [
-    {
-      function_declarations: [
-        {
-          name: "preprocess_order",
-          description:
-            "Generar una lista detallada de los productos mencionados por el cliente.",
-          parameters: {
-            type: "object",
-            properties: {
-              orderItems: {
+              orderDetails: {
                 type: "array",
-                description: "Productos y cantidades.",
+                description:
+                  "Array de productos solicitados (solo requerido para ORDER_MAPPER_AGENT)",
                 items: {
                   type: "object",
                   properties: {
                     quantity: {
                       type: "integer",
-                      description: "Cantidad del producto (mínimo 1).",
+                      description: "Cantidad del producto",
+                    },
+                    description: {
+                      type: "string",
+                      description: "Descripción detallada del producto",
+                    },
+                  },
+                  required: ["quantity", "description"],
+                },
+              },
+            },
+            required: ["targetAgent"],
+          },
+        },
+      ],
+    },
+  ],
+  allowedFunctionNames: ["route_to_agent"],
+  functionCallingMode: FunctionCallingMode.ANY,
+};
+
+export const QUERY_AGENT_GEMINI: AgentGemini = {
+  model: "gemini-1.5-flash-002",
+  systemMessage: async () => `
+Eres el asistente virtual del Restaurante La Leña. Usa un lenguaje amigable y cercano, incluyendo emojis en tus respuestas para hacerlas más atractivas.
+
+**Limitaciones:**
+- Solo ayudas con consultas sobre el menú y envío del menú
+- No puedes resolver consultas sobre estados de pedidos, modificaciones, reservas, pagos, etc.
+
+**Envío del Menú:**
+- Envía el menú completo solo cuando el cliente lo solicite explícitamente.
+
+**Interacción con el Cliente:**
+- Responde de forma breve y directa.
+- Usa un tono amigable y varios emojis para hacer la conversación dinámica.
+
+${await menuService.getMenuForAI()}`,
+  tools: [
+    {
+      function_declarations: [
+        {
+          name: "send_menu",
+          description: "Envía el menú completo al cliente",
+          parameters: {
+            type: "object",
+            properties: {
+              confirmed: {
+                type: "boolean",
+                description: "Confirma el envío del menú",
+              },
+            },
+            required: ["confirmed"],
+          },
+        },
+      ],
+    },
+  ],
+  allowedFunctionNames: ["send_menu"],
+  functionCallingMode: FunctionCallingMode.AUTO,
+};
+
+export const ORDER_MAPPER_AGENT_GEMINI: AgentGemini = {
+  model: "gemini-1.5-flash-002",
+  systemMessage: async () => `
+Eres un agente especializado en mapear pedidos a los nombres exactos del menú.
+
+**Objetivo Principal:**
+- Convertir las solicitudes imprecisas de los clientes en referencias exactas del menú
+
+**Reglas de Mapeo:**
+1. Analiza detalladamente cada producto mencionado por el cliente
+2. Compara con todas las opciones disponibles de el matchMenu obtenido de cada descripción
+3. Identifica la mejor coincidencia basándote en:
+   - Similitud fonética y textual
+   - Ingredientes mencionados
+   - Variantes y modificaciones solicitadas
+   - Términos comunes o coloquiales utilizados por los clientes
+
+**Proceso de Coincidencia:**
+- Prioriza coincidencias exactas
+- Considera sinónimos y variaciones regionales
+- Evalúa coincidencias parciales por ingredientes
+- Maneja personalizaciones y modificaciones especiales
+- Procesa solicitudes de mitad y mitad en pizzas
+
+**Importante:**
+- Siempre incluye el nombre exacto del menú en la descripción
+- Mantén todas las personalizaciones solicitadas por el cliente
+- En caso de ambigüedad, selecciona la opción más popular o relevante
+`,
+  tools: [
+    {
+      function_declarations: [
+        {
+          name: "map_order_items",
+          description:
+            "Mapea los productos mencionados por el cliente a los nombres exactos del menú",
+          parameters: {
+            type: "object",
+            properties: {
+              orderItems: {
+                type: "array",
+                description: "Productos mapeados y sus cantidades",
+                items: {
+                  type: "object",
+                  properties: {
+                    quantity: {
+                      type: "integer",
+                      description: "Cantidad del producto (mínimo 1)",
                     },
                     description: {
                       type: "string",
                       description:
-                        "Descripción detallada del producto, mapeándolos a los nombres exactos del menú proporcionado en el mensaje del asistente, incluyendo modificaciones, ingredientes extra, etc. o mitad y mitad de pizza si el cliente las menciona",
+                        "Nombre exacto del producto según el menú, incluyendo todas las modificaciones y personalizaciones",
                     },
                   },
                   required: ["description", "quantity"],
@@ -140,13 +168,12 @@ export const ORDER_AGENT_GEMINI: AgentGemini = {
               orderType: {
                 type: "string",
                 enum: ["delivery", "pickup"],
-                description:
-                  "Tipo de orden: entrega a domicilio o recolección en restaurante, por defecto, asume que el orderType es 'delivery'.",
+                description: "Tipo de orden (default: 'delivery')",
               },
               scheduledDeliveryTime: {
                 type: "string",
                 description:
-                  "Hora programada para el pedido (opcional, en formato de 24 horas), por defecto, asume que la scheduledDeliveryTime es null (entrega inmediata).",
+                  "Hora programada de entrega en formato 24h (default: null para entrega inmediata)",
               },
             },
             required: ["orderItems", "orderType", "scheduledDeliveryTime"],
@@ -155,11 +182,12 @@ export const ORDER_AGENT_GEMINI: AgentGemini = {
       ],
     },
   ],
-  allowedFunctionNames: ["preprocess_order"],
+  allowedFunctionNames: ["map_order_items"],
   functionCallingMode: FunctionCallingMode.ANY,
 };
 
 export const AGENTS_GEMINI = {
-  [AgentType.GENERAL_AGENT]: GENERAL_AGENT_GEMINI,
-  [AgentType.ORDER_AGENT]: ORDER_AGENT_GEMINI,
+  [AgentType.ROUTER_AGENT]: ROUTER_AGENT_GEMINI,
+  [AgentType.QUERY_AGENT]: QUERY_AGENT_GEMINI,
+  [AgentType.ORDER_MAPPER_AGENT]: ORDER_MAPPER_AGENT_GEMINI,
 };

@@ -9,7 +9,7 @@ import {
 import { AgentConfig, AgentMapping, AgentType } from "src/types/agents";
 import { AIResponse } from "src/utils/messageProcessUtils";
 import logger from "src/utils/logger";
-import { analyzeOrderSummary } from "../orderSummaryAnalyzer";
+import { findMenuMatches } from "../orderSummaryAnalyzer";
 
 const googleAI = new GoogleGenerativeAI(process.env.GOOGLE_AI_API_KEY);
 
@@ -17,22 +17,21 @@ export async function preProcessMessagesGemini(
   messages: any[],
   currentAgent: AgentMapping,
   agentConfig: AgentConfig,
-  orderSummary?: string
+  orderDetails?: { quantity: number; description: string }[]
 ): Promise<AIResponse[]> {
   try {
     const agent = AGENTS_GEMINI[currentAgent.type];
     const processedMessages =
-      currentAgent.type === AgentType.ORDER_AGENT && orderSummary
+      currentAgent.type === AgentType.ORDER_MAPPER_AGENT && orderDetails
         ? [
             {
-              role: "assistant",
-              parts: [{ text: await analyzeOrderSummary(orderSummary) }],
-            },
-            { role: "user", parts: [{ text: orderSummary }] },
+              role: "user",
+              parts: [{ text: JSON.stringify(await findMenuMatches(orderDetails)) }]
+            }
           ]
         : messages.map((message) => ({
             role: message.role === "assistant" ? "model" : message.role,
-            parts: [{ text: message.content }],
+            parts: [{ text: message.content }]
           }));
 
     const model = googleAI.getGenerativeModel(await prepareModelGemini(agent));
@@ -43,7 +42,7 @@ export async function preProcessMessagesGemini(
       JSON.stringify(processedMessages, null, 2)
     );
     const response = await model.generateContent({
-      contents: processedMessages,
+      contents: processedMessages as any,
     });
 
     console.log("response gemini", JSON.stringify(response, null, 2));
@@ -58,7 +57,7 @@ export async function preProcessMessagesGemini(
         });
       } else if (part.functionCall) {
         switch (part.functionCall.name) {
-          case "transfer_to_agent":
+          case "route_to_agent":
             // Nota: Aquí necesitarás pasar agentConfig, que no está disponible en este scope.
             // Considera pasar agentConfig como un parámetro adicional a esta función.
             return await handleAgentTransfer(
@@ -66,7 +65,7 @@ export async function preProcessMessagesGemini(
               messages,
               agentConfig
             );
-          case "preprocess_order":
+          case "map_order_items":
             responses.push(
               await handlePreProcessOrderTool({ args: part.functionCall.args })
             );

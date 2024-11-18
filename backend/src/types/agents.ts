@@ -1,8 +1,9 @@
 import { FunctionCallingMode } from "@google/generative-ai";
 
 export enum AgentType {
-  GENERAL_AGENT = "GENERAL_AGENT",
-  ORDER_AGENT = "ORDER_AGENT",
+  ORDER_MAPPER_AGENT = "ORDER_MAPPER_AGENT",
+  ROUTER_AGENT = "ROUTER_AGENT",
+  QUERY_AGENT = "QUERY_AGENT",
 }
 
 export interface AgentClaude {
@@ -26,11 +27,14 @@ export interface AgentOpenAI {
   systemMessage: string | (() => Promise<{ role: string; content: string }>);
   tools: any[];
   temperature?: number;
+  tool_choice?: { type: string; function: { name: string } };
+  parallel_tool_calls?: boolean;
 }
 
 export interface AgentConfig {
-  generalAgent: AgentMapping;
-  orderAgent: AgentMapping;
+  orderMapperAgent: AgentMapping;
+  routerAgent: AgentMapping;
+  queryAgent: AgentMapping;
 }
 
 export type AgentProvider = "CLAUDE" | "GEMINI" | "OPENAI";
