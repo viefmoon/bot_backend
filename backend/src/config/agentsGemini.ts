@@ -5,7 +5,8 @@ import { MenuService } from "../services/menu.service";
 const menuService = new MenuService();
 
 export const ROUTER_AGENT_GEMINI: AgentGemini = {
-  model: "gemini-1.5-flash-002",
+  //model: "gemini-1.5-flash-002",
+  model: "gemini-exp-1114",
   systemMessage: async () => `
 IMPORTANTE: Considera ÚNICAMENTE el último mensaje del usuario para determinar el agente apropiado.
 
@@ -108,7 +109,8 @@ ${await menuService.getMenuForAI()}`,
 };
 
 export const ORDER_MAPPER_AGENT_GEMINI: AgentGemini = {
-  model: "gemini-1.5-flash-002",
+  //model: "gemini-1.5-flash-002",
+  model: "gemini-exp-1114",
   systemMessage: async () => `
 Eres un agente especializado en mapear pedidos a los nombres exactos del menú.
 
