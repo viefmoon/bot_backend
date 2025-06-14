@@ -1,17 +1,17 @@
 import * as dotenv from "dotenv";
 dotenv.config();
-import { sequelize } from "../src/lib/db";
-import Product from "../src/models/product";
-import ProductVariant from "../src/models/productVariant";
-import PizzaIngredient from "../src/models/pizzaIngredient";
-import ModifierType from "../src/models/modifierType";
-import Modifier from "../src/models/modifier";
-import Subcategory from "../src/models/subcategory";
-import Category from "../src/models/category";
-import Availability from "../src/models/availability";
-import RestaurantConfig from "../src/models/restaurantConfig";
-import logger from "../src/utils/logger";
-import SeederControl from "../src/models/seederControl";
+import { sequelize } from "../src/database/db";
+import Product from "../src/database/entities/product";
+import ProductVariant from "../src/database/entities/productVariant";
+import PizzaIngredient from "../src/database/entities/pizzaIngredient";
+import ModifierType from "../src/database/entities/modifierType";
+import Modifier from "../src/database/entities/modifier";
+import Subcategory from "../src/database/entities/subcategory";
+import Category from "../src/database/entities/category";
+import Availability from "../src/database/entities/availability";
+import RestaurantConfig from "../src/database/entities/restaurantConfig";
+import logger from "../src/common/utils/logger";
+import SeederControl from "../src/database/entities/seederControl";
 
 const testConnection = async (): Promise<void> => {
   try {
@@ -1300,11 +1300,6 @@ export const seedMenuItems = async (): Promise<void> => {
       estimatedDeliveryTime: 40,
     });
 
-    // Añadir el número de teléfono de notificación por defecto
-    await NotificationPhone.create({
-      phoneNumber: "5213320407035",
-      isActive: true,
-    });
 
     // Registrar que el seeder se ha ejecutado
     await SeederControl.create({
