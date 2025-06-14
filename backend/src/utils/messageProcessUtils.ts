@@ -1,6 +1,6 @@
 import { Modifier, PizzaIngredient, ProductVariant } from "src/models";
 import * as stringSimilarity from "string-similarity";
-import { AgentClaude, AgentGemini, AgentOpenAI } from "src/types/agents";
+import { AgentGemini } from "src/types/agents";
 
 export function mapSynonym(normalizedWord: string): string | null {
   const synonyms: { [key: string]: string[] } = {
@@ -225,48 +225,6 @@ export interface AIResponse {
   preprocessedContent?: PreprocessedContent;
 }
 
-export const prepareRequestPayloadClaude = async (
-  agent: AgentClaude,
-  messages: any[]
-) => ({
-  model: agent.model,
-  system:
-    typeof agent.systemMessage === "function"
-      ? await agent.systemMessage()
-      : agent.systemMessage,
-  tools: agent.tools,
-  max_tokens: agent.maxTokens,
-  temperature: agent.temperature,
-  messages,
-});
-
-export const prepareRequestPayloadOpenAI = async (
-  agent: AgentOpenAI,
-  messages: any[]
-) => {
-  const systemMessage =
-    typeof agent.systemMessage === "function"
-      ? await agent.systemMessage()
-      : agent.systemMessage;
-
-  return {
-    model: agent.model,
-    tools: agent.tools,
-    tool_choice: agent.tool_choice,
-    temperature: agent.temperature,
-    parallel_tool_calls: agent.parallel_tool_calls,
-    messages: [
-      {
-        role: "system",
-        content:
-          typeof systemMessage === "string"
-            ? systemMessage
-            : systemMessage.content,
-      },
-      ...messages,
-    ],
-  };
-};
 
 export const prepareModelGemini = async (agent: AgentGemini) => ({
   model: agent.model,

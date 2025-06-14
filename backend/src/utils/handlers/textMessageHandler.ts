@@ -164,7 +164,7 @@ async function processAndGenerateAIResponse(
     routerAgent: { type: AgentType.ROUTER_AGENT, provider: "GEMINI" },
     orderMapperAgent: {
       type: AgentType.ORDER_MAPPER_AGENT,
-      provider: "OPENAI",
+      provider: "GEMINI",
     },
     queryAgent: { type: AgentType.QUERY_AGENT, provider: "GEMINI" },
   };

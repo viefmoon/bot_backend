@@ -6,13 +6,6 @@ export enum AgentType {
   QUERY_AGENT = "QUERY_AGENT",
 }
 
-export interface AgentClaude {
-  model: string;
-  systemMessage: any[] | (() => Promise<any[]>);
-  tools: any[];
-  maxTokens: number;
-  temperature?: number;
-}
 
 export interface AgentGemini {
   model: string;
@@ -22,14 +15,6 @@ export interface AgentGemini {
   functionCallingMode: FunctionCallingMode;
 }
 
-export interface AgentOpenAI {
-  model: string;
-  systemMessage: string | (() => Promise<{ role: string; content: string }>);
-  tools: any[];
-  temperature?: number;
-  tool_choice?: { type: string; function: { name: string } };
-  parallel_tool_calls?: boolean;
-}
 
 export interface AgentConfig {
   orderMapperAgent: AgentMapping;
@@ -37,7 +22,7 @@ export interface AgentConfig {
   queryAgent: AgentMapping;
 }
 
-export type AgentProvider = "CLAUDE" | "GEMINI" | "OPENAI";
+export type AgentProvider = "GEMINI";
 export interface AgentMapping {
   type: AgentType;
   provider: AgentProvider;

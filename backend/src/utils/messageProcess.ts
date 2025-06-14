@@ -2,8 +2,6 @@ import * as dotenv from "dotenv";
 import { AIResponse } from "../utils/messageProcessUtils";
 import { AgentConfig, AgentMapping } from "src/types/agents";
 import { preProcessMessagesGemini } from "./processors/geminiProcessor";
-import { preProcessMessagesClaude } from "./processors/claudeProcessor";
-import { preProcessMessagesOpenAI } from "./processors/openAIProcessor";
 dotenv.config();
 
 export async function preProcessMessages(
@@ -17,20 +15,6 @@ export async function preProcessMessages(
   switch (agentProvider) {
     case "GEMINI":
       return preProcessMessagesGemini(
-        messages,
-        currentAgent,
-        agentConfig,
-        orderDetails
-      );
-    case "CLAUDE":
-      return preProcessMessagesClaude(
-        messages,
-        currentAgent,
-        agentConfig,
-        orderDetails
-      );
-    case "OPENAI":
-      return preProcessMessagesOpenAI(
         messages,
         currentAgent,
         agentConfig,

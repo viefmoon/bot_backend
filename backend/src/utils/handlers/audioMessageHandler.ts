@@ -15,7 +15,6 @@ const unlinkAsync = promisify(unlink);
 
 // Añadir esta enumeración al inicio del archivo
 export enum TranscriptionModel {
-  WHISPER = "whisper",
   GEMINI = "gemini",
 }
 
@@ -38,7 +37,7 @@ async function getAudioUrl(audioId: string): Promise<string | null> {
 
 async function transcribeAudio(
   audioUrl: string,
-  model: TranscriptionModel = TranscriptionModel.WHISPER
+  model: TranscriptionModel = TranscriptionModel.GEMINI
 ): Promise<string> {
   const audioPath = `/tmp/audio.ogg`;
   try {
@@ -60,24 +59,7 @@ async function transcribeAudio(
       }
     });
 
-    if (model === TranscriptionModel.WHISPER) {
-      const formData = new FormData();
-      formData.append("file", createReadStream(audioPath));
-      formData.append("model", "whisper-1");
-
-      const { data: whisperData } = await axios.post<{ text: string }>(
-        "https://api.openai.com/v1/audio/transcriptions",
-        formData,
-        {
-          headers: {
-            ...formData.getHeaders(),
-            Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
-          },
-        }
-      );
-      return whisperData.text;
-    } else {
-      // Implementación de Gemini
+    // Implementación de Gemini por defecto
       const fileManager = new GoogleAIFileManager(
         process.env.GOOGLE_AI_API_KEY
       );
@@ -100,7 +82,6 @@ async function transcribeAudio(
         { text: "Generate a transcript of the speech." },
       ]);
       return result.response.candidates[0].content.parts[0].text;
-    }
   } catch (error) {
     logger.error("Error al transcribir el audio:", error);
     return "Lo siento, no pude transcribir el mensaje de audio.";
@@ -112,7 +93,7 @@ async function transcribeAudio(
 export async function handleAudioMessage(
   from: string,
   message: any,
-  model: TranscriptionModel = TranscriptionModel.WHISPER
+  model: TranscriptionModel = TranscriptionModel.GEMINI
 ): Promise<void> {
   try {
     const audioUrl = await getAudioUrl(message.audio.id);
