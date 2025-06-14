@@ -13,7 +13,6 @@ import {
 } from "../models";
 import {
   sendWhatsAppMessage,
-  sendWhatsAppNotification,
 } from "../utils/whatsAppUtils";
 import { getUTCTime, isBusinessOpen } from "../utils/timeUtils";
 import { checkMessageRateLimit } from "../utils/messageRateLimit";
@@ -112,9 +111,9 @@ export class WebhookService {
                 customer.customerId,
                 PAYMENT_CONFIRMATION_MESSAGE(order.dailyOrderNumber)
               );
-              await sendWhatsAppNotification(
-                "Se ha realizado el pago de un pedido"
-              );
+              // await sendWhatsAppNotification(
+              //   "Se ha realizado el pago de un pedido"
+              // );
             }
           }
         } catch (error) {

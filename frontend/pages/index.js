@@ -20,8 +20,6 @@ export default function Home() {
   const [error, setError] = useState(null);
   const [selectedDate, setSelectedDate] = useState(new Date()); // Por defecto a la fecha actual
   const [activeView, setActiveView] = useState("orders"); // Nueva estado para controlar la vista activa
-  const [notificationPhones, setNotificationPhones] = useState([]);
-  const [newPhoneNumber, setNewPhoneNumber] = useState("");
   const [restaurantConfig, setRestaurantConfig] = useState({
     acceptingOrders: false,
     estimatedPickupTime: 0,
@@ -37,7 +35,6 @@ export default function Home() {
       fetchCustomers();
       fetchMenu();
       fetchRestaurantConfig();
-      fetchNotificationPhones();
       const interval = setInterval(() => {
         fetchOrders(selectedDate);
       }, 30000);
@@ -144,63 +141,8 @@ export default function Home() {
     }
   };
 
-  const fetchNotificationPhones = async () => {
-    try {
-      const response = await axios.get("/api/notification_phones");
-      setNotificationPhones(response.data);
-    } catch (error) {
-      console.error("Error al obtener teléfonos de notificación:", error);
-      setError(
-        "No se pudieron obtener los teléfonos de notificación. Por favor, inténtelo de nuevo más tarde."
-      );
-    }
-  };
-
   const handleDateChange = (date) => {
     setSelectedDate(date);
-  };
-
-  const addNotificationPhone = async (e) => {
-    e.preventDefault();
-    try {
-      await axios.post("/api/notification-phones", {
-        phoneNumber: newPhoneNumber,
-        isActive: true,
-      });
-      setNewPhoneNumber("");
-      fetchNotificationPhones();
-    } catch (error) {
-      console.error("Error al agregar teléfono de notificación:", error);
-      setError(
-        "No se pudo agregar el teléfono de notificación. Por favor, inténtelo de nuevo."
-      );
-    }
-  };
-
-  const deleteNotificationPhone = async (phoneId) => {
-    try {
-      await axios.delete(`/api/notification_phones/${phoneId}`);
-      fetchNotificationPhones();
-    } catch (error) {
-      console.error("Error al eliminar teléfono de notificación:", error);
-      setError(
-        "No se pudo eliminar el teléfono de notificación. Por favor, inténtelo de nuevo."
-      );
-    }
-  };
-
-  const togglePhoneStatus = async (phoneId, currentStatus) => {
-    try {
-      await axios.put(`/api/notification_phones/${phoneId}`, {
-        isActive: !currentStatus,
-      });
-      fetchNotificationPhones();
-    } catch (error) {
-      console.error("Error al actualizar teléfono de notificación:", error);
-      setError(
-        "No se pudo actualizar el teléfono de notificación. Por favor, inténtelo de nuevo."
-      );
-    }
   };
 
   const fetchRestaurantConfig = async () => {
@@ -274,7 +216,6 @@ export default function Home() {
         fetchCustomers(),
         fetchMenu(),
         fetchRestaurantConfig(),
-        fetchNotificationPhones(),
       ]);
     } catch (error) {
       console.error("Error al refrescar datos:", error);
@@ -305,7 +246,6 @@ export default function Home() {
               {[
                 "orders",
                 "customers",
-                "notificationPhones",
                 "restaurantConfig",
                 "menu",
               ].map((view) => (
@@ -378,7 +318,6 @@ export default function Home() {
             {[
               "orders",
               "customers",
-              "notificationPhones",
               "restaurantConfig",
               "menu",
             ].map((view) => (
@@ -491,72 +430,6 @@ export default function Home() {
                     ))
                   )}
                 </div>
-              </div>
-            )}
-
-            {activeView === "notificationPhones" && (
-              <div className="bg-white shadow-lg rounded-lg p-4 sm:p-6 max-w-2xl mx-auto">
-                <h2 className="text-xl sm:text-2xl font-bold mb-4 sm:mb-6 text-gray-800 text-center">
-                  Teléfonos de Notificación
-                </h2>
-
-                <form onSubmit={addNotificationPhone} className="mb-6 sm:mb-8">
-                  <div className="flex flex-col sm:flex-row items-center space-y-2 sm:space-y-0 sm:space-x-4">
-                    <input
-                      type="text"
-                      value={newPhoneNumber}
-                      onChange={(e) => setNewPhoneNumber(e.target.value)}
-                      placeholder="Nuevo número de teléfono"
-                      required
-                      className="w-full sm:flex-grow px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    />
-                    <button
-                      type="submit"
-                      className="w-full sm:w-auto px-6 py-2 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition duration-300"
-                    >
-                      Agregar
-                    </button>
-                  </div>
-                </form>
-
-                {notificationPhones.length > 0 ? (
-                  <ul className="space-y-4">
-                    {notificationPhones.map((phone) => (
-                      <li
-                        key={phone.id}
-                        className="flex flex-col sm:flex-row items-center justify-between bg-gray-50 p-4 rounded-lg"
-                      >
-                        <span className="text-lg font-medium text-gray-700 mb-2 sm:mb-0">
-                          {phone.phoneNumber}
-                        </span>
-                        <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2 w-full sm:w-auto">
-                          <button
-                            onClick={() =>
-                              togglePhoneStatus(phone.id, phone.isActive)
-                            }
-                            className={`px-4 py-2 rounded-lg text-sm font-medium transition duration-300 w-full sm:w-auto ${
-                              phone.isActive
-                                ? "bg-green-500 text-white hover:bg-green-600"
-                                : "bg-yellow-500 text-white hover:bg-yellow-600"
-                            }`}
-                          >
-                            {phone.isActive ? "Activo" : "Inactivo"}
-                          </button>
-                          <button
-                            onClick={() => deleteNotificationPhone(phone.id)}
-                            className="px-4 py-2 bg-red-500 text-white text-sm font-medium rounded-lg hover:bg-red-600 transition duration-300 w-full sm:w-auto"
-                          >
-                            Eliminar
-                          </button>
-                        </div>
-                      </li>
-                    ))}
-                  </ul>
-                ) : (
-                  <p className="text-center text-gray-500">
-                    No hay teléfonos de notificación registrados.
-                  </p>
-                )}
               </div>
             )}
 
@@ -844,7 +717,6 @@ function getViewTitle(view) {
   const titles = {
     orders: "Órdenes",
     customers: "Clientes",
-    notificationPhones: "Teléfonos de Notificación",
     restaurantConfig: "Configuración del Restaurante",
     menu: "Menú",
   };

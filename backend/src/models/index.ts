@@ -17,7 +17,6 @@ import Availability from "./availability";
 import MessageRateLimit from "./messageRateLimit";
 import BannedCustomer from "./bannedCustomer";
 import MessageLog from "./messageLog";
-import NotificationPhone from "./notificationPhone";
 import CustomerDeliveryInfo from "./customerDeliveryInfo";
 import OrderDeliveryInfo from "./orderDeliveryInfo";
 import Category from "./category";
@@ -45,7 +44,6 @@ export {
   BannedCustomer,
   MessageLog,
   PreOrder,
-  NotificationPhone,
   CustomerDeliveryInfo,
   OrderDeliveryInfo,
   Category,

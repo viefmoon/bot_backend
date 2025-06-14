@@ -15,7 +15,6 @@ import logger from "src/utils/logger";
 import {
   sendWhatsAppMessage,
   sendWhatsAppInteractiveMessage,
-  sendWhatsAppNotification,
 } from "src/utils/whatsAppUtils";
 import { OrderService } from "src/services/order.service";
 import { PreOrderService } from "src/services/pre-order.service";
@@ -214,7 +213,7 @@ export async function handlePreOrderConfirmation(
       interactiveOptions
     );
 
-    await sendWhatsAppNotification("Se ha creado un nuevo pedido");
+    // await sendWhatsAppNotification("Se ha creado un nuevo pedido");
 
     if (confirmationMessageId) {
       await Order.update(
@@ -289,7 +288,7 @@ export async function handleOrderCancellation(
     }
 
     await sendWhatsAppMessage(customerId, mensaje);
-    await sendWhatsAppNotification("Se ha cancelado un pedido");
+    // await sendWhatsAppNotification("Se ha cancelado un pedido");
   } catch (error) {
     logger.error("Error al eliminar la orden:", error);
     await sendWhatsAppMessage(
@@ -465,7 +464,7 @@ export async function handleOrderModification(
           customerId,
           selectProductsResponse.json.interactiveMessage
         );
-        await sendWhatsAppNotification("Se ha modificado un pedido");
+        // await sendWhatsAppNotification("Se ha modificado un pedido");
 
         // Actualizar la preorden con el messageId si existe
         if (selectProductsResponse.json.preOrderId && messageId) {

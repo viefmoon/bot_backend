@@ -10,7 +10,6 @@ import Subcategory from "../src/models/subcategory";
 import Category from "../src/models/category";
 import Availability from "../src/models/availability";
 import RestaurantConfig from "../src/models/restaurantConfig";
-import NotificationPhone from "../src/models/notificationPhone";
 import logger from "../src/utils/logger";
 import SeederControl from "../src/models/seederControl";
 
