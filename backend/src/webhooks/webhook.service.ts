@@ -1,6 +1,6 @@
 import { Injectable } from "@nestjs/common";
 import { Request, Response } from "express";
-import { OtpService } from "../customers/services/otp.service";
+import { OtpService } from "../common/services/otp.service";
 import { RawBodyRequest } from "@nestjs/common";
 import Stripe from "stripe";
 import {

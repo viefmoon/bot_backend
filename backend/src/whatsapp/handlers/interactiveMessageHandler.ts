@@ -12,7 +12,7 @@ import {
   sendWhatsAppMessage,
 } from "../utils/whatsapp.utils";
 import Stripe from "stripe";
-import { OtpService } from "../../customers/services/otp.service";
+import { OtpService } from "../../common/services/otp.service";
 import {
   WAIT_TIMES_MESSAGE,
   RESTAURANT_INFO_MESSAGE,
@@ -82,12 +82,15 @@ async function handlePreOrderDeliveryModification(
     const customerId = preOrder.customerId;
     const preOrderId = preOrder.id;
 
-    const otp = otpService.generateOTP();
-    await otpService.storeOTP(customerId, otp);
-
+    // Generar OTP y crear el enlace
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
     const updateLink = `${process.env.FRONTEND_BASE_URL}/delivery-info-registration/${customerId}?otp=${otp}&preOrderId=${preOrderId}`;
+    
+    // Enviar OTP separadamente
+    await otpService.sendOTP(customerId);
+    
+    // Enviar el mensaje con el enlace
     const message = CHANGE_DELIVERY_INFO_MESSAGE(updateLink);
-
     await sendWhatsAppMessage(customerId, message);
   } catch (error) {
     logger.error("Error al manejar la modificación de entrega:", error);

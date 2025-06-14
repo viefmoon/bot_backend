@@ -5,8 +5,10 @@
   "scripts": {
     "dev": "nest start --watch",
     "build": "nest build",
-    "start": "nest start",
-    "migrate": "sequelize-cli db:migrate --config sequelize.config.js"
+    "start": "node dist/main",
+    "start:prod": "node dist/main",
+    "migrate": "sequelize-cli db:migrate --config config/config.js",
+    "seed": "ts-node seeders/seedMenuItems.ts"
   },
   "dependencies": {
     "@google/generative-ai": "^0.21.0",
