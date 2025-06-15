@@ -2,13 +2,19 @@ import { Request, Response } from 'express';
 import Stripe from 'stripe';
 import logger from '../utils/logger';
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
-  apiVersion: '2024-12-18.acacia'
-});
+const stripeKey = process.env.STRIPE_SECRET_KEY;
+const stripe = stripeKey ? new Stripe(stripeKey, {
+  apiVersion: '2024-10-28.acacia'
+}) : null;
 
 const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET || '';
 
 export async function handleStripeWebhook(req: Request, res: Response) {
+  if (!stripe) {
+    logger.warn('Stripe webhook called but Stripe is not configured');
+    return res.status(503).json({ error: 'Stripe service unavailable' });
+  }
+  
   try {
     const sig = req.headers['stripe-signature'] as string;
     

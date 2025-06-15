@@ -1,0 +1,110 @@
+#!/bin/bash
+
+echo "🚀 Iniciando backend localmente..."
+
+# Colores
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+RED='\033[0;31m'
+NC='\033[0m'
+
+# Verificar si el puerto 5433 está en uso
+if lsof -Pi :5433 -sTCP:LISTEN -t >/dev/null 2>&1 ; then
+    echo -e "\n${YELLOW}⚠️  El puerto 5433 está en uso. Intentando detener contenedores previos...${NC}"
+    docker-compose down
+    sleep 2
+fi
+
+# Paso 1: Iniciar PostgreSQL con Docker
+echo -e "\n${YELLOW}1. Iniciando PostgreSQL...${NC}"
+docker-compose up -d
+
+# Esperar a que PostgreSQL esté listo
+echo -e "${YELLOW}   Esperando a que PostgreSQL esté listo...${NC}"
+max_attempts=30
+attempt=0
+until docker-compose exec -T postgres pg_isready -U postgres >/dev/null 2>&1 || [ $attempt -eq $max_attempts ]; do
+    attempt=$((attempt + 1))
+    printf "\r   Esperando... intento $attempt/$max_attempts"
+    sleep 1
+done
+
+if [ $attempt -eq $max_attempts ]; then
+    echo -e "\n${RED}❌ PostgreSQL no pudo iniciar después de $max_attempts intentos${NC}"
+    echo "   Intenta ejecutar: docker-compose logs postgres"
+    exit 1
+fi
+echo -e "\n${GREEN}   ✅ PostgreSQL está listo!${NC}"
+
+# Paso 2: Verificar configuración antes de copiar
+echo -e "\n${YELLOW}2. Verificando configuración...${NC}"
+cd backend
+
+# Verificar configuración en .env.local
+echo -e "${YELLOW}Verificando .env.local...${NC}"
+
+# Verificar API Key de Google
+if grep -q "TU_API_KEY_AQUI" .env.local || grep -q "tu_api_key_real_aqui" .env.local; then
+    echo -e "\n${RED}❌ FALTA: Google AI API Key${NC}"
+    echo "   Edita backend/.env.local y configura GOOGLE_AI_API_KEY"
+    echo "   Obtén una en: https://makersuite.google.com/app/apikey"
+    missing_config=true
+else
+    echo -e "${GREEN}✅ Google AI API Key configurada${NC}"
+fi
+
+# Verificar credenciales de WhatsApp
+if grep -q "tu_phone_number_id" .env.local || grep -q "tu_access_token_permanente" .env.local || grep -q "un_token_secreto_que_tu_elijas" .env.local; then
+    echo -e "\n${RED}❌ FALTA: Credenciales de WhatsApp${NC}"
+    echo "   Edita backend/.env.local y configura:"
+    echo "   - WHATSAPP_PHONE_NUMBER_MESSAGING_ID"
+    echo "   - WHATSAPP_ACCESS_TOKEN"
+    echo "   - WHATSAPP_VERIFY_TOKEN"
+    echo "   - BOT_WHATSAPP_NUMBER"
+    echo "   Obtén las credenciales en: https://developers.facebook.com"
+    missing_config=true
+else
+    echo -e "${GREEN}✅ Credenciales de WhatsApp configuradas${NC}"
+fi
+
+if [ "$missing_config" = true ]; then
+    echo -e "\n${YELLOW}Ver QUICK_START.md para instrucciones detalladas${NC}"
+    echo ""
+    read -p "Presiona ENTER cuando hayas configurado todo..."
+fi
+
+# Copiar archivo de entorno
+echo -e "\n${YELLOW}Copiando .env.local a .env...${NC}"
+cp .env.local .env
+echo -e "${GREEN}✅ Archivo .env creado${NC}"
+
+# Paso 3: Instalar dependencias
+echo -e "\n${YELLOW}3. Instalando dependencias...${NC}"
+npm install
+
+# Paso 4: Generar Prisma Client
+echo -e "\n${YELLOW}4. Generando Prisma Client...${NC}"
+npm run generate
+
+# Paso 5: Ejecutar migraciones
+echo -e "\n${YELLOW}5. Creando tablas en la base de datos...${NC}"
+npx prisma migrate deploy 2>/dev/null || npx prisma migrate dev --name init
+
+# Paso 6: Ejecutar seed
+echo -e "\n${YELLOW}6. Agregando datos iniciales (menú)...${NC}"
+npm run seed
+
+# Paso 7: Iniciar servidor
+echo -e "\n${GREEN}✅ Todo listo! Iniciando servidor...${NC}"
+echo -e "   Backend corriendo en: http://localhost:5000/backend"
+echo -e "   Prisma Studio: npx prisma studio"
+echo -e "   Logs de Docker: docker-compose logs -f"
+echo -e "\n${BLUE}📱 Para conectar WhatsApp:${NC}"
+echo -e "   1. En otra terminal ejecuta: ${YELLOW}ngrok http 5000${NC}"
+echo -e "   2. Copia la URL HTTPS que te da ngrok"
+echo -e "   3. Configura el webhook en Meta Developers"
+echo -e "   4. ¡Envía mensajes a tu número de WhatsApp!"
+echo -e "\n${YELLOW}Para detener todo: Ctrl+C y luego: docker-compose down${NC}"
+echo ""
+
+npm run dev

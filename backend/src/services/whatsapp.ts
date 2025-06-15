@@ -105,7 +105,7 @@ export async function sendWhatsAppMessage(to: string, message: string) {
   }
 }
 
-export async function sendInteractiveMessage(to: string, body: string, buttons: any[]) {
+export async function sendWhatsAppInteractiveMessage(to: string, interactive: any) {
   try {
     const response = await axios.post(
       `${WHATSAPP_API_URL}/${PHONE_NUMBER_ID}/messages`,
@@ -113,11 +113,7 @@ export async function sendInteractiveMessage(to: string, body: string, buttons: 
         messaging_product: 'whatsapp',
         to,
         type: 'interactive',
-        interactive: {
-          type: 'button',
-          body: { text: body },
-          action: { buttons }
-        }
+        interactive
       },
       {
         headers: {
@@ -128,9 +124,9 @@ export async function sendInteractiveMessage(to: string, body: string, buttons: 
     );
     
     logger.info(`Interactive message sent to ${to}:`, response.data);
-    return { success: true, messageId: response.data.messages[0].id };
+    return response.data.messages[0].id;
   } catch (error: any) {
     logger.error('Error sending interactive message:', error.response?.data || error.message);
-    return { success: false, error: error.message };
+    throw error;
   }
 }

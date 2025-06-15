@@ -11,13 +11,6 @@ datasource db {
 }
 
 // Enums
-enum EntityType {
-  product
-  productVariant
-  modifier
-  pizzaIngredient
-}
-
 enum OrderType {
   delivery
   pickup
@@ -50,26 +43,10 @@ enum IngredientAction {
 }
 
 // Models
-model Availability {
-  id         Int        @id @default(autoincrement())
-  entityId   String
-  entityType EntityType
-  available  Boolean    @default(true)
-
-  @@index([entityId, entityType])
-}
-
-model BannedCustomer {
-  id         Int      @id @default(autoincrement())
-  customerId String   @unique
-  bannedAt   DateTime @default(now())
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
-}
-
 model Category {
   id           String        @id
   name         String        @unique
+  isActive     Boolean       @default(true)
   subcategories Subcategory[]
 }
 
@@ -79,6 +56,8 @@ model Customer {
   relevantChatHistory Json?
   stripeCustomerId    String?              @unique
   lastInteraction     DateTime?
+  isBanned            Boolean              @default(false)
+  bannedAt            DateTime?
   createdAt           DateTime             @default(now())
   updatedAt           DateTime             @updatedAt
   deliveryInfo        CustomerDeliveryInfo?
@@ -122,6 +101,7 @@ model Modifier {
   price            Float
   modifierTypeId   String
   shortName        String?
+  isActive         Boolean            @default(true)
   modifierType     ModifierType       @relation(fields: [modifierTypeId], references: [id])
   selectedModifiers SelectedModifier[]
 }
@@ -201,6 +181,7 @@ model PizzaIngredient {
   ingredientValue       Int                       @default(1)
   productId             String
   ingredients           String?
+  isActive              Boolean                   @default(true)
   product               Product                   @relation(fields: [productId], references: [id])
   selectedPizzaIngredients SelectedPizzaIngredient[]
 }
@@ -223,6 +204,7 @@ model Product {
   shortName       String?
   price           Float?
   ingredients     String?
+  isActive        Boolean          @default(true)
   subcategoryId   String
   subcategory     Subcategory      @relation(fields: [subcategoryId], references: [id])
   variants        ProductVariant[]
@@ -238,6 +220,7 @@ model ProductVariant {
   price       Float
   productId   String
   ingredients String?
+  isActive    Boolean     @default(true)
   product     Product     @relation(fields: [productId], references: [id])
   orderItems  OrderItem[]
 }
@@ -276,6 +259,7 @@ model Subcategory {
   id         String    @id
   name       String    @unique
   categoryId String
+  isActive   Boolean   @default(true)
   category   Category  @relation(fields: [categoryId], references: [id])
   products   Product[]
 }

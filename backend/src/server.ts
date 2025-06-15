@@ -1,15 +1,18 @@
-import express from 'express';
+import express, { Request, Response } from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import { PrismaClient } from '@prisma/client';
 import webhookRoutes from './routes/webhook';
 import logger from './utils/logger';
+import { verifyOTP, invalidateOTP } from './services/otp';
+import { PreOrderService } from './services/preOrder';
+import { sendWhatsAppMessage } from './services/whatsapp';
 
 // Load environment variables
 dotenv.config();
 
 // Initialize Express app
-const app = express();
+const app: express.Application = express();
 const prisma = new PrismaClient();
 
 // Configure CORS
@@ -33,7 +36,7 @@ app.use((req, res, next) => {
 });
 
 // Health check endpoint
-app.get('/backend', (req, res) => {
+app.get('/backend', (_, res) => {
   res.json({ 
     message: 'Bot Backend API is running',
     version: '2.0.0',
@@ -44,12 +47,12 @@ app.get('/backend', (req, res) => {
 // Routes
 app.use('/backend/webhook', webhookRoutes);
 
-// OTP endpoints (migrated from NestJS)
+// OTP endpoints
 app.post('/backend/otp/verify', async (req, res) => {
   try {
     const { customerId, otp } = req.body;
-    // OTP verification logic will be added here
-    res.json({ valid: false });
+    const isValid = await verifyOTP(customerId, otp);
+    res.json({ valid: isValid });
   } catch (error) {
     logger.error('Error verifying OTP:', error);
     res.status(500).json({ error: 'Internal server error' });
@@ -59,7 +62,7 @@ app.post('/backend/otp/verify', async (req, res) => {
 app.post('/backend/otp/invalidate', async (req, res) => {
   try {
     const { customerId } = req.body;
-    // OTP invalidation logic will be added here
+    await invalidateOTP(customerId);
     res.json({ success: true });
   } catch (error) {
     logger.error('Error invalidating OTP:', error);
@@ -94,7 +97,7 @@ app.put('/backend/customer-delivery-info/:customerId', async (req, res) => {
   }
 });
 
-app.get('/backend/customer-delivery-info/:customerId', async (req, res) => {
+const getCustomerDeliveryInfo = async (req: any, res: any) => {
   try {
     const { customerId } = req.params;
     const deliveryInfo = await prisma.customerDeliveryInfo.findUnique({
@@ -105,18 +108,21 @@ app.get('/backend/customer-delivery-info/:customerId', async (req, res) => {
       return res.status(404).json({ error: 'Delivery info not found' });
     }
     
-    res.json(deliveryInfo);
+    return res.json(deliveryInfo);
   } catch (error) {
     logger.error('Error fetching delivery info:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    return res.status(500).json({ error: 'Internal server error' });
   }
-});
+};
+
+app.get('/backend/customer-delivery-info/:customerId', getCustomerDeliveryInfo);
 
 // Pre-orders endpoint
 app.post('/backend/pre-orders/select-products', async (req, res) => {
   try {
-    // Pre-order logic will be migrated here
-    res.json({ message: 'Pre-order endpoint - to be implemented' });
+    const preOrderService = new PreOrderService();
+    const result = await preOrderService.selectProducts(req.body);
+    res.status(result.status).json(result.json);
   } catch (error) {
     logger.error('Error creating pre-order:', error);
     res.status(500).json({ error: 'Internal server error' });
@@ -127,8 +133,8 @@ app.post('/backend/pre-orders/select-products', async (req, res) => {
 app.post('/backend/whatsapp/send-message', async (req, res) => {
   try {
     const { to, message } = req.body;
-    // WhatsApp send logic will be migrated here
-    res.json({ success: true, message: 'Message sent' });
+    const result = await sendWhatsAppMessage(to, message);
+    res.json(result);
   } catch (error) {
     logger.error('Error sending WhatsApp message:', error);
     res.status(500).json({ error: 'Internal server error' });
@@ -136,7 +142,7 @@ app.post('/backend/whatsapp/send-message', async (req, res) => {
 });
 
 // Error handling middleware
-app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
+app.use((err: any, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
   logger.error('Unhandled error:', err);
   res.status(500).json({ error: 'Something went wrong!' });
 });

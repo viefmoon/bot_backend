@@ -1,7 +1,8 @@
 import { prisma } from '../server';
 import logger from '../utils/logger';
 import { sendWhatsAppMessage } from './whatsapp';
-import { generateAIResponse } from './ai';
+import { handleTextMessage } from '../handlers/textMessageHandler';
+import { handleInteractiveMessage } from '../handlers/interactiveMessageHandler';
 
 export async function processMessage(from: string, message: any) {
   try {
@@ -16,11 +17,7 @@ export async function processMessage(from: string, message: any) {
     });
     
     // Check if customer is banned
-    const bannedCustomer = await prisma.bannedCustomer.findUnique({
-      where: { customerId: from }
-    });
-    
-    if (bannedCustomer) {
+    if (customer.isBanned) {
       logger.info(`Banned customer ${from} tried to send message`);
       return;
     }
@@ -36,46 +33,21 @@ export async function processMessage(from: string, message: any) {
     }
     
     // Process message based on type
-    let userMessage = '';
-    
     if (message.type === 'text') {
-      userMessage = message.text.body;
+      await handleTextMessage(from, message.text.body);
     } else if (message.type === 'interactive') {
-      userMessage = message.interactive.button_reply?.title || '';
+      await handleInteractiveMessage(from, message.interactive);
+    } else if (message.type === 'audio') {
+      await sendWhatsAppMessage(
+        from,
+        'Lo siento, no puedo procesar mensajes de audio en este momento. Por favor envía tu pedido por texto.'
+      );
     } else {
       await sendWhatsAppMessage(
         from,
         'Lo siento, solo puedo procesar mensajes de texto por el momento.'
       );
-      return;
     }
-    
-    // Generate AI response
-    const aiResponse = await generateAIResponse(customer, userMessage);
-    
-    // Send response
-    await sendWhatsAppMessage(from, aiResponse);
-    
-    // Update chat history
-    const chatHistory = customer.fullChatHistory as any[] || [];
-    chatHistory.push({
-      timestamp: new Date(),
-      from: 'user',
-      message: userMessage
-    });
-    chatHistory.push({
-      timestamp: new Date(),
-      from: 'assistant',
-      message: aiResponse
-    });
-    
-    await prisma.customer.update({
-      where: { customerId: from },
-      data: {
-        fullChatHistory: chatHistory,
-        relevantChatHistory: chatHistory.slice(-10) // Keep last 10 messages
-      }
-    });
     
   } catch (error) {
     logger.error('Error processing message:', error);
