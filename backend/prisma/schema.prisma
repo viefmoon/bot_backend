@@ -1,0 +1,281 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Enums
+enum EntityType {
+  product
+  productVariant
+  modifier
+  pizzaIngredient
+}
+
+enum OrderType {
+  delivery
+  pickup
+}
+
+enum OrderStatus {
+  created
+  accepted
+  in_preparation
+  prepared
+  in_delivery
+  finished
+  canceled
+}
+
+enum PaymentStatus {
+  pending
+  paid
+}
+
+enum PizzaHalf {
+  left
+  right
+  full
+}
+
+enum IngredientAction {
+  add
+  remove
+}
+
+// Models
+model Availability {
+  id         Int        @id @default(autoincrement())
+  entityId   String
+  entityType EntityType
+  available  Boolean    @default(true)
+
+  @@index([entityId, entityType])
+}
+
+model BannedCustomer {
+  id         Int      @id @default(autoincrement())
+  customerId String   @unique
+  bannedAt   DateTime @default(now())
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
+
+model Category {
+  id           String        @id
+  name         String        @unique
+  subcategories Subcategory[]
+}
+
+model Customer {
+  customerId          String               @id @unique
+  fullChatHistory     Json?
+  relevantChatHistory Json?
+  stripeCustomerId    String?              @unique
+  lastInteraction     DateTime?
+  createdAt           DateTime             @default(now())
+  updatedAt           DateTime             @updatedAt
+  deliveryInfo        CustomerDeliveryInfo?
+}
+
+model CustomerDeliveryInfo {
+  id                Int      @id @default(autoincrement())
+  customerId        String   @unique
+  streetAddress     String
+  neighborhood      String
+  postalCode        String
+  city              String
+  state             String
+  country           String
+  latitude          Float
+  longitude         Float
+  pickupName        String?
+  geocodedAddress   String?
+  additionalDetails String?  @db.Text
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  customer          Customer @relation(fields: [customerId], references: [customerId])
+}
+
+model MessageLog {
+  id        Int     @id @default(autoincrement())
+  messageId String  @unique
+  processed Boolean @default(false)
+}
+
+model MessageRateLimit {
+  id              Int      @id @default(autoincrement())
+  customerId      String   @unique
+  messageCount    Int      @default(0)
+  lastMessageTime DateTime
+}
+
+model Modifier {
+  id               String             @id
+  name             String
+  price            Float
+  modifierTypeId   String
+  shortName        String?
+  modifierType     ModifierType       @relation(fields: [modifierTypeId], references: [id])
+  selectedModifiers SelectedModifier[]
+}
+
+model ModifierType {
+  id              String     @id
+  name            String
+  acceptsMultiple Boolean    @default(false)
+  required        Boolean    @default(false)
+  productId       String
+  product         Product    @relation(fields: [productId], references: [id])
+  modifiers       Modifier[]
+}
+
+model Order {
+  id                   Int               @id @default(autoincrement())
+  dailyOrderNumber     Int
+  orderType            OrderType
+  status               OrderStatus       @default(created)
+  paymentStatus        PaymentStatus?
+  totalCost            Float
+  customerId           String
+  estimatedTime        Int               @default(0)
+  scheduledDeliveryTime DateTime?
+  messageId            String?
+  stripeSessionId      String?
+  finishedAt           DateTime?
+  syncedWithLocal      Boolean           @default(false)
+  localId              Int?
+  createdAt            DateTime
+  updatedAt            DateTime
+  orderItems           OrderItem[]
+  deliveryInfo         OrderDeliveryInfo?
+}
+
+model OrderDeliveryInfo {
+  id                Int       @id @default(autoincrement())
+  streetAddress     String?
+  neighborhood      String?
+  postalCode        String?
+  city              String?
+  state             String?
+  country           String?
+  latitude          Float?
+  longitude         Float?
+  pickupName        String?
+  geocodedAddress   String?
+  additionalDetails String?   @db.Text
+  preOrderId        Int?
+  orderId           Int?      @unique
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+  order             Order?    @relation(fields: [orderId], references: [id])
+  preOrder          PreOrder? @relation(fields: [preOrderId], references: [id])
+}
+
+model OrderItem {
+  id                    Int                        @id @default(autoincrement())
+  quantity              Int                        @default(1)
+  price                 Float
+  comments              String?
+  orderId               Int
+  productId             String
+  productVariantId      String?
+  createdAt             DateTime
+  updatedAt             DateTime
+  order                 Order                      @relation(fields: [orderId], references: [id])
+  product               Product                    @relation(fields: [productId], references: [id])
+  productVariant        ProductVariant?            @relation(fields: [productVariantId], references: [id])
+  selectedModifiers     SelectedModifier[]
+  selectedPizzaIngredients SelectedPizzaIngredient[]
+}
+
+model PizzaIngredient {
+  id                    String                    @id
+  name                  String
+  ingredientValue       Int                       @default(1)
+  productId             String
+  ingredients           String?
+  product               Product                   @relation(fields: [productId], references: [id])
+  selectedPizzaIngredients SelectedPizzaIngredient[]
+}
+
+model PreOrder {
+  id                    Int                @id @default(autoincrement())
+  orderItems            Json
+  orderType             OrderType
+  scheduledDeliveryTime DateTime?
+  customerId            String
+  messageId             String?
+  createdAt             DateTime           @default(now())
+  updatedAt             DateTime           @updatedAt
+  deliveryInfo          OrderDeliveryInfo[]
+}
+
+model Product {
+  id              String           @id
+  name            String
+  shortName       String?
+  price           Float?
+  ingredients     String?
+  subcategoryId   String
+  subcategory     Subcategory      @relation(fields: [subcategoryId], references: [id])
+  variants        ProductVariant[]
+  modifierTypes   ModifierType[]
+  pizzaIngredients PizzaIngredient[]
+  orderItems      OrderItem[]
+}
+
+model ProductVariant {
+  id          String      @id
+  name        String
+  shortName   String?
+  price       Float
+  productId   String
+  ingredients String?
+  product     Product     @relation(fields: [productId], references: [id])
+  orderItems  OrderItem[]
+}
+
+model RestaurantConfig {
+  id                    Int     @id @default(autoincrement())
+  acceptingOrders       Boolean @default(true)
+  estimatedPickupTime   Int     @default(20) // Tiempo estimado de recolección en minutos
+  estimatedDeliveryTime Int     @default(40) // Tiempo estimado de entrega a domicilio en minutos
+}
+
+model SeederControl {
+  id      String   @id
+  lastRun DateTime
+}
+
+model SelectedModifier {
+  id          Int       @id @default(autoincrement())
+  orderItemId Int
+  modifierId  String
+  orderItem   OrderItem @relation(fields: [orderItemId], references: [id])
+  modifier    Modifier  @relation(fields: [modifierId], references: [id])
+}
+
+model SelectedPizzaIngredient {
+  id               Int              @id @default(autoincrement())
+  half             PizzaHalf        @default(full)
+  pizzaIngredientId String
+  orderItemId      Int
+  action           IngredientAction @default(add)
+  orderItem        OrderItem        @relation(fields: [orderItemId], references: [id])
+  pizzaIngredient  PizzaIngredient  @relation(fields: [pizzaIngredientId], references: [id])
+}
+
+model Subcategory {
+  id         String    @id
+  name       String    @unique
+  categoryId String
+  category   Category  @relation(fields: [categoryId], references: [id])
+  products   Product[]
+}
