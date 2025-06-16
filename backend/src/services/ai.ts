@@ -6,7 +6,7 @@ const genAI = new GoogleGenerativeAI(process.env.GOOGLE_AI_API_KEY || '');
 
 export async function generateAIResponse(customer: Customer, userMessage: string): Promise<string> {
   try {
-    const model = genAI.getGenerativeModel({ model: 'gemini-pro' });
+    const model = genAI.getGenerativeModel({ model: 'gemini-2.5-pro-preview-05-06' });
     
     // Build context from chat history
     const chatHistory = customer.relevantChatHistory as any[] || [];

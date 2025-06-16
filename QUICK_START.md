@@ -3,7 +3,7 @@
 ## Requisitos Previos
 1. **Docker** instalado
 2. **Node.js 18+** instalado
-3. **ngrok** (para WhatsApp real): `sudo snap install ngrok` o descarga de https://ngrok.com
+3. **ngrok** (para WhatsApp real) - ver configuración abajo
 4. **API Key de Google AI** (gratis en https://makersuite.google.com/app/apikey)
 5. **Cuenta Meta Developer** con app WhatsApp Business configurada
 
@@ -18,6 +18,10 @@
    - `WhatsApp Business Account ID`
    - `Permanent Access Token` (WHATSAPP_ACCESS_TOKEN)
 4. Anota tu número de WhatsApp Business
+5. **IMPORTANTE para desarrollo**: En la sección "To" o "Recipients", agrega tu número personal:
+   - Click en "Add phone number" o "Manage phone number list"
+   - Agrega el número desde el cual enviarás mensajes de prueba
+   - Verifica con el código que recibirás por WhatsApp
 
 ### 2️⃣ Configurar Variables de Entorno
 
@@ -33,6 +37,17 @@ WHATSAPP_ACCESS_TOKEN=tu_access_token_permanente
 WHATSAPP_VERIFY_TOKEN=un_token_secreto_que_tu_elijas
 BOT_WHATSAPP_NUMBER=521234567890  # Tu número WhatsApp Business
 ```
+
+### 3️⃣ Configurar Ngrok
+
+Ngrok ahora requiere autenticación (cuenta gratuita):
+
+1. **Crea una cuenta** en https://dashboard.ngrok.com/signup
+2. **Obtén tu authtoken** en https://dashboard.ngrok.com/get-started/your-authtoken
+3. **Configura ngrok** con tu token:
+   ```bash
+   ngrok config add-authtoken TU_TOKEN_AQUI
+   ```
 
 ## 🚀 Iniciar el Bot
 
@@ -59,7 +74,9 @@ Verás algo como:
 Forwarding  https://abc123.ngrok-free.app -> http://localhost:5000
 ```
 
-**IMPORTANTE**: Copia la URL HTTPS (cambia cada vez que reinicias ngrok)
+**IMPORTANTE**: 
+- Copia la URL HTTPS (cambia cada vez que reinicias ngrok)
+- Si no configuraste ngrok anteriormente, ver la sección 3️⃣ arriba
 
 ### 3️⃣ Configurar Webhook en Meta
 
@@ -85,14 +102,15 @@ Forwarding  https://abc123.ngrok-free.app -> http://localhost:5000
 ## 🛠️ Comandos Útiles
 
 ```bash
-# Ver la base de datos
+# Ver y editar datos en la base de datos (en otra terminal)
 cd backend && npx prisma studio
+# Esto abre una interfaz web en http://localhost:5555
 
 # Ver logs de Docker
-docker-compose logs -f
+docker compose logs -f
 
 # Reiniciar todo
-docker-compose down && ./start-local.sh
+docker compose down && ./start-local.sh
 ```
 
 ## 🛑 Para Detener Todo
@@ -112,6 +130,12 @@ docker-compose down && ./start-local.sh
 - Verifica que estés suscrito a "messages" en el webhook
 - Revisa los logs del servidor
 - En Meta > Webhooks > Recent errors
+
+### "Error: Recipient phone number not in allowed list"
+- Tu app está en modo desarrollo
+- Ve a WhatsApp > API Setup > sección "To" o "Recipients"
+- Agrega el número desde el cual envías mensajes
+- Verifica con el código que recibes por WhatsApp
 
 ### "El bot no responde"
 - Verifica que tengas tu Google AI API key configurada

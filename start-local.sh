@@ -11,19 +11,19 @@ NC='\033[0m'
 # Verificar si el puerto 5433 está en uso
 if lsof -Pi :5433 -sTCP:LISTEN -t >/dev/null 2>&1 ; then
     echo -e "\n${YELLOW}⚠️  El puerto 5433 está en uso. Intentando detener contenedores previos...${NC}"
-    docker-compose down
+    docker compose down
     sleep 2
 fi
 
 # Paso 1: Iniciar PostgreSQL con Docker
 echo -e "\n${YELLOW}1. Iniciando PostgreSQL...${NC}"
-docker-compose up -d
+docker compose up -d
 
 # Esperar a que PostgreSQL esté listo
 echo -e "${YELLOW}   Esperando a que PostgreSQL esté listo...${NC}"
 max_attempts=30
 attempt=0
-until docker-compose exec -T postgres pg_isready -U postgres >/dev/null 2>&1 || [ $attempt -eq $max_attempts ]; do
+until docker compose exec -T postgres pg_isready -U postgres >/dev/null 2>&1 || [ $attempt -eq $max_attempts ]; do
     attempt=$((attempt + 1))
     printf "\r   Esperando... intento $attempt/$max_attempts"
     sleep 1
@@ -31,7 +31,7 @@ done
 
 if [ $attempt -eq $max_attempts ]; then
     echo -e "\n${RED}❌ PostgreSQL no pudo iniciar después de $max_attempts intentos${NC}"
-    echo "   Intenta ejecutar: docker-compose logs postgres"
+    echo "   Intenta ejecutar: docker compose logs postgres"
     exit 1
 fi
 echo -e "\n${GREEN}   ✅ PostgreSQL está listo!${NC}"
@@ -98,13 +98,13 @@ npm run seed
 echo -e "\n${GREEN}✅ Todo listo! Iniciando servidor...${NC}"
 echo -e "   Backend corriendo en: http://localhost:5000/backend"
 echo -e "   Prisma Studio: npx prisma studio"
-echo -e "   Logs de Docker: docker-compose logs -f"
+echo -e "   Logs de Docker: docker compose logs -f"
 echo -e "\n${BLUE}📱 Para conectar WhatsApp:${NC}"
 echo -e "   1. En otra terminal ejecuta: ${YELLOW}ngrok http 5000${NC}"
 echo -e "   2. Copia la URL HTTPS que te da ngrok"
 echo -e "   3. Configura el webhook en Meta Developers"
 echo -e "   4. ¡Envía mensajes a tu número de WhatsApp!"
-echo -e "\n${YELLOW}Para detener todo: Ctrl+C y luego: docker-compose down${NC}"
+echo -e "\n${YELLOW}Para detener todo: Ctrl+C y luego: docker compose down${NC}"
 echo ""
 
 npm run dev
