@@ -1,4 +1,4 @@
-import { Modifier, PizzaIngredient, ProductVariant } from "../../database/entities";
+import type { ProductVariant, Modifier, PizzaIngredient } from "../types/sequelize-entities";
 import * as stringSimilarity from "string-similarity";
 import { AgentGemini } from "../types/agents";
 

@@ -2,7 +2,7 @@ import { Router } from 'express';
 import express from 'express';
 import { handleWhatsAppWebhook, verifyWebhook } from '../services/whatsapp';
 import { handleStripeWebhook } from '../services/stripe';
-import logger from '../utils/logger';
+import logger from '../common/utils/logger';
 
 const router = Router();
 

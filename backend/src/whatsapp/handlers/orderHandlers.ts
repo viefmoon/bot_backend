@@ -11,12 +11,12 @@ import {
   Modifier,
   OrderDeliveryInfo,
   CustomerDeliveryInfo,
-} from "../../database/entities";
+} from "../../database/models";
 import logger from "../../common/utils/logger";
 import {
   sendWhatsAppMessage,
   sendWhatsAppInteractiveMessage,
-} from "../utils/whatsapp.utils";
+} from "../../services/whatsapp";
 import { OrderService } from "../../orders/order.service";
 import { PreOrderService } from "../../orders/pre-order.service";
 

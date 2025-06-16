@@ -5,7 +5,7 @@ import {
   Modifier,
   ModifierType,
   Availability,
-} from "../database/entities";
+} from "../database/models";
 
 export class MenuService {
   async getFullMenu() {

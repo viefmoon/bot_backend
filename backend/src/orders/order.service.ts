@@ -1,8 +1,7 @@
 import { Injectable } from '@nestjs/common';
-import { Order, OrderItem, Customer, OrderDeliveryInfo } from '../database/entities';
+import { Order, OrderItem, Customer, OrderDeliveryInfo, Op } from '../database/models';
 import { CreateOrderDto } from './dto/create-order.dto';
 import logger from '../common/utils/logger';
-import { Op } from 'sequelize';
 
 @Injectable()
 export class OrderService {

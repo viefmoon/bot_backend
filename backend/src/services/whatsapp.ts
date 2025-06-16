@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import axios from 'axios';
 import { prisma } from '../server';
-import logger from '../utils/logger';
+import logger from '../common/utils/logger';
 import { processMessage } from './messageProcessor';
 
 const WHATSAPP_API_URL = 'https://graph.facebook.com/v17.0';

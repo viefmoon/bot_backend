@@ -1,9 +1,9 @@
 import { prisma } from '../server';
-import logger from '../utils/logger';
+import logger from '../common/utils/logger';
 import { sendWhatsAppMessage } from './whatsapp';
-import { handleTextMessage } from '../handlers/textMessageHandler';
-import { handleInteractiveMessage } from '../handlers/interactiveMessageHandler';
-import { handleAudioMessage } from '../handlers/audioMessageHandler';
+import { handleTextMessage } from '../whatsapp/handlers/textMessageHandler';
+import { handleInteractiveMessage } from '../whatsapp/handlers/interactiveMessageHandler';
+import { handleAudioMessage } from '../whatsapp/handlers/audioMessageHandler';
 
 export async function processMessage(from: string, message: any) {
   try {

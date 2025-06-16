@@ -8,7 +8,7 @@ import {
   PreOrder,
   CustomerDeliveryInfo,
   OrderDeliveryInfo,
-} from "../database/entities";
+} from "../database/models";
 
 export class PreOrderService {
   async selectProducts(orderData: {

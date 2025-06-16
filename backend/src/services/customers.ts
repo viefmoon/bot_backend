@@ -1,5 +1,5 @@
 import { prisma } from '../server';
-import logger from '../utils/logger';
+import logger from '../common/utils/logger';
 
 // Banear un cliente
 export async function banCustomer(customerId: string) {

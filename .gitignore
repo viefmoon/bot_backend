@@ -3,4 +3,5 @@ node_modules
 .package-lock.json.swp
 package.json.save
 .env
+.env.local
 backend/dist/

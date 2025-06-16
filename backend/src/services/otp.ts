@@ -1,5 +1,5 @@
 import { prisma } from '../server';
-import logger from '../utils/logger';
+import logger from '../common/utils/logger';
 import crypto from 'crypto';
 
 // In-memory OTP storage with expiration

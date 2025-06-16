@@ -7,12 +7,12 @@ import {
   handleOrderModification,
 } from "./orderHandlers";
 
-import { Order, Customer, RestaurantConfig, PreOrder } from "../../database/entities";
+import { Order, Customer, RestaurantConfig, PreOrder } from "../../database/models";
 import {
   sendWhatsAppMessage,
-} from "../utils/whatsapp.utils";
+} from "../../services/whatsapp";
 import Stripe from "stripe";
-import { OtpService } from "../../common/services/otp.service";
+import { generateOTP, storeOTP, verifyOTP } from "../../common/utils/otp";
 import {
   WAIT_TIMES_MESSAGE,
   RESTAURANT_INFO_MESSAGE,
@@ -27,7 +27,6 @@ const stripeClient = new Stripe(process.env.STRIPE_SECRET_KEY!, {
   apiVersion: "2024-10-28.acacia",
 });
 
-const otpService = new OtpService();
 const menuService = new MenuService();
 
 const BUTTON_ACTIONS = {
@@ -86,8 +85,8 @@ async function handlePreOrderDeliveryModification(
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
     const updateLink = `${process.env.FRONTEND_BASE_URL}/delivery-info-registration/${customerId}?otp=${otp}&preOrderId=${preOrderId}`;
     
-    // Enviar OTP separadamente
-    await otpService.sendOTP(customerId);
+    // Store OTP for later verification
+    storeOTP(customerId, otp);
     
     // Enviar el mensaje con el enlace
     const message = CHANGE_DELIVERY_INFO_MESSAGE(updateLink);
@@ -255,8 +254,8 @@ async function handleChatbotHelp(customerId: string): Promise<void> {
 }
 
 async function handleChangeDeliveryInfo(from: string): Promise<void> {
-  const otp = otpService.generateOTP();
-  await otpService.storeOTP(from, otp);
+  const otp = generateOTP();
+  storeOTP(from, otp);
   const updateLink = `${process.env.FRONTEND_BASE_URL}/delivery-info-registration/${from}?otp=${otp}`;
   const message = CHANGE_DELIVERY_INFO_MESSAGE(updateLink);
   await sendWhatsAppMessage(from, message);

@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import Stripe from 'stripe';
-import logger from '../utils/logger';
+import logger from '../common/utils/logger';
 
 const stripeKey = process.env.STRIPE_SECRET_KEY;
 const stripe = stripeKey ? new Stripe(stripeKey, {

@@ -1,5 +1,5 @@
-import { MessageRateLimit } from "../../database/entities";
-import { sendWhatsAppMessage } from "../../whatsapp/utils/whatsapp.utils";
+import { MessageRateLimit } from "../../database/models";
+import { sendWhatsAppMessage } from "../../services/whatsapp";
 import * as dotenv from "dotenv";
 dotenv.config();
 

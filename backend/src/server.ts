@@ -3,9 +3,9 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import { PrismaClient } from '@prisma/client';
 import webhookRoutes from './routes/webhook';
-import logger from './utils/logger';
+import logger from './common/utils/logger';
 import { verifyOTP, invalidateOTP } from './services/otp';
-import { PreOrderService } from './services/preOrder';
+import { PreOrderService } from './orders/pre-order.service';
 import { sendWhatsAppMessage } from './services/whatsapp';
 
 // Load environment variables
