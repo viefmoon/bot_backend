@@ -171,15 +171,34 @@ async function resetChatHistory(customer: Customer) {
 }
 
 async function sendWelcomeMessage(customerId: string) {
-  const message = `¡Hola! 👋 Bienvenido a nuestro servicio de pedidos por WhatsApp.
+  const listOptions = {
+    type: "list",
+    header: {
+      type: "text",
+      text: "Bienvenido a La Leña 🪵🔥",
+    },
+    body: {
+      text: "¿Cómo podemos ayudarte hoy? 😊",
+    },
+    footer: {
+      text: "Selecciona una opción:",
+    },
+    action: {
+      button: "Ver opciones",
+      sections: [
+        {
+          title: "Acciones",
+          rows: [
+            { id: "view_menu", title: "Ver Menú 📋" },
+            { id: "make_order", title: "Hacer un pedido 🍕" },
+            { id: "wait_times", title: "Tiempos de espera ⏰" },
+            { id: "restaurant_info", title: "Información y horarios 📍" },
+            { id: "chatbot_help", title: "¿Cómo usar el bot? 🤖" },
+          ],
+        },
+      ],
+    },
+  };
 
-¿En qué puedo ayudarte hoy?
-• Ver el menú
-• Hacer un pedido
-• Consultar horarios
-• Información del restaurante
-
-Solo escribe lo que necesitas y con gusto te atenderé. 😊`;
-
-  await sendWhatsAppMessage(customerId, message);
+  await sendWhatsAppInteractiveMessage(customerId, listOptions);
 }

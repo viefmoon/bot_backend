@@ -1,8 +1,13 @@
 import { prisma } from '../server';
 import { sendWhatsAppMessage } from '../services/whatsapp';
-import { createOrderFromPreOrder, updateOrderStatus } from '../services/orders';
 import { createCheckoutSession } from '../services/stripe';
-import { generateAndSendOTP, verifyOTP } from '../services/otp';
+import { generateAndSendOTP } from '../services/otp';
+import { getFullMenu } from '../services/menu';
+import { 
+  WAIT_TIMES_MESSAGE, 
+  RESTAURANT_INFO_MESSAGE, 
+  CHATBOT_HELP_MESSAGE 
+} from '../config/predefinedMessages';
 import logger from '../utils/logger';
 
 export async function handleInteractiveMessage(
@@ -10,45 +15,77 @@ export async function handleInteractiveMessage(
   interactive: any
 ): Promise<void> {
   const buttonReply = interactive.button_reply;
-  if (!buttonReply) return;
-
-  const buttonId = buttonReply.id;
+  const listReply = interactive.list_reply;
   const messageId = interactive.response?.message_id;
 
-  logger.info(`Interactive button pressed: ${buttonId} by ${from}`);
+  if (!buttonReply && !listReply) return;
+
+  const actionId = buttonReply?.id || listReply?.id;
+  logger.info(`Interactive action: ${actionId} by ${from}`);
 
   try {
-    switch (buttonId) {
-      case 'confirm_order':
-        await handleConfirmOrder(from, messageId);
-        break;
-      
-      case 'modify_delivery':
-        await handleModifyDelivery(from);
-        break;
-      
-      case 'discard_order':
-        await handleDiscardOrder(from);
-        break;
-      
-      case 'request_otp':
-        await handleRequestOTP(from);
-        break;
-      
-      case 'pay_with_card':
-        await handlePayWithCard(from, messageId);
-        break;
-      
-      case 'pay_on_delivery':
-        await handlePayOnDelivery(from, messageId);
-        break;
-      
-      case 'cancel_order':
-        await handleCancelOrder(from, messageId);
-        break;
-      
-      default:
-        await sendWhatsAppMessage(from, "Opción no reconocida. Por favor intenta de nuevo.");
+    // Handle button replies
+    if (buttonReply) {
+      switch (actionId) {
+        case 'confirm_order':
+          await handleConfirmOrder(from, messageId);
+          break;
+        
+        case 'modify_delivery':
+          await handleModifyDelivery(from);
+          break;
+        
+        case 'discard_order':
+          await handleDiscardOrder(from);
+          break;
+        
+        case 'request_otp':
+          await handleRequestOTP(from);
+          break;
+        
+        case 'pay_with_card':
+          await handlePayWithCard(from, messageId);
+          break;
+        
+        case 'pay_on_delivery':
+          await handlePayOnDelivery(from, messageId);
+          break;
+        
+        case 'cancel_order':
+          await handleCancelOrder(from, messageId);
+          break;
+        
+        default:
+          await sendWhatsAppMessage(from, "Opción no reconocida. Por favor intenta de nuevo.");
+      }
+    }
+    
+    // Handle list replies (from welcome message)
+    if (listReply) {
+      switch (actionId) {
+        case 'view_menu':
+          await handleViewMenu(from);
+          break;
+        
+        case 'make_order':
+          await handleMakeOrder(from);
+          break;
+        
+        case 'wait_times':
+          await handleWaitTimes(from);
+          break;
+        
+        case 'restaurant_info':
+          await handleRestaurantInfo(from);
+          break;
+        
+        case 'chatbot_help':
+          await handleChatbotHelp(from);
+          break;
+        
+        default:
+          await sendWhatsAppMessage(from, "Opción no reconocida. Por favor intenta de nuevo.");
+      }
     }
   } catch (error) {
     logger.error('Error handling interactive message:', error);
@@ -218,4 +255,146 @@ async function handleCancelOrder(customerId: string, messageId: string) {
     customerId,
     `❌ Tu orden #${order.dailyOrderNumber} ha sido cancelada.\n\n¿Hay algo más en lo que pueda ayudarte?`
   );
+}
+
+// List reply handlers
+async function handleViewMenu(customerId: string) {
+  try {
+    const menuData = await getFullMenu();
+    let menuText = "🍕 *MENÚ LA LEÑA* 🍕\n\n";
+    
+    for (const category of menuData.categories) {
+      menuText += `━━━━━━━━━━━━━━━━\n*${category.name.toUpperCase()}*\n━━━━━━━━━━━━━━━━\n\n`;
+      
+      for (const subcategory of category.subcategories) {
+        if (subcategory.products.length > 0) {
+          menuText += `📌 *${subcategory.name}*\n\n`;
+          
+          for (const product of subcategory.products) {
+            // Nombre del producto
+            menuText += `▪️ *${product.name}*\n`;
+            
+            // Ingredientes si los tiene
+            if (product.ingredients) {
+              menuText += `   _${product.ingredients}_\n`;
+            }
+            
+            // Si tiene variantes, mostrarlas
+            if (product.variants && product.variants.length > 0) {
+              for (const variant of product.variants) {
+                menuText += `   • ${variant.name}: $${variant.price}\n`;
+              }
+            } else if (product.price) {
+              // Si no tiene variantes pero sí precio
+              menuText += `   Precio: $${product.price}\n`;
+            }
+            
+            // Modificadores disponibles
+            if (product.modifierTypes && product.modifierTypes.length > 0) {
+              for (const modType of product.modifierTypes) {
+                if (modType.modifiers && modType.modifiers.length > 0) {
+                  menuText += `   🔸 ${modType.name}:\n`;
+                  for (const mod of modType.modifiers) {
+                    menuText += `      - ${mod.name}: +$${mod.price}\n`;
+                  }
+                }
+              }
+            }
+            
+            // Ingredientes de pizza si aplica
+            if (product.pizzaIngredients && product.pizzaIngredients.length > 0) {
+              menuText += `   🍕 Ingredientes disponibles:\n`;
+              const ingredients = product.pizzaIngredients
+                .map(ing => ing.name)
+                .join(', ');
+              menuText += `      ${ingredients}\n`;
+            }
+            
+            menuText += '\n';
+          }
+        }
+      }
+    }
+    
+    menuText += `\n💬 Para ordenar, simplemente escribe lo que deseas.\n`;
+    menuText += `📞 ¿Preguntas? ¡Estamos para ayudarte!`;
+    
+    // Dividir el mensaje si es muy largo
+    const maxLength = 4096;
+    if (menuText.length > maxLength) {
+      const parts = [];
+      let currentPart = '';
+      const lines = menuText.split('\n');
+      
+      for (const line of lines) {
+        if ((currentPart + line + '\n').length > maxLength) {
+          parts.push(currentPart);
+          currentPart = line + '\n';
+        } else {
+          currentPart += line + '\n';
+        }
+      }
+      
+      if (currentPart) {
+        parts.push(currentPart);
+      }
+      
+      // Enviar cada parte
+      for (let i = 0; i < parts.length; i++) {
+        await sendWhatsAppMessage(customerId, parts[i]);
+        // Pequeña pausa entre mensajes para evitar problemas
+        if (i < parts.length - 1) {
+          await new Promise(resolve => setTimeout(resolve, 500));
+        }
+      }
+    } else {
+      await sendWhatsAppMessage(customerId, menuText);
+    }
+    
+  } catch (error) {
+    logger.error('Error al enviar el menú:', error);
+    await sendWhatsAppMessage(
+      customerId,
+      "❌ Hubo un error al obtener el menú. Por favor intenta de nuevo más tarde."
+    );
+  }
+}
+
+async function handleMakeOrder(customerId: string) {
+  await sendWhatsAppMessage(
+    customerId,
+    "¡Perfecto! 🍕 Para hacer tu pedido, simplemente escríbeme lo que deseas ordenar. Por ejemplo:\n\n" +
+    "• '2 pizzas hawaianas grandes'\n" +
+    "• 'Una pizza pepperoni mediana y una coca cola'\n" +
+    "• 'Quiero ordenar 3 hamburguesas con papas'\n\n" +
+    "¿Qué te gustaría ordenar hoy?"
+  );
+}
+
+async function handleWaitTimes(customerId: string) {
+  try {
+    // Obtener tiempos de la configuración del restaurante
+    const restaurantConfig = await prisma.restaurantConfig.findFirst();
+    const pickupTime = restaurantConfig?.estimatedPickupTime || 20;
+    const deliveryTime = restaurantConfig?.estimatedDeliveryTime || 40;
+    
+    await sendWhatsAppMessage(
+      customerId,
+      WAIT_TIMES_MESSAGE(pickupTime, deliveryTime)
+    );
+  } catch (error) {
+    logger.error('Error al obtener tiempos de espera:', error);
+    await sendWhatsAppMessage(
+      customerId,
+      "❌ Hubo un error al obtener los tiempos de espera. Por favor intenta de nuevo."
+    );
+  }
+}
+
+async function handleRestaurantInfo(customerId: string) {
+  await sendWhatsAppMessage(customerId, RESTAURANT_INFO_MESSAGE);
+}
+
+async function handleChatbotHelp(customerId: string) {
+  await sendWhatsAppMessage(customerId, CHATBOT_HELP_MESSAGE);
 }

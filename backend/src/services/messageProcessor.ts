@@ -3,6 +3,7 @@ import logger from '../utils/logger';
 import { sendWhatsAppMessage } from './whatsapp';
 import { handleTextMessage } from '../handlers/textMessageHandler';
 import { handleInteractiveMessage } from '../handlers/interactiveMessageHandler';
+import { handleAudioMessage } from '../handlers/audioMessageHandler';
 
 export async function processMessage(from: string, message: any) {
   try {
@@ -38,10 +39,7 @@ export async function processMessage(from: string, message: any) {
     } else if (message.type === 'interactive') {
       await handleInteractiveMessage(from, message.interactive);
     } else if (message.type === 'audio') {
-      await sendWhatsAppMessage(
-        from,
-        'Lo siento, no puedo procesar mensajes de audio en este momento. Por favor envía tu pedido por texto.'
-      );
+      await handleAudioMessage(from, message);
     } else {
       await sendWhatsAppMessage(
         from,
