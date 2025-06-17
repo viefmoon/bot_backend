@@ -1,5 +1,5 @@
-// Interfaz básica para mensajes de WhatsApp
-export interface WhatsAppMessage {
+// Interfaz para mensajes salientes de WhatsApp
+export interface OutgoingWhatsAppMessage {
   messaging_product: string;
   to: string;
   type: string;
@@ -41,8 +41,8 @@ export interface WhatsAppInteractiveContent {
   };
 }
 
-// Interfaz para mensajes interactivos
-export interface WhatsAppInteractiveMessage {
+// Interfaz para mensajes interactivos salientes
+export interface OutgoingWhatsAppInteractiveMessage {
   messaging_product: string;
   recipient_type: string;
   to: string;

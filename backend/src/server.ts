@@ -1,15 +1,21 @@
 import express, { Request, Response } from 'express';
 import cors from 'cors';
-import dotenv from 'dotenv';
 import { PrismaClient } from '@prisma/client';
 import webhookRoutes from './routes/webhook';
 import logger from './common/utils/logger';
-import { verifyOTP, invalidateOTP } from './services/otp';
-import { PreOrderService } from './orders/pre-order.service';
-import { sendWhatsAppMessage } from './services/whatsapp';
+import { OTPService } from './services/security/OTPService';
+import { PreOrderService } from './orders/PreOrderService';
+import { WhatsAppService } from './services/communication/WhatsAppService';
+import { DeliveryInfoService } from './orders/services/DeliveryInfoService';
+import { envValidator, env } from './common/config/envValidator';
 
-// Load environment variables
-dotenv.config();
+// Validate environment variables
+try {
+  envValidator.validate();
+} catch (error) {
+  logger.error('Environment validation failed:', error);
+  process.exit(1);
+}
 
 // Initialize Express app
 const app: express.Application = express();
@@ -20,7 +26,7 @@ app.use(cors({
   origin: [
     'https://pizzatototlan.store',
     'http://localhost:3000',
-    process.env.FRONTEND_BASE_URL || ''
+    env.FRONTEND_BASE_URL
   ].filter(Boolean),
   credentials: true,
 }));
@@ -51,7 +57,7 @@ app.use('/backend/webhook', webhookRoutes);
 app.post('/backend/otp/verify', async (req, res) => {
   try {
     const { customerId, otp } = req.body;
-    const isValid = await verifyOTP(customerId, otp);
+    const isValid = await OTPService.verifyOTP(customerId, otp);
     res.json({ valid: isValid });
   } catch (error) {
     logger.error('Error verifying OTP:', error);
@@ -62,7 +68,7 @@ app.post('/backend/otp/verify', async (req, res) => {
 app.post('/backend/otp/invalidate', async (req, res) => {
   try {
     const { customerId } = req.body;
-    await invalidateOTP(customerId);
+    await OTPService.invalidateOTP(customerId);
     res.json({ success: true });
   } catch (error) {
     logger.error('Error invalidating OTP:', error);
@@ -71,47 +77,51 @@ app.post('/backend/otp/invalidate', async (req, res) => {
 });
 
 // Customer delivery info endpoints
-app.post('/backend/customer-delivery-info', async (req, res) => {
+app.post('/backend/customer-delivery-info', async (req: Request, res: Response) => {
   try {
-    const deliveryInfo = await prisma.customerDeliveryInfo.create({
-      data: req.body
-    });
+    const deliveryInfo = await DeliveryInfoService.createCustomerDeliveryInfo(req.body);
     res.json(deliveryInfo);
-  } catch (error) {
+  } catch (error: any) {
     logger.error('Error creating delivery info:', error);
-    res.status(500).json({ error: 'Internal server error' });
-  }
-});
-
-app.put('/backend/customer-delivery-info/:customerId', async (req, res) => {
-  try {
-    const { customerId } = req.params;
-    const deliveryInfo = await prisma.customerDeliveryInfo.update({
-      where: { customerId },
-      data: req.body
-    });
-    res.json(deliveryInfo);
-  } catch (error) {
-    logger.error('Error updating delivery info:', error);
-    res.status(500).json({ error: 'Internal server error' });
-  }
-});
-
-const getCustomerDeliveryInfo = async (req: any, res: any) => {
-  try {
-    const { customerId } = req.params;
-    const deliveryInfo = await prisma.customerDeliveryInfo.findUnique({
-      where: { customerId }
-    });
-    
-    if (!deliveryInfo) {
-      return res.status(404).json({ error: 'Delivery info not found' });
+    if (error.code) {
+      res.status(400).json({ error: error.message });
+    } else {
+      res.status(500).json({ error: 'Internal server error' });
     }
-    
+  }
+});
+
+app.put('/backend/customer-delivery-info/:customerId', async (req: Request, res: Response) => {
+  try {
+    const { customerId } = req.params;
+    const deliveryInfo = await DeliveryInfoService.updateCustomerDeliveryInfo(customerId, req.body);
+    res.json(deliveryInfo);
+  } catch (error: any) {
+    logger.error('Error updating delivery info:', error);
+    if (error.code === 'CUSTOMER_NOT_FOUND') {
+      res.status(404).json({ error: error.message });
+    } else if (error.code) {
+      res.status(400).json({ error: error.message });
+    } else {
+      res.status(500).json({ error: 'Internal server error' });
+    }
+  }
+});
+
+const getCustomerDeliveryInfo = async (req: Request, res: Response) => {
+  try {
+    const { customerId } = req.params;
+    const deliveryInfo = await DeliveryInfoService.getCustomerDeliveryInfo(customerId);
     return res.json(deliveryInfo);
-  } catch (error) {
+  } catch (error: any) {
     logger.error('Error fetching delivery info:', error);
-    return res.status(500).json({ error: 'Internal server error' });
+    if (error.code === 'CUSTOMER_NOT_FOUND') {
+      return res.status(404).json({ error: error.message });
+    } else if (error.code) {
+      return res.status(400).json({ error: error.message });
+    } else {
+      return res.status(500).json({ error: 'Internal server error' });
+    }
   }
 };
 
@@ -133,7 +143,7 @@ app.post('/backend/pre-orders/select-products', async (req, res) => {
 app.post('/backend/whatsapp/send-message', async (req, res) => {
   try {
     const { to, message } = req.body;
-    const result = await sendWhatsAppMessage(to, message);
+    const result = await WhatsAppService.sendMessage(to, message);
     res.json(result);
   } catch (error) {
     logger.error('Error sending WhatsApp message:', error);
@@ -148,13 +158,16 @@ app.use((err: any, _req: express.Request, res: express.Response, _next: express.
 });
 
 // Start server
-const PORT = process.env.PORT || 5000;
+const PORT = parseInt(env.PORT, 10);
 
 async function startServer() {
   try {
     // Test database connection
     await prisma.$connect();
     logger.info('Database connected successfully');
+    
+    // Start OTP cleanup interval
+    OTPService.startOTPCleanup();
     
     app.listen(PORT, () => {
       logger.info(`Server is running on port ${PORT}`);
@@ -168,6 +181,14 @@ async function startServer() {
 // Handle graceful shutdown
 process.on('SIGINT', async () => {
   logger.info('Shutting down server...');
+  OTPService.stopOTPCleanup();
+  await prisma.$disconnect();
+  process.exit(0);
+});
+
+process.on('SIGTERM', async () => {
+  logger.info('Shutting down server...');
+  OTPService.stopOTPCleanup();
   await prisma.$disconnect();
   process.exit(0);
 });

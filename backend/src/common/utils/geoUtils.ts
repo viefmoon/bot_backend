@@ -1,4 +1,4 @@
-import { getRestaurantConfig } from '../../services/restaurantConfig';
+import { RestaurantService } from '../../services/restaurant/RestaurantService';
 import logger from './logger';
 
 /**
@@ -59,7 +59,7 @@ function toRad(degrees: number): number {
  */
 export async function isWithinDeliveryArea(latitude: number, longitude: number): Promise<boolean> {
   try {
-    const config = await getRestaurantConfig();
+    const config = await RestaurantService.getConfig();
     
     // Si hay un polígono definido, usarlo
     if (config.deliveryCoverageArea && Array.isArray(config.deliveryCoverageArea)) {
@@ -99,7 +99,7 @@ export async function getDeliveryAreaInfo(): Promise<{
   radius?: number;
 }> {
   try {
-    const config = await getRestaurantConfig();
+    const config = await RestaurantService.getConfig();
     
     return {
       hasPolygon: !!config.deliveryCoverageArea,

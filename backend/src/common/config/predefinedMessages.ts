@@ -1,9 +1,47 @@
-export const BANNED_USER_MESSAGE =
-  "Lo sentimos, tu número ha sido baneado debido a la detección de un uso inadecuado de nuestro servicio.\n\n" +
-  "Si crees que es un error, por favor contacta directamente con el restaurante:\n\n" +
-  "📞 Teléfono fijo: 3919160126\n" +
-  "📱 Celular: 3338423316\n\n" +
-  "Agradecemos tu comprensión y esperamos resolver cualquier malentendido.";
+import { prisma } from "../../server";
+import { RestaurantInfo } from "../types/restaurant";
+
+// Helper function to get restaurant config
+async function getRestaurantInfo(): Promise<RestaurantInfo> {
+  const config = await prisma.restaurantConfig.findFirst();
+  
+  // Cast explícito para resolver problemas de tipos en VS Code
+  const typedConfig = config as any;
+  
+  if (!typedConfig) {
+    return {
+      restaurantName: "Establecimiento",
+      phoneMain: "",
+      phoneSecondary: "",
+      address: "",
+      city: "",
+      state: "",
+      postalCode: ""
+    };
+  }
+  
+  return {
+    restaurantName: typedConfig.restaurantName || "Establecimiento",
+    phoneMain: typedConfig.phoneMain || "",
+    phoneSecondary: typedConfig.phoneSecondary || "",
+    address: typedConfig.address || "",
+    city: typedConfig.city || "",
+    state: typedConfig.state || "",
+    postalCode: typedConfig.postalCode || ""
+  };
+}
+
+export const BANNED_USER_MESSAGE = async () => {
+  const config = await getRestaurantInfo();
+  return `Lo sentimos, tu número ha sido baneado debido a la detección de un uso inadecuado de nuestro servicio.
+
+Si crees que es un error, por favor contacta directamente con nosotros:
+
+${config.phoneMain ? `📞 Teléfono: ${config.phoneMain}` : ''}
+${config.phoneSecondary ? `📞 Teléfono: ${config.phoneSecondary}` : ''}
+
+Agradecemos tu comprensión y esperamos resolver cualquier malentendido.`;
+};
 
 export const WAIT_TIMES_MESSAGE = (
   pickupTime: number,
@@ -11,30 +49,41 @@ export const WAIT_TIMES_MESSAGE = (
 ) => `
 🕒 *Tiempos de espera estimados:*
 
-🏠 Recolección en restaurante: ${pickupTime} minutos
+🏠 Recolección en establecimiento: ${pickupTime} minutos
 🚚 Entrega a domicilio: ${deliveryTime} minutos
 
 Estos tiempos son aproximados y pueden variar según la demanda actual.
 `;
 
-export const RESTAURANT_INFO_MESSAGE = `
-🍕 *Información y horarios de La Leña*
+export const RESTAURANT_INFO_MESSAGE = async () => {
+  const { getFormattedBusinessHours } = await import("../utils/timeUtils");
+  const config = await getRestaurantInfo();
+  const formattedHours = await getFormattedBusinessHours();
+  
+  const fullAddress = [config.address, config.city, config.state, config.postalCode]
+    .filter(Boolean)
+    .join(", ");
+  
+  return `
+📍 *Información y horarios de ${config.restaurantName}*
 
-📍 *Ubicación:* C. Ogazón Sur 36, Centro, 47730 Tototlán, Jal.
+${fullAddress ? `📍 *Ubicación:* ${fullAddress}` : ''}
 
 📞 *Teléfonos:*
-   Fijo: 3919160126
-   Celular: 3338423316
+${config.phoneMain ? `   ${config.phoneMain}` : ''}
+${config.phoneSecondary ? `   ${config.phoneSecondary}` : ''}
 
 🕒 *Horarios:*
-   Martes a sábado: 6:00 PM - 11:00 PM
-   Domingos: 2:00 PM - 11:00 PM
+${formattedHours.split('\n').map(line => '   ' + line).join('\n')}
 
 ¡Gracias por tu interés! Esperamos verte pronto.
 `;
+};
 
-export const CHATBOT_HELP_MESSAGE = `
-🤖💬 *¡Bienvenido al Chatbot de La Leña!*
+export const CHATBOT_HELP_MESSAGE = async () => {
+  const config = await getRestaurantInfo();
+  return `
+🤖💬 *¡Bienvenido al Chatbot de ${config.restaurantName}!*
 
 Este asistente virtual está potenciado por inteligencia artificial para brindarte una experiencia fluida y natural. Aquí te explicamos cómo usarlo:
 
@@ -45,21 +94,21 @@ Envía cualquier mensaje para comenzar. Recibirás opciones para:
    🔄 Reordenar
    ℹ️ Información del restaurante
 
-🍕 *Realizar un pedido:*
+🍽️ *Realizar un pedido:*
 Escribe o envía un audio con tu pedido. Opciones:
    🏠 Entrega a domicilio: Incluye la dirección completa
-   🏃 Recolección en restaurante: Indica el nombre para recoger
+   🏃 Recolección en establecimiento: Indica el nombre para recoger
 Ejemplos:
-   '2 pizzas grandes especiales y una coca-cola para entrega a Morelos 66 poniente'
-   'Pizza mediana hawaiana y ensalada grande de pollo para recoger, nombre: Juan Pérez'
+   '2 platos principales y una bebida para entrega a Morelos 66 poniente'
+   'Un combo familiar y una ensalada para recoger, nombre: Juan Pérez'
 
-Una vez generado tu pedido, recibirás un mensaje de confirmación cuando el restaurante lo acepte o un mensaje de rechazo en caso de que no puedan procesarlo.
+Una vez generado tu pedido, recibirás un mensaje de confirmación cuando lo aceptemos o un mensaje de rechazo en caso de que no podamos procesarlo.
 
 ✏️ *Modificar un pedido:*
-Usa la opción en el mensaje de confirmación, solo si el restaurante aún no lo ha aceptado.
+Usa la opción en el mensaje de confirmación, solo si aún no lo hemos aceptado.
 
 ❌ *Cancelar un pedido:*
-Disponible en las opciones del mensaje de confirmación, solo se puede cancelar si el restaurante aún no ha aceptado el pedido.
+Disponible en las opciones del mensaje de confirmación, solo se puede cancelar si aún no hemos aceptado el pedido.
 
 💳 *Pagar:*
 Genera un enlace de pago desde las opciones del mensaje de confirmación.
@@ -72,32 +121,39 @@ Envía un mensaje a la vez y espera la respuesta antes del siguiente para evitar
 
 ¡Disfruta tu experiencia con nuestro chatbot! 🍽️🤖
 `;
+};
 
 export const CHANGE_DELIVERY_INFO_MESSAGE = (updateLink: string) => `
 🚚 ¡Actualiza tu información de entrega! 📝
 🔗 Por favor, utiliza este enlace para hacer cambios: ${updateLink}
 ⏳ ¡Ojo! Este enlace tiene validez limitada por motivos de seguridad. 🔒`;
 
-export const RESTAURANT_NOT_ACCEPTING_ORDERS_MESSAGE = `
-🚫🍽️ Lo sentimos, el restaurante no está aceptando pedidos en este momento. 😔
+export const RESTAURANT_NOT_ACCEPTING_ORDERS_MESSAGE = async () => {
+  const config = await getRestaurantInfo();
+  return `
+🚫🍽️ Lo sentimos, no estamos aceptando pedidos en este momento. 😔
 
-⏳ Puedes intentar más tarde o llamar directamente al restaurante:
-📞 Teléfono fijo: 3919160126
-📱 Celular: 3338423316
+⏳ Puedes intentar más tarde o llamarnos directamente:
+${config.phoneMain ? `📞 Teléfono: ${config.phoneMain}` : ''}
+${config.phoneSecondary ? `📞 Teléfono: ${config.phoneSecondary}` : ''}
 
 ¡Gracias por tu comprensión! 🙏
 `;
+};
 
-export const RESTAURANT_CLOSED_MESSAGE = `
-🚫🍕 Lo sentimos, el restaurante está cerrado en este momento. 😴
+export const RESTAURANT_CLOSED_MESSAGE = async () => {
+  const { getFormattedBusinessHours } = await import("../utils/timeUtils");
+  const formattedHours = await getFormattedBusinessHours();
+  
+  return `
+🚫 Lo sentimos, estamos cerrados en este momento. 😴
 
 🕒 Nuestro horario de atención es:
-   🗓️ Martes a sábado: 6:00 PM - 11:00 PM
-   🗓️ Domingos: 2:00 PM - 11:00 PM
-   🚫 Lunes: Cerrado
+${formattedHours.split('\n').map(line => '   🗓️ ' + line).join('\n')}
 
 🙏 Gracias por tu comprensión. ¡Esperamos atenderte pronto! 😊
 `;
+};
 
 export const DELIVERY_INFO_REGISTRATION_MESSAGE = (
   registrationLink: string
@@ -112,3 +168,76 @@ Por favor, usa este enlace: 🔗 ${registrationLink}
 export const PAYMENT_CONFIRMATION_MESSAGE = (orderNumber: number) => `
 ¡Tu pago para la orden #${orderNumber} ha sido confirmado! 🎉✅ Gracias por tu compra. 🛍️😊
 `;
+
+export const WELCOME_MESSAGE_INTERACTIVE = async () => {
+  const config = await getRestaurantInfo();
+  return {
+    type: "list",
+    header: {
+      type: "text",
+      text: `Bienvenido a ${config.restaurantName} 🍽️`
+    },
+    body: {
+      text: "¿Cómo podemos ayudarte hoy? 😊"
+    },
+    footer: {
+      text: "Selecciona una opción:"
+    },
+    action: {
+      button: "Ver opciones",
+      sections: [
+        {
+          title: "Acciones",
+          rows: [
+            { id: "view_menu", title: "📜 Ver Menú" },
+            { id: "wait_times", title: "⏱️ Tiempos de espera" },
+            { id: "restaurant_info", title: "ℹ️ Información y horarios" },
+            { id: "chatbot_help", title: "🤖 ¿Cómo usar el bot?" },
+            {
+              id: "change_delivery_info",
+              title: "🚚 Actualizar entrega"
+            }
+          ]
+        }
+      ]
+    }
+  };
+};
+
+// Mensaje cuando se reinicia la conversación
+export const CONVERSATION_RESET_MESSAGE = "🔄 Entendido, he olvidado el contexto anterior. ¿En qué puedo ayudarte ahora? 😊";
+
+// Mensaje de error genérico
+export const GENERIC_ERROR_MESSAGE = "Lo siento, ocurrió un error procesando tu mensaje. Por favor intenta de nuevo.";
+
+// Mensaje para tipo de mensaje no soportado
+export const UNSUPPORTED_MESSAGE_TYPE = "Lo siento, solo puedo procesar mensajes de texto por el momento.";
+
+// Mensaje cuando falla la transcripción de audio
+export const AUDIO_TRANSCRIPTION_ERROR = "🎤 Hubo un problema al procesar tu mensaje de audio. Por favor, intenta nuevamente o envía un mensaje de texto.";
+
+// Mensaje de límite de tasa excedido
+export const RATE_LIMIT_MESSAGE = "Has alcanzado el límite de mensajes. Por favor espera unos minutos antes de enviar más mensajes.";
+
+// Mensaje cuando no se encuentra una orden
+export const ORDER_NOT_FOUND_MESSAGE = "❌ Lo siento, no se pudo encontrar tu orden. 🚫🔍";
+
+// Mensaje cuando no se puede cancelar una orden
+export const ORDER_CANNOT_BE_CANCELLED_MESSAGE = (status: string) => {
+  const statusMessages = {
+    accepted: "Lo sentimos, pero esta orden ya no se puede cancelar porque ya fue aceptada. ⚠️",
+    in_preparation: "Lo sentimos, pero esta orden ya está en preparación y no se puede cancelar. 👨‍🍳",
+    prepared: "Lo sentimos, pero esta orden ya está preparada y no se puede cancelar. 🍽️",
+    in_delivery: "Lo sentimos, pero esta orden ya está en camino y no se puede cancelar. 🚚",
+  };
+  return statusMessages[status] || "Lo sentimos, esta orden no se puede cancelar en su estado actual.";
+};
+
+// Mensaje de confirmación de cancelación de orden
+export const ORDER_CANCELLED_MESSAGE = "Tu orden ha sido eliminada exitosamente. ✅";
+
+// Mensaje cuando Stripe no está disponible
+export const STRIPE_NOT_AVAILABLE_MESSAGE = "❌ Lo siento, los pagos en línea no están disponibles en este momento. Por favor, realiza el pago en efectivo al recibir tu pedido. 💵";
+
+// Mensaje cuando ya existe un enlace de pago
+export const PAYMENT_LINK_EXISTS_MESSAGE = "⚠️ Ya existe un enlace de pago activo para esta orden. Por favor, utiliza el enlace enviado anteriormente o contáctanos si necesitas ayuda. 🔄";

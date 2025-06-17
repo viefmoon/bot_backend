@@ -1,5 +1,3 @@
-import * as dotenv from "dotenv";
-dotenv.config();
 import {
   handlePreOrderConfirmation,
   handlePreOrderDiscard,
@@ -7,25 +5,27 @@ import {
   handleOrderModification,
 } from "./orderHandlers";
 
-import { Order, Customer, RestaurantConfig, PreOrder } from "../../database/models";
-import {
-  sendWhatsAppMessage,
-} from "../../services/whatsapp";
+import { prisma } from "../../server";
+import { sendWhatsAppMessage } from "../../common/utils/messageSender";
 import Stripe from "stripe";
-import { generateOTP, storeOTP, verifyOTP } from "../../common/utils/otp";
+import { OTPService } from "../../services/security/OTPService";
 import {
   WAIT_TIMES_MESSAGE,
   RESTAURANT_INFO_MESSAGE,
   CHATBOT_HELP_MESSAGE,
   CHANGE_DELIVERY_INFO_MESSAGE,
 } from "../../common/config/predefinedMessages";
-import { MenuService } from "../../orders/menu.service";
+import { MenuService } from "../../orders/MenuService";
 import logger from "../../common/utils/logger";
 import { getCurrentMexicoTime } from "../../common/utils/timeUtils";
+import { env } from "../../common/config/envValidator";
+import { ErrorService, BusinessLogicError, ErrorCode } from "../../common/services/errors";
 
-const stripeClient = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: "2024-10-28.acacia",
-});
+const stripeClient = env.STRIPE_SECRET_KEY 
+  ? new Stripe(env.STRIPE_SECRET_KEY, {
+      apiVersion: "2024-10-28.acacia",
+    })
+  : null;
 
 const menuService = new MenuService();
 
@@ -50,16 +50,35 @@ export async function handleInteractiveMessage(
   from: string,
   message: any
 ): Promise<void> {
-  const { type, button_reply, list_reply } = message.interactive;
-  const messageId = message.context.id;
+  try {
+    logger.info('Interactive message received:', JSON.stringify(message));
+    
+    if (!message.interactive) {
+      logger.error('No interactive property in message');
+      return;
+    }
+    
+    const { type, button_reply, list_reply } = message.interactive;
+    const messageId = message.context?.id || null;
 
-  if (type === "button_reply") {
-    const action =
-      BUTTON_ACTIONS[button_reply.id as keyof typeof BUTTON_ACTIONS];
-    if (action) await action(from, messageId);
-  } else if (type === "list_reply") {
-    const action = LIST_ACTIONS[list_reply.id as keyof typeof LIST_ACTIONS];
-    if (action) await action(from, messageId);
+    if (type === "button_reply") {
+      const action =
+        BUTTON_ACTIONS[button_reply.id as keyof typeof BUTTON_ACTIONS];
+      if (action) await action(from, messageId);
+    } else if (type === "list_reply") {
+      const action = LIST_ACTIONS[list_reply.id as keyof typeof LIST_ACTIONS];
+      if (action) {
+        logger.info(`Executing action: ${list_reply.id}`);
+        await action(from, messageId);
+      } else {
+        logger.error(`No action found for: ${list_reply.id}`);
+      }
+    }
+  } catch (error) {
+    await ErrorService.handleAndSendError(error, from, {
+      userId: from,
+      operation: 'handleInteractiveMessage'
+    });
   }
 }
 
@@ -68,14 +87,14 @@ async function handlePreOrderDeliveryModification(
   messageId: string
 ): Promise<void> {
   try {
-    const preOrder = await PreOrder.findOne({ where: { messageId } });
+    const preOrder = await prisma.preOrder.findFirst({ where: { messageId } });
 
     if (!preOrder) {
-      await sendWhatsAppMessage(
-        from,
-        "❌ No se pudo encontrar la preorden para modificar la información de entrega. 🚫🔍"
+      throw new BusinessLogicError(
+        ErrorCode.ORDER_NOT_FOUND,
+        'PreOrder not found for delivery modification',
+        { userId: from, operation: 'handlePreOrderDeliveryModification' }
       );
-      return;
     }
 
     const customerId = preOrder.customerId;
@@ -83,20 +102,19 @@ async function handlePreOrderDeliveryModification(
 
     // Generar OTP y crear el enlace
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
-    const updateLink = `${process.env.FRONTEND_BASE_URL}/delivery-info-registration/${customerId}?otp=${otp}&preOrderId=${preOrderId}`;
+    const updateLink = `${env.FRONTEND_BASE_URL}/delivery-info-registration/${customerId}?otp=${otp}&preOrderId=${preOrderId}`;
     
     // Store OTP for later verification
-    storeOTP(customerId, otp);
+    OTPService.storeOTP(customerId, otp);
     
     // Enviar el mensaje con el enlace
     const message = CHANGE_DELIVERY_INFO_MESSAGE(updateLink);
     await sendWhatsAppMessage(customerId, message);
   } catch (error) {
-    logger.error("Error al manejar la modificación de entrega:", error);
-    await sendWhatsAppMessage(
-      from,
-      "❌ Hubo un error al procesar tu solicitud de modificación de entrega. Por favor, intenta nuevamente más tarde. 🚫🔄"
-    );
+    await ErrorService.handleAndSendError(error, from, {
+      userId: from,
+      operation: 'handlePreOrderDeliveryModification'
+    });
   }
 }
 
@@ -105,21 +123,28 @@ async function handleOnlinePayment(
   messageId: string
 ): Promise<void> {
   try {
-    const order = await Order.findOne({ where: { messageId } });
-    if (!order) {
-      await sendWhatsAppMessage(
-        customerId,
-        "❌ Lo siento, no se pudo encontrar tu orden para procesar el pago. 🚫🔍"
+    if (!stripeClient) {
+      throw new BusinessLogicError(
+        ErrorCode.STRIPE_ERROR,
+        'Stripe client not configured',
+        { userId: customerId, operation: 'handleOnlinePayment' }
       );
-      return;
+    }
+    const order = await prisma.order.findFirst({ where: { messageId } });
+    if (!order) {
+      throw new BusinessLogicError(
+        ErrorCode.ORDER_NOT_FOUND,
+        'Order not found for payment processing',
+        { userId: customerId, operation: 'handleOnlinePayment' }
+      );
     }
 
     if (order.stripeSessionId || order.paymentStatus === "pending") {
-      await sendWhatsAppMessage(
-        customerId,
-        "⚠️ Ya existe un enlace de pago activo para esta orden. Por favor, utiliza el enlace enviado anteriormente o contacta al restaurante si necesitas ayuda. 🔄"
+      throw new BusinessLogicError(
+        ErrorCode.PAYMENT_LINK_EXISTS,
+        'Payment link already exists for this order',
+        { userId: customerId, orderId: order.id, operation: 'handleOnlinePayment' }
       );
-      return;
     }
 
     // Verificar el estado de la orden
@@ -159,7 +184,7 @@ async function handleOnlinePayment(
       return;
     }
 
-    let customer = await Customer.findOne({ where: { customerId } });
+    let customer = await prisma.customer.findFirst({ where: { customerId } });
     let stripeCustomerId = customer.stripeCustomerId;
 
     if (!stripeCustomerId) {
@@ -168,7 +193,10 @@ async function handleOnlinePayment(
         metadata: { whatsappId: customerId },
       });
       stripeCustomerId = stripeCustomer.id;
-      await customer.update({ stripeCustomerId });
+      await prisma.customer.update({
+        where: { customerId: customer.customerId },
+        data: { stripeCustomerId }
+      });
     }
 
     const session = await stripeClient.checkout.sessions.create({
@@ -181,7 +209,7 @@ async function handleOnlinePayment(
             product_data: {
               name: `Orden #${
                 order.dailyOrderNumber
-              } - ${getCurrentMexicoTime().format("DD/MM/YYYY")}`,
+              } - ${(await getCurrentMexicoTime()).format("DD/MM/YYYY")}`,
             },
             unit_amount: Math.round(order.totalCost * 100),
           },
@@ -189,13 +217,16 @@ async function handleOnlinePayment(
         },
       ],
       mode: "payment",
-      success_url: `${process.env.FRONTEND_BASE_URL}/payment-success`,
-      cancel_url: `${process.env.FRONTEND_BASE_URL}/payment-cancel`,
+      success_url: `${env.FRONTEND_BASE_URL}/payment-success`,
+      cancel_url: `${env.FRONTEND_BASE_URL}/payment-cancel`,
     });
 
-    await order.update({
-      stripeSessionId: session.id,
-      paymentStatus: "pending",
+    await prisma.order.update({
+      where: { id: order.id },
+      data: {
+        stripeSessionId: session.id,
+        paymentStatus: "pending",
+      }
     });
 
     const paymentLink = session.url;
@@ -205,48 +236,48 @@ async function handleOnlinePayment(
     );
     // await sendWhatsAppNotification("Se ha generado un link de pago");
   } catch (error) {
-    logger.error("Error al procesar el pago en línea:", error);
-    await sendWhatsAppMessage(
-      customerId,
-      "❌ Hubo un error al procesar tu solicitud de pago. 😕 Por favor, intenta nuevamente o contacta con el restaurante. 🔄📞"
-    );
+    await ErrorService.handleAndSendError(error, customerId, {
+      userId: customerId,
+      orderId: order.id,
+      operation: 'handleOnlinePayment'
+    });
   }
 }
 
 async function sendMenu(phoneNumber: string): Promise<boolean> {
   try {
     const fullMenu = await menuService.getMenuForAI();
-    await sendWhatsAppMessage(phoneNumber, String(fullMenu));
-    return true;
+    // La utilidad messageSender se encarga de dividir mensajes largos automáticamente
+    const success = await sendWhatsAppMessage(phoneNumber, String(fullMenu));
+    return success;
   } catch (error) {
-    logger.error("Error al enviar el menú:", error);
-    await sendWhatsAppMessage(
-      phoneNumber,
-      "❌ Hubo un error al enviar el menú. Por favor, intenta nuevamente. 🚫🔄"
-    );
+    await ErrorService.handleAndSendError(error, phoneNumber, {
+      userId: phoneNumber,
+      operation: 'sendMenu'
+    });
     return false;
   }
 }
 
 async function handleWaitTimes(customerId: string): Promise<void> {
   try {
-    const config = await RestaurantConfig.findOne();
+    const config = await prisma.restaurantConfig.findFirst();
     const message = WAIT_TIMES_MESSAGE(
       config.estimatedPickupTime,
       config.estimatedDeliveryTime
     );
     await sendWhatsAppMessage(customerId, message);
   } catch (error) {
-    logger.error("Error al obtener los tiempos de espera:", error);
-    await sendWhatsAppMessage(
-      customerId,
-      "❌ Hubo un error al obtener los tiempos de espera. Por favor, intenta nuevamente. 🚫🔄"
-    );
+    await ErrorService.handleAndSendError(error, customerId, {
+      userId: customerId,
+      operation: 'handleWaitTimes'
+    });
   }
 }
 
 async function handleRestaurantInfo(customerId: string): Promise<void> {
-  await sendWhatsAppMessage(customerId, RESTAURANT_INFO_MESSAGE);
+  const message = await RESTAURANT_INFO_MESSAGE();
+  await sendWhatsAppMessage(customerId, message);
 }
 
 async function handleChatbotHelp(customerId: string): Promise<void> {
@@ -254,9 +285,9 @@ async function handleChatbotHelp(customerId: string): Promise<void> {
 }
 
 async function handleChangeDeliveryInfo(from: string): Promise<void> {
-  const otp = generateOTP();
-  storeOTP(from, otp);
-  const updateLink = `${process.env.FRONTEND_BASE_URL}/delivery-info-registration/${from}?otp=${otp}`;
+  const otp = OTPService.generateOTP();
+  OTPService.storeOTP(from, otp);
+  const updateLink = `${env.FRONTEND_BASE_URL}/delivery-info-registration/${from}?otp=${otp}`;
   const message = CHANGE_DELIVERY_INFO_MESSAGE(updateLink);
   await sendWhatsAppMessage(from, message);
 }

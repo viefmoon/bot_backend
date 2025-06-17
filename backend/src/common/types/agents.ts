@@ -14,16 +14,3 @@ export interface AgentGemini {
   allowedFunctionNames: string[];
   functionCallingMode: FunctionCallingMode;
 }
-
-
-export interface AgentConfig {
-  orderMapperAgent: AgentMapping;
-  routerAgent: AgentMapping;
-  queryAgent: AgentMapping;
-}
-
-export type AgentProvider = "GEMINI";
-export interface AgentMapping {
-  type: AgentType;
-  provider: AgentProvider;
-}

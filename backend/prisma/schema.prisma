@@ -226,10 +226,42 @@ model ProductVariant {
 }
 
 model RestaurantConfig {
-  id                    Int     @id @default(autoincrement())
-  acceptingOrders       Boolean @default(true)
-  estimatedPickupTime   Int     @default(20) // Tiempo estimado de recolección en minutos
-  estimatedDeliveryTime Int     @default(40) // Tiempo estimado de entrega a domicilio en minutos
+  id                    Int                @id @default(autoincrement())
+  // Información básica del restaurante
+  restaurantName        String             @default("La Leña") // Nombre del restaurante
+  phoneMain             String?            // Teléfono principal
+  phoneSecondary        String?            // Teléfono secundario/móvil
+  address               String?            // Dirección completa
+  city                  String?            // Ciudad
+  state                 String?            // Estado
+  postalCode            String?            // Código postal
+  
+  // Configuración de operación
+  acceptingOrders       Boolean            @default(true)
+  estimatedPickupTime   Int                @default(20) // Tiempo estimado de recolección en minutos
+  estimatedDeliveryTime Int                @default(40) // Tiempo estimado de entrega a domicilio en minutos
+  openingGracePeriod    Int                @default(30) // Minutos después de abrir antes de aceptar pedidos
+  closingGracePeriod    Int                @default(30) // Minutos antes de cerrar para dejar de aceptar pedidos
+  timeZone              String             @default("America/Mexico_City") // Zona horaria del restaurante
+  businessHours         BusinessHours[]
+  
+  // Configuración de delivery
+  deliveryCoverageArea  Json?              // Polígono de cobertura - Array de coordenadas [lat, lng]
+  centerLatitude        Float?             // Centro del área de servicio (para mostrar en mapas)
+  centerLongitude       Float?
+  maxDeliveryRadius     Float?             @default(5.0) // Radio máximo de entrega en kilómetros
+}
+
+model BusinessHours {
+  id                 Int              @id @default(autoincrement())
+  dayOfWeek          Int              // 0 = Domingo, 1 = Lunes, ... 6 = Sábado
+  openingTime        String?          // Hora de apertura en formato HH:mm (null = cerrado)
+  closingTime        String?          // Hora de cierre en formato HH:mm (null = cerrado)
+  isClosed           Boolean          @default(false) // true si el restaurante está cerrado ese día
+  restaurantConfigId Int
+  restaurantConfig   RestaurantConfig @relation(fields: [restaurantConfigId], references: [id])
+  
+  @@unique([restaurantConfigId, dayOfWeek]) // Un solo horario por día
 }
 
 model SeederControl {

@@ -1,7 +1,9 @@
 import { PrismaClient } from '@prisma/client';
 import dotenv from 'dotenv';
+import path from 'path';
 
-dotenv.config();
+// Load environment variables from the correct path
+dotenv.config({ path: path.resolve(__dirname, '../.env') });
 
 const prisma = new PrismaClient();
 
@@ -27,22 +29,33 @@ async function main() {
   // Create restaurant config with business hours
   const restaurantConfig = await prisma.restaurantConfig.create({
     data: {
+      // Información básica del restaurante
+      restaurantName: "La Leña",
+      phoneMain: "3919160126",
+      phoneSecondary: "3338423316",
+      address: "C. Ogazón Sur 36, Centro",
+      city: "Tototlán",
+      state: "Jalisco",
+      postalCode: "47730",
+      
+      // Configuración de operación
       acceptingOrders: true,
       estimatedPickupTime: 20,
       estimatedDeliveryTime: 40,
       openingGracePeriod: 30,
       closingGracePeriod: 30,
       timeZone: "America/Mexico_City",
-      // Ejemplo de polígono de cobertura (área en Ciudad de México)
+      
+      // Configuración de delivery (ejemplo para Tototlán, Jalisco)
       deliveryCoverageArea: [
-        [19.4326, -99.1332],  // Norte
-        [19.4270, -99.1280],  // Este
-        [19.4200, -99.1330],  // Sur
-        [19.4250, -99.1380],  // Oeste
-        [19.4326, -99.1332]   // Cierre del polígono
+        [20.5320, -102.8690],  // Norte
+        [20.5280, -102.8650],  // Este
+        [20.5240, -102.8690],  // Sur
+        [20.5280, -102.8730],  // Oeste
+        [20.5320, -102.8690]   // Cierre del polígono
       ],
-      centerLatitude: 19.4263,
-      centerLongitude: -99.1330,
+      centerLatitude: 20.5280,
+      centerLongitude: -102.8690,
       maxDeliveryRadius: 5.0
     }
   });

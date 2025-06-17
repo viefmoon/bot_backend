@@ -1,0 +1,66 @@
+import { MessageMiddleware } from '../types';
+import { MessageContext } from '../MessageContext';
+import { prisma } from '../../../server';
+import { sendWhatsAppMessage } from '../../whatsapp';
+import { RATE_LIMIT_MESSAGE } from '../../../common/config/predefinedMessages';
+import logger from '../../../common/utils/logger';
+
+export class RateLimitMiddleware implements MessageMiddleware {
+  name = 'RateLimitMiddleware';
+  
+  private readonly RATE_LIMIT_MESSAGES = 50;
+  private readonly RATE_LIMIT_WINDOW_MINUTES = 10;
+
+  async process(context: MessageContext): Promise<MessageContext> {
+    try {
+      const customerId = context.message.from;
+      const now = new Date();
+      const windowStart = new Date(now.getTime() - this.RATE_LIMIT_WINDOW_MINUTES * 60 * 1000);
+
+      // Verificar límite de tasa existente
+      const rateLimit = await prisma.messageRateLimit.findUnique({
+        where: { customerId }
+      });
+
+      if (rateLimit && rateLimit.lastMessageTime > windowStart) {
+        // Dentro de la ventana de límite de tasa
+        if (rateLimit.messageCount >= this.RATE_LIMIT_MESSAGES) {
+          // Límite de tasa excedido
+          logger.warn(`Rate limit exceeded for customer ${customerId}`);
+          await sendWhatsAppMessage(customerId, RATE_LIMIT_MESSAGE);
+          context.stop();
+          return context;
+        }
+
+        // Incrementar contador de mensajes
+        await prisma.messageRateLimit.update({
+          where: { customerId },
+          data: {
+            messageCount: rateLimit.messageCount + 1,
+            lastMessageTime: now
+          }
+        });
+      } else {
+        // Fuera de la ventana de límite o sin registro de límite
+        await prisma.messageRateLimit.upsert({
+          where: { customerId },
+          update: {
+            messageCount: 1,
+            lastMessageTime: now
+          },
+          create: {
+            customerId,
+            messageCount: 1,
+            lastMessageTime: now
+          }
+        });
+      }
+
+      return context;
+    } catch (error) {
+      logger.error('Error in RateLimitMiddleware:', error);
+      context.setError(error as Error);
+      return context;
+    }
+  }
+}
