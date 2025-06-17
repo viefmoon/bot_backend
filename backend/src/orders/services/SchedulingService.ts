@@ -25,7 +25,7 @@ export class SchedulingService {
         throw new ValidationError(
           ErrorCode.INVALID_SCHEDULE_TIME,
           'Invalid time format',
-          { scheduledDeliveryTime }
+          { metadata: { scheduledDeliveryTime } }
         );
       }
 
@@ -82,7 +82,7 @@ export class SchedulingService {
       throw new ValidationError(
         ErrorCode.RESTAURANT_CLOSED,
         'Restaurant is closed on this day',
-        { dayOfWeek }
+        { metadata: { dayOfWeek } }
       );
     }
 
@@ -123,7 +123,7 @@ export class SchedulingService {
       throw new ValidationError(
         ErrorCode.INVALID_SCHEDULE_TIME,
         `Scheduled time is outside business hours. Please schedule between ${openingFormatted} and ${closingFormatted}`,
-        { scheduledMinutes, adjustedOpeningMinutes, adjustedClosingMinutes }
+        { metadata: { scheduledMinutes, adjustedOpeningMinutes, adjustedClosingMinutes } }
       );
     }
 
@@ -139,7 +139,7 @@ export class SchedulingService {
       throw new ValidationError(
         ErrorCode.INVALID_SCHEDULE_TIME,
         `Scheduled time must be at least ${minTimeRequired} minutes from now`,
-        { timeDifference, minTimeRequired }
+        { metadata: { timeDifference, minTimeRequired } }
       );
     }
   }

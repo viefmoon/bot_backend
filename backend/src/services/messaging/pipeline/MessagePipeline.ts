@@ -6,8 +6,7 @@ import { MessageTypeMiddleware } from '../middlewares/MessageTypeMiddleware';
 import { MessageProcessingMiddleware } from '../middlewares/MessageProcessingMiddleware';
 import { prisma } from '../../../server';
 import logger from '../../../common/utils/logger';
-import { sendWhatsAppMessage } from '../../../common/utils/messageSender';
-import { sendWhatsAppInteractiveMessage } from '../../whatsapp';
+import { sendWhatsAppMessage, sendWhatsAppInteractiveMessage } from '../../whatsapp';
 
 export class MessagePipeline {
   private middlewares: MessageMiddleware[] = [];

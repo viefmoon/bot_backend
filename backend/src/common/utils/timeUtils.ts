@@ -76,8 +76,7 @@ export { getCurrentMexicoTime, isBusinessOpen, getUTCTime };
 
 export async function getFormattedBusinessHours(): Promise<string> {
   try {
-    const { getAllBusinessHours } = await import("../../services/restaurantConfig");
-    const hours = await getAllBusinessHours();
+    const hours = await RestaurantService.getAllBusinessHours();
     
     const dayNames = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
     

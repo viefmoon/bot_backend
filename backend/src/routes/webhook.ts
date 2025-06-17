@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import express from 'express';
-import { WhatsAppService } from '../services/communication/WhatsAppService';
+import { WhatsAppService } from '../services/whatsapp';
 import { StripeService } from '../services/payment/StripeService';
 import logger from '../common/utils/logger';
 

@@ -40,6 +40,13 @@ export class ExternalServiceError extends BaseError {
   }
 }
 
+export class NotFoundError extends BaseError {
+  constructor(code: ErrorCode, message: string, context?: ErrorContext) {
+    super(code, ErrorType.BUSINESS_LOGIC, message, context);
+    this.name = 'NotFoundError';
+  }
+}
+
 export class RateLimitError extends BaseError {
   constructor(message: string, context?: ErrorContext) {
     super(ErrorCode.RATE_LIMIT_EXCEEDED, ErrorType.RATE_LIMIT, message, context);

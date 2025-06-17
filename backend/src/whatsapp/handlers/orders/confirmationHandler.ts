@@ -1,7 +1,6 @@
 import { prisma } from "../../../server";
 import logger from "../../../common/utils/logger";
-import { sendWhatsAppMessage } from "../../../common/utils/messageSender";
-import { WhatsAppService } from "../../../services/communication/WhatsAppService";
+import { sendWhatsAppMessage, WhatsAppService } from "../../../services/whatsapp";
 import { OrderManagementService } from "../../../orders/services/OrderManagementService";
 import { OrderFormattingService } from "../../../orders/services/OrderFormattingService";
 import { ErrorService, BusinessLogicError, ErrorCode } from "../../../common/services/errors";
@@ -18,11 +17,7 @@ export async function handlePreOrderConfirmation(
     const preOrder = await orderManagementService.getPreOrderByMessageId(messageId);
 
     if (!preOrder) {
-      throw new BusinessLogicError(
-        ErrorCode.ORDER_NOT_FOUND,
-        'PreOrder not found',
-        { userId: from, messageId, operation: 'handlePreOrderConfirmation' }
-      );
+      throw new BusinessLogicError(ErrorCode.ORDER_NOT_FOUND, 'PreOrder not found', { userId: from, operation: 'handlePreOrderConfirmation', metadata: { messageId } });
     }
 
     logger.info(`Found preorder: ${preOrder.id}`);
@@ -71,11 +66,7 @@ export async function sendOrderConfirmation(
     });
 
     if (!fullOrder) {
-      throw new BusinessLogicError(
-        ErrorCode.ORDER_NOT_FOUND,
-        'Order not found for confirmation',
-        { userId: telefono, orderId, operation: 'sendOrderConfirmation' }
-      );
+      throw new BusinessLogicError(ErrorCode.ORDER_NOT_FOUND, 'Order not found for confirmation', { userId: telefono, orderId, operation: 'sendOrderConfirmation' });
     }
 
     const orderType = fullOrder.orderType;
@@ -106,7 +97,7 @@ export async function sendOrderConfirmation(
 
     // Enviar botones de acción
     await sendActionButtonsForOrder(
-      newOrder.telefono,
+      telefono,
       fullOrder.id,
       fullOrder.messageId || `order_${fullOrder.id}_${Date.now()}`,
       fullOrder.status

@@ -57,7 +57,7 @@ export class RestaurantService {
       
       if (!config) {
         throw new BusinessLogicError(
-          ErrorCode.NOT_FOUND,
+          ErrorCode.ORDER_NOT_FOUND,
           'Restaurant configuration not found'
         );
       }
@@ -172,7 +172,7 @@ export class RestaurantService {
       throw new BusinessLogicError(
         ErrorCode.DATABASE_ERROR,
         'Failed to update business hours',
-        { dayOfWeek, data }
+        { metadata: { dayOfWeek, data } }
       );
     }
   }

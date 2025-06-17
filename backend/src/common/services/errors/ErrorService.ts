@@ -1,5 +1,5 @@
 import logger from '../../utils/logger';
-import { sendWhatsAppMessage } from '../../utils/messageSender';
+import { sendWhatsAppMessage } from '../../../services/whatsapp';
 import { ErrorCode, ErrorType, ErrorContext, ErrorResponse } from './types';
 import { ERROR_MESSAGES } from './errorMessages';
 import { BaseError } from './CustomErrors';

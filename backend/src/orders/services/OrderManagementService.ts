@@ -19,18 +19,6 @@ export class OrderManagementService {
     const preOrder = await prisma.preOrder.findUnique({
       where: { id: preOrderId },
       include: {
-        selectedProducts: {
-          include: {
-            product: true,
-            productVariant: true,
-            selectedModifiers: {
-              include: { modifier: true },
-            },
-            selectedPizzaIngredients: {
-              include: { pizzaIngredient: true },
-            },
-          },
-        },
         deliveryInfo: true,
       },
     });
@@ -39,39 +27,36 @@ export class OrderManagementService {
       throw new BusinessLogicError(
         ErrorCode.ORDER_NOT_FOUND,
         'PreOrder not found',
-        { preOrderId }
+        { metadata: { preOrderId } }
       );
     }
 
-    // Build order items from selected products
-    const orderItems = preOrder.selectedProducts.map((sp) => ({
-      productId: sp.productId,
-      productVariantId: sp.productVariantId,
-      quantity: sp.quantity,
-      comments: sp.comments,
-      selectedModifiers: sp.selectedModifiers.map((sm) => sm.modifierId),
-      selectedPizzaIngredients: sp.selectedPizzaIngredients.map((spi) => ({
-        pizzaIngredientId: spi.pizzaIngredientId,
-        half: spi.half,
-        action: spi.action,
-      })),
+    // Build order items from preOrder.orderItems JSON
+    const orderItems = (preOrder.orderItems as any[]).map((item) => ({
+      productId: item.productId,
+      productVariantId: item.productVariantId,
+      quantity: item.quantity,
+      comments: item.comments,
+      selectedModifiers: item.selectedModifiers || [],
+      selectedPizzaIngredients: item.selectedPizzaIngredients || [],
     }));
 
     // Build delivery info if exists
     let deliveryInfo = undefined;
-    if (preOrder.deliveryInfo) {
+    if (preOrder.deliveryInfo && preOrder.deliveryInfo.length > 0) {
+      const info = preOrder.deliveryInfo[0];
       deliveryInfo = {
-        streetAddress: preOrder.deliveryInfo.streetAddress,
-        neighborhood: preOrder.deliveryInfo.neighborhood,
-        postalCode: preOrder.deliveryInfo.postalCode,
-        city: preOrder.deliveryInfo.city,
-        state: preOrder.deliveryInfo.state,
-        country: preOrder.deliveryInfo.country,
-        latitude: preOrder.deliveryInfo.latitude,
-        longitude: preOrder.deliveryInfo.longitude,
-        pickupName: preOrder.deliveryInfo.pickupName,
-        geocodedAddress: preOrder.deliveryInfo.geocodedAddress,
-        additionalDetails: preOrder.deliveryInfo.additionalDetails,
+        streetAddress: info.streetAddress,
+        neighborhood: info.neighborhood,
+        postalCode: info.postalCode,
+        city: info.city,
+        state: info.state,
+        country: info.country,
+        latitude: info.latitude,
+        longitude: info.longitude,
+        pickupName: info.pickupName,
+        geocodedAddress: info.geocodedAddress,
+        additionalDetails: info.additionalDetails,
       };
     }
 
@@ -79,13 +64,12 @@ export class OrderManagementService {
       orderItems,
       customerId: preOrder.customerId,
       orderType: preOrder.orderType,
-      estimatedTime: preOrder.estimatedTime,
-      scheduledDeliveryTime: preOrder.scheduledDeliveryTime,
-      deliveryInfo,
+      scheduledDeliveryTime: preOrder.scheduledDeliveryTime ? preOrder.scheduledDeliveryTime.toISOString() : undefined,
+      orderDeliveryInfo: deliveryInfo,
     };
 
     // Create the order
-    const order = await this.orderService.createOrder(orderData);
+    const order = await this.orderService.create(orderData);
 
     // Delete the preorder after successful confirmation
     await prisma.preOrder.delete({ where: { id: preOrderId } });
@@ -110,18 +94,14 @@ export class OrderManagementService {
       );
     }
 
-    const cancellableStatuses: OrderStatus[] = ["created", "pending"];
+    const cancellableStatuses: OrderStatus[] = ["created", "accepted"];
     if (!cancellableStatuses.includes(order.status)) {
-      throw new BusinessLogicError(
-        ErrorCode.ORDER_CANNOT_CANCEL,
-        `Cannot cancel order with status: ${order.status}`,
-        { orderId, currentStatus: order.status }
-      );
+      throw new BusinessLogicError(ErrorCode.ORDER_CANNOT_CANCEL, 'Cannot cancel order with status: ${order.status}', { metadata: { orderId, currentStatus: order.status } });
     }
 
     const cancelledOrder = await prisma.order.update({
       where: { id: orderId },
-      data: { status: "cancelled" },
+      data: { status: 'canceled' },
     });
 
     logger.info(`Order ${orderId} cancelled successfully`);
@@ -144,7 +124,7 @@ export class OrderManagementService {
       );
     }
 
-    const modifiableStatuses: OrderStatus[] = ["created", "pending"];
+    const modifiableStatuses: OrderStatus[] = ["created", "accepted"];
     return modifiableStatuses.includes(order.status);
   }
 
@@ -179,7 +159,6 @@ export class OrderManagementService {
     return await prisma.preOrder.findFirst({
       where: { messageId },
       include: {
-        selectedProducts: true,
         deliveryInfo: true,
       },
     });
@@ -207,7 +186,7 @@ export class OrderManagementService {
       throw new BusinessLogicError(
         ErrorCode.ORDER_NOT_FOUND,
         'PreOrder not found',
-        { preOrderId }
+        { metadata: { preOrderId } }
       );
     }
 

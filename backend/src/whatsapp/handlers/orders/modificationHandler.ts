@@ -1,5 +1,5 @@
 import logger from "../../../common/utils/logger";
-import { sendWhatsAppMessage } from "../../../common/utils/messageSender";
+import { sendWhatsAppMessage } from "../../../services/whatsapp";
 import { OTPService } from "../../../services/security/OTPService";
 import { env } from "../../../common/config/envValidator";
 import { ErrorService, BusinessLogicError, ErrorCode } from "../../../common/services/errors";
@@ -18,11 +18,7 @@ export async function handleOrderModification(
     const order = await orderManagementService.getOrderByMessageId(messageId);
 
     if (!order) {
-      throw new BusinessLogicError(
-        ErrorCode.ORDER_NOT_FOUND,
-        'Order not found for modification',
-        { userId: from, messageId, operation: 'handleOrderModification' }
-      );
+      throw new BusinessLogicError(ErrorCode.ORDER_NOT_FOUND, 'Order not found for modification', { userId: from, operation: 'handleOrderModification', metadata: { messageId } });
     }
 
     logger.info(`Found order: ${order.id} with status: ${order.status}`);
@@ -30,11 +26,7 @@ export async function handleOrderModification(
     // Check if order can be modified
     const canModify = await orderManagementService.canModifyOrder(order.id);
     if (!canModify) {
-      throw new BusinessLogicError(
-        ErrorCode.ORDER_CANNOT_MODIFY,
-        `Cannot modify order with status: ${order.status}`,
-        { userId: from, orderId: order.id, orderStatus: order.status }
-      );
+      throw new BusinessLogicError(ErrorCode.ORDER_CANNOT_MODIFY, 'Cannot modify order with status: ${order.status}', { userId: from, orderId: order.id, metadata: { orderStatus: order.status } });
     }
 
     // Generar un OTP para la modificación

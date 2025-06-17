@@ -6,7 +6,7 @@ import {
 } from "./orderHandlers";
 
 import { prisma } from "../../server";
-import { sendWhatsAppMessage } from "../../common/utils/messageSender";
+import { sendWhatsAppMessage } from "../../services/whatsapp";
 import Stripe from "stripe";
 import { OTPService } from "../../services/security/OTPService";
 import {
@@ -148,7 +148,7 @@ async function handleOnlinePayment(
     }
 
     // Verificar el estado de la orden
-    let mensaje;
+    let mensaje: string | undefined;
     switch (order.status) {
       case "created":
       case "accepted":
@@ -238,8 +238,8 @@ async function handleOnlinePayment(
   } catch (error) {
     await ErrorService.handleAndSendError(error, customerId, {
       userId: customerId,
-      orderId: order.id,
-      operation: 'handleOnlinePayment'
+      operation: 'handleOnlinePayment',
+      metadata: { messageId }
     });
   }
 }
@@ -276,12 +276,27 @@ async function handleWaitTimes(customerId: string): Promise<void> {
 }
 
 async function handleRestaurantInfo(customerId: string): Promise<void> {
-  const message = await RESTAURANT_INFO_MESSAGE();
-  await sendWhatsAppMessage(customerId, message);
+  try {
+    const message = await RESTAURANT_INFO_MESSAGE();
+    await sendWhatsAppMessage(customerId, message);
+  } catch (error) {
+    await ErrorService.handleAndSendError(error, customerId, {
+      userId: customerId,
+      operation: 'handleRestaurantInfo'
+    });
+  }
 }
 
 async function handleChatbotHelp(customerId: string): Promise<void> {
-  await sendWhatsAppMessage(customerId, CHATBOT_HELP_MESSAGE);
+  try {
+    const message = await CHATBOT_HELP_MESSAGE();
+    await sendWhatsAppMessage(customerId, message);
+  } catch (error) {
+    await ErrorService.handleAndSendError(error, customerId, {
+      userId: customerId,
+      operation: 'handleChatbotHelp'
+    });
+  }
 }
 
 async function handleChangeDeliveryInfo(from: string): Promise<void> {

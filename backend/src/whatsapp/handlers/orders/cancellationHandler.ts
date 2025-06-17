@@ -1,4 +1,4 @@
-import { sendWhatsAppMessage } from "../../../common/utils/messageSender";
+import { sendWhatsAppMessage } from "../../../services/whatsapp";
 import { ErrorService } from "../../../common/services/errors";
 import { OrderManagementService } from "../../../orders/services/OrderManagementService";
 import {

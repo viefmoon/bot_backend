@@ -1,10 +1,8 @@
 import { prisma } from "../../../server";
 import logger from "../../../common/utils/logger";
-import { sendWhatsAppMessage } from "../../../common/utils/messageSender";
-import { WhatsAppService } from "../../../services/communication/WhatsAppService";
+import { sendWhatsAppMessage, WhatsAppService } from "../../../services/whatsapp";
 import { PreOrderService } from "../../../orders/PreOrderService";
 import { generateOrderSummary } from "./orderFormatters";
-import { getCurrentMexicoTime } from "../../../common/utils/timeUtils";
 import { ErrorService, BusinessLogicError, ValidationError, ErrorCode } from "../../../common/services/errors";
 import { OrderManagementService } from "../../../orders/services/OrderManagementService";
 
@@ -94,11 +92,9 @@ export async function createPreOrderAndSendSummary(
     const preOrder = await prisma.preOrder.update({
       where: { id: preOrderId },
       data: {
-        deliveryInfoId: deliveryInfoId,
-        estimatedTime:
-          result.orderType === "delivery"
-            ? selectedProducts.estimatedDeliveryTime
-            : selectedProducts.estimatedPickupTime,
+        deliveryInfo: {
+          connect: { id: deliveryInfoId }
+        }
       },
     });
 
@@ -181,7 +177,7 @@ export async function handlePreOrderDiscard(
       throw new BusinessLogicError(
         ErrorCode.ORDER_NOT_FOUND,
         'PreOrder not found for discard',
-        { userId: from, messageId, operation: 'handlePreOrderDiscard' }
+        { userId: from, operation: 'handlePreOrderDiscard', metadata: { messageId } }
       );
     }
 

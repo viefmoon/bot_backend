@@ -46,7 +46,7 @@ export class CustomerService {
       throw new BusinessLogicError(
         ErrorCode.DATABASE_ERROR,
         'Failed to get or create customer',
-        { customerId }
+        { metadata: { customerId } }
       );
     }
   }
@@ -71,7 +71,7 @@ export class CustomerService {
       throw new BusinessLogicError(
         ErrorCode.DATABASE_ERROR,
         'Failed to update customer',
-        { customerId, data }
+        { metadata: { customerId, data } }
       );
     }
   }
@@ -95,7 +95,7 @@ export class CustomerService {
       throw new BusinessLogicError(
         ErrorCode.DATABASE_ERROR,
         'Failed to ban customer',
-        { customerId, reason }
+        { metadata: { customerId, reason } }
       );
     }
   }
@@ -119,7 +119,7 @@ export class CustomerService {
       throw new BusinessLogicError(
         ErrorCode.DATABASE_ERROR,
         'Failed to unban customer',
-        { customerId }
+        { metadata: { customerId } }
       );
     }
   }
@@ -140,7 +140,7 @@ export class CustomerService {
         throw new BusinessLogicError(
           ErrorCode.ORDER_NOT_FOUND,
           'Customer not found',
-          { customerId }
+          { metadata: { customerId } }
         );
       }
 
@@ -152,7 +152,7 @@ export class CustomerService {
       throw new BusinessLogicError(
         ErrorCode.DATABASE_ERROR,
         'Failed to get customer information',
-        { customerId }
+        { metadata: { customerId } }
       );
     }
   }

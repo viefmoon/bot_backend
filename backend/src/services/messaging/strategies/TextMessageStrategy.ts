@@ -2,9 +2,14 @@ import { MessageStrategy } from './MessageStrategy';
 import { MessageContext } from '../MessageContext';
 import { AgentService, ContextType } from '../../ai';
 import { PreOrderService } from '../../../orders/PreOrderService';
-import { sendWhatsAppMessage } from '../../../common/utils/messageSender';
+import { sendWhatsAppMessage } from '../../whatsapp';
 import logger from '../../../common/utils/logger';
-import { Content } from '@google/generative-ai';
+
+// Type definition for content
+interface Content {
+  role: 'user' | 'model';
+  parts: Array<{ text: string }>;
+}
 
 export class TextMessageStrategy extends MessageStrategy {
   name = 'TextMessageStrategy';
@@ -37,6 +42,11 @@ export class TextMessageStrategy extends MessageStrategy {
     );
     
     try {
+      logger.debug('=== TextMessageStrategy.execute DEBUG ===');
+      logger.debug('User message:', text);
+      logger.debug('Customer ID:', context.customer.customerId);
+      logger.debug('Chat history length:', relevantChatHistory.length);
+      
       // Procesar con AI
       const messages: Content[] = relevantChatHistory.map(
         ({ role, content }: any) => ({
@@ -45,13 +55,20 @@ export class TextMessageStrategy extends MessageStrategy {
         })
       );
       
+      logger.debug(`Messages to send to AI: ${JSON.stringify(messages, null, 2)}`);
+      
       const response = await AgentService.processMessage(
         messages,
         ContextType.GENERAL_CHAT
       );
       
+      logger.debug(`Raw AI response: ${JSON.stringify(response, null, 2)}`);
+      
       // Convertir respuesta al formato esperado
       const aiResponses = await this.processGeminiResponse(response);
+      
+      logger.debug(`Processed AI responses: ${JSON.stringify(aiResponses, null, 2)}`);
+      logger.debug('=== End TextMessageStrategy.execute DEBUG ===');
       
       // Procesar respuestas de AI
       for (const response of aiResponses) {
@@ -104,53 +121,97 @@ export class TextMessageStrategy extends MessageStrategy {
     
     // Crear pre-orden
     const preOrderService = new PreOrderService();
-    const selectProductsResponse = await preOrderService.selectProducts({
+    const preOrderResult = await preOrderService.selectProducts({
       orderItems: preprocessedContent.orderItems,
       customerId: context.message.from,
       orderType: preprocessedContent.orderType,
       scheduledDeliveryTime: preprocessedContent.scheduledDeliveryTime,
     });
     
-    // Agregar respuesta de texto
-    context.addResponse({
-      text: selectProductsResponse.json.text,
-      sendToWhatsApp: selectProductsResponse.json.sendToWhatsApp,
-      isRelevant: selectProductsResponse.json.isRelevant
-    });
+    // Generate order summary
+    const { generateOrderSummary } = await import('../../../whatsapp/handlers/orders/orderFormatters');
+    const orderSummary = await generateOrderSummary(preOrderResult.preOrderId);
     
-    // Agregar mensaje interactivo si existe
-    if (selectProductsResponse.json.interactiveMessage) {
-      context.addResponse({
-        interactiveMessage: selectProductsResponse.json.interactiveMessage,
-        sendToWhatsApp: true,
-        isRelevant: false,
-        preOrderId: selectProductsResponse.json.preOrderId
-      });
-    }
+    // Send order summary
+    await sendWhatsAppMessage(context.message.from, orderSummary);
+    
+    // Add interactive confirmation message
+    context.addResponse({
+      interactiveMessage: {
+        type: "button",
+        body: {
+          text: "¿Deseas confirmar tu pedido?"
+        },
+        action: {
+          buttons: [
+            {
+              type: "reply",
+              reply: {
+                id: `confirm_order_${preOrderResult.preOrderId}`,
+                title: "✅ Confirmar"
+              }
+            },
+            {
+              type: "reply",
+              reply: {
+                id: `discard_order_${preOrderResult.preOrderId}`,
+                title: "❌ Cancelar"
+              }
+            }
+          ]
+        }
+      },
+      sendToWhatsApp: true,
+      isRelevant: false,
+      preOrderId: preOrderResult.preOrderId
+    });
   }
   
   private async processGeminiResponse(response: any): Promise<any[]> {
+    logger.debug('=== processGeminiResponse DEBUG ===');
     const responses: any[] = [];
     
     // Verificar estructura de respuesta válida
     if (!response?.candidates?.[0]?.content?.parts) {
       logger.error('Estructura de respuesta inválida de Gemini API');
+      logger.debug('Response structure:', {
+        hasCandidate: !!response?.candidates?.[0],
+        hasContent: !!response?.candidates?.[0]?.content,
+        hasParts: !!response?.candidates?.[0]?.content?.parts
+      });
       return [{
         text: "Error: Respuesta inválida del modelo",
         isRelevant: true
       }];
     }
     
+    const parts = response.candidates[0].content.parts;
+    logger.debug(`Processing ${parts.length} parts from response`);
+    
     // Procesar cada parte de la respuesta
-    for (const part of response.candidates[0].content.parts) {
+    for (const part of parts) {
+      const partInfo = {
+        hasText: !!part.text,
+        hasFunctionCall: !!part.functionCall,
+        functionName: part.functionCall?.name
+      };
+      logger.debug(`Processing part: ${JSON.stringify(partInfo)}`);
+      
       if (part.text) {
         // Respuesta de texto simple
+        logger.debug('Text response:', part.text);
         responses.push({
           text: part.text,
           isRelevant: true,
         });
       } else if (part.functionCall) {
         // Procesar function calls
+        const functionInfo = {
+          name: part.functionCall.name,
+          args: part.functionCall.args
+        };
+        logger.debug(`Function call: ${JSON.stringify(functionInfo, null, 2)}`);
+        
         const functionResponse = await this.handleFunctionCall(
           part.functionCall.name,
           part.functionCall.args
@@ -158,24 +219,33 @@ export class TextMessageStrategy extends MessageStrategy {
         if (functionResponse) {
           // Si la función retorna un array (múltiples mensajes), agregar todos
           if (Array.isArray(functionResponse)) {
+            logger.debug(`Function returned ${functionResponse.length} responses`);
             responses.push(...functionResponse);
           } else {
+            logger.debug('Function returned single response');
             responses.push(functionResponse);
           }
         }
       }
     }
     
+    logger.debug(`Total responses processed: ${responses.length}`);
+    logger.debug('=== End processGeminiResponse DEBUG ===');
+    
     return responses;
   }
   
   private async handleFunctionCall(name: string, args: any): Promise<any | null> {
-    logger.debug(`Procesando function call: ${name}`, args);
+    logger.debug('=== handleFunctionCall DEBUG ===');
+    logger.debug(`Function name: ${name}`);
+    logger.debug('Function args:', JSON.stringify(args, null, 2));
+    
+    let result: any = null;
     
     switch (name) {
       case "map_order_items":
         // Procesar mapeo de items del pedido
-        return {
+        result = {
           preprocessedContent: {
             orderItems: args.orderItems || [],
             orderType: args.orderType || 'pickup',
@@ -183,11 +253,12 @@ export class TextMessageStrategy extends MessageStrategy {
             scheduledDeliveryTime: args.scheduledDeliveryTime
           }
         };
+        break;
         
       case "send_menu":
         // Enviar menú
         try {
-          const { MenuService } = await import('../../../orders/menu.service');
+          const { MenuService } = await import('../../../orders/MenuService');
           const menuService = new MenuService();
           const menu = await menuService.getMenuForAI();
           const menuText = String(menu);
@@ -198,30 +269,34 @@ export class TextMessageStrategy extends MessageStrategy {
             const parts = this.splitMenuIntelligently(menuText, maxLength);
             logger.debug(`Menú dividido en ${parts.length} partes`);
             // Retornar múltiples respuestas
-            return parts.map((part, index) => ({
+            result = parts.map((part, index) => ({
               text: part,
               isRelevant: true,
               // Agregar indicador de continuación si no es la última parte
               ...(index < parts.length - 1 && { continuationIndicator: true })
             }));
+          } else {
+            result = {
+              text: menuText,
+              isRelevant: true
+            };
           }
-          
-          return {
-            text: menuText,
-            isRelevant: true
-          };
         } catch (error) {
           logger.error('Error obteniendo menú:', error);
-          return {
+          result = {
             text: "Lo siento, no pude obtener el menú en este momento.",
             isRelevant: true
           };
         }
+        break;
         
       default:
         logger.warn(`Function call no reconocido: ${name}`);
-        return null;
     }
+    
+    logger.debug('Function call result:', JSON.stringify(result, null, 2));
+    logger.debug('=== End handleFunctionCall DEBUG ===');
+    return result;
   }
   
   private splitMenuIntelligently(text: string, maxLength: number): string[] {

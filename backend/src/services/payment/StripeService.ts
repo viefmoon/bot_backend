@@ -11,20 +11,31 @@ import { prisma } from '../../server';
 export class StripeService {
   private static stripe: Stripe | null = null;
   private static webhookSecret: string = '';
+  private static initialized = false;
 
   /**
-   * Initialize Stripe client
+   * Initialize Stripe client (lazy initialization)
    */
-  static {
-    const stripeKey = env.STRIPE_SECRET_KEY;
-    if (stripeKey) {
-      this.stripe = new Stripe(stripeKey, {
-        apiVersion: '2024-10-28.acacia'
-      });
-      this.webhookSecret = env.STRIPE_WEBHOOK_SECRET || '';
-      logger.info('Stripe service initialized');
-    } else {
-      logger.warn('Stripe service not configured - missing STRIPE_SECRET_KEY');
+  private static initialize(): void {
+    if (this.initialized) {
+      return;
+    }
+
+    try {
+      const stripeKey = env.STRIPE_SECRET_KEY;
+      if (stripeKey) {
+        this.stripe = new Stripe(stripeKey, {
+          apiVersion: '2024-10-28.acacia'
+        });
+        this.webhookSecret = env.STRIPE_WEBHOOK_SECRET || '';
+        logger.info('Stripe service initialized');
+      } else {
+        logger.warn('Stripe service not configured - missing STRIPE_SECRET_KEY');
+      }
+    } catch (error) {
+      logger.error('Failed to initialize Stripe service:', error);
+    } finally {
+      this.initialized = true;
     }
   }
 
@@ -32,6 +43,7 @@ export class StripeService {
    * Check if Stripe is configured
    */
   static isConfigured(): boolean {
+    this.initialize();
     return this.stripe !== null;
   }
 
@@ -39,6 +51,8 @@ export class StripeService {
    * Handle Stripe webhook
    */
   static async handleWebhook(req: Request, res: Response): Promise<void> {
+    this.initialize();
+    
     if (!this.stripe) {
       logger.warn('Stripe webhook called but Stripe is not configured');
       res.status(503).json({ error: 'Stripe service unavailable' });
@@ -118,6 +132,8 @@ export class StripeService {
     amount: number, 
     customerPhone: string
   ): Promise<Stripe.Checkout.Session> {
+    this.initialize();
+    
     if (!this.stripe) {
       throw new ExternalServiceError(
         ErrorCode.STRIPE_ERROR,
@@ -165,6 +181,8 @@ export class StripeService {
    * Get checkout session by ID
    */
   static async getCheckoutSession(sessionId: string): Promise<Stripe.Checkout.Session | null> {
+    this.initialize();
+    
     if (!this.stripe) {
       throw new ExternalServiceError(
         ErrorCode.STRIPE_ERROR,
@@ -186,6 +204,8 @@ export class StripeService {
    * Cancel payment intent
    */
   static async cancelPaymentIntent(paymentIntentId: string): Promise<void> {
+    this.initialize();
+    
     if (!this.stripe) {
       throw new ExternalServiceError(
         ErrorCode.STRIPE_ERROR,

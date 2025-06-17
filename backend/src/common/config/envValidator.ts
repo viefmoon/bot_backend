@@ -37,11 +37,14 @@ class EnvironmentValidator {
   ];
 
   validate(): void {
+    logger.info('Starting environment validation...');
     const missingVars: string[] = [];
     
     for (const varName of this.requiredVars) {
       if (!process.env[varName]) {
         missingVars.push(varName);
+      } else {
+        logger.debug(`Environment variable ${varName}: ${varName.includes('KEY') || varName.includes('TOKEN') ? '[REDACTED]' : process.env[varName]}`);
       }
     }
     

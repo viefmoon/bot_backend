@@ -5,10 +5,9 @@ const logger = winston.createLogger({
   level: env.NODE_ENV === 'production' ? 'info' : 'debug',
   format: winston.format.combine(
     winston.format.timestamp(),
-    winston.format.json(), // Agregar formato JSON
     winston.format.printf(({ timestamp, level, message, ...meta }) => {
       // Helper function to safely stringify objects with circular references
-      const safeStringify = (obj: any): string => {
+      const safeStringify = (obj: any, indent = 0): string => {
         const seen = new WeakSet();
         return JSON.stringify(obj, (key, value) => {
           if (typeof value === 'object' && value !== null) {
@@ -18,16 +17,16 @@ const logger = winston.createLogger({
             seen.add(value);
           }
           return value;
-        });
+        }, indent);
       };
       
       // Si el mensaje es un objeto, convertirlo a string
       const formattedMessage = typeof message === 'object' 
-        ? safeStringify(message)
-        : message;
+        ? safeStringify(message, 2)
+        : String(message);
       
       // Si hay metadata adicional, incluirla en el log
-      const metadata = Object.keys(meta).length ? ` ${safeStringify(meta)}` : '';
+      const metadata = Object.keys(meta).length ? `\n${safeStringify(meta, 2)}` : '';
       
       return `${timestamp} [${level}]: ${formattedMessage}${metadata}`;
     })

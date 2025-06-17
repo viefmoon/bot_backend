@@ -22,7 +22,7 @@ export class DeliveryInfoService {
       throw new ValidationError(
         ErrorCode.MISSING_DELIVERY_INFO,
         'Customer delivery information not found',
-        { customerId }
+        { metadata: { customerId } }
       );
     }
 
@@ -49,7 +49,7 @@ export class DeliveryInfoService {
         throw new ValidationError(
           ErrorCode.MISSING_DELIVERY_INFO,
           'Street address is required for delivery orders',
-          { customerId, orderType }
+          { metadata: { customerId, orderType } }
         );
       }
     } else if (orderType === "pickup") {
@@ -62,7 +62,7 @@ export class DeliveryInfoService {
         throw new ValidationError(
           ErrorCode.MISSING_REQUIRED_FIELD,
           'Pickup name is required for pickup orders',
-          { customerId, orderType }
+          { metadata: { customerId, orderType } }
         );
       }
     }
@@ -92,14 +92,14 @@ export class DeliveryInfoService {
       throw new ValidationError(
         ErrorCode.ORDER_NOT_FOUND,
         'PreOrder not found',
-        { preOrderId }
+        { metadata: { preOrderId } }
       );
     }
 
-    if (preOrder.deliveryInfoId && preOrder.deliveryInfo) {
+    if (preOrder.deliveryInfo && preOrder.deliveryInfo.length > 0 && preOrder.deliveryInfo[0].id) {
       // Update existing delivery info
       await prisma.orderDeliveryInfo.update({
-        where: { id: preOrder.deliveryInfoId },
+        where: { id: preOrder.deliveryInfo[0].id },
         data: deliveryInfo
       });
     } else {
@@ -110,7 +110,11 @@ export class DeliveryInfoService {
 
       await prisma.preOrder.update({
         where: { id: preOrderId },
-        data: { deliveryInfoId: newDeliveryInfo.id }
+        data: {
+          deliveryInfo: {
+            connect: { id: newDeliveryInfo.id }
+          }
+        }
       });
     }
 
@@ -148,15 +152,11 @@ export class DeliveryInfoService {
         data
       });
       
-      logger.info(`Created customer delivery info for customer ${data.customerId}`);
+      logger.info(`Created customer delivery info for customer ${deliveryInfo.customerId}`);
       return deliveryInfo;
     } catch (error) {
       logger.error('Error creating customer delivery info:', error);
-      throw new ValidationError(
-        ErrorCode.DATABASE_ERROR,
-        'Failed to create customer delivery info',
-        { customerId: data.customerId }
-      );
+      throw new ValidationError(ErrorCode.DATABASE_ERROR, 'Failed to create customer delivery info', { metadata: { error: error.message } });
     }
   }
 
@@ -178,9 +178,9 @@ export class DeliveryInfoService {
     } catch (error: any) {
       if (error.code === 'P2025') {
         throw new NotFoundError(
-          ErrorCode.CUSTOMER_NOT_FOUND,
+          ErrorCode.ORDER_NOT_FOUND,
           'Customer delivery info not found',
-          { customerId }
+          { metadata: { customerId } }
         );
       }
       
@@ -188,7 +188,7 @@ export class DeliveryInfoService {
       throw new ValidationError(
         ErrorCode.DATABASE_ERROR,
         'Failed to update customer delivery info',
-        { customerId }
+        { metadata: { customerId } }
       );
     }
   }
@@ -206,9 +206,9 @@ export class DeliveryInfoService {
       
       if (!deliveryInfo) {
         throw new NotFoundError(
-          ErrorCode.CUSTOMER_NOT_FOUND,
+          ErrorCode.ORDER_NOT_FOUND,
           'Customer delivery info not found',
-          { customerId }
+          { metadata: { customerId } }
         );
       }
       
@@ -222,7 +222,7 @@ export class DeliveryInfoService {
       throw new ValidationError(
         ErrorCode.DATABASE_ERROR,
         'Failed to fetch customer delivery info',
-        { customerId }
+        { metadata: { customerId } }
       );
     }
   }

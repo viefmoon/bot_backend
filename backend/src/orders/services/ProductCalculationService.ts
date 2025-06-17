@@ -39,11 +39,7 @@ export class ProductCalculationService {
       });
 
       if (!product) {
-        throw new ValidationError(
-          ErrorCode.INVALID_PRODUCT,
-          `Product not found: ${item.productId}`,
-          { productId: item.productId }
-        );
+        throw new ValidationError(ErrorCode.INVALID_PRODUCT, `Product not found: ${item.productId}`, { metadata: { productId: item.productId } });
       }
     }
 
@@ -54,11 +50,7 @@ export class ProductCalculationService {
       });
 
       if (!productVariant) {
-        throw new ValidationError(
-          ErrorCode.INVALID_PRODUCT,
-          `Product variant not found: ${item.productVariantId}`,
-          { productVariantId: item.productVariantId }
-        );
+        throw new ValidationError(ErrorCode.INVALID_PRODUCT, `Product variant not found: ${item.productVariantId}`, { metadata: { productVariantId: item.productVariantId } });
       }
 
       product = productVariant.product;
@@ -69,7 +61,7 @@ export class ProductCalculationService {
       throw new ValidationError(
         ErrorCode.INVALID_PRODUCT,
         'Either productId or productVariantId must be provided',
-        { item }
+        { metadata: { item } }
       );
     }
 
@@ -124,7 +116,7 @@ export class ProductCalculationService {
       throw new ValidationError(
         ErrorCode.INVALID_PRODUCT,
         `Modifiers not found: ${notFoundIds.join(', ')}`,
-        { notFoundIds, productId }
+        { metadata: { notFoundIds, productId } }
       );
     }
 
@@ -144,19 +136,11 @@ export class ProductCalculationService {
     // Validate modifier selection rules
     for (const { type, modifiers: typeModifiers } of Object.values(modifiersByType)) {
       if (type.required && typeModifiers.length === 0) {
-        throw new ValidationError(
-          ErrorCode.INVALID_PRODUCT,
-          `Required modifier type ${type.name} must have at least one selection`,
-          { modifierTypeName: type.name }
-        );
+        throw new ValidationError(ErrorCode.INVALID_PRODUCT, `Required modifier type ${type.name} must have at least one selection`, { metadata: { modifierTypeName: type.name } });
       }
 
       if (!type.acceptsMultiple && typeModifiers.length > 1) {
-        throw new ValidationError(
-          ErrorCode.INVALID_PRODUCT,
-          `Modifier type ${type.name} only accepts one selection`,
-          { modifierTypeName: type.name, selectedCount: typeModifiers.length }
-        );
+        throw new ValidationError(ErrorCode.INVALID_PRODUCT, `Modifier type ${type.name} only accepts one selection`, { metadata: { modifierTypeName: type.name, selectedCount: typeModifiers.length } });
       }
     }
 
@@ -199,7 +183,7 @@ export class ProductCalculationService {
       throw new ValidationError(
         ErrorCode.INVALID_PRODUCT,
         `Pizza ingredients not found: ${notFoundIds.join(', ')}`,
-        { notFoundIds, productId }
+        { metadata: { notFoundIds, productId } }
       );
     }
 

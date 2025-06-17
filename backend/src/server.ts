@@ -5,7 +5,7 @@ import webhookRoutes from './routes/webhook';
 import logger from './common/utils/logger';
 import { OTPService } from './services/security/OTPService';
 import { PreOrderService } from './orders/PreOrderService';
-import { WhatsAppService } from './services/communication/WhatsAppService';
+import { WhatsAppService } from './services/whatsapp';
 import { DeliveryInfoService } from './orders/services/DeliveryInfoService';
 import { envValidator, env } from './common/config/envValidator';
 
@@ -108,19 +108,19 @@ app.put('/backend/customer-delivery-info/:customerId', async (req: Request, res:
   }
 });
 
-const getCustomerDeliveryInfo = async (req: Request, res: Response) => {
+const getCustomerDeliveryInfo = async (req: Request, res: Response): Promise<void> => {
   try {
     const { customerId } = req.params;
     const deliveryInfo = await DeliveryInfoService.getCustomerDeliveryInfo(customerId);
-    return res.json(deliveryInfo);
+    res.json(deliveryInfo);
   } catch (error: any) {
     logger.error('Error fetching delivery info:', error);
     if (error.code === 'CUSTOMER_NOT_FOUND') {
-      return res.status(404).json({ error: error.message });
+      res.status(404).json({ error: error.message });
     } else if (error.code) {
-      return res.status(400).json({ error: error.message });
+      res.status(400).json({ error: error.message });
     } else {
-      return res.status(500).json({ error: 'Internal server error' });
+      res.status(500).json({ error: 'Internal server error' });
     }
   }
 };
@@ -128,11 +128,11 @@ const getCustomerDeliveryInfo = async (req: Request, res: Response) => {
 app.get('/backend/customer-delivery-info/:customerId', getCustomerDeliveryInfo);
 
 // Pre-orders endpoint
-app.post('/backend/pre-orders/select-products', async (req, res) => {
+app.post('/backend/pre-orders/select-products', async (req: Request, res: Response) => {
   try {
     const preOrderService = new PreOrderService();
     const result = await preOrderService.selectProducts(req.body);
-    res.status(result.status).json(result.json);
+    res.status(200).json(result);
   } catch (error) {
     logger.error('Error creating pre-order:', error);
     res.status(500).json({ error: 'Internal server error' });

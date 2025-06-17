@@ -1,4 +1,4 @@
-import { GoogleGenerativeAI, GenerativeModel, Content } from '@google/generative-ai';
+import { GoogleGenAI } from '@google/genai';
 import { env } from '../../common/config/envValidator';
 import logger from '../../common/utils/logger';
 import { ValidationError, ErrorCode } from '../../common/services/errors';
@@ -8,50 +8,18 @@ import { ValidationError, ErrorCode } from '../../common/services/errors';
  * Maneja la configuración, el cliente y las operaciones comunes
  */
 export class GeminiService {
-  private static instance: GoogleGenerativeAI | null = null;
-  private static modelCache: Map<string, GenerativeModel> = new Map();
+  private static instance: GoogleGenAI | null = null;
 
   /**
    * Obtiene la instancia singleton del cliente de Gemini
    */
-  static getClient(): GoogleGenerativeAI {
+  static getClient(): GoogleGenAI {
     if (!this.instance) {
-      this.instance = new GoogleGenerativeAI(env.GOOGLE_AI_API_KEY);
+      this.instance = new GoogleGenAI({ apiKey: env.GOOGLE_AI_API_KEY });
       logger.info('GeminiService: Cliente inicializado');
+      logger.info(`GeminiService: Using model ${env.GEMINI_MODEL}`);
     }
     return this.instance;
-  }
-
-  /**
-   * Obtiene un modelo de Gemini con configuración específica
-   * Usa caché para evitar recrear modelos idénticos
-   */
-  static getModel(config?: {
-    model?: string;
-    systemInstruction?: string;
-    generationConfig?: any;
-    tools?: any[];
-  }): GenerativeModel {
-    const modelName = config?.model || env.GEMINI_MODEL;
-    const cacheKey = JSON.stringify(config || { model: modelName });
-
-    // Verificar caché
-    if (this.modelCache.has(cacheKey)) {
-      return this.modelCache.get(cacheKey)!;
-    }
-
-    // Crear nuevo modelo
-    const client = this.getClient();
-    const model = client.getGenerativeModel({
-      model: modelName,
-      systemInstruction: config?.systemInstruction,
-      generationConfig: config?.generationConfig,
-      tools: config?.tools,
-    });
-
-    // Guardar en caché
-    this.modelCache.set(cacheKey, model);
-    return model;
   }
 
   /**
@@ -59,10 +27,22 @@ export class GeminiService {
    */
   static async generateText(prompt: string, systemInstruction?: string): Promise<string> {
     try {
-      const model = this.getModel({ systemInstruction });
-      const result = await model.generateContent(prompt);
-      const response = result.response;
-      return response.text() || '';
+      logger.debug('=== GeminiService.generateText DEBUG ===');
+      logger.debug(`Prompt: ${prompt}`);
+      logger.debug(`System Instruction: ${systemInstruction || 'None'}`);
+      
+      const client = this.getClient();
+      const response = await client.models.generateContent({
+        model: env.GEMINI_MODEL,
+        contents: prompt,
+        config: systemInstruction ? { systemInstruction } : undefined,
+      });
+      
+      logger.debug('Response:', JSON.stringify(response, null, 2));
+      logger.debug(`Extracted text: ${response.text || 'No text in response'}`);
+      logger.debug('=== End DEBUG ===');
+      
+      return response.text || '';
     } catch (error) {
       logger.error('GeminiService: Error generando texto', error);
       throw error;
@@ -73,16 +53,39 @@ export class GeminiService {
    * Genera contenido con historial de conversación
    */
   static async generateContentWithHistory(
-    messages: Content[],
+    messages: any[],
     systemInstruction?: string,
     tools?: any[]
   ): Promise<any> {
     try {
-      const model = this.getModel({ systemInstruction, tools });
-      const result = await model.generateContent({
+      logger.debug('=== GeminiService.generateContentWithHistory DEBUG ===');
+      logger.debug(`Model: ${env.GEMINI_MODEL}`);
+      logger.debug(`System Instruction: ${systemInstruction || 'None'}`);
+      logger.debug(`Number of messages: ${messages.length}`);
+      logger.debug(`Messages: ${JSON.stringify(messages, null, 2)}`);
+      logger.debug(`Tools provided: ${tools ? tools.map(t => t.name).join(', ') : 'None'}`);
+      
+      const client = this.getClient();
+      const response = await client.models.generateContent({
+        model: env.GEMINI_MODEL,
         contents: messages,
+        config: {
+          systemInstruction,
+          tools: tools ? [{ functionDeclarations: tools }] : undefined,
+        },
       });
-      return result.response;
+      
+      const responseStructure = {
+        candidates: response.candidates?.length || 0,
+        hasText: !!response.text,
+        text: response.text || 'No text',
+        functionCalls: response.candidates?.[0]?.content?.parts?.filter((p: any) => p.functionCall)?.map((p: any) => p.functionCall.name) || []
+      };
+      logger.debug(`Response structure: ${JSON.stringify(responseStructure, null, 2)}`);
+      logger.debug(`Full response: ${JSON.stringify(response, null, 2)}`);
+      logger.debug('=== End DEBUG ===');
+      
+      return response;
     } catch (error) {
       logger.error('GeminiService: Error generando contenido con historial', error);
       throw error;
@@ -97,24 +100,45 @@ export class GeminiService {
     mimeType: string
   ): Promise<string> {
     try {
-      const model = this.getModel();
+      logger.debug('=== GeminiService.transcribeAudio DEBUG ===');
+      logger.debug(`MimeType: ${mimeType}`);
+      logger.debug(`Audio data length: ${audioData.length}`);
+      
+      const client = this.getClient();
       
       const prompt = `Transcribe el siguiente audio a texto. 
       Si el audio no es claro o no se puede entender, responde con "ERROR_TRANSCRIPTION".
       Si el audio está en otro idioma que no sea español, tradúcelo al español.
       Solo devuelve el texto transcrito, sin explicaciones adicionales.`;
 
-      const result = await model.generateContent([
-        prompt,
+      const contents = [
         {
-          inlineData: {
-            mimeType,
-            data: audioData,
-          },
+          role: "user",
+          parts: [
+            { text: prompt },
+            {
+              inlineData: {
+                mimeType,
+                data: audioData,
+              },
+            },
+          ],
         },
-      ]);
+      ];
+      
+      logger.debug('Contents structure:', JSON.stringify({
+        role: contents[0].role,
+        parts: contents[0].parts.map(p => p.text ? 'text' : 'inlineData')
+      }, null, 2));
 
-      const transcription = result.response.text().trim();
+      const response = await client.models.generateContent({
+        model: env.GEMINI_MODEL,
+        contents,
+      });
+
+      const transcription = response.text?.trim() || '';
+      logger.debug(`Transcription result: ${transcription}`);
+      logger.debug('=== End DEBUG ===');
       
       if (!transcription || transcription === 'ERROR_TRANSCRIPTION' || transcription.length < 2) {
         throw new ValidationError(
@@ -132,10 +156,21 @@ export class GeminiService {
   }
 
   /**
-   * Limpia la caché de modelos
+   * Crea una sesión de chat con historial
    */
-  static clearCache(): void {
-    this.modelCache.clear();
-    logger.info('GeminiService: Caché de modelos limpiada');
+  static createChat(config?: {
+    history?: any[];
+    systemInstruction?: string;
+    tools?: any[];
+  }) {
+    const client = this.getClient();
+    return client.chats.create({
+      model: env.GEMINI_MODEL,
+      history: config?.history || [],
+      config: {
+        systemInstruction: config?.systemInstruction,
+        tools: config?.tools ? [{ functionDeclarations: config.tools }] : undefined,
+      },
+    });
   }
 }
