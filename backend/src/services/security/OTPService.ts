@@ -11,7 +11,6 @@ export class OTPService {
   private static cleanupInterval: NodeJS.Timeout | null = null;
   private static readonly MAX_OTP_ENTRIES = 10000;
   private static readonly OTP_EXPIRY_MINUTES = 10;
-  private static readonly ADDRESS_OTP_EXPIRY_MINUTES = 10; // Mismo tiempo para todos los OTP
 
   /**
    * Generate a new OTP code
@@ -29,11 +28,10 @@ export class OTPService {
       this.cleanupOldestEntries();
     }
 
-    const expiryMinutes = isAddressRegistration ? this.ADDRESS_OTP_EXPIRY_MINUTES : this.OTP_EXPIRY_MINUTES;
-    const expires = new Date(Date.now() + expiryMinutes * 60 * 1000);
+    const expires = new Date(Date.now() + this.OTP_EXPIRY_MINUTES * 60 * 1000);
     this.otpStore.set(customerId, { code: otp, expires });
     
-    logger.info(`OTP stored for customer ${customerId} (expires at ${expires.toISOString()}) - Type: ${isAddressRegistration ? 'Address Registration' : 'Standard'}`);
+    logger.info(`OTP stored for customer ${customerId} (expires at ${expires.toISOString()})`);
   }
 
   /**
