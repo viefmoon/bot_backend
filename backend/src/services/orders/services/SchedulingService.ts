@@ -1,6 +1,6 @@
-import { RestaurantService } from "../../services/restaurant/RestaurantService";
-import { ValidationError, ErrorCode } from "../../common/services/errors";
-import logger from "../../common/utils/logger";
+import { RestaurantService } from "../../restaurant/RestaurantService";
+import { ValidationError, ErrorCode } from "../../../common/services/errors";
+import logger from "../../../common/utils/logger";
 
 export class SchedulingService {
   /**

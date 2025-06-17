@@ -1,6 +1,6 @@
 /**
  * Central type export file
- * All shared types should be imported from here
+ * All common types should be imported from here
  */
 
 // Order types
@@ -19,8 +19,7 @@ export * from './webhook.types';
 
 // Response types are now in messaging/types/responses
 
-// Agent types
-export * from './agents';
+// Agent types removed - using unified agent now
 
 // Service types
 export * from './services.types';

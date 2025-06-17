@@ -1,10 +1,10 @@
 import { prisma } from "../../../server";
 import logger from "../../../common/utils/logger";
 import { sendWhatsAppMessage, WhatsAppService } from "../../../services/whatsapp";
-import { PreOrderService } from "../../../orders/PreOrderService";
+import { PreOrderService } from "../../../services/orders/PreOrderService";
 import { generateOrderSummary } from "./orderFormatters";
 import { ErrorService, BusinessLogicError, ValidationError, ErrorCode } from "../../../common/services/errors";
-import { OrderManagementService } from "../../../orders/services/OrderManagementService";
+import { OrderManagementService } from "../../../services/orders/services/OrderManagementService";
 
 // Crear una preorden con los productos seleccionados
 export async function createPreOrderAndSendSummary(

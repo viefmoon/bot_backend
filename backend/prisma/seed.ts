@@ -55,8 +55,7 @@ async function main() {
         [20.5320, -102.8690]   // Cierre del polígono
       ],
       centerLatitude: 20.5280,
-      centerLongitude: -102.8690,
-      maxDeliveryRadius: 5.0
+      centerLongitude: -102.8690
     }
   });
 

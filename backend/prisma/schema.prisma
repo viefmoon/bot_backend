@@ -249,7 +249,6 @@ model RestaurantConfig {
   deliveryCoverageArea  Json?              // Polígono de cobertura - Array de coordenadas [lat, lng]
   centerLatitude        Float?             // Centro del área de servicio (para mostrar en mapas)
   centerLongitude       Float?
-  maxDeliveryRadius     Float?             @default(5.0) // Radio máximo de entrega en kilómetros
 }
 
 model BusinessHours {

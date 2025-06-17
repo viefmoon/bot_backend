@@ -1,5 +1,5 @@
 import { Order, OrderItem, OrderType } from "@prisma/client";
-import { NewOrder } from "../../common/types/order.types";
+import { NewOrder } from "../../../common/types/order.types";
 
 export class OrderFormattingService {
   /**

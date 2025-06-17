@@ -1,7 +1,7 @@
 import { MessageStrategy } from './MessageStrategy';
 import { MessageContext } from '../MessageContext';
-import { AgentService, ContextType } from '../../ai';
-import { PreOrderService } from '../../../orders/PreOrderService';
+import { AgentService } from '../../ai';
+import { PreOrderService } from '../../../services/orders/PreOrderService';
 import { sendWhatsAppMessage } from '../../whatsapp';
 import logger from '../../../common/utils/logger';
 
@@ -57,10 +57,7 @@ export class TextMessageStrategy extends MessageStrategy {
       
       logger.debug(`Messages to send to AI: ${JSON.stringify(messages, null, 2)}`);
       
-      const response = await AgentService.processMessage(
-        messages,
-        ContextType.GENERAL_CHAT
-      );
+      const response = await AgentService.processMessage(messages);
       
       logger.debug(`Raw AI response: ${JSON.stringify(response, null, 2)}`);
       
@@ -130,7 +127,7 @@ export class TextMessageStrategy extends MessageStrategy {
     
     // Generate order summary
     const { generateOrderSummary } = await import('../../../whatsapp/handlers/orders/orderFormatters');
-    const orderSummary = await generateOrderSummary(preOrderResult.preOrderId);
+    const orderSummary = generateOrderSummary(preOrderResult.preOrderId);
     
     // Send order summary
     await sendWhatsAppMessage(context.message.from, orderSummary);
@@ -258,9 +255,8 @@ export class TextMessageStrategy extends MessageStrategy {
       case "send_menu":
         // Enviar menú
         try {
-          const { MenuService } = await import('../../../orders/MenuService');
-          const menuService = new MenuService();
-          const menu = await menuService.getMenuForAI();
+          const { ProductService } = await import('../../products/ProductService');
+          const menu = await ProductService.getActiveProducts({ formatForAI: true });
           const menuText = String(menu);
           
           // Si el menú es muy largo, dividirlo en partes
@@ -285,6 +281,37 @@ export class TextMessageStrategy extends MessageStrategy {
           logger.error('Error obteniendo menú:', error);
           result = {
             text: "Lo siento, no pude obtener el menú en este momento.",
+            isRelevant: true
+          };
+        }
+        break;
+        
+      case "get_business_hours":
+        // Obtener horario de atención
+        try {
+          const { RestaurantService } = await import('../../../services/restaurant/RestaurantService');
+          const businessHours = await RestaurantService.getAllBusinessHours();
+          
+          const daysOfWeek = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
+          let hoursText = "🕐 *Horario de Atención*\n\n";
+          
+          for (const hours of businessHours) {
+            const day = daysOfWeek[hours.dayOfWeek];
+            if (hours.isClosed) {
+              hoursText += `${day}: Cerrado\n`;
+            } else {
+              hoursText += `${day}: ${hours.openingTime} - ${hours.closingTime}\n`;
+            }
+          }
+          
+          result = {
+            text: hoursText.trim(),
+            isRelevant: true
+          };
+        } catch (error) {
+          logger.error('Error obteniendo horario:', error);
+          result = {
+            text: "Lo siento, no pude obtener el horario de atención en este momento.",
             isRelevant: true
           };
         }

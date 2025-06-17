@@ -1,8 +1,8 @@
 import { prisma } from "../../../server";
 import logger from "../../../common/utils/logger";
 import { sendWhatsAppMessage, WhatsAppService } from "../../../services/whatsapp";
-import { OrderManagementService } from "../../../orders/services/OrderManagementService";
-import { OrderFormattingService } from "../../../orders/services/OrderFormattingService";
+import { OrderManagementService } from "../../../services/orders/services/OrderManagementService";
+import { OrderFormattingService } from "../../../services/orders/services/OrderFormattingService";
 import { ErrorService, BusinessLogicError, ErrorCode } from "../../../common/services/errors";
 
 // Crear la orden en el sistema
@@ -149,7 +149,7 @@ async function sendActionButtonsForOrder(
               type: "reply",
               reply: {
                 id: "online_payment",
-                title: "💳 Pagar en línea",
+                title: "💳 Generar enlace de pago",
               },
             },
           ],

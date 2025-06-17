@@ -15,7 +15,7 @@ import {
   CHATBOT_HELP_MESSAGE,
   CHANGE_DELIVERY_INFO_MESSAGE,
 } from "../../common/config/predefinedMessages";
-import { MenuService } from "../../orders/MenuService";
+import { ProductService } from "../../services/products/ProductService";
 import logger from "../../common/utils/logger";
 import { getCurrentMexicoTime } from "../../common/utils/timeUtils";
 import { env } from "../../common/config/envValidator";
@@ -27,7 +27,7 @@ const stripeClient = env.STRIPE_SECRET_KEY
     })
   : null;
 
-const menuService = new MenuService();
+// ProductService uses static methods, no need to instantiate
 
 const BUTTON_ACTIONS = {
   confirm_order: handlePreOrderConfirmation,
@@ -246,7 +246,7 @@ async function handleOnlinePayment(
 
 async function sendMenu(phoneNumber: string): Promise<boolean> {
   try {
-    const fullMenu = await menuService.getMenuForAI();
+    const fullMenu = await ProductService.getActiveProducts({ formatForAI: true });
     // La utilidad messageSender se encarga de dividir mensajes largos automáticamente
     const success = await sendWhatsAppMessage(phoneNumber, String(fullMenu));
     return success;

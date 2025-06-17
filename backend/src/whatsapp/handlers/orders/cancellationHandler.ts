@@ -1,6 +1,6 @@
 import { sendWhatsAppMessage } from "../../../services/whatsapp";
 import { ErrorService } from "../../../common/services/errors";
-import { OrderManagementService } from "../../../orders/services/OrderManagementService";
+import { OrderManagementService } from "../../../services/orders/services/OrderManagementService";
 import {
   ORDER_NOT_FOUND_MESSAGE,
   ORDER_CANNOT_BE_CANCELLED_MESSAGE,

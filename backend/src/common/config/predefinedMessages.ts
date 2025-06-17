@@ -111,7 +111,7 @@ Usa la opción en el mensaje de confirmación, solo si aún no lo hemos aceptado
 Disponible en las opciones del mensaje de confirmación, solo se puede cancelar si aún no hemos aceptado el pedido.
 
 💳 *Pagar:*
-Genera un enlace de pago desde las opciones del mensaje de confirmación.
+Genera un enlace de pago desde las opciones del mensaje de confirmación. Si no pagas en línea, el pago se realizará en efectivo al momento de la entrega.
 
 🔁 *Reordenar:*
 Selecciona 'Reordenar' en el mensaje de bienvenida para ver tus últimas 3 órdenes y poder reordenar con solo un click.

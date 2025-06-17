@@ -8,30 +8,18 @@ interface Content {
 }
 
 /**
- * Define los tipos de contexto para diferentes operaciones
- */
-export enum ContextType {
-  GENERAL_CHAT = 'GENERAL_CHAT',
-  ORDER_PROCESSING = 'ORDER_PROCESSING',
-  MENU_QUERY = 'MENU_QUERY',
-}
-
-/**
- * Servicio simplificado para manejar diferentes contextos de conversación
- * Reemplaza el sistema complejo de múltiples agentes
+ * Servicio unificado de AI para manejar todas las conversaciones
  */
 export class AgentService {
   /**
-   * Procesa mensajes según el contexto
+   * Procesa mensajes con el asistente unificado
    */
   static async processMessage(
     messages: Content[],
-    contextType: ContextType = ContextType.GENERAL_CHAT,
     additionalContext?: any
   ): Promise<any> {
     try {
       logger.debug('=== AgentService.processMessage DEBUG ===');
-      logger.debug(`Context Type: ${contextType}`);
       logger.debug(`Additional Context: ${additionalContext ? JSON.stringify(additionalContext, null, 2) : 'None'}`);
       logger.debug(`Number of messages: ${messages.length}`);
       
@@ -48,12 +36,12 @@ export class AgentService {
         logger.debug(`Message ${index + 1}: ${JSON.stringify(messageData, null, 2)}`);
       });
       
-      // Obtener instrucciones del sistema según el contexto
-      const systemInstruction = await this.getSystemInstruction(contextType, additionalContext);
+      // Obtener instrucciones del sistema
+      const systemInstruction = await this.getSystemInstruction(additionalContext);
       logger.debug(`System Instruction: ${systemInstruction}`);
       
-      // Obtener herramientas según el contexto
-      const tools = this.getToolsForContext(contextType);
+      // Obtener herramientas disponibles
+      const tools = this.getTools();
       const toolsInfo = tools.map(t => ({ name: t.name, description: t.description }));
       logger.debug(`Tools: ${JSON.stringify(toolsInfo, null, 2)}`);
       
@@ -68,133 +56,129 @@ export class AgentService {
       
       return response;
     } catch (error) {
-      logger.error(`AgentService: Error procesando mensaje con contexto ${contextType}`, error);
+      logger.error('AgentService: Error procesando mensaje', error);
       throw error;
     }
   }
   
   /**
-   * Obtiene las instrucciones del sistema según el contexto
+   * Obtiene las instrucciones del sistema
    */
   private static async getSystemInstruction(
-    contextType: ContextType,
     additionalContext?: any
   ): Promise<string> {
-    const baseInstructions = {
-      [ContextType.GENERAL_CHAT]: `
-        Eres un asistente amigable para una pizzería.
-        Tu objetivo es ayudar a los clientes con sus pedidos y consultas.
-        Siempre responde en español de manera cordial y profesional.
-        Si el cliente quiere hacer un pedido, usa las herramientas disponibles.
-      `,
-      
-      [ContextType.ORDER_PROCESSING]: `
-        Eres un especialista en procesar pedidos de pizzería.
-        Debes extraer la información del pedido y mapearla a los productos del menú.
-        Sé preciso con las cantidades y especificaciones.
-        ${additionalContext?.menuInfo || ''}
-      `,
-      
-      [ContextType.MENU_QUERY]: `
-        Eres un experto en el menú de la pizzería.
-        Responde preguntas sobre productos, precios e ingredientes.
-        Sugiere productos según las preferencias del cliente.
-        ${additionalContext?.menuInfo || ''}
-      `,
-    };
+    // Obtener el menú para incluirlo en las instrucciones
+    let menuInfo = '';
+    if (additionalContext?.menuInfo) {
+      menuInfo = additionalContext.menuInfo;
+    } else {
+      try {
+        const { ProductService } = await import('../products/ProductService');
+        const menu = await ProductService.getActiveProducts({ formatForAI: true });
+        menuInfo = String(menu);
+      } catch (error) {
+        logger.error('Error obteniendo menú para instrucciones:', error);
+      }
+    }
     
-    return baseInstructions[contextType] || baseInstructions[ContextType.GENERAL_CHAT];
+    return `
+      Eres un asistente completo para una pizzería que puede:
+      1. Responder preguntas generales de manera amigable
+      2. Procesar pedidos de comida
+      3. Proporcionar información sobre el menú
+      4. Mostrar el horario de atención del negocio
+      
+      IMPORTANTE:
+      - Siempre responde en español de manera cordial y profesional
+      - Cuando un cliente quiera ordenar, usa la herramienta map_order_items
+      - Sé preciso con las cantidades y especificaciones
+      - Si no entiendes algo, pregunta para clarificar
+      - Confirma siempre los detalles del pedido antes de procesarlo
+      
+      MENÚ DISPONIBLE:
+      ${menuInfo}
+      
+      Cuando proceses un pedido:
+      - Mapea correctamente los items solicitados a los productId y variantId del menú
+      - Si un producto no está claro, sugiere opciones similares
+      - Incluye comentarios especiales del cliente
+      - Determina si es para entrega (delivery) o recoger (pickup)
+    `;
   }
   
   /**
-   * Obtiene las herramientas según el contexto
+   * Obtiene todas las herramientas disponibles
    */
-  private static getToolsForContext(contextType: ContextType): any[] {
-    switch (contextType) {
-      case ContextType.GENERAL_CHAT:
-        // Herramientas para chat general
-        return [
-          {
-            name: "send_menu",
-            description: "Envía el menú completo al usuario",
-            parameters: {
-              type: "object",
-              properties: {}
-            }
-          },
-          {
-            name: "route_to_agent",
-            description: "Redirige la conversación a un agente especializado",
-            parameters: {
-              type: "object",
-              properties: {
-                targetAgent: {
-                  type: "string",
-                  enum: ["ORDER_MAPPER_AGENT", "QUERY_AGENT"],
-                  description: "Agente objetivo"
-                },
-                conversationSummary: {
-                  type: "string",
-                  description: "Resumen de la conversación"
-                }
-              },
-              required: ["targetAgent", "conversationSummary"]
-            }
-          }
-        ];
-        break;
-        
-      case ContextType.ORDER_PROCESSING:
-        // Herramientas para procesamiento de pedidos
-        return [
-          {
-            name: "map_order_items",
-            description: "Mapea los items del pedido a productos del menú",
-            parameters: {
-              type: "object",
-              properties: {
-                orderItems: {
-                  type: "array",
-                  items: {
-                    type: "object",
-                    properties: {
-                      productId: { type: "string" },
-                      variantId: { type: "string" },
-                      quantity: { type: "number" },
-                      comments: { type: "string" }
-                    }
+  private static getTools(): any[] {
+    // Todas las herramientas disponibles para el asistente unificado
+    return [
+      {
+        name: "send_menu",
+        description: "Envía el menú completo al usuario cuando lo solicite",
+        parameters: {
+          type: "object",
+          properties: {}
+        }
+      },
+      {
+        name: "map_order_items",
+        description: "Procesa y mapea los items del pedido a productos del menú",
+        parameters: {
+          type: "object",
+          properties: {
+            orderItems: {
+              type: "array",
+              items: {
+                type: "object",
+                properties: {
+                  productId: { 
+                    type: "string",
+                    description: "ID del producto del menú"
+                  },
+                  variantId: { 
+                    type: "string",
+                    description: "ID de la variante (tamaño/tipo)"
+                  },
+                  quantity: { 
+                    type: "number",
+                    description: "Cantidad a ordenar"
+                  },
+                  comments: { 
+                    type: "string",
+                    description: "Comentarios especiales del cliente"
                   }
                 },
-                orderType: {
-                  type: "string",
-                  enum: ["delivery", "pickup"]
-                },
-                warnings: {
-                  type: "array",
-                  items: { type: "string" }
-                }
+                required: ["productId", "quantity"]
               },
-              required: ["orderItems", "orderType"]
+              description: "Lista de productos a ordenar"
+            },
+            orderType: {
+              type: "string",
+              enum: ["delivery", "pickup"],
+              description: "Tipo de pedido: entrega a domicilio o recoger en tienda"
+            },
+            warnings: {
+              type: "array",
+              items: { type: "string" },
+              description: "Advertencias o aclaraciones sobre el pedido"
+            },
+            scheduledDeliveryTime: {
+              type: "string",
+              description: "Hora programada para entrega/recogida (opcional)"
             }
-          }
-        ];
-        
-      case ContextType.MENU_QUERY:
-        // Herramientas para consultas del menú
-        return [
-          {
-            name: "send_menu",
-            description: "Envía el menú completo al usuario",
-            parameters: {
-              type: "object",
-              properties: {}
-            }
-          }
-        ];
-        
-      default:
-        return [];
-    }
+          },
+          required: ["orderItems", "orderType"]
+        }
+      },
+      {
+        name: "get_business_hours",
+        description: "Obtiene el horario de atención del negocio",
+        parameters: {
+          type: "object",
+          properties: {}
+        }
+      }
+    ];
   }
   
   /**
@@ -214,7 +198,6 @@ export class AgentService {
     
     return this.processMessage(
       messages,
-      ContextType.ORDER_PROCESSING,
       { menuInfo }
     );
   }

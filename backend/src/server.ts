@@ -4,9 +4,9 @@ import { PrismaClient } from '@prisma/client';
 import webhookRoutes from './routes/webhook';
 import logger from './common/utils/logger';
 import { OTPService } from './services/security/OTPService';
-import { PreOrderService } from './orders/PreOrderService';
+import { PreOrderService } from './services/orders/PreOrderService';
 import { WhatsAppService } from './services/whatsapp';
-import { DeliveryInfoService } from './orders/services/DeliveryInfoService';
+import { DeliveryInfoService } from './services/orders/services/DeliveryInfoService';
 import { envValidator, env } from './common/config/envValidator';
 
 // Validate environment variables

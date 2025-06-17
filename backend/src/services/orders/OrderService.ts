@@ -1,7 +1,7 @@
-import { prisma } from '../server';
+import { prisma } from '../../server';
 import { CreateOrderDto } from './dto/create-order.dto';
-import logger from '../common/utils/logger';
-import { NotFoundError, ErrorCode } from '../common/services/errors';
+import logger from '../../common/utils/logger';
+import { NotFoundError, ErrorCode } from '../../common/services/errors';
 
 export class OrderService {
   async create(createOrderDto: CreateOrderDto) {

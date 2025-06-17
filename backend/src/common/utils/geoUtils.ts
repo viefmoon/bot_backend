@@ -24,32 +24,6 @@ export function isPointInPolygon(point: [number, number], polygon: [number, numb
   return inside;
 }
 
-/**
- * Calcula la distancia entre dos puntos usando la fórmula Haversine
- * @param lat1 Latitud del primer punto
- * @param lon1 Longitud del primer punto
- * @param lat2 Latitud del segundo punto
- * @param lon2 Longitud del segundo punto
- * @returns Distancia en kilómetros
- */
-export function calculateDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
-  const R = 6371; // Radio de la Tierra en kilómetros
-  const dLat = toRad(lat2 - lat1);
-  const dLon = toRad(lon2 - lon1);
-  
-  const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-    Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) *
-    Math.sin(dLon / 2) * Math.sin(dLon / 2);
-  
-  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-  const distance = R * c;
-  
-  return distance;
-}
-
-function toRad(degrees: number): number {
-  return degrees * (Math.PI / 180);
-}
 
 /**
  * Verifica si una ubicación está dentro del área de cobertura del restaurante
@@ -67,16 +41,6 @@ export async function isWithinDeliveryArea(latitude: number, longitude: number):
       return isPointInPolygon([latitude, longitude], polygon);
     }
     
-    // Si no hay polígono pero hay centro y radio, usar distancia
-    if (config.centerLatitude && config.centerLongitude && config.maxDeliveryRadius) {
-      const distance = calculateDistance(
-        latitude, 
-        longitude, 
-        config.centerLatitude, 
-        config.centerLongitude
-      );
-      return distance <= config.maxDeliveryRadius;
-    }
     
     // Si no hay configuración de área, aceptar todas las direcciones
     logger.warn('No delivery area configuration found, accepting all addresses');
@@ -93,25 +57,21 @@ export async function isWithinDeliveryArea(latitude: number, longitude: number):
  */
 export async function getDeliveryAreaInfo(): Promise<{
   hasPolygon: boolean;
-  hasRadius: boolean;
   polygon?: [number, number][];
   center?: { lat: number; lng: number };
-  radius?: number;
 }> {
   try {
     const config = await RestaurantService.getConfig();
     
     return {
       hasPolygon: !!config.deliveryCoverageArea,
-      hasRadius: !!(config.centerLatitude && config.centerLongitude && config.maxDeliveryRadius),
       polygon: config.deliveryCoverageArea as [number, number][] | undefined,
       center: config.centerLatitude && config.centerLongitude 
         ? { lat: config.centerLatitude, lng: config.centerLongitude }
-        : undefined,
-      radius: config.maxDeliveryRadius || undefined
+        : undefined
     };
   } catch (error) {
     logger.error('Error getting delivery area info:', error);
-    return { hasPolygon: false, hasRadius: false };
+    return { hasPolygon: false };
   }
 }

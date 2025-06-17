@@ -3,7 +3,7 @@ import { sendWhatsAppMessage } from "../../../services/whatsapp";
 import { OTPService } from "../../../services/security/OTPService";
 import { env } from "../../../common/config/envValidator";
 import { ErrorService, BusinessLogicError, ErrorCode } from "../../../common/services/errors";
-import { OrderManagementService } from "../../../orders/services/OrderManagementService";
+import { OrderManagementService } from "../../../services/orders/services/OrderManagementService";
 
 export async function handleOrderModification(
   from: string,

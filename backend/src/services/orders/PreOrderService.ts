@@ -1,10 +1,10 @@
-import { prisma } from "../server";
-import logger from "../common/utils/logger";
+import { prisma } from "../../server";
+import logger from "../../common/utils/logger";
 import { SchedulingService } from "./services/SchedulingService";
 import { ProductCalculationService } from "./services/ProductCalculationService";
 import { DeliveryInfoService } from "./services/DeliveryInfoService";
-import { RestaurantService } from "../services/restaurant/RestaurantService";
-import { NotFoundError, ErrorCode } from "../common/services/errors";
+import { RestaurantService } from "../restaurant/RestaurantService";
+import { NotFoundError, ErrorCode } from "../../common/services/errors";
 import { OrderType } from "@prisma/client";
 
 export class PreOrderService {
