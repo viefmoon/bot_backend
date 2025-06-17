@@ -10,7 +10,8 @@ export class OTPService {
   private static otpStore = new Map<string, { code: string; expires: Date }>();
   private static cleanupInterval: NodeJS.Timeout | null = null;
   private static readonly MAX_OTP_ENTRIES = 10000;
-  private static readonly OTP_EXPIRY_MINUTES = 5;
+  private static readonly OTP_EXPIRY_MINUTES = 10;
+  private static readonly ADDRESS_OTP_EXPIRY_MINUTES = 10; // Mismo tiempo para todos los OTP
 
   /**
    * Generate a new OTP code
@@ -22,16 +23,17 @@ export class OTPService {
   /**
    * Store an OTP for a customer
    */
-  static storeOTP(customerId: string, otp: string): void {
+  static storeOTP(customerId: string, otp: string, isAddressRegistration: boolean = false): void {
     // Check store size limit
     if (this.otpStore.size >= this.MAX_OTP_ENTRIES) {
       this.cleanupOldestEntries();
     }
 
-    const expires = new Date(Date.now() + this.OTP_EXPIRY_MINUTES * 60 * 1000);
+    const expiryMinutes = isAddressRegistration ? this.ADDRESS_OTP_EXPIRY_MINUTES : this.OTP_EXPIRY_MINUTES;
+    const expires = new Date(Date.now() + expiryMinutes * 60 * 1000);
     this.otpStore.set(customerId, { code: otp, expires });
     
-    logger.info(`OTP stored for customer ${customerId} (expires at ${expires.toISOString()})`);
+    logger.info(`OTP stored for customer ${customerId} (expires at ${expires.toISOString()}) - Type: ${isAddressRegistration ? 'Address Registration' : 'Standard'}`);
   }
 
   /**
@@ -58,6 +60,14 @@ export class OTPService {
    */
   static async verifyOTP(customerId: string, code: string): Promise<boolean> {
     try {
+      logger.info(`Verifying OTP for customer ${customerId}, code: ${code}`);
+      
+      // Log all stored OTPs for debugging
+      logger.debug(`Current OTP store size: ${this.otpStore.size}`);
+      for (const [key, value] of this.otpStore.entries()) {
+        logger.debug(`Stored OTP - Customer: ${key}, Code: ${value.code}, Expires: ${value.expires.toISOString()}`);
+      }
+      
       const storedOTP = this.otpStore.get(customerId);
       
       if (!storedOTP) {
@@ -68,18 +78,18 @@ export class OTPService {
       // Check if expired
       if (new Date() > storedOTP.expires) {
         this.otpStore.delete(customerId);
-        logger.warn(`OTP expired for customer ${customerId}`);
+        logger.warn(`OTP expired for customer ${customerId} - Expired at: ${storedOTP.expires.toISOString()}, Current time: ${new Date().toISOString()}`);
         return false;
       }
 
       // Verify code
       if (storedOTP.code === code) {
-        this.otpStore.delete(customerId); // Remove after successful verification
+        // Don't delete immediately for address registration - allow multiple verifications
         logger.info(`OTP verified successfully for customer ${customerId}`);
         return true;
       }
 
-      logger.warn(`Invalid OTP attempt for customer ${customerId}`);
+      logger.warn(`Invalid OTP attempt for customer ${customerId} - Expected: ${storedOTP.code}, Received: ${code}`);
       return false;
     } catch (error) {
       logger.error('Error verifying OTP:', error);

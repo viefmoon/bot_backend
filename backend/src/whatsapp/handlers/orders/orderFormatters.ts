@@ -88,12 +88,20 @@ export function generateOrderSummary(result: any): string {
   }
   
   if (result.orderType === "delivery" && result.deliveryInfo) {
-    message += `📍 *Dirección de entrega:*\n${result.deliveryInfo.streetAddress}\n`;
+    // Combine street, number and interior number
+    let fullAddress = result.deliveryInfo.street || "";
+    if (result.deliveryInfo.number) {
+      fullAddress += ` ${result.deliveryInfo.number}`;
+    }
+    if (result.deliveryInfo.interiorNumber) {
+      fullAddress += ` Int. ${result.deliveryInfo.interiorNumber}`;
+    }
+    message += `📍 *Dirección de entrega:*\n${fullAddress}\n`;
     if (result.deliveryInfo.neighborhood) {
       message += `Colonia: ${result.deliveryInfo.neighborhood}\n`;
     }
-    if (result.deliveryInfo.additionalDetails) {
-      message += `Referencias: ${result.deliveryInfo.additionalDetails}\n`;
+    if (result.deliveryInfo.references) {
+      message += `Referencias: ${result.deliveryInfo.references}\n`;
     }
     message += "\n";
   }

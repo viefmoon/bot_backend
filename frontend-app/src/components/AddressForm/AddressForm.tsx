@@ -3,29 +3,34 @@ import { useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from 'yup';
 import { Input } from '@/components/ui';
-import type { AddressFormData, CustomerDeliveryInfo } from '@/types/customer.types';
+import type { AddressFormData } from '@/types/customer.types';
 
 const schema = yup.object({
-  pickupName: yup.string().required('El nombre del cliente es obligatorio'),
-  streetAddress: yup.string().required('La dirección es obligatoria'),
-  additionalDetails: yup.string().nullable(),
+  street: yup.string().required('La calle es obligatoria'),
+  number: yup.string().required('El número es obligatorio'),
+  interiorNumber: yup.string().nullable(),
+  references: yup.string().nullable(),
   neighborhood: yup.string().nullable(),
-  postalCode: yup.string().nullable(),
+  zipCode: yup.string().nullable(),
   city: yup.string().nullable(),
   state: yup.string().nullable(),
   country: yup.string().nullable(),
+  latitude: yup.number().required('La ubicación es obligatoria'),
+  longitude: yup.number().required('La ubicación es obligatoria'),
 });
 
 interface AddressFormProps {
   formData: AddressFormData;
-  onSubmit: (data: CustomerDeliveryInfo) => Promise<void>;
+  onSubmit: (data: AddressFormData) => Promise<void>;
   errors?: Record<string, string>;
+  isUpdating?: boolean;
 }
 
 export const AddressForm: React.FC<AddressFormProps> = ({ 
   formData, 
   onSubmit,
-  errors: externalErrors = {} 
+  errors: externalErrors = {},
+  isUpdating = false
 }) => {
   const {
     register,
@@ -45,97 +50,137 @@ export const AddressForm: React.FC<AddressFormProps> = ({
     });
   }, [formData, setValue]);
 
-  const onFormSubmit = (data: AddressFormData) => {
-    const deliveryInfo: CustomerDeliveryInfo = {
-      ...data,
-      latitude: data.latitude ? parseFloat(data.latitude) : undefined,
-      longitude: data.longitude ? parseFloat(data.longitude) : undefined,
-    };
-    onSubmit(deliveryInfo);
-  };
-
   const fieldTranslations = {
-    streetAddress: 'Dirección',
+    street: 'Calle',
+    number: 'Número',
+    interiorNumber: 'Número interior',
     neighborhood: 'Colonia',
-    postalCode: 'Código postal',
+    zipCode: 'Código postal',
     city: 'Ciudad',
     state: 'Estado',
     country: 'País',
+    references: 'Referencias',
   };
 
   return (
-    <form onSubmit={handleSubmit(onFormSubmit)} className="space-y-2 bg-white p-2 rounded-lg shadow-md">
-      <div className="grid grid-cols-1 gap-1">
-        {/* Nombre del cliente */}
-        <Input
-          label="Nombre del cliente"
-          {...register('pickupName')}
-          error={errors.pickupName?.message || externalErrors.pickupName}
-          required
-          placeholder="Ej: Juan Pérez"
-        />
-
-        {/* Dirección completa */}
-        <div>
-          <Input
-            label={fieldTranslations.streetAddress}
-            {...register('streetAddress')}
-            error={errors.streetAddress?.message || externalErrors.streetAddress}
-            required
-            placeholder="Ej: Av. Principal 123"
-            hint="Importante: Incluya la orientación de la calle si aplica (ej. Norte, Sur, etc.)"
-          />
+    <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+      {/* Dirección principal */}
+      <div className="space-y-4">
+        <h3 className="text-sm font-semibold text-gray-700 flex items-center">
+          <svg className="w-4 h-4 mr-2 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+          </svg>
+          Dirección Principal
+        </h3>
+        
+        <div className="grid grid-cols-3 gap-3">
+          <div className="col-span-2">
+            <Input
+              label={fieldTranslations.street}
+              {...register('street')}
+              error={errors.street?.message || externalErrors.street}
+              required
+              placeholder="Ej: Av. Principal"
+            />
+          </div>
+          <div>
+            <Input
+              label={fieldTranslations.number}
+              {...register('number')}
+              error={errors.number?.message || externalErrors.number}
+              required
+              placeholder="123"
+            />
+          </div>
         </div>
 
-        {/* Detalles adicionales */}
-        <Input
-          label="Detalles adicionales"
-          {...register('additionalDetails')}
-          error={errors.additionalDetails?.message}
-          as="textarea"
-          rows={2}
-          placeholder="ej. entre calles, puntos de referencia"
-          hint="Agregue información extra para ubicar su dirección más fácilmente"
-        />
+        <div className="grid grid-cols-2 gap-3">
+          <Input
+            label={fieldTranslations.interiorNumber}
+            {...register('interiorNumber')}
+            error={errors.interiorNumber?.message}
+            placeholder="Depto 4B (Opcional)"
+          />
+        </div>
+      </div>
 
-        {/* Campos de ubicación */}
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-1">
+      {/* Referencias */}
+      <div className="space-y-4">
+        <h3 className="text-sm font-semibold text-gray-700 flex items-center">
+          <svg className="w-4 h-4 mr-2 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          Referencias
+        </h3>
+        
+        <Input
+          label=""
+          {...register('references')}
+          error={errors.references?.message}
+          as="textarea"
+          rows={3}
+          placeholder="Entre calles, puntos de referencia, color de la casa, etc."
+          className="resize-none"
+        />
+      </div>
+
+      {/* Información adicional */}
+      <div className="space-y-4">
+        <h3 className="text-sm font-semibold text-gray-700 flex items-center">
+          <svg className="w-4 h-4 mr-2 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+          </svg>
+          Información Geográfica
+        </h3>
+        
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
           <Input
             label={fieldTranslations.neighborhood}
             {...register('neighborhood')}
             readOnly
-            className="bg-gray-100"
+            className="bg-gray-50 cursor-not-allowed"
           />
           <Input
-            label={fieldTranslations.postalCode}
-            {...register('postalCode')}
+            label={fieldTranslations.zipCode}
+            {...register('zipCode')}
             readOnly
-            className="bg-gray-100"
+            className="bg-gray-50 cursor-not-allowed"
           />
           <Input
             label={fieldTranslations.city}
             {...register('city')}
             readOnly
-            className="bg-gray-100"
+            className="bg-gray-50 cursor-not-allowed"
           />
           <Input
             label={fieldTranslations.state}
             {...register('state')}
             readOnly
-            className="bg-gray-100"
+            className="bg-gray-50 cursor-not-allowed"
           />
           <Input
             label={fieldTranslations.country}
             {...register('country')}
             readOnly
-            className="bg-gray-100"
+            className="bg-gray-50 cursor-not-allowed"
           />
         </div>
 
-        {/* Hidden fields for coordinates */}
-        <input type="hidden" {...register('latitude')} />
-        <input type="hidden" {...register('longitude')} />
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+          <p className="text-xs text-blue-700 flex items-start">
+            <svg className="w-4 h-4 mr-1 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+              <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+            </svg>
+            Esta información se completa automáticamente al seleccionar tu ubicación en el mapa.
+          </p>
+        </div>
       </div>
+
+      {/* Hidden fields for coordinates */}
+      <input type="hidden" {...register('latitude')} />
+      <input type="hidden" {...register('longitude')} />
+      <input type="hidden" {...register('geocodedAddress')} />
     </form>
   );
 };

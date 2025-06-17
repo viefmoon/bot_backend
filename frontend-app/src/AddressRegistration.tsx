@@ -1,23 +1,19 @@
 import { useState, useEffect } from 'react';
-import { useSearchParams } from 'react-router-dom';
-import { useLoadScript, Autocomplete } from '@react-google-maps/api';
+import { useParams, useSearchParams } from 'react-router-dom';
 import toast, { Toaster } from 'react-hot-toast';
 import { AddressForm } from '@/components/AddressForm';
-import { Map } from '@/components/Map';
-import { Button } from '@/components/ui';
+import { BasicMap } from '@/components/BasicMap';
 import customerService from '@/services/customer.service';
 import type { AddressFormData, Customer, Address } from '@/types/customer.types';
-
-const libraries: ('places' | 'geometry')[] = ['places', 'geometry'];
 
 interface Location {
   lat: number;
   lng: number;
 }
 
-function App() {
+function AddressRegistration() {
+  const { customerId } = useParams<{ customerId: string }>();
   const [searchParams] = useSearchParams();
-  const customerId = searchParams.get('from') || '';
   const otp = searchParams.get('otp') || '';
   const preOrderId = searchParams.get('preOrderId');
 
@@ -43,29 +39,41 @@ function App() {
   const [isUpdating, setIsUpdating] = useState(false);
   const [locationError, setLocationError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [autocomplete, setAutocomplete] = useState<google.maps.places.Autocomplete | null>(null);
-
-  const { isLoaded, loadError } = useLoadScript({
-    googleMapsApiKey: import.meta.env.VITE_GOOGLE_MAPS_API_KEY,
-    libraries,
-  });
-
-  const polygonCoords: Location[] = import.meta.env.VITE_POLYGON_COORDS 
-    ? JSON.parse(import.meta.env.VITE_POLYGON_COORDS)
-    : [];
+  const [hasVerified, setHasVerified] = useState(false);
+  const [polygonCoords, setPolygonCoords] = useState<Location[]>([]);
+  const [mapCenter, setMapCenter] = useState<Location>({ lat: 20.6597, lng: -103.3496 });
 
   useEffect(() => {
+    // Evitar doble verificación
+    if (hasVerified) return;
+    
     if (customerId && otp) {
+      setHasVerified(true);
       verifyOtp();
     } else {
       setLoading(false);
       toast.error('El enlace no es válido. Falta información necesaria.');
     }
-  }, [customerId, otp]);
+  }, [customerId, otp, hasVerified]);
+
+  // Load delivery area from backend
+  useEffect(() => {
+    const loadDeliveryArea = async () => {
+      const { polygonCoords: coords, center } = await customerService.getDeliveryArea();
+      if (coords && coords.length > 0) {
+        setPolygonCoords(coords);
+      }
+      if (center) {
+        setMapCenter(center);
+      }
+    };
+    
+    loadDeliveryArea();
+  }, []);
 
   const verifyOtp = async () => {
     try {
-      const response = await customerService.verifyOTP(customerId, otp);
+      const response = await customerService.verifyOTP(customerId!, otp);
       
       if (response.valid && response.customer) {
         setIsValidOtp(true);
@@ -120,7 +128,7 @@ function App() {
     setSelectedLocation(location);
     setLocationError(null);
     
-    // Reverse geocoding to get address details
+    // Reverse geocoding using Google
     const geocoder = new google.maps.Geocoder();
     geocoder.geocode({ location }, (results, status) => {
       if (status === 'OK' && results && results[0]) {
@@ -157,18 +165,6 @@ function App() {
     });
   };
 
-  const handlePlaceSelect = () => {
-    if (autocomplete) {
-      const place = autocomplete.getPlace();
-      if (place.geometry && place.geometry.location) {
-        const location = {
-          lat: place.geometry.location.lat(),
-          lng: place.geometry.location.lng(),
-        };
-        handleLocationSelect(location);
-      }
-    }
-  };
 
   const handleSubmit = async (data: AddressFormData) => {
     if (!selectedLocation) {
@@ -183,14 +179,14 @@ function App() {
         // Update existing address
         await customerService.updateAddress(
           selectedAddress.id,
-          customerId,
+          customerId!,
           otp,
           data
         );
         toast.success('¡Dirección actualizada exitosamente!');
       } else {
         // Create new address
-        await customerService.createAddress(customerId, otp, data);
+        await customerService.createAddress(customerId!, otp, data);
         toast.success('¡Dirección registrada exitosamente!');
       }
 
@@ -259,7 +255,7 @@ function App() {
           </p>
           <div className="mt-6">
             <a
-              href={`https://wa.me/${import.meta.env.VITE_WHATSAPP_NUMBER}`}
+              href={`https://wa.me/${import.meta.env.VITE_BOT_WHATSAPP_NUMBER}`}
               className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700"
             >
               Abrir WhatsApp
@@ -271,147 +267,132 @@ function App() {
     );
   }
 
-  if (loadError) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
-        <div className="text-center text-red-600">
-          Error al cargar Google Maps. Por favor, recarga la página.
-        </div>
-      </div>
-    );
-  }
-
-  if (!isLoaded) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Cargando mapa...</p>
-        </div>
-      </div>
-    );
-  }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="max-w-4xl mx-auto p-2">
-        <div className="bg-white rounded-lg shadow-lg p-4 mb-4">
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">
-            {isUpdating ? 'Actualizar dirección de entrega' : 'Registrar dirección de entrega'}
-          </h1>
-          
-          {customer && (
-            <p className="text-gray-600 mb-4">
-              Hola {customer.firstName || 'Cliente'}, por favor completa tu información de entrega.
-            </p>
-          )}
-
-          {/* Address Search */}
-          <div className="mb-4">
-            <Autocomplete
-              onLoad={setAutocomplete}
-              onPlaceChanged={handlePlaceSelect}
-              options={{
-                componentRestrictions: { country: 'mx' },
-                fields: ['address_components', 'geometry', 'formatted_address'],
-              }}
-            >
-              <input
-                type="text"
-                placeholder="Buscar dirección..."
-                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-              />
-            </Autocomplete>
-          </div>
-
-          {/* Use my location button */}
-          <div className="mb-4">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={handleUseMyLocation}
-              className="w-full sm:w-auto"
-            >
-              <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-              </svg>
-              Usar mi ubicación actual
-            </Button>
-          </div>
-
-          {/* Map */}
-          <div className="mb-4">
-            <Map
-              center={selectedLocation || { lat: 20.6597, lng: -103.3496 }}
-              onLocationSelect={handleLocationSelect}
-              selectedLocation={selectedLocation}
-              polygonCoords={polygonCoords}
-              onLocationError={setLocationError}
-            />
-            {locationError && (
-              <p className="mt-2 text-sm text-red-600">{locationError}</p>
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+      <div className="max-w-4xl mx-auto p-2 sm:p-4">
+        <div className="bg-white rounded-xl sm:rounded-2xl shadow-xl overflow-hidden">
+          <div className="bg-gradient-to-r from-blue-600 to-indigo-600 p-4 sm:p-6 text-white">
+            <h1 className="text-xl sm:text-2xl md:text-3xl font-bold mb-2">
+              {isUpdating ? '📍 Actualizar Dirección' : '📍 Registrar Dirección de Entrega'}
+            </h1>
+            {customer && (
+              <p className="text-sm sm:text-base text-blue-100">
+                ¡Hola {customer.firstName || 'Cliente'}! Por favor completa tu información de entrega.
+              </p>
             )}
           </div>
+          
+          <div className="p-4 sm:p-6">
 
-          {/* Address Form */}
-          <AddressForm
-            formData={formData}
-            onSubmit={handleSubmit}
-            isUpdating={isUpdating}
-          />
-
-          {/* Submit Button */}
-          <div className="mt-4">
-            <Button
-              type="submit"
-              onClick={() => handleSubmit(formData)}
-              disabled={isSubmitting || !selectedLocation}
-              loading={isSubmitting}
-              className="w-full"
-            >
-              {isSubmitting 
-                ? 'Guardando...' 
-                : isUpdating 
-                  ? 'Actualizar dirección' 
-                  : 'Registrar dirección'
-              }
-            </Button>
-          </div>
-
-          {/* List existing addresses if any */}
-          {customer && customer.addresses.length > 0 && !isUpdating && (
-            <div className="mt-6 border-t pt-4">
-              <h3 className="text-lg font-semibold mb-2">Mis direcciones guardadas</h3>
-              <div className="space-y-2">
-                {customer.addresses.map((address) => (
-                  <div 
-                    key={address.id} 
-                    className="p-3 border rounded-md hover:bg-gray-50 cursor-pointer"
-                    onClick={() => loadExistingAddress(address)}
-                  >
-                    <div className="flex justify-between items-start">
-                      <div>
-                        <p className="font-medium">
-                          {address.street} {address.number}
-                          {address.interiorNumber && ` Int. ${address.interiorNumber}`}
-                        </p>
-                        <p className="text-sm text-gray-600">
-                          {address.neighborhood && `${address.neighborhood}, `}
-                          {address.city}, {address.state}
-                        </p>
-                      </div>
-                      {address.isDefault && (
-                        <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded">
-                          Principal
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                ))}
-              </div>
+            {/* Use my location button */}
+            <div className="mb-4 sm:mb-6">
+              <button
+                type="button"
+                onClick={handleUseMyLocation}
+                className="w-full sm:w-auto bg-white border-2 border-blue-500 text-blue-600 font-medium sm:font-semibold py-2.5 sm:py-3 px-4 sm:px-6 rounded-lg hover:bg-blue-50 transition duration-200 flex items-center justify-center text-sm sm:text-base"
+              >
+                <svg className="w-4 h-4 sm:w-5 sm:h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                </svg>
+                Usar mi ubicación actual
+              </button>
             </div>
-          )}
+
+            {/* Map with Search */}
+            <div className="mb-4 sm:mb-6">
+              <BasicMap
+                center={selectedLocation || mapCenter}
+                onLocationSelect={handleLocationSelect}
+                selectedLocation={selectedLocation}
+                polygonCoords={polygonCoords}
+                onLocationError={setLocationError}
+              />
+              {locationError && (
+                <div className="mt-2 bg-red-50 border border-red-200 text-red-600 px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm">
+                  {locationError}
+                </div>
+              )}
+            </div>
+
+            {/* Address Form */}
+            <div className="bg-gray-50 rounded-lg p-4 sm:p-6 mb-4 sm:mb-6">
+              <h2 className="text-base sm:text-lg font-semibold text-gray-800 mb-3 sm:mb-4">Detalles de la dirección</h2>
+              <AddressForm
+                formData={formData}
+                onSubmit={handleSubmit}
+                isUpdating={isUpdating}
+              />
+            </div>
+
+            {/* Submit Button */}
+            <div className="mt-4 sm:mt-6">
+              <button
+                type="submit"
+                onClick={() => handleSubmit(formData)}
+                disabled={isSubmitting || !selectedLocation}
+                className={`w-full py-3 sm:py-4 px-4 sm:px-6 font-medium sm:font-semibold rounded-lg transition duration-200 text-sm sm:text-base ${
+                  isSubmitting || !selectedLocation
+                    ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                    : 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white hover:from-blue-700 hover:to-indigo-700'
+                }`}
+              >
+                {isSubmitting ? (
+                  <span className="flex items-center justify-center">
+                    <svg className="animate-spin -ml-1 mr-2 sm:mr-3 h-4 w-4 sm:h-5 sm:w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    Guardando...
+                  </span>
+                ) : (
+                  <span>
+                    {isUpdating ? 'Actualizar dirección' : 'Registrar dirección'}
+                  </span>
+                )}
+              </button>
+            </div>
+
+            {/* List existing addresses if any */}
+            {customer && customer.addresses.length > 0 && !isUpdating && (
+              <div className="mt-6 sm:mt-8 pt-4 sm:pt-6 border-t border-gray-200">
+                <h3 className="text-base sm:text-lg font-semibold text-gray-800 mb-3 sm:mb-4">📍 Mis direcciones guardadas</h3>
+                <div className="space-y-2 sm:space-y-3">
+                  {customer.addresses.map((address) => (
+                    <div 
+                      key={address.id} 
+                      className="group p-3 sm:p-4 bg-white border-2 border-gray-200 rounded-lg hover:border-blue-400 hover:shadow-md cursor-pointer transition duration-200"
+                      onClick={() => loadExistingAddress(address)}
+                    >
+                      <div className="flex justify-between items-start">
+                        <div className="flex-1 min-w-0">
+                          <p className="font-medium sm:font-semibold text-gray-800 group-hover:text-blue-600 text-sm sm:text-base truncate">
+                            {address.street} {address.number}
+                            {address.interiorNumber && ` Int. ${address.interiorNumber}`}
+                          </p>
+                          <p className="text-xs sm:text-sm text-gray-600 mt-1 truncate">
+                            {address.neighborhood && `${address.neighborhood}, `}
+                            {address.city}, {address.state}
+                          </p>
+                        </div>
+                        <div className="flex items-center space-x-1 sm:space-x-2 ml-2">
+                          {address.isDefault && (
+                            <span className="text-xs bg-green-100 text-green-700 px-2 sm:px-3 py-1 rounded-full font-medium whitespace-nowrap">
+                              Principal
+                            </span>
+                          )}
+                          <svg className="w-4 h-4 sm:w-5 sm:h-5 text-gray-400 group-hover:text-blue-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                          </svg>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
         </div>
       </div>
       <Toaster position="top-center" />
@@ -419,4 +400,4 @@ function App() {
   );
 }
 
-export default App;
+export default AddressRegistration;

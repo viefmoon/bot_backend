@@ -6,7 +6,7 @@ import {
 } from "./orderHandlers";
 
 import { prisma } from "../../server";
-import { sendWhatsAppMessage } from "../../services/whatsapp";
+import { sendWhatsAppMessage, sendMessageWithUrlButton } from "../../services/whatsapp";
 import Stripe from "stripe";
 import { OTPService } from "../../services/security/OTPService";
 import {
@@ -102,14 +102,20 @@ async function handlePreOrderDeliveryModification(
 
     // Generar OTP y crear el enlace
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
-    const updateLink = `${env.FRONTEND_BASE_URL}/delivery-info-registration/${customerId}?otp=${otp}&preOrderId=${preOrderId}`;
+    const updateLink = `${env.FRONTEND_BASE_URL}/address-registration/${customerId}?otp=${otp}&preOrderId=${preOrderId}`;
     
     // Store OTP for later verification
     OTPService.storeOTP(customerId, otp);
     
-    // Enviar el mensaje con el enlace
-    const message = CHANGE_DELIVERY_INFO_MESSAGE(updateLink);
-    await sendWhatsAppMessage(customerId, message);
+    // Enviar mensaje con botón URL
+    await sendMessageWithUrlButton(
+      customerId,
+      "🚚 Actualizar Dirección",
+      "Puedes actualizar tu información de entrega haciendo clic en el botón de abajo.\n\nTu pedido actual permanecerá sin cambios hasta que confirmes la nueva dirección.",
+      "Actualizar Dirección",
+      updateLink,
+      "Este enlace es válido por 15 minutos"
+    );
   } catch (error) {
     await ErrorService.handleAndSendError(error, from, {
       userId: from,
@@ -301,8 +307,16 @@ async function handleChatbotHelp(customerId: string): Promise<void> {
 
 async function handleChangeDeliveryInfo(from: string): Promise<void> {
   const otp = OTPService.generateOTP();
-  OTPService.storeOTP(from, otp);
-  const updateLink = `${env.FRONTEND_BASE_URL}/delivery-info-registration/${from}?otp=${otp}`;
-  const message = CHANGE_DELIVERY_INFO_MESSAGE(updateLink);
-  await sendWhatsAppMessage(from, message);
+  OTPService.storeOTP(from, otp, true); // true for address registration
+  const updateLink = `${env.FRONTEND_BASE_URL}/address-registration/${from}?otp=${otp}`;
+  
+  // Enviar mensaje con botón URL
+  await sendMessageWithUrlButton(
+    from,
+    "🚚 Actualizar Dirección",
+    "Puedes actualizar o agregar una nueva dirección de entrega haciendo clic en el botón de abajo.",
+    "Actualizar Dirección",
+    updateLink,
+    "Este enlace es válido por 15 minutos"
+  );
 }

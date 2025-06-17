@@ -25,12 +25,24 @@ CREATE TABLE "Category" (
 -- CreateTable
 CREATE TABLE "Customer" (
     "customerId" TEXT NOT NULL,
+    "localId" UUID,
+    "firstName" VARCHAR(100),
+    "lastName" VARCHAR(100),
+    "email" VARCHAR(255),
+    "birthDate" DATE,
     "fullChatHistory" JSONB,
     "relevantChatHistory" JSONB,
     "stripeCustomerId" TEXT,
     "lastInteraction" TIMESTAMP(3),
+    "totalOrders" INTEGER NOT NULL DEFAULT 0,
+    "totalSpent" DECIMAL(10,2) NOT NULL DEFAULT 0,
+    "isActive" BOOLEAN NOT NULL DEFAULT true,
     "isBanned" BOOLEAN NOT NULL DEFAULT false,
     "bannedAt" TIMESTAMP(3),
+    "banReason" TEXT,
+    "deletedAt" TIMESTAMP(3),
+    "lastSyncAt" TIMESTAMP(3),
+    "syncVersion" INTEGER NOT NULL DEFAULT 0,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
 
@@ -38,24 +50,28 @@ CREATE TABLE "Customer" (
 );
 
 -- CreateTable
-CREATE TABLE "CustomerDeliveryInfo" (
+CREATE TABLE "Address" (
     "id" SERIAL NOT NULL,
-    "customerId" TEXT NOT NULL,
-    "streetAddress" TEXT NOT NULL,
-    "neighborhood" TEXT NOT NULL,
-    "postalCode" TEXT NOT NULL,
-    "city" TEXT NOT NULL,
-    "state" TEXT NOT NULL,
-    "country" TEXT NOT NULL,
-    "latitude" DOUBLE PRECISION NOT NULL,
-    "longitude" DOUBLE PRECISION NOT NULL,
-    "pickupName" TEXT,
+    "localId" UUID,
+    "customer_id" TEXT NOT NULL,
+    "street" VARCHAR(200) NOT NULL,
+    "number" VARCHAR(50) NOT NULL,
+    "interiorNumber" VARCHAR(50),
+    "neighborhood" VARCHAR(150),
+    "city" VARCHAR(100),
+    "state" VARCHAR(100),
+    "zipCode" VARCHAR(10),
+    "country" VARCHAR(100),
+    "references" TEXT,
+    "latitude" DECIMAL(10,8),
+    "longitude" DECIMAL(11,8),
     "geocodedAddress" TEXT,
-    "additionalDetails" TEXT,
+    "isDefault" BOOLEAN NOT NULL DEFAULT false,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
+    "deletedAt" TIMESTAMP(3),
 
-    CONSTRAINT "CustomerDeliveryInfo_pkey" PRIMARY KEY ("id")
+    CONSTRAINT "Address_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
@@ -125,17 +141,19 @@ CREATE TABLE "Order" (
 -- CreateTable
 CREATE TABLE "OrderDeliveryInfo" (
     "id" SERIAL NOT NULL,
-    "streetAddress" TEXT,
-    "neighborhood" TEXT,
-    "postalCode" TEXT,
-    "city" TEXT,
-    "state" TEXT,
-    "country" TEXT,
-    "latitude" DOUBLE PRECISION,
-    "longitude" DOUBLE PRECISION,
-    "pickupName" TEXT,
+    "street" VARCHAR(200),
+    "number" VARCHAR(50),
+    "interiorNumber" VARCHAR(50),
+    "neighborhood" VARCHAR(150),
+    "city" VARCHAR(100),
+    "state" VARCHAR(100),
+    "zipCode" VARCHAR(10),
+    "country" VARCHAR(100),
+    "references" TEXT,
+    "latitude" DECIMAL(10,8),
+    "longitude" DECIMAL(11,8),
     "geocodedAddress" TEXT,
-    "additionalDetails" TEXT,
+    "pickupName" TEXT,
     "preOrderId" INTEGER,
     "orderId" INTEGER,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -214,11 +232,36 @@ CREATE TABLE "ProductVariant" (
 -- CreateTable
 CREATE TABLE "RestaurantConfig" (
     "id" SERIAL NOT NULL,
+    "restaurantName" TEXT NOT NULL DEFAULT 'La Leña',
+    "phoneMain" TEXT,
+    "phoneSecondary" TEXT,
+    "address" TEXT,
+    "city" TEXT,
+    "state" TEXT,
+    "postalCode" TEXT,
     "acceptingOrders" BOOLEAN NOT NULL DEFAULT true,
     "estimatedPickupTime" INTEGER NOT NULL DEFAULT 20,
     "estimatedDeliveryTime" INTEGER NOT NULL DEFAULT 40,
+    "openingGracePeriod" INTEGER NOT NULL DEFAULT 30,
+    "closingGracePeriod" INTEGER NOT NULL DEFAULT 30,
+    "timeZone" TEXT NOT NULL DEFAULT 'America/Mexico_City',
+    "deliveryCoverageArea" JSONB,
+    "centerLatitude" DOUBLE PRECISION,
+    "centerLongitude" DOUBLE PRECISION,
 
     CONSTRAINT "RestaurantConfig_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "BusinessHours" (
+    "id" SERIAL NOT NULL,
+    "dayOfWeek" INTEGER NOT NULL,
+    "openingTime" TEXT,
+    "closingTime" TEXT,
+    "isClosed" BOOLEAN NOT NULL DEFAULT false,
+    "restaurantConfigId" INTEGER NOT NULL,
+
+    CONSTRAINT "BusinessHours_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
@@ -259,6 +302,22 @@ CREATE TABLE "Subcategory" (
     CONSTRAINT "Subcategory_pkey" PRIMARY KEY ("id")
 );
 
+-- CreateTable
+CREATE TABLE "SyncLog" (
+    "id" SERIAL NOT NULL,
+    "entityType" TEXT NOT NULL,
+    "entityId" TEXT NOT NULL,
+    "localId" UUID,
+    "action" TEXT NOT NULL,
+    "syncDirection" TEXT NOT NULL,
+    "syncStatus" TEXT NOT NULL,
+    "errorMessage" TEXT,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "completedAt" TIMESTAMP(3),
+
+    CONSTRAINT "SyncLog_pkey" PRIMARY KEY ("id")
+);
+
 -- CreateIndex
 CREATE UNIQUE INDEX "Category_name_key" ON "Category"("name");
 
@@ -266,10 +325,31 @@ CREATE UNIQUE INDEX "Category_name_key" ON "Category"("name");
 CREATE UNIQUE INDEX "Customer_customerId_key" ON "Customer"("customerId");
 
 -- CreateIndex
+CREATE UNIQUE INDEX "Customer_localId_key" ON "Customer"("localId");
+
+-- CreateIndex
 CREATE UNIQUE INDEX "Customer_stripeCustomerId_key" ON "Customer"("stripeCustomerId");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "CustomerDeliveryInfo_customerId_key" ON "CustomerDeliveryInfo"("customerId");
+CREATE INDEX "Customer_localId_idx" ON "Customer"("localId");
+
+-- CreateIndex
+CREATE INDEX "Customer_email_idx" ON "Customer"("email");
+
+-- CreateIndex
+CREATE INDEX "Customer_lastSyncAt_idx" ON "Customer"("lastSyncAt");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "Address_localId_key" ON "Address"("localId");
+
+-- CreateIndex
+CREATE INDEX "Address_customer_id_idx" ON "Address"("customer_id");
+
+-- CreateIndex
+CREATE INDEX "Address_localId_idx" ON "Address"("localId");
+
+-- CreateIndex
+CREATE INDEX "Address_zipCode_idx" ON "Address"("zipCode");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "MessageLog_messageId_key" ON "MessageLog"("messageId");
@@ -281,10 +361,19 @@ CREATE UNIQUE INDEX "MessageRateLimit_customerId_key" ON "MessageRateLimit"("cus
 CREATE UNIQUE INDEX "OrderDeliveryInfo_orderId_key" ON "OrderDeliveryInfo"("orderId");
 
 -- CreateIndex
+CREATE UNIQUE INDEX "BusinessHours_restaurantConfigId_dayOfWeek_key" ON "BusinessHours"("restaurantConfigId", "dayOfWeek");
+
+-- CreateIndex
 CREATE UNIQUE INDEX "Subcategory_name_key" ON "Subcategory"("name");
 
+-- CreateIndex
+CREATE INDEX "SyncLog_entityType_entityId_idx" ON "SyncLog"("entityType", "entityId");
+
+-- CreateIndex
+CREATE INDEX "SyncLog_syncStatus_idx" ON "SyncLog"("syncStatus");
+
 -- AddForeignKey
-ALTER TABLE "CustomerDeliveryInfo" ADD CONSTRAINT "CustomerDeliveryInfo_customerId_fkey" FOREIGN KEY ("customerId") REFERENCES "Customer"("customerId") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "Address" ADD CONSTRAINT "Address_customer_id_fkey" FOREIGN KEY ("customer_id") REFERENCES "Customer"("customerId") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "Modifier" ADD CONSTRAINT "Modifier_modifierTypeId_fkey" FOREIGN KEY ("modifierTypeId") REFERENCES "ModifierType"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
@@ -315,6 +404,9 @@ ALTER TABLE "Product" ADD CONSTRAINT "Product_subcategoryId_fkey" FOREIGN KEY ("
 
 -- AddForeignKey
 ALTER TABLE "ProductVariant" ADD CONSTRAINT "ProductVariant_productId_fkey" FOREIGN KEY ("productId") REFERENCES "Product"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "BusinessHours" ADD CONSTRAINT "BusinessHours_restaurantConfigId_fkey" FOREIGN KEY ("restaurantConfigId") REFERENCES "RestaurantConfig"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "SelectedModifier" ADD CONSTRAINT "SelectedModifier_orderItemId_fkey" FOREIGN KEY ("orderItemId") REFERENCES "OrderItem"("id") ON DELETE RESTRICT ON UPDATE CASCADE;

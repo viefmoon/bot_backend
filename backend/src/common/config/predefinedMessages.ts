@@ -1,6 +1,27 @@
 import { prisma } from "../../server";
 import { RestaurantInfo } from "../types/restaurant";
 
+// Address registration messages
+export const ADDRESS_REGISTRATION_SUCCESS = (address: any): string => {
+  return `✅ *¡Dirección registrada exitosamente!*
+
+📍 *Tu dirección de entrega:*
+${address.street} ${address.number}${address.interiorNumber ? ` Int. ${address.interiorNumber}` : ''}
+${address.neighborhood ? `Col. ${address.neighborhood}\n` : ''}${address.city}, ${address.state}
+
+¡Ahora puedes realizar tu pedido! 
+
+Escribe *"menú"* para ver nuestros productos o simplemente dinos qué se te antoja hoy 🍕😊`;
+};
+
+export const ADDRESS_UPDATE_SUCCESS = (): string => {
+  return `✅ *¡Dirección actualizada correctamente!*
+
+Tu información de entrega ha sido actualizada exitosamente.
+
+¿Qué te gustaría ordenar hoy? 🍕`;
+};
+
 // Helper function to get restaurant config
 async function getRestaurantInfo(): Promise<RestaurantInfo> {
   const config = await prisma.restaurantConfig.findFirst();
@@ -125,8 +146,12 @@ Envía un mensaje a la vez y espera la respuesta antes del siguiente para evitar
 
 export const CHANGE_DELIVERY_INFO_MESSAGE = (updateLink: string) => `
 🚚 ¡Actualiza tu información de entrega! 📝
-🔗 Por favor, utiliza este enlace para hacer cambios: ${updateLink}
-⏳ ¡Ojo! Este enlace tiene validez limitada por motivos de seguridad. 🔒`;
+
+👇 *PRESIONA AQUÍ PARA ACTUALIZAR* 👇
+
+${updateLink}
+
+⏳ *Este enlace es válido por 15 minutos* 🔒`;
 
 export const RESTAURANT_NOT_ACCEPTING_ORDERS_MESSAGE = async () => {
   const config = await getRestaurantInfo();
@@ -160,9 +185,11 @@ export const DELIVERY_INFO_REGISTRATION_MESSAGE = (
 ) => `
 ¡Hola! 👋 Antes de continuar, necesitamos que registres tu información de entrega. 📝
 
-Por favor, usa este enlace: 🔗 ${registrationLink}
+👇 *PRESIONA AQUÍ PARA REGISTRARTE* 👇
 
-⚠️ Este enlace es válido por un tiempo limitado por razones de seguridad. 🔒
+${registrationLink}
+
+⚠️ *Este enlace es válido por 15 minutos* 🔒
 `;
 
 export const PAYMENT_CONFIRMATION_MESSAGE = (orderNumber: number) => `

@@ -21,7 +21,7 @@ The database uses Prisma ORM with the following main tables:
 - Product: Restaurant menu items
 - Order: Customer orders
 - PreOrder: Temporary cart items
-- CustomerDeliveryInfo: Delivery addresses
+- Address: Customer addresses
 
 ## API Endpoints
 

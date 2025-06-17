@@ -11,6 +11,7 @@
     "type-check": "tsc --noEmit"
   },
   "dependencies": {
+    "@googlemaps/js-api-loader": "^1.16.8",
     "@hookform/resolvers": "^5.1.1",
     "@react-google-maps/api": "^2.20.6",
     "axios": "^1.9.0",
@@ -24,6 +25,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.25.0",
+    "@tailwindcss/postcss": "^4.1.10",
     "@types/google.maps": "^3.58.1",
     "@types/react": "^19.1.2",
     "@types/react-dom": "^19.1.2",

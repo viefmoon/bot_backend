@@ -2,6 +2,7 @@ import { IncomingMessage, MessageMiddleware } from '../types';
 import { MessageContext } from '../MessageContext';
 import { RateLimitMiddleware } from '../middlewares/RateLimitMiddleware';
 import { CustomerValidationMiddleware } from '../middlewares/CustomerValidationMiddleware';
+import { AddressRequiredMiddleware } from '../middlewares/AddressRequiredMiddleware';
 import { MessageTypeMiddleware } from '../middlewares/MessageTypeMiddleware';
 import { MessageProcessingMiddleware } from '../middlewares/MessageProcessingMiddleware';
 import { prisma } from '../../../server';
@@ -16,6 +17,7 @@ export class MessagePipeline {
     this.middlewares = [
       new RateLimitMiddleware(),
       new CustomerValidationMiddleware(),
+      new AddressRequiredMiddleware(), // Bloquea si no hay dirección
       new MessageTypeMiddleware(),
       new MessageProcessingMiddleware(), // Lógica principal de procesamiento
     ];

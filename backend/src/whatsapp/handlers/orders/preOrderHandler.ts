@@ -52,7 +52,8 @@ export async function createPreOrderAndSendSummary(
     if (result.orderType === "delivery" && result.deliveryInfo) {
       const existingDeliveryInfo = await prisma.orderDeliveryInfo.findFirst({
         where: {
-          streetAddress: result.deliveryInfo.streetAddress,
+          street: result.deliveryInfo.street,
+          number: result.deliveryInfo.number,
           neighborhood: result.deliveryInfo.neighborhood,
           city: result.deliveryInfo.city,
         },
@@ -63,16 +64,18 @@ export async function createPreOrderAndSendSummary(
       } else {
         const newDeliveryInfo = await prisma.orderDeliveryInfo.create({
           data: {
-            streetAddress: result.deliveryInfo.streetAddress,
+            street: result.deliveryInfo.street,
+            number: result.deliveryInfo.number,
+            interiorNumber: result.deliveryInfo.interiorNumber,
             neighborhood: result.deliveryInfo.neighborhood,
-            postalCode: result.deliveryInfo.postalCode,
+            zipCode: result.deliveryInfo.zipCode,
             city: result.deliveryInfo.city,
             state: result.deliveryInfo.state,
             country: result.deliveryInfo.country || "México",
             latitude: result.deliveryInfo.latitude,
             longitude: result.deliveryInfo.longitude,
             geocodedAddress: result.deliveryInfo.geocodedAddress,
-            additionalDetails: result.deliveryInfo.additionalDetails,
+            references: result.deliveryInfo.references,
             preOrderId: preOrderId,
           },
         });

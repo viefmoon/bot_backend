@@ -14,6 +14,7 @@ import { WhatsAppService } from './WhatsAppService';
 
 export const sendWhatsAppMessage = WhatsAppService.sendWhatsAppMessage.bind(WhatsAppService);
 export const sendWhatsAppInteractiveMessage = WhatsAppService.sendInteractiveMessage.bind(WhatsAppService);
+export const sendMessageWithUrlButton = WhatsAppService.sendMessageWithUrlButton.bind(WhatsAppService);
 export const getWhatsAppMediaUrl = WhatsAppService.getMediaUrl.bind(WhatsAppService);
 export const downloadWhatsAppMedia = WhatsAppService.downloadMedia.bind(WhatsAppService);
 export const verifyWhatsAppWebhook = WhatsAppService.verifyWebhook.bind(WhatsAppService);

@@ -13,10 +13,18 @@ export class OrderFormattingService {
     if (orderType === "delivery" && order.deliveryInfo) {
       const info = order.deliveryInfo;
       const parts = [];
-      if (info.streetAddress) parts.push(info.streetAddress);
+      // Combine street, number, and interior number
+      let fullAddress = info.street || "";
+      if (info.number) {
+        fullAddress += ` ${info.number}`;
+      }
+      if (info.interiorNumber) {
+        fullAddress += ` Int. ${info.interiorNumber}`;
+      }
+      if (fullAddress.trim()) parts.push(fullAddress.trim());
       if (info.neighborhood) parts.push(info.neighborhood);
       if (info.city) parts.push(info.city);
-      if (info.additionalDetails) parts.push(`(${info.additionalDetails})`);
+      if (info.references) parts.push(`(${info.references})`);
       deliveryInfo = parts.join(", ");
     } else if (orderType === "pickup" && order.deliveryInfo?.pickupName) {
       deliveryInfo = order.deliveryInfo.pickupName;

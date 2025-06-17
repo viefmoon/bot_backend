@@ -6,6 +6,7 @@ echo "🚀 Iniciando backend localmente..."
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 RED='\033[0;31m'
+BLUE='\033[0;34m'
 NC='\033[0m'
 
 # Verificar si el puerto 5433 está en uso
@@ -94,11 +95,53 @@ npx prisma migrate deploy 2>/dev/null || npx prisma migrate dev --name init
 echo -e "\n${YELLOW}6. Agregando datos iniciales (menú)...${NC}"
 npm run seed
 
-# Paso 7: Iniciar servidor
-echo -e "\n${GREEN}✅ Todo listo! Iniciando servidor...${NC}"
-echo -e "   Backend corriendo en: http://localhost:5000/backend"
-echo -e "   Prisma Studio: npx prisma studio"
-echo -e "   Logs de Docker: docker compose logs -f"
+# Paso 7: Verificar e instalar dependencias del frontend si existe
+if [ -d "../frontend-app" ] && [ -f "../frontend-app/package.json" ]; then
+    echo -e "\n${YELLOW}7. Verificando frontend...${NC}"
+    cd ../frontend-app
+    if [ ! -d "node_modules" ]; then
+        echo -e "${YELLOW}   Instalando dependencias del frontend...${NC}"
+        npm install
+    fi
+    cd ../backend
+fi
+
+# Función para limpiar al salir
+cleanup() {
+    echo -e "\n${YELLOW}⏹️  Deteniendo servicios...${NC}"
+    pkill -P $$
+    exit 0
+}
+
+# Capturar Ctrl+C
+trap cleanup INT
+
+# Paso 8: Iniciar servicios
+echo -e "\n${GREEN}✅ Todo listo! Iniciando servicios...${NC}"
+
+# Iniciar backend
+echo -e "${YELLOW}🖥️  Iniciando Backend...${NC}"
+npm run dev 2>&1 | sed 's/^/[Backend] /' &
+BACKEND_PID=$!
+
+# Esperar un poco para que el backend inicie
+sleep 3
+
+# Iniciar frontend si existe
+if [ -d "../frontend-app" ] && [ -f "../frontend-app/package.json" ]; then
+    echo -e "${YELLOW}🌐 Iniciando Frontend...${NC}"
+    cd ../frontend-app && npm run dev 2>&1 | sed 's/^/[Frontend] /' &
+    FRONTEND_PID=$!
+    cd ../backend
+fi
+
+echo -e "\n${GREEN}✅ Servicios iniciados:${NC}"
+echo -e "   Backend:  ${BLUE}http://localhost:5000${NC}"
+if [ ! -z "$FRONTEND_PID" ]; then
+    echo -e "   Frontend: ${BLUE}http://localhost:3000${NC}"
+fi
+echo -e "   Prisma Studio: ${YELLOW}npx prisma studio${NC}"
+echo -e "   Logs de Docker: ${YELLOW}docker compose logs -f${NC}"
 echo -e "\n${BLUE}📱 Para conectar WhatsApp:${NC}"
 echo -e "   1. En otra terminal ejecuta: ${YELLOW}ngrok http 5000${NC}"
 echo -e "   2. Copia la URL HTTPS que te da ngrok"
@@ -107,4 +150,5 @@ echo -e "   4. ¡Envía mensajes a tu número de WhatsApp!"
 echo -e "\n${YELLOW}Para detener todo: Ctrl+C y luego: docker compose down${NC}"
 echo ""
 
-npm run dev
+# Esperar a los procesos
+wait $BACKEND_PID

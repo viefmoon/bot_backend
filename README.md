@@ -89,7 +89,28 @@ En Railway, configura:
 
 Railway desplegará automáticamente cuando hagas push a tu repositorio.
 
-## 🔧 Comandos Útiles
+## 🔧 Scripts de Desarrollo
+
+### Scripts Principales
+
+```bash
+# Iniciar todo (backend + frontend + PostgreSQL)
+./start-local.sh
+
+# Iniciar solo el frontend (requiere backend corriendo)
+./start-frontend.sh
+
+# Desarrollo completo con hot-reload (backend + frontend)
+./dev.sh
+
+# Solo backend
+./dev-backend.sh
+
+# Solo frontend
+./dev-frontend.sh
+```
+
+### Comandos NPM
 
 ```bash
 # Desarrollo local

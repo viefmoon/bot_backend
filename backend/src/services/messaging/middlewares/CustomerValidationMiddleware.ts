@@ -12,9 +12,10 @@ export class CustomerValidationMiddleware implements MessageMiddleware {
     try {
       const customerId = context.message.from;
       
-      // Obtener o crear cliente
+      // Obtener o crear cliente con sus direcciones
       let customer = await prisma.customer.findUnique({
-        where: { customerId }
+        where: { customerId },
+        include: { addresses: true }
       });
 
       if (!customer) {
@@ -25,11 +26,13 @@ export class CustomerValidationMiddleware implements MessageMiddleware {
             lastInteraction: new Date(),
             fullChatHistory: [],
             relevantChatHistory: []
-          }
+          },
+          include: { addresses: true }
         });
         
         // Marcar como cliente nuevo para mensaje de bienvenida
         context.set('isNewCustomer', true);
+        context.set('hasNoAddress', true);
       } else {
         // Verificar si el cliente está baneado
         if (customer.isBanned) {
@@ -38,6 +41,13 @@ export class CustomerValidationMiddleware implements MessageMiddleware {
           await sendWhatsAppMessage(customerId, bannedMessage);
           context.stop();
           return context;
+        }
+        
+        // Verificar si el cliente tiene direcciones activas
+        const activeAddresses = customer.addresses.filter(addr => !addr.deletedAt);
+        if (activeAddresses.length === 0) {
+          context.set('hasNoAddress', true);
+          logger.info(`Customer ${customerId} has no active addresses`);
         }
       }
 

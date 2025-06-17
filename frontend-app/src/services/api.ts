@@ -1,4 +1,5 @@
-import axios, { AxiosInstance, AxiosError } from 'axios';
+import axios from 'axios';
+import type { AxiosInstance, AxiosError } from 'axios';
 import type { ApiError } from '@/types/api.types';
 
 class ApiService {
@@ -6,7 +7,7 @@ class ApiService {
 
   constructor() {
     this.api = axios.create({
-      baseURL: import.meta.env.VITE_API_URL || 'http://localhost:3001',
+      baseURL: import.meta.env.VITE_API_URL || '',
       headers: {
         'Content-Type': 'application/json',
       },
@@ -31,4 +32,5 @@ class ApiService {
   }
 }
 
-export default new ApiService();
+const apiService = new ApiService();
+export default apiService.instance;

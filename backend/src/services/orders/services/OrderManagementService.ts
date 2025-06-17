@@ -46,9 +46,11 @@ export class OrderManagementService {
     if (preOrder.deliveryInfo && preOrder.deliveryInfo.length > 0) {
       const info = preOrder.deliveryInfo[0];
       deliveryInfo = {
-        streetAddress: info.streetAddress,
+        street: info.street,
+        number: info.number,
+        interiorNumber: info.interiorNumber,
         neighborhood: info.neighborhood,
-        postalCode: info.postalCode,
+        zipCode: info.zipCode,
         city: info.city,
         state: info.state,
         country: info.country,
@@ -56,7 +58,7 @@ export class OrderManagementService {
         longitude: info.longitude,
         pickupName: info.pickupName,
         geocodedAddress: info.geocodedAddress,
-        additionalDetails: info.additionalDetails,
+        references: info.references,
       };
     }
 

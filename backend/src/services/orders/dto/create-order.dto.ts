@@ -58,7 +58,15 @@ class OrderDeliveryInfoDto {
 
   @IsString()
   @IsOptional()
-  streetAddress?: string;
+  street?: string;
+
+  @IsString()
+  @IsOptional()
+  number?: string;
+
+  @IsString()
+  @IsOptional()
+  interiorNumber?: string;
 
   @IsString()
   @IsOptional()
@@ -66,7 +74,7 @@ class OrderDeliveryInfoDto {
 
   @IsString()
   @IsOptional()
-  postalCode?: string;
+  zipCode?: string;
 
   @IsString()
   @IsOptional()
@@ -98,7 +106,7 @@ class OrderDeliveryInfoDto {
 
   @IsString()
   @IsOptional()
-  additionalDetails?: string;
+  references?: string;
 
   @IsNumber()
   @IsOptional()

@@ -4,6 +4,8 @@
   "private": true,
   "scripts": {
     "dev": "ts-node src/server.ts",
+    "dev:all": "cd .. && ./dev.sh",
+    "dev:frontend": "cd .. && ./dev-frontend.sh",
     "build": "tsc",
     "start": "node dist/server.js",
     "start:prod": "node dist/server.js",

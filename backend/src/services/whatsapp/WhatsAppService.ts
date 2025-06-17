@@ -235,6 +235,45 @@ export class WhatsAppService {
   }
 
   /**
+   * Send a message with a URL button
+   */
+  static async sendMessageWithUrlButton(
+    to: string, 
+    headerText: string,
+    bodyText: string, 
+    buttonText: string, 
+    url: string,
+    footerText?: string
+  ): Promise<boolean> {
+    try {
+      const interactive = {
+        type: "cta_url",
+        header: {
+          type: "text",
+          text: headerText
+        },
+        body: {
+          text: bodyText
+        },
+        footer: footerText ? { text: footerText } : undefined,
+        action: {
+          name: "cta_url",
+          parameters: {
+            display_text: buttonText,
+            url: url
+          }
+        }
+      };
+
+      await this.sendInteractiveMessage(to, interactive);
+      return true;
+    } catch (error) {
+      logger.error('Error sending message with URL button:', error);
+      return false;
+    }
+  }
+
+  /**
    * Send a WhatsApp message, automatically splitting long messages
    */
   static async sendWhatsAppMessage(to: string, message: string): Promise<boolean> {

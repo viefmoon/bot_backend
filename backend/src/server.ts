@@ -2,6 +2,8 @@ import express, { Request, Response } from 'express';
 import cors from 'cors';
 import { PrismaClient } from '@prisma/client';
 import webhookRoutes from './routes/webhook';
+import syncRoutes from './routes/sync';
+import addressRegistrationRoutes from './routes/address-registration';
 import logger from './common/utils/logger';
 import { OTPService } from './services/security/OTPService';
 import { PreOrderService } from './services/orders/PreOrderService';
@@ -52,6 +54,8 @@ app.get('/backend', (_, res) => {
 
 // Routes
 app.use('/backend/webhook', webhookRoutes);
+app.use('/backend/sync', syncRoutes);
+app.use('/backend/address-registration', addressRegistrationRoutes);
 
 // OTP endpoints
 app.post('/backend/otp/verify', async (req, res) => {
@@ -76,13 +80,18 @@ app.post('/backend/otp/invalidate', async (req, res) => {
   }
 });
 
-// Customer delivery info endpoints
-app.post('/backend/customer-delivery-info', async (req: Request, res: Response) => {
+// Customer addresses endpoints
+app.post('/backend/customer/:customerId/addresses', async (req: Request, res: Response) => {
   try {
-    const deliveryInfo = await DeliveryInfoService.createCustomerDeliveryInfo(req.body);
-    res.json(deliveryInfo);
+    const { customerId } = req.params;
+    const addressData = {
+      ...req.body,
+      customer: { connect: { customerId } }
+    };
+    const address = await DeliveryInfoService.createCustomerAddress(addressData);
+    res.json(address);
   } catch (error: any) {
-    logger.error('Error creating delivery info:', error);
+    logger.error('Error creating address:', error);
     if (error.code) {
       res.status(400).json({ error: error.message });
     } else {
@@ -91,13 +100,43 @@ app.post('/backend/customer-delivery-info', async (req: Request, res: Response) 
   }
 });
 
-app.put('/backend/customer-delivery-info/:customerId', async (req: Request, res: Response) => {
+app.get('/backend/customer/:customerId/addresses', async (req: Request, res: Response) => {
   try {
     const { customerId } = req.params;
-    const deliveryInfo = await DeliveryInfoService.updateCustomerDeliveryInfo(customerId, req.body);
-    res.json(deliveryInfo);
+    const includeInactive = req.query.includeInactive === 'true';
+    const addresses = await DeliveryInfoService.getCustomerAddresses(customerId, includeInactive);
+    res.json(addresses);
   } catch (error: any) {
-    logger.error('Error updating delivery info:', error);
+    logger.error('Error fetching addresses:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+app.get('/backend/customer/:customerId/addresses/default', async (req: Request, res: Response) => {
+  try {
+    const { customerId } = req.params;
+    const address = await DeliveryInfoService.getCustomerDefaultAddress(customerId);
+    if (!address) {
+      res.status(404).json({ error: 'No default address found' });
+    } else {
+      res.json(address);
+    }
+  } catch (error: any) {
+    logger.error('Error fetching default address:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+app.put('/backend/addresses/:addressId', async (req: Request, res: Response) => {
+  try {
+    const { addressId } = req.params;
+    const address = await DeliveryInfoService.updateCustomerAddress(
+      parseInt(addressId),
+      req.body
+    );
+    res.json(address);
+  } catch (error: any) {
+    logger.error('Error updating address:', error);
     if (error.code === 'CUSTOMER_NOT_FOUND') {
       res.status(404).json({ error: error.message });
     } else if (error.code) {
@@ -108,24 +147,33 @@ app.put('/backend/customer-delivery-info/:customerId', async (req: Request, res:
   }
 });
 
-const getCustomerDeliveryInfo = async (req: Request, res: Response): Promise<void> => {
+app.put('/backend/addresses/:addressId/set-default', async (req: Request, res: Response) => {
   try {
-    const { customerId } = req.params;
-    const deliveryInfo = await DeliveryInfoService.getCustomerDeliveryInfo(customerId);
-    res.json(deliveryInfo);
+    const { addressId } = req.params;
+    const { customerId } = req.body;
+    const address = await DeliveryInfoService.setDefaultAddress(parseInt(addressId), customerId);
+    res.json(address);
   } catch (error: any) {
-    logger.error('Error fetching delivery info:', error);
-    if (error.code === 'CUSTOMER_NOT_FOUND') {
+    logger.error('Error setting default address:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+app.delete('/backend/addresses/:addressId', async (req: Request, res: Response) => {
+  try {
+    const { addressId } = req.params;
+    const { customerId } = req.body;
+    await DeliveryInfoService.deleteCustomerAddress(parseInt(addressId), customerId);
+    res.json({ success: true });
+  } catch (error: any) {
+    logger.error('Error deleting address:', error);
+    if (error.code === 'ORDER_NOT_FOUND') {
       res.status(404).json({ error: error.message });
-    } else if (error.code) {
-      res.status(400).json({ error: error.message });
     } else {
       res.status(500).json({ error: 'Internal server error' });
     }
   }
-};
-
-app.get('/backend/customer-delivery-info/:customerId', getCustomerDeliveryInfo);
+});
 
 // Pre-orders endpoint
 app.post('/backend/pre-orders/select-products', async (req: Request, res: Response) => {

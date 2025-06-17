@@ -51,35 +51,61 @@ model Category {
 }
 
 model Customer {
-  customerId          String               @id @unique
+  customerId          String               @id @unique // WhatsApp phone number
+  localId             String?              @unique @db.Uuid // UUID from local backend
+  firstName           String?              @db.VarChar(100)
+  lastName            String?              @db.VarChar(100)
+  email               String?              @db.VarChar(255)
+  birthDate           DateTime?            @db.Date
   fullChatHistory     Json?
   relevantChatHistory Json?
   stripeCustomerId    String?              @unique
   lastInteraction     DateTime?
+  totalOrders         Int                  @default(0)
+  totalSpent          Decimal              @default(0) @db.Decimal(10, 2)
+  isActive            Boolean              @default(true)
   isBanned            Boolean              @default(false)
   bannedAt            DateTime?
+  banReason           String?              @db.Text
+  deletedAt           DateTime?            // Soft delete
+  lastSyncAt          DateTime?            // Last sync timestamp
+  syncVersion         Int                  @default(0) // For optimistic locking
   createdAt           DateTime             @default(now())
   updatedAt           DateTime             @updatedAt
-  deliveryInfo        CustomerDeliveryInfo?
+  addresses           Address[]            // One-to-Many relationship
+  
+  @@index([localId])
+  @@index([email])
+  @@index([lastSyncAt])
 }
 
-model CustomerDeliveryInfo {
+// Customer addresses (1:N relationship)
+// A customer can have multiple delivery addresses
+model Address {
   id                Int      @id @default(autoincrement())
-  customerId        String   @unique
-  streetAddress     String
-  neighborhood      String
-  postalCode        String
-  city              String
-  state             String
-  country           String
-  latitude          Float
-  longitude         Float
-  pickupName        String?
-  geocodedAddress   String?
-  additionalDetails String?  @db.Text
+  localId           String?  @unique @db.Uuid // UUID from local backend (maps to 'id' in local)
+  customerId        String   @map("customer_id")
+  street            String   @db.VarChar(200)
+  number            String   @db.VarChar(50)
+  interiorNumber    String?  @db.VarChar(50)
+  neighborhood      String?  @db.VarChar(150)
+  city              String?  @db.VarChar(100)
+  state             String?  @db.VarChar(100)
+  zipCode           String?  @db.VarChar(10)
+  country           String?  @db.VarChar(100)
+  references        String?  @db.Text
+  latitude          Decimal? @db.Decimal(10, 8)
+  longitude         Decimal? @db.Decimal(11, 8)
+  geocodedAddress   String?  @db.Text
+  isDefault         Boolean  @default(false)
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
-  customer          Customer @relation(fields: [customerId], references: [customerId])
+  deletedAt         DateTime? // Soft delete
+  customer          Customer @relation(fields: [customerId], references: [customerId], onDelete: Cascade)
+  
+  @@index([customerId])
+  @@index([localId])
+  @@index([zipCode])
 }
 
 model MessageLog {
@@ -137,19 +163,24 @@ model Order {
   deliveryInfo         OrderDeliveryInfo?
 }
 
+// Order's delivery address (snapshot at order time)
+// This is a copy of the customer's address at the time of order creation
+// Preserves historical data even if customer changes their address later
 model OrderDeliveryInfo {
   id                Int       @id @default(autoincrement())
-  streetAddress     String?
-  neighborhood      String?
-  postalCode        String?
-  city              String?
-  state             String?
-  country           String?
-  latitude          Float?
-  longitude         Float?
-  pickupName        String?
-  geocodedAddress   String?
-  additionalDetails String?   @db.Text
+  street            String?   @db.VarChar(200)
+  number            String?   @db.VarChar(50)
+  interiorNumber    String?   @db.VarChar(50)
+  neighborhood      String?   @db.VarChar(150)
+  city              String?   @db.VarChar(100)
+  state             String?   @db.VarChar(100)
+  zipCode           String?   @db.VarChar(10)  // Changed from postalCode
+  country           String?   @db.VarChar(100)
+  references        String?   @db.Text // Changed from additionalDetails
+  latitude          Decimal?  @db.Decimal(10, 8) // Changed to Decimal for precision
+  longitude         Decimal?  @db.Decimal(11, 8) // Changed to Decimal for precision
+  geocodedAddress   String?   @db.Text
+  pickupName        String?   // For pickup orders
   preOrderId        Int?
   orderId           Int?      @unique
   createdAt         DateTime  @default(now())
@@ -246,7 +277,7 @@ model RestaurantConfig {
   businessHours         BusinessHours[]
   
   // Configuración de delivery
-  deliveryCoverageArea  Json?              // Polígono de cobertura - Array de coordenadas [lat, lng]
+  deliveryCoverageArea  Json?              // Polígono de cobertura - Array de objetos {lat: number, lng: number}
   centerLatitude        Float?             // Centro del área de servicio (para mostrar en mapas)
   centerLongitude       Float?
 }
@@ -293,4 +324,21 @@ model Subcategory {
   isActive   Boolean   @default(true)
   category   Category  @relation(fields: [categoryId], references: [id])
   products   Product[]
+}
+
+// Sync tracking between local and cloud backends
+model SyncLog {
+  id            Int       @id @default(autoincrement())
+  entityType    String    // 'customer', 'order', etc.
+  entityId      String    // WhatsApp backend ID (phone number for customers)
+  localId       String?   @db.Uuid // Local backend UUID
+  action        String    // 'create', 'update', 'delete'
+  syncDirection String    // 'local_to_cloud' or 'cloud_to_local'
+  syncStatus    String    // 'pending', 'success', 'failed'
+  errorMessage  String?   @db.Text
+  createdAt     DateTime  @default(now())
+  completedAt   DateTime?
+  
+  @@index([entityType, entityId])
+  @@index([syncStatus])
 }

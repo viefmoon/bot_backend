@@ -2,7 +2,7 @@ import { prisma } from "../../../server";
 import { ValidationError, ErrorCode, NotFoundError } from "../../../common/services/errors";
 import logger from "../../../common/utils/logger";
 import { DeliveryInfoInput } from "../../../common/types";
-import { CustomerDeliveryInfo, Prisma } from "@prisma/client";
+import { Address, Prisma } from "@prisma/client";
 
 export class DeliveryInfoService {
   /**
@@ -13,15 +13,22 @@ export class DeliveryInfoService {
     customerId: string,
     deliveryInfoInput?: DeliveryInfoInput
   ): Promise<any> {
-    // Get customer delivery info
-    const customerDeliveryInfo = await prisma.customerDeliveryInfo.findUnique({
-      where: { customerId },
+    // Get customer's default address or first active address
+    const customerAddress = await prisma.address.findFirst({
+      where: { 
+        customerId,
+        deletedAt: null
+      },
+      orderBy: [
+        { isDefault: 'desc' },
+        { createdAt: 'desc' }
+      ]
     });
 
-    if (!customerDeliveryInfo) {
+    if (!customerAddress) {
       throw new ValidationError(
         ErrorCode.MISSING_DELIVERY_INFO,
-        'Customer delivery information not found',
+        'Customer has no active addresses',
         { metadata: { customerId } }
       );
     }
@@ -30,49 +37,45 @@ export class DeliveryInfoService {
     let deliveryInfoData: any = {};
 
     if (orderType === "delivery") {
-      // Use provided info or fall back to customer's default
+      // Copy all address fields from customer's address
+      // This creates a snapshot of the address at the time of order
       deliveryInfoData = {
-        streetAddress: deliveryInfoInput?.streetAddress || customerDeliveryInfo.streetAddress,
-        neighborhood: deliveryInfoInput?.neighborhood || customerDeliveryInfo.neighborhood,
-        postalCode: deliveryInfoInput?.postalCode || customerDeliveryInfo.postalCode,
-        city: deliveryInfoInput?.city || customerDeliveryInfo.city,
-        state: deliveryInfoInput?.state || customerDeliveryInfo.state,
-        country: deliveryInfoInput?.country || customerDeliveryInfo.country,
-        latitude: deliveryInfoInput?.latitude || customerDeliveryInfo.latitude,
-        longitude: deliveryInfoInput?.longitude || customerDeliveryInfo.longitude,
-        geocodedAddress: deliveryInfoInput?.geocodedAddress || customerDeliveryInfo.geocodedAddress,
-        additionalDetails: deliveryInfoInput?.additionalDetails || customerDeliveryInfo.additionalDetails,
+        street: deliveryInfoInput?.street || customerAddress.street,
+        number: customerAddress.number,
+        interiorNumber: customerAddress.interiorNumber,
+        neighborhood: deliveryInfoInput?.neighborhood || customerAddress.neighborhood,
+        zipCode: deliveryInfoInput?.zipCode || customerAddress.zipCode,
+        city: deliveryInfoInput?.city || customerAddress.city,
+        state: deliveryInfoInput?.state || customerAddress.state,
+        country: deliveryInfoInput?.country || customerAddress.country,
+        latitude: deliveryInfoInput?.latitude || customerAddress.latitude?.toNumber(),
+        longitude: deliveryInfoInput?.longitude || customerAddress.longitude?.toNumber(),
+        geocodedAddress: deliveryInfoInput?.geocodedAddress || customerAddress.geocodedAddress,
+        references: deliveryInfoInput?.references || customerAddress.references,
       };
 
       // Validate required fields for delivery
-      if (!deliveryInfoData.streetAddress) {
+      if (!deliveryInfoData.street || !deliveryInfoData.number) {
         throw new ValidationError(
           ErrorCode.MISSING_DELIVERY_INFO,
-          'Street address is required for delivery orders',
+          'Street address and number are required for delivery orders',
           { metadata: { customerId, orderType } }
         );
       }
     } else if (orderType === "pickup") {
+      // For pickup orders, we might just need basic info
       deliveryInfoData = {
-        pickupName: deliveryInfoInput?.pickupName || customerDeliveryInfo.pickupName,
+        pickupName: customerId, // Use customer ID as pickup reference
       };
-
-      // Validate required fields for pickup
-      if (!deliveryInfoData.pickupName) {
-        throw new ValidationError(
-          ErrorCode.MISSING_REQUIRED_FIELD,
-          'Pickup name is required for pickup orders',
-          { metadata: { customerId, orderType } }
-        );
-      }
     }
 
-    // Create delivery info record
+    // Create a copy of delivery info for this specific order
+    // This preserves the address at the time of order creation
     const orderDeliveryInfo = await prisma.orderDeliveryInfo.create({
       data: deliveryInfoData
     });
 
-    logger.info(`Created delivery info ${orderDeliveryInfo.id} for ${orderType} order`);
+    logger.info(`Created order delivery info ${orderDeliveryInfo.id} from customer address`);
     return orderDeliveryInfo;
   }
 
@@ -142,87 +145,252 @@ export class DeliveryInfoService {
   }
 
   /**
-   * Create customer delivery info
+   * Create customer address
    */
-  static async createCustomerDeliveryInfo(
-    data: Prisma.CustomerDeliveryInfoCreateInput
-  ): Promise<CustomerDeliveryInfo> {
+  static async createCustomerAddress(
+    data: Prisma.AddressCreateInput
+  ): Promise<Address> {
     try {
-      const deliveryInfo = await prisma.customerDeliveryInfo.create({
-        data
+      // If this is the first address, make it default
+      const existingAddresses = await prisma.address.count({
+        where: { 
+          customerId: data.customer.connect?.customerId || data.customer.connectOrCreate?.where.customerId,
+          deletedAt: null
+        }
       });
       
-      logger.info(`Created customer delivery info for customer ${deliveryInfo.customerId}`);
-      return deliveryInfo;
+      const addressData = {
+        ...data,
+        isDefault: existingAddresses === 0 ? true : (data.isDefault || false)
+      };
+      
+      // If setting as default, unset other defaults
+      if (addressData.isDefault) {
+        await prisma.address.updateMany({
+          where: { 
+            customerId: data.customer.connect?.customerId || data.customer.connectOrCreate?.where.customerId,
+            isDefault: true
+          },
+          data: { isDefault: false }
+        });
+      }
+      
+      const address = await prisma.address.create({
+        data: addressData
+      });
+      
+      logger.info(`Created customer address ${address.id} for customer ${address.customerId}`);
+      return address;
     } catch (error) {
-      logger.error('Error creating customer delivery info:', error);
-      throw new ValidationError(ErrorCode.DATABASE_ERROR, 'Failed to create customer delivery info', { metadata: { error: error.message } });
+      logger.error('Error creating customer address:', error);
+      throw new ValidationError(ErrorCode.DATABASE_ERROR, 'Failed to create customer address', { metadata: { error: error.message } });
     }
   }
 
   /**
-   * Update customer delivery info
+   * Update customer address
    */
-  static async updateCustomerDeliveryInfo(
-    customerId: string,
-    data: Prisma.CustomerDeliveryInfoUpdateInput
-  ): Promise<CustomerDeliveryInfo> {
+  static async updateCustomerAddress(
+    addressId: number,
+    data: Prisma.AddressUpdateInput
+  ): Promise<Address> {
     try {
-      const deliveryInfo = await prisma.customerDeliveryInfo.update({
-        where: { customerId },
+      const deliveryInfo = await prisma.address.update({
+        where: { id: addressId },
         data
       });
       
-      logger.info(`Updated customer delivery info for customer ${customerId}`);
+      logger.info(`Updated address ${addressId}`);
       return deliveryInfo;
     } catch (error: any) {
       if (error.code === 'P2025') {
         throw new NotFoundError(
           ErrorCode.ORDER_NOT_FOUND,
-          'Customer delivery info not found',
-          { metadata: { customerId } }
+          'Address not found',
+          { metadata: { addressId } }
         );
       }
       
-      logger.error('Error updating customer delivery info:', error);
+      logger.error('Error updating customer address:', error);
       throw new ValidationError(
         ErrorCode.DATABASE_ERROR,
-        'Failed to update customer delivery info',
+        'Failed to update customer address',
+        { metadata: { addressId } }
+      );
+    }
+  }
+
+  /**
+   * Copy customer address to order delivery info
+   * This is a convenience method to create OrderDeliveryInfo from customer's Address
+   */
+  static async copyCustomerAddressToOrder(
+    customerId: string,
+    orderType: 'delivery' | 'pickup',
+    customDeliveryInfo?: DeliveryInfoInput
+  ): Promise<any> {
+    return this.getOrCreateDeliveryInfo(orderType, customerId, customDeliveryInfo);
+  }
+
+  /**
+   * Get all customer addresses
+   */
+  static async getCustomerAddresses(
+    customerId: string,
+    includeInactive: boolean = false
+  ): Promise<Address[]> {
+    try {
+      const addresses = await prisma.address.findMany({
+        where: { 
+          customerId,
+          ...(includeInactive ? {} : { deletedAt: null })
+        },
+        orderBy: [
+          { isDefault: 'desc' },
+          { createdAt: 'desc' }
+        ]
+      });
+      
+      return addresses;
+    } catch (error) {
+      logger.error('Error fetching customer addresses:', error);
+      throw new ValidationError(
+        ErrorCode.DATABASE_ERROR,
+        'Failed to fetch customer addresses',
         { metadata: { customerId } }
       );
     }
   }
 
   /**
-   * Get customer delivery info
+   * Get customer's default address
    */
-  static async getCustomerDeliveryInfo(
+  static async getCustomerDefaultAddress(
     customerId: string
-  ): Promise<CustomerDeliveryInfo | null> {
+  ): Promise<Address | null> {
     try {
-      const deliveryInfo = await prisma.customerDeliveryInfo.findUnique({
-        where: { customerId }
+      const address = await prisma.address.findFirst({
+        where: { 
+          customerId,
+          isDefault: true,
+          deletedAt: null
+        }
       });
       
-      if (!deliveryInfo) {
+      if (!address) {
+        // If no default, get the first active address
+        const firstAddress = await prisma.address.findFirst({
+          where: { 
+            customerId,
+            deletedAt: null
+          },
+          orderBy: { createdAt: 'desc' }
+        });
+        
+        return firstAddress;
+      }
+      
+      return address;
+    } catch (error) {
+      logger.error('Error fetching default address:', error);
+      throw new ValidationError(
+        ErrorCode.DATABASE_ERROR,
+        'Failed to fetch default address',
+        { metadata: { customerId } }
+      );
+    }
+  }
+
+  /**
+   * Set address as default
+   */
+  static async setDefaultAddress(
+    addressId: number,
+    customerId: string
+  ): Promise<Address> {
+    try {
+      // Unset other defaults
+      await prisma.address.updateMany({
+        where: { 
+          customerId,
+          isDefault: true
+        },
+        data: { isDefault: false }
+      });
+      
+      // Set this one as default
+      const address = await prisma.address.update({
+        where: { id: addressId },
+        data: { isDefault: true }
+      });
+      
+      logger.info(`Set address ${addressId} as default for customer ${customerId}`);
+      return address;
+    } catch (error) {
+      logger.error('Error setting default address:', error);
+      throw new ValidationError(
+        ErrorCode.DATABASE_ERROR,
+        'Failed to set default address',
+        { metadata: { addressId, customerId } }
+      );
+    }
+  }
+
+  /**
+   * Soft delete address
+   */
+  static async deleteCustomerAddress(
+    addressId: number,
+    customerId: string
+  ): Promise<void> {
+    try {
+      const address = await prisma.address.findFirst({
+        where: { id: addressId, customerId }
+      });
+      
+      if (!address) {
         throw new NotFoundError(
           ErrorCode.ORDER_NOT_FOUND,
-          'Customer delivery info not found',
-          { metadata: { customerId } }
+          'Address not found',
+          { metadata: { addressId, customerId } }
         );
       }
       
-      return deliveryInfo;
+      // Soft delete
+      await prisma.address.update({
+        where: { id: addressId },
+        data: { 
+          deletedAt: new Date()
+        }
+      });
+      
+      // If it was default, set another as default
+      if (address.isDefault) {
+        const nextDefault = await prisma.address.findFirst({
+          where: { 
+            customerId,
+            deletedAt: null,
+            id: { not: addressId }
+          },
+          orderBy: { createdAt: 'desc' }
+        });
+        
+        if (nextDefault) {
+          await this.setDefaultAddress(nextDefault.id, customerId);
+        }
+      }
+      
+      logger.info(`Soft deleted address ${addressId} for customer ${customerId}`);
     } catch (error) {
       if (error instanceof NotFoundError) {
         throw error;
       }
       
-      logger.error('Error fetching customer delivery info:', error);
+      logger.error('Error deleting address:', error);
       throw new ValidationError(
         ErrorCode.DATABASE_ERROR,
-        'Failed to fetch customer delivery info',
-        { metadata: { customerId } }
+        'Failed to delete address',
+        { metadata: { addressId, customerId } }
       );
     }
   }

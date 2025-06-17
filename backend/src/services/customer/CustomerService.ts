@@ -132,7 +132,7 @@ export class CustomerService {
       const customer = await prisma.customer.findUnique({
         where: { customerId },
         include: {
-          deliveryInfo: true
+          addresses: true
         }
       });
 

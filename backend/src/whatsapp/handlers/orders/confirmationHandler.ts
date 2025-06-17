@@ -75,10 +75,17 @@ export async function sendOrderConfirmation(
     if (orderType === "delivery" && fullOrder.deliveryInfo) {
       const deliveryInfo = fullOrder.deliveryInfo;
       const parts = [];
-      if (deliveryInfo.streetAddress) parts.push(deliveryInfo.streetAddress);
+      // Construir dirección completa
+      if (deliveryInfo.street && deliveryInfo.number) {
+        let address = `${deliveryInfo.street} ${deliveryInfo.number}`;
+        if (deliveryInfo.interiorNumber) {
+          address += ` Int ${deliveryInfo.interiorNumber}`;
+        }
+        parts.push(address);
+      }
       if (deliveryInfo.neighborhood) parts.push(deliveryInfo.neighborhood);
       if (deliveryInfo.city) parts.push(deliveryInfo.city);
-      if (deliveryInfo.additionalDetails) parts.push(`(${deliveryInfo.additionalDetails})`);
+      if (deliveryInfo.references) parts.push(`(${deliveryInfo.references})`);
       informacionEntrega = parts.join(", ");
     } else if (orderType === "pickup" && fullOrder.deliveryInfo?.pickupName) {
       informacionEntrega = fullOrder.deliveryInfo.pickupName;

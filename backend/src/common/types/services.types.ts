@@ -2,19 +2,21 @@
  * Service-specific types that are used across multiple services
  */
 
-// Delivery Info types
+// Delivery Info types (compatible with Address model)
 export interface DeliveryInfoInput {
-  streetAddress?: string | null;
+  street?: string | null;
+  number?: string | null;
+  interiorNumber?: string | null;
   neighborhood?: string | null;
-  postalCode?: string | null;
   city?: string | null;
   state?: string | null;
+  zipCode?: string | null;
   country?: string | null;
+  references?: string | null;
   latitude?: number | null;
   longitude?: number | null;
   geocodedAddress?: string | null;
-  additionalDetails?: string | null;
-  pickupName?: string | null;
+  isDefault?: boolean;
 }
 
 // Product Calculation types
