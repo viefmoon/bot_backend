@@ -40,7 +40,6 @@
     "prisma": "^6.9.0",
     "queue-typescript": "^1.0.1",
     "raw-body": "^3.0.0",
-    "sequelize": "^6.37.7",
     "string-similarity": "^4.0.4",
     "stripe": "^17.3.1",
     "winston": "^3.17.0"

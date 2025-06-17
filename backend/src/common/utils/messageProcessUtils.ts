@@ -1,6 +1,6 @@
-import type { ProductVariant, Modifier, PizzaIngredient } from "../types/sequelize-entities";
 import * as stringSimilarity from "string-similarity";
 import { AgentGemini } from "../types/agents";
+import type { ProductVariant, Modifier, PizzaIngredient } from "@prisma/client";
 
 export function mapSynonym(normalizedWord: string): string | null {
   const synonyms: { [key: string]: string[] } = {

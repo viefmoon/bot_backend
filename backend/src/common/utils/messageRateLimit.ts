@@ -1,4 +1,4 @@
-import { MessageRateLimit } from "../../database/models";
+import { prisma } from "../../server";
 import { sendWhatsAppMessage } from "../../services/whatsapp";
 import * as dotenv from "dotenv";
 dotenv.config();
@@ -16,15 +16,17 @@ export async function checkMessageRateLimit(
   );
   const RATE_LIMIT_TIME_WINDOW = RATE_LIMIT_TIME_WINDOW_MINUTES * 60 * 1000;
 
-  let rateLimit = await MessageRateLimit.findOne({
+  let rateLimit = await prisma.messageRateLimit.findUnique({
     where: { customerId },
   });
 
   if (!rateLimit) {
-    await MessageRateLimit.create({
-      customerId,
-      messageCount: 1,
-      lastMessageTime: new Date(),
+    await prisma.messageRateLimit.create({
+      data: {
+        customerId,
+        messageCount: 1,
+        lastMessageTime: new Date(),
+      }
     });
     return false; // No limitado
   }
@@ -34,7 +36,10 @@ export async function checkMessageRateLimit(
     now.getTime() - rateLimit.lastMessageTime.getTime();
 
   if (timeSinceLastMessage > RATE_LIMIT_TIME_WINDOW) {
-    await rateLimit.update({ messageCount: 1, lastMessageTime: now });
+    await prisma.messageRateLimit.update({
+      where: { customerId },
+      data: { messageCount: 1, lastMessageTime: now }
+    });
     return false; // No limitado
   }
 
@@ -46,9 +51,12 @@ export async function checkMessageRateLimit(
     return true; // Limitado
   }
 
-  await rateLimit.update({
-    messageCount: rateLimit.messageCount + 1,
-    lastMessageTime: now,
+  await prisma.messageRateLimit.update({
+    where: { customerId },
+    data: {
+      messageCount: rateLimit.messageCount + 1,
+      lastMessageTime: now,
+    }
   });
   return false; // No limitado
 }
