@@ -5,13 +5,15 @@ export interface ProductoInfo {
     productVariantId: string;
     name: string;
   }>;
-  modifierTypes?: Array<{
-    modifierTypeId: string;
+  modifierGroups?: Array<{
+    modifierGroupId: string;
     name: string;
-    acceptsMultiple: boolean;
-    required: boolean;
-    modifiers?: Array<{
-      modifierId: string;
+    minSelections: number;
+    maxSelections: number;
+    isRequired: boolean;
+    allowMultipleSelections: boolean;
+    productModifiers?: Array<{
+      productModifierId: string;
       name: string;
     }>;
   }>;

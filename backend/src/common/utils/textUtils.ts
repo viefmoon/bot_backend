@@ -183,14 +183,14 @@ export function detectUnknownWords(
   
   // Agregar palabras de los modificadores seleccionados
   if (bestProduct.selectedModifiers) {
-    bestProduct.selectedModifiers.forEach(modifier => {
+    bestProduct.selectedModifiers.forEach((modifier: any) => {
       normalizeText(modifier.name).forEach(word => knownWords.add(word));
     });
   }
   
   // Agregar palabras de los ingredientes de pizza seleccionados
   if (bestProduct.selectedPizzaIngredients) {
-    bestProduct.selectedPizzaIngredients.forEach(ingredient => {
+    bestProduct.selectedPizzaIngredients.forEach((ingredient: any) => {
       normalizeText(ingredient.name).forEach(word => knownWords.add(word));
     });
   }

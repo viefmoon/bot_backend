@@ -14,6 +14,7 @@ export enum ErrorCode {
   RESTAURANT_CLOSED = 'BL004',
   NOT_ACCEPTING_ORDERS = 'BL005',
   PAYMENT_LINK_EXISTS = 'BL006',
+  CUSTOMER_NOT_FOUND = 'BL007',
   
   // Validation
   INVALID_PRODUCT = 'VAL001',
@@ -40,6 +41,7 @@ export enum ErrorCode {
 
 export interface ErrorContext {
   userId?: string;
+  customerId?: string;
   orderId?: number;
   operation?: string;
   metadata?: Record<string, any>;

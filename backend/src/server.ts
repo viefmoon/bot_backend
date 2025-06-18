@@ -4,6 +4,7 @@ import { PrismaClient } from '@prisma/client';
 import webhookRoutes from './routes/webhook';
 import syncRoutes from './routes/sync';
 import addressRegistrationRoutes from './routes/address-registration';
+import addressSelectionRoutes from './routes/address-selection';
 import logger from './common/utils/logger';
 import { OTPService } from './services/security/OTPService';
 import { PreOrderService } from './services/orders/PreOrderService';
@@ -56,6 +57,7 @@ app.get('/backend', (_, res) => {
 app.use('/backend/webhook', webhookRoutes);
 app.use('/backend/sync', syncRoutes);
 app.use('/backend/address-registration', addressRegistrationRoutes);
+app.use('/backend/address-selection', addressSelectionRoutes);
 
 // OTP endpoints
 app.post('/backend/otp/verify', async (req, res) => {
@@ -131,7 +133,7 @@ app.put('/backend/addresses/:addressId', async (req: Request, res: Response) => 
   try {
     const { addressId } = req.params;
     const address = await DeliveryInfoService.updateCustomerAddress(
-      parseInt(addressId),
+      addressId,
       req.body
     );
     res.json(address);
@@ -151,7 +153,7 @@ app.put('/backend/addresses/:addressId/set-default', async (req: Request, res: R
   try {
     const { addressId } = req.params;
     const { customerId } = req.body;
-    const address = await DeliveryInfoService.setDefaultAddress(parseInt(addressId), customerId);
+    const address = await DeliveryInfoService.setDefaultAddress(addressId, customerId);
     res.json(address);
   } catch (error: any) {
     logger.error('Error setting default address:', error);
@@ -163,7 +165,7 @@ app.delete('/backend/addresses/:addressId', async (req: Request, res: Response) 
   try {
     const { addressId } = req.params;
     const { customerId } = req.body;
-    await DeliveryInfoService.deleteCustomerAddress(parseInt(addressId), customerId);
+    await DeliveryInfoService.deleteCustomerAddress(addressId, customerId);
     res.json({ success: true });
   } catch (error: any) {
     logger.error('Error deleting address:', error);

@@ -28,8 +28,12 @@ export const ERROR_MESSAGES: Record<ErrorCode, ErrorMessageConfig> = {
     log: "Restaurant not accepting orders"
   },
   [ErrorCode.PAYMENT_LINK_EXISTS]: {
-    user: "⚠️ Ya existe un enlace de pago activo para esta orden. Por favor, utiliza el enlace enviado anteriormente o contáctanos si necesitas ayuda. 🔄",
-    log: "Payment link already exists for order"
+    user: "⚠️ Ya existe un enlace de pago activo para esta orden.",
+    log: "Payment link already exists"
+  },
+  [ErrorCode.CUSTOMER_NOT_FOUND]: {
+    user: "❌ No se encontró información del cliente.",
+    log: "Customer not found"
   },
   
   // Validation Errors

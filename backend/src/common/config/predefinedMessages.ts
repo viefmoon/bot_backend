@@ -247,11 +247,13 @@ export const ORDER_NOT_FOUND_MESSAGE = "❌ Lo siento, no se pudo encontrar tu o
 
 // Mensaje cuando no se puede cancelar una orden
 export const ORDER_CANNOT_BE_CANCELLED_MESSAGE = (status: string) => {
-  const statusMessages = {
-    accepted: "Lo sentimos, pero esta orden ya no se puede cancelar porque ya fue aceptada. ⚠️",
-    in_preparation: "Lo sentimos, pero esta orden ya está en preparación y no se puede cancelar. 👨‍🍳",
-    prepared: "Lo sentimos, pero esta orden ya está preparada y no se puede cancelar. 🍽️",
-    in_delivery: "Lo sentimos, pero esta orden ya está en camino y no se puede cancelar. 🚚",
+  const statusMessages: Record<string, string> = {
+    IN_PROGRESS: "Lo sentimos, pero esta orden ya no se puede cancelar porque ya fue aceptada. ⚠️",
+    IN_PREPARATION: "Lo sentimos, pero esta orden ya está en preparación y no se puede cancelar. 👨‍🍳",
+    READY: "Lo sentimos, pero esta orden ya está preparada y no se puede cancelar. 🍽️",
+    IN_DELIVERY: "Lo sentimos, pero esta orden ya está en camino y no se puede cancelar. 🚚",
+    DELIVERED: "Lo sentimos, pero esta orden ya fue entregada y no se puede cancelar. ✅",
+    COMPLETED: "Lo sentimos, pero esta orden ya fue completada y no se puede cancelar. ✅",
   };
   return statusMessages[status] || "Lo sentimos, esta orden no se puede cancelar en su estado actual.";
 };
