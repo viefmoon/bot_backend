@@ -110,13 +110,13 @@ export class TextMessageStrategy extends MessageStrategy {
   }
   
   private async handlePreprocessedContent(context: MessageContext, preprocessedContent: any): Promise<void> {
-    // Manejar advertencias
+    // Handle warnings
     if (preprocessedContent.warnings && preprocessedContent.warnings.length > 0) {
       const warningMessage = "📝 Observaciones:\n" + preprocessedContent.warnings.join("\n");
       await sendWhatsAppMessage(context.message.from, warningMessage);
     }
     
-    // Crear pre-orden
+    // Create pre-order
     const preOrderService = new PreOrderService();
     const preOrderResult = await preOrderService.selectProducts({
       orderItems: preprocessedContent.orderItems,
@@ -127,7 +127,7 @@ export class TextMessageStrategy extends MessageStrategy {
     
     // Generate order summary
     const { generateOrderSummary } = await import('../../../whatsapp/handlers/orders/orderFormatters');
-    const orderSummary = generateOrderSummary(preOrderResult.preOrderId);
+    const orderSummary = generateOrderSummary(preOrderResult);
     
     // Send order summary
     await sendWhatsAppMessage(context.message.from, orderSummary);

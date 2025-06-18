@@ -55,14 +55,28 @@ export class PreOrderService {
 
       logger.info(`Created pre-order ${preOrder.id} for customer ${customerId}`);
 
+      // Get delivery info if it's a delivery order
+      let deliveryInfo = null;
+      if (orderType === 'delivery') {
+        const customer = await prisma.customer.findUnique({
+          where: { customerId },
+          include: { addresses: { where: { isActive: true } } }
+        });
+        
+        if (customer?.addresses?.[0]) {
+          deliveryInfo = customer.addresses[0];
+        }
+      }
+
       return {
         preOrderId: preOrder.id,
-        selectedProducts: {
-          items: calculatedItems,
-          totalCost,
-          estimatedPickupTime: config.estimatedPickupTime,
-          estimatedDeliveryTime: config.estimatedDeliveryTime,
-        }
+        orderType,
+        items: calculatedItems,
+        total: totalCost,
+        deliveryInfo,
+        scheduledDeliveryTime: validatedScheduledTime,
+        estimatedPickupTime: config.estimatedPickupTime,
+        estimatedDeliveryTime: config.estimatedDeliveryTime,
       };
     } catch (error) {
       logger.error("Error in selectProducts:", error);

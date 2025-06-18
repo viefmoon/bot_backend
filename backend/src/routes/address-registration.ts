@@ -113,12 +113,31 @@ router.post('/create', async (req: Request, res: Response): Promise<void> => {
     
     // Send confirmation message to WhatsApp
     try {
-      const { sendWhatsAppMessage } = await import('../services/whatsapp');
-      const { ADDRESS_REGISTRATION_SUCCESS } = await import('../common/config/predefinedMessages');
+      const { sendWhatsAppMessage, sendWhatsAppInteractiveMessage } = await import('../services/whatsapp');
+      const { ADDRESS_REGISTRATION_SUCCESS, WELCOME_MESSAGE_INTERACTIVE } = await import('../common/config/predefinedMessages');
+      
+      // Send confirmation message
       await sendWhatsAppMessage(
         customerId,
         ADDRESS_REGISTRATION_SUCCESS(newAddress)
       );
+      
+      // Small delay to ensure proper message order
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      // Send welcome message immediately after
+      const welcomeMessage = await WELCOME_MESSAGE_INTERACTIVE();
+      await sendWhatsAppInteractiveMessage(customerId, welcomeMessage);
+      
+      // Mark that welcome message has been sent to avoid duplicate
+      // Update lastInteraction to current time to prevent isNewConversation detection
+      await prisma.customer.update({
+        where: { customerId },
+        data: { 
+          lastInteraction: new Date()
+        }
+      });
+      
     } catch (msgError) {
       logger.error('Error sending confirmation message:', msgError);
     }
@@ -183,6 +202,37 @@ router.put('/:addressId', async (req: Request, res: Response): Promise<void> => 
       parseInt(addressId),
       address
     );
+    
+    // Send WhatsApp notification about address update
+    try {
+      const { sendWhatsAppMessage, sendWhatsAppInteractiveMessage } = await import('../services/whatsapp');
+      const { ADDRESS_UPDATE_SUCCESS, WELCOME_MESSAGE_INTERACTIVE } = await import('../common/config/predefinedMessages');
+      
+      // Send update confirmation
+      await sendWhatsAppMessage(
+        customerId,
+        ADDRESS_UPDATE_SUCCESS(updatedAddress)
+      );
+      
+      // Small delay to ensure proper message order
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      // Send welcome message immediately after
+      const welcomeMessage = await WELCOME_MESSAGE_INTERACTIVE();
+      await sendWhatsAppInteractiveMessage(customerId, welcomeMessage);
+      
+      // Mark that interaction happened to avoid duplicate welcome message
+      await prisma.customer.update({
+        where: { customerId },
+        data: { 
+          lastInteraction: new Date()
+        }
+      });
+      
+    } catch (sendError) {
+      logger.error('Failed to send WhatsApp notification:', sendError);
+      // Continue even if WhatsApp fails
+    }
     
     res.json({ 
       success: true,

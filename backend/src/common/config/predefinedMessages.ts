@@ -9,17 +9,17 @@ export const ADDRESS_REGISTRATION_SUCCESS = (address: any): string => {
 ${address.street} ${address.number}${address.interiorNumber ? ` Int. ${address.interiorNumber}` : ''}
 ${address.neighborhood ? `Col. ${address.neighborhood}\n` : ''}${address.city}, ${address.state}
 
-¡Ahora puedes realizar tu pedido! 
-
-Escribe *"menú"* para ver nuestros productos o simplemente dinos qué se te antoja hoy 🍕😊`;
+¡Perfecto! Tu dirección ha sido guardada. Ahora puedes realizar tu pedido. 🎉`;
 };
 
-export const ADDRESS_UPDATE_SUCCESS = (): string => {
+export const ADDRESS_UPDATE_SUCCESS = (address: any): string => {
   return `✅ *¡Dirección actualizada correctamente!*
 
-Tu información de entrega ha sido actualizada exitosamente.
+📍 *Tu nueva dirección de entrega:*
+${address.street} ${address.number}${address.interiorNumber ? ` Int. ${address.interiorNumber}` : ''}
+${address.neighborhood ? `Col. ${address.neighborhood}\n` : ''}${address.city}, ${address.state}
 
-¿Qué te gustaría ordenar hoy? 🍕`;
+Tu información de entrega ha sido actualizada exitosamente. 👍`;
 };
 
 // Helper function to get restaurant config
@@ -149,9 +149,7 @@ export const CHANGE_DELIVERY_INFO_MESSAGE = (updateLink: string) => `
 
 👇 *PRESIONA AQUÍ PARA ACTUALIZAR* 👇
 
-${updateLink}
-
-⏳ *Este enlace es válido por 15 minutos* 🔒`;
+${updateLink}`;
 
 export const RESTAURANT_NOT_ACCEPTING_ORDERS_MESSAGE = async () => {
   const config = await getRestaurantInfo();
@@ -188,8 +186,6 @@ export const DELIVERY_INFO_REGISTRATION_MESSAGE = (
 👇 *PRESIONA AQUÍ PARA REGISTRARTE* 👇
 
 ${registrationLink}
-
-⚠️ *Este enlace es válido por 15 minutos* 🔒
 `;
 
 export const PAYMENT_CONFIRMATION_MESSAGE = (orderNumber: number) => `

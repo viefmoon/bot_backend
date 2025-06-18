@@ -196,18 +196,34 @@ function AddressRegistration() {
         toast.success('¡Dirección registrada exitosamente!');
       }
 
-      // Success feedback
-      setTimeout(() => {
-        toast.success('Ahora puedes cerrar esta ventana y continuar con tu pedido en WhatsApp', {
-          duration: 6000,
-        });
-      }, 1000);
+      // Success feedback and redirect to WhatsApp
+      toast.success('Redirigiendo a WhatsApp...', {
+        duration: 2000,
+      });
 
       // If updating for a pre-order, notify backend
       if (preOrderId) {
         // The backend will handle the pre-order update
         toast.success('Tu pedido ha sido actualizado con la nueva dirección');
       }
+
+      // Redirect to WhatsApp after a short delay
+      setTimeout(() => {
+        const phoneNumber = import.meta.env.VITE_BOT_WHATSAPP_NUMBER;
+        const message = preOrderId 
+          ? 'Mi dirección ha sido actualizada, por favor continúa con mi pedido.'
+          : 'Hola, acabo de registrar mi dirección de entrega.';
+        const encodedMessage = encodeURIComponent(message);
+        const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodedMessage}`;
+        
+        // Try to close the window first, then redirect
+        window.location.href = whatsappUrl;
+        
+        // Try to close the window after redirect (may not work in all browsers)
+        setTimeout(() => {
+          window.close();
+        }, 100);
+      }, 2000);
     } catch (error: any) {
       console.error('Error al guardar la dirección:', error);
       const errorMessage = error.response?.data?.error || 'Hubo un error al guardar la dirección';

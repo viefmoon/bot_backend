@@ -11,14 +11,17 @@ export class MessageTypeMiddleware implements MessageMiddleware {
   async process(context: MessageContext): Promise<MessageContext> {
     try {
       // Verificar si es un cliente nuevo o conversación nueva que necesita mensaje de bienvenida
-      if (context.get('isNewCustomer') || context.get('isNewConversation')) {
+      const customer = context.customer;
+      const isVeryNewCustomer = customer && customer.createdAt && 
+        (new Date().getTime() - new Date(customer.createdAt).getTime() < 5 * 60 * 1000); // Created less than 5 minutes ago
+      
+      // Only send welcome if it's a new conversation (not a brand new customer who just registered)
+      if (context.get('isNewConversation') && !isVeryNewCustomer) {
         const welcomeMessage = await WELCOME_MESSAGE_INTERACTIVE();
         await sendWhatsAppInteractiveMessage(context.message.from, welcomeMessage);
         
         // Limpiar el historial relevante para conversaciones nuevas
-        if (context.get('isNewConversation')) {
-          context.set('relevantChatHistory', []);
-        }
+        context.set('relevantChatHistory', []);
       }
       
       // Manejar frases de reinicio

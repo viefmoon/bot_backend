@@ -30,8 +30,7 @@ export class AddressRequiredMiddleware implements MessageMiddleware {
           "🏠 ¡Bienvenido!",
           "Para poder tomar tu pedido, necesitamos que registres tu dirección de entrega.\n\nEs muy fácil y rápido:\n• Haz clic en el botón de abajo\n• Completa tu información\n• ¡Listo para ordenar!",
           "Registrar Dirección",
-          registrationLink,
-          "Este enlace es válido por 15 minutos"
+          registrationLink
         );
         
         // Detener el procesamiento - no procesar ningún mensaje hasta que tenga dirección

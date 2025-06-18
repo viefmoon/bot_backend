@@ -113,8 +113,7 @@ async function handlePreOrderDeliveryModification(
       "🚚 Actualizar Dirección",
       "Puedes actualizar tu información de entrega haciendo clic en el botón de abajo.\n\nTu pedido actual permanecerá sin cambios hasta que confirmes la nueva dirección.",
       "Actualizar Dirección",
-      updateLink,
-      "Este enlace es válido por 15 minutos"
+      updateLink
     );
   } catch (error) {
     await ErrorService.handleAndSendError(error, from, {
@@ -316,7 +315,6 @@ async function handleChangeDeliveryInfo(from: string): Promise<void> {
     "🚚 Actualizar Dirección",
     "Puedes actualizar o agregar una nueva dirección de entrega haciendo clic en el botón de abajo.",
     "Actualizar Dirección",
-    updateLink,
-    "Este enlace es válido por 15 minutos"
+    updateLink
   );
 }
