@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { loadGoogleMaps } from '@/utils/loadGoogleMaps';
 import { config } from '@/config';
+import { isPointInPolygon } from '@/utils/polygonUtils';
 
 interface Location {
   lat: number;
@@ -68,6 +69,15 @@ export const BasicMap: React.FC<BasicMapProps> = ({
                 lat: e.latLng.lat(),
                 lng: e.latLng.lng(),
               };
+              
+              // Validate if location is inside polygon
+              if (polygonCoords.length > 0 && !isPointInPolygon(location, polygonCoords)) {
+                if (onLocationError) {
+                  onLocationError('⚠️ Por favor selecciona una ubicación dentro de nuestra área de cobertura');
+                }
+                return;
+              }
+              
               onLocationSelect(location);
             }
           });
@@ -76,12 +86,27 @@ export const BasicMap: React.FC<BasicMapProps> = ({
           if (polygonCoords.length > 0) {
             const polygon = new google.maps.Polygon({
               paths: polygonCoords,
-              strokeColor: '#3B82F6',
-              strokeOpacity: 0.8,
+              strokeColor: '#10B981',
+              strokeOpacity: 0.9,
               strokeWeight: 3,
-              fillColor: '#3B82F6',
-              fillOpacity: 0.15,
+              fillColor: '#10B981',
+              fillOpacity: 0.2,
               map: mapInstance,
+            });
+
+            // Add visual feedback on polygon hover
+            polygon.addListener('mouseover', () => {
+              polygon.setOptions({
+                fillOpacity: 0.3,
+                strokeWeight: 4,
+              });
+            });
+
+            polygon.addListener('mouseout', () => {
+              polygon.setOptions({
+                fillOpacity: 0.2,
+                strokeWeight: 3,
+              });
             });
 
             // Fit map to polygon bounds
@@ -122,6 +147,18 @@ export const BasicMap: React.FC<BasicMapProps> = ({
                 lat: place.geometry.location.lat(),
                 lng: place.geometry.location.lng(),
               };
+
+              // Validate if location is inside polygon
+              if (polygonCoords.length > 0 && !isPointInPolygon(location, polygonCoords)) {
+                if (onLocationError) {
+                  onLocationError('⚠️ La dirección seleccionada está fuera de nuestra área de cobertura');
+                }
+                // Clear the input
+                if (searchBoxRef.current) {
+                  searchBoxRef.current.value = '';
+                }
+                return;
+              }
 
               onLocationSelect(location);
               mapInstance.panTo(location);

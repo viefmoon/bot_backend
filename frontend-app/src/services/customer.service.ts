@@ -102,8 +102,7 @@ class CustomerService {
       country: data.country,
       references: data.additionalDetails,
       latitude: data.latitude,
-      longitude: data.longitude,
-      geocodedAddress: data.geocodedAddress
+      longitude: data.longitude
     };
 
     // Extract customerId from the data (assuming it's passed)
@@ -138,8 +137,7 @@ class CustomerService {
       country: data.country,
       references: data.additionalDetails,
       latitude: data.latitude,
-      longitude: data.longitude,
-      geocodedAddress: data.geocodedAddress
+      longitude: data.longitude
     };
 
     const otp = data.otp;

@@ -223,7 +223,6 @@ export const AddressForm: React.FC<AddressFormProps> = ({
       {/* Hidden fields for coordinates */}
       <input type="hidden" {...register('latitude')} />
       <input type="hidden" {...register('longitude')} />
-      <input type="hidden" {...register('geocodedAddress')} />
     </form>
   );
 };

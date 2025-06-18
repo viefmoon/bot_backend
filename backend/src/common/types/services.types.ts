@@ -15,7 +15,6 @@ export interface DeliveryInfoInput {
   references?: string | null;
   latitude?: number | null;
   longitude?: number | null;
-  geocodedAddress?: string | null;
   isDefault?: boolean;
 }
 

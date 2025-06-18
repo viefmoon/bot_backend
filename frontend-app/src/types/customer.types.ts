@@ -21,7 +21,6 @@ export interface Address {
   references?: string | null;
   latitude?: number | null;
   longitude?: number | null;
-  geocodedAddress?: string | null;
   isDefault: boolean;
   createdAt: string;
   updatedAt: string;
@@ -40,7 +39,6 @@ export interface AddressFormData {
   references?: string;
   latitude: number;
   longitude: number;
-  geocodedAddress?: string;
   isDefault?: boolean;
 }
 
@@ -67,7 +65,6 @@ export interface CustomerDeliveryInfo {
   latitude?: string | number;
   longitude?: string | number;
   additionalDetails?: string | null;
-  geocodedAddress?: string | null;
 }
 
 // Location type
