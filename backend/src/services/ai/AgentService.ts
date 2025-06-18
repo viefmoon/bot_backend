@@ -90,7 +90,7 @@ export class AgentService {
       
       IMPORTANTE:
       - Siempre responde en español de manera cordial y profesional
-      - Cuando un cliente quiera ordenar, usa la herramienta map_order_items
+      - Cuando un cliente quiera ordenar, usa la herramienta map_order_items que generara la orden que el cliente debera aceptar
       - Sé preciso con las cantidades y especificaciones
       - Si no entiendes algo, pregunta para clarificar
       - Confirma siempre los detalles del pedido antes de procesarlo
