@@ -224,11 +224,11 @@ export async function getNextDailyOrderNumber(): Promise<number> {
         },
       },
       orderBy: {
-        dailyOrderNumber: "desc"
+        dailyNumber: "desc"
       },
     });
 
-    return lastOrder ? lastOrder.dailyOrderNumber + 1 : 1;
+    return lastOrder ? lastOrder.dailyNumber + 1 : 1;
   } catch (error) {
     logger.error(
       "Error al obtener el siguiente número de orden diaria:",

@@ -1,4 +1,5 @@
 import { prisma } from '../../server';
+import { PizzaHalf, IngredientAction } from '@prisma/client';
 import { CreateOrderDto } from './dto/create-order.dto';
 import logger from '../../common/utils/logger';
 import { NotFoundError, ErrorCode } from '../../common/services/errors';
@@ -17,15 +18,15 @@ export class OrderService {
           }
         },
         orderBy: {
-          dailyOrderNumber: 'desc'
+          dailyNumber: 'desc'
         }
       });
       
-      const dailyOrderNumber = lastOrder ? lastOrder.dailyOrderNumber + 1 : 1;
+      const dailyNumber = lastOrder ? lastOrder.dailyNumber + 1 : 1;
       
       // Get restaurant config for estimated times
       const config = await prisma.restaurantConfig.findFirst();
-      const estimatedTime = createOrderDto.orderType === 'delivery' 
+      const estimatedTime = createOrderDto.orderType === 'DELIVERY' 
         ? (config?.estimatedDeliveryTime || 40)
         : (config?.estimatedPickupTime || 20);
       
@@ -37,13 +38,14 @@ export class OrderService {
         // Create the order
         const newOrder = await tx.order.create({
           data: {
-            orderType: createOrderDto.orderType as "delivery" | "pickup",
+            orderType: createOrderDto.orderType as "DINE_IN" | "TAKE_AWAY" | "DELIVERY",
             customerId: createOrderDto.customerId,
-            scheduledDeliveryTime: createOrderDto.scheduledDeliveryTime ? new Date(createOrderDto.scheduledDeliveryTime) : null,
-            status: 'created',
-            dailyOrderNumber,
+            scheduledAt: createOrderDto.scheduledAt ? new Date(createOrderDto.scheduledAt) : null,
+            orderStatus: 'PENDING',
+            dailyNumber,
             totalCost,
             estimatedTime,
+            isFromWhatsApp: true,
             createdAt: new Date(),
             updatedAt: new Date()
           }
@@ -78,68 +80,65 @@ export class OrderService {
                 itemPrice = product.price;
               }
               
-              const orderItem = await tx.orderItem.create({
-                data: {
-                  orderId: newOrder.id,
-                  productId: item.productId,
-                  productVariantId: item.productVariantId,
-                  quantity: item.quantity,
-                  comments: item.comments,
-                  price: itemPrice,
-                  createdAt: new Date(),
-                  updatedAt: new Date()
-                }
-              });
-              
-              // Create selected modifiers if provided and add their prices
+              // First calculate total price including modifiers
+              let modifierIds: string[] = [];
               if (item.selectedModifiers && item.selectedModifiers.length > 0) {
-                const modifiers = await Promise.all(
-                  item.selectedModifiers.map(async (selectedModifier) => {
-                    const modifier = await tx.modifier.findUnique({
-                      where: { id: selectedModifier.modifierId }
-                    });
-                    
-                    if (modifier) {
-                      itemPrice += modifier.price;
-                    }
-                    
-                    return tx.selectedModifier.create({
-                      data: {
-                        orderItemId: orderItem.id,
-                        modifierId: selectedModifier.modifierId
-                      }
-                    });
-                  })
-                );
+                modifierIds = item.selectedModifiers.map(sm => sm.modifierId);
+                
+                // Get modifier prices
+                const modifiers = await tx.productModifier.findMany({
+                  where: { id: { in: modifierIds } }
+                });
+                
+                // Add modifier prices to item price
+                for (const modifier of modifiers) {
+                  itemPrice += modifier.price || 0;
+                }
               }
               
-              // Create selected pizza ingredients if provided
+              // Crear items individuales según la cantidad
+              const quantity = item.quantity || 1;
+              const orderItems = [];
+              
+              for (let i = 0; i < quantity; i++) {
+                const orderItem = await tx.orderItem.create({
+                  data: {
+                    orderId: newOrder.id,
+                    productId: item.productId,
+                    productVariantId: item.productVariantId,
+                    basePrice: itemPrice,
+                    finalPrice: itemPrice,
+                    productModifiers: modifierIds.length > 0 ? {
+                      connect: modifierIds.map(id => ({ id }))
+                    } : undefined
+                  }
+                });
+                orderItems.push(orderItem);
+              }
+              
+              // Create selected pizza ingredients for each order item if provided
               if (item.selectedPizzaIngredients && item.selectedPizzaIngredients.length > 0) {
-                await Promise.all(
-                  item.selectedPizzaIngredients.map(ingredient =>
-                    tx.selectedPizzaIngredient.create({
-                      data: {
-                        orderItemId: orderItem.id,
-                        pizzaIngredientId: ingredient.pizzaIngredientId,
-                        half: ingredient.half as any,
-                        action: ingredient.action as any
-                      }
-                    })
-                  )
-                );
+                for (const orderItem of orderItems) {
+                  await Promise.all(
+                    item.selectedPizzaIngredients.map(ingredient =>
+                      tx.selectedPizzaIngredient.create({
+                        data: {
+                          orderItemId: orderItem.id,
+                          pizzaIngredientId: ingredient.pizzaIngredientId,
+                          half: ingredient.half as PizzaHalf,
+                          action: ingredient.action as IngredientAction
+                        }
+                      })
+                    )
+                  );
+                }
               }
               
-              // Calculate total price for this item (base price + modifiers) * quantity
-              const itemTotal = itemPrice * item.quantity;
+              // Calculate total price for all items of this type
+              const itemTotal = itemPrice * quantity;
               totalCost += itemTotal;
               
-              // Update order item with final price
-              const updatedOrderItem = await tx.orderItem.update({
-                where: { id: orderItem.id },
-                data: { price: itemPrice }
-              });
-              
-              return updatedOrderItem;
+              return orderItems;
             })
           );
         }
@@ -170,7 +169,7 @@ export class OrderService {
     }
   }
 
-  async findOne(id: number) {
+  async findOne(id: string) {
     return prisma.order.findUnique({
       where: { id },
       include: {
@@ -178,11 +177,7 @@ export class OrderService {
           include: {
             product: true,
             productVariant: true,
-            selectedModifiers: {
-              include: {
-                modifier: true
-              }
-            },
+            productModifiers: true,
             selectedPizzaIngredients: {
               include: {
                 pizzaIngredient: true
@@ -195,7 +190,7 @@ export class OrderService {
     });
   }
 
-  async update(id: number, updateData: any) {
+  async update(id: string, updateData: any) {
     try {
       const order = await prisma.order.update({
         where: { id },
@@ -211,7 +206,8 @@ export class OrderService {
     }
   }
 
-  async cancel(id: number) {
-    return this.update(id, { status: 'canceled' });
+  async cancel(id: string) {
+    return this.update(id, { orderStatus: 'CANCELLED' });
   }
+
 }

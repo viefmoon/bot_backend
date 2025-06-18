@@ -42,9 +42,9 @@ export class OrderFormattingService {
       let itemPrice = item.productVariant?.price || 0;
       
       // Add modifier prices
-      const modifiers = item.selectedModifiers?.map((selectedMod: any) => ({
-        nombre: selectedMod.modifier?.name || "Modificador",
-        precio: selectedMod.modifier?.price || 0,
+      const modifiers = item.productModifiers?.map((mod: any) => ({
+        nombre: mod.name || "Modificador",
+        precio: mod.price || 0,
       })) || [];
       
       modifiers.forEach((mod: any) => {
@@ -81,8 +81,8 @@ export class OrderFormattingService {
       minute: '2-digit',
     });
 
-    const scheduledDelivery = order.scheduledDeliveryTime
-      ? order.scheduledDeliveryTime.toLocaleString(env.DEFAULT_LOCALE, {
+    const scheduledDelivery = order.scheduledAt
+      ? order.scheduledAt.toLocaleString(env.DEFAULT_LOCALE, {
           timeZone: env.DEFAULT_TIMEZONE,
           day: '2-digit',
           month: '2-digit',
@@ -108,9 +108,10 @@ export class OrderFormattingService {
    * Generate order confirmation message
    */
   static generateConfirmationMessage(order: any, formattedOrder: NewOrder): string {
-    const orderTypeText = order.orderType === "delivery" ? "A domicilio" : "Recolección";
+    const orderTypeText = order.orderType === "DELIVERY" ? "A domicilio" : 
+                         order.orderType === "TAKE_AWAY" ? "Para llevar" : "Para comer aquí";
     
-    let message = `🎉 *¡Tu orden #${order.dailyOrderNumber} ha sido creada exitosamente!* 🎉\n\n`;
+    let message = `🎉 *¡Tu orden #${order.dailyNumber} ha sido creada exitosamente!* 🎉\n\n`;
     message += `📞 *Teléfono:* ${formattedOrder.telefono}\n`;
     message += `📅 *Fecha de creación:* ${formattedOrder.fecha_creacion}\n`;
     message += `🚚 *Información de entrega:* ${orderTypeText} - ${formattedOrder.informacion_entrega}\n`;
@@ -162,13 +163,13 @@ export class OrderFormattingService {
 
     const ingredientsByHalf = {
       left: ingredientes
-        .filter((ing: any) => ing.mitad === "left")
+        .filter((ing: any) => ing.mitad === "LEFT")
         .map((ing: any) => ing.nombre),
       right: ingredientes
-        .filter((ing: any) => ing.mitad === "right")
+        .filter((ing: any) => ing.mitad === "RIGHT")
         .map((ing: any) => ing.nombre),
       full: ingredientes
-        .filter((ing: any) => ing.mitad === "full")
+        .filter((ing: any) => ing.mitad === "FULL")
         .map((ing: any) => ing.nombre),
     };
 
@@ -197,7 +198,7 @@ export class OrderFormattingService {
 
     // Show removed ingredients
     const removedIngredients = ingredientes
-      .filter((ing: any) => ing.action === "remove")
+      .filter((ing: any) => ing.action === "REMOVE")
       .map((ing: any) => ing.nombre);
     if (removedIngredients.length > 0) {
       summary += `     • ❌ Quitar: ${removedIngredients.join(", ")}\n`;

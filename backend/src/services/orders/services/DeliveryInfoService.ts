@@ -50,7 +50,6 @@ export class DeliveryInfoService {
         country: deliveryInfoInput?.country || customerAddress.country,
         latitude: deliveryInfoInput?.latitude || customerAddress.latitude?.toNumber(),
         longitude: deliveryInfoInput?.longitude || customerAddress.longitude?.toNumber(),
-        geocodedAddress: deliveryInfoInput?.geocodedAddress || customerAddress.geocodedAddress,
         references: deliveryInfoInput?.references || customerAddress.references,
       };
 
@@ -154,7 +153,7 @@ export class DeliveryInfoService {
       // If this is the first address, make it default
       const existingAddresses = await prisma.address.count({
         where: { 
-          customerId: data.customer.connect?.customerId || data.customer.connectOrCreate?.where.customerId,
+          customerId: data.customer.connect?.id || data.customer.connectOrCreate?.where.id,
           deletedAt: null
         }
       });
@@ -168,7 +167,7 @@ export class DeliveryInfoService {
       if (addressData.isDefault) {
         await prisma.address.updateMany({
           where: { 
-            customerId: data.customer.connect?.customerId || data.customer.connectOrCreate?.where.customerId,
+            customerId: data.customer.connect?.id || data.customer.connectOrCreate?.where.id,
             isDefault: true
           },
           data: { isDefault: false }
@@ -183,7 +182,7 @@ export class DeliveryInfoService {
       return address;
     } catch (error) {
       logger.error('Error creating customer address:', error);
-      throw new ValidationError(ErrorCode.DATABASE_ERROR, 'Failed to create customer address', { metadata: { error: error.message } });
+      throw new ValidationError(ErrorCode.DATABASE_ERROR, 'Failed to create customer address', { metadata: { error: error instanceof Error ? error.message : 'Unknown error' } });
     }
   }
 
@@ -191,7 +190,7 @@ export class DeliveryInfoService {
    * Update customer address
    */
   static async updateCustomerAddress(
-    addressId: number,
+    addressId: string,
     data: Prisma.AddressUpdateInput
   ): Promise<Address> {
     try {
@@ -305,7 +304,7 @@ export class DeliveryInfoService {
    * Set address as default
    */
   static async setDefaultAddress(
-    addressId: number,
+    addressId: string,
     customerId: string
   ): Promise<Address> {
     try {
@@ -340,7 +339,7 @@ export class DeliveryInfoService {
    * Soft delete address
    */
   static async deleteCustomerAddress(
-    addressId: number,
+    addressId: string,
     customerId: string
   ): Promise<void> {
     try {

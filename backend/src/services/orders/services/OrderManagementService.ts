@@ -46,28 +46,40 @@ export class OrderManagementService {
     if (preOrder.deliveryInfo && preOrder.deliveryInfo.length > 0) {
       const info = preOrder.deliveryInfo[0];
       deliveryInfo = {
-        street: info.street,
-        number: info.number,
-        interiorNumber: info.interiorNumber,
-        neighborhood: info.neighborhood,
-        zipCode: info.zipCode,
-        city: info.city,
-        state: info.state,
-        country: info.country,
-        latitude: info.latitude,
-        longitude: info.longitude,
-        pickupName: info.pickupName,
-        geocodedAddress: info.geocodedAddress,
-        references: info.references,
+        street: info.street || undefined,
+        number: info.number || undefined,
+        interiorNumber: info.interiorNumber || undefined,
+        neighborhood: info.neighborhood || undefined,
+        zipCode: info.zipCode || undefined,
+        city: info.city || undefined,
+        state: info.state || undefined,
+        country: info.country || undefined,
+        latitude: info.latitude ? info.latitude.toNumber() : undefined,
+        longitude: info.longitude ? info.longitude.toNumber() : undefined,
+        pickupName: info.pickupName || undefined,
+        references: info.references || undefined,
       };
+    }
+
+    // Get customer by WhatsApp phone number
+    const customer = await prisma.customer.findUnique({
+      where: { whatsappPhoneNumber: preOrder.whatsappPhoneNumber }
+    });
+
+    if (!customer) {
+      throw new BusinessLogicError(
+        ErrorCode.CUSTOMER_NOT_FOUND,
+        'Customer not found for this phone number',
+        { metadata: { whatsappPhoneNumber: preOrder.whatsappPhoneNumber } }
+      );
     }
 
     const orderData: CreateOrderDto = {
       orderItems,
-      customerId: preOrder.customerId,
+      customerId: customer.id,
       orderType: preOrder.orderType,
-      scheduledDeliveryTime: preOrder.scheduledDeliveryTime ? preOrder.scheduledDeliveryTime.toISOString() : undefined,
-      orderDeliveryInfo: deliveryInfo,
+      scheduledAt: preOrder.scheduledAt ? preOrder.scheduledAt.toISOString() : undefined,
+      ...(deliveryInfo ? { orderDeliveryInfo: deliveryInfo } : {}),
     };
 
     // Create the order
@@ -83,7 +95,7 @@ export class OrderManagementService {
   /**
    * Cancel an order if it's in a cancellable state
    */
-  async cancelOrder(orderId: number): Promise<Order> {
+  async cancelOrder(orderId: string): Promise<Order> {
     const order = await prisma.order.findUnique({
       where: { id: orderId },
     });
@@ -92,18 +104,18 @@ export class OrderManagementService {
       throw new BusinessLogicError(
         ErrorCode.ORDER_NOT_FOUND,
         'Order not found',
-        { orderId }
+        { metadata: { orderId } }
       );
     }
 
-    const cancellableStatuses: OrderStatus[] = ["created", "accepted"];
-    if (!cancellableStatuses.includes(order.status)) {
-      throw new BusinessLogicError(ErrorCode.ORDER_CANNOT_CANCEL, 'Cannot cancel order with status: ${order.status}', { metadata: { orderId, currentStatus: order.status } });
+    const cancellableStatuses: OrderStatus[] = ["PENDING", "IN_PROGRESS"];
+    if (!cancellableStatuses.includes(order.orderStatus)) {
+      throw new BusinessLogicError(ErrorCode.ORDER_CANNOT_CANCEL, 'Cannot cancel order with status: ${order.orderStatus}', { metadata: { orderId, currentStatus: order.orderStatus } });
     }
 
     const cancelledOrder = await prisma.order.update({
       where: { id: orderId },
-      data: { status: 'canceled' },
+      data: { orderStatus: 'CANCELLED' },
     });
 
     logger.info(`Order ${orderId} cancelled successfully`);
@@ -113,7 +125,7 @@ export class OrderManagementService {
   /**
    * Check if an order can be modified
    */
-  async canModifyOrder(orderId: number): Promise<boolean> {
+  async canModifyOrder(orderId: string): Promise<boolean> {
     const order = await prisma.order.findUnique({
       where: { id: orderId },
     });
@@ -122,12 +134,12 @@ export class OrderManagementService {
       throw new BusinessLogicError(
         ErrorCode.ORDER_NOT_FOUND,
         'Order not found',
-        { orderId }
+        { metadata: { orderId } }
       );
     }
 
-    const modifiableStatuses: OrderStatus[] = ["created", "accepted"];
-    return modifiableStatuses.includes(order.status);
+    const modifiableStatuses: OrderStatus[] = ["PENDING", "IN_PROGRESS"];
+    return modifiableStatuses.includes(order.orderStatus);
   }
 
   /**
@@ -141,9 +153,7 @@ export class OrderManagementService {
           include: {
             product: true,
             productVariant: true,
-            selectedModifiers: {
-              include: { modifier: true },
-            },
+            productModifiers: true,
             selectedPizzaIngredients: {
               include: { pizzaIngredient: true },
             },
@@ -169,7 +179,7 @@ export class OrderManagementService {
   /**
    * Update order message ID for tracking
    */
-  async updateOrderMessageId(orderId: number, messageId: string): Promise<void> {
+  async updateOrderMessageId(orderId: string, messageId: string): Promise<void> {
     await prisma.order.update({
       where: { id: orderId },
       data: { messageId },

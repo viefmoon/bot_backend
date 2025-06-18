@@ -37,15 +37,16 @@ export async function createPreOrderAndSendSummary(
           action: ing.action || "add",
         })) || [],
       })),
-      customerId: phone,
+      whatsappPhoneNumber: phone,
       orderType: result.orderType,
-      scheduledDeliveryTime: result.scheduledDeliveryTime,
+      scheduledAt: result.scheduledAt,
     };
 
     // Crear la preorden usando el servicio
-    const { preOrderId, selectedProducts } = await preOrderService.selectProducts(
+    const preOrderResult = await preOrderService.selectProducts(
       orderData
     );
+    const { preOrderId, items: selectedProducts } = preOrderResult;
 
     // Obtener información de entrega si es necesario
     let deliveryInfoId = null;
@@ -74,7 +75,6 @@ export async function createPreOrderAndSendSummary(
             country: result.deliveryInfo.country || "México",
             latitude: result.deliveryInfo.latitude,
             longitude: result.deliveryInfo.longitude,
-            geocodedAddress: result.deliveryInfo.geocodedAddress,
             references: result.deliveryInfo.references,
             preOrderId: preOrderId,
           },
@@ -91,15 +91,17 @@ export async function createPreOrderAndSendSummary(
       deliveryInfoId = pickupInfo.id;
     }
 
-    // Actualizar la preorden con la información de entrega
-    const preOrder = await prisma.preOrder.update({
-      where: { id: preOrderId },
-      data: {
-        deliveryInfo: {
-          connect: { id: deliveryInfoId }
-        }
-      },
-    });
+    // Actualizar la preorden con la información de entrega si existe
+    if (deliveryInfoId) {
+      const preOrder = await prisma.preOrder.update({
+        where: { id: preOrderId },
+        data: {
+          deliveryInfo: {
+            connect: { id: deliveryInfoId }
+          }
+        },
+      });
+    }
 
     // Generar y enviar el resumen
     const orderSummary = generateOrderSummary(result);
@@ -108,7 +110,7 @@ export async function createPreOrderAndSendSummary(
     // Enviar botones de confirmación
     await sendPreOrderConfirmationButtons(
       phone,
-      preOrder.messageId || `preorder_${preOrder.id}`
+      `preorder_${preOrderId}`
     );
   } catch (error) {
     await ErrorService.handleAndSendError(error, phone, {

@@ -1,5 +1,5 @@
 import { prisma } from '../../server';
-import { Product, Category, Subcategory, ProductVariant, ModifierType } from '@prisma/client';
+import { Product, Category, ProductVariant } from '@prisma/client';
 import logger from '../../common/utils/logger';
 import { NotFoundError, ErrorCode } from '../../common/services/errors';
 
@@ -26,9 +26,9 @@ export class ProductService {
           variants: {
             where: { isActive: true }
           },
-          modifierTypes: {
+          modifierGroups: {
             include: {
-              modifiers: {
+              productModifiers: {
                 where: { isActive: true }
               }
             }
@@ -57,48 +57,87 @@ export class ProductService {
   private static formatMenuForAI(products: any[]): string {
     let menuText = "=== MENÚ COMPLETO ===\n\n";
 
-    // Agrupar por categoría
+    // Agrupar por categoría y subcategoría
     const productsByCategory = products.reduce((acc, product) => {
       const categoryName = product.subcategory?.category?.name || 'Sin categoría';
-      if (!acc[categoryName]) acc[categoryName] = [];
-      acc[categoryName].push(product);
-      return acc;
-    }, {} as Record<string, any[]>);
-
-    // Formatear por categoría
-    for (const [category, categoryProducts] of Object.entries(productsByCategory) as [string, any[]][]) {
-      menuText += `\n📋 **${category.toUpperCase()}**\n\n`;
+      const subcategoryName = product.subcategory?.name || 'Sin subcategoría';
       
-      for (const product of categoryProducts) {
-        menuText += `**${product.name}** (ID: ${product.id})\n`;
-        
-        // Variantes
-        if (product.variants?.length > 0) {
-          for (const variant of product.variants) {
-            menuText += `  - ${variant.name} (ID: ${variant.id}): $${variant.price}\n`;
+      if (!acc[categoryName]) acc[categoryName] = {};
+      if (!acc[categoryName][subcategoryName]) {
+        acc[categoryName][subcategoryName] = {
+          description: product.subcategory?.description,
+          products: []
+        };
+      }
+      acc[categoryName][subcategoryName].products.push(product);
+      return acc;
+    }, {} as Record<string, Record<string, { description: string | null; products: any[] }>>);
+
+    // Formatear por categoría y subcategoría
+    for (const [category, subcategories] of Object.entries(productsByCategory)) {
+      // Obtener información de la categoría si existe
+      const categoryInfo = products.find(p => p.subcategory?.category?.name === category)?.subcategory?.category;
+      
+      menuText += `\n📋 **${category.toUpperCase()}**`;
+      if (categoryInfo?.description) {
+        menuText += ` - ${categoryInfo.description}`;
+      }
+      menuText += '\n\n';
+      
+      for (const [subcategory, data] of Object.entries(subcategories as Record<string, any>)) {
+        if (subcategory !== 'Sin subcategoría') {
+          menuText += `  *${subcategory}*`;
+          if (data.description) {
+            menuText += ` - ${data.description}`;
           }
+          menuText += '\n';
         }
         
-        // Modificadores
-        if (product.modifierTypes?.length > 0) {
-          menuText += `  Modificadores:\n`;
-          for (const modType of product.modifierTypes) {
-            menuText += `    ${modType.name}:\n`;
-            for (const mod of modType.modifiers || []) {
-              menuText += `      - ${mod.name}: +$${mod.price}\n`;
+        const categoryProducts = data.products;
+        
+        for (const product of categoryProducts) {
+          menuText += `    **${product.name}** (ID: ${product.id})`;
+          
+          // Agregar precio si no tiene variantes
+          if (!product.hasVariants && product.price) {
+            menuText += ` - $${product.price}`;
+          }
+          
+          // Agregar descripción si existe
+          if (product.description) {
+            menuText += `\n      ${product.description}`;
+          }
+          
+          menuText += '\n';
+          
+          // Variantes
+          if (product.variants?.length > 0 && product.hasVariants) {
+            for (const variant of product.variants) {
+              menuText += `      - ${variant.name} (ID: ${variant.id}): $${variant.price}\n`;
             }
           }
-        }
-        
-        // Ingredientes de pizza
-        if (product.pizzaIngredients?.length > 0) {
-          menuText += `  Ingredientes disponibles:\n`;
-          for (const ingredient of product.pizzaIngredients) {
-            menuText += `    - ${ingredient.name}\n`;
+          
+          // Modificadores
+          if (product.modifierGroups?.length > 0) {
+            menuText += `      Modificadores:\n`;
+            for (const modGroup of product.modifierGroups) {
+              menuText += `        ${modGroup.name}:\n`;
+              for (const mod of modGroup.productModifiers || []) {
+                menuText += `          - ${mod.name}: +$${mod.price || 0}\n`;
+              }
+            }
           }
+          
+          // Ingredientes de pizza
+          if (product.pizzaIngredients?.length > 0 && product.isPizza) {
+            menuText += `      Ingredientes disponibles:\n`;
+            for (const ingredient of product.pizzaIngredients) {
+              menuText += `        - ${ingredient.name}\n`;
+            }
+          }
+          
+          menuText += "\n";
         }
-        
-        menuText += "\n";
       }
     }
 
@@ -133,9 +172,9 @@ export class ProductService {
         where: { id: productId },
         include: {
           variants: true,
-          modifierTypes: {
+          modifierGroups: {
             include: {
-              modifiers: true
+              productModifiers: true
             }
           },
           pizzaIngredients: true
@@ -207,4 +246,5 @@ export class ProductService {
       );
     }
   }
+
 }

@@ -100,17 +100,16 @@ export class ProductCalculationService {
       return { items: [], totalPrice: 0 };
     }
 
-    const modifiers = await prisma.modifier.findMany({
+    const modifiers = await prisma.productModifier.findMany({
       where: { 
-        id: { in: selectedModifierIds },
-        modifierType: productId ? { productId } : undefined
+        id: { in: selectedModifierIds }
       },
-      include: { modifierType: true }
+      include: { modifierGroup: true }
     });
 
     // Validate all modifiers were found
     if (modifiers.length !== selectedModifierIds.length) {
-      const foundIds = modifiers.map(m => m.id);
+      const foundIds = modifiers.map((m: any) => m.id);
       const notFoundIds = selectedModifierIds.filter(id => !foundIds.includes(id));
       
       throw new ValidationError(
@@ -120,31 +119,32 @@ export class ProductCalculationService {
       );
     }
 
-    // Group by modifier type and validate
-    const modifiersByType = modifiers.reduce((acc, mod) => {
-      const typeId = mod.modifierType.id;
-      if (!acc[typeId]) {
-        acc[typeId] = {
-          type: mod.modifierType,
+    // Group by modifier group and validate
+    const modifiersByGroup = modifiers.reduce((acc: any, mod: any) => {
+      const groupId = mod.modifierGroup.id;
+      if (!acc[groupId]) {
+        acc[groupId] = {
+          group: mod.modifierGroup,
           modifiers: []
         };
       }
-      acc[typeId].modifiers.push(mod);
+      acc[groupId].modifiers.push(mod);
       return acc;
-    }, {} as Record<string, { type: any; modifiers: any[] }>);
+    }, {} as Record<string, { group: any; modifiers: any[] }>);
 
     // Validate modifier selection rules
-    for (const { type, modifiers: typeModifiers } of Object.values(modifiersByType)) {
-      if (type.required && typeModifiers.length === 0) {
-        throw new ValidationError(ErrorCode.INVALID_PRODUCT, `Required modifier type ${type.name} must have at least one selection`, { metadata: { modifierTypeName: type.name } });
+    for (const groupData of Object.values(modifiersByGroup)) {
+      const { group, modifiers: groupModifiers } = groupData as { group: any; modifiers: any[] };
+      if (group.required && groupModifiers.length === 0) {
+        throw new ValidationError(ErrorCode.INVALID_PRODUCT, `Required modifier group ${group.name} must have at least one selection`, { metadata: { modifierGroupName: group.name } });
       }
 
-      if (!type.acceptsMultiple && typeModifiers.length > 1) {
-        throw new ValidationError(ErrorCode.INVALID_PRODUCT, `Modifier type ${type.name} only accepts one selection`, { metadata: { modifierTypeName: type.name, selectedCount: typeModifiers.length } });
+      if (!group.acceptsMultiple && groupModifiers.length > 1) {
+        throw new ValidationError(ErrorCode.INVALID_PRODUCT, `Modifier group ${group.name} only accepts one selection`, { metadata: { modifierGroupName: group.name, selectedCount: groupModifiers.length } });
       }
     }
 
-    const totalPrice = modifiers.reduce((sum, mod) => sum + mod.price, 0);
+    const totalPrice = modifiers.reduce((sum: number, mod: any) => sum + mod.price, 0);
 
     return {
       items: modifiers,
@@ -171,7 +171,7 @@ export class ProductCalculationService {
     const ingredients = await prisma.pizzaIngredient.findMany({
       where: {
         id: { in: ingredientIds },
-        productId: productId || undefined
+        products: productId ? { some: { id: productId } } : undefined
       }
     });
 

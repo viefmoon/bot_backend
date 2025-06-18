@@ -3,7 +3,7 @@ import { useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from 'yup';
 import { Input } from '@/components/ui';
-import type { AddressFormData } from '@/types/customer.types';
+import type { AddressFormData } from '@/types';
 
 const schema = yup.object({
   street: yup.string().required('La calle es obligatoria'),

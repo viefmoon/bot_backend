@@ -133,5 +133,5 @@ export class CreateOrderDto {
 
   @IsOptional()
   @IsDateString()
-  scheduledDeliveryTime?: string;
+  scheduledAt?: string;
 }

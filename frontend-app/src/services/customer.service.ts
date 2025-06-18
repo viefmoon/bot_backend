@@ -6,7 +6,7 @@ import type {
   AddressFormData, 
   OTPVerificationResponse, 
   AddressRegistrationResponse 
-} from '../types/customer.types';
+} from '@/types';
 
 class CustomerService {
   /**
@@ -65,6 +65,41 @@ class CustomerService {
   }
 
   /**
+   * Delete customer address
+   */
+  async deleteAddress(
+    addressId: number,
+    customerId: string,
+    otp: string
+  ): Promise<void> {
+    const response = await api.delete(
+      endpoints.addressRegistration.delete(addressId.toString()),
+      {
+        data: { customerId, otp }
+      }
+    );
+    
+    if (!response.data.success) {
+      throw new Error('Failed to delete address');
+    }
+  }
+
+  /**
+   * Set address as default
+   */
+  async setDefaultAddress(
+    addressId: number,
+    customerId: string,
+    otp: string
+  ): Promise<Address> {
+    const response = await api.put(
+      endpoints.addressRegistration.setDefault(addressId.toString()),
+      { customerId, otp }
+    );
+    return response.data.address;
+  }
+
+  /**
    * Get delivery area polygon
    */
   async getDeliveryArea(): Promise<{ polygonCoords: any[], center?: { lat: number, lng: number } }> {
@@ -76,6 +111,7 @@ class CustomerService {
       return { polygonCoords: [] };
     }
   }
+
 
   /**
    * Legacy methods for backward compatibility

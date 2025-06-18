@@ -8,25 +8,25 @@ export class SchedulingService {
    * Validate and process scheduled delivery time
    */
   static async validateScheduledTime(
-    scheduledDeliveryTime: string | Date | undefined,
+    scheduledAt: string | Date | undefined,
     orderType: 'delivery' | 'pickup'
   ): Promise<Date | null> {
-    if (!scheduledDeliveryTime || scheduledDeliveryTime === "null") {
+    if (!scheduledAt || scheduledAt === "null") {
       return null;
     }
 
     const now = new Date();
     let fullScheduledDeliveryTime: Date;
 
-    if (scheduledDeliveryTime instanceof Date) {
-      fullScheduledDeliveryTime = scheduledDeliveryTime;
+    if (scheduledAt instanceof Date) {
+      fullScheduledDeliveryTime = scheduledAt;
     } else {
-      const timeParts = scheduledDeliveryTime.match(/(\d{1,2}):(\d{2})\s*(AM|PM)?/i);
+      const timeParts = scheduledAt.match(/(\d{1,2}):(\d{2})\s*(AM|PM)?/i);
       if (!timeParts) {
         throw new ValidationError(
           ErrorCode.INVALID_SCHEDULE_TIME,
           'Invalid time format',
-          { metadata: { scheduledDeliveryTime } }
+          { metadata: { scheduledAt } }
         );
       }
 

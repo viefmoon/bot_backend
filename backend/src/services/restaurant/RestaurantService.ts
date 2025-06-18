@@ -62,9 +62,10 @@ export class RestaurantService {
         );
       }
 
+      const { id, ...updateData } = data;
       const updated = await prisma.restaurantConfig.update({
         where: { id: config.id },
-        data
+        data: updateData as any
       });
 
       // Clear caches

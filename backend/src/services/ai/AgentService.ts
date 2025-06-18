@@ -1,5 +1,6 @@
 import { GeminiService } from './GeminiService';
 import logger from '../../common/utils/logger';
+import { ProductService } from '../products/ProductService';
 
 // Type definitions for the new SDK
 interface Content {
@@ -7,53 +8,36 @@ interface Content {
   parts: Array<{ text: string } | { inlineData: { mimeType: string; data: string } }>;
 }
 
+// Contexto para el agente de órdenes
+interface OrderContext {
+  itemsSummary: string;
+  relevantMenu: string;
+}
+
 /**
- * Servicio unificado de AI para manejar todas las conversaciones
+ * Servicio de AI con agentes especializados
  */
 export class AgentService {
   /**
-   * Procesa mensajes con el asistente unificado
+   * Procesa mensajes con el agente general
    */
   static async processMessage(
-    messages: Content[],
-    additionalContext?: any
+    messages: Content[]
   ): Promise<any> {
     try {
-      logger.debug('=== AgentService.processMessage DEBUG ===');
-      logger.debug(`Additional Context: ${additionalContext ? JSON.stringify(additionalContext, null, 2) : 'None'}`);
-      logger.debug(`Number of messages: ${messages.length}`);
+      logger.debug('=== AgentService.processMessage (GENERAL_AGENT) ===');
       
-      // Log cada mensaje
-      messages.forEach((msg, index) => {
-        const messageData = {
-          role: msg.role,
-          parts: msg.parts.map(p => {
-            if ('text' in p) return { type: 'text', content: p.text };
-            if ('inlineData' in p) return { type: 'inlineData', mimeType: p.inlineData.mimeType };
-            return p;
-          })
-        };
-        logger.debug(`Message ${index + 1}: ${JSON.stringify(messageData, null, 2)}`);
-      });
+      // Usar el agente general para detectar intención
+      const systemInstruction = await this.getGeneralAgentInstruction();
+      const tools = this.getGeneralAgentTools();
       
-      // Obtener instrucciones del sistema
-      const systemInstruction = await this.getSystemInstruction(additionalContext);
-      logger.debug(`System Instruction: ${systemInstruction}`);
-      
-      // Obtener herramientas disponibles
-      const tools = this.getTools();
-      const toolsInfo = tools.map(t => ({ name: t.name, description: t.description }));
-      logger.debug(`Tools: ${JSON.stringify(toolsInfo, null, 2)}`);
-      
-      // Procesar con Gemini
       const response = await GeminiService.generateContentWithHistory(
         messages,
         systemInstruction,
         tools
       );
       
-      logger.debug('=== End AgentService.processMessage DEBUG ===');
-      
+      logger.debug('=== End GENERAL_AGENT Processing ===');
       return response;
     } catch (error) {
       logger.error('AgentService: Error procesando mensaje', error);
@@ -62,55 +46,113 @@ export class AgentService {
   }
   
   /**
-   * Obtiene las instrucciones del sistema
+   * Procesa una orden con el agente especializado
    */
-  private static async getSystemInstruction(
-    additionalContext?: any
-  ): Promise<string> {
-    // Obtener el menú para incluirlo en las instrucciones
-    let menuInfo = '';
-    if (additionalContext?.menuInfo) {
-      menuInfo = additionalContext.menuInfo;
-    } else {
-      try {
-        const { ProductService } = await import('../products/ProductService');
-        const menu = await ProductService.getActiveProducts({ formatForAI: true });
-        menuInfo = String(menu);
-      } catch (error) {
-        logger.error('Error obteniendo menú para instrucciones:', error);
-      }
+  static async processOrderMapping(
+    orderContext: OrderContext
+  ): Promise<any> {
+    try {
+      logger.debug('=== AgentService.processOrderMapping (ORDER_AGENT) ===');
+      logger.debug('Order Context:', orderContext);
+      
+      // Crear mensaje para el agente de órdenes
+      const messages: Content[] = [{
+        role: 'user',
+        parts: [{ 
+          text: `Cliente quiere ordenar: ${orderContext.itemsSummary}\n\nMenú relevante:\n${orderContext.relevantMenu}` 
+        }]
+      }];
+      
+      const systemInstruction = this.getOrderAgentInstruction();
+      const tools = this.getOrderAgentTools();
+      
+      // Configurar modo ANY para forzar la ejecución de función
+      const toolConfig = {
+        functionCallingConfig: {
+          mode: 'ANY',
+          allowedFunctionNames: ['map_order_items']
+        }
+      };
+      
+      const response = await GeminiService.generateContentWithHistory(
+        messages,
+        systemInstruction,
+        tools,
+        toolConfig
+      );
+      
+      logger.debug('=== End ORDER_AGENT Processing ===');
+      return response;
+    } catch (error) {
+      logger.error('OrderAgent: Error procesando orden', error);
+      throw error;
     }
-    
+  }
+  
+  /**
+   * Instrucciones para el agente general
+   */
+  private static async getGeneralAgentInstruction(): Promise<string> {
     return `
-      Eres un asistente completo para una pizzería que puede:
-      1. Responder preguntas generales de manera amigable
-      2. Procesar pedidos de comida
-      3. Proporcionar información sobre el menú
-      4. Mostrar el horario de atención del negocio
+      Eres un asistente amigable de una pizzería. Tu rol principal es:
+      
+      1. DETECTAR INTENCIÓN:
+         - Si el cliente quiere ordenar algo, usa la herramienta "prepare_order_context"
+         - Si es una consulta general, responde directamente
+      
+      2. CONSULTAS GENERALES:
+         - Información sobre el menú: usa "send_menu"
+         - Horarios: usa "get_business_hours"
+         - Preguntas generales: responde de forma amigable
+      
+      3. DETECCIÓN DE ÓRDENES:
+         Cuando detectes que el cliente quiere ordenar (palabras como: quiero, pedir, ordenar, dame, etc.):
+         - Extrae TODOS los artículos mencionados
+         - Incluye cantidades si las menciona
+         - Detecta el tipo de orden:
+           * DELIVERY: si menciona "a domicilio", "envío", "traer", "mi casa", "mi dirección" (POR DEFECTO)
+           * TAKE_AWAY: si menciona "para llevar", "recoger", "paso por", "voy por"
+           * DINE_IN: si menciona "comer ahí", "en el restaurante", "mesa"
+           * Por defecto usa DELIVERY si no está claro
+         - USA SIEMPRE "prepare_order_context" para pasar al agente de órdenes
       
       IMPORTANTE:
-      - Siempre responde en español de manera cordial y profesional
-      - Cuando un cliente quiera ordenar, usa la herramienta map_order_items que generara la orden que el cliente debera aceptar
-      - Sé preciso con las cantidades y especificaciones
-      - Si no entiendes algo, pregunta para clarificar
-      - Confirma siempre los detalles del pedido antes de procesarlo
-      
-      MENÚ DISPONIBLE:
-      ${menuInfo}
-      
-      Cuando proceses un pedido:
-      - Mapea correctamente los items solicitados a los productId y variantId del menú
-      - Si un producto no está claro, sugiere opciones similares
-      - Incluye comentarios especiales del cliente
-      - Determina si es para entrega (delivery) o recoger (pickup)
+      - Responde siempre en español
+      - Sé cordial y profesional
+      - Para órdenes, NO intentes mapear productos, solo extrae lo que el cliente dice
     `;
   }
   
   /**
-   * Obtiene todas las herramientas disponibles
+   * Instrucciones para el agente de órdenes
    */
-  private static getTools(): any[] {
-    // Todas las herramientas disponibles para el asistente unificado
+  private static getOrderAgentInstruction(): string {
+    return `
+      Eres un agente especializado en mapear órdenes. Tu ÚNICA función es:
+      
+      1. Recibir el resumen de lo que el cliente quiere
+      2. Mapear cada item al menú proporcionado
+      3. SIEMPRE ejecutar "map_order_items" con el resultado
+      
+      REGLAS ESTRICTAS:
+      - DEBES usar la herramienta "map_order_items" SIEMPRE
+      - Mapea con precisión usando productId y variantId del menú
+      - Si algo no está claro, incluye una advertencia
+      - Detecta el tipo de orden: DELIVERY (entrega), TAKE_AWAY (para llevar), DINE_IN (comer aquí)
+      
+      NO HAGAS:
+      - No converses con el cliente
+      - No pidas aclaraciones
+      - No respondas sin usar la herramienta
+      
+      SOLO ejecuta la función con el mapeo correcto.
+    `;
+  }
+  
+  /**
+   * Herramientas para el agente general
+   */
+  private static getGeneralAgentTools(): any[] {
     return [
       {
         name: "send_menu",
@@ -121,8 +163,47 @@ export class AgentService {
         }
       },
       {
+        name: "get_business_hours",
+        description: "Obtiene el horario de atención del negocio",
+        parameters: {
+          type: "object",
+          properties: {}
+        }
+      },
+      {
+        name: "prepare_order_context",
+        description: "Prepara el contexto para procesar una orden cuando el cliente quiere pedir algo",
+        parameters: {
+          type: "object",
+          properties: {
+            itemsSummary: {
+              type: "string",
+              description: "Lista de todos los artículos que el cliente mencionó (ej: '2 pizzas hawaianas grandes, 1 coca cola, papas fritas')"
+            },
+            detectedOrderType: {
+              type: "string", 
+              enum: ["DELIVERY", "TAKE_AWAY", "DINE_IN"],
+              description: "Tipo de orden detectado si el cliente lo mencionó"
+            },
+            specialInstructions: {
+              type: "string",
+              description: "Instrucciones especiales del cliente si las hay"
+            }
+          },
+          required: ["itemsSummary"]
+        }
+      }
+    ];
+  }
+  
+  /**
+   * Herramientas para el agente de órdenes
+   */
+  private static getOrderAgentTools(): any[] {
+    return [
+      {
         name: "map_order_items",
-        description: "Procesa y mapea los items del pedido a productos del menú",
+        description: "SIEMPRE usa esta herramienta para mapear los items del pedido",
         parameters: {
           type: "object",
           properties: {
@@ -142,63 +223,92 @@ export class AgentService {
                   quantity: { 
                     type: "number",
                     description: "Cantidad a ordenar"
-                  },
-                  comments: { 
-                    type: "string",
-                    description: "Comentarios especiales del cliente"
                   }
                 },
                 required: ["productId", "quantity"]
-              },
-              description: "Lista de productos a ordenar"
+              }
             },
             orderType: {
               type: "string",
-              enum: ["delivery", "pickup"],
-              description: "Tipo de pedido: entrega a domicilio o recoger en tienda"
+              enum: ["DELIVERY", "TAKE_AWAY", "DINE_IN"],
+              description: "Tipo de pedido: DELIVERY (entrega), TAKE_AWAY (para llevar), DINE_IN (comer en el lugar)"
             },
             warnings: {
-              type: "array",
-              items: { type: "string" },
-              description: "Advertencias o aclaraciones sobre el pedido"
-            },
-            scheduledDeliveryTime: {
               type: "string",
-              description: "Hora programada para entrega/recogida (opcional)"
+              description: "Advertencias o errores generales sobre el procesamiento del pedido"
             }
           },
           required: ["orderItems", "orderType"]
-        }
-      },
-      {
-        name: "get_business_hours",
-        description: "Obtiene el horario de atención del negocio",
-        parameters: {
-          type: "object",
-          properties: {}
         }
       }
     ];
   }
   
   /**
-   * Método helper para procesar pedidos
+   * Obtiene el menú relevante basado en las palabras clave
    */
-  static async processOrder(orderDetails: any[], menuInfo?: string): Promise<any> {
-    logger.debug('=== AgentService.processOrder DEBUG ===');
-    logger.debug('Order Details:', JSON.stringify(orderDetails, null, 2));
-    logger.debug(`Menu Info provided: ${menuInfo ? 'Yes' : 'No'}`);
-    
-    const messages: Content[] = [{
-      role: 'user',
-      parts: [{ text: JSON.stringify(orderDetails) }]
-    }];
-    
-    logger.debug('=== End AgentService.processOrder DEBUG ===');
-    
-    return this.processMessage(
-      messages,
-      { menuInfo }
-    );
+  static async getRelevantMenu(itemsSummary: string): Promise<string> {
+    try {
+      // Obtener menú completo
+      const fullMenu = await ProductService.getActiveProducts({ formatForAI: true });
+      const menuStr = String(fullMenu);
+      
+      // Palabras clave del resumen (normalizado)
+      const keywords = itemsSummary
+        .toLowerCase()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .split(/\s+/)
+        .filter(word => word.length > 2);
+      
+      // Filtrar líneas del menú que contengan palabras clave
+      const menuLines = menuStr.split('\n');
+      const relevantLines: string[] = [];
+      let currentCategory = '';
+      
+      for (const line of menuLines) {
+        const lineLower = line.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+        
+        // Detectar categorías
+        if (line.startsWith('##') || line.startsWith('📋')) {
+          currentCategory = line;
+          continue;
+        }
+        
+        // Verificar si la línea contiene alguna palabra clave
+        const isRelevant = keywords.some(keyword => lineLower.includes(keyword));
+        
+        if (isRelevant) {
+          // Agregar categoría si no está
+          if (currentCategory && !relevantLines.includes(currentCategory)) {
+            relevantLines.push(currentCategory);
+          }
+          relevantLines.push(line);
+        }
+      }
+      
+      // Si no encontramos líneas relevantes, incluir categorías populares
+      if (relevantLines.length === 0) {
+        const popularCategories = ['pizza', 'hamburguesa', 'bebida', 'combo'];
+        for (const line of menuLines) {
+          const lineLower = line.toLowerCase();
+          if (popularCategories.some(cat => lineLower.includes(cat))) {
+            relevantLines.push(line);
+          }
+        }
+      }
+      
+      // Si aún no hay resultados, devolver un extracto del menú
+      if (relevantLines.length === 0) {
+        return menuLines.slice(0, 50).join('\n');
+      }
+      
+      return relevantLines.join('\n');
+    } catch (error) {
+      logger.error('Error obteniendo menú relevante:', error);
+      // En caso de error, devolver menú completo
+      const menu = await ProductService.getActiveProducts({ formatForAI: true });
+      return String(menu);
+    }
   }
 }

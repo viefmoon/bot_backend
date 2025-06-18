@@ -31,7 +31,6 @@ export interface LocalAddress {
   references?: string | null;
   latitude?: number | null;
   longitude?: number | null;
-  geocodedAddress?: string | null;
   isDefault: boolean;
 }
 
@@ -42,11 +41,11 @@ export class SyncService {
   static async syncCustomerFromLocal(localCustomer: LocalCustomer): Promise<Customer> {
     try {
       // Map phone number to WhatsApp format (add country code if needed)
-      const customerId = this.formatPhoneNumberForWhatsApp(localCustomer.phoneNumber);
+      const whatsappPhoneNumber = this.formatPhoneNumberForWhatsApp(localCustomer.phoneNumber);
       
-      // Check if customer exists
+      // Check if customer exists by phone number
       const existingCustomer = await prisma.customer.findUnique({
-        where: { customerId }
+        where: { whatsappPhoneNumber }
       });
 
       let customer: Customer;
@@ -54,9 +53,8 @@ export class SyncService {
       if (existingCustomer) {
         // Update existing customer
         customer = await prisma.customer.update({
-          where: { customerId },
+          where: { whatsappPhoneNumber },
           data: {
-            localId: localCustomer.id,
             firstName: localCustomer.firstName,
             lastName: localCustomer.lastName,
             email: localCustomer.email,
@@ -71,13 +69,13 @@ export class SyncService {
           }
         });
         
-        await this.logSync('customer', customerId, localCustomer.id, 'update', 'local_to_cloud', 'success');
+        await this.logSync('customer', customer.id, 'update', 'local_to_cloud', 'success');
       } else {
-        // Create new customer
+        // Create new customer with the same UUID as local
         customer = await prisma.customer.create({
           data: {
-            customerId,
-            localId: localCustomer.id,
+            id: localCustomer.id, // Use the same UUID as local backend
+            whatsappPhoneNumber,
             firstName: localCustomer.firstName,
             lastName: localCustomer.lastName,
             email: localCustomer.email,
@@ -93,21 +91,21 @@ export class SyncService {
           }
         });
         
-        await this.logSync('customer', customerId, localCustomer.id, 'create', 'local_to_cloud', 'success');
+        await this.logSync('customer', customer.id, 'create', 'local_to_cloud', 'success');
       }
       
-      logger.info(`Synced customer ${customerId} from local backend`);
+      logger.info(`Synced customer ${customer.id} with phone ${whatsappPhoneNumber} from local backend`);
       
       // Sync addresses if provided
       if (localCustomer.addresses && localCustomer.addresses.length > 0) {
-        await this.syncAddressesFromLocal(customerId, localCustomer.addresses);
+        await this.syncAddressesFromLocal(customer.id, localCustomer.addresses);
       }
       
       return customer;
       
     } catch (error) {
-      const customerId = this.formatPhoneNumberForWhatsApp(localCustomer.phoneNumber);
-      await this.logSync('customer', customerId, localCustomer.id, 'update', 'local_to_cloud', 'failed', error.message);
+      const whatsappPhoneNumber = this.formatPhoneNumberForWhatsApp(localCustomer.phoneNumber);
+      await this.logSync('customer', localCustomer.id, 'update', 'local_to_cloud', 'failed', error instanceof Error ? error.message : 'Unknown error');
       logger.error('Error syncing customer from local:', error);
       throw error;
     }
@@ -123,11 +121,11 @@ export class SyncService {
     try {
       for (const localAddress of localAddresses) {
         const existingAddress = await prisma.address.findUnique({
-          where: { localId: localAddress.id }
+          where: { id: localAddress.id }
         });
         
         const addressData = {
-          localId: localAddress.id,
+          id: localAddress.id, // Use the same UUID as local backend
           customerId,
           street: localAddress.street,
           number: localAddress.number,
@@ -140,13 +138,12 @@ export class SyncService {
           references: localAddress.references,
           latitude: localAddress.latitude,
           longitude: localAddress.longitude,
-          geocodedAddress: localAddress.geocodedAddress,
           isDefault: localAddress.isDefault
         };
         
         if (existingAddress) {
           await prisma.address.update({
-            where: { localId: localAddress.id },
+            where: { id: localAddress.id },
             data: addressData
           });
         } else {
@@ -163,7 +160,7 @@ export class SyncService {
           });
         }
         
-        await this.logSync('address', localAddress.id, localAddress.id, 
+        await this.logSync('address', localAddress.id, 
           existingAddress ? 'update' : 'create', 'local_to_cloud', 'success');
       }
       
@@ -183,7 +180,7 @@ export class SyncService {
       // Get customer addresses
       const addresses = await prisma.address.findMany({
         where: { 
-          customerId: customer.customerId,
+          customerId: customer.id,
           deletedAt: null
         }
       });
@@ -191,8 +188,8 @@ export class SyncService {
       // This would make an API call to your local backend
       // For now, just log the sync
       const syncData = {
-        id: customer.localId || undefined,
-        phoneNumber: this.formatPhoneNumberForLocal(customer.customerId),
+        id: customer.id,
+        phoneNumber: this.formatPhoneNumberForLocal(customer.whatsappPhoneNumber),
         firstName: customer.firstName,
         lastName: customer.lastName,
         email: customer.email,
@@ -206,7 +203,7 @@ export class SyncService {
         relevantChatHistory: customer.relevantChatHistory,
         lastInteraction: customer.lastInteraction,
         addresses: addresses.map(addr => ({
-          id: addr.localId || undefined,
+          id: addr.id,
           street: addr.street,
           number: addr.number,
           interiorNumber: addr.interiorNumber,
@@ -218,7 +215,6 @@ export class SyncService {
           references: addr.references,
           latitude: addr.latitude?.toNumber() || null,
           longitude: addr.longitude?.toNumber() || null,
-          geocodedAddress: addr.geocodedAddress,
           isDefault: addr.isDefault
         }))
       };
@@ -226,11 +222,11 @@ export class SyncService {
       // TODO: Make API call to local backend
       // const response = await axios.post(LOCAL_BACKEND_URL + '/sync/customer', syncData);
       
-      await this.logSync('customer', customer.customerId, customer.localId, 'update', 'cloud_to_local', 'success');
-      logger.info(`Synced customer ${customer.customerId} to local backend with ${addresses.length} addresses`);
+      await this.logSync('customer', customer.id, 'update', 'cloud_to_local', 'success');
+      logger.info(`Synced customer ${customer.id} to local backend with ${addresses.length} addresses`);
       
     } catch (error) {
-      await this.logSync('customer', customer.customerId, customer.localId, 'update', 'cloud_to_local', 'failed', error.message);
+      await this.logSync('customer', customer.id, 'update', 'cloud_to_local', 'failed', error instanceof Error ? error.message : 'Unknown error');
       logger.error('Error syncing customer to local:', error);
       throw error;
     }
@@ -268,12 +264,12 @@ export class SyncService {
   /**
    * Format phone number for local backend (remove country code if needed)
    */
-  private static formatPhoneNumberForLocal(customerId: string): string {
+  private static formatPhoneNumberForLocal(whatsappPhoneNumber: string): string {
     // Remove country code for local storage if needed
-    if (customerId.startsWith('52')) {
-      return customerId.substring(2);
+    if (whatsappPhoneNumber.startsWith('52')) {
+      return whatsappPhoneNumber.substring(2);
     }
-    return customerId;
+    return whatsappPhoneNumber;
   }
 
   /**
@@ -282,7 +278,6 @@ export class SyncService {
   private static async logSync(
     entityType: string,
     entityId: string,
-    localId: string | null,
     action: string,
     syncDirection: string,
     syncStatus: string,
@@ -292,7 +287,6 @@ export class SyncService {
       data: {
         entityType,
         entityId,
-        localId,
         action,
         syncDirection,
         syncStatus,

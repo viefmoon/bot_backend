@@ -31,7 +31,7 @@ export interface UnifiedResponse {
     orderItems?: any[];
     orderType?: 'delivery' | 'pickup';
     warnings?: string[];
-    scheduledDeliveryTime?: Date;
+    scheduledAt?: Date;
   };
   
   // Errores

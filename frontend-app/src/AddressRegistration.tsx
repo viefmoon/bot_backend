@@ -3,6 +3,7 @@ import { useParams, useSearchParams } from 'react-router-dom';
 import toast, { Toaster } from 'react-hot-toast';
 import { AddressForm } from '@/components/AddressForm';
 import { BasicMap } from '@/components/BasicMap';
+import { AddressManager } from '@/components/AddressManager';
 import { WhatsAppButton } from '@/components/ui';
 import customerService from '@/services/customer.service';
 import type { AddressFormData, Customer, Address } from '@/types/customer.types';
@@ -35,7 +36,6 @@ function AddressRegistration() {
     references: '',
     latitude: 0,
     longitude: 0,
-    geocodedAddress: '',
   });
   const [isUpdating, setIsUpdating] = useState(false);
   const [locationError, setLocationError] = useState<string | null>(null);
@@ -43,6 +43,7 @@ function AddressRegistration() {
   const [hasVerified, setHasVerified] = useState(false);
   const [polygonCoords, setPolygonCoords] = useState<Location[]>([]);
   const [mapCenter, setMapCenter] = useState<Location | null>(null);
+  const [showAddressForm, setShowAddressForm] = useState(false);
 
   useEffect(() => {
     // Evitar doble verificación
@@ -85,17 +86,17 @@ function AddressRegistration() {
         setIsValidOtp(true);
         setCustomer(response.customer);
         
-        // If customer has addresses, load the default one
-        if (response.customer.addresses.length > 0) {
-          const defaultAddress = response.customer.addresses.find(addr => addr.isDefault) || response.customer.addresses[0];
-          loadExistingAddress(defaultAddress);
+        // If customer has addresses, show the address manager
+        // Otherwise, show the form to add the first address
+        if (response.customer.addresses.length === 0) {
+          setShowAddressForm(true);
         }
       } else {
-        toast.error('El enlace ha expirado o no es válido.');
+        toast.error('❌ El enlace ha expirado o no es válido');
       }
     } catch (error) {
       console.error('Error al verificar el OTP:', error);
-      toast.error('Hubo un error al verificar el enlace.');
+      toast.error('⚠️ Hubo un error al verificar el enlace');
     } finally {
       setLoading(false);
     }
@@ -104,6 +105,7 @@ function AddressRegistration() {
   const loadExistingAddress = (address: Address) => {
     setSelectedAddress(address);
     setIsUpdating(true);
+    setShowAddressForm(true);
     
     const formattedData: AddressFormData = {
       street: address.street,
@@ -117,7 +119,6 @@ function AddressRegistration() {
       references: address.references || '',
       latitude: address.latitude || 0,
       longitude: address.longitude || 0,
-      geocodedAddress: address.geocodedAddress || '',
     };
 
     setFormData(formattedData);
@@ -134,6 +135,13 @@ function AddressRegistration() {
     setSelectedLocation(location);
     setLocationError(null);
     
+    // Update coordinates immediately
+    setFormData(prev => ({
+      ...prev,
+      latitude: location.lat,
+      longitude: location.lng,
+    }));
+    
     // Reverse geocoding using Google
     const geocoder = new google.maps.Geocoder();
     geocoder.geocode({ location }, (results, status) => {
@@ -144,7 +152,6 @@ function AddressRegistration() {
         const newFormData: Partial<AddressFormData> = {
           latitude: location.lat,
           longitude: location.lng,
-          geocodedAddress: formattedAddress,
         };
 
         addressComponents.forEach((component) => {
@@ -171,10 +178,42 @@ function AddressRegistration() {
     });
   };
 
+  const handleAddNewAddress = () => {
+    setShowAddressForm(true);
+    setIsUpdating(false);
+    setSelectedAddress(null);
+    setSelectedLocation(null);
+    setFormData({
+      street: '',
+      number: '',
+      interiorNumber: '',
+      neighborhood: '',
+      zipCode: '',
+      city: '',
+      state: '',
+      country: '',
+      references: '',
+      latitude: 0,
+      longitude: 0,
+    });
+  };
+
+  const loadCustomerData = async () => {
+    try {
+      const response = await customerService.verifyOTP(customerId!, otp);
+      if (response.valid && response.customer) {
+        setCustomer(response.customer);
+        setShowAddressForm(false);
+      }
+    } catch (error) {
+      console.error('Error reloading customer data:', error);
+    }
+  };
+
 
   const handleSubmit = async (data: AddressFormData) => {
     if (!selectedLocation) {
-      toast.error('Por favor selecciona una ubicación en el mapa');
+      toast.error('📍 Por favor selecciona una ubicación en el mapa');
       return;
     }
 
@@ -189,22 +228,25 @@ function AddressRegistration() {
           otp,
           data
         );
-        toast.success('¡Dirección actualizada exitosamente!');
+        toast.success('✅ ¡Dirección actualizada exitosamente!');
       } else {
         // Create new address
         await customerService.createAddress(customerId!, otp, data);
-        toast.success('¡Dirección registrada exitosamente!');
+        toast.success('🎉 ¡Dirección registrada exitosamente!');
       }
+      
+      // Reload customer data
+      await loadCustomerData();
 
       // Success feedback and redirect to WhatsApp
-      toast.success('Redirigiendo a WhatsApp...', {
+      toast.success('📱 Redirigiendo a WhatsApp...', {
         duration: 2000,
       });
 
       // If updating for a pre-order, notify backend
       if (preOrderId) {
         // The backend will handle the pre-order update
-        toast.success('Tu pedido ha sido actualizado con la nueva dirección');
+        toast.success('🛍️ Tu pedido ha sido actualizado con la nueva dirección');
       }
 
       // Redirect to WhatsApp after a short delay
@@ -242,10 +284,30 @@ function AddressRegistration() {
             lng: position.coords.longitude,
           };
           handleLocationSelect(location);
+          toast.success('✨ ¡Ubicación actual capturada con éxito!');
         },
         (error) => {
           console.error('Error getting location:', error);
-          toast.error('No se pudo obtener tu ubicación actual');
+          let errorMessage = 'No se pudo obtener tu ubicación actual';
+          
+          switch(error.code) {
+            case error.PERMISSION_DENIED:
+              errorMessage = 'Permiso de ubicación denegado. Por favor habilita la ubicación en tu navegador.';
+              break;
+            case error.POSITION_UNAVAILABLE:
+              errorMessage = 'La información de ubicación no está disponible.';
+              break;
+            case error.TIMEOUT:
+              errorMessage = 'Se agotó el tiempo de espera para obtener la ubicación.';
+              break;
+          }
+          
+          toast.error(errorMessage);
+        },
+        {
+          enableHighAccuracy: true,
+          timeout: 10000,
+          maximumAge: 0
         }
       );
     } else {
@@ -257,7 +319,7 @@ function AddressRegistration() {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto"></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-600 mx-auto"></div>
           <p className="mt-4 text-gray-600">Verificando enlace...</p>
         </div>
       </div>
@@ -283,147 +345,216 @@ function AddressRegistration() {
             </WhatsAppButton>
           </div>
         </div>
-        <Toaster position="top-center" />
+        <Toaster 
+        position="top-center"
+        toastOptions={{
+          duration: 4000,
+          style: {
+            background: '#fff',
+            color: '#1f2937',
+            padding: '16px',
+            borderRadius: '12px',
+            fontSize: '14px',
+            fontWeight: '500',
+            boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
+            border: '1px solid rgba(0, 0, 0, 0.05)',
+          },
+          success: {
+            iconTheme: {
+              primary: '#10b981',
+              secondary: '#fff',
+            },
+            style: {
+              background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+              color: '#fff',
+              border: 'none',
+            },
+          },
+          error: {
+            iconTheme: {
+              primary: '#ef4444',
+              secondary: '#fff',
+            },
+            style: {
+              background: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)',
+              color: '#fff',
+              border: 'none',
+            },
+          },
+        }}
+      />
       </div>
     );
   }
 
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+    <div className="min-h-screen bg-gradient-to-br from-orange-50 via-red-50 to-pink-50">
       <div className="max-w-4xl mx-auto p-2 sm:p-4">
         <div className="bg-white rounded-xl sm:rounded-2xl shadow-xl overflow-hidden">
-          <div className="bg-gradient-to-r from-blue-600 to-indigo-600 p-4 sm:p-6 text-white">
-            <h1 className="text-xl sm:text-2xl md:text-3xl font-bold mb-2">
-              {isUpdating ? '📍 Actualizar Dirección' : '📍 Registrar Dirección de Entrega'}
+          <div className="bg-gradient-to-r from-orange-500 to-pink-600 p-4 sm:p-6 text-white">
+            <h1 className="text-xl sm:text-2xl md:text-3xl font-bold mb-2 drop-shadow-lg">
+              {customer && customer.addresses.length > 0 && !showAddressForm 
+                ? '📍 Mis Direcciones de Entrega' 
+                : isUpdating 
+                  ? '📍 Actualizar Dirección' 
+                  : '📍 Registrar Dirección de Entrega'}
             </h1>
             <div className="space-y-1">
-              <p className="text-sm sm:text-base text-blue-100">
-                ¡Hola{customer?.firstName ? ` ${customer.firstName}` : ''}! Por favor completa tu información de entrega.
+              <p className="text-sm sm:text-base text-white font-medium drop-shadow">
+                {customer && customer.addresses.length > 0 && !showAddressForm
+                  ? `¡Hola${customer?.firstName ? ` ${customer.firstName}` : ''}! Selecciona o agrega una dirección de entrega.`
+                  : `¡Hola${customer?.firstName ? ` ${customer.firstName}` : ''}! Por favor completa tu información de entrega.`}
               </p>
               {customerId && (
-                <p className="text-xs sm:text-sm text-blue-200">
-                  📱 Tu número: {customerId}
-                </p>
+                <div className="inline-block bg-white/20 backdrop-blur-sm rounded-lg px-3 py-1 mt-2">
+                  <p className="text-xs sm:text-sm text-white font-medium">
+                    📱 Tu número: {customerId}
+                  </p>
+                </div>
               )}
             </div>
           </div>
           
           <div className="p-4 sm:p-6">
-
-            {/* Use my location button */}
-            <div className="mb-4 sm:mb-6">
-              <button
-                type="button"
-                onClick={handleUseMyLocation}
-                className="w-full sm:w-auto bg-white border-2 border-blue-500 text-blue-600 font-medium sm:font-semibold py-2.5 sm:py-3 px-4 sm:px-6 rounded-lg hover:bg-blue-50 transition duration-200 flex items-center justify-center text-sm sm:text-base"
-              >
-                <svg className="w-4 h-4 sm:w-5 sm:h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                </svg>
-                Usar mi ubicación actual
-              </button>
-            </div>
-
-            {/* Map with Search */}
-            <div className="mb-4 sm:mb-6">
-              {mapCenter && (
-                <BasicMap
-                  center={selectedLocation || mapCenter}
-                  onLocationSelect={handleLocationSelect}
-                  selectedLocation={selectedLocation}
-                  polygonCoords={polygonCoords}
-                  onLocationError={setLocationError}
-                />
-              )}
-              {locationError && (
-                <div className="mt-2 bg-red-50 border border-red-200 text-red-600 px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm">
-                  {locationError}
-                </div>
-              )}
-            </div>
-
-            {/* Address Form */}
-            <div className="bg-gray-50 rounded-lg p-4 sm:p-6 mb-4 sm:mb-6">
-              <h2 className="text-base sm:text-lg font-semibold text-gray-800 mb-3 sm:mb-4">Detalles de la dirección</h2>
-              <AddressForm
-                formData={formData}
-                onSubmit={handleSubmit}
-                isUpdating={isUpdating}
+            {/* Show AddressManager or Form based on state */}
+            {customer && customer.addresses.length > 0 && !showAddressForm ? (
+              <AddressManager
+                addresses={customer.addresses}
+                customerId={customerId!}
+                otp={otp}
+                onAddressClick={loadExistingAddress}
+                onAddNew={handleAddNewAddress}
+                onAddressesChange={loadCustomerData}
               />
-            </div>
-
-            {/* Submit Button */}
-            <div className="mt-4 sm:mt-6">
-              <button
-                type="submit"
-                onClick={() => handleSubmit(formData)}
-                disabled={isSubmitting || !selectedLocation}
-                className={`w-full py-3 sm:py-4 px-4 sm:px-6 font-medium sm:font-semibold rounded-lg transition duration-200 text-sm sm:text-base ${
-                  isSubmitting || !selectedLocation
-                    ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                    : 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white hover:from-blue-700 hover:to-indigo-700'
-                }`}
-              >
-                {isSubmitting ? (
-                  <span className="flex items-center justify-center">
-                    <svg className="animate-spin -ml-1 mr-2 sm:mr-3 h-4 w-4 sm:h-5 sm:w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            ) : (
+              <>
+                {/* Back button if user has addresses */}
+                {customer && customer.addresses.length > 0 && (
+                  <button
+                    onClick={() => setShowAddressForm(false)}
+                    className="mb-4 text-orange-600 hover:text-orange-700 flex items-center text-sm font-medium"
+                  >
+                    <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
                     </svg>
-                    Guardando...
-                  </span>
-                ) : (
-                  <span>
-                    {isUpdating ? 'Actualizar dirección' : 'Registrar dirección'}
-                  </span>
+                    Volver a mis direcciones
+                  </button>
                 )}
-              </button>
-            </div>
 
-            {/* List existing addresses if any */}
-            {customer && customer.addresses.length > 0 && !isUpdating && (
-              <div className="mt-6 sm:mt-8 pt-4 sm:pt-6 border-t border-gray-200">
-                <h3 className="text-base sm:text-lg font-semibold text-gray-800 mb-3 sm:mb-4">📍 Mis direcciones guardadas</h3>
-                <div className="space-y-2 sm:space-y-3">
-                  {customer.addresses.map((address) => (
-                    <div 
-                      key={address.id} 
-                      className="group p-3 sm:p-4 bg-white border-2 border-gray-200 rounded-lg hover:border-blue-400 hover:shadow-md cursor-pointer transition duration-200"
-                      onClick={() => loadExistingAddress(address)}
-                    >
-                      <div className="flex justify-between items-start">
-                        <div className="flex-1 min-w-0">
-                          <p className="font-medium sm:font-semibold text-gray-800 group-hover:text-blue-600 text-sm sm:text-base truncate">
-                            {address.street} {address.number}
-                            {address.interiorNumber && ` Int. ${address.interiorNumber}`}
-                          </p>
-                          <p className="text-xs sm:text-sm text-gray-600 mt-1 truncate">
-                            {address.neighborhood && `${address.neighborhood}, `}
-                            {address.city}, {address.state}
-                          </p>
-                        </div>
-                        <div className="flex items-center space-x-1 sm:space-x-2 ml-2">
-                          {address.isDefault && (
-                            <span className="text-xs bg-green-100 text-green-700 px-2 sm:px-3 py-1 rounded-full font-medium whitespace-nowrap">
-                              Principal
-                            </span>
-                          )}
-                          <svg className="w-4 h-4 sm:w-5 sm:h-5 text-gray-400 group-hover:text-blue-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                          </svg>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
+                {/* Use my location button */}
+                <div className="mb-4 sm:mb-6">
+                  <button
+                    type="button"
+                    onClick={handleUseMyLocation}
+                    className="w-full sm:w-auto bg-white border-2 border-orange-500 text-orange-600 font-medium sm:font-semibold py-2.5 sm:py-3 px-4 sm:px-6 rounded-lg hover:bg-orange-50 transition duration-200 flex items-center justify-center text-sm sm:text-base"
+                  >
+                    <svg className="w-4 h-4 sm:w-5 sm:h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                    </svg>
+                    Usar mi ubicación actual
+                  </button>
                 </div>
-              </div>
+
+                {/* Map with Search */}
+                <div className="mb-4 sm:mb-6">
+                  {mapCenter && (
+                    <BasicMap
+                      center={selectedLocation || mapCenter}
+                      onLocationSelect={handleLocationSelect}
+                      selectedLocation={selectedLocation}
+                      polygonCoords={polygonCoords}
+                      onLocationError={setLocationError}
+                    />
+                  )}
+                  {locationError && (
+                    <div className="mt-2 bg-red-50 border border-red-200 text-red-600 px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm">
+                      {locationError}
+                    </div>
+                  )}
+                </div>
+
+                {/* Address Form */}
+                <div className="bg-gray-50 rounded-lg p-4 sm:p-6 mb-4 sm:mb-6">
+                  <h2 className="text-base sm:text-lg font-semibold text-gray-800 mb-3 sm:mb-4">Detalles de la dirección</h2>
+                  <AddressForm
+                    formData={formData}
+                    onSubmit={handleSubmit}
+                    isUpdating={isUpdating}
+                  />
+                </div>
+
+                {/* Submit Button */}
+                <div className="mt-4 sm:mt-6">
+                  <button
+                    type="submit"
+                    onClick={() => handleSubmit(formData)}
+                    disabled={isSubmitting || !selectedLocation}
+                    className={`w-full py-3 sm:py-4 px-4 sm:px-6 font-medium sm:font-semibold rounded-lg transition duration-200 text-sm sm:text-base ${
+                      isSubmitting || !selectedLocation
+                        ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                        : 'bg-gradient-to-r from-orange-500 to-pink-600 text-white hover:from-orange-600 hover:to-pink-700'
+                    }`}
+                  >
+                    {isSubmitting ? (
+                      <span className="flex items-center justify-center">
+                        <svg className="animate-spin -ml-1 mr-2 sm:mr-3 h-4 w-4 sm:h-5 sm:w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        Guardando...
+                      </span>
+                    ) : (
+                      <span>
+                        {isUpdating ? 'Actualizar dirección' : 'Registrar dirección'}
+                      </span>
+                    )}
+                  </button>
+                </div>
+              </>
             )}
           </div>
         </div>
       </div>
-      <Toaster position="top-center" />
+      <Toaster 
+        position="top-center"
+        toastOptions={{
+          duration: 4000,
+          style: {
+            background: '#fff',
+            color: '#1f2937',
+            padding: '16px',
+            borderRadius: '12px',
+            fontSize: '14px',
+            fontWeight: '500',
+            boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
+            border: '1px solid rgba(0, 0, 0, 0.05)',
+          },
+          success: {
+            iconTheme: {
+              primary: '#10b981',
+              secondary: '#fff',
+            },
+            style: {
+              background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+              color: '#fff',
+              border: 'none',
+            },
+          },
+          error: {
+            iconTheme: {
+              primary: '#ef4444',
+              secondary: '#fff',
+            },
+            style: {
+              background: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)',
+              color: '#fff',
+              border: 'none',
+            },
+          },
+        }}
+      />
     </div>
   );
 }

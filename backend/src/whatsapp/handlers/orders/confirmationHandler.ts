@@ -41,7 +41,7 @@ export async function handlePreOrderConfirmation(
 // Función principal para enviar la confirmación de la orden
 export async function sendOrderConfirmation(
   telefono: string,
-  orderId: number,
+  orderId: string,
   action: "confirmed" | "cancelled" | "modified"
 ): Promise<void> {
   try {
@@ -53,9 +53,7 @@ export async function sendOrderConfirmation(
           include: {
             product: true,
             productVariant: true,
-            selectedModifiers: {
-              include: { modifier: true },
-            },
+            productModifiers: true,
             selectedPizzaIngredients: {
               include: { pizzaIngredient: true },
             },
@@ -66,13 +64,13 @@ export async function sendOrderConfirmation(
     });
 
     if (!fullOrder) {
-      throw new BusinessLogicError(ErrorCode.ORDER_NOT_FOUND, 'Order not found for confirmation', { userId: telefono, orderId, operation: 'sendOrderConfirmation' });
+      throw new BusinessLogicError(ErrorCode.ORDER_NOT_FOUND, 'Order not found for confirmation', { userId: telefono, metadata: { orderId }, operation: 'sendOrderConfirmation' });
     }
 
     const orderType = fullOrder.orderType;
     let informacionEntrega = "";
 
-    if (orderType === "delivery" && fullOrder.deliveryInfo) {
+    if (orderType === "DELIVERY" && fullOrder.deliveryInfo) {
       const deliveryInfo = fullOrder.deliveryInfo;
       const parts = [];
       // Construir dirección completa
@@ -87,7 +85,7 @@ export async function sendOrderConfirmation(
       if (deliveryInfo.city) parts.push(deliveryInfo.city);
       if (deliveryInfo.references) parts.push(`(${deliveryInfo.references})`);
       informacionEntrega = parts.join(", ");
-    } else if (orderType === "pickup" && fullOrder.deliveryInfo?.pickupName) {
+    } else if (orderType === "TAKE_AWAY" && fullOrder.deliveryInfo?.pickupName) {
       informacionEntrega = fullOrder.deliveryInfo.pickupName;
     }
 
@@ -105,14 +103,14 @@ export async function sendOrderConfirmation(
     // Enviar botones de acción
     await sendActionButtonsForOrder(
       telefono,
-      fullOrder.id,
+      fullOrder.dailyNumber,
       fullOrder.messageId || `order_${fullOrder.id}_${Date.now()}`,
-      fullOrder.status
+      fullOrder.orderStatus
     );
   } catch (error) {
     await ErrorService.handleAndSendError(error, telefono, {
       userId: telefono,
-      orderId,
+      metadata: { orderId },
       operation: 'sendOrderConfirmation'
     });
   }

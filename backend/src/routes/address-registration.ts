@@ -32,9 +32,10 @@ router.post('/verify-otp', async (req: Request, res: Response): Promise<void> =>
     
     // Get customer info
     const customer = await prisma.customer.findUnique({
-      where: { customerId },
+      where: { whatsappPhoneNumber: customerId },
       select: {
-        customerId: true,
+        id: true,
+        whatsappPhoneNumber: true,
         firstName: true,
         lastName: true,
         addresses: {
@@ -52,7 +53,7 @@ router.post('/verify-otp', async (req: Request, res: Response): Promise<void> =>
     res.json({ 
       valid: true,
       customer: {
-        customerId: customer.customerId,
+        customerId: customer.whatsappPhoneNumber,
         firstName: customer.firstName,
         lastName: customer.lastName,
         hasAddresses: customer.addresses.length > 0,
@@ -103,10 +104,21 @@ router.post('/create', async (req: Request, res: Response): Promise<void> => {
       return;
     }
     
+    // Get the actual customer UUID first
+    const customerRecord = await prisma.customer.findUnique({
+      where: { whatsappPhoneNumber: customerId },
+      select: { id: true }
+    });
+    
+    if (!customerRecord) {
+      res.status(404).json({ error: 'Customer not found' });
+      return;
+    }
+    
     // Create address
     const addressData = {
       ...address,
-      customer: { connect: { customerId } }
+      customer: { connect: { id: customerRecord.id } }
     };
     
     const newAddress = await DeliveryInfoService.createCustomerAddress(addressData);
@@ -116,23 +128,33 @@ router.post('/create', async (req: Request, res: Response): Promise<void> => {
       const { sendWhatsAppMessage, sendWhatsAppInteractiveMessage } = await import('../services/whatsapp');
       const { ADDRESS_REGISTRATION_SUCCESS, WELCOME_MESSAGE_INTERACTIVE } = await import('../common/config/predefinedMessages');
       
+      // Get customer's WhatsApp phone number
+      const customer = await prisma.customer.findUnique({
+        where: { id: customerId },
+        select: { whatsappPhoneNumber: true }
+      });
+      
       // Send confirmation message
-      await sendWhatsAppMessage(
-        customerId,
-        ADDRESS_REGISTRATION_SUCCESS(newAddress)
-      );
+      if (customer?.whatsappPhoneNumber) {
+        await sendWhatsAppMessage(
+          customer.whatsappPhoneNumber,
+          ADDRESS_REGISTRATION_SUCCESS(newAddress)
+        );
+      }
       
       // Small delay to ensure proper message order
       await new Promise(resolve => setTimeout(resolve, 1000));
       
       // Send welcome message immediately after
       const welcomeMessage = await WELCOME_MESSAGE_INTERACTIVE();
-      await sendWhatsAppInteractiveMessage(customerId, welcomeMessage);
+      if (customer?.whatsappPhoneNumber) {
+        await sendWhatsAppInteractiveMessage(customer.whatsappPhoneNumber, welcomeMessage);
+      }
       
       // Mark that welcome message has been sent to avoid duplicate
       // Update lastInteraction to current time to prevent isNewConversation detection
       await prisma.customer.update({
-        where: { customerId },
+        where: { id: customerRecord.id },
         data: { 
           lastInteraction: new Date()
         }
@@ -182,11 +204,22 @@ router.put('/:addressId', async (req: Request, res: Response): Promise<void> => 
       return;
     }
     
+    // Get customer by phone number
+    const customerRecord = await prisma.customer.findUnique({
+      where: { whatsappPhoneNumber: customerId },
+      select: { id: true }
+    });
+    
+    if (!customerRecord) {
+      res.status(404).json({ error: 'Customer not found' });
+      return;
+    }
+    
     // Verify address belongs to customer
     const existingAddress = await prisma.address.findFirst({
       where: { 
-        id: parseInt(addressId),
-        customerId
+        id: addressId,
+        customerId: customerRecord.id
       }
     });
     
@@ -199,7 +232,7 @@ router.put('/:addressId', async (req: Request, res: Response): Promise<void> => 
     
     // Update address
     const updatedAddress = await DeliveryInfoService.updateCustomerAddress(
-      parseInt(addressId),
+      addressId,
       address
     );
     
@@ -208,22 +241,32 @@ router.put('/:addressId', async (req: Request, res: Response): Promise<void> => 
       const { sendWhatsAppMessage, sendWhatsAppInteractiveMessage } = await import('../services/whatsapp');
       const { ADDRESS_UPDATE_SUCCESS, WELCOME_MESSAGE_INTERACTIVE } = await import('../common/config/predefinedMessages');
       
+      // Get customer's WhatsApp phone number
+      const customer = await prisma.customer.findUnique({
+        where: { id: customerId },
+        select: { whatsappPhoneNumber: true }
+      });
+      
       // Send update confirmation
-      await sendWhatsAppMessage(
-        customerId,
-        ADDRESS_UPDATE_SUCCESS(updatedAddress)
-      );
+      if (customer?.whatsappPhoneNumber) {
+        await sendWhatsAppMessage(
+          customer.whatsappPhoneNumber,
+          ADDRESS_UPDATE_SUCCESS(updatedAddress)
+        );
+      }
       
       // Small delay to ensure proper message order
       await new Promise(resolve => setTimeout(resolve, 1000));
       
       // Send welcome message immediately after
       const welcomeMessage = await WELCOME_MESSAGE_INTERACTIVE();
-      await sendWhatsAppInteractiveMessage(customerId, welcomeMessage);
+      if (customer?.whatsappPhoneNumber) {
+        await sendWhatsAppInteractiveMessage(customer.whatsappPhoneNumber, welcomeMessage);
+      }
       
       // Mark that interaction happened to avoid duplicate welcome message
       await prisma.customer.update({
-        where: { customerId },
+        where: { id: customerRecord.id },
         data: { 
           lastInteraction: new Date()
         }
@@ -270,12 +313,137 @@ router.get('/:customerId/addresses', async (req: Request, res: Response): Promis
       return;
     }
     
-    const addresses = await DeliveryInfoService.getCustomerAddresses(customerId);
+    // Get customer by phone number
+    const customerRecord = await prisma.customer.findUnique({
+      where: { whatsappPhoneNumber: customerId },
+      select: { id: true }
+    });
+    
+    if (!customerRecord) {
+      res.status(404).json({ error: 'Customer not found' });
+      return;
+    }
+    
+    const addresses = await DeliveryInfoService.getCustomerAddresses(customerRecord.id);
     res.json({ addresses });
     
   } catch (error: any) {
     logger.error('Error fetching addresses:', error);
     res.status(500).json({ error: 'Failed to fetch addresses' });
+  }
+});
+
+/**
+ * Delete customer address
+ * DELETE /backend/address-registration/:addressId
+ */
+router.delete('/:addressId', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { addressId } = req.params;
+    const { customerId, otp } = req.body;
+    
+    if (!customerId || !otp) {
+      res.status(400).json({ 
+        error: 'customerId and otp are required' 
+      });
+      return;
+    }
+    
+    // Verify OTP
+    const isValid = await OTPService.verifyOTP(customerId, otp);
+    
+    if (!isValid) {
+      res.status(401).json({ 
+        error: 'Invalid or expired OTP' 
+      });
+      return;
+    }
+    
+    // Get customer by phone number
+    const customerRecord = await prisma.customer.findUnique({
+      where: { whatsappPhoneNumber: customerId },
+      select: { id: true }
+    });
+    
+    if (!customerRecord) {
+      res.status(404).json({ error: 'Customer not found' });
+      return;
+    }
+    
+    // Delete address (soft delete)
+    await DeliveryInfoService.deleteCustomerAddress(
+      addressId,
+      customerRecord.id
+    );
+    
+    res.json({ 
+      success: true,
+      message: 'Address deleted successfully'
+    });
+    
+  } catch (error: any) {
+    logger.error('Error deleting address:', error);
+    res.status(500).json({ 
+      error: 'Failed to delete address',
+      message: error.message 
+    });
+  }
+});
+
+/**
+ * Set address as default
+ * PUT /backend/address-registration/:addressId/default
+ */
+router.put('/:addressId/default', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { addressId } = req.params;
+    const { customerId, otp } = req.body;
+    
+    if (!customerId || !otp) {
+      res.status(400).json({ 
+        error: 'customerId and otp are required' 
+      });
+      return;
+    }
+    
+    // Verify OTP
+    const isValid = await OTPService.verifyOTP(customerId, otp);
+    
+    if (!isValid) {
+      res.status(401).json({ 
+        error: 'Invalid or expired OTP' 
+      });
+      return;
+    }
+    
+    // Get customer by phone number
+    const customerRecord = await prisma.customer.findUnique({
+      where: { whatsappPhoneNumber: customerId },
+      select: { id: true }
+    });
+    
+    if (!customerRecord) {
+      res.status(404).json({ error: 'Customer not found' });
+      return;
+    }
+    
+    // Set as default
+    const updatedAddress = await DeliveryInfoService.setDefaultAddress(
+      addressId,
+      customerRecord.id
+    );
+    
+    res.json({ 
+      success: true,
+      address: updatedAddress
+    });
+    
+  } catch (error: any) {
+    logger.error('Error setting default address:', error);
+    res.status(500).json({ 
+      error: 'Failed to set default address',
+      message: error.message 
+    });
   }
 });
 

@@ -1,5 +1,5 @@
 import { sendWhatsAppMessage } from "../../../services/whatsapp";
-import { ErrorService } from "../../../common/services/errors";
+import { ErrorService, BusinessLogicError, ErrorCode } from "../../../common/services/errors";
 import { OrderManagementService } from "../../../services/orders/services/OrderManagementService";
 import {
   ORDER_NOT_FOUND_MESSAGE,
@@ -25,8 +25,8 @@ export async function handleOrderCancellation(
       await sendWhatsAppMessage(from, ORDER_CANCELLED_MESSAGE);
     } catch (error) {
       // If it's a business logic error about status, send the appropriate message
-      if (error.code === 'BL003') {
-        const message = ORDER_CANNOT_BE_CANCELLED_MESSAGE(order.status);
+      if (error instanceof BusinessLogicError && error.code === ErrorCode.ORDER_CANNOT_CANCEL) {
+        const message = ORDER_CANNOT_BE_CANCELLED_MESSAGE(order.orderStatus);
         await sendWhatsAppMessage(from, message);
         return;
       }

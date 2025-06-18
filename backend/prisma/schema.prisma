@@ -12,47 +12,62 @@ datasource db {
 
 // Enums
 enum OrderType {
-  delivery
-  pickup
+  DINE_IN
+  TAKE_AWAY
+  DELIVERY
 }
 
 enum OrderStatus {
-  created
-  accepted
-  in_preparation
-  prepared
-  in_delivery
-  finished
-  canceled
+  PENDING
+  IN_PROGRESS
+  IN_PREPARATION
+  READY
+  IN_DELIVERY
+  DELIVERED
+  COMPLETED
+  CANCELLED
 }
 
 enum PaymentStatus {
-  pending
-  paid
+  PENDING
+  PAID
 }
 
 enum PizzaHalf {
-  left
-  right
-  full
+  LEFT
+  RIGHT
+  FULL
 }
 
 enum IngredientAction {
-  add
-  remove
+  ADD
+  REMOVE
+}
+
+enum PreparationStatus {
+  PENDING
+  IN_PROGRESS
+  READY
+  DELIVERED
+  CANCELLED
 }
 
 // Models
 model Category {
   id           String        @id
   name         String        @unique
+  description  String?
   isActive     Boolean       @default(true)
+  photoId      String?
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  deletedAt    DateTime?
   subcategories Subcategory[]
 }
 
 model Customer {
-  customerId          String               @id @unique // WhatsApp phone number
-  localId             String?              @unique @db.Uuid // UUID from local backend
+  id                  String               @id @default(uuid()) @db.Uuid // UUID primary key
+  whatsappPhoneNumber String               @unique // WhatsApp phone number
   firstName           String?              @db.VarChar(100)
   lastName            String?              @db.VarChar(100)
   email               String?              @db.VarChar(255)
@@ -73,8 +88,9 @@ model Customer {
   createdAt           DateTime             @default(now())
   updatedAt           DateTime             @updatedAt
   addresses           Address[]            // One-to-Many relationship
+  orders              Order[]              // One-to-Many relationship
   
-  @@index([localId])
+  @@index([whatsappPhoneNumber])
   @@index([email])
   @@index([lastSyncAt])
 }
@@ -82,9 +98,8 @@ model Customer {
 // Customer addresses (1:N relationship)
 // A customer can have multiple delivery addresses
 model Address {
-  id                Int      @id @default(autoincrement())
-  localId           String?  @unique @db.Uuid // UUID from local backend (maps to 'id' in local)
-  customerId        String   @map("customer_id")
+  id                String   @id @default(uuid()) @db.Uuid // UUID primary key
+  customerId        String   @db.Uuid // Foreign key to Customer
   street            String   @db.VarChar(200)
   number            String   @db.VarChar(50)
   interiorNumber    String?  @db.VarChar(50)
@@ -96,15 +111,13 @@ model Address {
   references        String?  @db.Text
   latitude          Decimal? @db.Decimal(10, 8)
   longitude         Decimal? @db.Decimal(11, 8)
-  geocodedAddress   String?  @db.Text
   isDefault         Boolean  @default(false)
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
   deletedAt         DateTime? // Soft delete
-  customer          Customer @relation(fields: [customerId], references: [customerId], onDelete: Cascade)
+  customer          Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
   
   @@index([customerId])
-  @@index([localId])
   @@index([zipCode])
 }
 
@@ -116,51 +129,63 @@ model MessageLog {
 
 model MessageRateLimit {
   id              Int      @id @default(autoincrement())
-  customerId      String   @unique
+  whatsappPhoneNumber String   @unique
   messageCount    Int      @default(0)
   lastMessageTime DateTime
 }
 
-model Modifier {
+model ProductModifier {
   id               String             @id
+  groupId          String
   name             String
-  price            Float
-  modifierTypeId   String
-  shortName        String?
+  description      String?
+  price            Float?
+  sortOrder        Int                @default(0)
+  isDefault        Boolean            @default(false)
   isActive         Boolean            @default(true)
-  modifierType     ModifierType       @relation(fields: [modifierTypeId], references: [id])
-  selectedModifiers SelectedModifier[]
+  createdAt        DateTime           @default(now())
+  updatedAt        DateTime           @updatedAt
+  deletedAt        DateTime?
+  modifierGroup    ModifierGroup      @relation(fields: [groupId], references: [id])
+  orderItems       OrderItem[]        @relation("OrderItemProductModifiers")
 }
 
-model ModifierType {
-  id              String     @id
-  name            String
-  acceptsMultiple Boolean    @default(false)
-  required        Boolean    @default(false)
-  productId       String
-  product         Product    @relation(fields: [productId], references: [id])
-  modifiers       Modifier[]
+model ModifierGroup {
+  id                      String            @id
+  name                    String
+  description             String?
+  minSelections           Int               @default(0)
+  maxSelections           Int               @default(1)
+  isRequired              Boolean           @default(false)
+  allowMultipleSelections Boolean           @default(false)
+  isActive                Boolean           @default(true)
+  productId               String
+  createdAt               DateTime          @default(now())
+  updatedAt               DateTime          @updatedAt
+  deletedAt               DateTime?
+  product                 Product           @relation(fields: [productId], references: [id])
+  productModifiers        ProductModifier[]
 }
 
 model Order {
-  id                   Int               @id @default(autoincrement())
-  dailyOrderNumber     Int
+  id                   String            @id @default(uuid())
+  dailyNumber          Int
   orderType            OrderType
-  status               OrderStatus       @default(created)
+  orderStatus          OrderStatus       @default(PENDING)
   paymentStatus        PaymentStatus?
   totalCost            Float
-  customerId           String
+  customerId           String            @db.Uuid
   estimatedTime        Int               @default(0)
-  scheduledDeliveryTime DateTime?
+  scheduledAt          DateTime?
   messageId            String?
   stripeSessionId      String?
-  finishedAt           DateTime?
   syncedWithLocal      Boolean           @default(false)
-  localId              Int?
-  createdAt            DateTime
-  updatedAt            DateTime
+  isFromWhatsApp       Boolean           @default(true)
+  createdAt            DateTime          @default(now())
+  updatedAt            DateTime          @updatedAt
   orderItems           OrderItem[]
   deliveryInfo         OrderDeliveryInfo?
+  customer             Customer          @relation(fields: [customerId], references: [id])
 }
 
 // Order's delivery address (snapshot at order time)
@@ -179,10 +204,9 @@ model OrderDeliveryInfo {
   references        String?   @db.Text // Changed from additionalDetails
   latitude          Decimal?  @db.Decimal(10, 8) // Changed to Decimal for precision
   longitude         Decimal?  @db.Decimal(11, 8) // Changed to Decimal for precision
-  geocodedAddress   String?   @db.Text
   pickupName        String?   // For pickup orders
   preOrderId        Int?
-  orderId           Int?      @unique
+  orderId           String?   @unique
   createdAt         DateTime  @default(now())
   updatedAt         DateTime  @updatedAt
   order             Order?    @relation(fields: [orderId], references: [id])
@@ -190,19 +214,22 @@ model OrderDeliveryInfo {
 }
 
 model OrderItem {
-  id                    Int                        @id @default(autoincrement())
-  quantity              Int                        @default(1)
-  price                 Float
-  comments              String?
-  orderId               Int
+  id                    String                     @id @default(uuid())
+  orderId               String
   productId             String
   productVariantId      String?
-  createdAt             DateTime
-  updatedAt             DateTime
+  basePrice             Float
+  finalPrice            Float
+  preparationStatus     PreparationStatus          @default(PENDING)
+  statusChangedAt       DateTime                   @default(now())
+  preparationNotes      String?
+  createdAt             DateTime                   @default(now())
+  updatedAt             DateTime                   @updatedAt
+  deletedAt             DateTime?
   order                 Order                      @relation(fields: [orderId], references: [id])
   product               Product                    @relation(fields: [productId], references: [id])
   productVariant        ProductVariant?            @relation(fields: [productVariantId], references: [id])
-  selectedModifiers     SelectedModifier[]
+  productModifiers      ProductModifier[]          @relation("OrderItemProductModifiers")
   selectedPizzaIngredients SelectedPizzaIngredient[]
 }
 
@@ -210,10 +237,14 @@ model PizzaIngredient {
   id                    String                    @id
   name                  String
   ingredientValue       Int                       @default(1)
-  productId             String
   ingredients           String?
   isActive              Boolean                   @default(true)
-  product               Product                   @relation(fields: [productId], references: [id])
+  sortOrder             Int                       @default(0)
+  productIds            String[]                  // Array de IDs de productos relacionados
+  createdAt             DateTime                  @default(now())
+  updatedAt             DateTime                  @updatedAt
+  deletedAt             DateTime?
+  products              Product[]                 @relation("ProductPizzaIngredients")
   selectedPizzaIngredients SelectedPizzaIngredient[]
 }
 
@@ -221,37 +252,47 @@ model PreOrder {
   id                    Int                @id @default(autoincrement())
   orderItems            Json
   orderType             OrderType
-  scheduledDeliveryTime DateTime?
-  customerId            String
+  scheduledAt          DateTime?
+  whatsappPhoneNumber   String             // Store WhatsApp phone number instead of customerId
   messageId             String?
   createdAt             DateTime           @default(now())
   updatedAt             DateTime           @updatedAt
   deliveryInfo          OrderDeliveryInfo[]
+  
+  @@index([whatsappPhoneNumber])
 }
 
 model Product {
-  id              String           @id
-  name            String
-  shortName       String?
-  price           Float?
-  ingredients     String?
-  isActive        Boolean          @default(true)
-  subcategoryId   String
-  subcategory     Subcategory      @relation(fields: [subcategoryId], references: [id])
-  variants        ProductVariant[]
-  modifierTypes   ModifierType[]
-  pizzaIngredients PizzaIngredient[]
-  orderItems      OrderItem[]
+  id                   String              @id
+  name                 String
+  description          String?
+  price                Float?
+  hasVariants          Boolean             @default(false)
+  isActive             Boolean             @default(true)
+  isPizza              Boolean             @default(false)
+  subcategoryId        String
+  preparationScreenId  String?
+  photoId              String?
+  estimatedPrepTime    Int                 @default(0)
+  createdAt            DateTime            @default(now())
+  updatedAt            DateTime            @updatedAt
+  deletedAt            DateTime?
+  subcategory          Subcategory         @relation(fields: [subcategoryId], references: [id])
+  variants             ProductVariant[]
+  modifierGroups       ModifierGroup[]
+  pizzaIngredients     PizzaIngredient[]   @relation("ProductPizzaIngredients")
+  orderItems           OrderItem[]
 }
 
 model ProductVariant {
   id          String      @id
-  name        String
-  shortName   String?
-  price       Float
   productId   String
-  ingredients String?
+  name        String
+  price       Float
   isActive    Boolean     @default(true)
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  deletedAt   DateTime?
   product     Product     @relation(fields: [productId], references: [id])
   orderItems  OrderItem[]
 }
@@ -266,6 +307,7 @@ model RestaurantConfig {
   city                  String?            // Ciudad
   state                 String?            // Estado
   postalCode            String?            // Código postal
+  country               String?            // País
   
   // Configuración de operación
   acceptingOrders       Boolean            @default(true)
@@ -297,39 +339,35 @@ model SeederControl {
   lastRun DateTime
 }
 
-model SelectedModifier {
-  id          Int       @id @default(autoincrement())
-  orderItemId Int
-  modifierId  String
-  orderItem   OrderItem @relation(fields: [orderItemId], references: [id])
-  modifier    Modifier  @relation(fields: [modifierId], references: [id])
-}
-
 model SelectedPizzaIngredient {
   id               Int              @id @default(autoincrement())
-  half             PizzaHalf        @default(full)
+  half             PizzaHalf        @default(FULL)
   pizzaIngredientId String
-  orderItemId      Int
-  action           IngredientAction @default(add)
+  orderItemId      String
+  action           IngredientAction @default(ADD)
   orderItem        OrderItem        @relation(fields: [orderItemId], references: [id])
   pizzaIngredient  PizzaIngredient  @relation(fields: [pizzaIngredientId], references: [id])
 }
 
 model Subcategory {
-  id         String    @id
-  name       String    @unique
-  categoryId String
-  isActive   Boolean   @default(true)
-  category   Category  @relation(fields: [categoryId], references: [id])
-  products   Product[]
+  id          String    @id
+  categoryId  String
+  name        String    @unique
+  description String?
+  isActive    Boolean   @default(true)
+  photoId     String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  deletedAt   DateTime?
+  category    Category  @relation(fields: [categoryId], references: [id])
+  products    Product[]
 }
 
 // Sync tracking between local and cloud backends
 model SyncLog {
   id            Int       @id @default(autoincrement())
   entityType    String    // 'customer', 'order', etc.
-  entityId      String    // WhatsApp backend ID (phone number for customers)
-  localId       String?   @db.Uuid // Local backend UUID
+  entityId      String    // Entity UUID
   action        String    // 'create', 'update', 'delete'
   syncDirection String    // 'local_to_cloud' or 'cloud_to_local'
   syncStatus    String    // 'pending', 'success', 'failed'

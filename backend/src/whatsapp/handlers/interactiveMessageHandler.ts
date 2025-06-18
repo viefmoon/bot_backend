@@ -62,16 +62,30 @@ export async function handleInteractiveMessage(
     const messageId = message.context?.id || null;
 
     if (type === "button_reply") {
-      const action =
-        BUTTON_ACTIONS[button_reply.id as keyof typeof BUTTON_ACTIONS];
-      if (action) await action(from, messageId);
-    } else if (type === "list_reply") {
-      const action = LIST_ACTIONS[list_reply.id as keyof typeof LIST_ACTIONS];
-      if (action) {
-        logger.info(`Executing action: ${list_reply.id}`);
-        await action(from, messageId);
+      // Check for address confirmation
+      if (button_reply.id.startsWith('confirm_address_')) {
+        await handleAddressConfirmation(from, button_reply.id, messageId);
+      } else if (button_reply.id === 'change_address') {
+        await handleChangeDeliveryInfo(from);
       } else {
-        logger.error(`No action found for: ${list_reply.id}`);
+        const action =
+          BUTTON_ACTIONS[button_reply.id as keyof typeof BUTTON_ACTIONS];
+        if (action) await action(from, messageId);
+      }
+    } else if (type === "list_reply") {
+      // Check for address selection
+      if (list_reply.id.startsWith('select_address_')) {
+        await handleAddressSelection(from, list_reply.id, messageId);
+      } else if (list_reply.id === 'add_new_address') {
+        await handleAddNewAddress(from, messageId);
+      } else {
+        const action = LIST_ACTIONS[list_reply.id as keyof typeof LIST_ACTIONS];
+        if (action) {
+          logger.info(`Executing action: ${list_reply.id}`);
+          await action(from, messageId);
+        } else {
+          logger.error(`No action found for: ${list_reply.id}`);
+        }
       }
     }
   } catch (error) {
@@ -97,19 +111,33 @@ async function handlePreOrderDeliveryModification(
       );
     }
 
-    const customerId = preOrder.customerId;
+    const whatsappPhoneNumber = preOrder.whatsappPhoneNumber;
     const preOrderId = preOrder.id;
+
+    // Get customer to verify they exist
+    const customer = await prisma.customer.findUnique({
+      where: { whatsappPhoneNumber },
+      select: { id: true }
+    });
+    
+    if (!customer) {
+      throw new BusinessLogicError(
+        ErrorCode.CUSTOMER_NOT_FOUND,
+        'Customer not found',
+        { userId: whatsappPhoneNumber }
+      );
+    }
 
     // Generar OTP y crear el enlace
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
-    const updateLink = `${env.FRONTEND_BASE_URL}/address-registration/${customerId}?otp=${otp}&preOrderId=${preOrderId}`;
+    const updateLink = `${env.FRONTEND_BASE_URL}/address-registration/${whatsappPhoneNumber}?otp=${otp}&preOrderId=${preOrderId}`;
     
     // Store OTP for later verification
-    OTPService.storeOTP(customerId, otp);
+    OTPService.storeOTP(customer.id, otp);
     
     // Enviar mensaje con botón URL
     await sendMessageWithUrlButton(
-      customerId,
+      whatsappPhoneNumber,
       "🚚 Actualizar Dirección",
       "Puedes actualizar tu información de entrega haciendo clic en el botón de abajo.\n\nTu pedido actual permanecerá sin cambios hasta que confirmes la nueva dirección.",
       "Actualizar Dirección",
@@ -144,38 +172,38 @@ async function handleOnlinePayment(
       );
     }
 
-    if (order.stripeSessionId || order.paymentStatus === "pending") {
+    if (order.stripeSessionId || order.paymentStatus === "PENDING") {
       throw new BusinessLogicError(
         ErrorCode.PAYMENT_LINK_EXISTS,
         'Payment link already exists for this order',
-        { userId: customerId, orderId: order.id, operation: 'handleOnlinePayment' }
+        { userId: customerId, metadata: { orderId: order.id }, operation: 'handleOnlinePayment' }
       );
     }
 
     // Verificar el estado de la orden
     let mensaje: string | undefined;
-    switch (order.status) {
-      case "created":
-      case "accepted":
+    switch (order.orderStatus) {
+      case "PENDING":
+      case "IN_PROGRESS":
         // Continuar con el proceso de pago
         break;
-      case "in_preparation":
+      case "IN_PREPARATION":
         mensaje =
           "❌ Esta orden ya está en preparación. Por favor, contacta con el restaurante para opciones de pago.";
         break;
-      case "prepared":
+      case "READY":
         mensaje =
           "❌ Esta orden ya está preparada. Por favor, contacta con el restaurante para opciones de pago.";
         break;
-      case "in_delivery":
+      case "IN_DELIVERY":
         mensaje =
           "❌ Esta orden ya está en camino. Por favor, paga al repartidor o contacta con el restaurante.";
         break;
-      case "canceled":
+      case "CANCELLED":
         mensaje =
           "❌ Esta orden ya ha sido cancelada y no se puede procesar el pago.";
         break;
-      case "finished":
+      case "COMPLETED":
         mensaje =
           "❌ Esta orden ya ha sido finalizada y no se puede procesar el pago.";
         break;
@@ -185,21 +213,35 @@ async function handleOnlinePayment(
     }
 
     if (mensaje) {
-      await sendWhatsAppMessage(customerId, mensaje);
+      // Get customer's WhatsApp phone number
+      const customerForMessage = await prisma.customer.findUnique({
+        where: { id: customerId },
+        select: { whatsappPhoneNumber: true }
+      });
+      
+      if (customerForMessage?.whatsappPhoneNumber) {
+        await sendWhatsAppMessage(customerForMessage.whatsappPhoneNumber, mensaje);
+      }
       return;
     }
 
-    let customer = await prisma.customer.findFirst({ where: { customerId } });
+    let customer = await prisma.customer.findUnique({ where: { id: customerId } });
+    
+    if (!customer) {
+      await sendWhatsAppMessage(customerId, "❌ Error al procesar el pago. Cliente no encontrado.");
+      return;
+    }
+    
     let stripeCustomerId = customer.stripeCustomerId;
 
     if (!stripeCustomerId) {
       const stripeCustomer = await stripeClient.customers.create({
-        phone: customerId,
-        metadata: { whatsappId: customerId },
+        phone: customer.whatsappPhoneNumber,
+        metadata: { whatsappId: customer.whatsappPhoneNumber },
       });
       stripeCustomerId = stripeCustomer.id;
       await prisma.customer.update({
-        where: { customerId: customer.customerId },
+        where: { id: customer.id },
         data: { stripeCustomerId }
       });
     }
@@ -213,7 +255,7 @@ async function handleOnlinePayment(
             currency: "mxn",
             product_data: {
               name: `Orden #${
-                order.dailyOrderNumber
+                order.dailyNumber
               } - ${(await getCurrentMexicoTime()).format("DD/MM/YYYY")}`,
             },
             unit_amount: Math.round(order.totalCost * 100),
@@ -230,7 +272,7 @@ async function handleOnlinePayment(
       where: { id: order.id },
       data: {
         stripeSessionId: session.id,
-        paymentStatus: "pending",
+        paymentStatus: "PENDING",
       }
     });
 
@@ -267,6 +309,9 @@ async function sendMenu(phoneNumber: string): Promise<boolean> {
 async function handleWaitTimes(customerId: string): Promise<void> {
   try {
     const config = await prisma.restaurantConfig.findFirst();
+    if (!config) {
+      throw new BusinessLogicError(ErrorCode.DATABASE_ERROR, 'Restaurant configuration not found');
+    }
     const message = WAIT_TIMES_MESSAGE(
       config.estimatedPickupTime,
       config.estimatedDeliveryTime
@@ -317,4 +362,145 @@ async function handleChangeDeliveryInfo(from: string): Promise<void> {
     "Actualizar Dirección",
     updateLink
   );
+}
+
+async function handleAddressConfirmation(from: string, confirmationId: string, messageId: string): Promise<void> {
+  try {
+    // Extract address ID from confirmation ID
+    const addressId = confirmationId.replace('confirm_address_', '');
+    
+    // This is the same as selecting an address
+    await handleAddressSelection(from, `select_address_${addressId}`, messageId);
+    
+  } catch (error) {
+    await ErrorService.handleAndSendError(error, from, {
+      userId: from,
+      operation: 'handleAddressConfirmation'
+    });
+  }
+}
+
+async function handleAddressSelection(from: string, selectionId: string, messageId: string): Promise<void> {
+  try {
+    // Extract address ID from selection ID
+    const addressId = selectionId.replace('select_address_', '');
+    
+    // Get customer
+    const customer = await prisma.customer.findUnique({
+      where: { whatsappPhoneNumber: from },
+      include: {
+        addresses: {
+          where: { id: addressId }
+        }
+      }
+    });
+    
+    if (!customer || customer.addresses.length === 0) {
+      throw new BusinessLogicError(
+        ErrorCode.CUSTOMER_NOT_FOUND,
+        'Customer or address not found',
+        { userId: from }
+      );
+    }
+    
+    const selectedAddress = customer.addresses[0];
+    
+    // Format address for confirmation
+    const addressParts = [];
+    if (selectedAddress.street && selectedAddress.number) {
+      let streetLine = `${selectedAddress.street} ${selectedAddress.number}`;
+      if (selectedAddress.interiorNumber) {
+        streetLine += ` Int. ${selectedAddress.interiorNumber}`;
+      }
+      addressParts.push(streetLine);
+    }
+    if (selectedAddress.neighborhood) addressParts.push(selectedAddress.neighborhood);
+    if (selectedAddress.city && selectedAddress.state) {
+      addressParts.push(`${selectedAddress.city}, ${selectedAddress.state}`);
+    }
+    if (selectedAddress.references) {
+      addressParts.push(`Referencias: ${selectedAddress.references}`);
+    }
+    
+    const formattedAddress = addressParts.join('\n');
+    
+    // Check if this is for a preorder
+    const preOrder = await prisma.preOrder.findFirst({
+      where: { 
+        whatsappPhoneNumber: customer.whatsappPhoneNumber,
+        messageId: { contains: messageId }
+      }
+    });
+    
+    if (preOrder) {
+      // Update preorder with selected address
+      const axios = (await import('axios')).default;
+      await axios.post(`${process.env.BACKEND_BASE_URL || 'http://localhost:3001'}/backend/address-selection/update`, {
+        preOrderId: preOrder.id,
+        addressId: selectedAddress.id,
+        customerId: customer.id
+      });
+      
+      await sendWhatsAppMessage(
+        from,
+        `✅ *Dirección seleccionada exitosamente*\n\n📍 *Dirección de entrega:*\n${formattedAddress}\n\nTu pedido será entregado en esta dirección.`
+      );
+    } else {
+      // Just confirming address selection
+      await sendWhatsAppMessage(
+        from,
+        `✅ *Dirección seleccionada*\n\n📍 *Dirección de entrega:*\n${formattedAddress}\n\nEsta dirección se usará para tu próximo pedido.`
+      );
+    }
+    
+  } catch (error) {
+    await ErrorService.handleAndSendError(error, from, {
+      userId: from,
+      operation: 'handleAddressSelection'
+    });
+  }
+}
+
+async function handleAddNewAddress(from: string, messageId: string): Promise<void> {
+  try {
+    // Get customer
+    const customer = await prisma.customer.findUnique({
+      where: { whatsappPhoneNumber: from }
+    });
+    
+    if (!customer) {
+      throw new BusinessLogicError(
+        ErrorCode.CUSTOMER_NOT_FOUND,
+        'Customer not found',
+        { userId: from }
+      );
+    }
+    
+    // Check if this is for a preorder
+    const preOrder = await prisma.preOrder.findFirst({
+      where: { 
+        whatsappPhoneNumber: customer.whatsappPhoneNumber,
+        messageId: { contains: messageId }
+      }
+    });
+    
+    const otp = OTPService.generateOTP();
+    OTPService.storeOTP(customer.whatsappPhoneNumber, otp, true);
+    
+    const updateLink = `${env.FRONTEND_BASE_URL}/address-registration/${customer.whatsappPhoneNumber}?otp=${otp}${preOrder ? `&preOrderId=${preOrder.id}` : ''}`;
+    
+    await sendMessageWithUrlButton(
+      from,
+      "📍 Agregar Nueva Dirección",
+      "Haz clic en el botón de abajo para registrar una nueva dirección de entrega.",
+      "Agregar Dirección",
+      updateLink
+    );
+    
+  } catch (error) {
+    await ErrorService.handleAndSendError(error, from, {
+      userId: from,
+      operation: 'handleAddNewAddress'
+    });
+  }
 }

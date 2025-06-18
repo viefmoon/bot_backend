@@ -1,4 +1,5 @@
 import { prisma } from '../../server';
+import { Prisma } from '@prisma/client';
 import logger from '../../common/utils/logger';
 import { Customer } from '../../common/types';
 import { BusinessLogicError, ErrorCode } from '../../common/services/errors';
@@ -8,12 +9,12 @@ import { BusinessLogicError, ErrorCode } from '../../common/services/errors';
  */
 export class CustomerService {
   /**
-   * Check if a customer is banned
+   * Check if a customer is banned by WhatsApp phone number
    */
-  static async isCustomerBanned(customerId: string): Promise<boolean> {
+  static async isCustomerBanned(whatsappPhoneNumber: string): Promise<boolean> {
     try {
       const customer = await prisma.customer.findUnique({
-        where: { customerId },
+        where: { whatsappPhoneNumber },
         select: { isBanned: true }
       });
       
@@ -25,19 +26,47 @@ export class CustomerService {
   }
 
   /**
-   * Get or create a customer
+   * Get customer by WhatsApp phone number
    */
-  static async getOrCreateCustomer(customerId: string): Promise<Customer> {
+  static async getCustomerByPhone(whatsappPhoneNumber: string): Promise<Customer | null> {
+    try {
+      return await prisma.customer.findUnique({
+        where: { whatsappPhoneNumber }
+      });
+    } catch (error) {
+      logger.error('Error getting customer by phone:', error);
+      return null;
+    }
+  }
+
+  /**
+   * Get customer by ID
+   */
+  static async getCustomerById(customerId: string): Promise<Customer | null> {
+    try {
+      return await prisma.customer.findUnique({
+        where: { id: customerId }
+      });
+    } catch (error) {
+      logger.error('Error getting customer by ID:', error);
+      return null;
+    }
+  }
+
+  /**
+   * Get or create a customer by WhatsApp phone number
+   */
+  static async getOrCreateCustomer(whatsappPhoneNumber: string): Promise<Customer> {
     try {
       let customer = await prisma.customer.findUnique({
-        where: { customerId }
+        where: { whatsappPhoneNumber }
       });
 
       if (!customer) {
         customer = await prisma.customer.create({
-          data: { customerId }
+          data: { whatsappPhoneNumber }
         });
-        logger.info(`Created new customer: ${customerId}`);
+        logger.info(`Created new customer with phone: ${whatsappPhoneNumber}`);
       }
 
       return customer;
@@ -46,21 +75,21 @@ export class CustomerService {
       throw new BusinessLogicError(
         ErrorCode.DATABASE_ERROR,
         'Failed to get or create customer',
-        { metadata: { customerId } }
+        { metadata: { whatsappPhoneNumber } }
       );
     }
   }
 
   /**
-   * Update customer information
+   * Update customer information by ID
    */
   static async updateCustomer(
     customerId: string, 
-    data: Partial<Customer>
+    data: Prisma.CustomerUpdateInput
   ): Promise<Customer> {
     try {
       const customer = await prisma.customer.update({
-        where: { customerId },
+        where: { id: customerId },
         data
       });
 
@@ -77,60 +106,89 @@ export class CustomerService {
   }
 
   /**
-   * Ban a customer
+   * Update customer information by WhatsApp phone number
    */
-  static async banCustomer(customerId: string, reason?: string): Promise<void> {
+  static async updateCustomerByPhone(
+    whatsappPhoneNumber: string, 
+    data: Prisma.CustomerUpdateInput
+  ): Promise<Customer> {
+    try {
+      const customer = await prisma.customer.update({
+        where: { whatsappPhoneNumber },
+        data
+      });
+
+      logger.info(`Updated customer with phone ${whatsappPhoneNumber}:`, data);
+      return customer;
+    } catch (error) {
+      logger.error('Error updating customer by phone:', error);
+      throw new BusinessLogicError(
+        ErrorCode.DATABASE_ERROR,
+        'Failed to update customer',
+        { metadata: { whatsappPhoneNumber, data } }
+      );
+    }
+  }
+
+  /**
+   * Ban a customer by WhatsApp phone number
+   */
+  static async banCustomer(whatsappPhoneNumber: string, reason?: string): Promise<void> {
     try {
       await prisma.customer.update({
-        where: { customerId },
+        where: { whatsappPhoneNumber },
         data: { 
           isBanned: true,
+          bannedAt: new Date(),
+          banReason: reason,
           updatedAt: new Date()
         }
       });
 
-      logger.warn(`Customer ${customerId} has been banned. Reason: ${reason || 'Not specified'}`);
+      logger.warn(`Customer with phone ${whatsappPhoneNumber} has been banned. Reason: ${reason || 'Not specified'}`);
     } catch (error) {
       logger.error('Error banning customer:', error);
       throw new BusinessLogicError(
         ErrorCode.DATABASE_ERROR,
         'Failed to ban customer',
-        { metadata: { customerId, reason } }
+        { metadata: { whatsappPhoneNumber, reason } }
       );
     }
   }
 
   /**
-   * Unban a customer
+   * Unban a customer by WhatsApp phone number
    */
-  static async unbanCustomer(customerId: string): Promise<void> {
+  static async unbanCustomer(whatsappPhoneNumber: string): Promise<void> {
     try {
       await prisma.customer.update({
-        where: { customerId },
+        where: { whatsappPhoneNumber },
         data: { 
           isBanned: false,
+          bannedAt: null,
+          banReason: null,
           updatedAt: new Date()
         }
       });
 
-      logger.info(`Customer ${customerId} has been unbanned`);
+      logger.info(`Customer with phone ${whatsappPhoneNumber} has been unbanned`);
     } catch (error) {
       logger.error('Error unbanning customer:', error);
       throw new BusinessLogicError(
         ErrorCode.DATABASE_ERROR,
         'Failed to unban customer',
-        { metadata: { customerId } }
+        { metadata: { whatsappPhoneNumber } }
       );
     }
   }
 
   /**
-   * Get customer with delivery info
+   * Get customer with delivery info by WhatsApp phone number
    */
-  static async getCustomerWithDeliveryInfo(customerId: string): Promise<any> {
+  static async getCustomerWithDeliveryInfo(whatsappPhoneNumber: string): Promise<any> {
     try {
       const customer = await prisma.customer.findUnique({
-        where: { customerId },
+        where: { whatsappPhoneNumber },
         include: {
           addresses: true
         }
@@ -138,7 +196,40 @@ export class CustomerService {
 
       if (!customer) {
         throw new BusinessLogicError(
-          ErrorCode.ORDER_NOT_FOUND,
+          ErrorCode.CUSTOMER_NOT_FOUND,
+          'Customer not found',
+          { metadata: { whatsappPhoneNumber } }
+        );
+      }
+
+      return customer;
+    } catch (error) {
+      if (error instanceof BusinessLogicError) throw error;
+      
+      logger.error('Error getting customer with delivery info:', error);
+      throw new BusinessLogicError(
+        ErrorCode.DATABASE_ERROR,
+        'Failed to get customer information',
+        { metadata: { whatsappPhoneNumber } }
+      );
+    }
+  }
+
+  /**
+   * Get customer with delivery info by ID
+   */
+  static async getCustomerWithDeliveryInfoById(customerId: string): Promise<any> {
+    try {
+      const customer = await prisma.customer.findUnique({
+        where: { id: customerId },
+        include: {
+          addresses: true
+        }
+      });
+
+      if (!customer) {
+        throw new BusinessLogicError(
+          ErrorCode.CUSTOMER_NOT_FOUND,
           'Customer not found',
           { metadata: { customerId } }
         );
@@ -148,7 +239,7 @@ export class CustomerService {
     } catch (error) {
       if (error instanceof BusinessLogicError) throw error;
       
-      logger.error('Error getting customer with delivery info:', error);
+      logger.error('Error getting customer with delivery info by ID:', error);
       throw new BusinessLogicError(
         ErrorCode.DATABASE_ERROR,
         'Failed to get customer information',

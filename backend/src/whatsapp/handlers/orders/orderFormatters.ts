@@ -125,8 +125,8 @@ export function generateOrderSummary(order: any): string {
   
   message += `\n💰 *Total: $${order.total || '0.00'}*\n`;
   
-  if (order.scheduledDeliveryTime) {
-    const date = new Date(order.scheduledDeliveryTime);
+  if (order.scheduledAt) {
+    const date = new Date(order.scheduledAt);
     const formattedDate = date.toLocaleDateString(env.DEFAULT_LOCALE, {
       weekday: "long",
       year: "numeric",

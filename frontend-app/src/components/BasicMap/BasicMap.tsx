@@ -25,10 +25,17 @@ export const BasicMap: React.FC<BasicMapProps> = ({
 }) => {
   const mapRef = useRef<HTMLDivElement>(null);
   const searchBoxRef = useRef<HTMLInputElement>(null);
+  const polygonCoordsRef = useRef<Location[]>(polygonCoords);
   const [map, setMap] = useState<google.maps.Map | null>(null);
   const [marker, setMarker] = useState<google.maps.Marker | null>(null);
   const [isMapLoaded, setIsMapLoaded] = useState(false);
   const [mapError, setMapError] = useState<string | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
+
+  // Update polygon coords ref when prop changes
+  useEffect(() => {
+    polygonCoordsRef.current = polygonCoords;
+  }, [polygonCoords]);
 
   useEffect(() => {
     loadGoogleMaps()
@@ -48,6 +55,9 @@ export const BasicMap: React.FC<BasicMapProps> = ({
             zoomControlOptions: {
               position: google.maps.ControlPosition.RIGHT_CENTER
             },
+            gestureHandling: 'greedy', // Allow one-finger pan on mobile
+            clickableIcons: false, // Disable POI clicks
+            disableDoubleClickZoom: false, // Allow double click zoom
             styles: [
               {
                 featureType: 'poi',
@@ -62,6 +72,9 @@ export const BasicMap: React.FC<BasicMapProps> = ({
             ]
           });
 
+          // Store reference to current marker
+          let currentMarker: google.maps.Marker | null = null;
+
           // Add click listener
           mapInstance.addListener('click', (e: google.maps.MapMouseEvent) => {
             if (e.latLng) {
@@ -71,14 +84,75 @@ export const BasicMap: React.FC<BasicMapProps> = ({
               };
               
               // Validate if location is inside polygon
-              if (polygonCoords.length > 0 && !isPointInPolygon(location, polygonCoords)) {
+              if (polygonCoordsRef.current.length > 0 && !isPointInPolygon(location, polygonCoordsRef.current)) {
                 if (onLocationError) {
                   onLocationError('⚠️ Por favor selecciona una ubicación dentro de nuestra área de cobertura');
                 }
                 return;
               }
               
+              // Remove existing marker if any
+              if (currentMarker) {
+                currentMarker.setMap(null);
+              }
+              
+              // Create new marker immediately
+              currentMarker = new google.maps.Marker({
+                position: location,
+                map: mapInstance,
+                animation: google.maps.Animation.DROP,
+                draggable: true,
+                icon: {
+                  url: 'data:image/svg+xml;charset=UTF-8;base64,' + btoa(`
+                    <svg width="48" height="48" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
+                      <defs>
+                        <filter id="shadow" x="-50%" y="-50%" width="200%" height="200%">
+                          <feDropShadow dx="0" dy="2" stdDeviation="2" flood-opacity="0.3"/>
+                        </filter>
+                      </defs>
+                      <path d="M24 4C16.27 4 10 10.27 10 18c0 10.5 14 26 14 26s14-15.5 14-26c0-7.73-6.27-14-14-14z" fill="#EF4444" filter="url(#shadow)"/>
+                      <circle cx="24" cy="18" r="6" fill="#ffffff"/>
+                      <circle cx="24" cy="18" r="3" fill="#EF4444"/>
+                    </svg>
+                  `),
+                  scaledSize: new google.maps.Size(48, 48),
+                  anchor: new google.maps.Point(24, 48),
+                },
+                cursor: 'move'
+              });
+              
+              // Set up drag listeners for the new marker
+              currentMarker.addListener('dragend', () => {
+                const newPosition = currentMarker?.getPosition();
+                if (newPosition) {
+                  const newLocation = {
+                    lat: newPosition.lat(),
+                    lng: newPosition.lng(),
+                  };
+                  
+                  // Validate if location is inside polygon
+                  if (polygonCoordsRef.current.length > 0 && !isPointInPolygon(newLocation, polygonCoordsRef.current)) {
+                    // Return marker to previous position
+                    currentMarker?.setPosition(location);
+                    if (onLocationError) {
+                      onLocationError('⚠️ Por favor selecciona una ubicación dentro de nuestra área de cobertura');
+                    }
+                    return;
+                  }
+                  
+                  onLocationSelect(newLocation);
+                }
+              });
+              
+              // Store marker reference
+              setMarker(currentMarker);
+              
+              // Call location select
               onLocationSelect(location);
+              
+              // Pan to location
+              mapInstance.panTo(location);
+              mapInstance.setZoom(16);
             }
           });
 
@@ -173,34 +247,15 @@ export const BasicMap: React.FC<BasicMapProps> = ({
       });
   }, []);
 
-  // Update marker when location changes
+  // Update marker when location changes (from search or other sources)
   useEffect(() => {
-    if (map && selectedLocation) {
-      // Remove old marker
-      if (marker) {
-        marker.setMap(null);
-      }
-
-      // Add new marker with custom style
-      const newMarker = new google.maps.Marker({
-        position: selectedLocation,
-        map,
-        animation: google.maps.Animation.DROP,
-        icon: {
-          path: google.maps.SymbolPath.CIRCLE,
-          fillColor: '#3B82F6',
-          fillOpacity: 1,
-          strokeColor: '#ffffff',
-          strokeWeight: 3,
-          scale: 10,
-        }
-      });
-
-      setMarker(newMarker);
+    if (map && selectedLocation && marker) {
+      // If we already have a marker (from click), just update its position
+      marker.setPosition(selectedLocation);
       map.panTo(selectedLocation);
       map.setZoom(16);
     }
-  }, [map, selectedLocation]);
+  }, [map, selectedLocation, marker]);
 
   if (mapError) {
     return (
@@ -219,7 +274,7 @@ export const BasicMap: React.FC<BasicMapProps> = ({
         <input
           ref={searchBoxRef}
           type="text"
-          placeholder="Busca tu dirección en México..."
+          placeholder="Busca tu dirección o haz clic en el mapa..."
           className="w-full px-4 py-3 pl-10 pr-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-200"
           disabled={!isMapLoaded}
         />
@@ -242,10 +297,52 @@ export const BasicMap: React.FC<BasicMapProps> = ({
         )}
         
         {/* Instructions overlay */}
-        {isMapLoaded && (
+        {isMapLoaded && !selectedLocation && (
+          <div className="absolute top-2 left-2 sm:top-4 sm:left-4 bg-orange-500 bg-opacity-95 backdrop-blur-sm rounded-lg shadow-lg p-3 max-w-[220px] sm:max-w-xs z-10 animate-pulse">
+            <div className="space-y-1">
+              <p className="text-sm text-white font-semibold">
+                👆 Toca cualquier punto del mapa para marcar tu ubicación
+              </p>
+            </div>
+          </div>
+        )}
+        
+        {/* Instructions for dragging - only show when marker exists */}
+        {isMapLoaded && selectedLocation && (
           <div className="absolute top-2 left-2 sm:top-4 sm:left-4 bg-white bg-opacity-95 backdrop-blur-sm rounded-lg shadow-lg p-2 sm:p-3 max-w-[200px] sm:max-w-xs z-10">
             <p className="text-xs text-gray-700">
-              <span className="font-semibold">📍 Haz clic en el mapa</span> para seleccionar tu ubicación
+              <span className="font-semibold">✋ Arrastra el marcador</span> para ajustar tu ubicación
+            </p>
+          </div>
+        )}
+        
+        
+        {/* Center on marker button */}
+        {selectedLocation && map && (
+          <button
+            onClick={() => {
+              map.panTo(selectedLocation);
+              map.setZoom(17);
+            }}
+            className="absolute bottom-20 right-2 sm:bottom-24 sm:right-4 bg-white bg-opacity-95 backdrop-blur-sm rounded-full shadow-lg p-3 hover:bg-gray-100 transition-colors z-10"
+            title="Centrar en mi ubicación"
+          >
+            <svg className="w-5 h-5 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l-4 4m0 0l-4-4m4 4V3" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          </button>
+        )}
+        
+        {/* Coordinates display */}
+        {selectedLocation && !isDragging && (
+          <div className="absolute bottom-2 right-2 sm:bottom-4 sm:right-4 bg-white bg-opacity-95 backdrop-blur-sm rounded-lg shadow-lg p-2 sm:p-3 z-10">
+            <p className="text-xs text-gray-700 font-medium">📍 Ubicación seleccionada:</p>
+            <p className="text-xs text-gray-600 font-mono">
+              Lat: {selectedLocation.lat.toFixed(6)}
+            </p>
+            <p className="text-xs text-gray-600 font-mono">
+              Lng: {selectedLocation.lng.toFixed(6)}
             </p>
           </div>
         )}

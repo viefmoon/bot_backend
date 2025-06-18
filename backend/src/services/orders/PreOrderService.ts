@@ -13,29 +13,37 @@ export class PreOrderService {
    */
   async selectProducts(orderData: {
     orderItems: any[];
-    customerId: string;
+    whatsappPhoneNumber: string;
     orderType: OrderType;
-    scheduledDeliveryTime?: string | Date;
+    scheduledAt?: string | Date;
     deliveryInfo?: any;
   }) {
-    const { orderItems, customerId, orderType, scheduledDeliveryTime, deliveryInfo } = orderData;
+    const { orderItems, whatsappPhoneNumber, orderType, scheduledAt, deliveryInfo: inputDeliveryInfo } = orderData;
 
     try {
       // Get restaurant config
       const config = await RestaurantService.getConfig();
 
+      // Convert OrderType enum to string
+      const orderTypeString = orderType === 'DELIVERY' ? 'delivery' : orderType === 'TAKE_AWAY' ? 'pickup' : 'pickup';
+
       // Validate scheduled time if provided
       const validatedScheduledTime = await SchedulingService.validateScheduledTime(
-        scheduledDeliveryTime,
-        orderType
+        scheduledAt,
+        orderTypeString
       );
 
+      // Get customerId from whatsapp phone number for delivery info
+      const customer = await prisma.customer.findUnique({
+        where: { whatsappPhoneNumber }
+      });
+      
       // Get or create delivery info
-      const orderDeliveryInfo = await DeliveryInfoService.getOrCreateDeliveryInfo(
-        orderType,
-        customerId,
-        deliveryInfo
-      );
+      const orderDeliveryInfo = customer ? await DeliveryInfoService.getOrCreateDeliveryInfo(
+        orderTypeString,
+        customer.id,
+        inputDeliveryInfo
+      ) : null;
 
       // Calculate items and total cost
       const { items: calculatedItems, totalCost } = await ProductCalculationService.calculateOrderItems(
@@ -45,26 +53,26 @@ export class PreOrderService {
       // Create pre-order
       const preOrder = await prisma.preOrder.create({
         data: {
-          customerId,
+          whatsappPhoneNumber,
           orderType,
           orderItems: JSON.parse(JSON.stringify(calculatedItems)), // Convert to JSON-compatible format
-          scheduledDeliveryTime: validatedScheduledTime,
-          messageId: `preorder_${customerId}_${Date.now()}`,
+          scheduledAt: validatedScheduledTime,
+          messageId: `preorder_${whatsappPhoneNumber}_${Date.now()}`,
         },
       });
 
-      logger.info(`Created pre-order ${preOrder.id} for customer ${customerId}`);
+      logger.info(`Created pre-order ${preOrder.id} for phone ${whatsappPhoneNumber}`);
 
       // Get delivery info if it's a delivery order
       let deliveryInfo = null;
-      if (orderType === 'delivery') {
-        const customer = await prisma.customer.findUnique({
-          where: { customerId },
-          include: { addresses: { where: { isActive: true } } }
+      if (orderType === 'DELIVERY' && customer) {
+        const customerWithAddresses = await prisma.customer.findUnique({
+          where: { id: customer.id },
+          include: { addresses: { where: { deletedAt: null } } }
         });
         
-        if (customer?.addresses?.[0]) {
-          deliveryInfo = customer.addresses[0];
+        if (customerWithAddresses?.addresses?.[0]) {
+          deliveryInfo = customerWithAddresses.addresses[0];
         }
       }
 
@@ -74,7 +82,7 @@ export class PreOrderService {
         items: calculatedItems,
         total: totalCost,
         deliveryInfo,
-        scheduledDeliveryTime: validatedScheduledTime,
+        scheduledAt: validatedScheduledTime,
         estimatedPickupTime: config.estimatedPickupTime,
         estimatedDeliveryTime: config.estimatedDeliveryTime,
       };
@@ -116,11 +124,11 @@ export class PreOrderService {
 
     return {
       id: preOrder.id,
-      customerId: preOrder.customerId,
+      whatsappPhoneNumber: preOrder.whatsappPhoneNumber,
       orderType: preOrder.orderType,
       orderItems: orderItems,
       totalCost: totalCost,
-      scheduledDeliveryTime: preOrder.scheduledDeliveryTime,
+      scheduledAt: preOrder.scheduledAt,
       deliveryInfo: preOrder.deliveryInfo
     };
   }

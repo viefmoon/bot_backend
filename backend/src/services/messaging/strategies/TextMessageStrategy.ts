@@ -44,7 +44,7 @@ export class TextMessageStrategy extends MessageStrategy {
     try {
       logger.debug('=== TextMessageStrategy.execute DEBUG ===');
       logger.debug('User message:', text);
-      logger.debug('Customer ID:', context.customer.customerId);
+      logger.debug('Customer ID:', context.customer.id);
       logger.debug('Chat history length:', relevantChatHistory.length);
       
       // Procesar con AI
@@ -120,9 +120,9 @@ export class TextMessageStrategy extends MessageStrategy {
     const preOrderService = new PreOrderService();
     const preOrderResult = await preOrderService.selectProducts({
       orderItems: preprocessedContent.orderItems,
-      customerId: context.message.from,
+      whatsappPhoneNumber: context.message.from,
       orderType: preprocessedContent.orderType,
-      scheduledDeliveryTime: preprocessedContent.scheduledDeliveryTime,
+      scheduledAt: preprocessedContent.scheduledAt,
     });
     
     // Generate order summary
@@ -245,9 +245,9 @@ export class TextMessageStrategy extends MessageStrategy {
         result = {
           preprocessedContent: {
             orderItems: args.orderItems || [],
-            orderType: args.orderType || 'pickup',
-            warnings: args.warnings || [],
-            scheduledDeliveryTime: args.scheduledDeliveryTime
+            orderType: args.orderType || 'DELIVERY',
+            warnings: args.warnings ? [args.warnings] : [],
+            scheduledAt: args.scheduledAt
           }
         };
         break;
@@ -312,6 +312,39 @@ export class TextMessageStrategy extends MessageStrategy {
           logger.error('Error obteniendo horario:', error);
           result = {
             text: "Lo siento, no pude obtener el horario de atención en este momento.",
+            isRelevant: true
+          };
+        }
+        break;
+        
+      case "prepare_order_context":
+        // Preparar contexto para el agente de órdenes
+        try {
+          logger.debug('Preparando contexto de orden:', args);
+          
+          // Obtener menú relevante basado en los items mencionados
+          const relevantMenu = await AgentService.getRelevantMenu(args.itemsSummary);
+          
+          // Crear contexto para el agente de órdenes
+          const orderContext = {
+            itemsSummary: args.itemsSummary,
+            relevantMenu: relevantMenu
+          };
+          
+          // Procesar con el agente de órdenes
+          const orderResponse = await AgentService.processOrderMapping(orderContext);
+          
+          // Procesar la respuesta del agente de órdenes
+          const orderResults = await this.processGeminiResponse(orderResponse);
+          
+          // El agente de órdenes siempre debe ejecutar map_order_items
+          // Así que devolvemos todos los resultados
+          result = orderResults;
+          
+        } catch (error) {
+          logger.error('Error preparando contexto de orden:', error);
+          result = {
+            text: "Lo siento, hubo un error al procesar tu pedido. Por favor intenta de nuevo.",
             isRelevant: true
           };
         }

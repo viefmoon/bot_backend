@@ -52,14 +52,14 @@ async function main() {
       closingGracePeriod: 30,
       timeZone: "America/Mexico_City",
       
-      // Configuración de delivery (ejemplo para Tototlán, Jalisco)
+      // Configuración de delivery
       // Formato Google Maps: {lat: number, lng: number}
       deliveryCoverageArea: [
-        { lat: 20.5320, lng: -102.8690 },  // Norte
-        { lat: 20.5280, lng: -102.8650 },  // Este
-        { lat: 20.5240, lng: -102.8690 },  // Sur
-        { lat: 20.5280, lng: -102.8730 },  // Oeste
-        { lat: 20.5320, lng: -102.8690 }   // Cierre del polígono
+        { lat: 20.552083014344916, lng: -102.80691765951832 },
+        { lat: 20.533011128610994, lng: -102.80691765951832 },
+        { lat: 20.533011128610994, lng: -102.78047795060189 },
+        { lat: 20.552083014344916, lng: -102.78047795060189 },
+        { lat: 20.552083014344916, lng: -102.80691765951832 }
       ]
     }
   });

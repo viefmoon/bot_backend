@@ -1,0 +1,1 @@
+export { AddressManager2 as AddressManager } from './AddressManager2';

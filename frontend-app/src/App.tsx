@@ -6,7 +6,7 @@ import { AddressForm } from '@/components/AddressForm';
 import { Map } from '@/components/Map';
 import { Button } from '@/components/ui';
 import customerService from '@/services/customer.service';
-import type { AddressFormData, Customer, Address } from '@/types/customer.types';
+import type { AddressFormData, Customer, Address } from '@/types';
 
 const libraries: ('places' | 'geometry')[] = ['places', 'geometry'];
 
@@ -38,7 +38,6 @@ function App() {
     references: '',
     latitude: 0,
     longitude: 0,
-    geocodedAddress: '',
   });
   const [isUpdating, setIsUpdating] = useState(false);
   const [locationError, setLocationError] = useState<string | null>(null);
@@ -103,7 +102,6 @@ function App() {
       references: address.references || '',
       latitude: address.latitude || 0,
       longitude: address.longitude || 0,
-      geocodedAddress: address.geocodedAddress || '',
     };
 
     setFormData(formattedData);
@@ -130,7 +128,6 @@ function App() {
         const newFormData: Partial<AddressFormData> = {
           latitude: location.lat,
           longitude: location.lng,
-          geocodedAddress: formattedAddress,
         };
 
         addressComponents.forEach((component) => {

@@ -21,12 +21,12 @@ export async function handleOrderModification(
       throw new BusinessLogicError(ErrorCode.ORDER_NOT_FOUND, 'Order not found for modification', { userId: from, operation: 'handleOrderModification', metadata: { messageId } });
     }
 
-    logger.info(`Found order: ${order.id} with status: ${order.status}`);
+    logger.info(`Found order: ${order.id} with status: ${order.orderStatus}`);
 
     // Check if order can be modified
     const canModify = await orderManagementService.canModifyOrder(order.id);
     if (!canModify) {
-      throw new BusinessLogicError(ErrorCode.ORDER_CANNOT_MODIFY, 'Cannot modify order with status: ${order.status}', { userId: from, orderId: order.id, metadata: { orderStatus: order.status } });
+      throw new BusinessLogicError(ErrorCode.ORDER_CANNOT_MODIFY, `Cannot modify order with status: ${order.orderStatus}`, { userId: from, metadata: { orderId: order.id, orderStatus: order.orderStatus } });
     }
 
     // Generar un OTP para la modificación
@@ -35,7 +35,7 @@ export async function handleOrderModification(
 
     const modificationLink = `${env.FRONTEND_BASE_URL}/modify-order/${order.id}?otp=${otp}`;
 
-    const message = `📝 Para modificar tu orden #${order.dailyOrderNumber}, haz clic en el siguiente enlace:
+    const message = `📝 Para modificar tu orden #${order.dailyNumber}, haz clic en el siguiente enlace:
 
 🔗 ${modificationLink}
 

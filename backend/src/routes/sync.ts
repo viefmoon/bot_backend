@@ -25,8 +25,8 @@ router.post('/customer', async (req: Request, res: Response): Promise<void> => {
     res.json({ 
       success: true, 
       customer: {
-        customerId: customer.customerId,
-        localId: customer.localId,
+        id: customer.id,
+        whatsappPhoneNumber: customer.whatsappPhoneNumber,
         syncVersion: customer.syncVersion
       }
     });
@@ -41,15 +41,16 @@ router.post('/customer', async (req: Request, res: Response): Promise<void> => {
 });
 
 /**
- * Get customer by local ID
- * GET /backend/sync/customer/:localId
+ * Get customer by ID
+ * GET /backend/sync/customer/:id
  */
-router.get('/customer/:localId', async (req: Request, res: Response): Promise<void> => {
+router.get('/customer/:id', async (req: Request, res: Response): Promise<void> => {
   try {
-    const { localId } = req.params;
+    const { id } = req.params;
     
+    // Search by UUID
     const customer = await prisma.customer.findUnique({
-      where: { localId },
+      where: { id },
       include: { addresses: true }
     });
     
@@ -61,7 +62,7 @@ router.get('/customer/:localId', async (req: Request, res: Response): Promise<vo
     res.json({ customer });
     
   } catch (error: any) {
-    logger.error('Error fetching customer by local ID:', error);
+    logger.error('Error fetching customer by ID:', error);
     res.status(500).json({ error: 'Failed to fetch customer' });
   }
 });
@@ -86,13 +87,13 @@ router.post('/customers/batch', async (req: Request, res: Response): Promise<voi
       try {
         const customer = await SyncService.syncCustomerFromLocal(localCustomer);
         results.push({
-          localId: localCustomer.id,
-          customerId: customer.customerId,
+          id: customer.id,
+          whatsappPhoneNumber: customer.whatsappPhoneNumber,
           success: true
         });
       } catch (error: any) {
         errors.push({
-          localId: localCustomer.id,
+          id: localCustomer.id,
           error: error.message
         });
       }

@@ -105,9 +105,9 @@ export class StripeService {
       // Update order payment status
       if (session.metadata?.orderId) {
         await prisma.order.update({
-          where: { id: parseInt(session.metadata.orderId) },
+          where: { id: session.metadata.orderId },
           data: {
-            paymentStatus: 'paid',
+            paymentStatus: 'PAID',
             stripeSessionId: session.id
           }
         });
