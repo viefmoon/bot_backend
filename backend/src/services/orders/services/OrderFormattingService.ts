@@ -1,5 +1,6 @@
 import { Order, OrderItem, OrderType } from "@prisma/client";
 import { NewOrder } from "../../../common/types/order.types";
+import { env } from "../../../common/config/envValidator";
 
 export class OrderFormattingService {
   /**
@@ -71,8 +72,8 @@ export class OrderFormattingService {
     }) || [];
 
     // Format dates
-    const createdAt = order.createdAt.toLocaleString('es-MX', {
-      timeZone: 'America/Mexico_City',
+    const createdAt = order.createdAt.toLocaleString(env.DEFAULT_LOCALE, {
+      timeZone: env.DEFAULT_TIMEZONE,
       day: '2-digit',
       month: '2-digit',
       year: 'numeric',
@@ -81,8 +82,8 @@ export class OrderFormattingService {
     });
 
     const scheduledDelivery = order.scheduledDeliveryTime
-      ? order.scheduledDeliveryTime.toLocaleString('es-MX', {
-          timeZone: 'America/Mexico_City',
+      ? order.scheduledDeliveryTime.toLocaleString(env.DEFAULT_LOCALE, {
+          timeZone: env.DEFAULT_TIMEZONE,
           day: '2-digit',
           month: '2-digit',
           year: 'numeric',

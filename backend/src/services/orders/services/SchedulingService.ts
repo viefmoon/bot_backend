@@ -1,6 +1,7 @@
 import { RestaurantService } from "../../restaurant/RestaurantService";
 import { ValidationError, ErrorCode } from "../../../common/services/errors";
 import logger from "../../../common/utils/logger";
+import { env } from "../../../common/config/envValidator";
 
 export class SchedulingService {
   /**
@@ -67,7 +68,7 @@ export class SchedulingService {
     // Convert to Mexico time
     const mexicoTime = new Date(
       scheduledTime.toLocaleString("en-US", {
-        timeZone: config.timeZone || "America/Mexico_City",
+        timeZone: config.timeZone || env.DEFAULT_TIMEZONE,
       })
     );
 

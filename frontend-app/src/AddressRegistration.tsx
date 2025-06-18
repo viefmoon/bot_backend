@@ -3,6 +3,7 @@ import { useParams, useSearchParams } from 'react-router-dom';
 import toast, { Toaster } from 'react-hot-toast';
 import { AddressForm } from '@/components/AddressForm';
 import { BasicMap } from '@/components/BasicMap';
+import { WhatsAppButton } from '@/components/ui';
 import customerService from '@/services/customer.service';
 import type { AddressFormData, Customer, Address } from '@/types/customer.types';
 
@@ -41,7 +42,7 @@ function AddressRegistration() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [hasVerified, setHasVerified] = useState(false);
   const [polygonCoords, setPolygonCoords] = useState<Location[]>([]);
-  const [mapCenter, setMapCenter] = useState<Location>({ lat: 20.6597, lng: -103.3496 });
+  const [mapCenter, setMapCenter] = useState<Location | null>(null);
 
   useEffect(() => {
     // Evitar doble verificación
@@ -52,19 +53,24 @@ function AddressRegistration() {
       verifyOtp();
     } else {
       setLoading(false);
-      toast.error('El enlace no es válido. Falta información necesaria.');
+      setIsValidOtp(false);
     }
   }, [customerId, otp, hasVerified]);
 
   // Load delivery area from backend
   useEffect(() => {
     const loadDeliveryArea = async () => {
-      const { polygonCoords: coords, center } = await customerService.getDeliveryArea();
+      const { polygonCoords: coords } = await customerService.getDeliveryArea();
       if (coords && coords.length > 0) {
         setPolygonCoords(coords);
-      }
-      if (center) {
-        setMapCenter(center);
+        
+        // Calculate center from polygon
+        const sumLat = coords.reduce((sum, coord) => sum + coord.lat, 0);
+        const sumLng = coords.reduce((sum, coord) => sum + coord.lng, 0);
+        setMapCenter({
+          lat: sumLat / coords.length,
+          lng: sumLng / coords.length
+        });
       }
     };
     
@@ -250,16 +256,15 @@ function AddressRegistration() {
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
           </svg>
           <h2 className="text-2xl font-bold text-gray-900 mb-2">Enlace inválido</h2>
-          <p className="text-gray-600">
+          <p className="text-gray-600 mb-4">
             Este enlace ha expirado o no es válido. Por favor, solicita un nuevo enlace desde WhatsApp.
           </p>
           <div className="mt-6">
-            <a
-              href={`https://wa.me/${import.meta.env.VITE_BOT_WHATSAPP_NUMBER}`}
-              className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700"
+            <WhatsAppButton 
+              className="w-full justify-center"
             >
-              Abrir WhatsApp
-            </a>
+              Continuar en WhatsApp
+            </WhatsAppButton>
           </div>
         </div>
         <Toaster position="top-center" />
@@ -307,13 +312,15 @@ function AddressRegistration() {
 
             {/* Map with Search */}
             <div className="mb-4 sm:mb-6">
-              <BasicMap
-                center={selectedLocation || mapCenter}
-                onLocationSelect={handleLocationSelect}
-                selectedLocation={selectedLocation}
-                polygonCoords={polygonCoords}
-                onLocationError={setLocationError}
-              />
+              {mapCenter && (
+                <BasicMap
+                  center={selectedLocation || mapCenter}
+                  onLocationSelect={handleLocationSelect}
+                  selectedLocation={selectedLocation}
+                  polygonCoords={polygonCoords}
+                  onLocationError={setLocationError}
+                />
+              )}
               {locationError && (
                 <div className="mt-2 bg-red-50 border border-red-200 text-red-600 px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm">
                   {locationError}

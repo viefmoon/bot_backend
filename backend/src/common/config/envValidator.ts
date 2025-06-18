@@ -21,6 +21,8 @@ interface EnvironmentVariables {
   PORT: string;
   RATE_LIMIT_MAX_MESSAGES: string;
   RATE_LIMIT_TIME_WINDOW_MINUTES: string;
+  DEFAULT_TIMEZONE: string;
+  DEFAULT_LOCALE: string;
 }
 
 class EnvironmentValidator {
@@ -35,7 +37,9 @@ class EnvironmentValidator {
     'NODE_ENV',
     'PORT',
     'RATE_LIMIT_MAX_MESSAGES',
-    'RATE_LIMIT_TIME_WINDOW_MINUTES'
+    'RATE_LIMIT_TIME_WINDOW_MINUTES',
+    'DEFAULT_TIMEZONE',
+    'DEFAULT_LOCALE'
   ];
 
   validate(): void {
@@ -115,7 +119,9 @@ class EnvironmentValidator {
       NODE_ENV: process.env.NODE_ENV!,
       PORT: process.env.PORT!,
       RATE_LIMIT_MAX_MESSAGES: process.env.RATE_LIMIT_MAX_MESSAGES!,
-      RATE_LIMIT_TIME_WINDOW_MINUTES: process.env.RATE_LIMIT_TIME_WINDOW_MINUTES!
+      RATE_LIMIT_TIME_WINDOW_MINUTES: process.env.RATE_LIMIT_TIME_WINDOW_MINUTES!,
+      DEFAULT_TIMEZONE: process.env.DEFAULT_TIMEZONE!,
+      DEFAULT_LOCALE: process.env.DEFAULT_LOCALE!
     };
   }
 }

@@ -4,12 +4,13 @@ import { prisma } from '../../../server';
 import { sendWhatsAppMessage } from '../../whatsapp';
 import { RATE_LIMIT_MESSAGE } from '../../../common/config/predefinedMessages';
 import logger from '../../../common/utils/logger';
+import { env } from '../../../common/config/envValidator';
 
 export class RateLimitMiddleware implements MessageMiddleware {
   name = 'RateLimitMiddleware';
   
-  private readonly RATE_LIMIT_MESSAGES = 50;
-  private readonly RATE_LIMIT_WINDOW_MINUTES = 10;
+  private readonly RATE_LIMIT_MESSAGES = parseInt(env.RATE_LIMIT_MAX_MESSAGES);
+  private readonly RATE_LIMIT_WINDOW_MINUTES = parseInt(env.RATE_LIMIT_TIME_WINDOW_MINUTES);
 
   async process(context: MessageContext): Promise<MessageContext> {
     try {

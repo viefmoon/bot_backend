@@ -1,4 +1,5 @@
 import api from './api';
+import { endpoints } from '@/config';
 import type { 
   Customer, 
   Address, 
@@ -12,7 +13,7 @@ class CustomerService {
    * Verify OTP for address registration
    */
   async verifyOTP(customerId: string, otp: string): Promise<OTPVerificationResponse> {
-    const response = await api.post<OTPVerificationResponse>('/backend/address-registration/verify-otp', {
+    const response = await api.post<OTPVerificationResponse>(endpoints.addressRegistration.verifyOtp, {
       customerId,
       otp
     });
@@ -27,7 +28,7 @@ class CustomerService {
     otp: string, 
     address: AddressFormData
   ): Promise<AddressRegistrationResponse> {
-    const response = await api.post<AddressRegistrationResponse>('/backend/address-registration/create', {
+    const response = await api.post<AddressRegistrationResponse>(endpoints.addressRegistration.create, {
       customerId,
       otp,
       address
@@ -44,7 +45,7 @@ class CustomerService {
     otp: string,
     address: AddressFormData
   ): Promise<AddressRegistrationResponse> {
-    const response = await api.put<AddressRegistrationResponse>(`/backend/address-registration/${addressId}`, {
+    const response = await api.put<AddressRegistrationResponse>(endpoints.addressRegistration.update(addressId.toString()), {
       customerId,
       otp,
       address
@@ -57,7 +58,7 @@ class CustomerService {
    */
   async getCustomerAddresses(customerId: string, otp: string): Promise<{ addresses: Address[] }> {
     const response = await api.get<{ addresses: Address[] }>(
-      `/backend/address-registration/${customerId}/addresses`,
+      endpoints.addressRegistration.getAddresses(customerId),
       { params: { otp } }
     );
     return response.data;
@@ -68,7 +69,7 @@ class CustomerService {
    */
   async getDeliveryArea(): Promise<{ polygonCoords: any[], center?: { lat: number, lng: number } }> {
     try {
-      const response = await api.get('/backend/address-registration/delivery-area');
+      const response = await api.get(endpoints.addressRegistration.getDeliveryArea);
       return response.data;
     } catch (error) {
       console.error('Error fetching delivery area:', error);

@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { loadGoogleMaps } from '@/utils/loadGoogleMaps';
+import { config } from '@/config';
 
 interface Location {
   lat: number;
@@ -38,7 +39,7 @@ export const BasicMap: React.FC<BasicMapProps> = ({
           // Initialize map with custom styles
           const mapInstance = new google.maps.Map(mapRef.current, {
             center,
-            zoom: 14,
+            zoom: config.maps.defaultZoom.initial,
             mapTypeControl: false,
             fullscreenControl: false,
             streetViewControl: false,
@@ -100,7 +101,7 @@ export const BasicMap: React.FC<BasicMapProps> = ({
           // Initialize autocomplete
           if (searchBoxRef.current) {
             const autocomplete = new google.maps.places.Autocomplete(searchBoxRef.current, {
-              componentRestrictions: { country: 'mx' },
+              componentRestrictions: { country: config.regional.countryCode },
               fields: ['geometry', 'formatted_address', 'name'],
               types: ['geocode', 'establishment']
             });
@@ -124,7 +125,7 @@ export const BasicMap: React.FC<BasicMapProps> = ({
 
               onLocationSelect(location);
               mapInstance.panTo(location);
-              mapInstance.setZoom(17);
+              mapInstance.setZoom(config.maps.defaultZoom.search);
             });
           }
         }

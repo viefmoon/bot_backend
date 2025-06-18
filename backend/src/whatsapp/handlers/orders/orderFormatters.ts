@@ -3,6 +3,8 @@
  * Handles the formatting of order summaries and product details
  */
 
+import { env } from '../../../common/config/envValidator';
+
 // Función auxiliar para generar el resumen de productos
 export function generateProductSummary(producto: any): string {
   let summary = `- *${producto.cantidad}x ${producto.nombre}*: $${producto.precio}\n`;
@@ -115,13 +117,13 @@ export function generateOrderSummary(result: any): string {
   
   if (result.scheduledDeliveryTime) {
     const date = new Date(result.scheduledDeliveryTime);
-    const formattedDate = date.toLocaleDateString("es-MX", {
+    const formattedDate = date.toLocaleDateString(env.DEFAULT_LOCALE, {
       weekday: "long",
       year: "numeric",
       month: "long",
       day: "numeric",
     });
-    const formattedTime = date.toLocaleTimeString("es-MX", {
+    const formattedTime = date.toLocaleTimeString(env.DEFAULT_LOCALE, {
       hour: "2-digit",
       minute: "2-digit",
     });
