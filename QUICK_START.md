@@ -35,7 +35,6 @@ GOOGLE_AI_API_KEY=tu_api_key_real_aqui
 WHATSAPP_PHONE_NUMBER_MESSAGING_ID=tu_phone_number_id
 WHATSAPP_ACCESS_TOKEN=tu_access_token_permanente
 WHATSAPP_VERIFY_TOKEN=un_token_secreto_que_tu_elijas
-BOT_WHATSAPP_NUMBER=521234567890  # Tu número WhatsApp Business
 ```
 
 ### 3️⃣ Configurar Ngrok

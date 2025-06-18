@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "ts-node src/server.ts",
+    "dev": "ts-node --transpile-only src/server.ts",
     "dev:all": "cd .. && ./dev.sh",
     "dev:frontend": "cd .. && ./dev-frontend.sh",
     "build": "tsc",
@@ -13,11 +13,11 @@
     "migrate:dev": "prisma migrate dev",
     "generate": "prisma generate",
     "studio": "prisma studio",
-    "seed": "ts-node prisma/seed.ts",
+    "seed": "ts-node --transpile-only prisma/seed.ts",
     "postinstall": "prisma generate"
   },
   "prisma": {
-    "seed": "ts-node prisma/seed.ts"
+    "seed": "ts-node --transpile-only prisma/seed.ts"
   },
   "dependencies": {
     "@google/genai": "^1.5.1",

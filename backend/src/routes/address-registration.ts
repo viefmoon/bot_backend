@@ -233,41 +233,23 @@ router.get('/:customerId/addresses', async (req: Request, res: Response): Promis
  * Get delivery area polygon
  * GET /backend/address-registration/delivery-area
  */
-router.get('/delivery-area', async (req: Request, res: Response): Promise<void> => {
+router.get('/delivery-area', async (_req: Request, res: Response): Promise<void> => {
   try {
     // Get restaurant configuration
     const restaurant = await prisma.restaurantConfig.findFirst({
       select: {
-        deliveryCoverageArea: true,
-        centerLatitude: true,
-        centerLongitude: true
+        deliveryCoverageArea: true
       }
     });
 
-    if (!restaurant) {
+    if (!restaurant || !restaurant.deliveryCoverageArea) {
       res.json({ polygonCoords: [] });
       return;
     }
 
-    // If restaurant has polygon coordinates, return them
-    if (restaurant.deliveryCoverageArea) {
-      res.json({ 
-        polygonCoords: restaurant.deliveryCoverageArea,
-        center: {
-          lat: restaurant.centerLatitude || 20.6597,
-          lng: restaurant.centerLongitude || -103.3496
-        }
-      });
-      return;
-    }
-
-    // Default: no delivery area defined
+    // Return polygon coordinates
     res.json({ 
-      polygonCoords: [],
-      center: {
-        lat: restaurant.centerLatitude || 20.6597,
-        lng: restaurant.centerLongitude || -103.3496
-      }
+      polygonCoords: restaurant.deliveryCoverageArea
     });
 
   } catch (error: any) {

@@ -50,20 +50,12 @@ En la pestaña **"Variables"** del servicio backend, agrega las siguientes varia
 WHATSAPP_PHONE_NUMBER_MESSAGING_ID=tu_phone_number_id
 WHATSAPP_ACCESS_TOKEN=tu_token_de_meta
 WHATSAPP_VERIFY_TOKEN=un_token_secreto_que_tu_elijas
-BOT_WHATSAPP_NUMBER=521234567890
 
 # API de IA (elige una)
 GOOGLE_AI_API_KEY=AIza...tu_api_key_de_gemini
 
 # Entorno
 NODE_ENV=production
-
-# Configuración del Restaurante
-TIME_ZONE=America/Mexico_City
-OPENING_HOURS_TUES_SAT=14:00
-CLOSING_HOURS_TUES_SAT=22:00
-OPENING_HOURS_SUN=14:00
-CLOSING_HOURS_SUN=21:00
 
 # Rate Limiting
 RATE_LIMIT_MAX_MESSAGES=30

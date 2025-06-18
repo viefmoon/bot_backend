@@ -54,9 +54,7 @@ async function main() {
         { lat: 20.5240, lng: -102.8690 },  // Sur
         { lat: 20.5280, lng: -102.8730 },  // Oeste
         { lat: 20.5320, lng: -102.8690 }   // Cierre del polígono
-      ],
-      centerLatitude: 20.5280,
-      centerLongitude: -102.8690
+      ]
     }
   });
 

@@ -276,11 +276,16 @@ function AddressRegistration() {
             <h1 className="text-xl sm:text-2xl md:text-3xl font-bold mb-2">
               {isUpdating ? '📍 Actualizar Dirección' : '📍 Registrar Dirección de Entrega'}
             </h1>
-            {customer && (
+            <div className="space-y-1">
               <p className="text-sm sm:text-base text-blue-100">
-                ¡Hola {customer.firstName || 'Cliente'}! Por favor completa tu información de entrega.
+                ¡Hola{customer?.firstName ? ` ${customer.firstName}` : ''}! Por favor completa tu información de entrega.
               </p>
-            )}
+              {customerId && (
+                <p className="text-xs sm:text-sm text-blue-200">
+                  📱 Tu número: {customerId}
+                </p>
+              )}
+            </div>
           </div>
           
           <div className="p-4 sm:p-6">

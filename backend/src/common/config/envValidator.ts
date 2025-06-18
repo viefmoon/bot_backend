@@ -11,17 +11,16 @@ interface EnvironmentVariables {
   WHATSAPP_PHONE_NUMBER_MESSAGING_ID: string;
   WHATSAPP_ACCESS_TOKEN: string;
   WHATSAPP_VERIFY_TOKEN: string;
-  BOT_WHATSAPP_NUMBER: string;
   FRONTEND_BASE_URL: string;
   GEMINI_MODEL: string;
   
   // Optional variables
   STRIPE_SECRET_KEY?: string;
   STRIPE_WEBHOOK_SECRET?: string;
-  NODE_ENV?: string;
-  PORT?: string;
-  RATE_LIMIT_MAX_MESSAGES?: string;
-  RATE_LIMIT_TIME_WINDOW_MINUTES?: string;
+  NODE_ENV: string;
+  PORT: string;
+  RATE_LIMIT_MAX_MESSAGES: string;
+  RATE_LIMIT_TIME_WINDOW_MINUTES: string;
 }
 
 class EnvironmentValidator {
@@ -31,9 +30,12 @@ class EnvironmentValidator {
     'WHATSAPP_PHONE_NUMBER_MESSAGING_ID',
     'WHATSAPP_ACCESS_TOKEN',
     'WHATSAPP_VERIFY_TOKEN',
-    'BOT_WHATSAPP_NUMBER',
     'FRONTEND_BASE_URL',
-    'GEMINI_MODEL'
+    'GEMINI_MODEL',
+    'NODE_ENV',
+    'PORT',
+    'RATE_LIMIT_MAX_MESSAGES',
+    'RATE_LIMIT_TIME_WINDOW_MINUTES'
   ];
 
   validate(): void {
@@ -60,7 +62,6 @@ class EnvironmentValidator {
     
     // Validate specific formats
     this.validateDatabaseUrl();
-    this.validateWhatsAppNumber();
     this.validateUrl('FRONTEND_BASE_URL');
     
     // Log optional variables status
@@ -84,16 +85,6 @@ class EnvironmentValidator {
     }
   }
   
-  private validateWhatsAppNumber(): void {
-    const number = process.env.BOT_WHATSAPP_NUMBER;
-    if (!number?.match(/^\d{10,15}$/)) {
-      throw new ValidationError(
-        ErrorCode.MISSING_REQUIRED_FIELD,
-        'BOT_WHATSAPP_NUMBER must be a valid phone number (10-15 digits)',
-        { metadata: { providedNumber: number } }
-      );
-    }
-  }
   
   private validateUrl(varName: string): void {
     const url = process.env[varName];
@@ -117,15 +108,14 @@ class EnvironmentValidator {
       WHATSAPP_PHONE_NUMBER_MESSAGING_ID: process.env.WHATSAPP_PHONE_NUMBER_MESSAGING_ID!,
       WHATSAPP_ACCESS_TOKEN: process.env.WHATSAPP_ACCESS_TOKEN!,
       WHATSAPP_VERIFY_TOKEN: process.env.WHATSAPP_VERIFY_TOKEN!,
-      BOT_WHATSAPP_NUMBER: process.env.BOT_WHATSAPP_NUMBER!,
       FRONTEND_BASE_URL: process.env.FRONTEND_BASE_URL!,
       GEMINI_MODEL: process.env.GEMINI_MODEL!,
       STRIPE_SECRET_KEY: process.env.STRIPE_SECRET_KEY,
       STRIPE_WEBHOOK_SECRET: process.env.STRIPE_WEBHOOK_SECRET,
-      NODE_ENV: process.env.NODE_ENV || 'development',
-      PORT: process.env.PORT || '5000',
-      RATE_LIMIT_MAX_MESSAGES: process.env.RATE_LIMIT_MAX_MESSAGES || '30',
-      RATE_LIMIT_TIME_WINDOW_MINUTES: process.env.RATE_LIMIT_TIME_WINDOW_MINUTES || '5'
+      NODE_ENV: process.env.NODE_ENV!,
+      PORT: process.env.PORT!,
+      RATE_LIMIT_MAX_MESSAGES: process.env.RATE_LIMIT_MAX_MESSAGES!,
+      RATE_LIMIT_TIME_WINDOW_MINUTES: process.env.RATE_LIMIT_TIME_WINDOW_MINUTES!
     };
   }
 }

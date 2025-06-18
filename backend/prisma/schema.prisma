@@ -278,8 +278,6 @@ model RestaurantConfig {
   
   // Configuración de delivery
   deliveryCoverageArea  Json?              // Polígono de cobertura - Array de objetos {lat: number, lng: number}
-  centerLatitude        Float?             // Centro del área de servicio (para mostrar en mapas)
-  centerLongitude       Float?
 }
 
 model BusinessHours {

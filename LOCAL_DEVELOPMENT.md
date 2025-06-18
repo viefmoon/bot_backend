@@ -117,7 +117,6 @@ DATABASE_URL=postgresql://postgres:postgres123@localhost:5432/bot_restaurant_db
 WHATSAPP_PHONE_NUMBER_MESSAGING_ID=123456789
 WHATSAPP_ACCESS_TOKEN=desarrollo_token_123
 WHATSAPP_VERIFY_TOKEN=mi_token_verificacion_local
-BOT_WHATSAPP_NUMBER=521234567890
 
 # API de IA - NECESITAS UNA REAL
 GOOGLE_AI_API_KEY=AIza... # Obtén una en https://makersuite.google.com/app/apikey
@@ -129,21 +128,6 @@ STRIPE_WEBHOOK_SECRET=whsec_...
 # Configuración de URLs
 NEXT_PUBLIC_BACKEND_BASE_URL=http://localhost:5000
 FRONTEND_BASE_URL=http://localhost:3000
-
-# Configuración del Restaurante
-TIME_ZONE=America/Mexico_City
-OPENING_HOURS_TUES_SAT=14:00
-CLOSING_HOURS_TUES_SAT=22:00
-OPENING_HOURS_SUN=14:00
-CLOSING_HOURS_SUN=21:00
-
-# Períodos de gracia
-OPENING_GRACE_PERIOD_MINUTES=30
-CLOSING_GRACE_PERIOD_MINUTES=30
-
-# Tiempos estimados
-ESTIMATED_PICKUP_TIME=20
-ESTIMATED_DELIVERY_TIME=40
 
 # Rate Limiting
 RATE_LIMIT_MAX_MESSAGES=30

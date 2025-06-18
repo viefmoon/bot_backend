@@ -8,10 +8,33 @@ See the main README.md in the parent directory for setup instructions.
 
 ## Environment Variables
 
-Copy `.env.local` to `.env` and update with your credentials:
+Required environment variables:
 
 ```bash
-cp .env.local .env
+# Database
+DATABASE_URL=postgresql://postgres:postgres@localhost:5433/bot_db
+
+# Google AI
+GOOGLE_AI_API_KEY=your_api_key  # Get from https://makersuite.google.com/app/apikey
+GEMINI_MODEL=gemini-2.5-pro
+
+# WhatsApp Business API
+WHATSAPP_PHONE_NUMBER_MESSAGING_ID=your_phone_id
+WHATSAPP_ACCESS_TOKEN=your_access_token
+WHATSAPP_VERIFY_TOKEN=your_verify_token
+
+# Application
+FRONTEND_BASE_URL=http://localhost:3000
+NODE_ENV=development
+PORT=5000
+
+# Rate Limiting
+RATE_LIMIT_MAX_MESSAGES=30
+RATE_LIMIT_TIME_WINDOW_MINUTES=5
+
+# Optional - Stripe Payments
+STRIPE_SECRET_KEY=
+STRIPE_WEBHOOK_SECRET=
 ```
 
 ## Database Schema

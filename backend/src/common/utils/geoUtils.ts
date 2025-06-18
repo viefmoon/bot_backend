@@ -58,17 +58,13 @@ export async function isWithinDeliveryArea(latitude: number, longitude: number):
 export async function getDeliveryAreaInfo(): Promise<{
   hasPolygon: boolean;
   polygon?: [number, number][];
-  center?: { lat: number; lng: number };
 }> {
   try {
     const config = await RestaurantService.getConfig();
     
     return {
       hasPolygon: !!config.deliveryCoverageArea,
-      polygon: config.deliveryCoverageArea as [number, number][] | undefined,
-      center: config.centerLatitude && config.centerLongitude 
-        ? { lat: config.centerLatitude, lng: config.centerLongitude }
-        : undefined
+      polygon: config.deliveryCoverageArea as [number, number][] | undefined
     };
   } catch (error) {
     logger.error('Error getting delivery area info:', error);
