@@ -60,6 +60,7 @@ export const endpoints = {
     create: `${config.api.prefix}/address-registration/create`,
     update: (addressId: string) => `${config.api.prefix}/address-registration/${addressId}`,
     delete: (addressId: string) => `${config.api.prefix}/address-registration/${addressId}`,
+    setDefault: (addressId: string) => `${config.api.prefix}/address-registration/${addressId}/default`,
     getAddresses: (customerId: string) => `${config.api.prefix}/address-registration/${customerId}/addresses`,
     getDeliveryArea: `${config.api.prefix}/address-registration/delivery-area`,
   },

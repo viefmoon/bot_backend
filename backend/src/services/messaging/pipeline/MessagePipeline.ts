@@ -2,6 +2,7 @@ import { IncomingMessage, MessageMiddleware } from '../types';
 import { MessageContext } from '../MessageContext';
 import { RateLimitMiddleware } from '../middlewares/RateLimitMiddleware';
 import { CustomerValidationMiddleware } from '../middlewares/CustomerValidationMiddleware';
+import { RestaurantHoursMiddleware } from '../middlewares/RestaurantHoursMiddleware';
 import { AddressRequiredMiddleware } from '../middlewares/AddressRequiredMiddleware';
 import { MessageTypeMiddleware } from '../middlewares/MessageTypeMiddleware';
 import { MessageProcessingMiddleware } from '../middlewares/MessageProcessingMiddleware';
@@ -17,6 +18,7 @@ export class MessagePipeline {
     this.middlewares = [
       new RateLimitMiddleware(),
       new CustomerValidationMiddleware(),
+      new RestaurantHoursMiddleware(), // Verifica horarios antes de cualquier procesamiento
       new AddressRequiredMiddleware(), // Bloquea si no hay dirección
       new MessageTypeMiddleware(),
       new MessageProcessingMiddleware(), // Lógica principal de procesamiento
@@ -130,7 +132,7 @@ export class MessagePipeline {
     
     // Actualizar cliente en la base de datos
     await prisma.customer.update({
-      where: { customerId: context.customer.customerId },
+      where: { id: context.customer.id },
       data: {
         fullChatHistory: JSON.stringify(fullChatHistory),
         relevantChatHistory: JSON.stringify(relevantChatHistory),

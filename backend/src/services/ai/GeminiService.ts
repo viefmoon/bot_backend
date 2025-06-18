@@ -55,7 +55,8 @@ export class GeminiService {
   static async generateContentWithHistory(
     messages: any[],
     systemInstruction?: string,
-    tools?: any[]
+    tools?: any[],
+    toolConfig?: any
   ): Promise<any> {
     try {
       logger.debug('=== GeminiService.generateContentWithHistory DEBUG ===');
@@ -66,13 +67,23 @@ export class GeminiService {
       logger.debug(`Tools provided: ${tools ? tools.map(t => t.name).join(', ') : 'None'}`);
       
       const client = this.getClient();
+      
+      // Construir la configuración
+      const config: any = {
+        systemInstruction,
+        tools: tools ? [{ functionDeclarations: tools }] : undefined,
+      };
+      
+      // Agregar toolConfig si se proporciona
+      if (toolConfig) {
+        config.toolConfig = toolConfig;
+        logger.debug(`Tool Config: ${JSON.stringify(toolConfig, null, 2)}`);
+      }
+      
       const response = await client.models.generateContent({
         model: env.GEMINI_MODEL,
         contents: messages,
-        config: {
-          systemInstruction,
-          tools: tools ? [{ functionDeclarations: tools }] : undefined,
-        },
+        config,
       });
       
       const responseStructure = {

@@ -10,11 +10,11 @@ export class CustomerValidationMiddleware implements MessageMiddleware {
 
   async process(context: MessageContext): Promise<MessageContext> {
     try {
-      const customerId = context.message.from;
+      const whatsappPhoneNumber = context.message.from;
       
       // Obtener o crear cliente con sus direcciones
       let customer = await prisma.customer.findUnique({
-        where: { customerId },
+        where: { whatsappPhoneNumber },
         include: { addresses: true }
       });
 
@@ -22,7 +22,7 @@ export class CustomerValidationMiddleware implements MessageMiddleware {
         // Crear nuevo cliente
         customer = await prisma.customer.create({
           data: {
-            customerId,
+            whatsappPhoneNumber,
             lastInteraction: new Date(),
             fullChatHistory: [],
             relevantChatHistory: []
@@ -36,9 +36,9 @@ export class CustomerValidationMiddleware implements MessageMiddleware {
       } else {
         // Verificar si el cliente está baneado
         if (customer.isBanned) {
-          logger.warn(`Banned customer ${customerId} tried to send a message`);
+          logger.warn(`Banned customer ${whatsappPhoneNumber} tried to send a message`);
           const bannedMessage = await BANNED_USER_MESSAGE();
-          await sendWhatsAppMessage(customerId, bannedMessage);
+          await sendWhatsAppMessage(whatsappPhoneNumber, bannedMessage);
           context.stop();
           return context;
         }
@@ -47,7 +47,7 @@ export class CustomerValidationMiddleware implements MessageMiddleware {
         const activeAddresses = customer.addresses.filter(addr => !addr.deletedAt);
         if (activeAddresses.length === 0) {
           context.set('hasNoAddress', true);
-          logger.info(`Customer ${customerId} has no active addresses`);
+          logger.info(`Customer ${whatsappPhoneNumber} has no active addresses`);
         }
       }
 

@@ -69,7 +69,7 @@ export class MessageTypeMiddleware implements MessageMiddleware {
   private async handleConversationReset(context: MessageContext): Promise<void> {
     // Reiniciar historial de chat
     await prisma.customer.update({
-      where: { customerId: context.message.from },
+      where: { whatsappPhoneNumber: context.message.from },
       data: { relevantChatHistory: [] }
     });
     

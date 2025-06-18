@@ -100,9 +100,6 @@ class OrderDeliveryInfoDto {
   @IsOptional()
   pickupName?: string;
 
-  @IsString()
-  @IsOptional()
-  geocodedAddress?: string;
 
   @IsString()
   @IsOptional()
