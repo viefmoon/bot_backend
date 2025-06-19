@@ -3,7 +3,6 @@ import { MessageContext } from '../MessageContext';
 import { sendWhatsAppMessage, sendWhatsAppInteractiveMessage } from '../../whatsapp';
 import { WELCOME_MESSAGE_INTERACTIVE, UNSUPPORTED_MESSAGE_TYPE } from '../../../common/config/predefinedMessages';
 import logger from '../../../common/utils/logger';
-import { prisma } from '../../../server';
 
 export class MessageTypeMiddleware implements MessageMiddleware {
   name = 'MessageTypeMiddleware';
@@ -19,28 +18,9 @@ export class MessageTypeMiddleware implements MessageMiddleware {
       if (context.get('isNewConversation') && !isVeryNewCustomer) {
         const welcomeMessage = await WELCOME_MESSAGE_INTERACTIVE();
         await sendWhatsAppInteractiveMessage(context.message.from, welcomeMessage);
-        
-        // Limpiar el historial relevante para conversaciones nuevas
-        context.set('relevantChatHistory', []);
       }
       
-      // Manejar frases de reinicio
-      if (context.message.type === 'text' && context.message.text?.body) {
-        const text = context.message.text.body;
-        const restartPhrases = [
-          "olvida lo anterior",
-          "reinicia la conversación",
-          "borra el historial",
-          "empecemos de nuevo",
-          "olvida todo",
-          "reinicia el chat",
-        ];
-        
-        if (restartPhrases.some(phrase => text.toLowerCase().includes(phrase))) {
-          await this.handleConversationReset(context);
-          return context;
-        }
-      }
+      // La detección de reinicio ahora se maneja a través del agente general
       
       // Validar tipo de mensaje
       const supportedTypes = ['text', 'interactive', 'audio'];
@@ -64,20 +44,5 @@ export class MessageTypeMiddleware implements MessageMiddleware {
       context.setError(error as Error);
       return context;
     }
-  }
-  
-  private async handleConversationReset(context: MessageContext): Promise<void> {
-    // Reiniciar historial de chat
-    await prisma.customer.update({
-      where: { whatsappPhoneNumber: context.message.from },
-      data: { relevantChatHistory: [] }
-    });
-    
-    await sendWhatsAppMessage(
-      context.message.from,
-      "🔄 Entendido, he olvidado el contexto anterior. ¿En qué puedo ayudarte ahora? 😊"
-    );
-    
-    context.stop(); // Detener procesamiento porque ya manejamos el reinicio
   }
 }

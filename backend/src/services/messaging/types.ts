@@ -45,6 +45,7 @@ export interface MessageResponse {
   isRelevant: boolean;
   preOrderId?: number;
   confirmationMessage?: string;
+  historyMarker?: string; // Texto alternativo para guardar en el historial
 }
 
 export interface MessageMiddleware {

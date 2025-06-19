@@ -119,7 +119,7 @@ export class WhatsAppService {
         }
       );
       
-      logger.info(`Message sent to ${to}:`, response.data);
+      logger.info(`Message sent to ${to}: "${message.substring(0, 50)}${message.length > 500 ? '...' : ''}"`);
       return { success: true, messageId: response.data.messages[0].id };
     } catch (error: any) {
       logger.error('Error sending WhatsApp message:', error.response?.data || error.message);
@@ -155,7 +155,9 @@ export class WhatsAppService {
         }
       );
       
-      logger.info(`Interactive message sent to ${to}:`, response.data);
+      const messageType = interactive.type || 'interactive';
+      const buttonText = interactive.action?.button || interactive.action?.buttons?.[0]?.reply?.title || '';
+      logger.info(`Interactive message (${messageType}) sent to ${to}${buttonText ? `: "${buttonText}"` : ''}`);
       return response.data.messages[0].id;
     } catch (error: any) {
       logger.error('Error sending interactive message:', error.response?.data || error.message);

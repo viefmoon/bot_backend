@@ -59,13 +59,6 @@ export class GeminiService {
     toolConfig?: any
   ): Promise<any> {
     try {
-      logger.debug('=== GeminiService.generateContentWithHistory DEBUG ===');
-      logger.debug(`Model: ${env.GEMINI_MODEL}`);
-      logger.debug(`System Instruction: ${systemInstruction || 'None'}`);
-      logger.debug(`Number of messages: ${messages.length}`);
-      logger.debug(`Messages: ${JSON.stringify(messages, null, 2)}`);
-      logger.debug(`Tools provided: ${tools ? tools.map(t => t.name).join(', ') : 'None'}`);
-      
       const client = this.getClient();
       
       // Construir la configuración
@@ -85,16 +78,6 @@ export class GeminiService {
         contents: messages,
         config,
       });
-      
-      const responseStructure = {
-        candidates: response.candidates?.length || 0,
-        hasText: !!response.text,
-        text: response.text || 'No text',
-        functionCalls: response.candidates?.[0]?.content?.parts?.filter((p: any) => p.functionCall)?.map((p: any) => p.functionCall.name) || []
-      };
-      logger.debug(`Response structure: ${JSON.stringify(responseStructure, null, 2)}`);
-      logger.debug(`Full response: ${JSON.stringify(response, null, 2)}`);
-      logger.debug('=== End DEBUG ===');
       
       return response;
     } catch (error) {

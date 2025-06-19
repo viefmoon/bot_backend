@@ -20,7 +20,6 @@ export class MessageProcessingMiddleware implements MessageMiddleware {
       // Encontrar la estrategia apropiada
       for (const strategy of this.strategies) {
         if (strategy.canHandle(context)) {
-          logger.debug(`Processing message with strategy: ${strategy.name}`);
           await strategy.execute(context);
           
           // Si el audio se convirtió a texto, continuar procesando
