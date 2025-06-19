@@ -27,7 +27,7 @@ export const BasicMap: React.FC<BasicMapProps> = ({
   const searchBoxRef = useRef<HTMLInputElement>(null);
   const polygonCoordsRef = useRef<Location[]>(polygonCoords);
   const [map, setMap] = useState<google.maps.Map | null>(null);
-  const [marker, setMarker] = useState<google.maps.Marker | null>(null);
+  const markerRef = useRef<google.maps.Marker | null>(null);
   const [isMapLoaded, setIsMapLoaded] = useState(false);
   const [mapError, setMapError] = useState<string | null>(null);
   const [isDragging, setIsDragging] = useState(false);
@@ -72,9 +72,6 @@ export const BasicMap: React.FC<BasicMapProps> = ({
             ]
           });
 
-          // Store reference to current marker
-          let currentMarker: google.maps.Marker | null = null;
-
           // Add click listener
           mapInstance.addListener('click', (e: google.maps.MapMouseEvent) => {
             if (e.latLng) {
@@ -91,61 +88,57 @@ export const BasicMap: React.FC<BasicMapProps> = ({
                 return;
               }
               
-              // Remove existing marker if any
-              if (currentMarker) {
-                currentMarker.setMap(null);
-              }
-              
-              // Create new marker immediately
-              currentMarker = new google.maps.Marker({
-                position: location,
-                map: mapInstance,
-                animation: google.maps.Animation.DROP,
-                draggable: true,
-                icon: {
-                  url: 'data:image/svg+xml;charset=UTF-8;base64,' + btoa(`
-                    <svg width="48" height="48" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
-                      <defs>
-                        <filter id="shadow" x="-50%" y="-50%" width="200%" height="200%">
-                          <feDropShadow dx="0" dy="2" stdDeviation="2" flood-opacity="0.3"/>
-                        </filter>
-                      </defs>
-                      <path d="M24 4C16.27 4 10 10.27 10 18c0 10.5 14 26 14 26s14-15.5 14-26c0-7.73-6.27-14-14-14z" fill="#EF4444" filter="url(#shadow)"/>
-                      <circle cx="24" cy="18" r="6" fill="#ffffff"/>
-                      <circle cx="24" cy="18" r="3" fill="#EF4444"/>
-                    </svg>
-                  `),
-                  scaledSize: new google.maps.Size(48, 48),
-                  anchor: new google.maps.Point(24, 48),
-                },
-                cursor: 'move'
-              });
-              
-              // Set up drag listeners for the new marker
-              currentMarker.addListener('dragend', () => {
-                const newPosition = currentMarker?.getPosition();
-                if (newPosition) {
-                  const newLocation = {
-                    lat: newPosition.lat(),
-                    lng: newPosition.lng(),
-                  };
-                  
-                  // Validate if location is inside polygon
-                  if (polygonCoordsRef.current.length > 0 && !isPointInPolygon(newLocation, polygonCoordsRef.current)) {
-                    // Return marker to previous position
-                    currentMarker?.setPosition(location);
-                    if (onLocationError) {
-                      onLocationError('⚠️ Por favor selecciona una ubicación dentro de nuestra área de cobertura');
+              // Create or update marker immediately
+              if (markerRef.current) {
+                markerRef.current.setPosition(location);
+              } else {
+                markerRef.current = new google.maps.Marker({
+                  position: location,
+                  map: mapInstance,
+                  animation: google.maps.Animation.DROP,
+                  draggable: true,
+                  icon: {
+                    url: 'data:image/svg+xml;charset=UTF-8;base64,' + btoa(`
+                      <svg width="48" height="48" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
+                        <defs>
+                          <filter id="shadow" x="-50%" y="-50%" width="200%" height="200%">
+                            <feDropShadow dx="0" dy="2" stdDeviation="2" flood-opacity="0.3"/>
+                          </filter>
+                        </defs>
+                        <path d="M24 4C16.27 4 10 10.27 10 18c0 10.5 14 26 14 26s14-15.5 14-26c0-7.73-6.27-14-14-14z" fill="#EF4444" filter="url(#shadow)"/>
+                        <circle cx="24" cy="18" r="6" fill="#ffffff"/>
+                        <circle cx="24" cy="18" r="3" fill="#EF4444"/>
+                      </svg>
+                    `),
+                    scaledSize: new google.maps.Size(48, 48),
+                    anchor: new google.maps.Point(24, 48),
+                  },
+                  cursor: 'move'
+                });
+                
+                // Set up drag listeners
+                markerRef.current.addListener('dragend', () => {
+                  const newPosition = markerRef.current?.getPosition();
+                  if (newPosition) {
+                    const newLocation = {
+                      lat: newPosition.lat(),
+                      lng: newPosition.lng(),
+                    };
+                    
+                    // Validate if new location is inside polygon
+                    if (polygonCoordsRef.current.length > 0 && !isPointInPolygon(newLocation, polygonCoordsRef.current)) {
+                      // Return marker to previous position
+                      markerRef.current?.setPosition(location);
+                      if (onLocationError) {
+                        onLocationError('⚠️ Por favor selecciona una ubicación dentro de nuestra área de cobertura');
+                      }
+                      return;
                     }
-                    return;
+                    
+                    onLocationSelect(newLocation);
                   }
-                  
-                  onLocationSelect(newLocation);
-                }
-              });
-              
-              // Store marker reference
-              setMarker(currentMarker);
+                });
+              }
               
               // Call location select
               onLocationSelect(location);
@@ -166,22 +159,11 @@ export const BasicMap: React.FC<BasicMapProps> = ({
               fillColor: '#10B981',
               fillOpacity: 0.2,
               map: mapInstance,
+              clickable: false,  // IMPORTANTE: Permite que los clicks pasen a través del polígono
+              zIndex: 1  // Asegura que esté detrás de otros elementos
             });
 
-            // Add visual feedback on polygon hover
-            polygon.addListener('mouseover', () => {
-              polygon.setOptions({
-                fillOpacity: 0.3,
-                strokeWeight: 4,
-              });
-            });
-
-            polygon.addListener('mouseout', () => {
-              polygon.setOptions({
-                fillOpacity: 0.2,
-                strokeWeight: 3,
-              });
-            });
+            // No agregamos listeners de hover ya que el polígono no es clickeable
 
             // Fit map to polygon bounds
             const bounds = new google.maps.LatLngBounds();
@@ -249,13 +231,71 @@ export const BasicMap: React.FC<BasicMapProps> = ({
 
   // Update marker when location changes (from search or other sources)
   useEffect(() => {
-    if (map && selectedLocation && marker) {
-      // If we already have a marker (from click), just update its position
-      marker.setPosition(selectedLocation);
+    if (map && selectedLocation) {
+      if (markerRef.current) {
+        // If we already have a marker, just update its position
+        markerRef.current.setPosition(selectedLocation);
+      } else {
+        // Create a new marker if it doesn't exist
+        const newMarker = new google.maps.Marker({
+          position: selectedLocation,
+          map: map,
+          animation: google.maps.Animation.DROP,
+          draggable: true,
+          icon: {
+            url: 'data:image/svg+xml;charset=UTF-8;base64,' + btoa(`
+              <svg width="48" height="48" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
+                <defs>
+                  <filter id="shadow" x="-50%" y="-50%" width="200%" height="200%">
+                    <feDropShadow dx="0" dy="2" stdDeviation="2" flood-opacity="0.3"/>
+                  </filter>
+                </defs>
+                <path d="M24 4C16.27 4 10 10.27 10 18c0 10.5 14 26 14 26s14-15.5 14-26c0-7.73-6.27-14-14-14z" fill="#EF4444" filter="url(#shadow)"/>
+                <circle cx="24" cy="18" r="6" fill="#ffffff"/>
+                <circle cx="24" cy="18" r="3" fill="#EF4444"/>
+              </svg>
+            `),
+            scaledSize: new google.maps.Size(48, 48),
+            anchor: new google.maps.Point(24, 48),
+          },
+          cursor: 'move'
+        });
+        
+        // Set up drag listeners for the new marker
+        newMarker.addListener('dragend', () => {
+          const newPosition = newMarker.getPosition();
+          if (newPosition) {
+            const newLocation = {
+              lat: newPosition.lat(),
+              lng: newPosition.lng(),
+            };
+            
+            // Validate if location is inside polygon
+            if (polygonCoordsRef.current.length > 0 && !isPointInPolygon(newLocation, polygonCoordsRef.current)) {
+              // Return marker to previous position
+              newMarker.setPosition(selectedLocation);
+              if (onLocationError) {
+                onLocationError('⚠️ Por favor selecciona una ubicación dentro de nuestra área de cobertura');
+              }
+              return;
+            }
+            
+            onLocationSelect(newLocation);
+          }
+        });
+        
+        markerRef.current = newMarker;
+      }
+      
+      // Pan to location
       map.panTo(selectedLocation);
       map.setZoom(16);
+    } else if (map && !selectedLocation && markerRef.current) {
+      // Remove marker if selectedLocation is null
+      markerRef.current.setMap(null);
+      markerRef.current = null;
     }
-  }, [map, selectedLocation, marker]);
+  }, [map, selectedLocation]);
 
   if (mapError) {
     return (
@@ -308,7 +348,7 @@ export const BasicMap: React.FC<BasicMapProps> = ({
         )}
         
         {/* Instructions for dragging - only show when marker exists */}
-        {isMapLoaded && selectedLocation && (
+        {isMapLoaded && selectedLocation && markerRef.current && (
           <div className="absolute top-2 left-2 sm:top-4 sm:left-4 bg-white bg-opacity-95 backdrop-blur-sm rounded-lg shadow-lg p-2 sm:p-3 max-w-[200px] sm:max-w-xs z-10">
             <p className="text-xs text-gray-700">
               <span className="font-semibold">✋ Arrastra el marcador</span> para ajustar tu ubicación
