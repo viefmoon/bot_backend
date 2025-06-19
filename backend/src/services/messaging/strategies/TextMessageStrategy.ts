@@ -22,49 +22,34 @@ export class TextMessageStrategy extends MessageStrategy {
     if (!context.message.text?.body || !context.customer) return;
     
     const text = context.message.text.body;
-    const relevantChatHistory = context.get('relevantChatHistory') || [];
+    let relevantChatHistory = context.get('relevantChatHistory') || [];
     
-    // Agregar mensaje del usuario al historial
-    const updateChatHistory = (message: any, isRelevant = true) => {
-      const fullHistory = context.get('fullChatHistory') || [];
-      fullHistory.push(message);
-      context.set('fullChatHistory', fullHistory);
-      
-      if (isRelevant) {
-        relevantChatHistory.push(message);
-        context.set('relevantChatHistory', relevantChatHistory);
-      }
-    };
-    
-    updateChatHistory(
-      { role: "user", content: text, timestamp: new Date() },
-      true
-    );
+    // Crear una copia para trabajar que incluya el mensaje actual
+    const workingHistory = [...relevantChatHistory];
+    workingHistory.push({ role: "user", content: text });
     
     try {
       logger.debug('=== TextMessageStrategy.execute DEBUG ===');
       logger.debug('User message:', text);
-      logger.debug('Customer ID:', context.customer.id);
+      logger.debug('Customer:', context.customer ? `ID: ${context.customer.id}, Phone: ${context.customer.whatsappPhoneNumber}` : 'No customer');
       logger.debug('Chat history length:', relevantChatHistory.length);
       
-      // Procesar con AI
-      const messages: Content[] = relevantChatHistory.map(
+      // Procesar con AI - usar workingHistory que incluye el mensaje actual
+      const messages: Content[] = workingHistory.map(
         ({ role, content }: any) => ({
           role: role === "assistant" ? "model" : role,
           parts: [{ text: content }]
         })
       );
       
-      logger.debug(`Messages to send to AI: ${JSON.stringify(messages, null, 2)}`);
+      (logger as any).json('Messages to send to AI:', messages);
       
       const response = await AgentService.processMessage(messages);
       
-      logger.debug(`Raw AI response: ${JSON.stringify(response, null, 2)}`);
-      
       // Convertir respuesta al formato esperado
-      const aiResponses = await this.processGeminiResponse(response);
+      const aiResponses = await this.processGeminiResponse(response, context);
       
-      logger.debug(`Processed AI responses: ${JSON.stringify(aiResponses, null, 2)}`);
+      (logger as any).json('Processed AI responses:', aiResponses);
       logger.debug('=== End TextMessageStrategy.execute DEBUG ===');
       
       // Procesar respuestas de AI
@@ -72,14 +57,29 @@ export class TextMessageStrategy extends MessageStrategy {
         if (response.text) {
           context.addResponse({
             text: response.text,
-            sendToWhatsApp: true,
+            sendToWhatsApp: response.sendToWhatsApp !== false,
+            isRelevant: response.isRelevant !== false,
+            historyMarker: response.historyMarker // Pasar el marcador de historial si existe
+          });
+        }
+        
+        if (response.urlButton) {
+          // Manejar mensaje con botón URL
+          const { sendMessageWithUrlButton } = await import('../../whatsapp');
+          await sendMessageWithUrlButton(
+            context.message.from,
+            response.urlButton.title,
+            response.urlButton.body,
+            response.urlButton.buttonText,
+            response.urlButton.url
+          );
+          
+          // Agregar al contexto para que se guarde en el historial
+          context.addResponse({
+            text: `${response.urlButton.title}\n\n${response.urlButton.body}`,
+            sendToWhatsApp: false, // Ya se envió con sendMessageWithUrlButton
             isRelevant: response.isRelevant !== false
           });
-          
-          updateChatHistory(
-            { role: "assistant", content: response.text, timestamp: new Date() },
-            response.isRelevant !== false
-          );
         }
         
         if (response.preprocessedContent) {
@@ -92,11 +92,6 @@ export class TextMessageStrategy extends MessageStrategy {
             sendToWhatsApp: true,
             isRelevant: true
           });
-          
-          updateChatHistory(
-            { role: "assistant", content: response.confirmationMessage, timestamp: new Date() },
-            true
-          );
         }
       }
     } catch (error) {
@@ -164,7 +159,7 @@ export class TextMessageStrategy extends MessageStrategy {
     });
   }
   
-  private async processGeminiResponse(response: any): Promise<any[]> {
+  private async processGeminiResponse(response: any, context?: MessageContext): Promise<any[]> {
     logger.debug('=== processGeminiResponse DEBUG ===');
     const responses: any[] = [];
     
@@ -207,11 +202,12 @@ export class TextMessageStrategy extends MessageStrategy {
           name: part.functionCall.name,
           args: part.functionCall.args
         };
-        logger.debug(`Function call: ${JSON.stringify(functionInfo, null, 2)}`);
+        (logger as any).json('Function call:', functionInfo);
         
         const functionResponse = await this.handleFunctionCall(
           part.functionCall.name,
-          part.functionCall.args
+          part.functionCall.args,
+          context
         );
         if (functionResponse) {
           // Si la función retorna un array (múltiples mensajes), agregar todos
@@ -232,22 +228,31 @@ export class TextMessageStrategy extends MessageStrategy {
     return responses;
   }
   
-  private async handleFunctionCall(name: string, args: any): Promise<any | null> {
+  private async handleFunctionCall(name: string, args: any, context?: MessageContext): Promise<any | null> {
     logger.debug('=== handleFunctionCall DEBUG ===');
     logger.debug(`Function name: ${name}`);
-    logger.debug('Function args:', JSON.stringify(args, null, 2));
+    (logger as any).json('Function args:', args);
     
     let result: any = null;
     
     switch (name) {
       case "map_order_items":
         // Procesar mapeo de items del pedido
+        // Asegurar que cada item tenga el formato correcto
+        const processedItems = (args.orderItems || []).map((item: any) => ({
+          productId: item.productId,
+          productVariantId: item.variantId || null, // Map variantId to productVariantId
+          quantity: item.quantity || 1,
+          selectedModifiers: item.modifiers || [], // Map modifiers to selectedModifiers
+          selectedPizzaIngredients: item.pizzaIngredients || [] // Map pizzaIngredients to selectedPizzaIngredients
+        }));
+        
         result = {
           preprocessedContent: {
-            orderItems: args.orderItems || [],
-            orderType: args.orderType || 'DELIVERY',
+            orderItems: processedItems,
+            orderType: args.orderType || 'DELIVERY', // Use the orderType from the order agent
             warnings: args.warnings ? [args.warnings] : [],
-            scheduledAt: args.scheduledAt
+            scheduledAt: args.scheduledAt || null
           }
         };
         break;
@@ -267,14 +272,19 @@ export class TextMessageStrategy extends MessageStrategy {
             // Retornar múltiples respuestas
             result = parts.map((part, index) => ({
               text: part,
-              isRelevant: true,
-              // Agregar indicador de continuación si no es la última parte
-              ...(index < parts.length - 1 && { continuationIndicator: true })
+              isRelevant: false, // No guardar el menú completo en historial relevante
+              sendToWhatsApp: true,
+              // Para el último mensaje, agregar marcador de historial
+              ...(index === parts.length - 1 && { 
+                historyMarker: "MENÚ ENVIADO" 
+              })
             }));
           } else {
             result = {
               text: menuText,
-              isRelevant: true
+              isRelevant: false, // No guardar el menú completo en historial relevante
+              sendToWhatsApp: true,
+              historyMarker: "MENÚ ENVIADO" // Marcador para el historial
             };
           }
         } catch (error) {
@@ -287,31 +297,19 @@ export class TextMessageStrategy extends MessageStrategy {
         break;
         
       case "get_business_hours":
-        // Obtener horario de atención
+        // Obtener información del restaurante y horarios
         try {
-          const { RestaurantService } = await import('../../../services/restaurant/RestaurantService');
-          const businessHours = await RestaurantService.getAllBusinessHours();
-          
-          const daysOfWeek = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
-          let hoursText = "🕐 *Horario de Atención*\n\n";
-          
-          for (const hours of businessHours) {
-            const day = daysOfWeek[hours.dayOfWeek];
-            if (hours.isClosed) {
-              hoursText += `${day}: Cerrado\n`;
-            } else {
-              hoursText += `${day}: ${hours.openingTime} - ${hours.closingTime}\n`;
-            }
-          }
+          const { RESTAURANT_INFO_MESSAGE } = await import('../../../common/config/predefinedMessages');
+          const infoMessage = await RESTAURANT_INFO_MESSAGE();
           
           result = {
-            text: hoursText.trim(),
+            text: infoMessage,
             isRelevant: true
           };
         } catch (error) {
-          logger.error('Error obteniendo horario:', error);
+          logger.error('Error obteniendo información del restaurante:', error);
           result = {
-            text: "Lo siento, no pude obtener el horario de atención en este momento.",
+            text: "Lo siento, no pude obtener la información del restaurante en este momento.",
             isRelevant: true
           };
         }
@@ -328,14 +326,15 @@ export class TextMessageStrategy extends MessageStrategy {
           // Crear contexto para el agente de órdenes
           const orderContext = {
             itemsSummary: args.itemsSummary,
-            relevantMenu: relevantMenu
+            relevantMenu: relevantMenu,
+            orderType: args.orderType // Pass the order type from general agent
           };
           
           // Procesar con el agente de órdenes
           const orderResponse = await AgentService.processOrderMapping(orderContext);
           
           // Procesar la respuesta del agente de órdenes
-          const orderResults = await this.processGeminiResponse(orderResponse);
+          const orderResults = await this.processGeminiResponse(orderResponse, context);
           
           // El agente de órdenes siempre debe ejecutar map_order_items
           // Así que devolvemos todos los resultados
@@ -350,11 +349,159 @@ export class TextMessageStrategy extends MessageStrategy {
         }
         break;
         
+      case "generate_address_update_link":
+        // Generar enlace para actualizar dirección
+        try {
+          logger.debug('Generando enlace de actualización de dirección:', args);
+          
+          // Importar servicios necesarios
+          const { OTPService } = await import('../../security/OTPService');
+          const { env } = await import('../../../common/config/envValidator');
+          
+          // Obtener el customerId del contexto
+          const customerId = context?.message?.from;
+          if (!customerId) {
+            throw new Error('No se pudo obtener el ID del cliente');
+          }
+          
+          // Generar OTP
+          const otp = OTPService.generateOTP();
+          OTPService.storeOTP(customerId, otp, true); // true = address registration
+          
+          // Crear enlace de registro
+          const registrationLink = `${env.FRONTEND_BASE_URL}/address-registration/${customerId}?otp=${otp}`;
+          
+          // Retornar configuración del mensaje con URL button para que se envíe y guarde
+          result = {
+            urlButton: {
+              title: "📍 Actualizar Dirección",
+              body: "Te he generado un enlace seguro para que puedas actualizar o agregar una nueva dirección de entrega.\n\n" +
+                    "Este enlace es temporal y expirará en 10 minutos por seguridad.",
+              buttonText: "Actualizar Dirección",
+              url: registrationLink
+            },
+            isRelevant: true
+          };
+          
+        } catch (error) {
+          logger.error('Error generando enlace de dirección:', error);
+          result = {
+            text: "Lo siento, hubo un error al generar el enlace. Por favor intenta de nuevo.",
+            isRelevant: true
+          };
+        }
+        break;
+        
+      case "send_bot_instructions":
+        // Enviar instrucciones de cómo usar el bot
+        try {
+          logger.debug('Enviando instrucciones del bot');
+          
+          // Importar la función de instrucciones del bot
+          const { CHATBOT_HELP_MESSAGE } = await import('../../../common/config/predefinedMessages');
+          
+          // Obtener las instrucciones
+          const instructions = await CHATBOT_HELP_MESSAGE();
+          
+          result = {
+            text: instructions,
+            isRelevant: true
+          };
+          
+        } catch (error) {
+          logger.error('Error enviando instrucciones del bot:', error);
+          result = {
+            text: "Lo siento, hubo un error al obtener las instrucciones. Por favor intenta de nuevo.",
+            isRelevant: true
+          };
+        }
+        break;
+        
+      case "get_wait_times":
+        // Obtener tiempos de espera
+        try {
+          logger.debug('Obteniendo tiempos de espera');
+          
+          // Importar servicios necesarios
+          const { WAIT_TIMES_MESSAGE } = await import('../../../common/config/predefinedMessages');
+          const { RestaurantService } = await import('../../../services/restaurant/RestaurantService');
+          
+          // Obtener configuración del restaurante
+          const config = await RestaurantService.getConfig();
+          
+          // Obtener los tiempos de espera
+          const waitTimesMessage = WAIT_TIMES_MESSAGE(
+            config.estimatedPickupTime,
+            config.estimatedDeliveryTime
+          );
+          
+          result = {
+            text: waitTimesMessage,
+            isRelevant: true
+          };
+          
+        } catch (error) {
+          logger.error('Error obteniendo tiempos de espera:', error);
+          result = {
+            text: "Lo siento, no pude obtener los tiempos de espera en este momento.",
+            isRelevant: true
+          };
+        }
+        break;
+        
+      case "reset_conversation":
+        // Reiniciar conversación
+        try {
+          logger.debug('Reiniciando conversación');
+          
+          // Importar servicios necesarios
+          const { prisma } = await import('../../../server');
+          const { CONVERSATION_RESET_MESSAGE } = await import('../../../common/config/predefinedMessages');
+          
+          // Obtener el customerId del contexto
+          const customerId = context?.customer?.id;
+          if (!customerId) {
+            throw new Error('No se pudo obtener el ID del cliente');
+          }
+          
+          // Reiniciar historial de chat relevante y completo INMEDIATAMENTE
+          await prisma.customer.update({
+            where: { id: customerId },
+            data: { 
+              relevantChatHistory: JSON.stringify([]),
+              fullChatHistory: JSON.stringify([]),
+              lastInteraction: new Date()
+            }
+          });
+          
+          // Limpiar el historial del contexto actual COMPLETAMENTE
+          context?.set('relevantChatHistory', []);
+          context?.set('fullChatHistory', []);
+          
+          // Marcar para que este intercambio completo NO se guarde
+          context?.set('skipHistoryUpdate', true);
+          
+          result = {
+            text: CONVERSATION_RESET_MESSAGE,
+            isRelevant: false
+          };
+          
+        } catch (error) {
+          logger.error('Error reiniciando conversación:', error);
+          result = {
+            text: "Lo siento, hubo un error al reiniciar la conversación. Por favor intenta de nuevo.",
+            isRelevant: true
+          };
+        }
+        break;
+        
       default:
         logger.warn(`Function call no reconocido: ${name}`);
     }
     
-    logger.debug('Function call result:', JSON.stringify(result, null, 2));
+    if (result) {
+      (logger as any).json('Function call result:', result);
+    }
     logger.debug('=== End handleFunctionCall DEBUG ===');
     return result;
   }

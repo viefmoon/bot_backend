@@ -119,7 +119,8 @@ export class WhatsAppService {
         }
       );
       
-      logger.info(`Message sent to ${to}: "${message.substring(0, 50)}${message.length > 500 ? '...' : ''}"`);
+      logger.debug(`Full message sent to ${to}:`, message);
+      logger.info(`Message sent to ${to} (${message.length} chars)`);
       return { success: true, messageId: response.data.messages[0].id };
     } catch (error: any) {
       logger.error('Error sending WhatsApp message:', error.response?.data || error.message);

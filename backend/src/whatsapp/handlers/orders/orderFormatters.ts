@@ -9,22 +9,28 @@ import { env } from '../../../common/config/envValidator';
 export function generateProductSummary(product: any): string {
   // Handle different product structures
   const quantity = product.quantity || product.cantidad || 1;
-  const name = product.productName || product.variantName || product.nombre || 'Producto';
-  const price = product.subtotal || product.precio || product.price || 0;
+  
+  // Use variant name if available, otherwise use product name
+  const name = product.variantName || product.productName || product.nombre || 'Producto';
+  
+  const price = product.subtotal || product.itemPrice || product.precio || product.price || 0;
   
   let summary = `- *${quantity}x ${name}*: $${price}\n`;
 
+  // Show modifiers if they exist
+  if (product.modifiers?.length > 0 || product.modificadores?.length > 0) {
+    const modifiers = product.modifiers || product.modificadores;
+    summary += `  🔸 Modificadores: ${modifiers
+      .map((mod: any) => mod.name || mod.nombre || mod)
+      .join(", ")}\n`;
+  }
+
+  // Show pizza ingredients if they exist
   if (product.pizzaIngredients?.length > 0 || product.ingredientes_pizza?.length > 0) {
     summary += generatePizzaIngredientsSummary(product.pizzaIngredients || product.ingredientes_pizza);
   }
 
-  if (product.modifiers?.length > 0 || product.modificadores?.length > 0) {
-    const modifiers = product.modifiers || product.modificadores;
-    summary += `  🔸 Modificadores: ${modifiers
-      .map((mod: any) => mod.name || mod.nombre)
-      .join(", ")}\n`;
-  }
-
+  // Show comments if they exist
   if (product.comments || product.comentarios) {
     summary += `  💬 Comentarios: ${product.comments || product.comentarios}\n`;
   }
@@ -86,16 +92,20 @@ export function generatePizzaIngredientsSummary(ingredients: any[]): string {
 
 // Function to generate complete order summary
 export function generateOrderSummary(order: any): string {
-  const deliveryTypeText = order.orderType === "delivery" ? "Entrega a domicilio" : "Recolección en establecimiento";
+  // Normalize orderType to lowercase for comparison
+  const orderType = (order.orderType || '').toString().toLowerCase();
+  const deliveryTypeText = orderType === "delivery" ? "Entrega a domicilio" : "Recolección en establecimiento";
   
   let message = `📋 *Resumen de tu pedido:*\n\n`;
   message += `📦 *Tipo de orden:* ${deliveryTypeText}\n\n`;
   
-  if (order.orderType === "pickup" && order.pickupName) {
-    message += `👤 *Nombre para recoger:* ${order.pickupName}\n\n`;
+  if (orderType === "pickup" || orderType === "take_away") {
+    if (order.pickupName) {
+      message += `👤 *Nombre para recoger:* ${order.pickupName}\n\n`;
+    }
   }
   
-  if (order.orderType === "delivery" && order.deliveryInfo) {
+  if (orderType === "delivery" && order.deliveryInfo) {
     // Combine street, number and interior number
     let fullAddress = order.deliveryInfo.street || "";
     if (order.deliveryInfo.number) {

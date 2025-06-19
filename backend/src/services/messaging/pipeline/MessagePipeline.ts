@@ -31,11 +31,9 @@ export class MessagePipeline {
     try {
       // Ejecutar todos los middlewares
       for (const middleware of this.middlewares) {
-        logger.debug(`Running middleware: ${middleware.name}`);
         await middleware.process(context);
         
         if (context.shouldStop) {
-          logger.debug(`Pipeline stopped by middleware: ${middleware.name}`);
           break;
         }
       }
@@ -73,10 +71,12 @@ export class MessagePipeline {
           
           // Actualizar preOrder con messageId si es necesario
           if (response.preOrderId && messageId) {
+            logger.info(`Updating pre-order ${response.preOrderId} with WhatsApp messageId: ${messageId}`);
             await prisma.preOrder.update({
               where: { id: response.preOrderId },
               data: { messageId }
             });
+            logger.info(`Pre-order ${response.preOrderId} updated successfully with messageId`);
           }
         }
         
@@ -92,6 +92,12 @@ export class MessagePipeline {
   private async updateChatHistory(context: MessageContext): Promise<void> {
     if (!context.customer || context.shouldStop) return;
     
+    // Si se marca skipHistoryUpdate, no guardar nada en el historial
+    if (context.get('skipHistoryUpdate')) {
+      logger.debug('Skipping history update due to skipHistoryUpdate flag');
+      return;
+    }
+    
     const fullChatHistory = context.get('fullChatHistory') || [];
     const relevantChatHistory = context.get('relevantChatHistory') || [];
     
@@ -102,32 +108,43 @@ export class MessagePipeline {
       timestamp: new Date()
     });
     
-    // Agregar al historial relevante si no es una conversación nueva
-    if (!context.get('isNewConversation')) {
-      relevantChatHistory.push({
-        role: 'user',
-        content: context.message.text?.body || '[Non-text message]',
-        timestamp: new Date()
-      });
-    }
+    // Siempre agregar al historial relevante
+    relevantChatHistory.push({
+      role: 'user',
+      content: context.message.text?.body || '[Non-text message]',
+      timestamp: new Date()
+    });
     
     // Agregar respuestas al historial
     for (const response of context.responses) {
-      if (response.text) {
-        fullChatHistory.push({
-          role: 'assistant',
-          content: response.text,
-          timestamp: new Date()
-        });
-        
-        if (response.isRelevant) {
-          relevantChatHistory.push({
+      if (response.text || response.historyMarker) {
+        // Para el historial completo, siempre usar el texto completo
+        if (response.text) {
+          fullChatHistory.push({
             role: 'assistant',
             content: response.text,
             timestamp: new Date()
           });
         }
+        
+        // Para el historial relevante
+        if (response.isRelevant || response.historyMarker) {
+          // Si hay marcador, usarlo siempre. Si no, usar el texto solo si es relevante
+          const contentToSave = response.historyMarker || (response.isRelevant ? response.text : null);
+          if (contentToSave) {
+            relevantChatHistory.push({
+              role: 'assistant',
+              content: contentToSave,
+              timestamp: new Date()
+            });
+          }
+        }
       }
+    }
+    
+    // Limitar el historial relevante a los últimos 20 mensajes antes de guardar
+    if (relevantChatHistory.length > 20) {
+      relevantChatHistory = relevantChatHistory.slice(-20);
     }
     
     // Actualizar cliente en la base de datos

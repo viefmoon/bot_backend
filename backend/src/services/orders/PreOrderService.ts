@@ -20,6 +20,13 @@ export class PreOrderService {
   }) {
     const { orderItems, whatsappPhoneNumber, orderType, scheduledAt, deliveryInfo: inputDeliveryInfo } = orderData;
 
+    logger.info(`Starting selectProducts for ${whatsappPhoneNumber}`, {
+      orderType,
+      itemCount: orderItems.length,
+      scheduledAt,
+      items: JSON.stringify(orderItems)
+    });
+
     try {
       // Get restaurant config
       const config = await RestaurantService.getConfig();
@@ -50,18 +57,35 @@ export class PreOrderService {
         orderItems
       );
 
+      // Create pre-order data without messageId (will be added after WhatsApp message is sent)
+      const preOrderData: any = {
+        whatsappPhoneNumber,
+        orderType,
+        orderItems: JSON.parse(JSON.stringify(calculatedItems)), // Convert to JSON-compatible format
+      };
+      
+      // Only add scheduledAt if it exists and is valid
+      if (validatedScheduledTime) {
+        preOrderData.scheduledAt = validatedScheduledTime;
+      }
+      
+      logger.info('Creating pre-order with data:', {
+        whatsappPhoneNumber: preOrderData.whatsappPhoneNumber,
+        orderType: preOrderData.orderType,
+        scheduledAt: preOrderData.scheduledAt,
+        itemCount: calculatedItems.length,
+        totalCost
+      });
+      
       // Create pre-order
       const preOrder = await prisma.preOrder.create({
-        data: {
-          whatsappPhoneNumber,
-          orderType,
-          orderItems: JSON.parse(JSON.stringify(calculatedItems)), // Convert to JSON-compatible format
-          scheduledAt: validatedScheduledTime,
-          messageId: `preorder_${whatsappPhoneNumber}_${Date.now()}`,
-        },
+        data: preOrderData,
       });
 
-      logger.info(`Created pre-order ${preOrder.id} for phone ${whatsappPhoneNumber}`);
+      logger.info(`Created pre-order ${preOrder.id} for phone ${whatsappPhoneNumber}`, {
+        preOrderId: preOrder.id,
+        createdAt: preOrder.createdAt
+      });
 
       // Get delivery info if it's a delivery order
       let deliveryInfo = null;

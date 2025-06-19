@@ -8,6 +8,24 @@ import logger from '../../../common/utils/logger';
 export class CustomerValidationMiddleware implements MessageMiddleware {
   name = 'CustomerValidationMiddleware';
 
+  private removeDuplicateMessages(messages: any[]): any[] {
+    if (messages.length === 0) return messages;
+    
+    const cleaned: any[] = [messages[0]];
+    
+    for (let i = 1; i < messages.length; i++) {
+      const current = messages[i];
+      const previous = messages[i - 1];
+      
+      // Si el mensaje actual es diferente al anterior, lo agregamos
+      if (current.role !== previous.role || current.content !== previous.content) {
+        cleaned.push(current);
+      }
+    }
+    
+    return cleaned;
+  }
+
   async process(context: MessageContext): Promise<MessageContext> {
     try {
       const whatsappPhoneNumber = context.message.from;
@@ -58,9 +76,18 @@ export class CustomerValidationMiddleware implements MessageMiddleware {
         ? customer.fullChatHistory
         : JSON.parse((customer.fullChatHistory as string) || "[]");
       
-      const relevantChatHistory = Array.isArray(customer.relevantChatHistory)
+      let relevantChatHistory = Array.isArray(customer.relevantChatHistory)
         ? customer.relevantChatHistory
         : JSON.parse((customer.relevantChatHistory as string) || "[]");
+      
+      // Limpiar duplicados consecutivos en el historial relevante
+      relevantChatHistory = this.removeDuplicateMessages(relevantChatHistory);
+      
+      // Limitar el historial relevante a los últimos 20 mensajes
+      if (relevantChatHistory.length > 20) {
+        relevantChatHistory = relevantChatHistory.slice(-20);
+        logger.debug(`Historial relevante limitado a los últimos 20 mensajes (de ${relevantChatHistory.length} total)`);
+      }
       
       context.set('fullChatHistory', fullChatHistory);
       context.set('relevantChatHistory', relevantChatHistory);
@@ -72,8 +99,6 @@ export class CustomerValidationMiddleware implements MessageMiddleware {
       
       if (isNewConversation && !context.get('isNewCustomer')) {
         context.set('isNewConversation', true);
-        // Reiniciar historial relevante para conversación nueva
-        context.set('relevantChatHistory', []);
       }
 
       return context;

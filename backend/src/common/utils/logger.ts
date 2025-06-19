@@ -1,6 +1,24 @@
 import * as winston from 'winston';
 import { env } from '../config/envValidator';
 
+// Helper function to format JSON for better readability
+const formatJSON = (obj: any, indent = 2): string => {
+  try {
+    if (typeof obj === 'string') {
+      // Try to parse if it's a JSON string
+      try {
+        const parsed = JSON.parse(obj);
+        return JSON.stringify(parsed, null, indent);
+      } catch {
+        return obj;
+      }
+    }
+    return JSON.stringify(obj, null, indent);
+  } catch (error) {
+    return String(obj);
+  }
+};
+
 const logger = winston.createLogger({
   level: env.NODE_ENV === 'production' ? 'info' : 'debug',
   format: winston.format.combine(
@@ -37,5 +55,14 @@ const logger = winston.createLogger({
     new winston.transports.File({ filename: 'logs/combined.log' }),
   ],
 });
+
+// Add helper methods for JSON logging
+(logger as any).json = function(message: string, data: any) {
+  this.debug(`${message}\n${formatJSON(data)}`);
+};
+
+(logger as any).jsonInfo = function(message: string, data: any) {
+  this.info(`${message}\n${formatJSON(data)}`);
+};
 
 export default logger;

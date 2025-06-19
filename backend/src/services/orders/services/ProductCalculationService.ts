@@ -31,6 +31,8 @@ export class ProductCalculationService {
 
     let product, productVariant;
     let itemPrice = 0;
+    
+    logger.info(`Starting calculation for item with productId: ${item.productId}, variantId: ${item.productVariantId}`);
 
     // Get product and variant
     if (item.productId) {
@@ -55,6 +57,11 @@ export class ProductCalculationService {
 
       product = productVariant.product;
       itemPrice = productVariant.price;
+      logger.info(`Found variant ${productVariant.name} with price: ${productVariant.price}`);
+    } else if (product && product.price !== null) {
+      // If no variant but product has price, use product price
+      itemPrice = product.price;
+      logger.info(`Using product price: ${product.price}`);
     }
 
     if (!product && !productVariant) {
@@ -77,12 +84,17 @@ export class ProductCalculationService {
 
     // Total item price
     itemPrice = itemPrice * item.quantity;
+    
+    logger.info(`Final item price after quantity (${item.quantity}): ${itemPrice}`);
 
     return {
       product,
       productVariant,
       quantity: item.quantity,
       itemPrice,
+      subtotal: itemPrice, // Add subtotal for compatibility
+      productName: product?.name,
+      variantName: productVariant?.name,
       comments: item.comments,
       modifiers: modifiers.items,
       pizzaIngredients

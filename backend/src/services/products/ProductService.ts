@@ -13,6 +13,7 @@ export class ProductService {
   static async getActiveProducts(options?: {
     includeRelations?: boolean;
     formatForAI?: boolean;
+    restaurantName?: string;
   }): Promise<Product[] | string> {
     try {
       const products = await prisma.product.findMany({
@@ -41,7 +42,18 @@ export class ProductService {
 
       // Si se solicita formato para AI, formatear el menú
       if (options?.formatForAI) {
-        return this.formatMenuForAI(products);
+        // Obtener nombre del restaurante si no se proporciona
+        let restaurantName = options.restaurantName;
+        if (!restaurantName) {
+          try {
+            const { RestaurantService } = await import('../restaurant/RestaurantService');
+            const config = await RestaurantService.getConfig();
+            restaurantName = config.restaurantName;
+          } catch (error) {
+            restaurantName = "Nuestro Restaurante";
+          }
+        }
+        return this.formatMenuForAI(products, restaurantName);
       }
 
       return products;
@@ -54,8 +66,9 @@ export class ProductService {
   /**
    * Format menu for AI consumption
    */
-  private static formatMenuForAI(products: any[]): string {
-    let menuText = "=== MENÚ COMPLETO ===\n\n";
+  private static formatMenuForAI(products: any[], restaurantName: string = "Nuestro Restaurante"): string {
+    let menuText = `🍽️ **MENÚ DE ${restaurantName.toUpperCase()}** 🍽️\n`;
+    menuText += "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n";
 
     // Agrupar por categoría y subcategoría
     const productsByCategory = products.reduce((acc, product) => {
@@ -73,66 +86,104 @@ export class ProductService {
       return acc;
     }, {} as Record<string, Record<string, { description: string | null; products: any[] }>>);
 
+    // Mapeo de emojis por tipo de categoría (genérico)
+    const categoryEmojis: Record<string, string> = {
+      'pizza': '🍕',
+      'pizzas': '🍕',
+      'hamburguesa': '🍔',
+      'hamburguesas': '🍔',
+      'bebida': '🥤',
+      'bebidas': '🥤',
+      'postre': '🍰',
+      'postres': '🍰',
+      'ensalada': '🥗',
+      'ensaladas': '🥗',
+      'pasta': '🍝',
+      'pastas': '🍝',
+      'sandwich': '🥪',
+      'sandwiches': '🥪',
+      'sushi': '🍱',
+      'comida china': '🥡',
+      'tacos': '🌮',
+      'mexicana': '🌮',
+      'desayuno': '🍳',
+      'desayunos': '🍳',
+      'café': '☕',
+      'cafés': '☕',
+      'sopa': '🍲',
+      'sopas': '🍲',
+      'mariscos': '🦐',
+      'pescados': '🐟',
+      'pollo': '🍗',
+      'carne': '🥩',
+      'carnes': '🥩',
+      'vegano': '🌱',
+      'vegetariano': '🥦',
+      'combo': '🍱',
+      'combos': '🍱',
+      'promoción': '⭐',
+      'promociones': '⭐'
+    };
+
+    // Función para obtener emoji apropiado
+    const getEmoji = (categoryName: string): string => {
+      const lowerName = categoryName.toLowerCase();
+      for (const [key, emoji] of Object.entries(categoryEmojis)) {
+        if (lowerName.includes(key)) {
+          return emoji;
+        }
+      }
+      return '🍽️'; // Emoji por defecto
+    };
+
     // Formatear por categoría y subcategoría
     for (const [category, subcategories] of Object.entries(productsByCategory)) {
-      // Obtener información de la categoría si existe
-      const categoryInfo = products.find(p => p.subcategory?.category?.name === category)?.subcategory?.category;
+      const emoji = getEmoji(category);
       
-      menuText += `\n📋 **${category.toUpperCase()}**`;
-      if (categoryInfo?.description) {
-        menuText += ` - ${categoryInfo.description}`;
-      }
-      menuText += '\n\n';
+      menuText += `\n${emoji} **${category.toUpperCase()}** ${emoji}\n`;
+      menuText += `${'─'.repeat(30)}\n\n`;
       
       for (const [subcategory, data] of Object.entries(subcategories as Record<string, any>)) {
         if (subcategory !== 'Sin subcategoría') {
-          menuText += `  *${subcategory}*`;
-          if (data.description) {
-            menuText += ` - ${data.description}`;
-          }
-          menuText += '\n';
+          menuText += `▸ _${subcategory}_\n\n`;
         }
         
         const categoryProducts = data.products;
         
         for (const product of categoryProducts) {
-          menuText += `    **${product.name}** (ID: ${product.id})`;
+          // Nombre del producto
+          menuText += `  **${product.name}**`;
           
-          // Agregar precio si no tiene variantes
+          // Precio si no tiene variantes
           if (!product.hasVariants && product.price) {
-            menuText += ` - $${product.price}`;
-          }
-          
-          // Agregar descripción si existe
-          if (product.description) {
-            menuText += `\n      ${product.description}`;
+            menuText += ` ─ $${product.price.toFixed(2)}`;
           }
           
           menuText += '\n';
           
-          // Variantes
+          // Variantes con precios
           if (product.variants?.length > 0 && product.hasVariants) {
             for (const variant of product.variants) {
-              menuText += `      - ${variant.name} (ID: ${variant.id}): $${variant.price}\n`;
+              menuText += `    • ${variant.name}: **$${variant.price.toFixed(2)}**\n`;
             }
           }
           
-          // Modificadores
-          if (product.modifierGroups?.length > 0) {
-            menuText += `      Modificadores:\n`;
-            for (const modGroup of product.modifierGroups) {
-              menuText += `        ${modGroup.name}:\n`;
-              for (const mod of modGroup.productModifiers || []) {
-                menuText += `          - ${mod.name}: +$${mod.price || 0}\n`;
-              }
-            }
-          }
-          
-          // Ingredientes de pizza
+          // Ingredientes de pizza (si aplica)
           if (product.pizzaIngredients?.length > 0 && product.isPizza) {
-            menuText += `      Ingredientes disponibles:\n`;
-            for (const ingredient of product.pizzaIngredients) {
-              menuText += `        - ${ingredient.name}\n`;
+            const ingredients = product.pizzaIngredients.map(i => i.name).join(', ');
+            menuText += `    _Ingredientes: ${ingredients}_\n`;
+          }
+          
+          // Modificadores disponibles
+          if (product.modifierGroups?.length > 0) {
+            for (const modGroup of product.modifierGroups) {
+              if (modGroup.productModifiers?.length > 0) {
+                menuText += `\n    **${modGroup.name}**\n`;
+                for (const mod of modGroup.productModifiers) {
+                  const price = mod.price ? `+$${mod.price.toFixed(2)}` : 'Sin costo';
+                  menuText += `      ○ ${mod.name} (${price})\n`;
+                }
+              }
             }
           }
           
@@ -140,6 +191,14 @@ export class ProductService {
         }
       }
     }
+
+    // Agregar información adicional
+    menuText += "\n━━━━━━━━━━━━━━━━━━━━━━\n";
+    menuText += "💡 **Cómo ordenar:**\n";
+    menuText += "• Menciona el nombre del producto\n";
+    menuText += "• Especifica el tamaño si hay variantes\n";
+    menuText += "• Indica modificadores si deseas\n";
+    menuText += "━━━━━━━━━━━━━━━━━━━━━━\n";
 
     return menuText;
   }
@@ -244,6 +303,92 @@ export class ProductService {
         'Product variant not found',
         { metadata: { variantId } }
       );
+    }
+  }
+
+  /**
+   * Get menu structure for AI context (without IDs or prices)
+   */
+  static async getMenuStructureForAI(): Promise<any> {
+    try {
+      const products = await prisma.product.findMany({
+        where: { isActive: true },
+        include: {
+          subcategory: {
+            include: {
+              category: true
+            }
+          },
+          variants: {
+            where: { isActive: true },
+            orderBy: { name: 'asc' }
+          },
+          modifierGroups: {
+            include: {
+              productModifiers: {
+                where: { isActive: true },
+                orderBy: { sortOrder: 'asc' }
+              }
+            }
+          },
+          pizzaIngredients: {
+            where: { isActive: true }
+          }
+        },
+        orderBy: { name: 'asc' }
+      });
+
+      // Agrupar por categorías
+      const menuStructure: Record<string, any> = {};
+
+      for (const product of products) {
+        const categoryName = product.subcategory.category.name;
+        const subcategoryName = product.subcategory.name;
+
+        // Crear estructura de categoría si no existe
+        if (!menuStructure[categoryName]) {
+          menuStructure[categoryName] = {};
+        }
+
+        // Crear estructura de subcategoría si no existe
+        if (!menuStructure[categoryName][subcategoryName]) {
+          menuStructure[categoryName][subcategoryName] = [];
+        }
+
+        // Crear estructura del producto
+        const productStructure: any = {
+          nombre: product.name,
+          descripcion: product.description
+        };
+
+        // Agregar variantes si existen
+        if (product.variants.length > 0) {
+          productStructure.variantes = product.variants.map(v => v.name);
+        }
+
+        // Agregar modificadores si existen
+        if (product.modifierGroups.length > 0) {
+          productStructure.modificadores = {};
+          
+          for (const group of product.modifierGroups) {
+            if (group.productModifiers.length > 0) {
+              productStructure.modificadores[group.name] = group.productModifiers.map(m => m.name);
+            }
+          }
+        }
+
+        // Agregar ingredientes de pizza si es una pizza
+        if (product.isPizza && product.pizzaIngredients.length > 0) {
+          productStructure.ingredientesPizza = product.pizzaIngredients.map(i => i.name);
+        }
+
+        menuStructure[categoryName][subcategoryName].push(productStructure);
+      }
+
+      return menuStructure;
+    } catch (error) {
+      logger.error('Error getting menu structure for AI:', error);
+      throw error;
     }
   }
 
