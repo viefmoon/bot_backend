@@ -14,7 +14,7 @@ interface Location {
 }
 
 function AddressRegistration() {
-  const { customerId } = useParams<{ customerId: string }>();
+  const { customerId: whatsappPhoneNumber } = useParams<{ customerId: string }>();
   const [searchParams] = useSearchParams();
   const otp = searchParams.get('otp') || '';
   const preOrderId = searchParams.get('preOrderId');
@@ -49,14 +49,14 @@ function AddressRegistration() {
     // Evitar doble verificación
     if (hasVerified) return;
     
-    if (customerId && otp) {
+    if (whatsappPhoneNumber && otp) {
       setHasVerified(true);
       verifyOtp();
     } else {
       setLoading(false);
       setIsValidOtp(false);
     }
-  }, [customerId, otp, hasVerified]);
+  }, [whatsappPhoneNumber, otp, hasVerified]);
 
   // Load delivery area from backend
   useEffect(() => {
@@ -80,7 +80,7 @@ function AddressRegistration() {
 
   const verifyOtp = async () => {
     try {
-      const response = await customerService.verifyOTP(customerId!, otp);
+      const response = await customerService.verifyOTP(whatsappPhoneNumber!, otp);
       
       if (response.valid && response.customer) {
         setIsValidOtp(true);
@@ -200,7 +200,7 @@ function AddressRegistration() {
 
   const loadCustomerData = async () => {
     try {
-      const response = await customerService.verifyOTP(customerId!, otp);
+      const response = await customerService.verifyOTP(whatsappPhoneNumber!, otp);
       if (response.valid && response.customer) {
         setCustomer(response.customer);
         setShowAddressForm(false);
@@ -224,14 +224,14 @@ function AddressRegistration() {
         // Update existing address
         await customerService.updateAddress(
           selectedAddress.id,
-          customerId!,
+          whatsappPhoneNumber!,
           otp,
           data
         );
         toast.success('✅ ¡Dirección actualizada exitosamente!');
       } else {
         // Create new address
-        await customerService.createAddress(customerId!, otp, data);
+        await customerService.createAddress(whatsappPhoneNumber!, otp, data);
         toast.success('🎉 ¡Dirección registrada exitosamente!');
       }
       
@@ -406,10 +406,10 @@ function AddressRegistration() {
                   ? `¡Hola${customer?.firstName ? ` ${customer.firstName}` : ''}! Selecciona o agrega una dirección de entrega.`
                   : `¡Hola${customer?.firstName ? ` ${customer.firstName}` : ''}! Por favor completa tu información de entrega.`}
               </p>
-              {customerId && (
+              {whatsappPhoneNumber && (
                 <div className="inline-block bg-white/20 backdrop-blur-sm rounded-lg px-3 py-1 mt-2">
                   <p className="text-xs sm:text-sm text-white font-medium">
-                    📱 Tu número: {customerId}
+                    📱 Tu número: {whatsappPhoneNumber}
                   </p>
                 </div>
               )}
@@ -421,7 +421,7 @@ function AddressRegistration() {
             {customer && customer.addresses.length > 0 && !showAddressForm ? (
               <AddressManager
                 addresses={customer.addresses}
-                customerId={customerId!}
+                customerId={whatsappPhoneNumber!}
                 otp={otp}
                 onAddressClick={loadExistingAddress}
                 onAddNew={handleAddNewAddress}

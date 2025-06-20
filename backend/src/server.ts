@@ -1,4 +1,5 @@
-import express, { Request, Response, NextFunction } from 'express';
+import 'reflect-metadata';
+import express, { Request, Response } from 'express';
 import cors from 'cors';
 import { PrismaClient } from '@prisma/client';
 import webhookRoutes from './routes/webhook';

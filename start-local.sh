@@ -9,9 +9,26 @@ RED='\033[0;31m'
 BLUE='\033[0;34m'
 NC='\033[0m'
 
-# Verificar si el puerto 5433 está en uso
+# Función para matar proceso en un puerto
+kill_port() {
+    local port=$1
+    local pid=$(lsof -ti:$port)
+    if [ ! -z "$pid" ]; then
+        echo -e "${YELLOW}⚠️  Puerto $port en uso por proceso $pid. Liberando puerto...${NC}"
+        kill -9 $pid 2>/dev/null || true
+        sleep 1
+    fi
+}
+
+# Limpiar puertos antes de iniciar
+echo -e "\n${YELLOW}0. Limpiando puertos...${NC}"
+kill_port 3000  # Frontend
+kill_port 5000  # Backend
+kill_port 5433  # PostgreSQL
+
+# Verificar si el puerto 5433 está en uso después de la limpieza
 if lsof -Pi :5433 -sTCP:LISTEN -t >/dev/null 2>&1 ; then
-    echo -e "\n${YELLOW}⚠️  El puerto 5433 está en uso. Intentando detener contenedores previos...${NC}"
+    echo -e "${YELLOW}⚠️  El puerto 5433 aún está en uso. Intentando detener contenedores previos...${NC}"
     docker compose down
     sleep 2
 fi

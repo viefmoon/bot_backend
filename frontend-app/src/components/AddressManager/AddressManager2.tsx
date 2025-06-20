@@ -25,7 +25,7 @@ interface AddressManagerProps {
 
 export function AddressManager2({
   addresses,
-  customerId,
+  customerId: whatsappPhoneNumber,
   otp,
   onAddressClick,
   onAddNew,
@@ -44,7 +44,7 @@ export function AddressManager2({
     setIsDeleting(addressId.toString());
     
     try {
-      await customerService.deleteAddress(addressId, customerId, otp);
+      await customerService.deleteAddress(addressId, whatsappPhoneNumber, otp);
       toast.success('Dirección eliminada exitosamente');
       onAddressesChange();
     } catch (error: any) {
@@ -61,7 +61,7 @@ export function AddressManager2({
     setIsSettingDefault(addressId.toString());
     
     try {
-      await customerService.setDefaultAddress(addressId, customerId, otp);
+      await customerService.setDefaultAddress(addressId, whatsappPhoneNumber, otp);
       toast.success('Dirección principal actualizada');
       onAddressesChange();
     } catch (error: any) {
