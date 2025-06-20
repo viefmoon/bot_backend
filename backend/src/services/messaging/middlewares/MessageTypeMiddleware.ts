@@ -2,6 +2,7 @@ import { MessageMiddleware } from '../types';
 import { MessageContext } from '../MessageContext';
 import { sendWhatsAppMessage, sendWhatsAppInteractiveMessage } from '../../whatsapp';
 import { WELCOME_MESSAGE_INTERACTIVE, UNSUPPORTED_MESSAGE_TYPE } from '../../../common/config/predefinedMessages';
+import { ConfigService } from '../../../services/config/ConfigService';
 import logger from '../../../common/utils/logger';
 
 export class MessageTypeMiddleware implements MessageMiddleware {
@@ -16,7 +17,8 @@ export class MessageTypeMiddleware implements MessageMiddleware {
       
       // Only send welcome if it's a new conversation (not a brand new customer who just registered)
       if (context.get('isNewConversation') && !isVeryNewCustomer) {
-        const welcomeMessage = await WELCOME_MESSAGE_INTERACTIVE();
+        const config = ConfigService.getConfig();
+        const welcomeMessage = WELCOME_MESSAGE_INTERACTIVE(config);
         await sendWhatsAppInteractiveMessage(context.message.from, welcomeMessage);
       }
       

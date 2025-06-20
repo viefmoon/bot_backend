@@ -13,9 +13,10 @@ import {
   RESTAURANT_INFO_MESSAGE,
   CHATBOT_HELP_MESSAGE,
 } from "../../common/config/predefinedMessages";
+import { ConfigService } from "../../services/config/ConfigService";
 import { ProductService } from "../../services/products/ProductService";
 import logger from "../../common/utils/logger";
-import { getCurrentMexicoTime } from "../../common/utils/timeUtils";
+import { getCurrentMexicoTime, getFormattedBusinessHours } from "../../common/utils/timeUtils";
 import { env } from "../../common/config/envValidator";
 import { ErrorService, BusinessLogicError, ErrorCode } from "../../common/services/errors";
 
@@ -269,7 +270,9 @@ async function handleWaitTimes(customerId: string): Promise<void> {
 
 async function handleRestaurantInfo(customerId: string): Promise<void> {
   try {
-    const message = await RESTAURANT_INFO_MESSAGE();
+    const config = ConfigService.getConfig();
+    const formattedHours = await getFormattedBusinessHours();
+    const message = RESTAURANT_INFO_MESSAGE(config, formattedHours);
     await sendWhatsAppMessage(customerId, message);
   } catch (error) {
     await ErrorService.handleAndSendError(error, customerId, {
@@ -281,7 +284,8 @@ async function handleRestaurantInfo(customerId: string): Promise<void> {
 
 async function handleChatbotHelp(whatsappPhoneNumber: string): Promise<void> {
   try {
-    const message = await CHATBOT_HELP_MESSAGE();
+    const config = ConfigService.getConfig();
+    const message = CHATBOT_HELP_MESSAGE(config);
     await sendWhatsAppMessage(whatsappPhoneNumber, message);
   } catch (error) {
     await ErrorService.handleAndSendError(error, whatsappPhoneNumber, {

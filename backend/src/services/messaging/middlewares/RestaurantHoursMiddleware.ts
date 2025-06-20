@@ -3,6 +3,7 @@ import { MessageContext } from '../MessageContext';
 import { RestaurantService } from '../../restaurant/RestaurantService';
 import { sendWhatsAppMessage } from '../../whatsapp';
 import { RESTAURANT_CLOSED_MESSAGE } from '../../../common/config/predefinedMessages';
+import { getFormattedBusinessHours } from '../../../common/utils/timeUtils';
 import logger from '../../../common/utils/logger';
 import { getCurrentMexicoTime } from '../../../common/utils/timeUtils';
 
@@ -16,7 +17,8 @@ export class RestaurantHoursMiddleware implements MessageMiddleware {
       
       // Check if restaurant is accepting orders
       if (!config.acceptingOrders) {
-        const closedMessage = await RESTAURANT_CLOSED_MESSAGE();
+        const formattedHours = await getFormattedBusinessHours();
+        const closedMessage = RESTAURANT_CLOSED_MESSAGE(formattedHours);
         await sendWhatsAppMessage(context.message.from, closedMessage);
         context.stop();
         return context;
@@ -32,7 +34,8 @@ export class RestaurantHoursMiddleware implements MessageMiddleware {
       
       if (!businessHours || businessHours.isClosed || !businessHours.openingTime || !businessHours.closingTime) {
         logger.info(`Restaurant is closed on day ${dayOfWeek}`);
-        const closedMessage = await RESTAURANT_CLOSED_MESSAGE();
+        const formattedHours = await getFormattedBusinessHours();
+        const closedMessage = RESTAURANT_CLOSED_MESSAGE(formattedHours);
         await sendWhatsAppMessage(context.message.from, closedMessage);
         context.stop();
         return context;
@@ -82,7 +85,8 @@ Cierre: ${businessHours.closingTime}
 ¡Te esperamos mañana! 😊`;
         } else {
           // Outside business hours completely
-          const closedMessage = await RESTAURANT_CLOSED_MESSAGE();
+          const formattedHours = await getFormattedBusinessHours();
+          const closedMessage = RESTAURANT_CLOSED_MESSAGE(formattedHours);
           message = closedMessage;
         }
         

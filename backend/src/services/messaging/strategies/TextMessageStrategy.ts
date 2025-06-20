@@ -301,7 +301,12 @@ export class TextMessageStrategy extends MessageStrategy {
         // Obtener información del restaurante y horarios
         try {
           const { RESTAURANT_INFO_MESSAGE } = await import('../../../common/config/predefinedMessages');
-          const infoMessage = await RESTAURANT_INFO_MESSAGE();
+          const { ConfigService } = await import('../../../services/config/ConfigService');
+          const { getFormattedBusinessHours } = await import('../../../common/utils/timeUtils');
+          
+          const config = ConfigService.getConfig();
+          const formattedHours = await getFormattedBusinessHours();
+          const infoMessage = RESTAURANT_INFO_MESSAGE(config, formattedHours);
           
           result = {
             text: infoMessage,
@@ -401,9 +406,11 @@ export class TextMessageStrategy extends MessageStrategy {
           
           // Importar la función de instrucciones del bot
           const { CHATBOT_HELP_MESSAGE } = await import('../../../common/config/predefinedMessages');
+          const { ConfigService } = await import('../../../services/config/ConfigService');
           
           // Obtener las instrucciones
-          const instructions = await CHATBOT_HELP_MESSAGE();
+          const config = ConfigService.getConfig();
+          const instructions = CHATBOT_HELP_MESSAGE(config);
           
           result = {
             text: instructions,

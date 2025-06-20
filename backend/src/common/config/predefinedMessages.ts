@@ -1,4 +1,3 @@
-import { prisma } from "../../server";
 import { RestaurantInfo } from "../types/restaurant";
 
 // Address registration messages
@@ -22,38 +21,8 @@ ${address.neighborhood ? `Col. ${address.neighborhood}\n` : ''}${address.city}, 
 Tu información de entrega ha sido actualizada exitosamente. 👍`;
 };
 
-// Helper function to get restaurant config
-async function getRestaurantInfo(): Promise<RestaurantInfo> {
-  const config = await prisma.restaurantConfig.findFirst();
-  
-  // Cast explícito para resolver problemas de tipos en VS Code
-  const typedConfig = config as any;
-  
-  if (!typedConfig) {
-    return {
-      restaurantName: "Establecimiento",
-      phoneMain: "",
-      phoneSecondary: "",
-      address: "",
-      city: "",
-      state: "",
-      postalCode: ""
-    };
-  }
-  
-  return {
-    restaurantName: typedConfig.restaurantName || "Establecimiento",
-    phoneMain: typedConfig.phoneMain || "",
-    phoneSecondary: typedConfig.phoneSecondary || "",
-    address: typedConfig.address || "",
-    city: typedConfig.city || "",
-    state: typedConfig.state || "",
-    postalCode: typedConfig.postalCode || ""
-  };
-}
-
-export const BANNED_USER_MESSAGE = async () => {
-  const config = await getRestaurantInfo();
+// Restaurant messages that depend on configuration
+export const BANNED_USER_MESSAGE = (config: RestaurantInfo): string => {
   return `Lo sentimos, tu número ha sido baneado debido a la detección de un uso inadecuado de nuestro servicio.
 
 Si crees que es un error, por favor contacta directamente con nosotros:
@@ -67,7 +36,7 @@ Agradecemos tu comprensión y esperamos resolver cualquier malentendido.`;
 export const WAIT_TIMES_MESSAGE = (
   pickupTime: number,
   deliveryTime: number
-) => `
+): string => `
 🕒 *Tiempos de espera estimados:*
 
 🏠 Recolección en establecimiento: ${pickupTime} minutos
@@ -76,11 +45,10 @@ export const WAIT_TIMES_MESSAGE = (
 Estos tiempos son aproximados y pueden variar según la demanda actual.
 `;
 
-export const RESTAURANT_INFO_MESSAGE = async () => {
-  const { getFormattedBusinessHours } = await import("../utils/timeUtils");
-  const config = await getRestaurantInfo();
-  const formattedHours = await getFormattedBusinessHours();
-  
+export const RESTAURANT_INFO_MESSAGE = (
+  config: RestaurantInfo,
+  formattedHours: string
+): string => {
   const fullAddress = [config.address, config.city, config.state, config.postalCode]
     .filter(Boolean)
     .join(", ");
@@ -101,8 +69,7 @@ ${formattedHours.split('\n').map(line => '   ' + line).join('\n')}
 `;
 };
 
-export const CHATBOT_HELP_MESSAGE = async () => {
-  const config = await getRestaurantInfo();
+export const CHATBOT_HELP_MESSAGE = (config: RestaurantInfo): string => {
   return `
 🤖💬 *¡Bienvenido al Chatbot de ${config.restaurantName}!*
 
@@ -144,15 +111,14 @@ Envía un mensaje a la vez y espera la respuesta antes del siguiente para evitar
 `;
 };
 
-export const CHANGE_DELIVERY_INFO_MESSAGE = (updateLink: string) => `
+export const CHANGE_DELIVERY_INFO_MESSAGE = (updateLink: string): string => `
 🚚 ¡Actualiza tu información de entrega! 📝
 
 👇 *PRESIONA AQUÍ PARA ACTUALIZAR* 👇
 
 ${updateLink}`;
 
-export const RESTAURANT_NOT_ACCEPTING_ORDERS_MESSAGE = async () => {
-  const config = await getRestaurantInfo();
+export const RESTAURANT_NOT_ACCEPTING_ORDERS_MESSAGE = (config: RestaurantInfo): string => {
   return `
 🚫🍽️ Lo sentimos, no estamos aceptando pedidos en este momento. 😔
 
@@ -164,10 +130,7 @@ ${config.phoneSecondary ? `📞 Teléfono: ${config.phoneSecondary}` : ''}
 `;
 };
 
-export const RESTAURANT_CLOSED_MESSAGE = async () => {
-  const { getFormattedBusinessHours } = await import("../utils/timeUtils");
-  const formattedHours = await getFormattedBusinessHours();
-  
+export const RESTAURANT_CLOSED_MESSAGE = (formattedHours: string): string => {
   return `
 🚫 Lo sentimos, estamos cerrados en este momento. 😴
 
@@ -180,7 +143,7 @@ ${formattedHours.split('\n').map(line => '   🗓️ ' + line).join('\n')}
 
 export const DELIVERY_INFO_REGISTRATION_MESSAGE = (
   registrationLink: string
-) => `
+): string => `
 ¡Hola! 👋 Antes de continuar, necesitamos que registres tu información de entrega. 📝
 
 👇 *PRESIONA AQUÍ PARA REGISTRARTE* 👇
@@ -188,12 +151,11 @@ export const DELIVERY_INFO_REGISTRATION_MESSAGE = (
 ${registrationLink}
 `;
 
-export const PAYMENT_CONFIRMATION_MESSAGE = (orderNumber: number) => `
+export const PAYMENT_CONFIRMATION_MESSAGE = (orderNumber: number): string => `
 ¡Tu pago para la orden #${orderNumber} ha sido confirmado! 🎉✅ Gracias por tu compra. 🛍️😊
 `;
 
-export const WELCOME_MESSAGE_INTERACTIVE = async () => {
-  const config = await getRestaurantInfo();
+export const WELCOME_MESSAGE_INTERACTIVE = (config: RestaurantInfo) => {
   return {
     type: "list",
     header: {
@@ -227,26 +189,20 @@ export const WELCOME_MESSAGE_INTERACTIVE = async () => {
   };
 };
 
-// Mensaje cuando se reinicia la conversación
+// Static messages that don't depend on configuration
 export const CONVERSATION_RESET_MESSAGE = "🔄 Entendido, he olvidado el contexto anterior. ¿En qué puedo ayudarte ahora? 😊";
 
-// Mensaje de error genérico
 export const GENERIC_ERROR_MESSAGE = "Lo siento, ocurrió un error procesando tu mensaje. Por favor intenta de nuevo.";
 
-// Mensaje para tipo de mensaje no soportado
 export const UNSUPPORTED_MESSAGE_TYPE = "Lo siento, solo puedo procesar mensajes de texto por el momento.";
 
-// Mensaje cuando falla la transcripción de audio
 export const AUDIO_TRANSCRIPTION_ERROR = "🎤 Hubo un problema al procesar tu mensaje de audio. Por favor, intenta nuevamente o envía un mensaje de texto.";
 
-// Mensaje de límite de tasa excedido
 export const RATE_LIMIT_MESSAGE = "Has alcanzado el límite de mensajes. Por favor espera unos minutos antes de enviar más mensajes.";
 
-// Mensaje cuando no se encuentra una orden
 export const ORDER_NOT_FOUND_MESSAGE = "❌ Lo siento, no se pudo encontrar tu orden. 🚫🔍";
 
-// Mensaje cuando no se puede cancelar una orden
-export const ORDER_CANNOT_BE_CANCELLED_MESSAGE = (status: string) => {
+export const ORDER_CANNOT_BE_CANCELLED_MESSAGE = (status: string): string => {
   const statusMessages: Record<string, string> = {
     IN_PROGRESS: "Lo sentimos, pero esta orden ya no se puede cancelar porque ya fue aceptada. ⚠️",
     IN_PREPARATION: "Lo sentimos, pero esta orden ya está en preparación y no se puede cancelar. 👨‍🍳",
@@ -258,11 +214,8 @@ export const ORDER_CANNOT_BE_CANCELLED_MESSAGE = (status: string) => {
   return statusMessages[status] || "Lo sentimos, esta orden no se puede cancelar en su estado actual.";
 };
 
-// Mensaje de confirmación de cancelación de orden
 export const ORDER_CANCELLED_MESSAGE = "Tu orden ha sido eliminada exitosamente. ✅";
 
-// Mensaje cuando Stripe no está disponible
 export const STRIPE_NOT_AVAILABLE_MESSAGE = "❌ Lo siento, los pagos en línea no están disponibles en este momento. Por favor, realiza el pago en efectivo al recibir tu pedido. 💵";
 
-// Mensaje cuando ya existe un enlace de pago
 export const PAYMENT_LINK_EXISTS_MESSAGE = "⚠️ Ya existe un enlace de pago activo para esta orden. Por favor, utiliza el enlace enviado anteriormente o contáctanos si necesitas ayuda. 🔄";

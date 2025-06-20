@@ -132,6 +132,24 @@ Middleware Pipeline:
   }
   ```
 
+**Configuration Management**:
+- `ConfigService`: Loads and caches restaurant configuration with auto-reload
+- Cache TTL: 2 minutes (auto-reloads when expired)
+- Eliminates redundant database calls for configuration data
+- Configuration loaded once in `server.ts` during startup
+- Auto-reloads in background when cache expires
+- All predefined messages now accept configuration as parameter
+- Example usage:
+  ```typescript
+  const config = ConfigService.getConfig(); // Auto-reloads if expired
+  const message = BANNED_USER_MESSAGE(config);
+  ```
+- Cache monitoring:
+  ```typescript
+  const status = ConfigService.getCacheStatus();
+  // Returns: { isLoaded, lastUpdated, ageInSeconds, isExpired, ttlSeconds }
+  ```
+
 ### Key Business Logic
 
 1. **Address Requirement**: Customers MUST have a registered address before any conversation

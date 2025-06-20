@@ -3,6 +3,7 @@ import { MessageContext } from '../MessageContext';
 import { prisma } from '../../../server';
 import { sendWhatsAppMessage } from '../../whatsapp';
 import { BANNED_USER_MESSAGE } from '../../../common/config/predefinedMessages';
+import { ConfigService } from '../../../services/config/ConfigService';
 import logger from '../../../common/utils/logger';
 
 export class CustomerValidationMiddleware implements MessageMiddleware {
@@ -55,7 +56,8 @@ export class CustomerValidationMiddleware implements MessageMiddleware {
         // Verificar si el cliente está baneado
         if (customer.isBanned) {
           logger.warn(`Banned customer ${whatsappPhoneNumber} tried to send a message`);
-          const bannedMessage = await BANNED_USER_MESSAGE();
+          const config = ConfigService.getConfig();
+          const bannedMessage = BANNED_USER_MESSAGE(config);
           await sendWhatsAppMessage(whatsappPhoneNumber, bannedMessage);
           context.stop();
           return context;

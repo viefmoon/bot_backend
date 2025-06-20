@@ -18,6 +18,7 @@ import { VerifyOtpDto, InvalidateOtpDto } from './dto/otp';
 import { AddressDto, GetAddressesQueryDto, UpdateAddressDto } from './dto/address';
 import { SendMessageDto } from './dto/whatsapp';
 import { CreateOrderDto } from './services/orders/dto/create-order.dto';
+import { ConfigService } from './services/config/ConfigService';
 
 // Validate environment variables
 try {
@@ -205,6 +206,10 @@ async function startServer() {
     // Test database connection
     await prisma.$connect();
     logger.info('Database connected successfully');
+    
+    // Load restaurant configuration
+    await ConfigService.loadConfig();
+    logger.info('Restaurant configuration loaded');
     
     // Connect to Redis
     const { redisService } = await import('./services/redis/RedisService');

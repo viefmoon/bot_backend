@@ -94,6 +94,7 @@ router.post('/create',
     try {
       const { sendWhatsAppMessage, sendWhatsAppInteractiveMessage } = await import('../services/whatsapp');
       const { ADDRESS_REGISTRATION_SUCCESS, WELCOME_MESSAGE_INTERACTIVE } = await import('../common/config/predefinedMessages');
+      const { ConfigService } = await import('../services/config/ConfigService');
       
       // Usar whatsappPhoneNumber del customer autenticado
       await sendWhatsAppMessage(
@@ -105,7 +106,8 @@ router.post('/create',
       await new Promise(resolve => setTimeout(resolve, 1000));
       
       // Enviar mensaje de bienvenida inmediatamente después
-      const welcomeMessage = await WELCOME_MESSAGE_INTERACTIVE();
+      const config = ConfigService.getConfig();
+      const welcomeMessage = WELCOME_MESSAGE_INTERACTIVE(config);
       await sendWhatsAppInteractiveMessage(customer.whatsappPhoneNumber, welcomeMessage);
       
       // Marcar que el mensaje de bienvenida fue enviado para evitar duplicados
@@ -166,6 +168,7 @@ router.put('/:addressId',
     try {
       const { sendWhatsAppMessage, sendWhatsAppInteractiveMessage } = await import('../services/whatsapp');
       const { ADDRESS_UPDATE_SUCCESS, WELCOME_MESSAGE_INTERACTIVE } = await import('../common/config/predefinedMessages');
+      const { ConfigService } = await import('../services/config/ConfigService');
       
       // Usar whatsappPhoneNumber del customer autenticado
       await sendWhatsAppMessage(
@@ -177,7 +180,8 @@ router.put('/:addressId',
       await new Promise(resolve => setTimeout(resolve, 1000));
       
       // Enviar mensaje de bienvenida inmediatamente después
-      const welcomeMessage = await WELCOME_MESSAGE_INTERACTIVE();
+      const config = ConfigService.getConfig();
+      const welcomeMessage = WELCOME_MESSAGE_INTERACTIVE(config);
       await sendWhatsAppInteractiveMessage(customer.whatsappPhoneNumber, welcomeMessage);
       
       // Marcar que hubo interacción para evitar mensaje de bienvenida duplicado
