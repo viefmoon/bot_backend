@@ -134,14 +134,7 @@ if [ -f "./scripts/setup-local-pgvector.sh" ]; then
     ./scripts/setup-local-pgvector.sh
     if [ $? -eq 0 ]; then
         echo -e "${GREEN}✅ pgvector configurado correctamente${NC}"
-        # Generar embeddings si la configuración fue exitosa
-        echo -e "${YELLOW}   Generando embeddings para productos...${NC}"
-        npm run seed:embeddings 2>/dev/null
-        if [ $? -eq 0 ]; then
-            echo -e "${GREEN}✅ Embeddings generados${NC}"
-        else
-            echo -e "${YELLOW}⚠️  No se pudieron generar embeddings (se generarán al iniciar)${NC}"
-        fi
+        echo -e "${YELLOW}   Los embeddings se generarán automáticamente al iniciar el servidor${NC}"
     else
         echo -e "${YELLOW}⚠️  pgvector no pudo configurarse (búsqueda semántica no disponible)${NC}"
     fi

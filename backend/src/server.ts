@@ -218,6 +218,11 @@ async function startServer() {
     // Start OTP cleanup interval
     OTPService.startOTPCleanup();
     
+    // Initialize embeddings on startup
+    const { initializeEmbeddings, scheduleEmbeddingUpdates } = await import('./startup/embeddingInitializer');
+    await initializeEmbeddings();
+    scheduleEmbeddingUpdates();
+    
     app.listen(PORT, () => {
       logger.info(`Server is running on port ${PORT}`);
     });
