@@ -33,8 +33,8 @@ if lsof -Pi :5433 -sTCP:LISTEN -t >/dev/null 2>&1 ; then
     sleep 2
 fi
 
-# Paso 1: Iniciar PostgreSQL con Docker
-echo -e "\n${YELLOW}1. Iniciando PostgreSQL...${NC}"
+# Paso 1: Iniciar PostgreSQL y Redis con Docker
+echo -e "\n${YELLOW}1. Iniciando PostgreSQL y Redis...${NC}"
 docker compose up -d
 
 # Esperar a que PostgreSQL esté listo
@@ -53,6 +53,22 @@ if [ $attempt -eq $max_attempts ]; then
     exit 1
 fi
 echo -e "\n${GREEN}   ✅ PostgreSQL está listo!${NC}"
+
+# Esperar a que Redis esté listo
+echo -e "${YELLOW}   Esperando a que Redis esté listo...${NC}"
+max_attempts=15
+attempt=0
+until docker compose exec -T redis redis-cli ping >/dev/null 2>&1 || [ $attempt -eq $max_attempts ]; do
+    attempt=$((attempt + 1))
+    printf "\r   Esperando... intento $attempt/$max_attempts"
+    sleep 1
+done
+
+if [ $attempt -eq $max_attempts ]; then
+    echo -e "\n${YELLOW}⚠️  Redis no pudo iniciar, pero continuaremos (el sistema funcionará sin Redis)${NC}"
+else
+    echo -e "\n${GREEN}   ✅ Redis está listo!${NC}"
+fi
 
 # Paso 2: Verificar configuración antes de copiar
 echo -e "\n${YELLOW}2. Verificando configuración...${NC}"

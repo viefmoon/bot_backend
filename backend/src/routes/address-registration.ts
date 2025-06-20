@@ -292,7 +292,7 @@ router.get('/delivery-area', asyncHandler(async (_req: Request, res: Response) =
  * GET /backend/address-registration/debug/otp-status
  */
 router.get('/debug/otp-status', asyncHandler(async (_req: Request, res: Response) => {
-  const stats = OTPService.getStats();
+  const stats = await OTPService.getStats();
   res.json({ 
     otpStats: stats,
     message: 'Check server logs for detailed OTP information'

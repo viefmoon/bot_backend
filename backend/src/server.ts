@@ -206,6 +206,10 @@ async function startServer() {
     await prisma.$connect();
     logger.info('Database connected successfully');
     
+    // Connect to Redis
+    const { redisService } = await import('./services/redis/RedisService');
+    await redisService.connect();
+    
     // Start OTP cleanup interval
     OTPService.startOTPCleanup();
     
@@ -222,6 +226,8 @@ async function startServer() {
 process.on('SIGINT', async () => {
   logger.info('Shutting down server...');
   OTPService.stopOTPCleanup();
+  const { redisService } = await import('./services/redis/RedisService');
+  await redisService.disconnect();
   await prisma.$disconnect();
   process.exit(0);
 });
@@ -229,6 +235,8 @@ process.on('SIGINT', async () => {
 process.on('SIGTERM', async () => {
   logger.info('Shutting down server...');
   OTPService.stopOTPCleanup();
+  const { redisService } = await import('./services/redis/RedisService');
+  await redisService.disconnect();
   await prisma.$disconnect();
   process.exit(0);
 });

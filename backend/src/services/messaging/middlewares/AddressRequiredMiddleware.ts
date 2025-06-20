@@ -19,7 +19,7 @@ export class AddressRequiredMiddleware implements MessageMiddleware {
         
         // Generar OTP con expiración extendida para registro de dirección
         const otp = OTPService.generateOTP();
-        OTPService.storeOTP(customerId, otp, true); // true = address registration
+        await OTPService.storeOTP(customerId, otp, true); // true = address registration
         
         // Crear enlace de registro
         const registrationLink = `${env.FRONTEND_BASE_URL}/address-registration/${customerId}?otp=${otp}`;

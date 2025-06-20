@@ -293,7 +293,7 @@ async function handleChatbotHelp(whatsappPhoneNumber: string): Promise<void> {
 
 async function handleChangeDeliveryInfo(from: string): Promise<void> {
   const otp = OTPService.generateOTP();
-  OTPService.storeOTP(from, otp, true); // true for address registration
+  await OTPService.storeOTP(from, otp, true); // true for address registration
   const updateLink = `${env.FRONTEND_BASE_URL}/address-registration/${from}?otp=${otp}`;
   
   // Enviar mensaje con botón URL
@@ -427,7 +427,7 @@ async function handleAddNewAddress(from: string, messageId: string): Promise<voi
     });
     
     const otp = OTPService.generateOTP();
-    OTPService.storeOTP(customer.whatsappPhoneNumber, otp, true);
+    await OTPService.storeOTP(customer.whatsappPhoneNumber, otp, true);
     
     const updateLink = `${env.FRONTEND_BASE_URL}/address-registration/${customer.whatsappPhoneNumber}?otp=${otp}${preOrder ? `&preOrderId=${preOrder.id}` : ''}`;
     

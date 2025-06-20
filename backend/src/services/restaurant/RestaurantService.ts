@@ -2,25 +2,42 @@ import { prisma } from '../../server';
 import { RestaurantConfig, BusinessHours } from '../../common/types';
 import logger from '../../common/utils/logger';
 import { BusinessLogicError, ErrorCode } from '../../common/services/errors';
+import { redisService } from '../redis/RedisService';
 
 /**
  * Service for managing restaurant configuration and business hours
  */
 export class RestaurantService {
-  private static configCache: RestaurantConfig | null = null;
-  private static businessHoursCache: BusinessHours[] | null = null;
+  // Redis cache keys
+  private static readonly REDIS_CONFIG_KEY = 'restaurant:config';
+  private static readonly REDIS_BUSINESS_HOURS_KEY = 'restaurant:business_hours';
+  private static readonly CACHE_TTL = 300; // 5 minutes cache
+  
+  // Memory cache fallback
+  private static memoryConfigCache: RestaurantConfig | null = null;
+  private static memoryBusinessHoursCache: BusinessHours[] | null = null;
 
   /**
    * Get restaurant configuration (with caching)
    */
   static async getConfig(): Promise<RestaurantConfig> {
     try {
-      // Return cached config if available
-      if (this.configCache) {
-        return this.configCache;
+      // Try Redis cache first
+      if (redisService.isAvailable()) {
+        const cached = await redisService.getJSON<RestaurantConfig>(this.REDIS_CONFIG_KEY);
+        if (cached) {
+          logger.debug('Restaurant config retrieved from Redis cache');
+          return cached;
+        }
+      }
+      
+      // Try memory cache
+      if (this.memoryConfigCache) {
+        logger.debug('Restaurant config retrieved from memory cache');
+        return this.memoryConfigCache;
       }
 
-      // Get or create config
+      // Get or create config from database
       let config = await prisma.restaurantConfig.findFirst();
       
       if (!config) {
@@ -34,7 +51,13 @@ export class RestaurantService {
         logger.info('Created default restaurant configuration');
       }
 
-      this.configCache = config;
+      // Cache in Redis if available
+      if (redisService.isAvailable()) {
+        await redisService.setJSON(this.REDIS_CONFIG_KEY, config, this.CACHE_TTL);
+      }
+      
+      // Cache in memory
+      this.memoryConfigCache = config;
       return config;
     } catch (error) {
       logger.error('Error getting restaurant config:', error);
@@ -69,7 +92,7 @@ export class RestaurantService {
       });
 
       // Clear caches
-      this.clearCache();
+      await this.clearCache();
       
       // Clear timezone cache if timezone was updated
       if (data.timeZone) {
@@ -120,8 +143,19 @@ export class RestaurantService {
    */
   static async getAllBusinessHours(): Promise<BusinessHours[]> {
     try {
-      if (this.businessHoursCache) {
-        return this.businessHoursCache;
+      // Try Redis cache first
+      if (redisService.isAvailable()) {
+        const cached = await redisService.getJSON<BusinessHours[]>(this.REDIS_BUSINESS_HOURS_KEY);
+        if (cached) {
+          logger.debug('Business hours retrieved from Redis cache');
+          return cached;
+        }
+      }
+      
+      // Try memory cache
+      if (this.memoryBusinessHoursCache) {
+        logger.debug('Business hours retrieved from memory cache');
+        return this.memoryBusinessHoursCache;
       }
 
       const config = await this.getConfig();
@@ -130,7 +164,13 @@ export class RestaurantService {
         orderBy: { dayOfWeek: 'asc' }
       });
 
-      this.businessHoursCache = businessHours;
+      // Cache in Redis if available
+      if (redisService.isAvailable()) {
+        await redisService.setJSON(this.REDIS_BUSINESS_HOURS_KEY, businessHours, this.CACHE_TTL);
+      }
+      
+      // Cache in memory
+      this.memoryBusinessHoursCache = businessHours;
       return businessHours;
     } catch (error) {
       logger.error('Error getting all business hours:', error);
@@ -163,8 +203,8 @@ export class RestaurantService {
         }
       });
 
-      // Clear cache
-      this.businessHoursCache = null;
+      // Clear caches
+      await this.clearCache();
       
       logger.info(`Updated business hours for day ${dayOfWeek}:`, data);
       return businessHours;
@@ -207,9 +247,16 @@ export class RestaurantService {
   /**
    * Clear all caches
    */
-  static clearCache(): void {
-    this.configCache = null;
-    this.businessHoursCache = null;
+  static async clearCache(): Promise<void> {
+    // Clear Redis cache if available
+    if (redisService.isAvailable()) {
+      await redisService.del(this.REDIS_CONFIG_KEY);
+      await redisService.del(this.REDIS_BUSINESS_HOURS_KEY);
+    }
+    
+    // Clear memory cache
+    this.memoryConfigCache = null;
+    this.memoryBusinessHoursCache = null;
     logger.debug('Restaurant service caches cleared');
   }
 

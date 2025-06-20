@@ -23,6 +23,9 @@ interface EnvironmentVariables {
   RATE_LIMIT_TIME_WINDOW_MINUTES: string;
   DEFAULT_TIMEZONE: string;
   DEFAULT_LOCALE: string;
+  REDIS_HOST?: string;
+  REDIS_PORT?: string;
+  REDIS_PASSWORD?: string;
 }
 
 class EnvironmentValidator {

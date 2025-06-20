@@ -45,7 +45,7 @@ router.post('/send',
       // No addresses, send link to add one
       const { OTPService } = await import('../services/security/OTPService');
       const otp = OTPService.generateOTP();
-      OTPService.storeOTP(customer.whatsappPhoneNumber, otp, true);
+      await OTPService.storeOTP(customer.whatsappPhoneNumber, otp, true);
       
       const updateLink = `${process.env.FRONTEND_BASE_URL}/address-registration/${customer.whatsappPhoneNumber}?otp=${otp}${preOrderId ? `&preOrderId=${preOrderId}` : ''}`;
       
