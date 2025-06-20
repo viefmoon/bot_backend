@@ -5,6 +5,7 @@ import logger from '../../common/utils/logger';
 import { MessageProcessor } from '../messaging/MessageProcessor';
 import { env } from '../../common/config/envValidator';
 import { ExternalServiceError, ErrorCode } from '../../common/services/errors';
+import { MessageSplitter } from '../../common/utils/messageSplitter';
 
 /**
  * Service for WhatsApp Business API communication
@@ -293,8 +294,8 @@ export class WhatsAppService {
         return true;
       }
       
-      // Split long message
-      const parts = this.splitLongMessage(message, this.MAX_MESSAGE_LENGTH);
+      // Split long message using unified utility
+      const parts = MessageSplitter.splitMessage(message, this.MAX_MESSAGE_LENGTH);
       logger.debug(`Message split into ${parts.length} parts`);
       
       // Send each part
@@ -316,54 +317,4 @@ export class WhatsAppService {
     }
   }
 
-  /**
-   * Split a long message into parts respecting lines and words
-   */
-  private static splitLongMessage(text: string, maxLength: number): string[] {
-    const parts: string[] = [];
-    const lines = text.split('\n');
-    let currentPart = '';
-    
-    for (const line of lines) {
-      // If adding this line exceeds the limit
-      if (currentPart.length + line.length + 1 > maxLength) {
-        // If the line alone is too long, split it by words
-        if (line.length > maxLength) {
-          if (currentPart.trim()) {
-            parts.push(currentPart.trim());
-            currentPart = '';
-          }
-          
-          const words = line.split(' ');
-          let tempLine = '';
-          
-          for (const word of words) {
-            if (tempLine.length + word.length + 1 <= maxLength) {
-              tempLine += (tempLine ? ' ' : '') + word;
-            } else {
-              if (tempLine) parts.push(tempLine);
-              tempLine = word;
-            }
-          }
-          if (tempLine) currentPart = tempLine + '\n';
-        } else {
-          // Save current part and start a new one
-          if (currentPart.trim()) {
-            parts.push(currentPart.trim());
-          }
-          currentPart = line + '\n';
-        }
-      } else {
-        // Add line to current part
-        currentPart += line + '\n';
-      }
-    }
-    
-    // Add any remaining content
-    if (currentPart.trim()) {
-      parts.push(currentPart.trim());
-    }
-    
-    return parts;
-  }
 }

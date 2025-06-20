@@ -4,6 +4,7 @@ import { AgentService } from '../../ai';
 import { PreOrderService } from '../../../services/orders/PreOrderService';
 import { sendWhatsAppMessage } from '../../whatsapp';
 import logger from '../../../common/utils/logger';
+import { MessageSplitter } from '../../../common/utils/messageSplitter';
 
 // Type definition for content
 interface Content {
@@ -267,7 +268,7 @@ export class TextMessageStrategy extends MessageStrategy {
           // Si el menú es muy largo, dividirlo en partes
           const maxLength = 4000; // Dejamos margen para WhatsApp
           if (menuText.length > maxLength) {
-            const parts = this.splitMenuIntelligently(menuText, maxLength);
+            const parts = MessageSplitter.splitMenu(menuText, maxLength);
             logger.debug(`Menú dividido en ${parts.length} partes`);
             // Retornar múltiples respuestas
             result = parts.map((part, index) => ({
@@ -506,66 +507,4 @@ export class TextMessageStrategy extends MessageStrategy {
     return result;
   }
   
-  private splitMenuIntelligently(text: string, maxLength: number): string[] {
-    const parts: string[] = [];
-    const lines = text.split('\n');
-    let currentPart = '';
-    let currentSection = '';
-    
-    for (let i = 0; i < lines.length; i++) {
-      const line = lines[i];
-      
-      // Detectar si es un encabezado de categoría (ej: "🍕 PIZZAS", "🥤 BEBIDAS")
-      const isCategoryHeader = line.match(/^[🍕🍔🥤🍗🥗🍝🍰🌮🥟🍛]|^[A-Z\s]{3,}:|^\*\*.*\*\*$/);
-      
-      // Si encontramos un nuevo encabezado de categoría y el parte actual + sección actual excede el límite
-      if (isCategoryHeader && currentSection && (currentPart.length + currentSection.length > maxLength)) {
-        // Guardar la parte actual si tiene contenido
-        if (currentPart.trim()) {
-          parts.push(currentPart.trim());
-        }
-        currentPart = currentSection;
-        currentSection = line + '\n';
-      } else if (currentPart.length + line.length + 1 > maxLength) {
-        // Si agregar la línea actual excedería el límite
-        
-        // Si la parte actual está vacía pero la línea es muy larga, dividirla
-        if (!currentPart.trim() && line.length > maxLength) {
-          // Dividir por palabras para no cortar a la mitad
-          const words = line.split(' ');
-          let tempLine = '';
-          
-          for (const word of words) {
-            if (tempLine.length + word.length + 1 <= maxLength) {
-              tempLine += (tempLine ? ' ' : '') + word;
-            } else {
-              if (tempLine) parts.push(tempLine);
-              tempLine = word;
-            }
-          }
-          if (tempLine) currentPart = tempLine + '\n';
-        } else {
-          // Guardar la parte actual y empezar una nueva
-          parts.push(currentPart.trim());
-          currentPart = currentSection + line + '\n';
-          currentSection = '';
-        }
-      } else {
-        // Agregar línea a la sección actual
-        currentSection += line + '\n';
-      }
-    }
-    
-    // Agregar cualquier contenido restante
-    if (currentSection) {
-      currentPart += currentSection;
-    }
-    if (currentPart.trim()) {
-      parts.push(currentPart.trim());
-    }
-    
-    // No agregar indicadores de continuación
-    
-    return parts;
-  }
 }
