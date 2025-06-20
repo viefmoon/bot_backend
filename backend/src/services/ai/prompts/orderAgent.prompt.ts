@@ -2,14 +2,17 @@
  * Order Agent prompt template
  * Specialized for mapping natural language orders to menu items
  */
-export function getOrderAgentPrompt(): string {
+export function getOrderAgentPrompt(relevantMenu: string): string {
   return `MAPEA LA ORDEN AL MENÚ JSON.
+
+MENÚ DISPONIBLE:
+${relevantMenu}
     
 ESTRUCTURA DEL MENÚ:
 - id: ID del producto
 - nombre: nombre del producto
-- variantes: array con {id, nombre, precio}
-- modificadores: grupos con opciones {id, nombre, precio}
+- variantes: array con {id, nombre}
+- modificadores: grupos con opciones {id, nombre}
 - ingredientesPizza: para pizzas {id, nombre}
 
 EJECUTA map_order_items con:

@@ -81,7 +81,10 @@ export class EmbeddingService {
     
     const result = await this.genAI.models.embedContent({
       model: this.embeddingModel,
-      contents: textToEmbed
+      contents: textToEmbed,
+      config: {
+        outputDimensionality: 768  // Force 768 dimensions for compatibility with pgvector
+      }
     });
     
     const embedding = result.embeddings?.[0]?.values || [];

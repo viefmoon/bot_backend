@@ -69,11 +69,11 @@ export class AgentService {
       const messages: Content[] = [{
         role: 'user',
         parts: [{ 
-          text: `ORDEN: ${orderContext.itemsSummary}\nTIPO: ${orderContext.orderType || 'DELIVERY'}\nMENÚ: ${orderContext.relevantMenu}` 
+          text: `ORDEN: ${orderContext.itemsSummary}\nTIPO: ${orderContext.orderType || 'DELIVERY'}` 
         }]
       }];
       
-      const systemInstruction = this.getOrderAgentInstruction();
+      const systemInstruction = this.getOrderAgentInstruction(orderContext.relevantMenu);
       const tools = getOrderAgentTools();
       
       // Configurar modo ANY para forzar la ejecución de función
@@ -86,14 +86,15 @@ export class AgentService {
       
       // Log completo de lo que recibe el modelo de órdenes
       logger.debug('=== COMPLETE ORDER AGENT INPUT ===');
-      logger.debug(`System Instruction:\n${systemInstruction}`);
-      (logger as any).json('Messages:', messages);
-      (logger as any).json('Tools:', tools.map(t => ({
-        name: t.name,
-        description: t.description,
-        parameters: t.parameters
-      })));
-      (logger as any).json('Tool Config:', toolConfig);
+      logger.debug('System Instruction includes menu:');
+      logger.debug(`Order: ${orderContext.itemsSummary}`);
+      logger.debug(`Type: ${orderContext.orderType || 'DELIVERY'}`);
+      try {
+        const menuParsed = JSON.parse(orderContext.relevantMenu);
+        (logger as any).json('Relevant Menu:', menuParsed);
+      } catch (e) {
+        logger.debug(`Relevant Menu: ${orderContext.relevantMenu}`);
+      }
       logger.debug('=== END ORDER AGENT INPUT ===');
       
       logger.info('Calling Gemini API for order processing...');
@@ -151,8 +152,8 @@ export class AgentService {
   /**
    * Instrucciones para el agente de órdenes
    */
-  private static getOrderAgentInstruction(): string {
-    return getOrderAgentPrompt();
+  private static getOrderAgentInstruction(relevantMenu: string): string {
+    return getOrderAgentPrompt(relevantMenu);
   }
   
   /**

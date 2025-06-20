@@ -20,7 +20,10 @@ export class MenuSearchService {
       // 1. Generate embedding for user query
       const embeddingResponse = await this.genAI.models.embedContent({
         model: env.EMBEDDING_MODEL,
-        contents: itemsSummary
+        contents: itemsSummary,
+        config: {
+          outputDimensionality: 768  // Force 768 dimensions for compatibility with pgvector
+        }
       });
       const queryEmbedding = embeddingResponse.embeddings?.[0]?.values || [];
       
@@ -41,17 +44,17 @@ export class MenuSearchService {
           FROM "Product"
           WHERE embedding IS NOT NULL
           ORDER BY distance
-          LIMIT 10
+          LIMIT 20
         `;
         
         // Filter by similarity threshold (lower distance = more similar)
-        // Based on testing: 0.0-0.4 = very similar, 0.4-0.5 = somewhat similar, >0.5 = different
-        const SIMILARITY_THRESHOLD = 0.5; // Only include products with strong similarity
+        // Based on testing: 0.0-0.3 = very similar, 0.3-0.4 = somewhat similar, >0.4 = different
+        const SIMILARITY_THRESHOLD = 0.4; // Only include products with strong similarity
         
         const filteredProducts = relevantProductsResult.filter(p => p.distance < SIMILARITY_THRESHOLD);
         
         // If no products meet the strict threshold, but the top result is reasonably close, include it
-        if (filteredProducts.length === 0 && relevantProductsResult.length > 0 && relevantProductsResult[0].distance < 0.6) {
+        if (filteredProducts.length === 0 && relevantProductsResult.length > 0 && relevantProductsResult[0].distance < 0.45) {
           filteredProducts.push(relevantProductsResult[0]);
           // Including top match even though it's slightly above threshold
         }
