@@ -53,6 +53,16 @@ export const ERROR_MESSAGES: Record<ErrorCode, ErrorMessageConfig> = {
     user: "❌ Tipo de orden no válido. Por favor, selecciona entrega a domicilio o recolección.",
     log: "Invalid order type"
   },
+  [ErrorCode.INVALID_OTP]: {
+    user: "❌ El código OTP es inválido o ha expirado. Por favor, solicita uno nuevo.",
+    log: "Invalid or expired OTP"
+  },
+  
+  // Not Found Errors
+  [ErrorCode.ADDRESS_NOT_FOUND]: {
+    user: "📍 No se encontró la dirección solicitada.",
+    log: "Address not found"
+  },
   
   // Technical Errors
   [ErrorCode.DATABASE_ERROR]: {

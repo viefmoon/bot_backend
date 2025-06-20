@@ -3,7 +3,8 @@ export enum ErrorType {
   VALIDATION = 'VALIDATION',
   TECHNICAL = 'TECHNICAL',
   EXTERNAL_SERVICE = 'EXTERNAL_SERVICE',
-  RATE_LIMIT = 'RATE_LIMIT'
+  RATE_LIMIT = 'RATE_LIMIT',
+  NOT_FOUND = 'NOT_FOUND'
 }
 
 export enum ErrorCode {
@@ -21,6 +22,10 @@ export enum ErrorCode {
   INVALID_SCHEDULE_TIME = 'VAL003',
   MISSING_REQUIRED_FIELD = 'VAL004',
   INVALID_ORDER_TYPE = 'VAL005',
+  INVALID_OTP = 'VAL006',
+  
+  // Not Found
+  ADDRESS_NOT_FOUND = 'NF001',
   
   // Technical
   DATABASE_ERROR = 'TECH001',
@@ -44,6 +49,7 @@ export interface ErrorContext {
   orderId?: number;
   operation?: string;
   metadata?: Record<string, any>;
+  [key: string]: any; // Allow additional properties
 }
 
 export interface ErrorResponse {
