@@ -6,6 +6,7 @@ import logger from '../common/utils/logger';
 import { asyncHandler } from '../common/middlewares/errorHandler';
 import { ValidationError, NotFoundError, ErrorCode } from '../common/services/errors';
 import { validationMiddleware, queryValidationMiddleware } from '../common/middlewares/validation.middleware';
+import { otpAuthMiddleware, AuthenticatedRequest } from '../common/middlewares/otp.middleware';
 import {
   VerifyOtpDto,
   CreateAddressDto,
@@ -76,37 +77,15 @@ router.post('/verify-otp',
  */
 router.post('/create',
   validationMiddleware(CreateAddressDto),
-  asyncHandler(async (req: Request, res: Response) => {
-    const { whatsappPhoneNumber, otp, address } = req.body as CreateAddressDto;
-    
-    // Verificar OTP primero
-    const isValid = await OTPService.verifyOTP(whatsappPhoneNumber, otp);
-    
-    if (!isValid) {
-      throw new ValidationError(
-        ErrorCode.INVALID_OTP,
-        'Invalid or expired OTP'
-      );
-    }
-    
-    // Obtener primero el UUID real del cliente
-    const customerRecord = await prisma.customer.findUnique({
-      where: { whatsappPhoneNumber },
-      select: { id: true }
-    });
-    
-    if (!customerRecord) {
-      throw new NotFoundError(
-        ErrorCode.CUSTOMER_NOT_FOUND,
-        'Customer not found',
-        { whatsappPhoneNumber }
-      );
-    }
+  otpAuthMiddleware,
+  asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    const { address } = req.body as CreateAddressDto;
+    const customer = req.customer; // Customer already validated by middleware
     
     // Crear dirección
     const addressData = {
       ...address,
-      customer: { connect: { id: customerRecord.id } }
+      customer: { connect: { id: customer.id } }
     };
     
     const newAddress = await DeliveryInfoService.createCustomerAddress(addressData);
@@ -116,9 +95,9 @@ router.post('/create',
       const { sendWhatsAppMessage, sendWhatsAppInteractiveMessage } = await import('../services/whatsapp');
       const { ADDRESS_REGISTRATION_SUCCESS, WELCOME_MESSAGE_INTERACTIVE } = await import('../common/config/predefinedMessages');
       
-      // Usar whatsappPhoneNumber para enviar mensajes
+      // Usar whatsappPhoneNumber del customer autenticado
       await sendWhatsAppMessage(
-        whatsappPhoneNumber,
+        customer.whatsappPhoneNumber,
         ADDRESS_REGISTRATION_SUCCESS(newAddress)
       );
       
@@ -127,12 +106,12 @@ router.post('/create',
       
       // Enviar mensaje de bienvenida inmediatamente después
       const welcomeMessage = await WELCOME_MESSAGE_INTERACTIVE();
-      await sendWhatsAppInteractiveMessage(whatsappPhoneNumber, welcomeMessage);
+      await sendWhatsAppInteractiveMessage(customer.whatsappPhoneNumber, welcomeMessage);
       
       // Marcar que el mensaje de bienvenida fue enviado para evitar duplicados
       // Actualizar lastInteraction a la hora actual para prevenir la detección de isNewConversation
       await prisma.customer.update({
-        where: { id: customerRecord.id },
+        where: { id: customer.id },
         data: { 
           lastInteraction: new Date()
         }
@@ -155,39 +134,17 @@ router.post('/create',
  */
 router.put('/:addressId',
   validationMiddleware(UpdateAddressDto),
-  asyncHandler(async (req: Request, res: Response) => {
+  otpAuthMiddleware,
+  asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
     const { addressId } = req.params;
-    const { whatsappPhoneNumber, otp, address } = req.body as UpdateAddressDto;
-    
-    // Verificar OTP
-    const isValid = await OTPService.verifyOTP(whatsappPhoneNumber, otp);
-    
-    if (!isValid) {
-      throw new ValidationError(
-        ErrorCode.INVALID_OTP,
-        'Invalid or expired OTP'
-      );
-    }
-    
-    // Obtener cliente por número de teléfono
-    const customerRecord = await prisma.customer.findUnique({
-      where: { whatsappPhoneNumber },
-      select: { id: true }
-    });
-    
-    if (!customerRecord) {
-      throw new NotFoundError(
-        ErrorCode.CUSTOMER_NOT_FOUND,
-        'Customer not found',
-        { whatsappPhoneNumber }
-      );
-    }
+    const { address } = req.body as UpdateAddressDto;
+    const customer = req.customer; // Customer already validated by middleware
     
     // Verificar que la dirección pertenece al cliente
     const existingAddress = await prisma.address.findFirst({
       where: { 
         id: addressId,
-        customerId: customerRecord.id
+        customerId: customer.id
       }
     });
     
@@ -195,7 +152,7 @@ router.put('/:addressId',
       throw new NotFoundError(
         ErrorCode.ADDRESS_NOT_FOUND,
         'Address not found or does not belong to customer',
-        { addressId, customerId: customerRecord.id }
+        { addressId, customerId: customer.id }
       );
     }
     
@@ -210,9 +167,9 @@ router.put('/:addressId',
       const { sendWhatsAppMessage, sendWhatsAppInteractiveMessage } = await import('../services/whatsapp');
       const { ADDRESS_UPDATE_SUCCESS, WELCOME_MESSAGE_INTERACTIVE } = await import('../common/config/predefinedMessages');
       
-      // Usar whatsappPhoneNumber para enviar mensajes
+      // Usar whatsappPhoneNumber del customer autenticado
       await sendWhatsAppMessage(
-        whatsappPhoneNumber,
+        customer.whatsappPhoneNumber,
         ADDRESS_UPDATE_SUCCESS(updatedAddress)
       );
       
@@ -221,11 +178,11 @@ router.put('/:addressId',
       
       // Enviar mensaje de bienvenida inmediatamente después
       const welcomeMessage = await WELCOME_MESSAGE_INTERACTIVE();
-      await sendWhatsAppInteractiveMessage(whatsappPhoneNumber, welcomeMessage);
+      await sendWhatsAppInteractiveMessage(customer.whatsappPhoneNumber, welcomeMessage);
       
       // Marcar que hubo interacción para evitar mensaje de bienvenida duplicado
       await prisma.customer.update({
-        where: { id: customerRecord.id },
+        where: { id: customer.id },
         data: { 
           lastInteraction: new Date()
         }
@@ -249,35 +206,11 @@ router.put('/:addressId',
  */
 router.get('/:customerId/addresses',
   queryValidationMiddleware(GetAddressesQueryDto),
-  asyncHandler(async (req: Request, res: Response) => {
-    const { customerId } = req.params; // This is actually whatsappPhoneNumber from URL
-    const { otp } = req.query as unknown as GetAddressesQueryDto;
+  otpAuthMiddleware,
+  asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    const customer = req.customer; // Customer already validated by middleware
     
-    // Verificar OTP
-    const isValid = await OTPService.verifyOTP(customerId, otp);
-    
-    if (!isValid) {
-      throw new ValidationError(
-        ErrorCode.INVALID_OTP,
-        'Invalid or expired OTP'
-      );
-    }
-    
-    // Obtener cliente por número de teléfono
-    const customerRecord = await prisma.customer.findUnique({
-      where: { whatsappPhoneNumber: customerId },
-      select: { id: true }
-    });
-    
-    if (!customerRecord) {
-      throw new NotFoundError(
-        ErrorCode.CUSTOMER_NOT_FOUND,
-        'Customer not found',
-        { whatsappPhoneNumber: customerId }
-      );
-    }
-    
-    const addresses = await DeliveryInfoService.getCustomerAddresses(customerRecord.id);
+    const addresses = await DeliveryInfoService.getCustomerAddresses(customer.id);
     res.json({ addresses });
   })
 );
@@ -288,38 +221,15 @@ router.get('/:customerId/addresses',
  */
 router.delete('/:addressId',
   validationMiddleware(DeleteAddressDto),
-  asyncHandler(async (req: Request, res: Response) => {
+  otpAuthMiddleware,
+  asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
     const { addressId } = req.params;
-    const { whatsappPhoneNumber, otp } = req.body as DeleteAddressDto;
-    
-    // Verificar OTP
-    const isValid = await OTPService.verifyOTP(whatsappPhoneNumber, otp);
-    
-    if (!isValid) {
-      throw new ValidationError(
-        ErrorCode.INVALID_OTP,
-        'Invalid or expired OTP'
-      );
-    }
-    
-    // Obtener cliente por número de teléfono
-    const customerRecord = await prisma.customer.findUnique({
-      where: { whatsappPhoneNumber },
-      select: { id: true }
-    });
-    
-    if (!customerRecord) {
-      throw new NotFoundError(
-        ErrorCode.CUSTOMER_NOT_FOUND,
-        'Customer not found',
-        { whatsappPhoneNumber }
-      );
-    }
+    const customer = req.customer; // Customer already validated by middleware
     
     // Eliminar dirección (eliminación suave)
     await DeliveryInfoService.deleteCustomerAddress(
       addressId,
-      customerRecord.id
+      customer.id
     );
     
     res.json({ 
@@ -335,38 +245,15 @@ router.delete('/:addressId',
  */
 router.put('/:addressId/default',
   validationMiddleware(SetDefaultAddressDto),
-  asyncHandler(async (req: Request, res: Response) => {
+  otpAuthMiddleware,
+  asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
     const { addressId } = req.params;
-    const { whatsappPhoneNumber, otp } = req.body as SetDefaultAddressDto;
-    
-    // Verificar OTP
-    const isValid = await OTPService.verifyOTP(whatsappPhoneNumber, otp);
-    
-    if (!isValid) {
-      throw new ValidationError(
-        ErrorCode.INVALID_OTP,
-        'Invalid or expired OTP'
-      );
-    }
-    
-    // Obtener cliente por número de teléfono
-    const customerRecord = await prisma.customer.findUnique({
-      where: { whatsappPhoneNumber },
-      select: { id: true }
-    });
-    
-    if (!customerRecord) {
-      throw new NotFoundError(
-        ErrorCode.CUSTOMER_NOT_FOUND,
-        'Customer not found',
-        { whatsappPhoneNumber }
-      );
-    }
+    const customer = req.customer; // Customer already validated by middleware
     
     // Establecer como predeterminada
     const updatedAddress = await DeliveryInfoService.setDefaultAddress(
       addressId,
-      customerRecord.id
+      customer.id
     );
     
     res.json({ 

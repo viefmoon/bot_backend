@@ -1,6 +1,6 @@
 import { IsNotEmpty, IsString, IsObject, ValidateNested } from 'class-validator';
 import { Type } from 'class-transformer';
-import { AddressDetailsDto } from './address-details.dto';
+import { AddressDto } from '../../../dto/address/address.dto';
 
 export class CreateAddressDto {
   @IsNotEmpty({ message: 'whatsappPhoneNumber is required' })
@@ -14,6 +14,6 @@ export class CreateAddressDto {
   @IsNotEmpty({ message: 'address is required' })
   @IsObject({ message: 'address must be an object' })
   @ValidateNested()
-  @Type(() => AddressDetailsDto)
-  address!: AddressDetailsDto;
+  @Type(() => AddressDto)
+  address!: AddressDto;
 }

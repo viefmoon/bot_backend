@@ -143,6 +143,7 @@ Middleware Pipeline:
 
 4. **Security**:
    - OTP-based authentication for sensitive operations
+   - Centralized OTP middleware (`/backend/src/common/middlewares/otp.middleware.ts`)
    - Message deduplication prevents replay attacks
    - WhatsApp phone number as primary identifier
 
@@ -191,6 +192,26 @@ Middleware Pipeline:
    - `RateLimitError` → 429 Too Many Requests
    - `ExternalServiceError` → 502 Bad Gateway
    - `TechnicalError` → 500 Internal Server Error
+
+### Authentication Middleware
+
+**OTP Authentication Middleware** (`/backend/src/common/middlewares/otp.middleware.ts`):
+- Centralizes OTP verification logic across all protected routes
+- Automatically validates OTP and attaches customer data to requests
+- Supports OTP in request body (POST/PUT/DELETE) or query params (GET)
+- Provides `AuthenticatedRequest` interface with customer data
+
+Usage:
+```typescript
+router.post('/protected-route',
+  validationMiddleware(YourDto),
+  otpAuthMiddleware, // Handles OTP verification
+  asyncHandler(async (req: AuthenticatedRequest, res) => {
+    const customer = req.customer; // Already validated
+    // Your business logic here
+  })
+);
+```
 
 ### Type System
 

@@ -15,7 +15,7 @@ import { envValidator, env } from './common/config/envValidator';
 import { globalErrorHandler, asyncHandler } from './common/middlewares/errorHandler';
 import { validationMiddleware, queryValidationMiddleware } from './common/middlewares/validation.middleware';
 import { VerifyOtpDto, InvalidateOtpDto } from './dto/otp';
-import { CreateCustomerAddressDto, GetAddressesQueryDto, UpdateAddressDto } from './dto/address';
+import { AddressDto, GetAddressesQueryDto, UpdateAddressDto } from './dto/address';
 import { SendMessageDto } from './dto/whatsapp';
 import { CreateOrderDto } from './services/orders/dto/create-order.dto';
 
@@ -85,11 +85,11 @@ app.post('/backend/otp/invalidate',
 
 // Customer addresses endpoints
 app.post('/backend/customer/:customerId/addresses',
-  validationMiddleware(CreateCustomerAddressDto),
+  validationMiddleware(AddressDto),
   asyncHandler(async (req: Request, res: Response) => {
     const { customerId } = req.params;
     const addressData = {
-      ...req.body as CreateCustomerAddressDto,
+      ...req.body as AddressDto,
       customer: { connect: { id: customerId } }
     };
   const address = await DeliveryInfoService.createCustomerAddress(addressData);
