@@ -148,14 +148,49 @@ Middleware Pipeline:
 
 ### Error Handling
 
-Centralized error service with WhatsApp-friendly messages:
-```typescript
-throw new BusinessLogicError(
-  ErrorCode.CUSTOMER_NOT_FOUND,
-  'Customer not found',
-  { customerId: data.customerId }
-);
-```
+**Global Error Handler Middleware**: All Express routes now use a centralized error handling system:
+
+1. **Error Handler Middleware** (`/backend/src/common/middlewares/errorHandler.ts`):
+   - Consistent error response format across all APIs
+   - Automatic HTTP status code mapping
+   - Request ID tracking for debugging
+   - Environment-aware error details (more info in development)
+   - Special handling for Prisma database errors
+
+2. **Usage Pattern**:
+   ```typescript
+   // Routes use asyncHandler wrapper
+   router.post('/route', asyncHandler(async (req, res) => {
+     // Throw custom errors - no try/catch needed
+     throw new BusinessLogicError(
+       ErrorCode.CUSTOMER_NOT_FOUND,
+       'Customer not found',
+       { customerId: data.customerId }
+     );
+   }));
+   ```
+
+3. **Error Response Format**:
+   ```json
+   {
+     "error": {
+       "code": "BL001",
+       "message": "User-friendly error message",
+       "type": "BUSINESS_LOGIC",
+       "timestamp": "2025-01-20T10:30:00.000Z",
+       "requestId": "req_1234567890_abc123",
+       "details": {} // Only in development
+     }
+   }
+   ```
+
+4. **Status Code Mapping**:
+   - `ValidationError` → 400 Bad Request
+   - `NotFoundError` → 404 Not Found
+   - `BusinessLogicError` → 409 Conflict
+   - `RateLimitError` → 429 Too Many Requests
+   - `ExternalServiceError` → 502 Bad Gateway
+   - `TechnicalError` → 500 Internal Server Error
 
 ### Type System
 

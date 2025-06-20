@@ -5,7 +5,6 @@ import webhookRoutes from './routes/webhook';
 import syncRoutes from './routes/sync';
 import addressRegistrationRoutes from './routes/address-registration';
 import addressSelectionRoutes from './routes/address-selection';
-import testErrorRoutes from './routes/test-error-handler';
 import logger from './common/utils/logger';
 import { OTPService } from './services/security/OTPService';
 import { PreOrderService } from './services/orders/PreOrderService';
@@ -13,6 +12,11 @@ import { WhatsAppService } from './services/whatsapp';
 import { DeliveryInfoService } from './services/orders/services/DeliveryInfoService';
 import { envValidator, env } from './common/config/envValidator';
 import { globalErrorHandler, asyncHandler } from './common/middlewares/errorHandler';
+import { validationMiddleware, queryValidationMiddleware } from './common/middlewares/validation.middleware';
+import { VerifyOtpDto, InvalidateOtpDto } from './dto/otp';
+import { CreateCustomerAddressDto, GetAddressesQueryDto, UpdateAddressDto, SetDefaultAddressDto, DeleteAddressDto } from './dto/address';
+import { SendMessageDto } from './dto/whatsapp';
+import { CreateOrderDto } from './services/orders/dto/create-order.dto';
 
 // Validate environment variables
 try {
@@ -60,35 +64,42 @@ app.use('/backend/webhook', webhookRoutes);
 app.use('/backend/sync', syncRoutes);
 app.use('/backend/address-registration', addressRegistrationRoutes);
 app.use('/backend/address-selection', addressSelectionRoutes);
-app.use('/backend/test-errors', testErrorRoutes); // Remove in production
 
 // OTP endpoints
-app.post('/backend/otp/verify', asyncHandler(async (req: Request, res: Response) => {
-  const { customerId, otp } = req.body;
+app.post('/backend/otp/verify',
+  validationMiddleware(VerifyOtpDto),
+  asyncHandler(async (req: Request, res: Response) => {
+    const { customerId, otp } = req.body as VerifyOtpDto;
   const isValid = await OTPService.verifyOTP(customerId, otp);
   res.json({ valid: isValid });
 }));
 
-app.post('/backend/otp/invalidate', asyncHandler(async (req: Request, res: Response) => {
-  const { customerId } = req.body;
+app.post('/backend/otp/invalidate',
+  validationMiddleware(InvalidateOtpDto),
+  asyncHandler(async (req: Request, res: Response) => {
+    const { customerId } = req.body as InvalidateOtpDto;
   await OTPService.invalidateOTP(customerId);
   res.json({ success: true });
 }));
 
 // Customer addresses endpoints
-app.post('/backend/customer/:customerId/addresses', asyncHandler(async (req: Request, res: Response) => {
-  const { customerId } = req.params;
-  const addressData = {
-    ...req.body,
-    customer: { connect: { customerId } }
-  };
+app.post('/backend/customer/:customerId/addresses',
+  validationMiddleware(CreateCustomerAddressDto),
+  asyncHandler(async (req: Request, res: Response) => {
+    const { customerId } = req.params;
+    const addressData = {
+      ...req.body as CreateCustomerAddressDto,
+      customer: { connect: { id: customerId } }
+    };
   const address = await DeliveryInfoService.createCustomerAddress(addressData);
   res.json(address);
 }));
 
-app.get('/backend/customer/:customerId/addresses', asyncHandler(async (req: Request, res: Response) => {
-  const { customerId } = req.params;
-  const includeInactive = req.query.includeInactive === 'true';
+app.get('/backend/customer/:customerId/addresses',
+  queryValidationMiddleware(GetAddressesQueryDto),
+  asyncHandler(async (req: Request, res: Response) => {
+    const { customerId } = req.params;
+    const { includeInactive } = req.query as unknown as GetAddressesQueryDto;
   const addresses = await DeliveryInfoService.getCustomerAddresses(customerId, includeInactive);
   res.json(addresses);
 }));
@@ -107,39 +118,49 @@ app.get('/backend/customer/:customerId/addresses/default', asyncHandler(async (r
   res.json(address);
 }));
 
-app.put('/backend/addresses/:addressId', asyncHandler(async (req: Request, res: Response) => {
-  const { addressId } = req.params;
-  const address = await DeliveryInfoService.updateCustomerAddress(
-    addressId,
-    req.body
-  );
+app.put('/backend/addresses/:addressId',
+  validationMiddleware(UpdateAddressDto),
+  asyncHandler(async (req: Request, res: Response) => {
+    const { addressId } = req.params;
+    const address = await DeliveryInfoService.updateCustomerAddress(
+      addressId,
+      req.body as UpdateAddressDto
+    );
   res.json(address);
 }));
 
-app.put('/backend/addresses/:addressId/set-default', asyncHandler(async (req: Request, res: Response) => {
-  const { addressId } = req.params;
-  const { customerId } = req.body;
+app.put('/backend/addresses/:addressId/set-default',
+  validationMiddleware(SetDefaultAddressDto),
+  asyncHandler(async (req: Request, res: Response) => {
+    const { addressId } = req.params;
+    const { customerId } = req.body as SetDefaultAddressDto;
   const address = await DeliveryInfoService.setDefaultAddress(addressId, customerId);
   res.json(address);
 }));
 
-app.delete('/backend/addresses/:addressId', asyncHandler(async (req: Request, res: Response) => {
-  const { addressId } = req.params;
-  const { customerId } = req.body;
+app.delete('/backend/addresses/:addressId',
+  validationMiddleware(DeleteAddressDto),
+  asyncHandler(async (req: Request, res: Response) => {
+    const { addressId } = req.params;
+    const { customerId } = req.body as DeleteAddressDto;
   await DeliveryInfoService.deleteCustomerAddress(addressId, customerId);
   res.json({ success: true });
 }));
 
 // Pre-orders endpoint
-app.post('/backend/pre-orders/create', asyncHandler(async (req: Request, res: Response) => {
-  const preOrderService = new PreOrderService();
-  const result = await preOrderService.createPreOrder(req.body);
+app.post('/backend/pre-orders/create',
+  validationMiddleware(CreateOrderDto),
+  asyncHandler(async (req: Request, res: Response) => {
+    const preOrderService = new PreOrderService();
+    const result = await preOrderService.createPreOrder(req.body as CreateOrderDto);
   res.status(200).json(result);
 }));
 
 // WhatsApp send message endpoint
-app.post('/backend/whatsapp/send-message', asyncHandler(async (req: Request, res: Response) => {
-  const { to, message } = req.body;
+app.post('/backend/whatsapp/send-message',
+  validationMiddleware(SendMessageDto),
+  asyncHandler(async (req: Request, res: Response) => {
+    const { to, message } = req.body as SendMessageDto;
   const result = await WhatsAppService.sendMessage(to, message);
   res.json(result);
 }));

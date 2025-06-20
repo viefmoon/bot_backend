@@ -2,6 +2,10 @@ import { Router, Request, Response } from 'express';
 import { prisma } from '../server';
 import logger from '../common/utils/logger';
 import { sendWhatsAppInteractiveMessage } from '../services/whatsapp';
+import { asyncHandler } from '../common/middlewares/errorHandler';
+import { ValidationError, NotFoundError, ErrorCode } from '../common/services/errors';
+import { validationMiddleware } from '../common/middlewares/validation.middleware';
+import { SendAddressSelectionDto, UpdateAddressSelectionDto } from './dto/address-selection';
 
 const router = Router();
 
@@ -9,36 +13,33 @@ const router = Router();
  * Send address selection message to customer
  * POST /backend/address-selection/send
  */
-router.post('/send', async (req: Request, res: Response): Promise<void> => {
-  try {
-    const { customerId, preOrderId } = req.body;
-    
-    if (!customerId) {
-      res.status(400).json({ 
-        error: 'customerId is required' 
-      });
-      return;
-    }
-    
-    // Get customer with addresses
-    const customer = await prisma.customer.findUnique({
-      where: { id: customerId },
-      include: {
-        addresses: {
-          where: { deletedAt: null },
-          orderBy: [
-            { isDefault: 'desc' },
-            { createdAt: 'desc' }
-          ],
-          take: 5 // Limit to 5 addresses for WhatsApp list
-        }
+router.post('/send',
+  validationMiddleware(SendAddressSelectionDto),
+  asyncHandler(async (req: Request, res: Response) => {
+    const { customerId, preOrderId } = req.body as SendAddressSelectionDto;
+  
+  // Get customer with addresses
+  const customer = await prisma.customer.findUnique({
+    where: { id: customerId },
+    include: {
+      addresses: {
+        where: { deletedAt: null },
+        orderBy: [
+          { isDefault: 'desc' },
+          { createdAt: 'desc' }
+        ],
+        take: 5 // Limit to 5 addresses for WhatsApp list
       }
-    });
-    
-    if (!customer) {
-      res.status(404).json({ error: 'Customer not found' });
-      return;
     }
+  });
+  
+  if (!customer) {
+    throw new NotFoundError(
+      ErrorCode.CUSTOMER_NOT_FOUND,
+      'Customer not found',
+      { customerId }
+    );
+  }
     
     if (customer.addresses.length === 0) {
       // No addresses, send link to add one
@@ -157,63 +158,42 @@ router.post('/send', async (req: Request, res: Response): Promise<void> => {
       hasAddresses: true,
       addressCount: customer.addresses.length
     });
-    
-  } catch (error: any) {
-    logger.error('Error sending address selection:', error);
-    res.status(500).json({ 
-      error: 'Failed to send address selection',
-      message: error.message 
-    });
-  }
-});
+}));
 
 /**
  * Update selected address for preorder
  * POST /backend/address-selection/update
  */
-router.post('/update', async (req: Request, res: Response): Promise<void> => {
-  try {
-    const { preOrderId, addressId, customerId } = req.body;
-    
-    if (!preOrderId || !addressId || !customerId) {
-      res.status(400).json({ 
-        error: 'preOrderId, addressId, and customerId are required' 
-      });
-      return;
+router.post('/update',
+  validationMiddleware(UpdateAddressSelectionDto),
+  asyncHandler(async (req: Request, res: Response) => {
+    const { preOrderId, addressId, customerId } = req.body as UpdateAddressSelectionDto;
+  
+  // Verify address belongs to customer
+  const address = await prisma.address.findFirst({
+    where: { 
+      id: addressId,
+      customerId,
+      deletedAt: null
     }
-    
-    // Verify address belongs to customer
-    const address = await prisma.address.findFirst({
-      where: { 
-        id: addressId,
-        customerId,
-        deletedAt: null
-      }
-    });
-    
-    if (!address) {
-      res.status(404).json({ 
-        error: 'Address not found or does not belong to customer' 
-      });
-      return;
-    }
-    
-    // Update preorder with selected address
-    await updatePreOrderAddress(preOrderId, addressId);
-    
-    res.json({ 
-      success: true,
-      message: 'PreOrder address updated successfully'
-    });
-    
-  } catch (error: any) {
-    logger.error('Error updating preorder address:', error);
-    res.status(500).json({ 
-      error: 'Failed to update address',
-      message: error.message 
-    });
+  });
+  
+  if (!address) {
+    throw new NotFoundError(
+      ErrorCode.ADDRESS_NOT_FOUND,
+      'Address not found or does not belong to customer',
+      { addressId, customerId }
+    );
   }
-});
+  
+  // Update preorder with selected address
+  await updatePreOrderAddress(preOrderId, addressId);
+  
+  res.json({ 
+    success: true,
+    message: 'PreOrder address updated successfully'
+  });
+}));
 
 // Helper functions
 function formatAddress(address: any): string {
@@ -251,7 +231,10 @@ async function updatePreOrderAddress(preOrderId: number, addressId: string): Pro
   });
   
   if (!address) {
-    throw new Error('Address not found');
+    throw new NotFoundError(
+      ErrorCode.ADDRESS_NOT_FOUND,
+      'Address not found'
+    );
   }
   
   // Get existing preorder delivery info
@@ -261,7 +244,11 @@ async function updatePreOrderAddress(preOrderId: number, addressId: string): Pro
   });
   
   if (!preOrder) {
-    throw new Error('PreOrder not found');
+    throw new NotFoundError(
+      ErrorCode.ORDER_NOT_FOUND,
+      'PreOrder not found',
+      { preOrderId }
+    );
   }
   
   const deliveryInfoData = {

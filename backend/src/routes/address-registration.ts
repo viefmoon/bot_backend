@@ -3,6 +3,17 @@ import { OTPService } from '../services/security/OTPService';
 import { DeliveryInfoService } from '../services/orders/services/DeliveryInfoService';
 import { prisma } from '../server';
 import logger from '../common/utils/logger';
+import { asyncHandler } from '../common/middlewares/errorHandler';
+import { ValidationError, NotFoundError, ErrorCode } from '../common/services/errors';
+import { validationMiddleware, queryValidationMiddleware } from '../common/middlewares/validation.middleware';
+import {
+  VerifyOtpDto,
+  CreateAddressDto,
+  UpdateAddressDto,
+  GetAddressesQueryDto,
+  DeleteAddressDto,
+  SetDefaultAddressDto
+} from './dto/address-registration';
 
 const router = Router();
 
@@ -10,98 +21,72 @@ const router = Router();
  * Verificar OTP para registro de dirección
  * POST /backend/address-registration/verify-otp
  */
-router.post('/verify-otp', async (req: Request, res: Response): Promise<void> => {
-  try {
-    const { customerId, otp } = req.body;
-    
-    if (!customerId || !otp) {
-      res.status(400).json({ 
-        error: 'customerId and otp are required' 
-      });
-      return;
-    }
-    
-    const isValid = await OTPService.verifyOTP(customerId, otp);
-    
-    if (!isValid) {
-      res.status(401).json({ 
-        error: 'Invalid or expired OTP' 
-      });
-      return;
-    }
-    
-    // Obtener información del cliente
-    const customer = await prisma.customer.findUnique({
-      where: { whatsappPhoneNumber: customerId },
-      select: {
-        id: true,
-        whatsappPhoneNumber: true,
-        firstName: true,
-        lastName: true,
-        addresses: {
-          where: { deletedAt: null },
-          orderBy: { isDefault: 'desc' }
-        }
-      }
-    });
-    
-    if (!customer) {
-      res.status(404).json({ error: 'Customer not found' });
-      return;
-    }
-    
-    res.json({ 
-      valid: true,
-      customer: {
-        customerId: customer.whatsappPhoneNumber,
-        firstName: customer.firstName,
-        lastName: customer.lastName,
-        hasAddresses: customer.addresses.length > 0,
-        addresses: customer.addresses
-      }
-    });
-    
-  } catch (error: any) {
-    logger.error('Error verifying OTP for address registration:', error);
-    res.status(500).json({ error: 'Internal server error' });
+router.post('/verify-otp', 
+  validationMiddleware(VerifyOtpDto),
+  asyncHandler(async (req: Request, res: Response) => {
+    const { customerId, otp } = req.body as VerifyOtpDto;
+  
+  const isValid = await OTPService.verifyOTP(customerId, otp);
+  
+  if (!isValid) {
+    throw new ValidationError(
+      ErrorCode.INVALID_OTP,
+      'Invalid or expired OTP'
+    );
   }
-});
+  
+  // Obtener información del cliente
+  const customer = await prisma.customer.findUnique({
+    where: { whatsappPhoneNumber: customerId },
+    select: {
+      id: true,
+      whatsappPhoneNumber: true,
+      firstName: true,
+      lastName: true,
+      addresses: {
+        where: { deletedAt: null },
+        orderBy: { isDefault: 'desc' }
+      }
+    }
+  });
+  
+  if (!customer) {
+    throw new NotFoundError(
+      ErrorCode.CUSTOMER_NOT_FOUND,
+      'Customer not found',
+      { customerId }
+    );
+  }
+  
+  res.json({ 
+    valid: true,
+    customer: {
+      customerId: customer.whatsappPhoneNumber,
+      firstName: customer.firstName,
+      lastName: customer.lastName,
+      hasAddresses: customer.addresses.length > 0,
+      addresses: customer.addresses
+    }
+  });
+}));
 
 /**
  * Crear nueva dirección para el cliente
  * POST /backend/address-registration/create
  */
-router.post('/create', async (req: Request, res: Response): Promise<void> => {
-  try {
-    const { customerId, otp, address } = req.body;
-    
-    // Validar campos requeridos
-    if (!customerId || !otp || !address) {
-      res.status(400).json({ 
-        error: 'customerId, otp, and address are required' 
-      });
-      return;
-    }
+router.post('/create',
+  validationMiddleware(CreateAddressDto),
+  asyncHandler(async (req: Request, res: Response) => {
+    const { customerId, otp, address } = req.body as CreateAddressDto;
     
     // Verificar OTP primero
     const isValid = await OTPService.verifyOTP(customerId, otp);
     
     if (!isValid) {
-      res.status(401).json({ 
-        error: 'Invalid or expired OTP' 
-      });
-      return;
-    }
-    
-    // Validar campos de dirección
-    const requiredFields = ['street', 'number', 'city', 'state', 'country', 'latitude', 'longitude'];
-    const missingFields = requiredFields.filter(field => !address[field]);
-    
-    if (missingFields.length > 0) {
-      res.status(400).json({ 
-        error: `Missing required address fields: ${missingFields.join(', ')}` 
-      });
-      return;
+      throw new ValidationError(
+        ErrorCode.INVALID_OTP,
+        'Invalid or expired OTP'
+      );
     }
     
     // Obtener primero el UUID real del cliente
@@ -111,8 +96,11 @@ router.post('/create', async (req: Request, res: Response): Promise<void> => {
     });
     
     if (!customerRecord) {
-      res.status(404).json({ error: 'Customer not found' });
-      return;
+      throw new NotFoundError(
+        ErrorCode.CUSTOMER_NOT_FOUND,
+        'Customer not found',
+        { customerId }
+      );
     }
     
     // Crear dirección
@@ -168,40 +156,27 @@ router.post('/create', async (req: Request, res: Response): Promise<void> => {
       success: true,
       address: newAddress
     });
-    
-  } catch (error: any) {
-    logger.error('Error creating address:', error);
-    res.status(500).json({ 
-      error: 'Failed to create address',
-      message: error.message 
-    });
-  }
-});
+  })
+);
 
 /**
  * Actualizar dirección existente
  * PUT /backend/address-registration/:addressId
  */
-router.put('/:addressId', async (req: Request, res: Response): Promise<void> => {
-  try {
+router.put('/:addressId',
+  validationMiddleware(UpdateAddressDto),
+  asyncHandler(async (req: Request, res: Response) => {
     const { addressId } = req.params;
-    const { customerId, otp, address } = req.body;
-    
-    if (!customerId || !otp || !address) {
-      res.status(400).json({ 
-        error: 'customerId, otp, and address are required' 
-      });
-      return;
-    }
+    const { customerId, otp, address } = req.body as UpdateAddressDto;
     
     // Verificar OTP
     const isValid = await OTPService.verifyOTP(customerId, otp);
     
     if (!isValid) {
-      res.status(401).json({ 
-        error: 'Invalid or expired OTP' 
-      });
-      return;
+      throw new ValidationError(
+        ErrorCode.INVALID_OTP,
+        'Invalid or expired OTP'
+      );
     }
     
     // Obtener cliente por número de teléfono
@@ -211,8 +186,11 @@ router.put('/:addressId', async (req: Request, res: Response): Promise<void> => 
     });
     
     if (!customerRecord) {
-      res.status(404).json({ error: 'Customer not found' });
-      return;
+      throw new NotFoundError(
+        ErrorCode.CUSTOMER_NOT_FOUND,
+        'Customer not found',
+        { customerId }
+      );
     }
     
     // Verificar que la dirección pertenece al cliente
@@ -224,10 +202,11 @@ router.put('/:addressId', async (req: Request, res: Response): Promise<void> => 
     });
     
     if (!existingAddress) {
-      res.status(404).json({ 
-        error: 'Address not found or does not belong to customer' 
-      });
-      return;
+      throw new NotFoundError(
+        ErrorCode.ADDRESS_NOT_FOUND,
+        'Address not found or does not belong to customer',
+        { addressId, customerId: customerRecord.id }
+      );
     }
     
     // Actualizar dirección
@@ -281,82 +260,27 @@ router.put('/:addressId', async (req: Request, res: Response): Promise<void> => 
       success: true,
       address: updatedAddress
     });
-    
-  } catch (error: any) {
-    logger.error('Error updating address:', error);
-    res.status(500).json({ 
-      error: 'Failed to update address',
-      message: error.message 
-    });
-  }
-});
+  })
+);
 
 /**
  * Obtener direcciones del cliente
  * GET /backend/address-registration/:customerId/addresses
  */
-router.get('/:customerId/addresses', async (req: Request, res: Response): Promise<void> => {
-  try {
+router.get('/:customerId/addresses',
+  queryValidationMiddleware(GetAddressesQueryDto),
+  asyncHandler(async (req: Request, res: Response) => {
     const { customerId } = req.params;
-    const { otp } = req.query;
-    
-    if (!otp) {
-      res.status(400).json({ error: 'OTP is required' });
-      return;
-    }
-    
-    // Verificar OTP
-    const isValid = await OTPService.verifyOTP(customerId, otp as string);
-    
-    if (!isValid) {
-      res.status(401).json({ error: 'Invalid or expired OTP' });
-      return;
-    }
-    
-    // Obtener cliente por número de teléfono
-    const customerRecord = await prisma.customer.findUnique({
-      where: { whatsappPhoneNumber: customerId },
-      select: { id: true }
-    });
-    
-    if (!customerRecord) {
-      res.status(404).json({ error: 'Customer not found' });
-      return;
-    }
-    
-    const addresses = await DeliveryInfoService.getCustomerAddresses(customerRecord.id);
-    res.json({ addresses });
-    
-  } catch (error: any) {
-    logger.error('Error fetching addresses:', error);
-    res.status(500).json({ error: 'Failed to fetch addresses' });
-  }
-});
-
-/**
- * Eliminar dirección del cliente
- * DELETE /backend/address-registration/:addressId
- */
-router.delete('/:addressId', async (req: Request, res: Response): Promise<void> => {
-  try {
-    const { addressId } = req.params;
-    const { customerId, otp } = req.body;
-    
-    if (!customerId || !otp) {
-      res.status(400).json({ 
-        error: 'customerId and otp are required' 
-      });
-      return;
-    }
+    const { otp } = req.query as unknown as GetAddressesQueryDto;
     
     // Verificar OTP
     const isValid = await OTPService.verifyOTP(customerId, otp);
     
     if (!isValid) {
-      res.status(401).json({ 
-        error: 'Invalid or expired OTP' 
-      });
-      return;
+      throw new ValidationError(
+        ErrorCode.INVALID_OTP,
+        'Invalid or expired OTP'
+      );
     }
     
     // Obtener cliente por número de teléfono
@@ -366,8 +290,50 @@ router.delete('/:addressId', async (req: Request, res: Response): Promise<void> 
     });
     
     if (!customerRecord) {
-      res.status(404).json({ error: 'Customer not found' });
-      return;
+      throw new NotFoundError(
+        ErrorCode.CUSTOMER_NOT_FOUND,
+        'Customer not found',
+        { customerId }
+      );
+    }
+    
+    const addresses = await DeliveryInfoService.getCustomerAddresses(customerRecord.id);
+    res.json({ addresses });
+  })
+);
+
+/**
+ * Eliminar dirección del cliente
+ * DELETE /backend/address-registration/:addressId
+ */
+router.delete('/:addressId',
+  validationMiddleware(DeleteAddressDto),
+  asyncHandler(async (req: Request, res: Response) => {
+    const { addressId } = req.params;
+    const { customerId, otp } = req.body as DeleteAddressDto;
+    
+    // Verificar OTP
+    const isValid = await OTPService.verifyOTP(customerId, otp);
+    
+    if (!isValid) {
+      throw new ValidationError(
+        ErrorCode.INVALID_OTP,
+        'Invalid or expired OTP'
+      );
+    }
+    
+    // Obtener cliente por número de teléfono
+    const customerRecord = await prisma.customer.findUnique({
+      where: { whatsappPhoneNumber: customerId },
+      select: { id: true }
+    });
+    
+    if (!customerRecord) {
+      throw new NotFoundError(
+        ErrorCode.CUSTOMER_NOT_FOUND,
+        'Customer not found',
+        { customerId }
+      );
     }
     
     // Eliminar dirección (eliminación suave)
@@ -380,40 +346,27 @@ router.delete('/:addressId', async (req: Request, res: Response): Promise<void> 
       success: true,
       message: 'Address deleted successfully'
     });
-    
-  } catch (error: any) {
-    logger.error('Error deleting address:', error);
-    res.status(500).json({ 
-      error: 'Failed to delete address',
-      message: error.message 
-    });
-  }
-});
+  })
+);
 
 /**
  * Establecer dirección como predeterminada
  * PUT /backend/address-registration/:addressId/default
  */
-router.put('/:addressId/default', async (req: Request, res: Response): Promise<void> => {
-  try {
+router.put('/:addressId/default',
+  validationMiddleware(SetDefaultAddressDto),
+  asyncHandler(async (req: Request, res: Response) => {
     const { addressId } = req.params;
-    const { customerId, otp } = req.body;
-    
-    if (!customerId || !otp) {
-      res.status(400).json({ 
-        error: 'customerId and otp are required' 
-      });
-      return;
-    }
+    const { customerId, otp } = req.body as SetDefaultAddressDto;
     
     // Verificar OTP
     const isValid = await OTPService.verifyOTP(customerId, otp);
     
     if (!isValid) {
-      res.status(401).json({ 
-        error: 'Invalid or expired OTP' 
-      });
-      return;
+      throw new ValidationError(
+        ErrorCode.INVALID_OTP,
+        'Invalid or expired OTP'
+      );
     }
     
     // Obtener cliente por número de teléfono
@@ -423,8 +376,11 @@ router.put('/:addressId/default', async (req: Request, res: Response): Promise<v
     });
     
     if (!customerRecord) {
-      res.status(404).json({ error: 'Customer not found' });
-      return;
+      throw new NotFoundError(
+        ErrorCode.CUSTOMER_NOT_FOUND,
+        'Customer not found',
+        { customerId }
+      );
     }
     
     // Establecer como predeterminada
@@ -437,22 +393,14 @@ router.put('/:addressId/default', async (req: Request, res: Response): Promise<v
       success: true,
       address: updatedAddress
     });
-    
-  } catch (error: any) {
-    logger.error('Error setting default address:', error);
-    res.status(500).json({ 
-      error: 'Failed to set default address',
-      message: error.message 
-    });
-  }
-});
+  })
+);
 
 /**
  * Obtener polígono del área de entrega
  * GET /backend/address-registration/delivery-area
  */
-router.get('/delivery-area', async (_req: Request, res: Response): Promise<void> => {
-  try {
+router.get('/delivery-area', asyncHandler(async (_req: Request, res: Response) => {
     // Obtener configuración del restaurante
     const restaurant = await prisma.restaurantConfig.findFirst({
       select: {
@@ -469,23 +417,19 @@ router.get('/delivery-area', async (_req: Request, res: Response): Promise<void>
     res.json({ 
       polygonCoords: restaurant.deliveryCoverageArea
     });
-
-  } catch (error: any) {
-    logger.error('Error fetching delivery area:', error);
-    res.status(500).json({ error: 'Failed to fetch delivery area' });
-  }
-});
+  })
+);
 
 /**
  * Estado de depuración del OTP (TEMPORAL - ELIMINAR EN PRODUCCIÓN)
  * GET /backend/address-registration/debug/otp-status
  */
-router.get('/debug/otp-status', async (req: Request, res: Response): Promise<void> => {
+router.get('/debug/otp-status', asyncHandler(async (_req: Request, res: Response) => {
   const stats = OTPService.getStats();
   res.json({ 
     otpStats: stats,
     message: 'Check server logs for detailed OTP information'
   });
-});
+}));
 
 export default router;
