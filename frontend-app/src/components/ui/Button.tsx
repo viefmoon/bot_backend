@@ -2,7 +2,7 @@ import { forwardRef } from 'react';
 import { clsx } from 'clsx';
 
 interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: 'primary' | 'secondary' | 'danger';
+  variant?: 'primary' | 'secondary' | 'danger' | 'outline';
   size?: 'sm' | 'md' | 'lg';
   isLoading?: boolean;
   fullWidth?: boolean;
@@ -25,6 +25,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
       primary: 'bg-blue-600 text-white hover:bg-blue-700 disabled:bg-gray-400',
       secondary: 'bg-gray-200 text-gray-800 hover:bg-gray-300 disabled:bg-gray-100',
       danger: 'bg-red-600 text-white hover:bg-red-700 disabled:bg-gray-400',
+      outline: 'border border-gray-300 text-gray-700 hover:bg-gray-50 disabled:bg-gray-100',
     };
 
     const sizes = {

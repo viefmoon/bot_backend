@@ -1,12 +1,19 @@
-import { useState, useEffect } from 'react';
+import { useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useLoadScript, Autocomplete } from '@react-google-maps/api';
 import toast, { Toaster } from 'react-hot-toast';
 import { AddressForm } from '@/components/AddressForm';
 import { BasicMap as Map } from '@/components/BasicMap';
 import { Button } from '@/components/ui';
-import customerService from '@/services/customer.service';
-import type { AddressFormData, Customer, Address } from '@/types';
+import { useAddressRegistrationStore } from '@/store/addressRegistrationStore';
+import { 
+  useVerifyOtp, 
+  useCreateAddress, 
+  useUpdateAddress, 
+  useDeliveryArea,
+  useSendPreOrderMessage 
+} from '@/hooks/useAddressQueries';
+import type { AddressFormData, Address } from '@/types';
 
 const libraries: ('places' | 'geometry')[] = ['places', 'geometry'];
 
@@ -15,80 +22,79 @@ interface Location {
   lng: number;
 }
 
-function App() {
+export function AddressRegistration() {
   const [searchParams] = useSearchParams();
-  const customerId = searchParams.get('from') || '';
-  const otp = searchParams.get('otp') || '';
-  const preOrderId = searchParams.get('preOrderId');
+  
+  // Get store state and actions
+  const {
+    customerId,
+    otp,
+    preOrderId,
+    customer,
+    formData,
+    isValidating,
+    isSaving,
+    editingAddressId,
+    setSession,
+    setCustomer,
+    setFormData,
+    updateFormField,
+    setValidating,
+    setSaving,
+    setError,
+    setEditingAddressId,
+    resetForm,
+  } = useAddressRegistrationStore();
 
-  const [isValidOtp, setIsValidOtp] = useState(false);
-  const [loading, setLoading] = useState(true);
-  const [customer, setCustomer] = useState<Customer | null>(null);
-  const [selectedAddress, setSelectedAddress] = useState<Address | null>(null);
-  const [selectedLocation, setSelectedLocation] = useState<Location | null>(null);
-  const [formData, setFormData] = useState<AddressFormData>({
-    street: '',
-    number: '',
-    interiorNumber: '',
-    neighborhood: '',
-    zipCode: '',
-    city: '',
-    state: '',
-    country: '',
-    references: '',
-    latitude: 0,
-    longitude: 0,
-  });
-  const [isUpdating, setIsUpdating] = useState(false);
-  const [locationError, setLocationError] = useState<string | null>(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [autocomplete, setAutocomplete] = useState<google.maps.places.Autocomplete | null>(null);
+  // Initialize session from URL params
+  useEffect(() => {
+    const urlCustomerId = searchParams.get('from') || '';
+    const urlOtp = searchParams.get('otp') || '';
+    const urlPreOrderId = searchParams.get('preOrderId') || null;
+    
+    if (urlCustomerId && urlOtp) {
+      setSession(urlCustomerId, urlOtp, urlPreOrderId || undefined);
+    }
+  }, [searchParams, setSession]);
 
+  // Google Maps
   const { isLoaded, loadError } = useLoadScript({
     googleMapsApiKey: import.meta.env.VITE_GOOGLE_MAPS_API_KEY,
     libraries,
   });
 
-  const polygonCoords: Location[] = import.meta.env.VITE_POLYGON_COORDS 
-    ? JSON.parse(import.meta.env.VITE_POLYGON_COORDS)
-    : [];
+  // React Query hooks
+  const { data: otpData, isLoading: isVerifying } = useVerifyOtp(
+    customerId && otp ? { customerId, otp } : null
+  );
+  
+  const { data: deliveryAreaData } = useDeliveryArea();
+  const createAddressMutation = useCreateAddress();
+  const updateAddressMutation = useUpdateAddress();
+  const sendPreOrderMutation = useSendPreOrderMessage();
 
+  // Handle OTP verification response
   useEffect(() => {
-    if (customerId && otp) {
-      verifyOtp();
-    } else {
-      setLoading(false);
-      toast.error('El enlace no es válido. Falta información necesaria.');
-    }
-  }, [customerId, otp]);
-
-  const verifyOtp = async () => {
-    try {
-      const response = await customerService.verifyOTP(customerId, otp);
-      
-      if (response.valid && response.customer) {
-        setIsValidOtp(true);
-        setCustomer(response.customer);
+    if (otpData) {
+      if (otpData.valid && otpData.customer) {
+        setCustomer(otpData.customer);
+        setValidating(false);
         
         // If customer has addresses, load the default one
-        if (response.customer.addresses.length > 0) {
-          const defaultAddress = response.customer.addresses.find(addr => addr.isDefault) || response.customer.addresses[0];
+        if (otpData.customer.addresses.length > 0) {
+          const defaultAddress = otpData.customer.addresses.find((addr: Address) => addr.isDefault) 
+            || otpData.customer.addresses[0];
           loadExistingAddress(defaultAddress);
         }
       } else {
+        setError('El enlace ha expirado o no es válido.');
         toast.error('El enlace ha expirado o no es válido.');
       }
-    } catch (error) {
-      console.error('Error al verificar el OTP:', error);
-      toast.error('Hubo un error al verificar el enlace.');
-    } finally {
-      setLoading(false);
     }
-  };
+  }, [otpData, setCustomer, setValidating, setError]);
 
   const loadExistingAddress = (address: Address) => {
-    setSelectedAddress(address);
-    setIsUpdating(true);
+    setEditingAddressId(address.id);
     
     const formattedData: AddressFormData = {
       street: address.street,
@@ -96,98 +102,83 @@ function App() {
       interiorNumber: address.interiorNumber || '',
       neighborhood: address.neighborhood || '',
       zipCode: address.zipCode || '',
-      city: address.city || '',
-      state: address.state || '',
-      country: address.country || '',
+      city: address.city,
+      state: address.state,
+      country: address.country,
       references: address.references || '',
-      latitude: address.latitude || 0,
-      longitude: address.longitude || 0,
+      latitude: Number(address.latitude),
+      longitude: Number(address.longitude),
     };
 
     setFormData(formattedData);
-    
-    if (address.latitude && address.longitude) {
-      setSelectedLocation({
-        lat: Number(address.latitude),
-        lng: Number(address.longitude),
-      });
-    }
   };
 
   const handleLocationSelect = (location: Location) => {
-    setSelectedLocation(location);
-    setLocationError(null);
+    updateFormField('latitude', location.lat);
+    updateFormField('longitude', location.lng);
     
-    // Reverse geocoding to get address details
+    // Reverse geocoding
     const geocoder = new google.maps.Geocoder();
     geocoder.geocode({ location }, (results, status) => {
       if (status === 'OK' && results && results[0]) {
         const addressComponents = results[0].address_components;
-        const formattedAddress = results[0].formatted_address;
         
-        const newFormData: Partial<AddressFormData> = {
-          latitude: location.lat,
-          longitude: location.lng,
-        };
-
+        const updates: Partial<AddressFormData> = {};
+        
         addressComponents.forEach((component) => {
           const types = component.types;
           if (types.includes('route')) {
-            newFormData.street = component.long_name;
+            updates.street = component.long_name;
           } else if (types.includes('street_number')) {
-            newFormData.number = component.long_name;
+            updates.number = component.long_name;
           } else if (types.includes('sublocality_level_1') || types.includes('neighborhood')) {
-            newFormData.neighborhood = component.long_name;
+            updates.neighborhood = component.long_name;
           } else if (types.includes('postal_code')) {
-            newFormData.zipCode = component.long_name;
+            updates.zipCode = component.long_name;
           } else if (types.includes('locality')) {
-            newFormData.city = component.long_name;
+            updates.city = component.long_name;
           } else if (types.includes('administrative_area_level_1')) {
-            newFormData.state = component.long_name;
+            updates.state = component.long_name;
           } else if (types.includes('country')) {
-            newFormData.country = component.long_name;
+            updates.country = component.long_name;
           }
         });
 
-        setFormData((prev) => ({ ...prev, ...newFormData }));
+        setFormData(updates);
       }
     });
   };
 
-  const handlePlaceSelect = () => {
-    if (autocomplete) {
-      const place = autocomplete.getPlace();
-      if (place.geometry && place.geometry.location) {
-        const location = {
-          lat: place.geometry.location.lat(),
-          lng: place.geometry.location.lng(),
-        };
-        handleLocationSelect(location);
-      }
-    }
-  };
-
   const handleSubmit = async (data: AddressFormData) => {
-    if (!selectedLocation) {
+    if (!data.latitude || !data.longitude) {
       toast.error('Por favor selecciona una ubicación en el mapa');
       return;
     }
 
-    setIsSubmitting(true);
+    if (!customerId || !otp) {
+      toast.error('Información de sesión no válida');
+      return;
+    }
+
+    setSaving(true);
     
     try {
-      if (isUpdating && selectedAddress) {
+      if (editingAddressId) {
         // Update existing address
-        await customerService.updateAddress(
-          selectedAddress.id,
+        await updateAddressMutation.mutateAsync({
+          addressId: editingAddressId,
           customerId,
           otp,
-          data
-        );
+          address: data,
+        });
         toast.success('¡Dirección actualizada exitosamente!');
       } else {
         // Create new address
-        await customerService.createAddress(customerId, otp, data);
+        await createAddressMutation.mutateAsync({
+          customerId,
+          otp,
+          address: data,
+        });
         toast.success('¡Dirección registrada exitosamente!');
       }
 
@@ -199,16 +190,21 @@ function App() {
       }, 1000);
 
       // If updating for a pre-order, notify backend
-      if (preOrderId) {
-        // The backend will handle the pre-order update
+      if (preOrderId && customer) {
+        await sendPreOrderMutation.mutateAsync({
+          customerId: customer.id,
+          preOrderId,
+        });
         toast.success('Tu pedido ha sido actualizado con la nueva dirección');
       }
+      
+      resetForm();
     } catch (error: any) {
       console.error('Error al guardar la dirección:', error);
       const errorMessage = error.response?.data?.error || 'Hubo un error al guardar la dirección';
       toast.error(errorMessage);
     } finally {
-      setIsSubmitting(false);
+      setSaving(false);
     }
   };
 
@@ -216,11 +212,10 @@ function App() {
     if ('geolocation' in navigator) {
       navigator.geolocation.getCurrentPosition(
         (position) => {
-          const location = {
+          handleLocationSelect({
             lat: position.coords.latitude,
             lng: position.coords.longitude,
-          };
-          handleLocationSelect(location);
+          });
         },
         (error) => {
           console.error('Error getting location:', error);
@@ -232,7 +227,8 @@ function App() {
     }
   };
 
-  if (loading) {
+  // Loading states
+  if (isVerifying || isValidating) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="text-center">
@@ -243,7 +239,7 @@ function App() {
     );
   }
 
-  if (!isValidOtp) {
+  if (!customer) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
         <div className="max-w-md w-full bg-white p-8 rounded-lg shadow-lg text-center">
@@ -289,25 +285,38 @@ function App() {
     );
   }
 
+  const selectedLocation = formData.latitude && formData.longitude 
+    ? { lat: formData.latitude, lng: formData.longitude } 
+    : null;
+
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-4xl mx-auto p-2">
         <div className="bg-white rounded-lg shadow-lg p-4 mb-4">
           <h1 className="text-2xl font-bold text-gray-900 mb-2">
-            {isUpdating ? 'Actualizar dirección de entrega' : 'Registrar dirección de entrega'}
+            {editingAddressId ? 'Actualizar dirección de entrega' : 'Registrar dirección de entrega'}
           </h1>
           
-          {customer && (
-            <p className="text-gray-600 mb-4">
-              Hola {customer.firstName || 'Cliente'}, por favor completa tu información de entrega.
-            </p>
-          )}
+          <p className="text-gray-600 mb-4">
+            Hola {customer.firstName || 'Cliente'}, por favor completa tu información de entrega.
+          </p>
 
           {/* Address Search */}
           <div className="mb-4">
             <Autocomplete
-              onLoad={setAutocomplete}
-              onPlaceChanged={handlePlaceSelect}
+              onPlaceChanged={() => {
+                // Handle place selection
+                const autocomplete = (window as any).autocomplete;
+                if (autocomplete) {
+                  const place = autocomplete.getPlace();
+                  if (place.geometry && place.geometry.location) {
+                    handleLocationSelect({
+                      lat: place.geometry.location.lat(),
+                      lng: place.geometry.location.lng(),
+                    });
+                  }
+                }
+              }}
               options={{
                 componentRestrictions: { country: 'mx' },
                 fields: ['address_components', 'geometry', 'formatted_address'],
@@ -343,19 +352,16 @@ function App() {
               center={selectedLocation || { lat: 20.6597, lng: -103.3496 }}
               onLocationSelect={handleLocationSelect}
               selectedLocation={selectedLocation}
-              polygonCoords={polygonCoords}
-              onLocationError={setLocationError}
+              polygonCoords={deliveryAreaData?.polygonCoords || []}
+              onLocationError={(error) => toast.error(error)}
             />
-            {locationError && (
-              <p className="mt-2 text-sm text-red-600">{locationError}</p>
-            )}
           </div>
 
           {/* Address Form */}
           <AddressForm
             formData={formData}
             onSubmit={handleSubmit}
-            isUpdating={isUpdating}
+            isUpdating={!!editingAddressId}
           />
 
           {/* Submit Button */}
@@ -363,25 +369,25 @@ function App() {
             <Button
               type="submit"
               onClick={() => handleSubmit(formData)}
-              disabled={isSubmitting || !selectedLocation}
-              loading={isSubmitting}
+              disabled={isSaving || !selectedLocation}
+              isLoading={isSaving}
               className="w-full"
             >
-              {isSubmitting 
+              {isSaving 
                 ? 'Guardando...' 
-                : isUpdating 
+                : editingAddressId 
                   ? 'Actualizar dirección' 
                   : 'Registrar dirección'
               }
             </Button>
           </div>
 
-          {/* List existing addresses if any */}
-          {customer && customer.addresses.length > 0 && !isUpdating && (
+          {/* List existing addresses */}
+          {customer.addresses.length > 0 && !editingAddressId && (
             <div className="mt-6 border-t pt-4">
               <h3 className="text-lg font-semibold mb-2">Mis direcciones guardadas</h3>
               <div className="space-y-2">
-                {customer.addresses.map((address) => (
+                {customer.addresses.map((address: Address) => (
                   <div 
                     key={address.id} 
                     className="p-3 border rounded-md hover:bg-gray-50 cursor-pointer"
@@ -416,4 +422,4 @@ function App() {
   );
 }
 
-export default App;
+export default AddressRegistration;

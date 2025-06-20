@@ -1,5 +1,5 @@
 import { Routes, Route } from 'react-router-dom';
-import AddressRegistration from './AddressRegistration';
+import AddressRegistration from './components/AddressRegistration';
 
 function Router() {
   return (

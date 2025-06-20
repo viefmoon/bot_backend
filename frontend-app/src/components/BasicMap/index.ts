@@ -1,1 +1,1 @@
-export { BasicMap } from './BasicMap';
+export { BasicMap } from './BasicMapRefactored';
