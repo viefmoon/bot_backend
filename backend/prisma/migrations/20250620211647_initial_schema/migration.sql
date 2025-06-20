@@ -1,3 +1,6 @@
+-- CreateExtension
+CREATE EXTENSION IF NOT EXISTS "vector";
+
 -- CreateEnum
 CREATE TYPE "OrderType" AS ENUM ('DINE_IN', 'TAKE_AWAY', 'DELIVERY');
 
@@ -137,18 +140,18 @@ CREATE TABLE "ModifierGroup" (
 -- CreateTable
 CREATE TABLE "Order" (
     "id" TEXT NOT NULL,
-    "dailyOrderNumber" INTEGER NOT NULL,
+    "dailyNumber" INTEGER NOT NULL,
     "orderType" "OrderType" NOT NULL,
-    "status" "OrderStatus" NOT NULL DEFAULT 'PENDING',
+    "orderStatus" "OrderStatus" NOT NULL DEFAULT 'PENDING',
     "paymentStatus" "PaymentStatus",
     "totalCost" DOUBLE PRECISION NOT NULL,
     "customerId" UUID NOT NULL,
     "estimatedTime" INTEGER NOT NULL DEFAULT 0,
-    "scheduledDeliveryTime" TIMESTAMP(3),
+    "scheduledAt" TIMESTAMP(3),
     "messageId" TEXT,
     "stripeSessionId" TEXT,
-    "finishedAt" TIMESTAMP(3),
     "syncedWithLocal" BOOLEAN NOT NULL DEFAULT false,
+    "isFromWhatsApp" BOOLEAN NOT NULL DEFAULT true,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
 
@@ -217,8 +220,8 @@ CREATE TABLE "PreOrder" (
     "id" SERIAL NOT NULL,
     "orderItems" JSONB NOT NULL,
     "orderType" "OrderType" NOT NULL,
-    "scheduledDeliveryTime" TIMESTAMP(3),
-    "customerId" UUID NOT NULL,
+    "scheduledAt" TIMESTAMP(3),
+    "whatsappPhoneNumber" TEXT NOT NULL,
     "messageId" TEXT,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
@@ -242,6 +245,7 @@ CREATE TABLE "Product" (
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
     "deletedAt" TIMESTAMP(3),
+    "embedding" vector(768),
 
     CONSTRAINT "Product_pkey" PRIMARY KEY ("id")
 );
@@ -393,6 +397,9 @@ CREATE UNIQUE INDEX "MessageRateLimit_whatsappPhoneNumber_key" ON "MessageRateLi
 CREATE UNIQUE INDEX "OrderDeliveryInfo_orderId_key" ON "OrderDeliveryInfo"("orderId");
 
 -- CreateIndex
+CREATE INDEX "PreOrder_whatsappPhoneNumber_idx" ON "PreOrder"("whatsappPhoneNumber");
+
+-- CreateIndex
 CREATE UNIQUE INDEX "BusinessHours_restaurantConfigId_dayOfWeek_key" ON "BusinessHours"("restaurantConfigId", "dayOfWeek");
 
 -- CreateIndex
@@ -436,9 +443,6 @@ ALTER TABLE "OrderItem" ADD CONSTRAINT "OrderItem_productId_fkey" FOREIGN KEY ("
 
 -- AddForeignKey
 ALTER TABLE "OrderItem" ADD CONSTRAINT "OrderItem_productVariantId_fkey" FOREIGN KEY ("productVariantId") REFERENCES "ProductVariant"("id") ON DELETE SET NULL ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "PreOrder" ADD CONSTRAINT "PreOrder_customerId_fkey" FOREIGN KEY ("customerId") REFERENCES "Customer"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "Product" ADD CONSTRAINT "Product_subcategoryId_fkey" FOREIGN KEY ("subcategoryId") REFERENCES "Subcategory"("id") ON DELETE RESTRICT ON UPDATE CASCADE;

@@ -128,6 +128,27 @@ npx prisma migrate deploy 2>/dev/null || npx prisma migrate dev --name init
 echo -e "\n${YELLOW}6. Agregando datos iniciales (menú)...${NC}"
 npm run seed
 
+# Paso 6.5: Configurar pgvector si está disponible
+echo -e "\n${YELLOW}6.5. Configurando búsqueda semántica (pgvector)...${NC}"
+if [ -f "./scripts/setup-local-pgvector.sh" ]; then
+    ./scripts/setup-local-pgvector.sh
+    if [ $? -eq 0 ]; then
+        echo -e "${GREEN}✅ pgvector configurado correctamente${NC}"
+        # Generar embeddings si la configuración fue exitosa
+        echo -e "${YELLOW}   Generando embeddings para productos...${NC}"
+        npm run seed:embeddings 2>/dev/null
+        if [ $? -eq 0 ]; then
+            echo -e "${GREEN}✅ Embeddings generados${NC}"
+        else
+            echo -e "${YELLOW}⚠️  No se pudieron generar embeddings (se generarán al iniciar)${NC}"
+        fi
+    else
+        echo -e "${YELLOW}⚠️  pgvector no pudo configurarse (búsqueda semántica no disponible)${NC}"
+    fi
+else
+    echo -e "${YELLOW}⚠️  Script de configuración no encontrado${NC}"
+fi
+
 # Paso 7: Verificar e instalar dependencias del frontend si existe
 if [ -d "../frontend-app" ] && [ -f "../frontend-app/package.json" ]; then
     echo -e "\n${YELLOW}7. Verificando frontend...${NC}"

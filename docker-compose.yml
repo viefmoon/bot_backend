@@ -1,23 +1,26 @@
+version: '3.8'
+
 services:
   postgres:
-    image: postgres:15-alpine
+    image: pgvector/pgvector:pg15
+    container_name: postgres_bot_backend
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: bot_db
+      POSTGRES_DB: bot_backend
     ports:
       - "5433:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+      - ./backend/scripts/init-pgvector.sql:/docker-entrypoint-initdb.d/01-init-pgvector.sql
+    restart: unless-stopped
 
   redis:
     image: redis:7-alpine
+    container_name: redis_bot_backend
     ports:
       - "6379:6379"
-    volumes:
-      - redis_data:/data
-    command: redis-server --appendonly yes
+    restart: unless-stopped
 
 volumes:
   postgres_data:
-  redis_data:
