@@ -6,8 +6,10 @@ import {
   ValidateNested,
   IsNotEmpty,
   IsNumber,
+  IsEnum,
 } from "class-validator";
 import { Type } from "class-transformer";
+import { OrderType } from '@prisma/client';
 
 class OrderItemDto {
   @IsString()
@@ -115,8 +117,8 @@ class OrderDeliveryInfoDto {
 }
 
 export class CreateOrderDto {
-  @IsString()
-  orderType: string;
+  @IsEnum(OrderType, { message: 'orderType must be a valid OrderType enum value' })
+  orderType: OrderType;
 
   @IsArray()
   @ValidateNested({ each: true })
@@ -129,7 +131,7 @@ export class CreateOrderDto {
   orderDeliveryInfo?: OrderDeliveryInfoDto;
 
   @IsString()
-  customerId: string;
+  whatsappPhoneNumber: string;
 
   @IsOptional()
   @IsDateString()

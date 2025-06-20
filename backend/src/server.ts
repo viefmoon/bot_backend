@@ -14,7 +14,7 @@ import { envValidator, env } from './common/config/envValidator';
 import { globalErrorHandler, asyncHandler } from './common/middlewares/errorHandler';
 import { validationMiddleware, queryValidationMiddleware } from './common/middlewares/validation.middleware';
 import { VerifyOtpDto, InvalidateOtpDto } from './dto/otp';
-import { CreateCustomerAddressDto, GetAddressesQueryDto, UpdateAddressDto, SetDefaultAddressDto, DeleteAddressDto } from './dto/address';
+import { CreateCustomerAddressDto, GetAddressesQueryDto, UpdateAddressDto } from './dto/address';
 import { SendMessageDto } from './dto/whatsapp';
 import { CreateOrderDto } from './services/orders/dto/create-order.dto';
 
@@ -69,18 +69,18 @@ app.use('/backend/address-selection', addressSelectionRoutes);
 app.post('/backend/otp/verify',
   validationMiddleware(VerifyOtpDto),
   asyncHandler(async (req: Request, res: Response) => {
-    const { customerId, otp } = req.body as VerifyOtpDto;
-  const isValid = await OTPService.verifyOTP(customerId, otp);
-  res.json({ valid: isValid });
-}));
+    const { whatsappPhoneNumber, otp } = req.body as VerifyOtpDto;
+    const isValid = await OTPService.verifyOTP(whatsappPhoneNumber, otp);
+    res.json({ valid: isValid });
+  }));
 
 app.post('/backend/otp/invalidate',
   validationMiddleware(InvalidateOtpDto),
   asyncHandler(async (req: Request, res: Response) => {
-    const { customerId } = req.body as InvalidateOtpDto;
-  await OTPService.invalidateOTP(customerId);
-  res.json({ success: true });
-}));
+    const { whatsappPhoneNumber } = req.body as InvalidateOtpDto;
+    await OTPService.invalidateOTP(whatsappPhoneNumber);
+    res.json({ success: true });
+  }));
 
 // Customer addresses endpoints
 app.post('/backend/customer/:customerId/addresses',
@@ -130,22 +130,50 @@ app.put('/backend/addresses/:addressId',
 }));
 
 app.put('/backend/addresses/:addressId/set-default',
-  validationMiddleware(SetDefaultAddressDto),
   asyncHandler(async (req: Request, res: Response) => {
     const { addressId } = req.params;
-    const { customerId } = req.body as SetDefaultAddressDto;
-  const address = await DeliveryInfoService.setDefaultAddress(addressId, customerId);
-  res.json(address);
-}));
+    
+    // Get the address to find the customerId
+    const existingAddress = await prisma.address.findUnique({
+      where: { id: addressId },
+      select: { customerId: true }
+    });
+    
+    if (!existingAddress) {
+      const { NotFoundError, ErrorCode } = await import('./common/services/errors');
+      throw new NotFoundError(
+        ErrorCode.ADDRESS_NOT_FOUND,
+        'Address not found',
+        { addressId }
+      );
+    }
+    
+    const address = await DeliveryInfoService.setDefaultAddress(addressId, existingAddress.customerId);
+    res.json(address);
+  }));
 
 app.delete('/backend/addresses/:addressId',
-  validationMiddleware(DeleteAddressDto),
   asyncHandler(async (req: Request, res: Response) => {
     const { addressId } = req.params;
-    const { customerId } = req.body as DeleteAddressDto;
-  await DeliveryInfoService.deleteCustomerAddress(addressId, customerId);
-  res.json({ success: true });
-}));
+    
+    // Get the address to find the customerId
+    const existingAddress = await prisma.address.findUnique({
+      where: { id: addressId },
+      select: { customerId: true }
+    });
+    
+    if (!existingAddress) {
+      const { NotFoundError, ErrorCode } = await import('./common/services/errors');
+      throw new NotFoundError(
+        ErrorCode.ADDRESS_NOT_FOUND,
+        'Address not found',
+        { addressId }
+      );
+    }
+    
+    await DeliveryInfoService.deleteCustomerAddress(addressId, existingAddress.customerId);
+    res.json({ success: true });
+  }));
 
 // Pre-orders endpoint
 app.post('/backend/pre-orders/create',

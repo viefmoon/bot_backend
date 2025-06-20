@@ -170,7 +170,7 @@ export class ProductService {
           
           // Ingredientes de pizza (si aplica)
           if (product.pizzaIngredients?.length > 0 && product.isPizza) {
-            const ingredients = product.pizzaIngredients.map(i => i.name).join(', ');
+            const ingredients = product.pizzaIngredients.map((i: any) => i.name).join(', ');
             menuText += `    _Ingredientes: ${ingredients}_\n`;
           }
           

@@ -1,6 +1,5 @@
 import { Router, Request, Response } from 'express';
 import { SyncService } from '../services/sync/SyncService';
-import logger from '../common/utils/logger';
 import { prisma } from '../server';
 import { asyncHandler } from '../common/middlewares/errorHandler';
 import { ValidationError, NotFoundError, ErrorCode } from '../common/services/errors';

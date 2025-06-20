@@ -7,6 +7,19 @@ import { NotFoundError, ErrorCode } from '../../common/services/errors';
 export class OrderService {
   async create(createOrderDto: CreateOrderDto) {
     try {
+      // Get customer by WhatsApp phone number
+      const customer = await prisma.customer.findUnique({
+        where: { whatsappPhoneNumber: createOrderDto.whatsappPhoneNumber }
+      });
+      
+      if (!customer) {
+        throw new NotFoundError(
+          ErrorCode.CUSTOMER_NOT_FOUND,
+          'Customer not found',
+          { whatsappPhoneNumber: createOrderDto.whatsappPhoneNumber }
+        );
+      }
+      
       // Generar el número de orden diario
       const today = new Date();
       today.setHours(0, 0, 0, 0);
@@ -39,7 +52,7 @@ export class OrderService {
         const newOrder = await tx.order.create({
           data: {
             orderType: createOrderDto.orderType as "DINE_IN" | "TAKE_AWAY" | "DELIVERY",
-            customerId: createOrderDto.customerId,
+            customerId: customer.id,
             scheduledAt: createOrderDto.scheduledAt ? new Date(createOrderDto.scheduledAt) : null,
             orderStatus: 'PENDING',
             dailyNumber,

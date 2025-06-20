@@ -305,32 +305,62 @@ export class DeliveryInfoService {
    */
   static async setDefaultAddress(
     addressId: string,
-    customerId: string
+    customerId?: string
   ): Promise<Address> {
     try {
+      // Get the address first to verify it exists and get customerId if not provided
+      const address = await prisma.address.findUnique({
+        where: { id: addressId },
+        select: { customerId: true }
+      });
+      
+      if (!address) {
+        throw new NotFoundError(
+          ErrorCode.ADDRESS_NOT_FOUND,
+          'Address not found',
+          { metadata: { addressId } }
+        );
+      }
+      
+      // Use provided customerId or the one from the address
+      const actualCustomerId = customerId || address.customerId;
+      
+      // Verify ownership if customerId was provided
+      if (customerId && address.customerId !== customerId) {
+        throw new ValidationError(
+          ErrorCode.MISSING_REQUIRED_FIELD,
+          'Address does not belong to customer',
+          { metadata: { addressId, customerId } }
+        );
+      }
+      
       // Desmarcar otras predeterminadas
       await prisma.address.updateMany({
         where: { 
-          customerId,
+          customerId: actualCustomerId,
           isDefault: true
         },
         data: { isDefault: false }
       });
       
       // Establecer esta como predeterminada
-      const address = await prisma.address.update({
+      const updatedAddress = await prisma.address.update({
         where: { id: addressId },
         data: { isDefault: true }
       });
       
-      logger.info(`Set address ${addressId} as default for customer ${customerId}`);
-      return address;
+      logger.info(`Set address ${addressId} as default for customer ${actualCustomerId}`);
+      return updatedAddress;
     } catch (error) {
+      if (error instanceof NotFoundError || error instanceof ValidationError) {
+        throw error;
+      }
+      
       logger.error('Error setting default address:', error);
       throw new ValidationError(
         ErrorCode.DATABASE_ERROR,
         'Failed to set default address',
-        { metadata: { addressId, customerId } }
+        { metadata: { addressId } }
       );
     }
   }
@@ -340,17 +370,27 @@ export class DeliveryInfoService {
    */
   static async deleteCustomerAddress(
     addressId: string,
-    customerId: string
+    customerId?: string
   ): Promise<void> {
     try {
-      const address = await prisma.address.findFirst({
-        where: { id: addressId, customerId }
+      // Get the address to verify ownership
+      const address = await prisma.address.findUnique({
+        where: { id: addressId }
       });
       
       if (!address) {
         throw new NotFoundError(
-          ErrorCode.ORDER_NOT_FOUND,
+          ErrorCode.ADDRESS_NOT_FOUND,
           'Address not found',
+          { metadata: { addressId } }
+        );
+      }
+      
+      // Verify ownership if customerId was provided
+      if (customerId && address.customerId !== customerId) {
+        throw new ValidationError(
+          ErrorCode.MISSING_REQUIRED_FIELD,
+          'Address does not belong to customer',
           { metadata: { addressId, customerId } }
         );
       }
@@ -367,7 +407,7 @@ export class DeliveryInfoService {
       if (address.isDefault) {
         const nextDefault = await prisma.address.findFirst({
           where: { 
-            customerId,
+            customerId: address.customerId,
             deletedAt: null,
             id: { not: addressId }
           },
@@ -375,13 +415,13 @@ export class DeliveryInfoService {
         });
         
         if (nextDefault) {
-          await this.setDefaultAddress(nextDefault.id, customerId);
+          await this.setDefaultAddress(nextDefault.id, address.customerId);
         }
       }
       
-      logger.info(`Soft deleted address ${addressId} for customer ${customerId}`);
+      logger.info(`Soft deleted address ${addressId} for customer ${address.customerId}`);
     } catch (error) {
-      if (error instanceof NotFoundError) {
+      if (error instanceof NotFoundError || error instanceof ValidationError) {
         throw error;
       }
       
@@ -389,7 +429,7 @@ export class DeliveryInfoService {
       throw new ValidationError(
         ErrorCode.DATABASE_ERROR,
         'Failed to delete address',
-        { metadata: { addressId, customerId } }
+        { metadata: { addressId } }
       );
     }
   }

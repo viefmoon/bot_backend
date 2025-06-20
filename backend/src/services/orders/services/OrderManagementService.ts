@@ -76,7 +76,7 @@ export class OrderManagementService {
 
     const orderData: CreateOrderDto = {
       orderItems,
-      customerId: customer.id,
+      whatsappPhoneNumber: customer.whatsappPhoneNumber,
       orderType: preOrder.orderType,
       scheduledAt: preOrder.scheduledAt ? preOrder.scheduledAt.toISOString() : undefined,
       ...(deliveryInfo ? { orderDeliveryInfo: deliveryInfo } : {}),

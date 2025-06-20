@@ -24,9 +24,9 @@ const router = Router();
 router.post('/verify-otp', 
   validationMiddleware(VerifyOtpDto),
   asyncHandler(async (req: Request, res: Response) => {
-    const { customerId, otp } = req.body as VerifyOtpDto;
+    const { whatsappPhoneNumber, otp } = req.body as VerifyOtpDto;
   
-  const isValid = await OTPService.verifyOTP(customerId, otp);
+  const isValid = await OTPService.verifyOTP(whatsappPhoneNumber, otp);
   
   if (!isValid) {
     throw new ValidationError(
@@ -37,7 +37,7 @@ router.post('/verify-otp',
   
   // Obtener información del cliente
   const customer = await prisma.customer.findUnique({
-    where: { whatsappPhoneNumber: customerId },
+    where: { whatsappPhoneNumber },
     select: {
       id: true,
       whatsappPhoneNumber: true,
@@ -54,7 +54,7 @@ router.post('/verify-otp',
     throw new NotFoundError(
       ErrorCode.CUSTOMER_NOT_FOUND,
       'Customer not found',
-      { customerId }
+      { whatsappPhoneNumber }
     );
   }
   
@@ -77,10 +77,10 @@ router.post('/verify-otp',
 router.post('/create',
   validationMiddleware(CreateAddressDto),
   asyncHandler(async (req: Request, res: Response) => {
-    const { customerId, otp, address } = req.body as CreateAddressDto;
+    const { whatsappPhoneNumber, otp, address } = req.body as CreateAddressDto;
     
     // Verificar OTP primero
-    const isValid = await OTPService.verifyOTP(customerId, otp);
+    const isValid = await OTPService.verifyOTP(whatsappPhoneNumber, otp);
     
     if (!isValid) {
       throw new ValidationError(
@@ -91,7 +91,7 @@ router.post('/create',
     
     // Obtener primero el UUID real del cliente
     const customerRecord = await prisma.customer.findUnique({
-      where: { whatsappPhoneNumber: customerId },
+      where: { whatsappPhoneNumber },
       select: { id: true }
     });
     
@@ -99,7 +99,7 @@ router.post('/create',
       throw new NotFoundError(
         ErrorCode.CUSTOMER_NOT_FOUND,
         'Customer not found',
-        { customerId }
+        { whatsappPhoneNumber }
       );
     }
     
@@ -116,28 +116,18 @@ router.post('/create',
       const { sendWhatsAppMessage, sendWhatsAppInteractiveMessage } = await import('../services/whatsapp');
       const { ADDRESS_REGISTRATION_SUCCESS, WELCOME_MESSAGE_INTERACTIVE } = await import('../common/config/predefinedMessages');
       
-      // Obtener el número de WhatsApp del cliente
-      const customer = await prisma.customer.findUnique({
-        where: { id: customerId },
-        select: { whatsappPhoneNumber: true }
-      });
-      
-      // Enviar mensaje de confirmación
-      if (customer?.whatsappPhoneNumber) {
-        await sendWhatsAppMessage(
-          customer.whatsappPhoneNumber,
-          ADDRESS_REGISTRATION_SUCCESS(newAddress)
-        );
-      }
+      // Usar whatsappPhoneNumber para enviar mensajes
+      await sendWhatsAppMessage(
+        whatsappPhoneNumber,
+        ADDRESS_REGISTRATION_SUCCESS(newAddress)
+      );
       
       // Pequeño retraso para asegurar el orden correcto de mensajes
       await new Promise(resolve => setTimeout(resolve, 1000));
       
       // Enviar mensaje de bienvenida inmediatamente después
       const welcomeMessage = await WELCOME_MESSAGE_INTERACTIVE();
-      if (customer?.whatsappPhoneNumber) {
-        await sendWhatsAppInteractiveMessage(customer.whatsappPhoneNumber, welcomeMessage);
-      }
+      await sendWhatsAppInteractiveMessage(whatsappPhoneNumber, welcomeMessage);
       
       // Marcar que el mensaje de bienvenida fue enviado para evitar duplicados
       // Actualizar lastInteraction a la hora actual para prevenir la detección de isNewConversation
@@ -167,10 +157,10 @@ router.put('/:addressId',
   validationMiddleware(UpdateAddressDto),
   asyncHandler(async (req: Request, res: Response) => {
     const { addressId } = req.params;
-    const { customerId, otp, address } = req.body as UpdateAddressDto;
+    const { whatsappPhoneNumber, otp, address } = req.body as UpdateAddressDto;
     
     // Verificar OTP
-    const isValid = await OTPService.verifyOTP(customerId, otp);
+    const isValid = await OTPService.verifyOTP(whatsappPhoneNumber, otp);
     
     if (!isValid) {
       throw new ValidationError(
@@ -181,7 +171,7 @@ router.put('/:addressId',
     
     // Obtener cliente por número de teléfono
     const customerRecord = await prisma.customer.findUnique({
-      where: { whatsappPhoneNumber: customerId },
+      where: { whatsappPhoneNumber },
       select: { id: true }
     });
     
@@ -189,7 +179,7 @@ router.put('/:addressId',
       throw new NotFoundError(
         ErrorCode.CUSTOMER_NOT_FOUND,
         'Customer not found',
-        { customerId }
+        { whatsappPhoneNumber }
       );
     }
     
@@ -220,28 +210,18 @@ router.put('/:addressId',
       const { sendWhatsAppMessage, sendWhatsAppInteractiveMessage } = await import('../services/whatsapp');
       const { ADDRESS_UPDATE_SUCCESS, WELCOME_MESSAGE_INTERACTIVE } = await import('../common/config/predefinedMessages');
       
-      // Obtener el número de WhatsApp del cliente
-      const customer = await prisma.customer.findUnique({
-        where: { id: customerId },
-        select: { whatsappPhoneNumber: true }
-      });
-      
-      // Enviar confirmación de actualización
-      if (customer?.whatsappPhoneNumber) {
-        await sendWhatsAppMessage(
-          customer.whatsappPhoneNumber,
-          ADDRESS_UPDATE_SUCCESS(updatedAddress)
-        );
-      }
+      // Usar whatsappPhoneNumber para enviar mensajes
+      await sendWhatsAppMessage(
+        whatsappPhoneNumber,
+        ADDRESS_UPDATE_SUCCESS(updatedAddress)
+      );
       
       // Pequeño retraso para asegurar el orden correcto de mensajes
       await new Promise(resolve => setTimeout(resolve, 1000));
       
       // Enviar mensaje de bienvenida inmediatamente después
       const welcomeMessage = await WELCOME_MESSAGE_INTERACTIVE();
-      if (customer?.whatsappPhoneNumber) {
-        await sendWhatsAppInteractiveMessage(customer.whatsappPhoneNumber, welcomeMessage);
-      }
+      await sendWhatsAppInteractiveMessage(whatsappPhoneNumber, welcomeMessage);
       
       // Marcar que hubo interacción para evitar mensaje de bienvenida duplicado
       await prisma.customer.update({
@@ -270,7 +250,7 @@ router.put('/:addressId',
 router.get('/:customerId/addresses',
   queryValidationMiddleware(GetAddressesQueryDto),
   asyncHandler(async (req: Request, res: Response) => {
-    const { customerId } = req.params;
+    const { customerId } = req.params; // This is actually whatsappPhoneNumber from URL
     const { otp } = req.query as unknown as GetAddressesQueryDto;
     
     // Verificar OTP
@@ -293,7 +273,7 @@ router.get('/:customerId/addresses',
       throw new NotFoundError(
         ErrorCode.CUSTOMER_NOT_FOUND,
         'Customer not found',
-        { customerId }
+        { whatsappPhoneNumber: customerId }
       );
     }
     
@@ -310,10 +290,10 @@ router.delete('/:addressId',
   validationMiddleware(DeleteAddressDto),
   asyncHandler(async (req: Request, res: Response) => {
     const { addressId } = req.params;
-    const { customerId, otp } = req.body as DeleteAddressDto;
+    const { whatsappPhoneNumber, otp } = req.body as DeleteAddressDto;
     
     // Verificar OTP
-    const isValid = await OTPService.verifyOTP(customerId, otp);
+    const isValid = await OTPService.verifyOTP(whatsappPhoneNumber, otp);
     
     if (!isValid) {
       throw new ValidationError(
@@ -324,7 +304,7 @@ router.delete('/:addressId',
     
     // Obtener cliente por número de teléfono
     const customerRecord = await prisma.customer.findUnique({
-      where: { whatsappPhoneNumber: customerId },
+      where: { whatsappPhoneNumber },
       select: { id: true }
     });
     
@@ -332,7 +312,7 @@ router.delete('/:addressId',
       throw new NotFoundError(
         ErrorCode.CUSTOMER_NOT_FOUND,
         'Customer not found',
-        { customerId }
+        { whatsappPhoneNumber }
       );
     }
     
@@ -357,10 +337,10 @@ router.put('/:addressId/default',
   validationMiddleware(SetDefaultAddressDto),
   asyncHandler(async (req: Request, res: Response) => {
     const { addressId } = req.params;
-    const { customerId, otp } = req.body as SetDefaultAddressDto;
+    const { whatsappPhoneNumber, otp } = req.body as SetDefaultAddressDto;
     
     // Verificar OTP
-    const isValid = await OTPService.verifyOTP(customerId, otp);
+    const isValid = await OTPService.verifyOTP(whatsappPhoneNumber, otp);
     
     if (!isValid) {
       throw new ValidationError(
@@ -371,7 +351,7 @@ router.put('/:addressId/default',
     
     // Obtener cliente por número de teléfono
     const customerRecord = await prisma.customer.findUnique({
-      where: { whatsappPhoneNumber: customerId },
+      where: { whatsappPhoneNumber },
       select: { id: true }
     });
     
@@ -379,7 +359,7 @@ router.put('/:addressId/default',
       throw new NotFoundError(
         ErrorCode.CUSTOMER_NOT_FOUND,
         'Customer not found',
-        { customerId }
+        { whatsappPhoneNumber }
       );
     }
     

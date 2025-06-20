@@ -1,7 +1,9 @@
-import { IsOptional, IsString, Transform } from 'class-validator';
+import { IsOptional, IsBoolean } from 'class-validator';
+import { Transform } from 'class-transformer';
 
 export class GetAddressesQueryDto {
   @IsOptional()
-  @Transform(({ value }) => value === 'true')
+  @Transform(({ value }: { value: any }) => value === 'true')
+  @IsBoolean()
   includeInactive?: boolean;
 }

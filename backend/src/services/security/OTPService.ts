@@ -18,31 +18,31 @@ export class OTPService {
   }
 
   /**
-   * Store an OTP for a customer
+   * Store an OTP for a WhatsApp phone number
    */
-  static storeOTP(customerId: string, otp: string, isAddressRegistration: boolean = false): void {
+  static storeOTP(whatsappPhoneNumber: string, otp: string, isAddressRegistration: boolean = false): void {
     // Check store size limit
     if (this.otpStore.size >= this.MAX_OTP_ENTRIES) {
       this.cleanupOldestEntries();
     }
 
     const expires = new Date(Date.now() + this.OTP_EXPIRY_MINUTES * 60 * 1000);
-    this.otpStore.set(customerId, { code: otp, expires });
+    this.otpStore.set(whatsappPhoneNumber, { code: otp, expires });
     
-    logger.info(`OTP stored for customer ${customerId} (expires at ${expires.toISOString()})`);
+    logger.info(`OTP stored for phone ${whatsappPhoneNumber} (expires at ${expires.toISOString()})`);
   }
 
   /**
-   * Generate and store OTP for a customer
+   * Generate and store OTP for a WhatsApp phone number
    */
-  static async generateAndSendOTP(customerId: string): Promise<boolean> {
+  static async generateAndSendOTP(whatsappPhoneNumber: string): Promise<boolean> {
     try {
       const otp = this.generateOTP();
-      this.storeOTP(customerId, otp);
+      this.storeOTP(whatsappPhoneNumber, otp);
 
       // In production, send via SMS/WhatsApp
       // For development, just log it
-      logger.info(`OTP for customer ${customerId}: ${otp}`);
+      logger.info(`OTP for phone ${whatsappPhoneNumber}: ${otp}`);
 
       return true;
     } catch (error) {
@@ -54,38 +54,38 @@ export class OTPService {
   /**
    * Verify an OTP
    */
-  static async verifyOTP(customerId: string, code: string): Promise<boolean> {
+  static async verifyOTP(whatsappPhoneNumber: string, code: string): Promise<boolean> {
     try {
-      logger.info(`Verifying OTP for customer ${customerId}, code: ${code}`);
+      logger.info(`Verifying OTP for phone ${whatsappPhoneNumber}, code: ${code}`);
       
       // Log all stored OTPs for debugging
       logger.debug(`Current OTP store size: ${this.otpStore.size}`);
       for (const [key, value] of this.otpStore.entries()) {
-        logger.debug(`Stored OTP - Customer: ${key}, Code: ${value.code}, Expires: ${value.expires.toISOString()}`);
+        logger.debug(`Stored OTP - Phone: ${key}, Code: ${value.code}, Expires: ${value.expires.toISOString()}`);
       }
       
-      const storedOTP = this.otpStore.get(customerId);
+      const storedOTP = this.otpStore.get(whatsappPhoneNumber);
       
       if (!storedOTP) {
-        logger.warn(`No OTP found for customer ${customerId}`);
+        logger.warn(`No OTP found for phone ${whatsappPhoneNumber}`);
         return false;
       }
 
       // Check if expired
       if (new Date() > storedOTP.expires) {
-        this.otpStore.delete(customerId);
-        logger.warn(`OTP expired for customer ${customerId} - Expired at: ${storedOTP.expires.toISOString()}, Current time: ${new Date().toISOString()}`);
+        this.otpStore.delete(whatsappPhoneNumber);
+        logger.warn(`OTP expired for phone ${whatsappPhoneNumber} - Expired at: ${storedOTP.expires.toISOString()}, Current time: ${new Date().toISOString()}`);
         return false;
       }
 
       // Verify code
       if (storedOTP.code === code) {
         // Don't delete immediately for address registration - allow multiple verifications
-        logger.info(`OTP verified successfully for customer ${customerId}`);
+        logger.info(`OTP verified successfully for phone ${whatsappPhoneNumber}`);
         return true;
       }
 
-      logger.warn(`Invalid OTP attempt for customer ${customerId} - Expected: ${storedOTP.code}, Received: ${code}`);
+      logger.warn(`Invalid OTP attempt for phone ${whatsappPhoneNumber} - Expected: ${storedOTP.code}, Received: ${code}`);
       return false;
     } catch (error) {
       logger.error('Error verifying OTP:', error);
@@ -96,9 +96,9 @@ export class OTPService {
   /**
    * Invalidate an OTP
    */
-  static async invalidateOTP(customerId: string): Promise<void> {
-    this.otpStore.delete(customerId);
-    logger.info(`OTP invalidated for customer ${customerId}`);
+  static async invalidateOTP(whatsappPhoneNumber: string): Promise<void> {
+    this.otpStore.delete(whatsappPhoneNumber);
+    logger.info(`OTP invalidated for phone ${whatsappPhoneNumber}`);
   }
 
   /**
@@ -122,9 +122,9 @@ export class OTPService {
     const now = new Date();
     let cleanedCount = 0;
     
-    for (const [customerId, otp] of this.otpStore.entries()) {
+    for (const [whatsappPhoneNumber, otp] of this.otpStore.entries()) {
       if (now > otp.expires) {
-        this.otpStore.delete(customerId);
+        this.otpStore.delete(whatsappPhoneNumber);
         cleanedCount++;
       }
     }

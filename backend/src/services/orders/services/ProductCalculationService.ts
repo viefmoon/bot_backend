@@ -92,9 +92,6 @@ export class ProductCalculationService {
       productVariant,
       quantity: item.quantity,
       itemPrice,
-      subtotal: itemPrice, // Add subtotal for compatibility
-      productName: product?.name,
-      variantName: productVariant?.name,
       comments: item.comments,
       modifiers: modifiers.items,
       pizzaIngredients

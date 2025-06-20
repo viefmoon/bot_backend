@@ -3,7 +3,7 @@ import { prisma } from '../server';
 import logger from '../common/utils/logger';
 import { sendWhatsAppInteractiveMessage } from '../services/whatsapp';
 import { asyncHandler } from '../common/middlewares/errorHandler';
-import { ValidationError, NotFoundError, ErrorCode } from '../common/services/errors';
+import { NotFoundError, ErrorCode } from '../common/services/errors';
 import { validationMiddleware } from '../common/middlewares/validation.middleware';
 import { SendAddressSelectionDto, UpdateAddressSelectionDto } from './dto/address-selection';
 
@@ -113,7 +113,7 @@ router.post('/send',
     const sections = [
       {
         title: "Mis direcciones",
-        rows: customer.addresses.map((address, index) => ({
+        rows: customer.addresses.map((address) => ({
           id: `select_address_${address.id}`,
           title: truncateText(`${address.street} ${address.number}`, 24),
           description: truncateText(

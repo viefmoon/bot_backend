@@ -99,7 +99,7 @@ export class MessagePipeline {
     }
     
     const fullChatHistory = context.get('fullChatHistory') || [];
-    const relevantChatHistory = context.get('relevantChatHistory') || [];
+    let relevantChatHistory = context.get('relevantChatHistory') || [];
     
     // Agregar mensaje del usuario al historial
     fullChatHistory.push({

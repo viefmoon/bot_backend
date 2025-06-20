@@ -279,13 +279,13 @@ async function handleRestaurantInfo(customerId: string): Promise<void> {
   }
 }
 
-async function handleChatbotHelp(customerId: string): Promise<void> {
+async function handleChatbotHelp(whatsappPhoneNumber: string): Promise<void> {
   try {
     const message = await CHATBOT_HELP_MESSAGE();
-    await sendWhatsAppMessage(customerId, message);
+    await sendWhatsAppMessage(whatsappPhoneNumber, message);
   } catch (error) {
-    await ErrorService.handleAndSendError(error, customerId, {
-      userId: customerId,
+    await ErrorService.handleAndSendError(error, whatsappPhoneNumber, {
+      userId: whatsappPhoneNumber,
       operation: 'handleChatbotHelp'
     });
   }
