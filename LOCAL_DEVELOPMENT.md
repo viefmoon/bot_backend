@@ -1,6 +1,23 @@
-# Guía de Desarrollo Local con Docker
+# Guía de Desarrollo Local
 
-Esta guía te ayudará a ejecutar el backend del bot de WhatsApp en tu máquina local usando Docker.
+## Script Automatizado (Recomendado)
+
+La forma más fácil de iniciar el desarrollo local es usando el script automatizado:
+
+```bash
+./start-local.sh
+```
+
+Este script:
+- Inicia PostgreSQL con pgvector y Redis usando Docker
+- Configura la base de datos y ejecuta migraciones
+- Instala dependencias
+- Genera embeddings automáticamente
+- Inicia el backend y frontend
+
+## Desarrollo Manual con Docker
+
+Si prefieres configurar todo manualmente, sigue esta guía:
 
 ## Requisitos Previos
 
@@ -25,142 +42,66 @@ version: '3.8'
 
 services:
   postgres:
-    image: postgres:15-alpine
-    container_name: bot_postgres
+    image: pgvector/pgvector:pg15
+    container_name: postgres_bot_backend
     environment:
       POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres123
-      POSTGRES_DB: bot_restaurant_db
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: bot_backend
     ports:
-      - "5432:5432"
+      - "5433:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
+    restart: unless-stopped
 
-  backend:
-    build: 
-      context: ./backend
-      dockerfile: Dockerfile
-    container_name: bot_backend
-    depends_on:
-      postgres:
-        condition: service_healthy
+  redis:
+    image: redis:7-alpine
+    container_name: redis_bot_backend
     ports:
-      - "5000:5000"
-    environment:
-      DATABASE_URL: postgresql://postgres:postgres123@postgres:5432/bot_restaurant_db
-      NODE_ENV: development
-      PORT: 5000
-    env_file:
-      - ./backend/.env
-    volumes:
-      - ./backend:/app
-      - /app/node_modules
-    command: npm run dev
+      - "6379:6379"
+    restart: unless-stopped
 
 volumes:
   postgres_data:
 ```
 
-## Paso 3: Crear Dockerfile para el Backend
+## Paso 3: Configurar Variables de Entorno
 
-Crea el archivo `backend/Dockerfile`:
-
-```dockerfile
-FROM node:18-alpine
-
-WORKDIR /app
-
-# Copiar archivos de dependencias
-COPY package*.json ./
-COPY tsconfig.json ./
-
-# Instalar dependencias
-RUN npm ci
-
-# Copiar prisma schema
-COPY prisma ./prisma
-
-# Generar Prisma Client
-RUN npx prisma generate
-
-# Copiar el resto del código
-COPY . .
-
-# Exponer puerto
-EXPOSE 5000
-
-# Comando por defecto
-CMD ["npm", "run", "dev"]
-```
-
-## Paso 4: Configurar Variables de Entorno
-
-Crea el archivo `backend/.env` basado en `.env.example`:
+Crea el archivo `backend/.env.local` con tus valores:
 
 ```bash
 cd backend
-cp .env.example .env
+cp .env.example .env.local
 ```
 
-Edita `backend/.env` con tus valores:
+Edita `backend/.env.local` con tus valores (ver QUICK_START.md para detalles)
 
-```env
-# Base de datos (Docker Compose la configura automáticamente)
-DATABASE_URL=postgresql://postgres:postgres123@localhost:5432/bot_restaurant_db
-
-# WhatsApp Business API (usa valores de prueba para desarrollo)
-WHATSAPP_PHONE_NUMBER_MESSAGING_ID=123456789
-WHATSAPP_ACCESS_TOKEN=desarrollo_token_123
-WHATSAPP_VERIFY_TOKEN=mi_token_verificacion_local
-
-# API de IA - NECESITAS UNA REAL
-GOOGLE_AI_API_KEY=AIza... # Obtén una en https://makersuite.google.com/app/apikey
-
-# Stripe (opcional para desarrollo)
-STRIPE_SECRET_KEY=sk_test_...
-STRIPE_WEBHOOK_SECRET=whsec_...
-
-# Configuración de URLs
-NEXT_PUBLIC_BACKEND_BASE_URL=http://localhost:5000
-FRONTEND_BASE_URL=http://localhost:3000
-
-# Rate Limiting
-RATE_LIMIT_MAX_MESSAGES=30
-RATE_LIMIT_TIME_WINDOW_MINUTES=5
-
-# Entorno
-NODE_ENV=development
-```
-
-## Paso 5: Iniciar los Servicios
+## Paso 4: Iniciar los Servicios
 
 ```bash
 # Desde la raíz del proyecto
 docker-compose up -d
 
-# Ver logs
-docker-compose logs -f
+# Instalar dependencias del backend
+cd backend
+npm install
 
-# Ver solo logs del backend
-docker-compose logs -f backend
-```
-
-## Paso 6: Ejecutar Migraciones y Seed
-
-```bash
 # Ejecutar migraciones
-docker-compose exec backend npx prisma migrate dev
+npm run migrate:dev
 
 # Ejecutar seed (datos iniciales)
-docker-compose exec backend npm run seed
+npm run seed
+
+# Iniciar el servidor de desarrollo
+npm run dev
 ```
 
-## Paso 7: Verificar que Todo Funciona
+**Nota**: pgvector se configura automáticamente:
+- La migración crea la extensión vector y la columna embedding
+- Los embeddings se generan automáticamente al iniciar el servidor
+- No se requieren pasos manuales adicionales
+
+## Paso 5: Verificar que Todo Funciona
 
 ### 1. Health Check
 ```bash
@@ -178,7 +119,8 @@ Deberías ver:
 
 ### 2. Prisma Studio (Visualizar Base de Datos)
 ```bash
-docker-compose exec backend npx prisma studio
+cd backend
+npm run studio
 ```
 Abre http://localhost:5555 en tu navegador
 
@@ -226,27 +168,22 @@ docker-compose down
 # Detener y eliminar volúmenes (BORRA LA BD)
 docker-compose down -v
 
-# Reconstruir imagen del backend
-docker-compose build backend
+# Ejecutar comandos del backend
+cd backend
+npm run migrate:dev
+npm run seed
+npm run studio
 
-# Ejecutar comandos en el contenedor
-docker-compose exec backend npm run migrate
-docker-compose exec backend npm run seed
-docker-compose exec backend npm run studio
-
-# Ver logs
-docker-compose logs -f backend
+# Ver logs de Docker
 docker-compose logs -f postgres
-
-# Reiniciar un servicio
-docker-compose restart backend
+docker-compose logs -f redis
 ```
 
 ## Desarrollo con Hot Reload
 
-El backend está configurado con `ts-node` en modo watch, por lo que:
+El backend se ejecuta con `ts-node --transpile-only`, por lo que:
 - Los cambios en el código se reflejan automáticamente
-- No necesitas reiniciar el contenedor
+- No necesitas reiniciar el servidor
 - Solo guarda los archivos y el servidor se recargará
 
 ## Solución de Problemas
@@ -269,9 +206,8 @@ docker-compose logs postgres
 # Encuentra qué proceso usa el puerto
 lsof -i :5000
 
-# O cambia el puerto en docker-compose.yml
-ports:
-  - "5001:5000"
+# O cambia el puerto en el archivo .env
+PORT=5001
 ```
 
 ### Limpiar y empezar de nuevo
@@ -282,9 +218,13 @@ docker-compose down -v
 # Eliminar node_modules
 rm -rf backend/node_modules
 
-# Reconstruir todo
-docker-compose build --no-cache
+# Reiniciar Docker
+docker-compose down
 docker-compose up -d
+
+# Reinstalar dependencias del backend
+cd backend
+npm install
 ```
 
 ## Testing Local

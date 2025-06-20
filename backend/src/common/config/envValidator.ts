@@ -124,7 +124,10 @@ class EnvironmentValidator {
       RATE_LIMIT_MAX_MESSAGES: process.env.RATE_LIMIT_MAX_MESSAGES!,
       RATE_LIMIT_TIME_WINDOW_MINUTES: process.env.RATE_LIMIT_TIME_WINDOW_MINUTES!,
       DEFAULT_TIMEZONE: process.env.DEFAULT_TIMEZONE!,
-      DEFAULT_LOCALE: process.env.DEFAULT_LOCALE!
+      DEFAULT_LOCALE: process.env.DEFAULT_LOCALE!,
+      REDIS_HOST: process.env.REDIS_HOST,
+      REDIS_PORT: process.env.REDIS_PORT,
+      REDIS_PASSWORD: process.env.REDIS_PASSWORD
     };
   }
 }

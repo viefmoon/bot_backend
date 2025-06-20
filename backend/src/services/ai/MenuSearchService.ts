@@ -1,194 +1,241 @@
 import logger from '../../common/utils/logger';
-import { ProductService } from '../products/ProductService';
+import { prisma } from '../../server';
+import { GoogleGenAI } from '@google/genai';
+import { env } from '../../common/config/envValidator';
 
 /**
  * Service for searching and matching menu items based on natural language input
+ * Uses semantic search with Google embeddings and pgvector
  */
 export class MenuSearchService {
+  private static genAI = new GoogleGenAI({ apiKey: env.GOOGLE_AI_API_KEY });
+
   /**
-   * Gets relevant menu items based on keywords using string similarity
+   * Gets relevant menu items based on keywords using semantic search
    * @param itemsSummary Natural language description of items
    * @returns JSON string of relevant menu items with their full structure
    */
   static async getRelevantMenu(itemsSummary: string): Promise<string> {
     try {
-      const stringSimilarity = await import('string-similarity');
-      
       logger.debug(`Getting relevant menu for: "${itemsSummary}"`);
-      
-      // Get products with all their relations
-      const products = await ProductService.getActiveProducts({ includeRelations: true }) as any[];
-      
-      // Normalize text for better matching
-      const normalizedSummary = this.normalizeText(itemsSummary);
-      
-      logger.debug(`Normalized search: "${normalizedSummary}"`);
-      
-      // Score each product based on similarity
-      const scoredProducts = products.map(product => {
-        const productName = this.normalizeText(product.name || '');
-        const productDesc = this.normalizeText(product.description || '');
-        const categoryName = this.normalizeText(product.subcategory?.category?.name || '');
-        const subcategoryName = this.normalizeText(product.subcategory?.name || '');
-        
-        // Create search target combinations
-        const searchTargets = [
-          productName, // Highest priority
-          `${productName} ${categoryName}`,
-          `${productName} ${subcategoryName}`,
-          `${productName} ${productDesc}`,
-        ];
-        
-        // Calculate similarity scores for each target
-        const similarities = searchTargets.map(target => 
-          stringSimilarity.compareTwoStrings(normalizedSummary, target)
-        );
-        
-        // Get best match score
-        const bestScore = Math.max(...similarities);
-        
-        // Calculate bonus score for partial word matches
-        const bonusScore = this.calculateBonusScore(normalizedSummary, productName, stringSimilarity);
-        
-        const finalScore = bestScore + bonusScore;
-        
-        return { 
-          product, 
-          score: finalScore,
-          debug: {
-            productName,
-            bestScore,
-            bonusScore,
-            finalScore
-          }
-        };
+
+      // 1. Generate embedding for user query
+      logger.debug('Generating embedding for user query...');
+      const embeddingResponse = await this.genAI.models.embedContent({
+        model: "text-embedding-004",
+        contents: itemsSummary
       });
+      const queryEmbedding = embeddingResponse.embeddings?.[0]?.values || [];
+      logger.debug(`Query embedding generated with ${queryEmbedding.length} dimensions`);
       
-      // Filter and sort by score
-      let relevantProducts = scoredProducts
-        .filter(item => item.score > 0.3) // 30% similarity threshold
-        .sort((a, b) => b.score - a.score);
-      
-      // Log top matches for debugging
-      logger.debug(`Top matches:`);
-      relevantProducts.slice(0, 5).forEach((item, index) => {
-        logger.debug(`${index + 1}. ${item.debug.productName} (score: ${item.score.toFixed(3)})`);
-      });
-      
-      // If no good matches, try more lenient threshold
-      if (relevantProducts.length === 0) {
-        logger.debug('No products found with 30% threshold, trying 20%...');
-        const lenientMatches = scoredProducts
-          .filter(item => item.score > 0.2)
-          .sort((a, b) => b.score - a.score)
-          .slice(0, 10);
-          
-        if (lenientMatches.length > 0) {
-          relevantProducts = lenientMatches;
-        }
+      if (queryEmbedding.length === 0) {
+        logger.error('Failed to generate embedding for query');
+        throw new Error('Embedding generation failed');
       }
+
+      // 2. Search database for most similar products using pgvector
+      let relevantProductIds: string[] = [];
+
+      // Use pgvector for efficient similarity search with threshold
+      try {
+        // First, get products with similarity scores
+        const relevantProductsResult: { id: string, distance: number }[] = await prisma.$queryRaw`
+          SELECT id, 
+                 (embedding <=> ${`[${queryEmbedding.join(',')}]`}::vector) as distance
+          FROM "Product"
+          WHERE embedding IS NOT NULL
+          ORDER BY distance
+          LIMIT 10
+        `;
+        
+        // Filter by similarity threshold (lower distance = more similar)
+        // Based on testing: 0.0-0.4 = very similar, 0.4-0.5 = somewhat similar, >0.5 = different
+        const SIMILARITY_THRESHOLD = 0.5; // Only include products with strong similarity
+        
+        const filteredProducts = relevantProductsResult.filter(p => p.distance < SIMILARITY_THRESHOLD);
+        
+        // If no products meet the strict threshold, but the top result is reasonably close, include it
+        if (filteredProducts.length === 0 && relevantProductsResult.length > 0 && relevantProductsResult[0].distance < 0.6) {
+          filteredProducts.push(relevantProductsResult[0]);
+          logger.debug(`No products within threshold ${SIMILARITY_THRESHOLD}, including top match with distance ${relevantProductsResult[0].distance.toFixed(3)}`);
+        }
+        
+        relevantProductIds = filteredProducts.map(p => p.id);
+        
+        logger.debug(`Vector search found ${relevantProductsResult.length} products, ${filteredProducts.length} within threshold`);
+        if (filteredProducts.length > 0) {
+          logger.debug(`Similarity distances: ${filteredProducts.map(p => `${p.id}:${p.distance.toFixed(3)}`).join(', ')}`);
+        }
+      } catch (error) {
+        logger.error('Error in vector search:', error);
+        // Fallback: if pgvector is not available, try a text-based search
+        logger.warn('pgvector search failed, attempting text-based fallback');
+        
+        // Try a simple text search as fallback
+        try {
+          const textSearchResult = await prisma.product.findMany({
+            where: {
+              isActive: true,
+              OR: [
+                { name: { contains: itemsSummary, mode: 'insensitive' } },
+                { description: { contains: itemsSummary, mode: 'insensitive' } }
+              ]
+            },
+            take: 10,
+            include: {
+              subcategory: { include: { category: true } },
+              variants: { where: { isActive: true } },
+              modifierGroups: {
+                where: { isActive: true },
+                include: {
+                  productModifiers: { where: { isActive: true } },
+                },
+              },
+              pizzaIngredients: { where: { isActive: true } },
+            }
+          });
+          
+          if (textSearchResult.length > 0) {
+            logger.info(`Text search fallback found ${textSearchResult.length} products`);
+            const menuStructure = this.buildMenuStructure(textSearchResult);
+            return JSON.stringify(menuStructure);
+          }
+        } catch (textSearchError) {
+          logger.error('Text search fallback also failed:', textSearchError);
+        }
+        
+        return "[]";
+      }
+
+      if (relevantProductIds.length === 0) {
+        logger.warn('No relevant products found via vector search within threshold');
+        
+        // Try a more aggressive text search as last resort
+        try {
+          // Split the search term into words for better matching
+          const searchTerms = itemsSummary.toLowerCase().split(' ').filter(term => term.length > 2);
+          
+          const textSearchResult = await prisma.product.findMany({
+            where: {
+              isActive: true,
+              OR: searchTerms.map(term => ({
+                OR: [
+                  { name: { contains: term, mode: 'insensitive' } },
+                  { description: { contains: term, mode: 'insensitive' } }
+                ]
+              }))
+            },
+            take: 5,
+            include: {
+              subcategory: { include: { category: true } },
+              variants: { where: { isActive: true } },
+              modifierGroups: {
+                where: { isActive: true },
+                include: {
+                  productModifiers: { where: { isActive: true } },
+                },
+              },
+              pizzaIngredients: { where: { isActive: true } },
+            }
+          });
+          
+          if (textSearchResult.length > 0) {
+            logger.info(`Aggressive text search found ${textSearchResult.length} products for terms: ${searchTerms.join(', ')}`);
+            const menuStructure = this.buildMenuStructure(textSearchResult);
+            return JSON.stringify(menuStructure);
+          }
+        } catch (textError) {
+          logger.error('Aggressive text search also failed:', textError);
+        }
+        
+        return "[]";
+      }
+
+      // 3. Get full product details
+      const products = await prisma.product.findMany({
+        where: {
+          id: { in: relevantProductIds },
+          isActive: true,
+        },
+        include: {
+          subcategory: { include: { category: true } },
+          variants: { where: { isActive: true } },
+          modifierGroups: {
+            where: { isActive: true },
+            include: {
+              productModifiers: { where: { isActive: true } },
+            },
+          },
+          pizzaIngredients: { where: { isActive: true } },
+        },
+      });
+
+      // 4. Sort products by the original order from search
+      const sortedProducts = relevantProductIds
+        .map(id => products.find(p => p.id === id))
+        .filter(Boolean);
+
+      // 5. Build menu structure
+      const menuStructure = this.buildMenuStructure(sortedProducts as any[]);
       
-      // Build complete menu structure with all relations
-      const menuStructure = this.buildMenuStructure(relevantProducts.slice(0, 15));
-      
-      // Log the menu structure
-      logger.debug(`Returning ${menuStructure.length} relevant products`);
+      logger.info(`MenuSearchService: Returning ${menuStructure.length} relevant products for query "${itemsSummary}"`);
+      // Log only product names for debugging, not full structure
       if (menuStructure.length > 0) {
-        (logger as any).json('Relevant menu structure:', menuStructure);
+        const productNames = menuStructure.map((p: any) => p.nombre).join(', ');
+        logger.info(`MenuSearchService: Products found: ${productNames}`);
+      } else {
+        logger.warn(`MenuSearchService: No relevant products found for query "${itemsSummary}"`);
       }
       
       return JSON.stringify(menuStructure);
     } catch (error) {
-      logger.error('Error getting relevant menu:', error);
+      logger.error('Error in vector search:', error);
       return "[]";
     }
   }
 
-  /**
-   * Normalizes text for better search matching
-   */
-  private static normalizeText(text: string): string {
-    return text
-      .toLowerCase()
-      .normalize('NFD')
-      .replace(/[\u0300-\u036f]/g, '') // Remove accents
-      .replace(/[^\w\s]/g, ' ') // Replace non-word chars with space
-      .replace(/\s+/g, ' ') // Multiple spaces to single
-      .trim();
-  }
-
-  /**
-   * Calculates bonus score for partial word matches
-   */
-  private static calculateBonusScore(
-    normalizedSummary: string, 
-    productName: string, 
-    stringSimilarity: any
-  ): number {
-    let bonusScore = 0;
-    
-    // Check if any word from summary appears in product name
-    const summaryWords = normalizedSummary.split(' ').filter(w => w.length > 2);
-    const productWords = productName.split(' ');
-    
-    summaryWords.forEach(summaryWord => {
-      productWords.forEach(productWord => {
-        const wordSimilarity = stringSimilarity.compareTwoStrings(summaryWord, productWord);
-        if (wordSimilarity > 0.8) { // 80% similarity threshold for individual words
-          bonusScore += 0.2;
-        }
-      });
-    });
-    
-    return bonusScore;
-  }
 
   /**
    * Builds the menu structure for AI consumption
+   * Only includes necessary information for order mapping (no prices needed at this stage)
    */
-  private static buildMenuStructure(scoredProducts: any[]): any[] {
-    return scoredProducts
-      .map(item => item.product)
-      .map(product => {
-        const item: any = {
-          id: product.id,
-          nombre: product.name,
-        };
-        
-        // Include variants with complete information
-        if (product.variants?.length > 0) {
-          item.variantes = product.variants.map((v: any) => ({
-            id: v.id,
-            nombre: v.name,
-            precio: v.price
+  private static buildMenuStructure(products: any[]): any[] {
+    return products.map(product => {
+      const item: any = {
+        id: product.id,
+        nombre: product.name,
+      };
+      
+      // Include variants with IDs and names only (no prices)
+      if (product.variants?.length > 0) {
+        item.variantes = product.variants.map((v: any) => ({
+          id: v.id,
+          nombre: v.name
+        }));
+      }
+      
+      // Include modifiers if they exist (simplified)
+      if (product.modifierGroups?.length > 0) {
+        item.modificadores = product.modifierGroups
+          .filter((g: any) => g.productModifiers?.length > 0)
+          .map((group: any) => ({
+            grupo: group.name,
+            opciones: group.productModifiers.map((m: any) => ({
+              id: m.id,
+              nombre: m.name
+            }))
           }));
-        }
-        
-        // Include modifiers if they exist
-        if (product.modifierGroups?.length > 0) {
-          item.modificadores = product.modifierGroups
-            .filter((g: any) => g.productModifiers?.length > 0)
-            .map((group: any) => ({
-              grupo: group.name,
-              requerido: group.required,
-              multiple: group.acceptsMultiple,
-              opciones: group.productModifiers.map((m: any) => ({
-                id: m.id,
-                nombre: m.name,
-                precio: m.price
-              }))
-            }));
-        }
-        
-        // Include pizza ingredients if it's a pizza
-        if (product.isPizza && product.pizzaIngredients?.length > 0) {
-          item.ingredientesPizza = product.pizzaIngredients.map((i: any) => ({
-            id: i.id,
-            nombre: i.name
-          }));
-        }
-        
-        return item;
-      });
+      }
+      
+      // Include pizza ingredients if it's a pizza
+      if (product.isPizza && product.pizzaIngredients?.length > 0) {
+        item.ingredientesPizza = product.pizzaIngredients.map((i: any) => ({
+          id: i.id,
+          nombre: i.name
+        }));
+      }
+      
+      return item;
+    });
   }
 }

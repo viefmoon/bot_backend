@@ -9,6 +9,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 # Start local development (both backend and frontend)
 ./start-local.sh
 
+# Clean up ports if they're stuck (e.g., docker-proxy processes)
+./cleanup-ports.sh
+
 # Or run separately:
 npm run dev          # Runs both backend and frontend concurrently
 cd backend && npm run dev    # Backend only (port 3001)
@@ -110,13 +113,21 @@ Middleware Pipeline:
 
 **AI Service Organization**:
 - `AgentService`: Main agent coordinator (170 lines, refactored from 440+)
-- `MenuSearchService`: Handles menu item search and matching
+- `MenuSearchService`: Semantic search with Google embeddings and pgvector
+  - Uses text-embedding-004 model (768 dimensions)
+  - Uses pgvector for semantic similarity search in all environments
+  - Returns empty array if no embeddings found
 - `/prompts/`: Externalized AI prompts
   - `generalAgent.prompt.ts`: General agent instructions
   - `orderAgent.prompt.ts`: Order processing instructions
 - `/tools/`: Externalized tool definitions
   - `generalAgent.tools.ts`: General agent function tools
   - `orderAgent.tools.ts`: Order agent function tools
+- **Semantic Search Setup**:
+  - Run `npm run seed:embeddings` to generate embeddings for all products
+  - Production: Enable pgvector extension in PostgreSQL
+  - Development: Uses JSONB field for local testing
+  - Important: Embeddings must be generated before search will work
 
 ### Service Architecture
 
@@ -422,6 +433,12 @@ cd backend && npm run migrate && npm run seed && npm start
 ```
 
 Auto-deploys on push to connected repository.
+
+### Semantic Search
+- pgvector is configured automatically in both local and production
+- Embeddings are generated automatically on server startup if needed
+- Updates happen automatically when products change
+- Production: Execute `backend/scripts/production-pgvector-setup.sql` if pgvector extension is not available
 
 ## Frontend Integration
 

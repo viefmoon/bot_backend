@@ -12,26 +12,137 @@ NC='\033[0m'
 # Función para matar proceso en un puerto
 kill_port() {
     local port=$1
-    local pid=$(lsof -ti:$port)
+    # Intentar múltiples métodos para encontrar el PID
+    local pid=$(lsof -ti:$port 2>/dev/null)
+    
+    # Si lsof no funciona, intentar con fuser
+    if [ -z "$pid" ]; then
+        pid=$(fuser $port/tcp 2>/dev/null | tr -d ' ')
+    fi
+    
     if [ ! -z "$pid" ]; then
-        echo -e "${YELLOW}⚠️  Puerto $port en uso por proceso $pid. Liberando puerto...${NC}"
-        kill -9 $pid 2>/dev/null || true
+        echo -e "${YELLOW}⚠️  Puerto $port en uso por proceso(es) $pid. Liberando puerto...${NC}"
+        # Intentar kill normal primero
+        kill $pid 2>/dev/null || true
         sleep 1
+        
+        # Si aún existe, forzar
+        if kill -0 $pid 2>/dev/null; then
+            kill -9 $pid 2>/dev/null || true
+            sleep 1
+        fi
+    fi
+    
+    # Verificar si el puerto sigue ocupado
+    if lsof -i:$port >/dev/null 2>&1 || fuser $port/tcp >/dev/null 2>&1; then
+        echo -e "${RED}❌ No se pudo liberar el puerto $port. Puede requerir permisos de sudo.${NC}"
+        echo -e "${YELLOW}   Intenta ejecutar: sudo kill -9 \$(sudo lsof -ti:$port)${NC}"
+    fi
+}
+
+# Función para limpiar contenedores Docker específicos
+cleanup_docker_containers() {
+    echo -e "${YELLOW}Limpiando contenedores Docker...${NC}"
+    
+    # Lista de contenedores específicos del proyecto
+    local containers=("redis_bot_backend" "postgres_bot_backend")
+    
+    for container in "${containers[@]}"; do
+        if docker ps -a --format "{{.Names}}" | grep -q "^${container}$"; then
+            echo -e "${YELLOW}   Deteniendo y eliminando contenedor: $container${NC}"
+            docker stop "$container" 2>/dev/null || true
+            docker rm "$container" 2>/dev/null || true
+        fi
+    done
+    
+    # También detener usando docker compose
+    docker compose down --remove-orphans 2>/dev/null || true
+    
+    # Esperar un poco para asegurar que los procesos docker-proxy se liberen
+    sleep 3
+    
+    # Buscar y matar procesos docker-proxy huérfanos que estén usando nuestros puertos
+    for port in 5433 6380; do
+        local docker_proxy_pids=$(ps aux | grep docker-proxy | grep "\-host-port $port" | awk '{print $2}' | tr '\n' ' ')
+        if [ ! -z "$docker_proxy_pids" ]; then
+            echo -e "${YELLOW}   Encontrados procesos docker-proxy huérfanos en puerto $port: $docker_proxy_pids${NC}"
+            echo -e "${YELLOW}   Estos procesos requieren permisos de root para eliminarlos.${NC}"
+            
+            # Intentar matarlos normalmente primero
+            for pid in $docker_proxy_pids; do
+                if kill -9 $pid 2>/dev/null; then
+                    echo -e "${GREEN}   ✓ Proceso $pid eliminado${NC}"
+                else
+                    echo -e "${RED}   ✗ No se pudo eliminar proceso $pid (requiere sudo)${NC}"
+                    echo -e "${YELLOW}   Por favor ejecuta: sudo kill -9 $pid${NC}"
+                fi
+            done
+        fi
+    done
+    
+    # Verificar si los contenedores zombis aún existen
+    local zombie_containers=$(docker ps -a | grep -E "(redis_bot_backend|postgres_bot_backend)" | grep -E "(Dead|Removal In Progress)" | awk '{print $1}')
+    if [ ! -z "$zombie_containers" ]; then
+        echo -e "${YELLOW}   Encontrados contenedores zombis: $zombie_containers${NC}"
+        for container_id in $zombie_containers; do
+            docker rm -f "$container_id" 2>/dev/null || true
+        done
     fi
 }
 
 # Limpiar puertos antes de iniciar
-echo -e "\n${YELLOW}0. Limpiando puertos...${NC}"
+echo -e "\n${YELLOW}0. Limpiando puertos y contenedores...${NC}"
+
+# Verificar si hay procesos docker-proxy huérfanos antes de empezar
+DOCKER_PROXY_FOUND=false
+for port in 5433 6380; do
+    if ps aux | grep docker-proxy | grep -q "\-host-port $port"; then
+        DOCKER_PROXY_FOUND=true
+        echo -e "${RED}❌ Detectados procesos docker-proxy huérfanos en puerto $port${NC}"
+        pids=$(ps aux | grep docker-proxy | grep "\-host-port $port" | awk '{print $2}')
+        echo -e "${YELLOW}   PIDs: $pids${NC}"
+    fi
+done
+
+if [ "$DOCKER_PROXY_FOUND" = true ]; then
+    echo -e "\n${YELLOW}⚠️  Se encontraron procesos docker-proxy que requieren permisos de root para eliminar.${NC}"
+    echo -e "${YELLOW}Por favor, ejecuta los siguientes comandos para limpiarlos:${NC}\n"
+    
+    # Generar comandos sudo para cada proceso
+    for port in 5433 6380; do
+        pids=$(ps aux | grep docker-proxy | grep "\-host-port $port" | awk '{print $2}' | tr '\n' ' ')
+        if [ ! -z "$pids" ]; then
+            echo -e "${BLUE}sudo kill -9 $pids${NC}"
+        fi
+    done
+    
+    echo -e "\n${YELLOW}Alternativamente, puedes ejecutar:${NC}"
+    echo -e "${BLUE}./cleanup-ports.sh${NC}"
+    echo -e "${YELLOW}para limpiar automáticamente todos los puertos y contenedores.${NC}"
+    
+    echo -e "\n${YELLOW}Después de ejecutar uno de los comandos anteriores, vuelve a ejecutar este script.${NC}"
+    exit 1
+fi
+
+# Primero limpiar contenedores Docker
+cleanup_docker_containers
+
+# Luego limpiar puertos
 kill_port 3000  # Frontend
 kill_port 5000  # Backend
 kill_port 5433  # PostgreSQL
+kill_port 6380  # Redis
 
-# Verificar si el puerto 5433 está en uso después de la limpieza
-if lsof -Pi :5433 -sTCP:LISTEN -t >/dev/null 2>&1 ; then
-    echo -e "${YELLOW}⚠️  El puerto 5433 aún está en uso. Intentando detener contenedores previos...${NC}"
-    docker compose down
-    sleep 2
-fi
+# Verificación final de puertos
+for port in 5433 6380; do
+    if lsof -Pi :$port -sTCP:LISTEN -t >/dev/null 2>&1; then
+        echo -e "${RED}❌ El puerto $port sigue en uso después de la limpieza.${NC}"
+        echo -e "${YELLOW}   Intentando limpieza forzada...${NC}"
+        # Intentar con fuser como último recurso
+        fuser -k $port/tcp 2>/dev/null || true
+        sleep 1
+    fi
+done
 
 # Paso 1: Iniciar PostgreSQL y Redis con Docker
 echo -e "\n${YELLOW}1. Iniciando PostgreSQL y Redis...${NC}"
@@ -156,12 +267,41 @@ fi
 # Función para limpiar al salir
 cleanup() {
     echo -e "\n${YELLOW}⏹️  Deteniendo servicios...${NC}"
-    pkill -P $$
+    
+    # Matar procesos hijos (backend y frontend)
+    if [ ! -z "$BACKEND_PID" ]; then
+        echo -e "${YELLOW}   Deteniendo proceso backend (PID: $BACKEND_PID)...${NC}"
+        kill $BACKEND_PID 2>/dev/null || true
+    fi
+    
+    if [ ! -z "$FRONTEND_PID" ]; then
+        echo -e "${YELLOW}   Deteniendo proceso frontend (PID: $FRONTEND_PID)...${NC}"
+        kill $FRONTEND_PID 2>/dev/null || true
+    fi
+    
+    # Matar cualquier otro proceso hijo
+    pkill -P $$ 2>/dev/null || true
+    
+    # Dar tiempo para que los procesos terminen
+    sleep 2
+    
+    # Limpiar contenedores Docker
+    echo -e "${YELLOW}   Limpiando contenedores Docker...${NC}"
+    cleanup_docker_containers
+    
+    # Limpiar puertos por si acaso
+    echo -e "${YELLOW}   Liberando puertos...${NC}"
+    kill_port 3000
+    kill_port 5000
+    kill_port 5433
+    kill_port 6380
+    
+    echo -e "${GREEN}✅ Todos los servicios y puertos han sido liberados${NC}"
     exit 0
 }
 
-# Capturar Ctrl+C
-trap cleanup INT
+# Capturar señales de terminación
+trap cleanup INT TERM EXIT
 
 # Paso 8: Iniciar servicios
 echo -e "\n${GREEN}✅ Todo listo! Iniciando servicios...${NC}"
@@ -194,7 +334,7 @@ echo -e "   1. En otra terminal ejecuta: ${YELLOW}ngrok http 5000${NC}"
 echo -e "   2. Copia la URL HTTPS que te da ngrok"
 echo -e "   3. Configura el webhook en Meta Developers"
 echo -e "   4. ¡Envía mensajes a tu número de WhatsApp!"
-echo -e "\n${YELLOW}Para detener todo: Ctrl+C y luego: docker compose down${NC}"
+echo -e "\n${YELLOW}Para detener todo: Ctrl+C (el script limpiará todo automáticamente)${NC}"
 echo ""
 
 # Esperar a los procesos

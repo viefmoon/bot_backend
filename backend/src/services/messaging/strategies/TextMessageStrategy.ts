@@ -330,6 +330,18 @@ export class TextMessageStrategy extends MessageStrategy {
           const { MenuSearchService } = await import('../../ai/MenuSearchService');
           const relevantMenu = await MenuSearchService.getRelevantMenu(args.itemsSummary);
           
+          logger.info(`Relevant menu search results: ${relevantMenu.length} chars, ${JSON.parse(relevantMenu).length} products`);
+          
+          // Si no se encontraron productos relevantes, informar al usuario
+          if (relevantMenu === "[]" || JSON.parse(relevantMenu).length === 0) {
+            logger.warn('No relevant products found for order context');
+            result = {
+              text: `Lo siento, no encontré productos que coincidan exactamente con "${args.itemsSummary}". ¿Podrías ser más específico?\n\nPor ejemplo:\n- "Pizza hawaiana grande"\n- "Hamburguesa con queso"\n- "Alitas BBQ"\n\nO puedes ver nuestro menú completo escribiendo "menú".`,
+              isRelevant: true
+            };
+            break;
+          }
+          
           // Crear contexto para el agente de órdenes
           const orderContext = {
             itemsSummary: args.itemsSummary,
