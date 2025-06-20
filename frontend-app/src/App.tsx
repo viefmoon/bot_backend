@@ -3,7 +3,7 @@ import { useSearchParams } from 'react-router-dom';
 import { useLoadScript, Autocomplete } from '@react-google-maps/api';
 import toast, { Toaster } from 'react-hot-toast';
 import { AddressForm } from '@/components/AddressForm';
-import { Map } from '@/components/Map';
+import { BasicMap as Map } from '@/components/BasicMap';
 import { Button } from '@/components/ui';
 import customerService from '@/services/customer.service';
 import type { AddressFormData, Customer, Address } from '@/types';

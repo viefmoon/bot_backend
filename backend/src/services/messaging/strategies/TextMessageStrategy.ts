@@ -113,7 +113,7 @@ export class TextMessageStrategy extends MessageStrategy {
     
     // Create pre-order
     const preOrderService = new PreOrderService();
-    const preOrderResult = await preOrderService.selectProducts({
+    const preOrderResult = await preOrderService.createPreOrder({
       orderItems: preprocessedContent.orderItems,
       whatsappPhoneNumber: context.message.from,
       orderType: preprocessedContent.orderType,

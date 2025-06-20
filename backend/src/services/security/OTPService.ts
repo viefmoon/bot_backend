@@ -1,7 +1,5 @@
-import { prisma } from '../../server';
 import logger from '../../common/utils/logger';
 import crypto from 'crypto';
-import { ValidationError, ErrorCode } from '../../common/services/errors';
 
 /**
  * Service for managing One-Time Passwords (OTP)

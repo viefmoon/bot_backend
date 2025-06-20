@@ -1,5 +1,4 @@
 import { Router, Request, Response } from 'express';
-import { DeliveryInfoService } from '../services/orders/services/DeliveryInfoService';
 import { prisma } from '../server';
 import logger from '../common/utils/logger';
 import { sendWhatsAppInteractiveMessage } from '../services/whatsapp';

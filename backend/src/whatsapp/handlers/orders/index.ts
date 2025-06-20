@@ -12,10 +12,6 @@ export {
   handleOrderCancellation 
 } from './cancellationHandler';
 
-export { 
-  handleOrderModification 
-} from './modificationHandler';
-
 export {
   createPreOrderAndSendSummary,
   handlePreOrderDiscard

@@ -6,14 +6,14 @@ import { Address, Prisma } from "@prisma/client";
 
 export class DeliveryInfoService {
   /**
-   * Get or create delivery info for an order
+   * Obtener o crear información de entrega para una orden
    */
   static async getOrCreateDeliveryInfo(
     orderType: 'delivery' | 'pickup',
     customerId: string,
     deliveryInfoInput?: DeliveryInfoInput
   ): Promise<any> {
-    // Get customer's default address or first active address
+    // Obtener la dirección predeterminada del cliente o la primera dirección activa
     const customerAddress = await prisma.address.findFirst({
       where: { 
         customerId,
@@ -33,12 +33,12 @@ export class DeliveryInfoService {
       );
     }
 
-    // Build delivery info data based on order type
+    // Construir datos de información de entrega basados en el tipo de orden
     let deliveryInfoData: any = {};
 
     if (orderType === "delivery") {
-      // Copy all address fields from customer's address
-      // This creates a snapshot of the address at the time of order
+      // Copiar todos los campos de dirección desde la dirección del cliente
+      // Esto crea una instantánea de la dirección en el momento de la orden
       deliveryInfoData = {
         street: deliveryInfoInput?.street || customerAddress.street,
         number: customerAddress.number,
@@ -53,7 +53,7 @@ export class DeliveryInfoService {
         references: deliveryInfoInput?.references || customerAddress.references,
       };
 
-      // Validate required fields for delivery
+      // Validar campos requeridos para entrega
       if (!deliveryInfoData.street || !deliveryInfoData.number) {
         throw new ValidationError(
           ErrorCode.MISSING_DELIVERY_INFO,
@@ -62,14 +62,14 @@ export class DeliveryInfoService {
         );
       }
     } else if (orderType === "pickup") {
-      // For pickup orders, we might just need basic info
+      // Para órdenes de recogida, quizás solo necesitemos información básica
       deliveryInfoData = {
-        pickupName: customerId, // Use customer ID as pickup reference
+        pickupName: customerId, // Usar ID del cliente como referencia de recogida
       };
     }
 
-    // Create a copy of delivery info for this specific order
-    // This preserves the address at the time of order creation
+    // Crear una copia de información de entrega para esta orden específica
+    // Esto preserva la dirección en el momento de creación de la orden
     const orderDeliveryInfo = await prisma.orderDeliveryInfo.create({
       data: deliveryInfoData
     });
@@ -79,7 +79,7 @@ export class DeliveryInfoService {
   }
 
   /**
-   * Update delivery info for a preorder
+   * Actualizar información de entrega para una preorden
    */
   static async updatePreOrderDeliveryInfo(
     preOrderId: number,
@@ -99,13 +99,13 @@ export class DeliveryInfoService {
     }
 
     if (preOrder.deliveryInfo && preOrder.deliveryInfo.length > 0 && preOrder.deliveryInfo[0].id) {
-      // Update existing delivery info
+      // Actualizar información de entrega existente
       await prisma.orderDeliveryInfo.update({
         where: { id: preOrder.deliveryInfo[0].id },
         data: deliveryInfo
       });
     } else {
-      // Create new delivery info and link it
+      // Crear nueva información de entrega y vincularla
       const newDeliveryInfo = await prisma.orderDeliveryInfo.create({
         data: deliveryInfo
       });
@@ -124,7 +124,7 @@ export class DeliveryInfoService {
   }
 
   /**
-   * Validate delivery address is within coverage area
+   * Validar que la dirección de entrega esté dentro del área de cobertura
    */
   static async validateDeliveryArea(
     latitude: number,
@@ -133,24 +133,24 @@ export class DeliveryInfoService {
     const config = await prisma.restaurantConfig.findFirst();
     
     if (!config || !config.deliveryCoverageArea) {
-      // If no coverage area is defined, accept all deliveries
+      // Si no se define área de cobertura, aceptar todas las entregas
       return true;
     }
 
-    // TODO: Implement actual polygon/radius check
-    // For now, return true
+    // TODO: Implementar verificación real de polígono/radio
+    // Por ahora, retornar true
     logger.warn('Delivery area validation not implemented yet');
     return true;
   }
 
   /**
-   * Create customer address
+   * Crear dirección del cliente
    */
   static async createCustomerAddress(
     data: Prisma.AddressCreateInput
   ): Promise<Address> {
     try {
-      // If this is the first address, make it default
+      // Si esta es la primera dirección, hacerla predeterminada
       const existingAddresses = await prisma.address.count({
         where: { 
           customerId: data.customer.connect?.id || data.customer.connectOrCreate?.where.id,
@@ -163,7 +163,7 @@ export class DeliveryInfoService {
         isDefault: existingAddresses === 0 ? true : (data.isDefault || false)
       };
       
-      // If setting as default, unset other defaults
+      // Si se establece como predeterminada, desmarcar otras predeterminadas
       if (addressData.isDefault) {
         await prisma.address.updateMany({
           where: { 
@@ -187,7 +187,7 @@ export class DeliveryInfoService {
   }
 
   /**
-   * Update customer address
+   * Actualizar dirección del cliente
    */
   static async updateCustomerAddress(
     addressId: string,
@@ -220,8 +220,8 @@ export class DeliveryInfoService {
   }
 
   /**
-   * Copy customer address to order delivery info
-   * This is a convenience method to create OrderDeliveryInfo from customer's Address
+   * Copiar dirección del cliente a información de entrega de orden
+   * Este es un método de conveniencia para crear OrderDeliveryInfo desde la Address del cliente
    */
   static async copyCustomerAddressToOrder(
     customerId: string,
@@ -232,7 +232,7 @@ export class DeliveryInfoService {
   }
 
   /**
-   * Get all customer addresses
+   * Obtener todas las direcciones del cliente
    */
   static async getCustomerAddresses(
     customerId: string,
@@ -262,7 +262,7 @@ export class DeliveryInfoService {
   }
 
   /**
-   * Get customer's default address
+   * Obtener la dirección predeterminada del cliente
    */
   static async getCustomerDefaultAddress(
     customerId: string
@@ -277,7 +277,7 @@ export class DeliveryInfoService {
       });
       
       if (!address) {
-        // If no default, get the first active address
+        // Si no hay predeterminada, obtener la primera dirección activa
         const firstAddress = await prisma.address.findFirst({
           where: { 
             customerId,
@@ -301,14 +301,14 @@ export class DeliveryInfoService {
   }
 
   /**
-   * Set address as default
+   * Establecer dirección como predeterminada
    */
   static async setDefaultAddress(
     addressId: string,
     customerId: string
   ): Promise<Address> {
     try {
-      // Unset other defaults
+      // Desmarcar otras predeterminadas
       await prisma.address.updateMany({
         where: { 
           customerId,
@@ -317,7 +317,7 @@ export class DeliveryInfoService {
         data: { isDefault: false }
       });
       
-      // Set this one as default
+      // Establecer esta como predeterminada
       const address = await prisma.address.update({
         where: { id: addressId },
         data: { isDefault: true }
@@ -336,7 +336,7 @@ export class DeliveryInfoService {
   }
 
   /**
-   * Soft delete address
+   * Eliminación suave de dirección
    */
   static async deleteCustomerAddress(
     addressId: string,
@@ -355,7 +355,7 @@ export class DeliveryInfoService {
         );
       }
       
-      // Soft delete
+      // Eliminación suave
       await prisma.address.update({
         where: { id: addressId },
         data: { 
@@ -363,7 +363,7 @@ export class DeliveryInfoService {
         }
       });
       
-      // If it was default, set another as default
+      // Si era predeterminada, establecer otra como predeterminada
       if (address.isDefault) {
         const nextDefault = await prisma.address.findFirst({
           where: { 

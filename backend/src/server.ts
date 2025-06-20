@@ -178,10 +178,10 @@ app.delete('/backend/addresses/:addressId', async (req: Request, res: Response) 
 });
 
 // Pre-orders endpoint
-app.post('/backend/pre-orders/select-products', async (req: Request, res: Response) => {
+app.post('/backend/pre-orders/create', async (req: Request, res: Response) => {
   try {
     const preOrderService = new PreOrderService();
-    const result = await preOrderService.selectProducts(req.body);
+    const result = await preOrderService.createPreOrder(req.body);
     res.status(200).json(result);
   } catch (error) {
     logger.error('Error creating pre-order:', error);

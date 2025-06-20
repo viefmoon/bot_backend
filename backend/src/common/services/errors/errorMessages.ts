@@ -11,10 +11,6 @@ export const ERROR_MESSAGES: Record<ErrorCode, ErrorMessageConfig> = {
     user: "❌ Lo siento, no se pudo encontrar tu orden. 🔍",
     log: "Order not found"
   },
-  [ErrorCode.ORDER_CANNOT_MODIFY]: {
-    user: "⚠️ Lo siento, esta orden ya no se puede modificar porque ya fue procesada.",
-    log: "Cannot modify order - invalid status"
-  },
   [ErrorCode.ORDER_CANNOT_CANCEL]: {
     user: "⚠️ Lo siento, esta orden ya no se puede cancelar.",
     log: "Cannot cancel order - invalid status"

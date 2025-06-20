@@ -1,4 +1,3 @@
-import { Order, OrderItem, OrderType } from "@prisma/client";
 import { NewOrder } from "../../../common/types/order.types";
 import { env } from "../../../common/config/envValidator";
 

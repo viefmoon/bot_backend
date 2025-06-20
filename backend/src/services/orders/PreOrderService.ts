@@ -4,14 +4,13 @@ import { SchedulingService } from "./services/SchedulingService";
 import { ProductCalculationService } from "./services/ProductCalculationService";
 import { DeliveryInfoService } from "./services/DeliveryInfoService";
 import { RestaurantService } from "../restaurant/RestaurantService";
-import { NotFoundError, ErrorCode } from "../../common/services/errors";
 import { OrderType } from "@prisma/client";
 
 export class PreOrderService {
   /**
    * Create a preorder with selected products
    */
-  async selectProducts(orderData: {
+  async createPreOrder(orderData: {
     orderItems: any[];
     whatsappPhoneNumber: string;
     orderType: OrderType;
@@ -20,7 +19,7 @@ export class PreOrderService {
   }) {
     const { orderItems, whatsappPhoneNumber, orderType, scheduledAt, deliveryInfo: inputDeliveryInfo } = orderData;
 
-    logger.info(`Starting selectProducts for ${whatsappPhoneNumber}`, {
+    logger.info(`Starting createPreOrder for ${whatsappPhoneNumber}`, {
       orderType,
       itemCount: orderItems.length,
       scheduledAt,
@@ -46,11 +45,13 @@ export class PreOrderService {
       });
       
       // Get or create delivery info
-      const orderDeliveryInfo = customer ? await DeliveryInfoService.getOrCreateDeliveryInfo(
-        orderTypeString,
-        customer.id,
-        inputDeliveryInfo
-      ) : null;
+      if (customer) {
+        await DeliveryInfoService.getOrCreateDeliveryInfo(
+          orderTypeString,
+          customer.id,
+          inputDeliveryInfo
+        );
+      }
 
       // Calculate items and total cost
       const { items: calculatedItems, totalCost } = await ProductCalculationService.calculateOrderItems(
@@ -111,7 +112,7 @@ export class PreOrderService {
         estimatedDeliveryTime: config.estimatedDeliveryTime,
       };
     } catch (error) {
-      logger.error("Error in selectProducts:", error);
+      logger.error("Error in createPreOrder:", error);
       throw error;
     }
   }
@@ -123,37 +124,4 @@ export class PreOrderService {
     await DeliveryInfoService.updatePreOrderDeliveryInfo(preOrderId, deliveryInfo);
   }
 
-  /**
-   * Get preorder summary
-   */
-  async getPreOrderSummary(preOrderId: number): Promise<any> {
-    const preOrder = await prisma.preOrder.findUnique({
-      where: { id: preOrderId },
-      include: {
-        deliveryInfo: true
-      }
-    });
-
-    if (!preOrder) {
-      throw new NotFoundError(
-        ErrorCode.ORDER_NOT_FOUND,
-        "PreOrder not found",
-        { metadata: { preOrderId } }
-      );
-    }
-
-    // Calculate total cost from orderItems
-    const orderItems = preOrder.orderItems as any[];
-    const totalCost = orderItems.reduce((total, item) => total + (item.subtotal || 0), 0);
-
-    return {
-      id: preOrder.id,
-      whatsappPhoneNumber: preOrder.whatsappPhoneNumber,
-      orderType: preOrder.orderType,
-      orderItems: orderItems,
-      totalCost: totalCost,
-      scheduledAt: preOrder.scheduledAt,
-      deliveryInfo: preOrder.deliveryInfo
-    };
-  }
 }

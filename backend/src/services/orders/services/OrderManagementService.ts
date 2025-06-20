@@ -1,7 +1,7 @@
 import { prisma } from "../../../server";
 import { Order, OrderStatus, PreOrder } from "@prisma/client";
 import logger from "../../../common/utils/logger";
-import { BusinessLogicError, ValidationError, ErrorCode } from "../../../common/services/errors";
+import { BusinessLogicError, ErrorCode } from "../../../common/services/errors";
 import { OrderService } from "../OrderService";
 import { CreateOrderDto } from "../dto/create-order.dto";
 
@@ -120,26 +120,6 @@ export class OrderManagementService {
 
     logger.info(`Order ${orderId} cancelled successfully`);
     return cancelledOrder;
-  }
-
-  /**
-   * Check if an order can be modified
-   */
-  async canModifyOrder(orderId: string): Promise<boolean> {
-    const order = await prisma.order.findUnique({
-      where: { id: orderId },
-    });
-
-    if (!order) {
-      throw new BusinessLogicError(
-        ErrorCode.ORDER_NOT_FOUND,
-        'Order not found',
-        { metadata: { orderId } }
-      );
-    }
-
-    const modifiableStatuses: OrderStatus[] = ["PENDING", "IN_PROGRESS"];
-    return modifiableStatuses.includes(order.orderStatus);
   }
 
   /**

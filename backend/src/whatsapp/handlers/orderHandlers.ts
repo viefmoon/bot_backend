@@ -8,7 +8,6 @@ export {
   handlePreOrderConfirmation,
   sendOrderConfirmation,
   handleOrderCancellation,
-  handleOrderModification,
   createPreOrderAndSendSummary,
   handlePreOrderDiscard
 } from './orders';

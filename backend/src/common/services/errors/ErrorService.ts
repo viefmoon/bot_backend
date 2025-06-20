@@ -6,28 +6,28 @@ import { BaseError } from './CustomErrors';
 
 export class ErrorService {
   /**
-   * Main error handler that processes all errors in a standardized way
+   * Manejador principal de errores que procesa todos los errores de manera estandarizada
    */
   static async handleError(
     error: unknown,
     context: ErrorContext
   ): Promise<ErrorResponse> {
-    // If it's already our custom error, use its properties
+    // Si ya es nuestro error personalizado, usar sus propiedades
     if (error instanceof BaseError) {
       return this.createErrorResponse(error.code, error.type, context);
     }
 
-    // Try to identify the error type and code
+    // Intentar identificar el tipo y código del error
     const { errorCode, errorType } = this.identifyError(error);
     
-    // Log the error with context
+    // Registrar el error con contexto
     this.logError(error, errorCode, context);
     
     return this.createErrorResponse(errorCode, errorType, context);
   }
 
   /**
-   * Send error message to user via WhatsApp
+   * Enviar mensaje de error al usuario vía WhatsApp
    */
   static async sendErrorToUser(
     userId: string,
@@ -47,7 +47,7 @@ export class ErrorService {
   }
 
   /**
-   * Create a standardized error response
+   * Crear una respuesta de error estandarizada
    */
   private static createErrorResponse(
     errorCode: ErrorCode,
@@ -67,7 +67,7 @@ export class ErrorService {
   }
 
   /**
-   * Identify error type and code from unknown error
+   * Identificar tipo y código de error desde un error desconocido
    */
   private static identifyError(error: unknown): {
     errorCode: ErrorCode;
@@ -75,7 +75,7 @@ export class ErrorService {
   } {
     const errorMessage = error instanceof Error ? error.message.toLowerCase() : String(error).toLowerCase();
 
-    // Check for specific error patterns
+    // Verificar patrones de error específicos
     if (errorMessage.includes('order not found') || errorMessage.includes('orden no encontrada')) {
       return { errorCode: ErrorCode.ORDER_NOT_FOUND, errorType: ErrorType.BUSINESS_LOGIC };
     }
@@ -108,12 +108,12 @@ export class ErrorService {
       return { errorCode: ErrorCode.AI_SERVICE_ERROR, errorType: ErrorType.EXTERNAL_SERVICE };
     }
 
-    // Default to technical error
+    // Por defecto a error técnico
     return { errorCode: ErrorCode.DATABASE_ERROR, errorType: ErrorType.TECHNICAL };
   }
 
   /**
-   * Enhanced error logging with context
+   * Registro mejorado de errores con contexto
    */
   private static logError(
     error: unknown,
@@ -132,12 +132,12 @@ export class ErrorService {
   }
 
   /**
-   * Determine if user should be notified based on error type
+   * Determinar si el usuario debe ser notificado basado en el tipo de error
    */
   private static shouldNotifyUser(errorType: ErrorType): boolean {
-    // Always notify for business logic, validation, and rate limit errors
-    // Sometimes notify for technical errors (depends on context)
-    // Rarely notify for external service errors (usually retry first)
+    // Siempre notificar para errores de lógica de negocio, validación y límite de tasa
+    // A veces notificar para errores técnicos (depende del contexto)
+    // Raramente notificar para errores de servicio externo (usualmente reintentar primero)
     return [
       ErrorType.BUSINESS_LOGIC,
       ErrorType.VALIDATION,
@@ -146,7 +146,7 @@ export class ErrorService {
   }
 
   /**
-   * Handle error and send to user in one operation
+   * Manejar error y enviar al usuario en una operación
    */
   static async handleAndSendError(
     error: unknown,

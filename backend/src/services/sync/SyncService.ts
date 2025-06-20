@@ -36,14 +36,14 @@ export interface LocalAddress {
 
 export class SyncService {
   /**
-   * Sync a customer from local backend to WhatsApp backend
+   * Sincronizar un cliente desde el backend local al backend de WhatsApp
    */
   static async syncCustomerFromLocal(localCustomer: LocalCustomer): Promise<Customer> {
     try {
-      // Map phone number to WhatsApp format (add country code if needed)
+      // Mapear número de teléfono al formato de WhatsApp (agregar código de país si es necesario)
       const whatsappPhoneNumber = this.formatPhoneNumberForWhatsApp(localCustomer.phoneNumber);
       
-      // Check if customer exists by phone number
+      // Verificar si el cliente existe por número de teléfono
       const existingCustomer = await prisma.customer.findUnique({
         where: { whatsappPhoneNumber }
       });
@@ -51,7 +51,7 @@ export class SyncService {
       let customer: Customer;
       
       if (existingCustomer) {
-        // Update existing customer
+        // Actualizar cliente existente
         customer = await prisma.customer.update({
           where: { whatsappPhoneNumber },
           data: {
@@ -71,10 +71,10 @@ export class SyncService {
         
         await this.logSync('customer', customer.id, 'update', 'local_to_cloud', 'success');
       } else {
-        // Create new customer with the same UUID as local
+        // Crear nuevo cliente con el mismo UUID que el local
         customer = await prisma.customer.create({
           data: {
-            id: localCustomer.id, // Use the same UUID as local backend
+            id: localCustomer.id, // Usar el mismo UUID que el backend local
             whatsappPhoneNumber,
             firstName: localCustomer.firstName,
             lastName: localCustomer.lastName,
@@ -96,7 +96,7 @@ export class SyncService {
       
       logger.info(`Synced customer ${customer.id} with phone ${whatsappPhoneNumber} from local backend`);
       
-      // Sync addresses if provided
+      // Sincronizar direcciones si se proporcionan
       if (localCustomer.addresses && localCustomer.addresses.length > 0) {
         await this.syncAddressesFromLocal(customer.id, localCustomer.addresses);
       }
@@ -112,7 +112,7 @@ export class SyncService {
   }
 
   /**
-   * Sync addresses from local backend
+   * Sincronizar direcciones desde el backend local
    */
   static async syncAddressesFromLocal(
     customerId: string,
@@ -125,7 +125,7 @@ export class SyncService {
         });
         
         const addressData = {
-          id: localAddress.id, // Use the same UUID as local backend
+          id: localAddress.id, // Usar el mismo UUID que el backend local
           customerId,
           street: localAddress.street,
           number: localAddress.number,
@@ -147,7 +147,7 @@ export class SyncService {
             data: addressData
           });
         } else {
-          // If setting as default, unset other defaults
+          // Si se establece como predeterminada, desmarcar otras predeterminadas
           if (localAddress.isDefault) {
             await prisma.address.updateMany({
               where: { customerId, isDefault: true },
@@ -172,12 +172,12 @@ export class SyncService {
   }
 
   /**
-   * Sync a customer from WhatsApp backend to local backend
-   * This would call your local backend API
+   * Sincronizar un cliente desde el backend de WhatsApp al backend local
+   * Esto llamaría a tu API del backend local
    */
   static async syncCustomerToLocal(customer: Customer & { addresses?: any[] }): Promise<void> {
     try {
-      // Get customer addresses
+      // Obtener direcciones del cliente
       const addresses = await prisma.address.findMany({
         where: { 
           customerId: customer.id,
@@ -185,8 +185,8 @@ export class SyncService {
         }
       });
       
-      // This would make an API call to your local backend
-      // For now, just log the sync
+      // Esto haría una llamada API a tu backend local
+      // Por ahora, solo registrar la sincronización
       const syncData = {
         id: customer.id,
         phoneNumber: this.formatPhoneNumberForLocal(customer.whatsappPhoneNumber),
@@ -219,7 +219,7 @@ export class SyncService {
         }))
       };
       
-      // TODO: Make API call to local backend
+      // TODO: Hacer llamada API al backend local
       // const response = await axios.post(LOCAL_BACKEND_URL + '/sync/customer', syncData);
       
       await this.logSync('customer', customer.id, 'update', 'cloud_to_local', 'success');
@@ -233,7 +233,7 @@ export class SyncService {
   }
 
   /**
-   * Get customers that need syncing
+   * Obtener clientes que necesitan sincronización
    */
   static async getCustomersToSync(since?: Date): Promise<Customer[]> {
     return await prisma.customer.findMany({
@@ -247,13 +247,13 @@ export class SyncService {
   }
 
   /**
-   * Format phone number for WhatsApp (ensure country code)
+   * Formatear número de teléfono para WhatsApp (asegurar código de país)
    */
   private static formatPhoneNumberForWhatsApp(phoneNumber: string): string {
-    // Remove any non-numeric characters
+    // Eliminar cualquier carácter no numérico
     let cleaned = phoneNumber.replace(/\D/g, '');
     
-    // Add Mexico country code if not present
+    // Agregar código de país de México si no está presente
     if (!cleaned.startsWith('52')) {
       cleaned = '52' + cleaned;
     }
@@ -262,10 +262,10 @@ export class SyncService {
   }
 
   /**
-   * Format phone number for local backend (remove country code if needed)
+   * Formatear número de teléfono para backend local (eliminar código de país si es necesario)
    */
   private static formatPhoneNumberForLocal(whatsappPhoneNumber: string): string {
-    // Remove country code for local storage if needed
+    // Eliminar código de país para almacenamiento local si es necesario
     if (whatsappPhoneNumber.startsWith('52')) {
       return whatsappPhoneNumber.substring(2);
     }
@@ -273,7 +273,7 @@ export class SyncService {
   }
 
   /**
-   * Log sync operation
+   * Registrar operación de sincronización
    */
   private static async logSync(
     entityType: string,
@@ -297,18 +297,18 @@ export class SyncService {
   }
 
   /**
-   * Handle conflict resolution between local and cloud
+   * Manejar resolución de conflictos entre local y nube
    */
   static async resolveConflict(localCustomer: LocalCustomer, cloudCustomer: Customer): Promise<Customer> {
-    // Simple strategy: most recently updated wins
+    // Estrategia simple: el más recientemente actualizado gana
     const localUpdatedAt = new Date(localCustomer.updatedAt);
     const cloudUpdatedAt = new Date(cloudCustomer.updatedAt);
     
     if (localUpdatedAt > cloudUpdatedAt) {
-      // Local is newer, update cloud
+      // Local es más nuevo, actualizar nube
       return await this.syncCustomerFromLocal(localCustomer);
     } else {
-      // Cloud is newer, update local
+      // Nube es más nueva, actualizar local
       await this.syncCustomerToLocal(cloudCustomer);
       return cloudCustomer;
     }

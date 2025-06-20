@@ -2,7 +2,7 @@ import { GeminiService } from './GeminiService';
 import logger from '../../common/utils/logger';
 import { ProductService } from '../products/ProductService';
 
-// Type definitions for the new SDK
+// Definiciones de tipos para el nuevo SDK
 interface Content {
   role: 'user' | 'model';
   parts: Array<{ text: string } | { inlineData: { mimeType: string; data: string } }>;
@@ -392,9 +392,9 @@ NO CONVERSES. SOLO MAPEA Y EJECUTA.`;
         return text
           .toLowerCase()
           .normalize('NFD')
-          .replace(/[\u0300-\u036f]/g, '') // Remove accents
-          .replace(/[^\w\s]/g, ' ') // Replace non-word chars with space
-          .replace(/\s+/g, ' ') // Multiple spaces to single
+          .replace(/[\u0300-\u036f]/g, '') // Eliminar acentos
+          .replace(/[^\w\s]/g, ' ') // Reemplazar caracteres no-palabra con espacio
+          .replace(/\s+/g, ' ') // Múltiples espacios a uno solo
           .trim();
       };
       
@@ -402,40 +402,40 @@ NO CONVERSES. SOLO MAPEA Y EJECUTA.`;
       
       logger.debug(`Normalized search: "${normalizedSummary}"`);
       
-      // Score each product based on similarity
+      // Calificar cada producto basado en similitud
       const scoredProducts = products.map(product => {
         const productName = normalizeText(product.name || '');
         const productDesc = normalizeText(product.description || '');
         const categoryName = normalizeText(product.subcategory?.category?.name || '');
         const subcategoryName = normalizeText(product.subcategory?.name || '');
         
-        // Create searchable combinations
+        // Crear combinaciones de búsqueda
         const searchTargets = [
-          productName, // Highest priority
+          productName, // Mayor prioridad
           `${productName} ${categoryName}`,
           `${productName} ${subcategoryName}`,
           `${productName} ${productDesc}`,
         ];
         
-        // Calculate similarity scores for each target
+        // Calcular puntuaciones de similitud para cada objetivo
         const similarities = searchTargets.map(target => 
           stringSimilarity.compareTwoStrings(normalizedSummary, target)
         );
         
-        // Get best match score
+        // Obtener la mejor puntuación de coincidencia
         const bestScore = Math.max(...similarities);
         
-        // Additional scoring for partial matches
+        // Puntuación adicional para coincidencias parciales
         let bonusScore = 0;
         
-        // Check if any word from the summary appears in the product name
+        // Verificar si alguna palabra del resumen aparece en el nombre del producto
         const summaryWords = normalizedSummary.split(' ').filter(w => w.length > 2);
         const productWords = productName.split(' ');
         
         summaryWords.forEach(summaryWord => {
           productWords.forEach(productWord => {
             const wordSimilarity = stringSimilarity.compareTwoStrings(summaryWord, productWord);
-            if (wordSimilarity > 0.8) { // 80% similarity threshold for individual words
+            if (wordSimilarity > 0.8) { // Umbral de 80% de similitud para palabras individuales
               bonusScore += 0.2;
             }
           });
@@ -455,18 +455,18 @@ NO CONVERSES. SOLO MAPEA Y EJECUTA.`;
         };
       });
       
-      // Filter and sort by score
+      // Filtrar y ordenar por puntuación
       const relevantProducts = scoredProducts
-        .filter(item => item.score > 0.3) // 30% similarity threshold
+        .filter(item => item.score > 0.3) // Umbral de 30% de similitud
         .sort((a, b) => b.score - a.score);
       
-      // Log top matches for debugging
+      // Registrar las mejores coincidencias para depuración
       logger.debug(`Top matches:`);
       relevantProducts.slice(0, 5).forEach((item, index) => {
         logger.debug(`${index + 1}. ${item.debug.productName} (score: ${item.score.toFixed(3)})`);
       });
       
-      // If no good matches, use a more lenient threshold
+      // Si no hay buenas coincidencias, usar un umbral más indulgente
       if (relevantProducts.length === 0) {
         logger.debug('No products found with 30% threshold, trying 20%...');
         const lenientMatches = scoredProducts
@@ -479,7 +479,7 @@ NO CONVERSES. SOLO MAPEA Y EJECUTA.`;
         }
       }
       
-      // Build complete menu structure with all relations
+      // Construir estructura completa del menú con todas las relaciones
       const menuStructure = relevantProducts
         .slice(0, 15)
         .map(item => item.product)
@@ -489,7 +489,7 @@ NO CONVERSES. SOLO MAPEA Y EJECUTA.`;
             nombre: product.name,
           };
           
-          // Include variants with full info
+          // Incluir variantes con información completa
           if (product.variants?.length > 0) {
             item.variantes = product.variants.map((v: any) => ({
               id: v.id,
@@ -498,7 +498,7 @@ NO CONVERSES. SOLO MAPEA Y EJECUTA.`;
             }));
           }
           
-          // Include modifiers if they exist
+          // Incluir modificadores si existen
           if (product.modifierGroups?.length > 0) {
             item.modificadores = product.modifierGroups
               .filter((g: any) => g.productModifiers?.length > 0)
@@ -514,7 +514,7 @@ NO CONVERSES. SOLO MAPEA Y EJECUTA.`;
               }));
           }
           
-          // Include pizza ingredients if it's a pizza
+          // Incluir ingredientes de pizza si es una pizza
           if (product.isPizza && product.pizzaIngredients?.length > 0) {
             item.ingredientesPizza = product.pizzaIngredients.map((i: any) => ({
               id: i.id,
@@ -525,7 +525,7 @@ NO CONVERSES. SOLO MAPEA Y EJECUTA.`;
           return item;
         });
       
-      // Log the menu structure in a readable format
+      // Registrar la estructura del menú en un formato legible
       logger.debug(`Returning ${menuStructure.length} relevant products`);
       if (menuStructure.length > 0) {
         (logger as any).json('Relevant menu structure:', menuStructure);

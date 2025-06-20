@@ -2,7 +2,6 @@ import {
   handlePreOrderConfirmation,
   handlePreOrderDiscard,
   handleOrderCancellation,
-  handleOrderModification,
 } from "./orderHandlers";
 
 import { prisma } from "../../server";
@@ -13,7 +12,6 @@ import {
   WAIT_TIMES_MESSAGE,
   RESTAURANT_INFO_MESSAGE,
   CHATBOT_HELP_MESSAGE,
-  CHANGE_DELIVERY_INFO_MESSAGE,
 } from "../../common/config/predefinedMessages";
 import { ProductService } from "../../services/products/ProductService";
 import logger from "../../common/utils/logger";
@@ -32,12 +30,10 @@ const stripeClient = env.STRIPE_SECRET_KEY
 const BUTTON_ACTIONS = {
   confirm_order: handlePreOrderConfirmation,
   discard_order: handlePreOrderDiscard,
-  modify_delivery: handlePreOrderDeliveryModification,
 } as const;
 
 const LIST_ACTIONS = {
   cancel_order: handleOrderCancellation,
-  modify_order: handleOrderModification,
   pay_online: handleOnlinePayment,
   wait_times: handleWaitTimes,
   view_menu: sendMenu,
@@ -96,60 +92,6 @@ export async function handleInteractiveMessage(
   }
 }
 
-async function handlePreOrderDeliveryModification(
-  from: string,
-  messageId: string
-): Promise<void> {
-  try {
-    const preOrder = await prisma.preOrder.findFirst({ where: { messageId } });
-
-    if (!preOrder) {
-      throw new BusinessLogicError(
-        ErrorCode.ORDER_NOT_FOUND,
-        'PreOrder not found for delivery modification',
-        { userId: from, operation: 'handlePreOrderDeliveryModification' }
-      );
-    }
-
-    const whatsappPhoneNumber = preOrder.whatsappPhoneNumber;
-    const preOrderId = preOrder.id;
-
-    // Get customer to verify they exist
-    const customer = await prisma.customer.findUnique({
-      where: { whatsappPhoneNumber },
-      select: { id: true }
-    });
-    
-    if (!customer) {
-      throw new BusinessLogicError(
-        ErrorCode.CUSTOMER_NOT_FOUND,
-        'Customer not found',
-        { userId: whatsappPhoneNumber }
-      );
-    }
-
-    // Generar OTP y crear el enlace
-    const otp = Math.floor(100000 + Math.random() * 900000).toString();
-    const updateLink = `${env.FRONTEND_BASE_URL}/address-registration/${whatsappPhoneNumber}?otp=${otp}&preOrderId=${preOrderId}`;
-    
-    // Store OTP for later verification
-    OTPService.storeOTP(customer.id, otp);
-    
-    // Enviar mensaje con botón URL
-    await sendMessageWithUrlButton(
-      whatsappPhoneNumber,
-      "🚚 Actualizar Dirección",
-      "Puedes actualizar tu información de entrega haciendo clic en el botón de abajo.\n\nTu pedido actual permanecerá sin cambios hasta que confirmes la nueva dirección.",
-      "Actualizar Dirección",
-      updateLink
-    );
-  } catch (error) {
-    await ErrorService.handleAndSendError(error, from, {
-      userId: from,
-      operation: 'handlePreOrderDeliveryModification'
-    });
-  }
-}
 
 async function handleOnlinePayment(
   customerId: string,

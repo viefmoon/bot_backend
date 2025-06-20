@@ -43,7 +43,7 @@ export async function createPreOrderAndSendSummary(
     };
 
     // Crear la preorden usando el servicio
-    const preOrderResult = await preOrderService.selectProducts(
+    const preOrderResult = await preOrderService.createPreOrder(
       orderData
     );
     const { preOrderId, items: selectedProducts } = preOrderResult;
@@ -142,13 +142,6 @@ async function sendPreOrderConfirmationButtons(
           reply: {
             id: "confirm_preorder",
             title: "✅ Confirmar",
-          },
-        },
-        {
-          type: "reply",
-          reply: {
-            id: "modify_delivery_info",
-            title: "📍 Cambiar dirección",
           },
         },
         {

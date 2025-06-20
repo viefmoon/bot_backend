@@ -1,6 +1,5 @@
 import { RestaurantService } from "../../restaurant/RestaurantService";
 import { ValidationError, ErrorCode } from "../../../common/services/errors";
-import logger from "../../../common/utils/logger";
 import { env } from "../../../common/config/envValidator";
 
 export class SchedulingService {

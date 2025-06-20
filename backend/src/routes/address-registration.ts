@@ -7,7 +7,7 @@ import logger from '../common/utils/logger';
 const router = Router();
 
 /**
- * Verify OTP for address registration
+ * Verificar OTP para registro de dirección
  * POST /backend/address-registration/verify-otp
  */
 router.post('/verify-otp', async (req: Request, res: Response): Promise<void> => {
@@ -30,7 +30,7 @@ router.post('/verify-otp', async (req: Request, res: Response): Promise<void> =>
       return;
     }
     
-    // Get customer info
+    // Obtener información del cliente
     const customer = await prisma.customer.findUnique({
       where: { whatsappPhoneNumber: customerId },
       select: {
@@ -68,14 +68,14 @@ router.post('/verify-otp', async (req: Request, res: Response): Promise<void> =>
 });
 
 /**
- * Create new address for customer
+ * Crear nueva dirección para el cliente
  * POST /backend/address-registration/create
  */
 router.post('/create', async (req: Request, res: Response): Promise<void> => {
   try {
     const { customerId, otp, address } = req.body;
     
-    // Validate required fields
+    // Validar campos requeridos
     if (!customerId || !otp || !address) {
       res.status(400).json({ 
         error: 'customerId, otp, and address are required' 
@@ -83,7 +83,7 @@ router.post('/create', async (req: Request, res: Response): Promise<void> => {
       return;
     }
     
-    // Verify OTP first
+    // Verificar OTP primero
     const isValid = await OTPService.verifyOTP(customerId, otp);
     
     if (!isValid) {
@@ -93,7 +93,7 @@ router.post('/create', async (req: Request, res: Response): Promise<void> => {
       return;
     }
     
-    // Validate address fields
+    // Validar campos de dirección
     const requiredFields = ['street', 'number', 'city', 'state', 'country', 'latitude', 'longitude'];
     const missingFields = requiredFields.filter(field => !address[field]);
     
@@ -104,7 +104,7 @@ router.post('/create', async (req: Request, res: Response): Promise<void> => {
       return;
     }
     
-    // Get the actual customer UUID first
+    // Obtener primero el UUID real del cliente
     const customerRecord = await prisma.customer.findUnique({
       where: { whatsappPhoneNumber: customerId },
       select: { id: true }
@@ -115,7 +115,7 @@ router.post('/create', async (req: Request, res: Response): Promise<void> => {
       return;
     }
     
-    // Create address
+    // Crear dirección
     const addressData = {
       ...address,
       customer: { connect: { id: customerRecord.id } }
@@ -123,18 +123,18 @@ router.post('/create', async (req: Request, res: Response): Promise<void> => {
     
     const newAddress = await DeliveryInfoService.createCustomerAddress(addressData);
     
-    // Send confirmation message to WhatsApp
+    // Enviar mensaje de confirmación a WhatsApp
     try {
       const { sendWhatsAppMessage, sendWhatsAppInteractiveMessage } = await import('../services/whatsapp');
       const { ADDRESS_REGISTRATION_SUCCESS, WELCOME_MESSAGE_INTERACTIVE } = await import('../common/config/predefinedMessages');
       
-      // Get customer's WhatsApp phone number
+      // Obtener el número de WhatsApp del cliente
       const customer = await prisma.customer.findUnique({
         where: { id: customerId },
         select: { whatsappPhoneNumber: true }
       });
       
-      // Send confirmation message
+      // Enviar mensaje de confirmación
       if (customer?.whatsappPhoneNumber) {
         await sendWhatsAppMessage(
           customer.whatsappPhoneNumber,
@@ -142,17 +142,17 @@ router.post('/create', async (req: Request, res: Response): Promise<void> => {
         );
       }
       
-      // Small delay to ensure proper message order
+      // Pequeño retraso para asegurar el orden correcto de mensajes
       await new Promise(resolve => setTimeout(resolve, 1000));
       
-      // Send welcome message immediately after
+      // Enviar mensaje de bienvenida inmediatamente después
       const welcomeMessage = await WELCOME_MESSAGE_INTERACTIVE();
       if (customer?.whatsappPhoneNumber) {
         await sendWhatsAppInteractiveMessage(customer.whatsappPhoneNumber, welcomeMessage);
       }
       
-      // Mark that welcome message has been sent to avoid duplicate
-      // Update lastInteraction to current time to prevent isNewConversation detection
+      // Marcar que el mensaje de bienvenida fue enviado para evitar duplicados
+      // Actualizar lastInteraction a la hora actual para prevenir la detección de isNewConversation
       await prisma.customer.update({
         where: { id: customerRecord.id },
         data: { 
@@ -179,7 +179,7 @@ router.post('/create', async (req: Request, res: Response): Promise<void> => {
 });
 
 /**
- * Update existing address
+ * Actualizar dirección existente
  * PUT /backend/address-registration/:addressId
  */
 router.put('/:addressId', async (req: Request, res: Response): Promise<void> => {
@@ -194,7 +194,7 @@ router.put('/:addressId', async (req: Request, res: Response): Promise<void> => 
       return;
     }
     
-    // Verify OTP
+    // Verificar OTP
     const isValid = await OTPService.verifyOTP(customerId, otp);
     
     if (!isValid) {
@@ -204,7 +204,7 @@ router.put('/:addressId', async (req: Request, res: Response): Promise<void> => 
       return;
     }
     
-    // Get customer by phone number
+    // Obtener cliente por número de teléfono
     const customerRecord = await prisma.customer.findUnique({
       where: { whatsappPhoneNumber: customerId },
       select: { id: true }
@@ -215,7 +215,7 @@ router.put('/:addressId', async (req: Request, res: Response): Promise<void> => 
       return;
     }
     
-    // Verify address belongs to customer
+    // Verificar que la dirección pertenece al cliente
     const existingAddress = await prisma.address.findFirst({
       where: { 
         id: addressId,
@@ -230,24 +230,24 @@ router.put('/:addressId', async (req: Request, res: Response): Promise<void> => 
       return;
     }
     
-    // Update address
+    // Actualizar dirección
     const updatedAddress = await DeliveryInfoService.updateCustomerAddress(
       addressId,
       address
     );
     
-    // Send WhatsApp notification about address update
+    // Enviar notificación de WhatsApp sobre actualización de dirección
     try {
       const { sendWhatsAppMessage, sendWhatsAppInteractiveMessage } = await import('../services/whatsapp');
       const { ADDRESS_UPDATE_SUCCESS, WELCOME_MESSAGE_INTERACTIVE } = await import('../common/config/predefinedMessages');
       
-      // Get customer's WhatsApp phone number
+      // Obtener el número de WhatsApp del cliente
       const customer = await prisma.customer.findUnique({
         where: { id: customerId },
         select: { whatsappPhoneNumber: true }
       });
       
-      // Send update confirmation
+      // Enviar confirmación de actualización
       if (customer?.whatsappPhoneNumber) {
         await sendWhatsAppMessage(
           customer.whatsappPhoneNumber,
@@ -255,16 +255,16 @@ router.put('/:addressId', async (req: Request, res: Response): Promise<void> => 
         );
       }
       
-      // Small delay to ensure proper message order
+      // Pequeño retraso para asegurar el orden correcto de mensajes
       await new Promise(resolve => setTimeout(resolve, 1000));
       
-      // Send welcome message immediately after
+      // Enviar mensaje de bienvenida inmediatamente después
       const welcomeMessage = await WELCOME_MESSAGE_INTERACTIVE();
       if (customer?.whatsappPhoneNumber) {
         await sendWhatsAppInteractiveMessage(customer.whatsappPhoneNumber, welcomeMessage);
       }
       
-      // Mark that interaction happened to avoid duplicate welcome message
+      // Marcar que hubo interacción para evitar mensaje de bienvenida duplicado
       await prisma.customer.update({
         where: { id: customerRecord.id },
         data: { 
@@ -274,7 +274,7 @@ router.put('/:addressId', async (req: Request, res: Response): Promise<void> => 
       
     } catch (sendError) {
       logger.error('Failed to send WhatsApp notification:', sendError);
-      // Continue even if WhatsApp fails
+      // Continuar aunque WhatsApp falle
     }
     
     res.json({ 
@@ -292,7 +292,7 @@ router.put('/:addressId', async (req: Request, res: Response): Promise<void> => 
 });
 
 /**
- * Get customer addresses
+ * Obtener direcciones del cliente
  * GET /backend/address-registration/:customerId/addresses
  */
 router.get('/:customerId/addresses', async (req: Request, res: Response): Promise<void> => {
@@ -305,7 +305,7 @@ router.get('/:customerId/addresses', async (req: Request, res: Response): Promis
       return;
     }
     
-    // Verify OTP
+    // Verificar OTP
     const isValid = await OTPService.verifyOTP(customerId, otp as string);
     
     if (!isValid) {
@@ -313,7 +313,7 @@ router.get('/:customerId/addresses', async (req: Request, res: Response): Promis
       return;
     }
     
-    // Get customer by phone number
+    // Obtener cliente por número de teléfono
     const customerRecord = await prisma.customer.findUnique({
       where: { whatsappPhoneNumber: customerId },
       select: { id: true }
@@ -334,7 +334,7 @@ router.get('/:customerId/addresses', async (req: Request, res: Response): Promis
 });
 
 /**
- * Delete customer address
+ * Eliminar dirección del cliente
  * DELETE /backend/address-registration/:addressId
  */
 router.delete('/:addressId', async (req: Request, res: Response): Promise<void> => {
@@ -349,7 +349,7 @@ router.delete('/:addressId', async (req: Request, res: Response): Promise<void> 
       return;
     }
     
-    // Verify OTP
+    // Verificar OTP
     const isValid = await OTPService.verifyOTP(customerId, otp);
     
     if (!isValid) {
@@ -359,7 +359,7 @@ router.delete('/:addressId', async (req: Request, res: Response): Promise<void> 
       return;
     }
     
-    // Get customer by phone number
+    // Obtener cliente por número de teléfono
     const customerRecord = await prisma.customer.findUnique({
       where: { whatsappPhoneNumber: customerId },
       select: { id: true }
@@ -370,7 +370,7 @@ router.delete('/:addressId', async (req: Request, res: Response): Promise<void> 
       return;
     }
     
-    // Delete address (soft delete)
+    // Eliminar dirección (eliminación suave)
     await DeliveryInfoService.deleteCustomerAddress(
       addressId,
       customerRecord.id
@@ -391,7 +391,7 @@ router.delete('/:addressId', async (req: Request, res: Response): Promise<void> 
 });
 
 /**
- * Set address as default
+ * Establecer dirección como predeterminada
  * PUT /backend/address-registration/:addressId/default
  */
 router.put('/:addressId/default', async (req: Request, res: Response): Promise<void> => {
@@ -406,7 +406,7 @@ router.put('/:addressId/default', async (req: Request, res: Response): Promise<v
       return;
     }
     
-    // Verify OTP
+    // Verificar OTP
     const isValid = await OTPService.verifyOTP(customerId, otp);
     
     if (!isValid) {
@@ -416,7 +416,7 @@ router.put('/:addressId/default', async (req: Request, res: Response): Promise<v
       return;
     }
     
-    // Get customer by phone number
+    // Obtener cliente por número de teléfono
     const customerRecord = await prisma.customer.findUnique({
       where: { whatsappPhoneNumber: customerId },
       select: { id: true }
@@ -427,7 +427,7 @@ router.put('/:addressId/default', async (req: Request, res: Response): Promise<v
       return;
     }
     
-    // Set as default
+    // Establecer como predeterminada
     const updatedAddress = await DeliveryInfoService.setDefaultAddress(
       addressId,
       customerRecord.id
@@ -448,12 +448,12 @@ router.put('/:addressId/default', async (req: Request, res: Response): Promise<v
 });
 
 /**
- * Get delivery area polygon
+ * Obtener polígono del área de entrega
  * GET /backend/address-registration/delivery-area
  */
 router.get('/delivery-area', async (_req: Request, res: Response): Promise<void> => {
   try {
-    // Get restaurant configuration
+    // Obtener configuración del restaurante
     const restaurant = await prisma.restaurantConfig.findFirst({
       select: {
         deliveryCoverageArea: true
@@ -465,7 +465,7 @@ router.get('/delivery-area', async (_req: Request, res: Response): Promise<void>
       return;
     }
 
-    // Return polygon coordinates
+    // Devolver coordenadas del polígono
     res.json({ 
       polygonCoords: restaurant.deliveryCoverageArea
     });
@@ -477,7 +477,7 @@ router.get('/delivery-area', async (_req: Request, res: Response): Promise<void>
 });
 
 /**
- * Debug OTP status (TEMPORARY - REMOVE IN PRODUCTION)
+ * Estado de depuración del OTP (TEMPORAL - ELIMINAR EN PRODUCCIÓN)
  * GET /backend/address-registration/debug/otp-status
  */
 router.get('/debug/otp-status', async (req: Request, res: Response): Promise<void> => {
