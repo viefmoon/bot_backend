@@ -1,6 +1,9 @@
 import { GeminiService } from './GeminiService';
 import logger from '../../common/utils/logger';
 import { ProductService } from '../products/ProductService';
+import { getGeneralAgentPrompt, getOrderAgentPrompt } from './prompts';
+import { getGeneralAgentTools, getOrderAgentTools } from './tools';
+import { MenuSearchService } from './MenuSearchService';
 
 // Definiciones de tipos para el nuevo SDK
 interface Content {
@@ -28,7 +31,7 @@ export class AgentService {
     try {
       // Usar el agente general para detectar intención
       const systemInstruction = await this.getGeneralAgentInstruction();
-      const tools = this.getGeneralAgentTools();
+      const tools = getGeneralAgentTools();
       
       // Log completo de lo que recibe el modelo
       logger.debug('=== COMPLETE AI MODEL INPUT ===');
@@ -76,7 +79,7 @@ export class AgentService {
       }];
       
       const systemInstruction = this.getOrderAgentInstruction();
-      const tools = this.getOrderAgentTools();
+      const tools = getOrderAgentTools();
       
       // Configurar modo ANY para forzar la ejecución de función
       const toolConfig = {
@@ -148,393 +151,21 @@ export class AgentService {
       logger.error('Error obteniendo configuración del restaurante:', error);
     }
     
-    return `
-      Eres un asistente virtual de ${restaurantName}. Tu función es ayudar a los clientes con sus consultas y pedidos.
-      
-      REGLAS ESTRICTAS:
-      - SOLO puedes proporcionar información que está en tu contexto o usar las herramientas disponibles
-      - NO inventes información sobre productos, precios, ingredientes o disponibilidad
-      - NO asumas o adivines características de productos que no están en tu contexto
-      - Si no tienes información específica, indica al cliente que no dispones de esa información
-      - NUNCA proporciones precios individuales, solo a través de la herramienta "send_menu"
-      
-      1. DETECTAR INTENCIÓN:
-         - Si el cliente quiere ordenar algo, usa la herramienta "prepare_order_context"
-         - Si es una consulta general, responde directamente
-      
-      2. CONSULTAS GENERALES:
-         - Menú completo con precios: usa "send_menu" 
-         - Información del restaurante: usa "get_business_hours"
-         - Tiempos de espera: usa "get_wait_times"
-         - Actualizar dirección: usa "generate_address_update_link"
-         - Instrucciones del bot: usa "send_bot_instructions"
-         - Para otras consultas: responde SOLO con información disponible en tu contexto
-      
-      3. DETECCIÓN DE ÓRDENES:
-         Cuando detectes intención de ordenar (palabras clave: quiero, pedir, ordenar, dame, tráeme, etc.):
-         
-         PRIMERO: Verifica el tipo de orden
-         - Si el cliente NO ha especificado si es para llevar o entrega a domicilio:
-           * PREGUNTA: "¿Tu pedido es para entrega a domicilio o para recoger en el restaurante?"
-           * NO ejecutes "prepare_order_context" hasta tener esta información
-         
-         - Detecta el tipo de orden SOLO cuando el cliente lo especifique:
-           * DELIVERY: "a domicilio", "envío", "traer", "mi casa", "mi dirección", "que me lo traigan"
-           * TAKE_AWAY: "para llevar", "recoger", "paso por", "voy por", "lo recojo"
-         
-         DESPUÉS de confirmar el tipo de orden:
-         - Extrae TODOS los artículos mencionados
-         - Incluye cantidades si las menciona
-         - USA "prepare_order_context" con el tipo de orden confirmado
-         
-         NUNCA asumas el tipo de orden - SIEMPRE debe ser especificado por el cliente
-      
-      4. ACTUALIZACIÓN DE DIRECCIÓN:
-         Si el cliente quiere actualizar su dirección o agregar una nueva dirección de entrega:
-         - Usa "generate_address_update_link" para generar un enlace seguro
-         - NO agregues mensajes adicionales, la herramienta ya envía el mensaje interactivo
-      
-      5. INSTRUCCIONES DEL BOT:
-         Si el cliente pregunta cómo usar el bot, cómo funciona, qué puede hacer, o necesita ayuda:
-         - Usa "send_bot_instructions" para enviar las instrucciones completas
-         - Detecta preguntas como: "cómo usar", "cómo funciona", "qué puedo hacer", "ayuda", "tutorial", "instrucciones"
-      
-      6. RESETEAR CONVERSACIÓN:
-         Si el cliente quiere reiniciar la conversación o borrar el historial:
-         - Usa "reset_conversation" para limpiar el contexto
-         - Detecta frases como: "olvida lo anterior", "reinicia la conversación", "borra el historial", "empecemos de nuevo", "olvida todo", "reinicia el chat"
-      
-      LIMITACIONES Y RESTRICCIONES:
-      - Solo puedes responder sobre productos que existen en el menú
-      - No puedes inventar o sugerir productos que no están disponibles
-      - No puedes modificar ingredientes base de los productos
-      - No puedes prometer tiempos de entrega específicos fuera de los establecidos
-      - No puedes ofrecer descuentos o promociones no autorizadas
-      - Si el cliente pide algo que no está en el menú, debes indicarlo claramente
-      
-      MANEJO DE ERRORES:
-      - Si no entiendes la solicitud: pide aclaración de manera amable
-      - Si el producto no existe: sugiere alternativas del menú disponible
-      - Si hay ambigüedad: pregunta para confirmar antes de proceder
-      
-      IMPORTANTE:
-      - Responde siempre en español
-      - Sé cordial y profesional pero mantente dentro de tus capacidades
-      - Para órdenes, NO intentes mapear productos, solo extrae lo que el cliente dice
-      - NUNCA proporciones precios individuales bajo ninguna circunstancia
-      - Si preguntan por precios, SIEMPRE ejecuta "send_menu"
-      
-      ESTRUCTURA DEL MENÚ DISPONIBLE:
-      ${menuJson}
-      
-      Esta estructura muestra TODO lo que puedes ofrecer. Si algo no está aquí, NO lo ofrezcas.
-      Úsala para validar las solicitudes del cliente y sugerir alternativas válidas.
-    `;
+    return getGeneralAgentPrompt(menuJson, restaurantName);
   }
   
   /**
    * Instrucciones para el agente de órdenes
    */
   private static getOrderAgentInstruction(): string {
-    return `MAPEA LA ORDEN AL MENÚ JSON.
-    
-ESTRUCTURA DEL MENÚ:
-- id: ID del producto
-- nombre: nombre del producto
-- variantes: array con {id, nombre, precio}
-- modificadores: grupos con opciones {id, nombre, precio}
-- ingredientesPizza: para pizzas {id, nombre}
-
-EJECUTA map_order_items con:
-- productId: usa el id del producto
-- variantId: usa el id de la variante correcta (si aplica)
-- quantity: cantidad solicitada
-- modifiers: array de IDs de modificadores (si aplica)
-- pizzaIngredients: array de IDs de ingredientes (si es pizza)
-- orderType: USA EL TIPO DE ORDEN QUE VIENE EN EL MENSAJE (DESPUÉS DE "TIPO:")
-
-IMPORTANTE: NO CAMBIES EL TIPO DE ORDEN. USA EXACTAMENTE EL QUE ESTÁ EN EL MENSAJE.
-
-NO CONVERSES. SOLO MAPEA Y EJECUTA.`;
-  }
-  
-  /**
-   * Herramientas para el agente general
-   */
-  private static getGeneralAgentTools(): any[] {
-    return [
-      {
-        name: "send_menu",
-        description: "Envía el menú completo al usuario cuando lo solicite",
-        parameters: {
-          type: "object",
-          properties: {}
-        }
-      },
-      {
-        name: "get_business_hours",
-        description: "Obtiene información completa del restaurante incluyendo ubicación, teléfonos y horarios",
-        parameters: {
-          type: "object",
-          properties: {}
-        }
-      },
-      {
-        name: "get_wait_times",
-        description: "Obtiene los tiempos de espera estimados para recolección y entrega a domicilio",
-        parameters: {
-          type: "object",
-          properties: {}
-        }
-      },
-      {
-        name: "prepare_order_context",
-        description: "Prepara el contexto para procesar una orden cuando el cliente quiere pedir algo",
-        parameters: {
-          type: "object",
-          properties: {
-            itemsSummary: {
-              type: "string",
-              description: "Lista de todos los artículos que el cliente mencionó (ej: '2 pizzas hawaianas grandes, 1 coca cola, papas fritas')"
-            },
-            orderType: {
-              type: "string", 
-              enum: ["DELIVERY", "TAKE_AWAY"],
-              description: "Tipo de orden: DELIVERY (entrega a domicilio), TAKE_AWAY (para llevar/recoger)"
-            }
-          },
-          required: ["itemsSummary", "orderType"]
-        }
-      },
-      {
-        name: "generate_address_update_link",
-        description: "Genera un enlace seguro para que el cliente actualice o agregue una dirección de entrega",
-        parameters: {
-          type: "object",
-          properties: {
-            reason: {
-              type: "string",
-              description: "Razón por la cual el cliente quiere actualizar la dirección"
-            }
-          }
-        }
-      },
-      {
-        name: "send_bot_instructions",
-        description: "Envía las instrucciones completas de cómo usar el bot cuando el cliente lo solicite",
-        parameters: {
-          type: "object",
-          properties: {}
-        }
-      },
-      {
-        name: "reset_conversation",
-        description: "Reinicia la conversación y borra el historial relevante cuando el cliente lo solicite",
-        parameters: {
-          type: "object",
-          properties: {}
-        }
-      }
-    ];
-  }
-  
-  /**
-   * Herramientas para el agente de órdenes
-   */
-  private static getOrderAgentTools(): any[] {
-    return [
-      {
-        name: "map_order_items",
-        description: "Mapear items del pedido",
-        parameters: {
-          type: "object",
-          properties: {
-            orderItems: {
-              type: "array",
-              items: {
-                type: "object",
-                properties: {
-                  productId: { type: "string" },
-                  variantId: { type: "string" },
-                  quantity: { type: "number" },
-                  modifiers: { type: "array", items: { type: "string" } },
-                  pizzaIngredients: { type: "array", items: { type: "string" } }
-                },
-                required: ["productId", "quantity"]
-              }
-            },
-            orderType: {
-              type: "string",
-              enum: ["DELIVERY", "TAKE_AWAY"]
-            },
-            warnings: { type: "string" }
-          },
-          required: ["orderItems", "orderType"]
-        }
-      }
-    ];
+    return getOrderAgentPrompt();
   }
   
   /**
    * Obtiene el menú relevante basado en las palabras clave (con IDs)
+   * Delega a MenuSearchService para la lógica de búsqueda
    */
   static async getRelevantMenu(itemsSummary: string): Promise<string> {
-    try {
-      const stringSimilarity = await import('string-similarity');
-      
-      logger.debug(`Getting relevant menu for: "${itemsSummary}"`);
-      
-      // Obtener productos con todas sus relaciones
-      const products = await ProductService.getActiveProducts({ includeRelations: true }) as any[];
-      
-      // Normalizar texto de búsqueda
-      const normalizeText = (text: string): string => {
-        return text
-          .toLowerCase()
-          .normalize('NFD')
-          .replace(/[\u0300-\u036f]/g, '') // Eliminar acentos
-          .replace(/[^\w\s]/g, ' ') // Reemplazar caracteres no-palabra con espacio
-          .replace(/\s+/g, ' ') // Múltiples espacios a uno solo
-          .trim();
-      };
-      
-      const normalizedSummary = normalizeText(itemsSummary);
-      
-      logger.debug(`Normalized search: "${normalizedSummary}"`);
-      
-      // Calificar cada producto basado en similitud
-      const scoredProducts = products.map(product => {
-        const productName = normalizeText(product.name || '');
-        const productDesc = normalizeText(product.description || '');
-        const categoryName = normalizeText(product.subcategory?.category?.name || '');
-        const subcategoryName = normalizeText(product.subcategory?.name || '');
-        
-        // Crear combinaciones de búsqueda
-        const searchTargets = [
-          productName, // Mayor prioridad
-          `${productName} ${categoryName}`,
-          `${productName} ${subcategoryName}`,
-          `${productName} ${productDesc}`,
-        ];
-        
-        // Calcular puntuaciones de similitud para cada objetivo
-        const similarities = searchTargets.map(target => 
-          stringSimilarity.compareTwoStrings(normalizedSummary, target)
-        );
-        
-        // Obtener la mejor puntuación de coincidencia
-        const bestScore = Math.max(...similarities);
-        
-        // Puntuación adicional para coincidencias parciales
-        let bonusScore = 0;
-        
-        // Verificar si alguna palabra del resumen aparece en el nombre del producto
-        const summaryWords = normalizedSummary.split(' ').filter(w => w.length > 2);
-        const productWords = productName.split(' ');
-        
-        summaryWords.forEach(summaryWord => {
-          productWords.forEach(productWord => {
-            const wordSimilarity = stringSimilarity.compareTwoStrings(summaryWord, productWord);
-            if (wordSimilarity > 0.8) { // Umbral de 80% de similitud para palabras individuales
-              bonusScore += 0.2;
-            }
-          });
-        });
-        
-        const finalScore = bestScore + bonusScore;
-        
-        return { 
-          product, 
-          score: finalScore,
-          debug: {
-            productName,
-            bestScore,
-            bonusScore,
-            finalScore
-          }
-        };
-      });
-      
-      // Filtrar y ordenar por puntuación
-      const relevantProducts = scoredProducts
-        .filter(item => item.score > 0.3) // Umbral de 30% de similitud
-        .sort((a, b) => b.score - a.score);
-      
-      // Registrar las mejores coincidencias para depuración
-      logger.debug(`Top matches:`);
-      relevantProducts.slice(0, 5).forEach((item, index) => {
-        logger.debug(`${index + 1}. ${item.debug.productName} (score: ${item.score.toFixed(3)})`);
-      });
-      
-      // Si no hay buenas coincidencias, usar un umbral más indulgente
-      if (relevantProducts.length === 0) {
-        logger.debug('No products found with 30% threshold, trying 20%...');
-        const lenientMatches = scoredProducts
-          .filter(item => item.score > 0.2)
-          .sort((a, b) => b.score - a.score)
-          .slice(0, 10);
-          
-        if (lenientMatches.length > 0) {
-          relevantProducts.push(...lenientMatches);
-        }
-      }
-      
-      // Construir estructura completa del menú con todas las relaciones
-      const menuStructure = relevantProducts
-        .slice(0, 15)
-        .map(item => item.product)
-        .map(product => {
-          const item: any = {
-            id: product.id,
-            nombre: product.name,
-          };
-          
-          // Incluir variantes con información completa
-          if (product.variants?.length > 0) {
-            item.variantes = product.variants.map((v: any) => ({
-              id: v.id,
-              nombre: v.name,
-              precio: v.price
-            }));
-          }
-          
-          // Incluir modificadores si existen
-          if (product.modifierGroups?.length > 0) {
-            item.modificadores = product.modifierGroups
-              .filter((g: any) => g.productModifiers?.length > 0)
-              .map((group: any) => ({
-                grupo: group.name,
-                requerido: group.required,
-                multiple: group.acceptsMultiple,
-                opciones: group.productModifiers.map((m: any) => ({
-                  id: m.id,
-                  nombre: m.name,
-                  precio: m.price
-                }))
-              }));
-          }
-          
-          // Incluir ingredientes de pizza si es una pizza
-          if (product.isPizza && product.pizzaIngredients?.length > 0) {
-            item.ingredientesPizza = product.pizzaIngredients.map((i: any) => ({
-              id: i.id,
-              nombre: i.name
-            }));
-          }
-          
-          return item;
-        });
-      
-      // Registrar la estructura del menú en un formato legible
-      logger.debug(`Returning ${menuStructure.length} relevant products`);
-      if (menuStructure.length > 0) {
-        (logger as any).json('Relevant menu structure:', menuStructure);
-      }
-      
-      return JSON.stringify(menuStructure);
-    } catch (error) {
-      logger.error('Error obteniendo menú relevante:', error);
-      return "[]";
-    }
+    return MenuSearchService.getRelevantMenu(itemsSummary);
   }
 }

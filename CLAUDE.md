@@ -108,6 +108,16 @@ Middleware Pipeline:
    - Executes `map_order_items` function
    - Creates structured order data from conversational input
 
+**AI Service Organization**:
+- `AgentService`: Main agent coordinator (170 lines, refactored from 440+)
+- `MenuSearchService`: Handles menu item search and matching
+- `/prompts/`: Externalized AI prompts
+  - `generalAgent.prompt.ts`: General agent instructions
+  - `orderAgent.prompt.ts`: Order processing instructions
+- `/tools/`: Externalized tool definitions
+  - `generalAgent.tools.ts`: General agent function tools
+  - `orderAgent.tools.ts`: Order agent function tools
+
 ### Service Architecture
 
 **Stateless Services Pattern**: All services use static methods

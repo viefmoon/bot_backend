@@ -322,7 +322,8 @@ export class TextMessageStrategy extends MessageStrategy {
           logger.debug('Preparando contexto de orden:', args);
           
           // Obtener menú relevante basado en los items mencionados
-          const relevantMenu = await AgentService.getRelevantMenu(args.itemsSummary);
+          const { MenuSearchService } = await import('../../ai/MenuSearchService');
+          const relevantMenu = await MenuSearchService.getRelevantMenu(args.itemsSummary);
           
           // Crear contexto para el agente de órdenes
           const orderContext = {
