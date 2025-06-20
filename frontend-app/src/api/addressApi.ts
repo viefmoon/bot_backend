@@ -1,14 +1,14 @@
 import axios from 'axios';
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001/backend';
+const API_BASE_URL = import.meta.env.VITE_BACKEND_BASE_URL || 'http://localhost:5000';
 
 export interface VerifyOtpParams {
-  customerId: string;
+  whatsappPhoneNumber: string;
   otp: string;
 }
 
 export interface CreateAddressParams {
-  customerId: string;
+  whatsappPhoneNumber: string;
   otp: string;
   address: {
     street: string;
@@ -31,13 +31,13 @@ export interface UpdateAddressParams extends CreateAddressParams {
 
 export interface DeleteAddressParams {
   addressId: string;
-  customerId: string;
+  whatsappPhoneNumber: string;
   otp: string;
 }
 
 export interface SetDefaultAddressParams {
   addressId: string;
-  customerId: string;
+  whatsappPhoneNumber: string;
   otp: string;
 }
 
@@ -52,40 +52,40 @@ export const apiClient = axios.create({
 // API functions
 export const addressApi = {
   verifyOtp: async (params: VerifyOtpParams) => {
-    const { data } = await apiClient.post('/address-registration/verify-otp', params);
+    const { data } = await apiClient.post('/backend/address-registration/verify-otp', params);
     return data;
   },
 
   createAddress: async (params: CreateAddressParams) => {
-    const { data } = await apiClient.post('/address-registration/create', params);
+    const { data } = await apiClient.post('/backend/address-registration/create', params);
     return data;
   },
 
   updateAddress: async ({ addressId, ...params }: UpdateAddressParams) => {
-    const { data } = await apiClient.put(`/address-registration/${addressId}`, params);
+    const { data } = await apiClient.put(`/backend/address-registration/${addressId}`, params);
     return data;
   },
 
   deleteAddress: async ({ addressId, ...params }: DeleteAddressParams) => {
-    const { data } = await apiClient.delete(`/address-registration/${addressId}`, {
+    const { data } = await apiClient.delete(`/backend/address-registration/${addressId}`, {
       data: params,
     });
     return data;
   },
 
   setDefaultAddress: async ({ addressId, ...params }: SetDefaultAddressParams) => {
-    const { data } = await apiClient.put(`/address-registration/${addressId}/default`, params);
+    const { data } = await apiClient.put(`/backend/address-registration/${addressId}/default`, params);
     return data;
   },
 
   getDeliveryArea: async () => {
-    const { data } = await apiClient.get('/address-registration/delivery-area');
+    const { data } = await apiClient.get('/backend/address-registration/delivery-area');
     return data;
   },
 
   // Send pre-order message
   sendPreOrderMessage: async (customerId: string, preOrderId: string) => {
-    const { data } = await apiClient.post('/address-selection/send', {
+    const { data } = await apiClient.post('/backend/address-selection/send', {
       customerId,
       preOrderId,
     });
