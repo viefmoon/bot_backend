@@ -71,7 +71,7 @@ async function main() {
     { dayOfWeek: 2, openingTime: "14:00", closingTime: "22:00", isClosed: false }, // Martes
     { dayOfWeek: 3, openingTime: "4:00", closingTime: "23:00", isClosed: false }, // Miércoles
     { dayOfWeek: 4, openingTime: "4:00", closingTime: "22:00", isClosed: false }, // Jueves
-    { dayOfWeek: 5, openingTime: "14:00", closingTime: "22:00", isClosed: false }, // Viernes
+    { dayOfWeek: 5, openingTime: "4:00", closingTime: "22:00", isClosed: false }, // Viernes
     { dayOfWeek: 6, openingTime: "14:00", closingTime: "22:00", isClosed: false }, // Sábado
   ];
 

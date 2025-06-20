@@ -13,6 +13,11 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 npm run dev          # Runs both backend and frontend concurrently
 cd backend && npm run dev    # Backend only (port 3001)
 cd frontend-app && npm run dev   # Frontend only (port 3000)
+
+# Other development scripts
+./dev.sh             # Full dev with hot-reload
+./dev-backend.sh     # Backend only development
+./dev-frontend.sh    # Frontend only development
 ```
 
 ### Database Management
@@ -43,65 +48,108 @@ cd frontend-app && npm run lint    # ESLint for frontend
 # Note: No linting configured for backend
 ```
 
-## Architecture Overview
+### Testing WhatsApp Locally
+```bash
+# 1. Start the backend
+./start-local.sh
 
-This is a WhatsApp restaurant ordering bot with the following architecture:
+# 2. In another terminal, expose webhook with ngrok
+ngrok http 3001
 
-### Backend Architecture
-
-The backend follows a **service-oriented architecture** with these key patterns:
-
-1. **Stateless Services Pattern**: All services use static methods and are organized by domain
-   - Services import `prisma` from the server file for database access
-   - Each service handles a single domain responsibility
-   - Located in `/backend/src/services/[domain]/`
-
-2. **Message Processing Pipeline**: WhatsApp messages flow through a middleware pipeline:
-   ```
-   RateLimitMiddleware → CustomerValidationMiddleware → MessageTypeMiddleware → Strategy (Text/Audio/Interactive)
-   ```
-
-3. **AI Integration**: Uses Google Gemini AI for natural language understanding and order processing
-   - AgentService orchestrates AI interactions
-   - Supports text and audio transcription
-
-4. **Type System**: Centralized type definitions in `/backend/src/common/types/`
-   - All types should be imported from the central index.ts
-   - Moving towards unified response types (`UnifiedResponse`)
-
-### Key Services
-
-- **Order Management** (`/services/orders/`): Handles order creation, modification, cancellation
-- **AI Services** (`/services/ai/`): Gemini integration and agent orchestration
-- **Messaging** (`/services/messaging/`): Message processing pipeline and strategies
-- **WhatsApp** (`/services/whatsapp/`): WhatsApp API integration
-- **Customer** (`/services/customer/`): Customer management and validation
-- **Products** (`/services/products/`): Menu and product management
-- **Restaurant** (`/services/restaurant/`): Restaurant configuration and hours
-
-### Frontend Architecture
-
-React app for collecting delivery addresses with Google Maps integration:
-- Vite + React + TypeScript
-- Tailwind CSS for styling
-- React Hook Form for form handling
-- Google Maps for address selection
-
-## Development Guidelines
-
-### Service Implementation Rules
-```typescript
-// Services should follow this pattern:
-export class MyService {
-  static async myMethod(params: MyParams): Promise<MyResponse> {
-    // Implementation
-  }
-}
+# 3. Update webhook URL in Meta Business dashboard to:
+# https://[your-ngrok-id].ngrok.io/backend/webhook
 ```
 
+## Architecture Overview
+
+This is a WhatsApp restaurant ordering bot with AI-powered natural language processing.
+
+### Message Processing Pipeline
+
+WhatsApp messages flow through a sophisticated middleware pipeline:
+
+```
+Webhook Entry (/backend/webhook)
+    ↓
+WhatsAppService.handleWebhook()
+    ↓
+MessageProcessor.processWithPipeline()
+    ↓
+Middleware Pipeline:
+    1. RateLimitMiddleware (configurable limits)
+    2. CustomerValidationMiddleware (creates/validates customers, loads chat history)
+    3. RestaurantHoursMiddleware (checks if restaurant is open)
+    4. AddressRequiredMiddleware (blocks until address registered)
+    5. MessageTypeMiddleware (routes to appropriate strategy)
+    6. MessageProcessingMiddleware (strategy pattern):
+        - AudioMessageStrategy (transcribes with Gemini)
+        - InteractiveMessageStrategy (button/list responses)
+        - TextMessageStrategy (AI agent processing)
+```
+
+### AI Agent Architecture
+
+**Two-Agent System**:
+
+1. **General Agent** (`AgentService.processMessage`)
+   - Detects user intent and routes appropriately
+   - Function tools available:
+     - `send_menu`: Display full restaurant menu
+     - `get_business_hours`: Restaurant info and hours
+     - `prepare_order_context`: Initiate order processing
+     - `generate_address_update_link`: OTP-secured address update
+     - `send_bot_instructions`: Help messages
+     - `reset_conversation`: Clear chat history
+   - Always asks for order type (delivery/takeaway) before processing
+
+2. **Order Agent** (`AgentService.processOrderMapping`)
+   - Specialized for mapping natural language to menu items
+   - Uses semantic similarity matching
+   - Executes `map_order_items` function
+   - Creates structured order data from conversational input
+
+### Service Architecture
+
+**Stateless Services Pattern**: All services use static methods
+- Import `prisma` from server.ts for database access
+- Services organized by domain in `/backend/src/services/[domain]/`
+- Examples:
+  ```typescript
+  export class OrderService {
+    static async createOrder(data: CreateOrderData): Promise<Order> {
+      // Implementation
+    }
+  }
+  ```
+
+### Key Business Logic
+
+1. **Address Requirement**: Customers MUST have a registered address before any conversation
+   - Enforced by `AddressRequiredMiddleware`
+   - Generates OTP and sends registration link
+   - Blocks all other interactions until completed
+
+2. **Order Flow**:
+   - User message → AI extracts items → Creates PreOrder
+   - Shows summary with confirm/cancel buttons
+   - Confirmation converts PreOrder to Order
+   - Generates unique daily order number
+
+3. **Message History Management**:
+   - Full history stored for context
+   - Relevant history (last 20 messages) for AI processing
+   - Automatic cleanup of duplicate consecutive messages
+   - History markers for important events (resets, orders)
+
+4. **Security**:
+   - OTP-based authentication for sensitive operations
+   - Message deduplication prevents replay attacks
+   - WhatsApp phone number as primary identifier
+
 ### Error Handling
+
+Centralized error service with WhatsApp-friendly messages:
 ```typescript
-// Use centralized error service
 throw new BusinessLogicError(
   ErrorCode.CUSTOMER_NOT_FOUND,
   'Customer not found',
@@ -109,43 +157,178 @@ throw new BusinessLogicError(
 );
 ```
 
-### Type Imports
-```typescript
-// ✅ Always import from common types
-import { Order, OrderType } from '@/common/types';
+### Type System
 
-// ❌ Never import directly from Prisma
-import { Order } from '@prisma/client';
-```
+- Centralized types in `/backend/src/common/types/`
+- Always import from the central index.ts
+- Never import directly from Prisma client
+- Moving towards unified response types
 
-### WhatsApp Testing
-- Use ngrok to expose local webhook: `ngrok http 3001`
-- Update webhook URL in Meta Business dashboard
-- Test with real WhatsApp messages
+### Important Implementation Details
+
+1. **Message Splitting**: Automatic splitting at 4000 chars
+2. **WhatsApp Message Types**:
+   - Text: Processed through AI agents
+   - Audio: Transcribed then processed as text
+   - Interactive: Direct action handlers (bypasses AI)
+3. **Response Accumulation**: Context collects all responses during pipeline
+4. **Idempotency**: Message log prevents duplicate processing
 
 ## Environment Variables
 
-Required environment variables (see `.env.example`):
-- `DATABASE_URL`: PostgreSQL connection (local uses port 5433)
+Required (see `.env.example` for full list):
+- `DATABASE_URL`: PostgreSQL connection (local uses port 5433 to avoid conflicts)
 - `GOOGLE_AI_API_KEY`: Google AI API key for Gemini
-- `GEMINI_MODEL`: Gemini model version (default: gemini-2.5-pro-preview-05-06)
-- `WHATSAPP_*`: WhatsApp Business API credentials
+- `GEMINI_MODEL`: Model version (default: gemini-2.5-pro)
+- `WHATSAPP_PHONE_NUMBER_MESSAGING_ID`: Meta phone number ID
+- `WHATSAPP_ACCESS_TOKEN`: WhatsApp API access token
+- `WHATSAPP_VERIFY_TOKEN`: Webhook verification token
 - `FRONTEND_BASE_URL`: Frontend URL for address collection
+- `RATE_LIMIT_MAX_MESSAGES`: Message limit per window (default: 30)
+- `RATE_LIMIT_TIME_WINDOW_MINUTES`: Time window for rate limiting (default: 5)
 
 ## Database Schema
 
-Key models in Prisma schema:
-- `Customer`: WhatsApp users
-- `Order`: Customer orders with status tracking
-- `OrderItem`: Individual items in an order
-- `Product`: Menu items
-- `Category`: Product categories
-- `Restaurant`: Restaurant configuration
-- `Message`: Message history for context
+### Core Business Models
+
+**Customer** - WhatsApp users
+- `id`: UUID primary key
+- `whatsappPhoneNumber`: Unique WhatsApp identifier (used for all messaging)
+- `firstName/lastName`: Optional customer name
+- `email`: Optional email
+- `fullChatHistory/relevantChatHistory`: JSON fields storing conversation history
+- `stripeCustomerId`: For payment processing
+- `isBanned/banReason`: For blocking abusive users
+- `totalOrders/totalSpent`: Customer metrics
+- Relations: has many `addresses` and `orders`
+
+**Address** - Customer delivery addresses (1:N with Customer)
+- `id`: UUID primary key
+- `customerId`: Foreign key to Customer
+- `street/number/interiorNumber`: Address components
+- `neighborhood/city/state/zipCode/country`: Location details
+- `latitude/longitude`: GPS coordinates (Decimal precision)
+- `references`: Additional delivery instructions
+- `isDefault`: Marks primary address
+
+**Order** - Confirmed customer orders
+- `id`: UUID primary key
+- `dailyNumber`: Sequential number reset daily
+- `orderType`: DINE_IN, TAKE_AWAY, or DELIVERY
+- `orderStatus`: PENDING → IN_PROGRESS → IN_PREPARATION → READY → IN_DELIVERY → DELIVERED/COMPLETED/CANCELLED
+- `paymentStatus`: PENDING or PAID
+- `totalCost`: Order total
+- `customerId`: Foreign key to Customer
+- `scheduledAt`: For future orders
+- `messageId`: WhatsApp message tracking
+- `stripeSessionId`: Payment tracking
+- Relations: has many `orderItems`, has one `deliveryInfo`
+
+**PreOrder** - Temporary orders before confirmation
+- `id`: Auto-increment integer
+- `orderItems`: JSON containing order details
+- `orderType`: Same as Order
+- `whatsappPhoneNumber`: Customer phone (not UUID)
+- `messageId`: For tracking confirmation buttons
+- Relations: can have `deliveryInfo`
+
+**OrderDeliveryInfo** - Snapshot of delivery address at order time
+- Preserves historical delivery data
+- Contains all address fields (street, number, city, etc.)
+- `pickupName`: For TAKE_AWAY orders
+- Can belong to either `Order` or `PreOrder`
+
+### Product Catalog Models
+
+**Category** - Top-level product categories
+- `id`: String primary key
+- `name`: Unique category name
+- `photoId`: Optional image reference
+- Relations: has many `subcategories`
+
+**Subcategory** - Product subcategories
+- Belongs to a `Category`
+- Relations: has many `products`
+
+**Product** - Menu items
+- `id`: String primary key
+- `name/description`: Product details
+- `price`: Base price (nullable if has variants)
+- `hasVariants`: Boolean flag
+- `isPizza`: Special handling for pizzas
+- `estimatedPrepTime`: Minutes to prepare
+- Relations: has many `variants`, `modifierGroups`, `pizzaIngredients`
+
+**ProductVariant** - Size/type variations (e.g., small, medium, large)
+- `price`: Variant-specific price
+- Belongs to a `Product`
+
+**ModifierGroup** - Groups of optional modifications
+- `minSelections/maxSelections`: Selection constraints
+- `isRequired`: Must select at least min
+- `allowMultipleSelections`: Can select multiple modifiers
+- Relations: has many `productModifiers`
+
+**ProductModifier** - Individual modifications (e.g., extra cheese, no onions)
+- `price`: Additional cost (nullable)
+- `isDefault`: Pre-selected option
+- Belongs to a `ModifierGroup`
+
+**PizzaIngredient** - Special ingredients for pizzas
+- `ingredientValue`: Quantity/portion
+- `productIds`: Array of applicable pizza products
+- Can be added/removed per pizza half
+
+### Order Detail Models
+
+**OrderItem** - Individual items within an order
+- Links to `Product` and optionally `ProductVariant`
+- `basePrice/finalPrice`: Pricing before/after modifiers
+- `preparationStatus`: Independent tracking per item
+- Relations: many-to-many with `productModifiers` and `selectedPizzaIngredients`
+
+**SelectedPizzaIngredient** - Pizza customizations per order item
+- `half`: LEFT, RIGHT, or FULL pizza
+- `action`: ADD or REMOVE ingredient
+- Links `OrderItem` to `PizzaIngredient`
+
+### Restaurant Configuration Models
+
+**RestaurantConfig** - Global restaurant settings
+- Restaurant name, phones, address
+- `acceptingOrders`: Master on/off switch
+- `estimatedPickupTime/estimatedDeliveryTime`: Default wait times
+- `openingGracePeriod/closingGracePeriod`: Buffer times
+- `deliveryCoverageArea`: JSON polygon for delivery zone
+- Relations: has many `businessHours`
+
+**BusinessHours** - Operating hours per day
+- `dayOfWeek`: 0-6 (Sunday-Saturday)
+- `openingTime/closingTime`: HH:mm format
+- `isClosed`: Override for holidays
+
+### System Models
+
+**MessageLog** - WhatsApp message deduplication
+- `messageId`: Unique WhatsApp message ID
+- `processed`: Boolean flag to prevent reprocessing
+
+**MessageRateLimit** - Rate limiting per customer
+- `whatsappPhoneNumber`: Customer identifier
+- `messageCount`: Messages in current window
+- `lastMessageTime`: For sliding window calculation
+
+**SyncLog** - Tracks sync between local and cloud systems
+- `entityType/entityId`: What was synced
+- `syncDirection`: local_to_cloud or cloud_to_local
+- `syncStatus`: pending, success, or failed
+
+**SeederControl** - Prevents duplicate seed runs
+- `lastRun`: Timestamp of last seed execution
 
 ## Deployment
 
-The project deploys to Railway with:
+Railway deployment:
 ```bash
 # Build command
 cd backend && npm install && npm run build
@@ -154,4 +337,11 @@ cd backend && npm install && npm run build
 cd backend && npm run migrate && npm run seed && npm start
 ```
 
-Auto-deploys on push to the connected repository.
+Auto-deploys on push to connected repository.
+
+## Frontend Integration
+
+- React app at `/frontend-app` for address collection
+- OTP-secured registration flow
+- Google Maps integration for address selection
+- Communicates with backend via REST API
