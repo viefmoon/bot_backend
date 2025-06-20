@@ -17,16 +17,12 @@ export class MenuSearchService {
    */
   static async getRelevantMenu(itemsSummary: string): Promise<string> {
     try {
-      logger.debug(`Getting relevant menu for: "${itemsSummary}"`);
-
       // 1. Generate embedding for user query
-      logger.debug('Generating embedding for user query...');
       const embeddingResponse = await this.genAI.models.embedContent({
-        model: "text-embedding-004",
+        model: env.EMBEDDING_MODEL,
         contents: itemsSummary
       });
       const queryEmbedding = embeddingResponse.embeddings?.[0]?.values || [];
-      logger.debug(`Query embedding generated with ${queryEmbedding.length} dimensions`);
       
       if (queryEmbedding.length === 0) {
         logger.error('Failed to generate embedding for query');
@@ -57,97 +53,17 @@ export class MenuSearchService {
         // If no products meet the strict threshold, but the top result is reasonably close, include it
         if (filteredProducts.length === 0 && relevantProductsResult.length > 0 && relevantProductsResult[0].distance < 0.6) {
           filteredProducts.push(relevantProductsResult[0]);
-          logger.debug(`No products within threshold ${SIMILARITY_THRESHOLD}, including top match with distance ${relevantProductsResult[0].distance.toFixed(3)}`);
+          // Including top match even though it's slightly above threshold
         }
         
         relevantProductIds = filteredProducts.map(p => p.id);
-        
-        logger.debug(`Vector search found ${relevantProductsResult.length} products, ${filteredProducts.length} within threshold`);
-        if (filteredProducts.length > 0) {
-          logger.debug(`Similarity distances: ${filteredProducts.map(p => `${p.id}:${p.distance.toFixed(3)}`).join(', ')}`);
-        }
       } catch (error) {
         logger.error('Error in vector search:', error);
-        // Fallback: if pgvector is not available, try a text-based search
-        logger.warn('pgvector search failed, attempting text-based fallback');
-        
-        // Try a simple text search as fallback
-        try {
-          const textSearchResult = await prisma.product.findMany({
-            where: {
-              isActive: true,
-              OR: [
-                { name: { contains: itemsSummary, mode: 'insensitive' } },
-                { description: { contains: itemsSummary, mode: 'insensitive' } }
-              ]
-            },
-            take: 10,
-            include: {
-              subcategory: { include: { category: true } },
-              variants: { where: { isActive: true } },
-              modifierGroups: {
-                where: { isActive: true },
-                include: {
-                  productModifiers: { where: { isActive: true } },
-                },
-              },
-              pizzaIngredients: { where: { isActive: true } },
-            }
-          });
-          
-          if (textSearchResult.length > 0) {
-            logger.info(`Text search fallback found ${textSearchResult.length} products`);
-            const menuStructure = this.buildMenuStructure(textSearchResult);
-            return JSON.stringify(menuStructure);
-          }
-        } catch (textSearchError) {
-          logger.error('Text search fallback also failed:', textSearchError);
-        }
-        
         return "[]";
       }
 
       if (relevantProductIds.length === 0) {
         logger.warn('No relevant products found via vector search within threshold');
-        
-        // Try a more aggressive text search as last resort
-        try {
-          // Split the search term into words for better matching
-          const searchTerms = itemsSummary.toLowerCase().split(' ').filter(term => term.length > 2);
-          
-          const textSearchResult = await prisma.product.findMany({
-            where: {
-              isActive: true,
-              OR: searchTerms.map(term => ({
-                OR: [
-                  { name: { contains: term, mode: 'insensitive' } },
-                  { description: { contains: term, mode: 'insensitive' } }
-                ]
-              }))
-            },
-            take: 5,
-            include: {
-              subcategory: { include: { category: true } },
-              variants: { where: { isActive: true } },
-              modifierGroups: {
-                where: { isActive: true },
-                include: {
-                  productModifiers: { where: { isActive: true } },
-                },
-              },
-              pizzaIngredients: { where: { isActive: true } },
-            }
-          });
-          
-          if (textSearchResult.length > 0) {
-            logger.info(`Aggressive text search found ${textSearchResult.length} products for terms: ${searchTerms.join(', ')}`);
-            const menuStructure = this.buildMenuStructure(textSearchResult);
-            return JSON.stringify(menuStructure);
-          }
-        } catch (textError) {
-          logger.error('Aggressive text search also failed:', textError);
-        }
-        
         return "[]";
       }
 

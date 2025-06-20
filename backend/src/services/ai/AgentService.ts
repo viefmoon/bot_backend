@@ -64,11 +64,6 @@ export class AgentService {
   ): Promise<any> {
     try {
       const startTime = Date.now();
-      logger.debug('=== AgentService.processOrderMapping (ORDER_AGENT) ===');
-      logger.debug('Order Context:', {
-        itemsSummary: orderContext.itemsSummary,
-        menuLength: orderContext.relevantMenu.length
-      });
       
       // Crear mensaje para el agente de órdenes
       const messages: Content[] = [{
@@ -119,7 +114,6 @@ export class AgentService {
         totalProcessingTime: `${totalTime}ms`,
         overheadTime: `${totalTime - geminiTime}ms`
       });
-      logger.debug('=== End ORDER_AGENT Processing ===');
       return response;
     } catch (error) {
       logger.error('OrderAgent: Error procesando orden', error);

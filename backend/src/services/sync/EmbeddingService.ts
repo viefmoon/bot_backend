@@ -25,7 +25,7 @@ interface ProductWithRelations extends Product {
  */
 export class EmbeddingService {
   private static genAI = new GoogleGenAI({ apiKey: env.GOOGLE_AI_API_KEY });
-  private static embeddingModel = 'text-embedding-004';
+  private static embeddingModel = env.EMBEDDING_MODEL;
   private static lastSyncChecksum: string | null = null;
 
   /**
@@ -79,16 +79,12 @@ export class EmbeddingService {
   static async generateProductEmbedding(product: ProductWithRelations): Promise<number[]> {
     const textToEmbed = this.createProductText(product);
     
-    logger.debug(`Generating embedding for: ${product.name}`);
-    logger.debug(`Text: ${textToEmbed}`);
-    
     const result = await this.genAI.models.embedContent({
       model: this.embeddingModel,
       contents: textToEmbed
     });
     
     const embedding = result.embeddings?.[0]?.values || [];
-    logger.debug(`Embedding generated with ${embedding.length} dimensions`);
     
     return embedding;
   }

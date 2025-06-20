@@ -13,6 +13,7 @@ interface EnvironmentVariables {
   WHATSAPP_VERIFY_TOKEN: string;
   FRONTEND_BASE_URL: string;
   GEMINI_MODEL: string;
+  EMBEDDING_MODEL: string;
   
   // Optional variables
   STRIPE_SECRET_KEY?: string;
@@ -117,6 +118,7 @@ class EnvironmentValidator {
       WHATSAPP_VERIFY_TOKEN: process.env.WHATSAPP_VERIFY_TOKEN!,
       FRONTEND_BASE_URL: process.env.FRONTEND_BASE_URL!,
       GEMINI_MODEL: process.env.GEMINI_MODEL!,
+      EMBEDDING_MODEL: process.env.EMBEDDING_MODEL || 'text-embedding-004',
       STRIPE_SECRET_KEY: process.env.STRIPE_SECRET_KEY,
       STRIPE_WEBHOOK_SECRET: process.env.STRIPE_WEBHOOK_SECRET,
       NODE_ENV: process.env.NODE_ENV!,

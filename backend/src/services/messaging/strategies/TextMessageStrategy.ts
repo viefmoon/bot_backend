@@ -30,11 +30,6 @@ export class TextMessageStrategy extends MessageStrategy {
     workingHistory.push({ role: "user", content: text });
     
     try {
-      logger.debug('=== TextMessageStrategy.execute DEBUG ===');
-      logger.debug('User message:', text);
-      logger.debug('Customer:', context.customer ? `ID: ${context.customer.id}, Phone: ${context.customer.whatsappPhoneNumber}` : 'No customer');
-      logger.debug('Chat history length:', relevantChatHistory.length);
-      
       // Procesar con AI - usar workingHistory que incluye el mensaje actual
       const messages: Content[] = workingHistory.map(
         ({ role, content }: any) => ({
@@ -43,15 +38,10 @@ export class TextMessageStrategy extends MessageStrategy {
         })
       );
       
-      (logger as any).json('Messages to send to AI:', messages);
-      
       const response = await AgentService.processMessage(messages);
       
       // Convertir respuesta al formato esperado
       const aiResponses = await this.processGeminiResponse(response, context);
-      
-      (logger as any).json('Processed AI responses:', aiResponses);
-      logger.debug('=== End TextMessageStrategy.execute DEBUG ===');
       
       // Procesar respuestas de AI
       for (const response of aiResponses) {
@@ -167,11 +157,6 @@ export class TextMessageStrategy extends MessageStrategy {
     // Verificar estructura de respuesta válida
     if (!response?.candidates?.[0]?.content?.parts) {
       logger.error('Estructura de respuesta inválida de Gemini API');
-      logger.debug('Response structure:', {
-        hasCandidate: !!response?.candidates?.[0],
-        hasContent: !!response?.candidates?.[0]?.content,
-        hasParts: !!response?.candidates?.[0]?.content?.parts
-      });
       return [{
         text: "Error: Respuesta inválida del modelo",
         isRelevant: true
@@ -179,31 +164,17 @@ export class TextMessageStrategy extends MessageStrategy {
     }
     
     const parts = response.candidates[0].content.parts;
-    logger.debug(`Processing ${parts.length} parts from response`);
     
     // Procesar cada parte de la respuesta
     for (const part of parts) {
-      const partInfo = {
-        hasText: !!part.text,
-        hasFunctionCall: !!part.functionCall,
-        functionName: part.functionCall?.name
-      };
-      logger.debug(`Processing part: ${JSON.stringify(partInfo)}`);
-      
       if (part.text) {
         // Respuesta de texto simple
-        logger.debug('Text response:', part.text);
         responses.push({
           text: part.text,
           isRelevant: true,
         });
       } else if (part.functionCall) {
         // Procesar function calls
-        const functionInfo = {
-          name: part.functionCall.name,
-          args: part.functionCall.args
-        };
-        (logger as any).json('Function call:', functionInfo);
         
         const functionResponse = await this.handleFunctionCall(
           part.functionCall.name,
@@ -213,10 +184,8 @@ export class TextMessageStrategy extends MessageStrategy {
         if (functionResponse) {
           // Si la función retorna un array (múltiples mensajes), agregar todos
           if (Array.isArray(functionResponse)) {
-            logger.debug(`Function returned ${functionResponse.length} responses`);
             responses.push(...functionResponse);
           } else {
-            logger.debug('Function returned single response');
             responses.push(functionResponse);
           }
         }
@@ -232,7 +201,6 @@ export class TextMessageStrategy extends MessageStrategy {
   private async handleFunctionCall(name: string, args: any, context?: MessageContext): Promise<any | null> {
     logger.debug('=== handleFunctionCall DEBUG ===');
     logger.debug(`Function name: ${name}`);
-    (logger as any).json('Function args:', args);
     
     let result: any = null;
     
@@ -324,13 +292,9 @@ export class TextMessageStrategy extends MessageStrategy {
       case "prepare_order_context":
         // Preparar contexto para el agente de órdenes
         try {
-          logger.debug('Preparando contexto de orden:', args);
-          
           // Obtener menú relevante basado en los items mencionados
           const { MenuSearchService } = await import('../../ai/MenuSearchService');
           const relevantMenu = await MenuSearchService.getRelevantMenu(args.itemsSummary);
-          
-          logger.info(`Relevant menu search results: ${relevantMenu.length} chars, ${JSON.parse(relevantMenu).length} products`);
           
           // Si no se encontraron productos relevantes, informar al usuario
           if (relevantMenu === "[]" || JSON.parse(relevantMenu).length === 0) {
@@ -520,9 +484,6 @@ export class TextMessageStrategy extends MessageStrategy {
         logger.warn(`Function call no reconocido: ${name}`);
     }
     
-    if (result) {
-      (logger as any).json('Function call result:', result);
-    }
     logger.debug('=== End handleFunctionCall DEBUG ===');
     return result;
   }
