@@ -1,194 +1,181 @@
 import logger from '../../common/utils/logger';
-import { ProductService } from '../products/ProductService';
+import { prisma } from '../../server';
+import { GoogleGenAI } from '@google/genai';
+import { env } from '../../common/config/envValidator';
 
 /**
  * Service for searching and matching menu items based on natural language input
+ * Uses semantic search with Google embeddings and pgvector
  */
 export class MenuSearchService {
+  private static genAI = new GoogleGenAI({ apiKey: env.GOOGLE_AI_API_KEY });
+
   /**
-   * Gets relevant menu items based on keywords using string similarity
+   * Gets relevant menu items based on keywords using semantic search
    * @param itemsSummary Natural language description of items
    * @returns JSON string of relevant menu items with their full structure
    */
   static async getRelevantMenu(itemsSummary: string): Promise<string> {
     try {
-      const stringSimilarity = await import('string-similarity');
-      
       logger.debug(`Getting relevant menu for: "${itemsSummary}"`);
-      
-      // Get products with all their relations
-      const products = await ProductService.getActiveProducts({ includeRelations: true }) as any[];
-      
-      // Normalize text for better matching
-      const normalizedSummary = this.normalizeText(itemsSummary);
-      
-      logger.debug(`Normalized search: "${normalizedSummary}"`);
-      
-      // Score each product based on similarity
-      const scoredProducts = products.map(product => {
-        const productName = this.normalizeText(product.name || '');
-        const productDesc = this.normalizeText(product.description || '');
-        const categoryName = this.normalizeText(product.subcategory?.category?.name || '');
-        const subcategoryName = this.normalizeText(product.subcategory?.name || '');
-        
-        // Create search target combinations
-        const searchTargets = [
-          productName, // Highest priority
-          `${productName} ${categoryName}`,
-          `${productName} ${subcategoryName}`,
-          `${productName} ${productDesc}`,
-        ];
-        
-        // Calculate similarity scores for each target
-        const similarities = searchTargets.map(target => 
-          stringSimilarity.compareTwoStrings(normalizedSummary, target)
-        );
-        
-        // Get best match score
-        const bestScore = Math.max(...similarities);
-        
-        // Calculate bonus score for partial word matches
-        const bonusScore = this.calculateBonusScore(normalizedSummary, productName, stringSimilarity);
-        
-        const finalScore = bestScore + bonusScore;
-        
-        return { 
-          product, 
-          score: finalScore,
-          debug: {
-            productName,
-            bestScore,
-            bonusScore,
-            finalScore
-          }
-        };
+
+      // 1. Generate embedding for user query
+      logger.debug('Generating embedding for user query...');
+      const embeddingResponse = await this.genAI.models.embedContent({
+        model: "text-embedding-004",
+        contents: itemsSummary
       });
-      
-      // Filter and sort by score
-      let relevantProducts = scoredProducts
-        .filter(item => item.score > 0.3) // 30% similarity threshold
-        .sort((a, b) => b.score - a.score);
-      
-      // Log top matches for debugging
-      logger.debug(`Top matches:`);
-      relevantProducts.slice(0, 5).forEach((item, index) => {
-        logger.debug(`${index + 1}. ${item.debug.productName} (score: ${item.score.toFixed(3)})`);
-      });
-      
-      // If no good matches, try more lenient threshold
-      if (relevantProducts.length === 0) {
-        logger.debug('No products found with 30% threshold, trying 20%...');
-        const lenientMatches = scoredProducts
-          .filter(item => item.score > 0.2)
-          .sort((a, b) => b.score - a.score)
-          .slice(0, 10);
-          
-        if (lenientMatches.length > 0) {
-          relevantProducts = lenientMatches;
-        }
+      const queryEmbedding = embeddingResponse.embeddings?.[0]?.values || [];
+      logger.debug(`Query embedding generated with ${queryEmbedding.length} dimensions`);
+
+      // 2. Search database for most similar products
+      // For local dev with JSONB, we need a different query
+      const isDevelopment = !env.DATABASE_URL?.includes('railway');
+      let relevantProductIds: string[] = [];
+
+      if (isDevelopment) {
+        // Development: Get all products with embeddings and calculate similarity in JS
+        logger.debug('Using development mode (JSONB embeddings)');
+        const productsWithEmbeddings: { id: string; embedding: any }[] = await prisma.$queryRaw`
+          SELECT id, embedding
+          FROM "Product"
+          WHERE embedding IS NOT NULL
+          AND "isActive" = true
+        `;
+
+        // Calculate cosine similarity for each product
+        const productScores = productsWithEmbeddings.map(product => {
+          const productEmbedding = product.embedding as number[];
+          const similarity = this.cosineSimilarity(queryEmbedding, productEmbedding);
+          return { id: product.id, similarity };
+        });
+
+        // Sort by similarity and take top 15
+        productScores.sort((a, b) => b.similarity - a.similarity);
+        relevantProductIds = productScores.slice(0, 15).map(p => p.id);
+        
+        logger.debug(`Top 5 matches:`, productScores.slice(0, 5).map(p => 
+          `${p.id} (similarity: ${p.similarity.toFixed(3)})`
+        ));
+      } else {
+        // Production: Use pgvector for efficient search
+        logger.debug('Using production mode (pgvector)');
+        const relevantProductsResult: { id: string }[] = await prisma.$queryRaw`
+          SELECT id FROM "Product"
+          WHERE embedding IS NOT NULL
+          ORDER BY embedding <=> ${`[${queryEmbedding.join(',')}]`}::vector
+          LIMIT 15
+        `;
+        relevantProductIds = relevantProductsResult.map(p => p.id);
       }
+
+      if (relevantProductIds.length === 0) {
+        logger.warn('No relevant products found via vector search');
+        return "[]";
+      }
+
+      // 3. Get full product details
+      const products = await prisma.product.findMany({
+        where: {
+          id: { in: relevantProductIds },
+          isActive: true,
+        },
+        include: {
+          subcategory: { include: { category: true } },
+          variants: { where: { isActive: true } },
+          modifierGroups: {
+            where: { isActive: true },
+            include: {
+              productModifiers: { where: { isActive: true } },
+            },
+          },
+          pizzaIngredients: { where: { isActive: true } },
+        },
+      });
+
+      // 4. Sort products by the original order from search
+      const sortedProducts = relevantProductIds
+        .map(id => products.find(p => p.id === id))
+        .filter(Boolean);
+
+      // 5. Build menu structure
+      const menuStructure = this.buildMenuStructure(sortedProducts as any[]);
       
-      // Build complete menu structure with all relations
-      const menuStructure = this.buildMenuStructure(relevantProducts.slice(0, 15));
-      
-      // Log the menu structure
-      logger.debug(`Returning ${menuStructure.length} relevant products`);
+      logger.debug(`Returning ${menuStructure.length} relevant products from vector search`);
       if (menuStructure.length > 0) {
         (logger as any).json('Relevant menu structure:', menuStructure);
       }
       
       return JSON.stringify(menuStructure);
     } catch (error) {
-      logger.error('Error getting relevant menu:', error);
+      logger.error('Error in vector search:', error);
       return "[]";
     }
   }
 
   /**
-   * Normalizes text for better search matching
+   * Calculates cosine similarity between two vectors
    */
-  private static normalizeText(text: string): string {
-    return text
-      .toLowerCase()
-      .normalize('NFD')
-      .replace(/[\u0300-\u036f]/g, '') // Remove accents
-      .replace(/[^\w\s]/g, ' ') // Replace non-word chars with space
-      .replace(/\s+/g, ' ') // Multiple spaces to single
-      .trim();
-  }
-
-  /**
-   * Calculates bonus score for partial word matches
-   */
-  private static calculateBonusScore(
-    normalizedSummary: string, 
-    productName: string, 
-    stringSimilarity: any
-  ): number {
-    let bonusScore = 0;
+  private static cosineSimilarity(a: number[], b: number[]): number {
+    if (a.length !== b.length) return 0;
     
-    // Check if any word from summary appears in product name
-    const summaryWords = normalizedSummary.split(' ').filter(w => w.length > 2);
-    const productWords = productName.split(' ');
+    let dotProduct = 0;
+    let normA = 0;
+    let normB = 0;
     
-    summaryWords.forEach(summaryWord => {
-      productWords.forEach(productWord => {
-        const wordSimilarity = stringSimilarity.compareTwoStrings(summaryWord, productWord);
-        if (wordSimilarity > 0.8) { // 80% similarity threshold for individual words
-          bonusScore += 0.2;
-        }
-      });
-    });
+    for (let i = 0; i < a.length; i++) {
+      dotProduct += a[i] * b[i];
+      normA += a[i] * a[i];
+      normB += b[i] * b[i];
+    }
     
-    return bonusScore;
+    return dotProduct / (Math.sqrt(normA) * Math.sqrt(normB));
   }
 
   /**
    * Builds the menu structure for AI consumption
    */
-  private static buildMenuStructure(scoredProducts: any[]): any[] {
-    return scoredProducts
-      .map(item => item.product)
-      .map(product => {
-        const item: any = {
-          id: product.id,
-          nombre: product.name,
-        };
-        
-        // Include variants with complete information
-        if (product.variants?.length > 0) {
-          item.variantes = product.variants.map((v: any) => ({
-            id: v.id,
-            nombre: v.name,
-            precio: v.price
+  private static buildMenuStructure(products: any[]): any[] {
+    return products.map(product => {
+      const item: any = {
+        id: product.id,
+        nombre: product.name,
+      };
+      
+      // Include variants with complete information
+      if (product.variants?.length > 0) {
+        item.variantes = product.variants.map((v: any) => ({
+          id: v.id,
+          nombre: v.name,
+          precio: v.price
+        }));
+      }
+      
+      // Include modifiers if they exist
+      if (product.modifierGroups?.length > 0) {
+        item.modificadores = product.modifierGroups
+          .filter((g: any) => g.productModifiers?.length > 0)
+          .map((group: any) => ({
+            grupo: group.name,
+            requerido: group.isRequired,
+            multiple: group.allowMultipleSelections,
+            opciones: group.productModifiers.map((m: any) => ({
+              id: m.id,
+              nombre: m.name,
+              precio: m.price
+            }))
           }));
-        }
-        
-        // Include modifiers if they exist
-        if (product.modifierGroups?.length > 0) {
-          item.modificadores = product.modifierGroups
-            .filter((g: any) => g.productModifiers?.length > 0)
-            .map((group: any) => ({
-              grupo: group.name,
-              requerido: group.required,
-              multiple: group.acceptsMultiple,
-              opciones: group.productModifiers.map((m: any) => ({
-                id: m.id,
-                nombre: m.name,
-                precio: m.price
-              }))
-            }));
-        }
-        
-        // Include pizza ingredients if it's a pizza
-        if (product.isPizza && product.pizzaIngredients?.length > 0) {
-          item.ingredientesPizza = product.pizzaIngredients.map((i: any) => ({
-            id: i.id,
-            nombre: i.name
-          }));
-        }
-        
-        return item;
-      });
+      }
+      
+      // Include pizza ingredients if it's a pizza
+      if (product.isPizza && product.pizzaIngredients?.length > 0) {
+        item.ingredientesPizza = product.pizzaIngredients.map((i: any) => ({
+          id: i.id,
+          nombre: i.name
+        }));
+      }
+      
+      return item;
+    });
   }
 }

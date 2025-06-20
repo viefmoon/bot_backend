@@ -110,13 +110,21 @@ Middleware Pipeline:
 
 **AI Service Organization**:
 - `AgentService`: Main agent coordinator (170 lines, refactored from 440+)
-- `MenuSearchService`: Handles menu item search and matching
+- `MenuSearchService`: Semantic search with Google embeddings and pgvector
+  - Uses text-embedding-004 model (768 dimensions)
+  - Handles development (JSONB) and production (pgvector) environments
+  - Returns empty array if no embeddings found
 - `/prompts/`: Externalized AI prompts
   - `generalAgent.prompt.ts`: General agent instructions
   - `orderAgent.prompt.ts`: Order processing instructions
 - `/tools/`: Externalized tool definitions
   - `generalAgent.tools.ts`: General agent function tools
   - `orderAgent.tools.ts`: Order agent function tools
+- **Semantic Search Setup**:
+  - Run `npm run seed:embeddings` to generate embeddings for all products
+  - Production: Enable pgvector extension in PostgreSQL
+  - Development: Uses JSONB field for local testing
+  - Important: Embeddings must be generated before search will work
 
 ### Service Architecture
 
