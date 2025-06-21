@@ -11,6 +11,5 @@ export {
 
 export {
   generateProductSummary,
-  generatePizzaIngredientsSummary,
   generateOrderSummary
 } from './orderFormatters';

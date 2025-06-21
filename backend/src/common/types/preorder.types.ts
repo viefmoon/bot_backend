@@ -8,9 +8,9 @@ export interface ProcessedOrderData {
     productVariantId?: string | null;
     quantity: number;
     selectedModifiers?: string[];
-    selectedPizzaIngredients?: Array<{
-      pizzaIngredientId: string;
-      half: 'LEFT' | 'RIGHT' | 'FULL';
+    selectedPizzaCustomizations?: Array<{
+      pizzaCustomizationId: string;
+      half: 'FULL' | 'HALF_1' | 'HALF_2';
       action: 'ADD' | 'REMOVE';
     }>;
   }>;

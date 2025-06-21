@@ -85,7 +85,7 @@ export class MenuSearchService {
               productModifiers: { where: { isActive: true } },
             },
           },
-          pizzaIngredients: { where: { isActive: true } },
+          pizzaCustomizations: { where: { isActive: true } },
         },
       });
 
@@ -146,11 +146,12 @@ export class MenuSearchService {
           }));
       }
       
-      // Include pizza ingredients if it's a pizza
-      if (product.isPizza && product.pizzaIngredients?.length > 0) {
-        item.ingredientesPizza = product.pizzaIngredients.map((i: any) => ({
-          id: i.id,
-          nombre: i.name
+      // Include pizza customizations if it's a pizza
+      if (product.isPizza && product.pizzaCustomizations?.length > 0) {
+        item.personalizacionesPizza = product.pizzaCustomizations.map((c: any) => ({
+          id: c.id,
+          nombre: c.name,
+          tipo: c.type
         }));
       }
       

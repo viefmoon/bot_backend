@@ -25,8 +25,8 @@ export interface OrderItemInput {
   quantity: number;
   comments?: string;
   selectedModifiers?: string[];
-  selectedPizzaIngredients?: Array<{
-    pizzaIngredientId: string;
+  selectedPizzaCustomizations?: Array<{
+    pizzaCustomizationId: string;
     half: string;
     action: string;
   }>;
@@ -39,7 +39,7 @@ export interface CalculatedItem {
   itemPrice: number;
   comments?: string;
   modifiers: any[];
-  pizzaIngredients: any[];
+  pizzaCustomizations: any[];
 }
 
 // AI Context types

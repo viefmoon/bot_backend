@@ -187,7 +187,7 @@ export class TextMessageStrategy extends MessageStrategy {
           productVariantId: item.variantId || null, // Map variantId to productVariantId
           quantity: item.quantity || 1,
           selectedModifiers: item.modifiers || [], // Map modifiers to selectedModifiers
-          selectedPizzaIngredients: item.pizzaIngredients || [] // Map pizzaIngredients to selectedPizzaIngredients
+          selectedPizzaCustomizations: item.pizzaCustomizations || [] // Map pizzaCustomizations to selectedPizzaCustomizations
         }));
         
         result = {

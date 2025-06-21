@@ -21,8 +21,8 @@ class OrderItemDto {
 
   @IsArray()
   @ValidateNested({ each: true })
-  @Type(() => SelectedPizzaIngredientDto)
-  selectedPizzaIngredients: SelectedPizzaIngredientDto[];
+  @Type(() => SelectedPizzaCustomizationDto)
+  selectedPizzaCustomizations: SelectedPizzaCustomizationDto[];
 
   @IsArray()
   @ValidateNested({ each: true })
@@ -37,9 +37,9 @@ class OrderItemDto {
   comments?: string;
 }
 
-class SelectedPizzaIngredientDto {
+class SelectedPizzaCustomizationDto {
   @IsString()
-  pizzaIngredientId: string;
+  pizzaCustomizationId: string;
 
   @IsString()
   half: string;

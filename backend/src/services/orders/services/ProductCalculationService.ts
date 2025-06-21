@@ -76,11 +76,14 @@ export class ProductCalculationService {
     const modifiers = await this.calculateModifiers(item.selectedModifiers || [], product?.id);
     itemPrice += modifiers.totalPrice;
 
-    // Calculate pizza ingredients
-    const pizzaIngredients = await this.calculatePizzaIngredients(
-      item.selectedPizzaIngredients || [],
-      product?.id
+    // Calculate pizza customizations and extra costs
+    const { customizations, extraCost } = await this.calculatePizzaCustomizations(
+      item.selectedPizzaCustomizations || [],
+      product
     );
+    
+    // Add pizza extra cost to item price
+    itemPrice += extraCost;
 
     // Total item price
     itemPrice = itemPrice * item.quantity;
@@ -94,7 +97,7 @@ export class ProductCalculationService {
       itemPrice,
       comments: item.comments,
       modifiers: modifiers.items,
-      pizzaIngredients
+      pizzaCustomizations: customizations
     };
   }
 
@@ -162,48 +165,82 @@ export class ProductCalculationService {
   }
 
   /**
-   * Calculate pizza ingredients
+   * Calculate pizza customizations and extra costs
    */
-  private static async calculatePizzaIngredients(
-    selectedIngredients: Array<{
-      pizzaIngredientId: string;
+  private static async calculatePizzaCustomizations(
+    selectedCustomizations: Array<{
+      pizzaCustomizationId: string;
       half: string;
       action: string;
     }>,
-    productId?: string
-  ): Promise<any[]> {
-    if (!selectedIngredients.length) {
-      return [];
+    product: any | null
+  ): Promise<{ customizations: any[]; extraCost: number }> {
+    if (!selectedCustomizations.length || !product?.isPizza) {
+      return { customizations: [], extraCost: 0 };
     }
 
-    const ingredientIds = selectedIngredients.map(i => i.pizzaIngredientId);
-    const ingredients = await prisma.pizzaIngredient.findMany({
+    // Get pizza configuration
+    const pizzaConfig = await prisma.pizzaConfiguration.findUnique({
+      where: { productId: product.id }
+    });
+
+    if (!pizzaConfig) {
+      logger.warn(`No pizza configuration found for product ${product.id}`);
+      return { customizations: [], extraCost: 0 };
+    }
+
+    const customizationIds = selectedCustomizations.map(c => c.pizzaCustomizationId);
+    const customizations = await prisma.pizzaCustomization.findMany({
       where: {
-        id: { in: ingredientIds },
-        products: productId ? { some: { id: productId } } : undefined
+        id: { in: customizationIds },
+        products: { some: { id: product.id } }
       }
     });
 
-    // Validate all ingredients were found
-    if (ingredients.length !== ingredientIds.length) {
-      const foundIds = ingredients.map(i => i.id);
-      const notFoundIds = ingredientIds.filter(id => !foundIds.includes(id));
+    // Validate all customizations were found
+    if (customizations.length !== customizationIds.length) {
+      const foundIds = customizations.map(c => c.id);
+      const notFoundIds = customizationIds.filter(id => !foundIds.includes(id));
       
       throw new ValidationError(
         ErrorCode.INVALID_PRODUCT,
-        `Pizza ingredients not found: ${notFoundIds.join(', ')}`,
-        { metadata: { notFoundIds, productId } }
+        `Pizza customizations not found: ${notFoundIds.join(', ')}`,
+        { metadata: { notFoundIds, productId: product.id } }
       );
     }
 
-    // Map ingredients with their selection details
-    return selectedIngredients.map(selected => {
-      const ingredient = ingredients.find(i => i.id === selected.pizzaIngredientId);
+    // Calculate total topping value for ADD actions only
+    let totalToppingValue = 0;
+    const mappedCustomizations = selectedCustomizations.map(selected => {
+      const customization = customizations.find(c => c.id === selected.pizzaCustomizationId);
+      
+      if (selected.action === 'ADD' && customization) {
+        if (selected.half === 'FULL') {
+          totalToppingValue += customization.toppingValue;
+        } else {
+          // Half pizza counts as half the topping value
+          totalToppingValue += customization.toppingValue / 2;
+        }
+      }
+      
       return {
-        ...ingredient,
+        ...customization,
         half: selected.half,
         action: selected.action
       };
     });
+
+    // Calculate extra cost if toppings exceed included amount
+    let extraCost = 0;
+    if (totalToppingValue > pizzaConfig.includedToppings) {
+      const extraToppings = totalToppingValue - pizzaConfig.includedToppings;
+      extraCost = extraToppings * pizzaConfig.extraToppingCost;
+      logger.info(`Pizza extra cost: ${extraCost} (${extraToppings} extra toppings at ${pizzaConfig.extraToppingCost} each)`);
+    }
+
+    return {
+      customizations: mappedCustomizations,
+      extraCost
+    };
   }
 }

@@ -40,7 +40,7 @@ export class OrderManagementService {
       quantity: item.quantity,
       comments: item.comments,
       selectedModifiers: item.selectedModifiers || [],
-      selectedPizzaIngredients: item.selectedPizzaIngredients || [],
+      selectedPizzaCustomizations: item.selectedPizzaCustomizations || [],
     }));
 
     // Build delivery info if exists
@@ -136,8 +136,8 @@ export class OrderManagementService {
             product: true,
             productVariant: true,
             productModifiers: true,
-            selectedPizzaIngredients: {
-              include: { pizzaIngredient: true },
+            selectedPizzaCustomizations: {
+              include: { pizzaCustomization: true },
             },
           },
         },
@@ -209,8 +209,8 @@ export class OrderManagementService {
               product: true,
               productVariant: true,
               productModifiers: true,
-              selectedPizzaIngredients: {
-                include: { pizzaIngredient: true },
+              selectedPizzaCustomizations: {
+                include: { pizzaCustomization: true },
               },
             },
           },

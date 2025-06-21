@@ -1,5 +1,5 @@
 import { prisma } from '../../server';
-import { PizzaHalf, IngredientAction } from '@prisma/client';
+import { PizzaHalf, CustomizationAction } from '@prisma/client';
 import { CreateOrderDto } from './dto/create-order.dto';
 import logger from '../../common/utils/logger';
 import { NotFoundError, ErrorCode } from '../../common/services/errors';
@@ -129,17 +129,17 @@ export class OrderService {
                 orderItems.push(orderItem);
               }
               
-              // Create selected pizza ingredients for each order item if provided
-              if (item.selectedPizzaIngredients && item.selectedPizzaIngredients.length > 0) {
+              // Create selected pizza customizations for each order item if provided
+              if (item.selectedPizzaCustomizations && item.selectedPizzaCustomizations.length > 0) {
                 for (const orderItem of orderItems) {
                   await Promise.all(
-                    item.selectedPizzaIngredients.map(ingredient =>
-                      tx.selectedPizzaIngredient.create({
+                    item.selectedPizzaCustomizations.map(customization =>
+                      tx.selectedPizzaCustomization.create({
                         data: {
                           orderItemId: orderItem.id,
-                          pizzaIngredientId: ingredient.pizzaIngredientId,
-                          half: ingredient.half as PizzaHalf,
-                          action: ingredient.action as IngredientAction
+                          pizzaCustomizationId: customization.pizzaCustomizationId,
+                          half: customization.half as PizzaHalf,
+                          action: customization.action as CustomizationAction
                         }
                       })
                     )
@@ -191,9 +191,9 @@ export class OrderService {
             product: true,
             productVariant: true,
             productModifiers: true,
-            selectedPizzaIngredients: {
+            selectedPizzaCustomizations: {
               include: {
-                pizzaIngredient: true
+                pizzaCustomization: true
               }
             }
           }

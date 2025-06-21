@@ -15,12 +15,13 @@ async function main() {
   if (existingCategories > 0) {
     console.log('Database already seeded. Cleaning up...');
     // Clean up existing data in reverse dependency order
-    await prisma.selectedPizzaIngredient.deleteMany();
+    await prisma.selectedPizzaCustomization.deleteMany();
     await prisma.orderItem.deleteMany();
     await prisma.orderDeliveryInfo.deleteMany();
     await prisma.order.deleteMany();
     await prisma.preOrder.deleteMany();
-    await prisma.pizzaIngredient.deleteMany();
+    await prisma.pizzaCustomization.deleteMany();
+    await prisma.pizzaConfiguration.deleteMany();
     await prisma.productModifier.deleteMany();
     await prisma.modifierGroup.deleteMany();
     await prisma.productVariant.deleteMany();
@@ -613,60 +614,60 @@ async function main() {
     },
   ];
 
-  // Create pizza ingredients separately
-  const pizzaIngredients = [
-    // Pizzas especiales (completas)
-    { id: "PZ-I-1", name: "Adelita", ingredientValue: 4, productIds: ["PZ"] },
-    { id: "PZ-I-2", name: "Carnes Frias", ingredientValue: 4, productIds: ["PZ"] },
-    { id: "PZ-I-3", name: "Carranza", ingredientValue: 4, productIds: ["PZ"] },
-    { id: "PZ-I-4", name: "Especial", ingredientValue: 4, productIds: ["PZ"] },
-    { id: "PZ-I-5", name: "Hawaiana", ingredientValue: 4, productIds: ["PZ"] },
-    { id: "PZ-I-6", name: "Kahlo", ingredientValue: 4, productIds: ["PZ"] },
-    { id: "PZ-I-7", name: "La Leña", ingredientValue: 6, productIds: ["PZ"] },
-    { id: "PZ-I-8", name: "La Maria", ingredientValue: 6, productIds: ["PZ"] },
-    { id: "PZ-I-9", name: "Lupita", ingredientValue: 4, productIds: ["PZ"] },
-    { id: "PZ-I-10", name: "Malinche", ingredientValue: 6, productIds: ["PZ"] },
-    { id: "PZ-I-11", name: "Margarita", ingredientValue: 4, productIds: ["PZ"] },
-    { id: "PZ-I-12", name: "Mexicana", ingredientValue: 4, productIds: ["PZ"] },
-    { id: "PZ-I-13", name: "Pepperoni", ingredientValue: 4, productIds: ["PZ"] },
-    { id: "PZ-I-14", name: "Rivera", ingredientValue: 4, productIds: ["PZ"] },
-    { id: "PZ-I-15", name: "Villa", ingredientValue: 4, productIds: ["PZ"] },
-    { id: "PZ-I-16", name: "Zapata", ingredientValue: 4, productIds: ["PZ"] },
-    { id: "PZ-I-17", name: "3 Quesos", ingredientValue: 2, productIds: ["PZ"] },
-    // Ingredientes individuales
-    { id: "PZ-I-18", name: "Albahaca", ingredientValue: 1, productIds: ["PZ"] },
-    { id: "PZ-I-19", name: "Arandano", ingredientValue: 1, productIds: ["PZ"] },
-    { id: "PZ-I-20", name: "Calabaza", ingredientValue: 1, productIds: ["PZ"] },
-    { id: "PZ-I-21", name: "Cebolla", ingredientValue: 1, productIds: ["PZ"] },
-    { id: "PZ-I-22", name: "Champiñon", ingredientValue: 1, productIds: ["PZ"] },
-    { id: "PZ-I-23", name: "Chile Jalapeño", ingredientValue: 1, productIds: ["PZ"] },
-    { id: "PZ-I-24", name: "Chile Morron", ingredientValue: 1, productIds: ["PZ"] },
-    { id: "PZ-I-25", name: "Chile Seco", ingredientValue: 1, productIds: ["PZ"] },
-    { id: "PZ-I-26", name: "Chorizo", ingredientValue: 1, productIds: ["PZ"] },
-    { id: "PZ-I-27", name: "Elote", ingredientValue: 1, productIds: ["PZ"] },
-    { id: "PZ-I-28", name: "Jamon", ingredientValue: 1, productIds: ["PZ"] },
-    { id: "PZ-I-29", name: "Jitomate", ingredientValue: 1, productIds: ["PZ"] },
-    { id: "PZ-I-30", name: "Molida", ingredientValue: 1, productIds: ["PZ"] },
-    { id: "PZ-I-31", name: "Pierna", ingredientValue: 2, productIds: ["PZ"] },
-    { id: "PZ-I-32", name: "Piña", ingredientValue: 1, productIds: ["PZ"] },
-    { id: "PZ-I-33", name: "Pollo BBQ", ingredientValue: 2, productIds: ["PZ"] },
-    { id: "PZ-I-34", name: "Queso", ingredientValue: 0, productIds: ["PZ"] },
-    { id: "PZ-I-35", name: "Queso de cabra", ingredientValue: 2, productIds: ["PZ"] },
-    { id: "PZ-I-36", name: "Salami", ingredientValue: 1, productIds: ["PZ"] },
-    { id: "PZ-I-37", name: "Salchicha", ingredientValue: 1, productIds: ["PZ"] },
-    { id: "PZ-I-38", name: "Salsa de tomate", ingredientValue: 0, productIds: ["PZ"] },
-    { id: "PZ-I-39", name: "Tocino", ingredientValue: 1, productIds: ["PZ"] },
-    { id: "PZ-I-40", name: "Pepperoni", ingredientValue: 1, productIds: ["PZ"] },
+  // Create pizza customizations separately
+  const pizzaCustomizations = [
+    // Sabores de pizza (FLAVOR)
+    { id: "PZ-I-1", name: "Adelita", type: "FLAVOR", ingredients: "Salsa de tomate, queso, jamón, champiñones", toppingValue: 4 },
+    { id: "PZ-I-2", name: "Carnes Frias", type: "FLAVOR", ingredients: "Salsa de tomate, queso, jamón, salami, pepperoni", toppingValue: 4 },
+    { id: "PZ-I-3", name: "Carranza", type: "FLAVOR", ingredients: "Salsa de tomate, queso, pollo, cebolla, chile morrón", toppingValue: 4 },
+    { id: "PZ-I-4", name: "Especial", type: "FLAVOR", ingredients: "Salsa de tomate, queso, jamón, champiñones, chile morrón", toppingValue: 4 },
+    { id: "PZ-I-5", name: "Hawaiana", type: "FLAVOR", ingredients: "Salsa de tomate, queso, jamón, piña", toppingValue: 3 },
+    { id: "PZ-I-6", name: "Kahlo", type: "FLAVOR", ingredients: "Salsa de tomate, queso, jitomate, albahaca", toppingValue: 3 },
+    { id: "PZ-I-7", name: "La Leña", type: "FLAVOR", ingredients: "Salsa de tomate, queso, pepperoni, jamón, champiñones, chile morrón, cebolla", toppingValue: 6 },
+    { id: "PZ-I-8", name: "La Maria", type: "FLAVOR", ingredients: "Salsa de tomate, queso, chorizo, carne molida, chile jalapeño, cebolla", toppingValue: 5 },
+    { id: "PZ-I-9", name: "Lupita", type: "FLAVOR", ingredients: "Salsa de tomate, queso, salchicha, chile morrón", toppingValue: 3 },
+    { id: "PZ-I-10", name: "Malinche", type: "FLAVOR", ingredients: "Salsa BBQ, queso, pollo BBQ, cebolla, chile morrón, elote", toppingValue: 5 },
+    { id: "PZ-I-11", name: "Margarita", type: "FLAVOR", ingredients: "Salsa de tomate, queso mozzarella, jitomate, albahaca", toppingValue: 3 },
+    { id: "PZ-I-12", name: "Mexicana", type: "FLAVOR", ingredients: "Salsa de tomate, queso, chorizo, chile jalapeño, cebolla", toppingValue: 4 },
+    { id: "PZ-I-13", name: "Pepperoni", type: "FLAVOR", ingredients: "Salsa de tomate, queso, pepperoni", toppingValue: 2 },
+    { id: "PZ-I-14", name: "Rivera", type: "FLAVOR", ingredients: "Salsa de tomate, queso, pierna, cebolla", toppingValue: 3 },
+    { id: "PZ-I-15", name: "Villa", type: "FLAVOR", ingredients: "Salsa de tomate, queso, tocino, champiñones", toppingValue: 3 },
+    { id: "PZ-I-16", name: "Zapata", type: "FLAVOR", ingredients: "Salsa de tomate, queso, carne molida, chile jalapeño", toppingValue: 3 },
+    { id: "PZ-I-17", name: "3 Quesos", type: "FLAVOR", ingredients: "Salsa de tomate, queso mozzarella, queso cheddar, queso parmesano", toppingValue: 2 },
+    // Ingredientes individuales (INGREDIENT)
+    { id: "PZ-I-18", name: "Albahaca", type: "INGREDIENT", toppingValue: 1 },
+    { id: "PZ-I-19", name: "Arándano", type: "INGREDIENT", toppingValue: 1 },
+    { id: "PZ-I-20", name: "Calabaza", type: "INGREDIENT", toppingValue: 1 },
+    { id: "PZ-I-21", name: "Cebolla", type: "INGREDIENT", toppingValue: 1 },
+    { id: "PZ-I-22", name: "Champiñón", type: "INGREDIENT", toppingValue: 1 },
+    { id: "PZ-I-23", name: "Chile Jalapeño", type: "INGREDIENT", toppingValue: 1 },
+    { id: "PZ-I-24", name: "Chile Morrón", type: "INGREDIENT", toppingValue: 1 },
+    { id: "PZ-I-25", name: "Chile Seco", type: "INGREDIENT", toppingValue: 1 },
+    { id: "PZ-I-26", name: "Chorizo", type: "INGREDIENT", toppingValue: 1 },
+    { id: "PZ-I-27", name: "Elote", type: "INGREDIENT", toppingValue: 1 },
+    { id: "PZ-I-28", name: "Jamón", type: "INGREDIENT", toppingValue: 1 },
+    { id: "PZ-I-29", name: "Jitomate", type: "INGREDIENT", toppingValue: 1 },
+    { id: "PZ-I-30", name: "Carne Molida", type: "INGREDIENT", toppingValue: 1 },
+    { id: "PZ-I-31", name: "Pierna", type: "INGREDIENT", toppingValue: 2 },
+    { id: "PZ-I-32", name: "Piña", type: "INGREDIENT", toppingValue: 1 },
+    { id: "PZ-I-33", name: "Pollo BBQ", type: "INGREDIENT", toppingValue: 2 },
+    { id: "PZ-I-34", name: "Queso Extra", type: "INGREDIENT", toppingValue: 1 },
+    { id: "PZ-I-35", name: "Queso de cabra", type: "INGREDIENT", toppingValue: 2 },
+    { id: "PZ-I-36", name: "Salami", type: "INGREDIENT", toppingValue: 1 },
+    { id: "PZ-I-37", name: "Salchicha", type: "INGREDIENT", toppingValue: 1 },
+    { id: "PZ-I-39", name: "Tocino", type: "INGREDIENT", toppingValue: 1 },
+    { id: "PZ-I-40", name: "Pepperoni Extra", type: "INGREDIENT", toppingValue: 1 },
   ];
 
-  // Create all pizza ingredients first
-  for (const ingredient of pizzaIngredients) {
-    await prisma.pizzaIngredient.create({
+  // Create all pizza customizations first
+  for (const customization of pizzaCustomizations) {
+    await prisma.pizzaCustomization.create({
       data: {
-        id: ingredient.id,
-        name: ingredient.name,
-        ingredientValue: ingredient.ingredientValue,
-        productIds: ingredient.productIds,
+        id: customization.id,
+        name: customization.name,
+        type: customization.type as "FLAVOR" | "INGREDIENT",
+        ingredients: customization.ingredients || null,
+        toppingValue: customization.toppingValue,
         isActive: true
       }
     });
@@ -705,12 +706,23 @@ async function main() {
             }
           }))
         } : undefined,
-        // Connect pizza ingredients to pizza product
-        pizzaIngredients: productData.isPizza ? {
-          connect: pizzaIngredients.map(pi => ({ id: pi.id }))
+        // Connect pizza customizations to pizza product
+        pizzaCustomizations: productData.isPizza ? {
+          connect: pizzaCustomizations.map(pc => ({ id: pc.id }))
         } : undefined
       }
     });
+    
+    // Create pizza configuration if it's a pizza product
+    if (productData.isPizza) {
+      await prisma.pizzaConfiguration.create({
+        data: {
+          productId: productData.id,
+          includedToppings: 4,
+          extraToppingCost: 20
+        }
+      });
+    }
   }
 
   console.log('Complete seed finished successfully');

@@ -53,11 +53,13 @@ export class OrderFormattingService {
       const totalItemPrice = itemPrice * item.quantity;
       totalPrice += totalItemPrice;
 
-      // Map pizza ingredients
-      const pizzaIngredients = item.selectedPizzaIngredients?.map((selectedIng: any) => ({
-        mitad: selectedIng.half as string,
-        nombre: selectedIng.pizzaIngredient?.name || "Ingrediente",
-        action: selectedIng.action,
+      // Map pizza customizations
+      const pizzaCustomizations = item.selectedPizzaCustomizations?.map((selectedCust: any) => ({
+        mitad: selectedCust.half as string,
+        nombre: selectedCust.pizzaCustomization?.name || "Personalización",
+        action: selectedCust.action,
+        tipo: selectedCust.pizzaCustomization?.type || "INGREDIENT",
+        ingredientes: selectedCust.pizzaCustomization?.ingredients,
       })) || [];
 
       return {
@@ -65,7 +67,7 @@ export class OrderFormattingService {
         cantidad: item.quantity,
         precio: totalItemPrice,
         modificadores: modifiers,
-        ingredientes_pizza: pizzaIngredients.length > 0 ? pizzaIngredients : undefined,
+        pizzaCustomizations: pizzaCustomizations.length > 0 ? pizzaCustomizations : undefined,
         comments: item.comments,
       };
     }) || [];
@@ -137,8 +139,8 @@ export class OrderFormattingService {
   private static formatProduct(producto: any): string {
     let summary = `- *${producto.cantidad}x ${producto.nombre}*: $${producto.precio}\n`;
 
-    if (producto.ingredientes_pizza?.length > 0) {
-      summary += this.formatPizzaIngredients(producto.ingredientes_pizza);
+    if (producto.pizzaCustomizations?.length > 0) {
+      summary += this.formatPizzaCustomizations(producto.pizzaCustomizations);
     }
 
     if (producto.modificadores.length > 0) {
@@ -155,52 +157,64 @@ export class OrderFormattingService {
   }
 
   /**
-   * Format pizza ingredients for display
+   * Format pizza customizations for display
    */
-  private static formatPizzaIngredients(ingredientes: any[]): string {
-    let summary = "  🔸 Ingredientes de pizza:\n";
+  private static formatPizzaCustomizations(customizations: any[]): string {
+    let summary = "  🔸 Personalización de pizza:\n";
 
-    const ingredientsByHalf = {
-      left: ingredientes
-        .filter((ing: any) => ing.mitad === "LEFT")
-        .map((ing: any) => ing.nombre),
-      right: ingredientes
-        .filter((ing: any) => ing.mitad === "RIGHT")
-        .map((ing: any) => ing.nombre),
-      full: ingredientes
-        .filter((ing: any) => ing.mitad === "FULL")
-        .map((ing: any) => ing.nombre),
-    };
+    // Separate flavors and ingredients
+    const flavors = customizations.filter((c: any) => c.tipo === "FLAVOR" && c.action === "ADD");
+    const addedIngredients = customizations.filter((c: any) => c.tipo === "INGREDIENT" && c.action === "ADD");
+    const removedItems = customizations.filter((c: any) => c.action === "REMOVE");
 
-    const leftIngredients = [
-      ...ingredientsByHalf.left,
-      ...ingredientsByHalf.full,
-    ];
-    const rightIngredients = [
-      ...ingredientsByHalf.right,
-      ...ingredientsByHalf.full,
-    ];
+    // Show flavors
+    if (flavors.length > 0) {
+      const flavorsByHalf = {
+        half1: flavors.filter((f: any) => f.mitad === "HALF_1"),
+        half2: flavors.filter((f: any) => f.mitad === "HALF_2"),
+        full: flavors.filter((f: any) => f.mitad === "FULL"),
+      };
 
-    if (
-      leftIngredients.length === rightIngredients.length &&
-      leftIngredients.every((ing: string) => rightIngredients.includes(ing))
-    ) {
-      summary += `     • Completa: ${leftIngredients.join(", ")}\n`;
-    } else {
-      if (leftIngredients.length > 0) {
-        summary += `     • Mitad Izquierda: ${leftIngredients.join(", ")}\n`;
+      if (flavorsByHalf.full.length > 0) {
+        summary += `     • Sabor Completo: ${flavorsByHalf.full.map((f: any) => f.nombre).join(", ")}\n`;
       }
-      if (rightIngredients.length > 0) {
-        summary += `     • Mitad Derecha: ${rightIngredients.join(", ")}\n`;
+      if (flavorsByHalf.half1.length > 0) {
+        summary += `     • Primera Mitad: ${flavorsByHalf.half1.map((f: any) => f.nombre).join(", ")}\n`;
+      }
+      if (flavorsByHalf.half2.length > 0) {
+        summary += `     • Segunda Mitad: ${flavorsByHalf.half2.map((f: any) => f.nombre).join(", ")}\n`;
       }
     }
 
-    // Show removed ingredients
-    const removedIngredients = ingredientes
-      .filter((ing: any) => ing.action === "REMOVE")
-      .map((ing: any) => ing.nombre);
-    if (removedIngredients.length > 0) {
-      summary += `     • ❌ Quitar: ${removedIngredients.join(", ")}\n`;
+    // Show added ingredients
+    if (addedIngredients.length > 0) {
+      const ingredientsByHalf = {
+        half1: addedIngredients.filter((i: any) => i.mitad === "HALF_1"),
+        half2: addedIngredients.filter((i: any) => i.mitad === "HALF_2"),
+        full: addedIngredients.filter((i: any) => i.mitad === "FULL"),
+      };
+
+      const half1Items = [...ingredientsByHalf.half1, ...ingredientsByHalf.full];
+      const half2Items = [...ingredientsByHalf.half2, ...ingredientsByHalf.full];
+
+      if (
+        half1Items.length === half2Items.length &&
+        half1Items.every((item: any) => half2Items.some((h2: any) => h2.nombre === item.nombre))
+      ) {
+        summary += `     • Ingredientes Extra: ${half1Items.map((i: any) => i.nombre).join(", ")}\n`;
+      } else {
+        if (half1Items.length > 0) {
+          summary += `     • Extra Primera Mitad: ${half1Items.map((i: any) => i.nombre).join(", ")}\n`;
+        }
+        if (half2Items.length > 0) {
+          summary += `     • Extra Segunda Mitad: ${half2Items.map((i: any) => i.nombre).join(", ")}\n`;
+        }
+      }
+    }
+
+    // Show removed items
+    if (removedItems.length > 0) {
+      summary += `     • ❌ Quitar: ${removedItems.map((r: any) => r.nombre).join(", ")}\n`;
     }
 
     return summary;

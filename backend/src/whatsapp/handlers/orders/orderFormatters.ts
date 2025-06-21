@@ -27,10 +27,9 @@ export function generateProductSummary(product: any): string {
     summary += `  ${modifierNames}\n`;
   }
 
-  // Show pizza ingredients if it's a pizza
-  if (product.isPizza && (product.pizzaIngredients?.length > 0 || product.ingredientes_pizza?.length > 0)) {
-    const ingredients = product.pizzaIngredients || product.ingredientes_pizza;
-    summary += formatPizzaIngredients(ingredients);
+  // Show pizza customizations if it's a pizza
+  if (product.isPizza && product.pizzaCustomizations?.length > 0) {
+    summary += formatPizzaCustomizations(product.pizzaCustomizations);
   }
 
   // Show comments if they exist
@@ -41,28 +40,30 @@ export function generateProductSummary(product: any): string {
   return summary;
 }
 
-// New function to format pizza ingredients in a more intuitive way
-function formatPizzaIngredients(ingredients: any[]): string {
-  const addIngredients = ingredients.filter((ing: any) => 
-    !ing.action || ing.action === "add" || ing.action === "ADD"
+// New function to format pizza customizations in a more intuitive way
+function formatPizzaCustomizations(customizations: any[]): string {
+  const addCustomizations = customizations.filter((cust: any) => 
+    !cust.action || cust.action === "add" || cust.action === "ADD"
   );
-  const removeIngredients = ingredients.filter((ing: any) => 
-    ing.action === "remove" || ing.action === "REMOVE"
+  const removeCustomizations = customizations.filter((cust: any) => 
+    cust.action === "remove" || cust.action === "REMOVE"
   );
 
   let result = "";
 
   // Format additions
-  if (addIngredients.length > 0) {
+  if (addCustomizations.length > 0) {
     const byHalf = {
-      group1: addIngredients.filter((ing: any) => 
-        ing.half === "LEFT" || ing.half === "left" || ing.mitad === "left"
+      group1: addCustomizations.filter((cust: any) => 
+        cust.half === "HALF_1" || cust.half === "half_1" || cust.mitad === "HALF_1" || 
+        cust.half === "LEFT" || cust.half === "left" || cust.mitad === "left"
       ),
-      group2: addIngredients.filter((ing: any) => 
-        ing.half === "RIGHT" || ing.half === "right" || ing.mitad === "right"
+      group2: addCustomizations.filter((cust: any) => 
+        cust.half === "HALF_2" || cust.half === "half_2" || cust.mitad === "HALF_2" || 
+        cust.half === "RIGHT" || cust.half === "right" || cust.mitad === "right"
       ),
-      full: addIngredients.filter((ing: any) => 
-        ing.half === "FULL" || ing.half === "full" || ing.mitad === "full" || !ing.half
+      full: addCustomizations.filter((cust: any) => 
+        cust.half === "FULL" || cust.half === "full" || cust.mitad === "full" || !cust.half
       )
     };
 
@@ -100,18 +101,14 @@ function formatPizzaIngredients(ingredients: any[]): string {
   }
 
   // Format removals
-  if (removeIngredients.length > 0) {
-    const names = removeIngredients.map(i => i.name || i.nombre).join(", ");
+  if (removeCustomizations.length > 0) {
+    const names = removeCustomizations.map(c => c.name || c.nombre).join(", ");
     result += `  Sin: ${names}\n`;
   }
 
   return result;
 }
 
-// Helper function to generate pizza ingredients summary (kept for backward compatibility)
-export function generatePizzaIngredientsSummary(ingredients: any[]): string {
-  return formatPizzaIngredients(ingredients);
-}
 
 // Function to generate complete order summary
 export function generateOrderSummary(order: any): string {

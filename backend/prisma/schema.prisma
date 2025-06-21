@@ -36,14 +36,19 @@ enum PaymentStatus {
 }
 
 enum PizzaHalf {
-  LEFT
-  RIGHT
   FULL
+  HALF_1
+  HALF_2
 }
 
-enum IngredientAction {
+enum CustomizationAction {
   ADD
   REMOVE
+}
+
+enum CustomizationType {
+  FLAVOR
+  INGREDIENT
 }
 
 enum PreparationStatus {
@@ -232,22 +237,31 @@ model OrderItem {
   product               Product                    @relation(fields: [productId], references: [id])
   productVariant        ProductVariant?            @relation(fields: [productVariantId], references: [id])
   productModifiers      ProductModifier[]          @relation("OrderItemProductModifiers")
-  selectedPizzaIngredients SelectedPizzaIngredient[]
+  selectedPizzaCustomizations SelectedPizzaCustomization[]
 }
 
-model PizzaIngredient {
-  id                    String                    @id
-  name                  String
-  ingredientValue       Int                       @default(1)
-  ingredients           String?
-  isActive              Boolean                   @default(true)
-  sortOrder             Int                       @default(0)
-  productIds            String[]                  // Array de IDs de productos relacionados
-  createdAt             DateTime                  @default(now())
-  updatedAt             DateTime                  @updatedAt
-  deletedAt             DateTime?
-  products              Product[]                 @relation("ProductPizzaIngredients")
-  selectedPizzaIngredients SelectedPizzaIngredient[]
+// Nueva estructura para personalización de pizzas
+model PizzaCustomization {
+  id                    String                       @id
+  name                  String                       // Nombre: "Hawaiana", "Pepperoni", "Champiñones"
+  type                  CustomizationType            // FLAVOR | INGREDIENT
+  ingredients           String?                      // Para FLAVOR: lista de ingredientes
+  toppingValue          Int                          @default(1) // Cuánto cuenta para el límite
+  isActive              Boolean                      @default(true)
+  sortOrder             Int                          @default(0)
+  createdAt             DateTime                     @default(now())
+  updatedAt             DateTime                     @updatedAt
+  products              Product[]                    @relation("ProductPizzaCustomizations")
+  selectedPizzaCustomizations SelectedPizzaCustomization[]
+}
+
+// Configuración específica para pizzas
+model PizzaConfiguration {
+  id                    String   @id @default(uuid())
+  productId             String   @unique
+  product               Product  @relation(fields: [productId], references: [id])
+  includedToppings      Int      @default(4)      // Valor de toppings incluidos en precio base
+  extraToppingCost      Float    @default(20)     // Costo por topping adicional
 }
 
 model PreOrder {
@@ -284,7 +298,8 @@ model Product {
   subcategory          Subcategory         @relation(fields: [subcategoryId], references: [id])
   variants             ProductVariant[]
   modifierGroups       ModifierGroup[]
-  pizzaIngredients     PizzaIngredient[]   @relation("ProductPizzaIngredients")
+  pizzaConfiguration   PizzaConfiguration?
+  pizzaCustomizations  PizzaCustomization[] @relation("ProductPizzaCustomizations")
   orderItems           OrderItem[]
 }
 
@@ -343,14 +358,16 @@ model SeederControl {
   lastRun DateTime
 }
 
-model SelectedPizzaIngredient {
-  id               Int              @id @default(autoincrement())
-  half             PizzaHalf        @default(FULL)
-  pizzaIngredientId String
-  orderItemId      String
-  action           IngredientAction @default(ADD)
-  orderItem        OrderItem        @relation(fields: [orderItemId], references: [id])
-  pizzaIngredient  PizzaIngredient  @relation(fields: [pizzaIngredientId], references: [id])
+model SelectedPizzaCustomization {
+  id                    String               @id @default(uuid())
+  orderItemId           String
+  pizzaCustomizationId  String
+  half                  PizzaHalf            @default(FULL)
+  action                CustomizationAction  @default(ADD)
+  orderItem             OrderItem            @relation(fields: [orderItemId], references: [id])
+  pizzaCustomization    PizzaCustomization   @relation(fields: [pizzaCustomizationId], references: [id])
+  
+  @@unique([orderItemId, pizzaCustomizationId, half, action])
 }
 
 model Subcategory {

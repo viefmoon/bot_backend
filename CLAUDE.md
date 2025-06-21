@@ -369,10 +369,16 @@ Required (see `.env.example` for full list):
 - `isDefault`: Pre-selected option
 - Belongs to a `ModifierGroup`
 
-**PizzaIngredient** - Special ingredients for pizzas
-- `ingredientValue`: Quantity/portion
-- `productIds`: Array of applicable pizza products
-- Can be added/removed per pizza half
+**PizzaCustomization** - Pizza flavors and ingredients
+- `type`: FLAVOR (complete pizzas like Hawaiana) or INGREDIENT (extras like pepperoni)
+- `ingredients`: Text description of what's in a FLAVOR
+- `toppingValue`: How much it counts toward topping limit
+- Relations: many-to-many with `Product`
+
+**PizzaConfiguration** - Pizza pricing configuration
+- `includedToppings`: Number of toppings included in base price (default: 4)
+- `extraToppingCost`: Cost per additional topping (default: 20)
+- One-to-one with pizza `Product`
 
 ### Order Detail Models
 
@@ -380,12 +386,13 @@ Required (see `.env.example` for full list):
 - Links to `Product` and optionally `ProductVariant`
 - `basePrice/finalPrice`: Pricing before/after modifiers
 - `preparationStatus`: Independent tracking per item
-- Relations: many-to-many with `productModifiers` and `selectedPizzaIngredients`
+- Relations: many-to-many with `productModifiers` and `selectedPizzaCustomizations`
 
-**SelectedPizzaIngredient** - Pizza customizations per order item
-- `half`: LEFT, RIGHT, or FULL pizza
-- `action`: ADD or REMOVE ingredient
-- Links `OrderItem` to `PizzaIngredient`
+**SelectedPizzaCustomization** - Pizza selections per order item
+- `half`: FULL, HALF_1, or HALF_2
+- `action`: ADD or REMOVE
+- Links `OrderItem` to `PizzaCustomization`
+- Unique constraint on [orderItemId, pizzaCustomizationId, half, action]
 
 ### Restaurant Configuration Models
 

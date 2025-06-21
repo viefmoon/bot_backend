@@ -20,7 +20,7 @@ export function getOrderAgentTools(): any[] {
                 variantId: { type: "string" },
                 quantity: { type: "number" },
                 modifiers: { type: "array", items: { type: "string" } },
-                pizzaIngredients: { type: "array", items: { type: "string" } }
+                pizzaCustomizations: { type: "array", items: { type: "string" } }
               },
               required: ["productId", "quantity"]
             }

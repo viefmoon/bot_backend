@@ -17,8 +17,10 @@ export interface ProductoInfo {
       name: string;
     }>;
   }>;
-  pizzaIngredients?: Array<{
-    pizzaIngredientId: string;
+  pizzaCustomizations?: Array<{
+    pizzaCustomizationId: string;
     name: string;
+    type: 'FLAVOR' | 'INGREDIENT';
+    ingredients?: string;
   }>;
 }

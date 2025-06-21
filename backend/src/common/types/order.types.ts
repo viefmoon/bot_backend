@@ -14,7 +14,7 @@ export interface OrderProduct {
   cantidad: number;
   precio: number;
   modificadores: { nombre: string; precio: number }[];
-  ingredientes_pizza?: { mitad: string; nombre: string }[];
+  pizzaCustomizations?: { mitad: string; nombre: string; action?: string; tipo?: string; ingredientes?: string }[];
   comments?: string;
 }
 

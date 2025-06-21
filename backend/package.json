@@ -15,7 +15,6 @@
     "studio": "prisma studio",
     "seed": "ts-node --transpile-only prisma/seed.ts",
     "seed:embeddings": "ts-node --transpile-only scripts/generate-embeddings.ts",
-    "test:embeddings": "ts-node --transpile-only scripts/test-embeddings.ts",
     "postinstall": "prisma generate"
   },
   "prisma": {

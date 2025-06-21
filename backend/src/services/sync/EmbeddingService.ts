@@ -12,7 +12,7 @@ interface ProductWithRelations extends Product {
     };
   };
   variants?: Array<{ name: string; isActive: boolean }>;
-  pizzaIngredients?: Array<{ name: string; isActive: boolean }>;
+  pizzaCustomizations?: Array<{ name: string; type: 'FLAVOR' | 'INGREDIENT'; isActive: boolean }>;
   modifierGroups?: Array<{
     productModifiers: Array<{ name: string; isActive: boolean }>;
     isActive: boolean;
@@ -38,13 +38,21 @@ export class EmbeddingService {
       text += ` Descripción: ${product.description}.`;
     }
     
-    if (product.isPizza && product.pizzaIngredients && product.pizzaIngredients.length > 0) {
-      const ingredients = product.pizzaIngredients
-        .filter(i => i.isActive)
-        .map(i => i.name)
+    if (product.isPizza && product.pizzaCustomizations && product.pizzaCustomizations.length > 0) {
+      const flavors = product.pizzaCustomizations
+        .filter(c => c.isActive && c.type === 'FLAVOR')
+        .map(c => c.name)
         .join(', ');
+      const ingredients = product.pizzaCustomizations
+        .filter(c => c.isActive && c.type === 'INGREDIENT')
+        .map(c => c.name)
+        .join(', ');
+      
+      if (flavors) {
+        text += ` Sabores disponibles: ${flavors}.`;
+      }
       if (ingredients) {
-        text += ` Ingredientes: ${ingredients}.`;
+        text += ` Ingredientes adicionales: ${ingredients}.`;
       }
     }
     
@@ -102,7 +110,8 @@ export class EmbeddingService {
         include: {
           subcategory: { include: { category: true } },
           variants: { where: { isActive: true } },
-          pizzaIngredients: { where: { isActive: true } },
+          pizzaCustomizations: { where: { isActive: true } },
+        pizzaConfiguration: true,
           modifierGroups: {
             where: { isActive: true },
             include: {
@@ -243,7 +252,8 @@ export class EmbeddingService {
       include: {
         subcategory: { include: { category: true } },
         variants: { where: { isActive: true } },
-        pizzaIngredients: { where: { isActive: true } },
+        pizzaCustomizations: { where: { isActive: true } },
+        pizzaConfiguration: true,
         modifierGroups: {
           where: { isActive: true },
           include: {

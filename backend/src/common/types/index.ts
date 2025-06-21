@@ -38,9 +38,11 @@ export type {
   Subcategory,
   ProductModifier,
   ModifierGroup,
-  PizzaIngredient,
+  PizzaCustomization,
+  PizzaConfiguration,
   PizzaHalf,
-  IngredientAction,
+  CustomizationAction,
+  CustomizationType,
   PreOrder,
   RestaurantConfig,
   BusinessHours

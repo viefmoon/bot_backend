@@ -34,9 +34,10 @@ export class ProductService {
               }
             }
           },
-          pizzaIngredients: {
+          pizzaCustomizations: {
             where: { isActive: true }
-          }
+          },
+          pizzaConfiguration: true
         } : undefined
       });
 
@@ -168,10 +169,17 @@ export class ProductService {
             }
           }
           
-          // Ingredientes de pizza (si aplica)
-          if (product.pizzaIngredients?.length > 0 && product.isPizza) {
-            const ingredients = product.pizzaIngredients.map((i: any) => i.name).join(', ');
-            menuText += `    _Ingredientes: ${ingredients}_\n`;
+          // Personalizaciones de pizza (si aplica)
+          if (product.pizzaCustomizations?.length > 0 && product.isPizza) {
+            const flavors = product.pizzaCustomizations.filter((c: any) => c.type === 'FLAVOR');
+            const ingredients = product.pizzaCustomizations.filter((c: any) => c.type === 'INGREDIENT');
+            
+            if (flavors.length > 0) {
+              menuText += `    _Sabores disponibles: ${flavors.map((f: any) => f.name).join(', ')}_\n`;
+            }
+            if (ingredients.length > 0) {
+              menuText += `    _Ingredientes extra: ${ingredients.map((i: any) => i.name).join(', ')}_\n`;
+            }
           }
           
           // Modificadores disponibles
@@ -236,7 +244,8 @@ export class ProductService {
               productModifiers: true
             }
           },
-          pizzaIngredients: true
+          pizzaCustomizations: true,
+          pizzaConfiguration: true
         }
       });
     } catch (error) {
@@ -331,9 +340,10 @@ export class ProductService {
               }
             }
           },
-          pizzaIngredients: {
+          pizzaCustomizations: {
             where: { isActive: true }
-          }
+          },
+          pizzaConfiguration: true
         },
         orderBy: { name: 'asc' }
       });
@@ -377,9 +387,15 @@ export class ProductService {
           }
         }
 
-        // Agregar ingredientes de pizza si es una pizza
-        if (product.isPizza && product.pizzaIngredients.length > 0) {
-          productStructure.ingredientesPizza = product.pizzaIngredients.map(i => i.name);
+        // Agregar personalizaciones de pizza si es una pizza
+        if (product.isPizza && product.pizzaCustomizations.length > 0) {
+          const flavors = product.pizzaCustomizations.filter((c: any) => c.type === 'FLAVOR');
+          const ingredients = product.pizzaCustomizations.filter((c: any) => c.type === 'INGREDIENT');
+          
+          productStructure.personalizacionesPizza = {
+            sabores: flavors.map(f => f.name),
+            ingredientes: ingredients.map(i => i.name)
+          };
         }
 
         menuStructure[categoryName][subcategoryName].push(productStructure);
