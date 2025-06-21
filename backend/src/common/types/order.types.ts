@@ -1,24 +1,30 @@
-export interface NewOrder {
+export interface FormattedOrder {
   id: number;
-  telefono: string;
-  informacion_entrega: string;
-  precio_total: number;
-  fecha_creacion: string;
-  horario_entrega_programado: string | null;
-  tiempoEstimado: number;
-  productos: OrderProduct[];
+  phoneNumber: string;
+  deliveryInfo: string;
+  totalPrice: number;
+  createdAt: string;
+  scheduledDeliveryTime: string | null;
+  estimatedTime: number;
+  products: FormattedOrderProduct[];
 }
 
-export interface OrderProduct {
-  nombre: string;
-  cantidad: number;
-  precio: number;
-  modificadores: { nombre: string; precio: number }[];
-  pizzaCustomizations?: { mitad: string; nombre: string; action?: string; tipo?: string; ingredientes?: string }[];
+export interface FormattedOrderProduct {
+  name: string;
+  quantity: number;
+  price: number;
+  modifiers: { name: string; price: number }[];
+  pizzaCustomizations?: { 
+    half: string; 
+    name: string; 
+    action?: string; 
+    type?: string; 
+    ingredients?: string;
+  }[];
   comments?: string;
 }
 
 export interface OrderSummaryResult {
-  newOrder: NewOrder;
+  formattedOrder: FormattedOrder;
   orderSummary: string;
 }

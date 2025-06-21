@@ -187,7 +187,25 @@ export class TextMessageStrategy extends MessageStrategy {
           productVariantId: item.variantId || null, // Map variantId to productVariantId
           quantity: item.quantity || 1,
           selectedModifiers: item.modifiers || [], // Map modifiers to selectedModifiers
-          selectedPizzaCustomizations: item.pizzaCustomizations || [] // Map pizzaCustomizations to selectedPizzaCustomizations
+          // Transform pizzaCustomizations to match expected structure
+          selectedPizzaCustomizations: (item.pizzaCustomizations || []).map((pc: any) => {
+            // Handle both old format (string IDs) and new format (objects)
+            if (typeof pc === 'string') {
+              // Legacy format - just ID string
+              return {
+                customizationId: pc,
+                half: 'FULL',
+                action: 'ADD'
+              };
+            } else {
+              // New format with full structure
+              return {
+                customizationId: pc.customizationId,
+                half: pc.half || 'FULL',
+                action: pc.action || 'ADD'
+              };
+            }
+          })
         }));
         
         result = {

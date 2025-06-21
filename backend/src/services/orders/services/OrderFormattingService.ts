@@ -1,11 +1,12 @@
-import { NewOrder } from "../../../common/types/order.types";
+import { FormattedOrder, FormattedOrderProduct } from "../../../common/types/order.types";
 import { env } from "../../../common/config/envValidator";
+import { PizzaHalf, CustomizationAction, CustomizationType } from "@prisma/client";
 
 export class OrderFormattingService {
   /**
    * Format an order for WhatsApp message display
    */
-  static formatOrderForWhatsApp(order: any, customerId: string): NewOrder {
+  static formatOrderForWhatsApp(order: any, customerId: string): FormattedOrder {
     const orderType = order.orderType;
     let deliveryInfo = "";
 
@@ -42,12 +43,12 @@ export class OrderFormattingService {
       
       // Add modifier prices
       const modifiers = item.productModifiers?.map((mod: any) => ({
-        nombre: mod.name || "Modificador",
-        precio: mod.price || 0,
+        name: mod.name || "Modificador",
+        price: mod.price || 0,
       })) || [];
       
       modifiers.forEach((mod: any) => {
-        itemPrice += mod.precio;
+        itemPrice += mod.price;
       });
       
       const totalItemPrice = itemPrice * item.quantity;
@@ -55,18 +56,18 @@ export class OrderFormattingService {
 
       // Map pizza customizations
       const pizzaCustomizations = item.selectedPizzaCustomizations?.map((selectedCust: any) => ({
-        mitad: selectedCust.half as string,
-        nombre: selectedCust.pizzaCustomization?.name || "Personalización",
+        half: selectedCust.half as string,
+        name: selectedCust.pizzaCustomization?.name || "Personalización",
         action: selectedCust.action,
-        tipo: selectedCust.pizzaCustomization?.type || "INGREDIENT",
-        ingredientes: selectedCust.pizzaCustomization?.ingredients,
+        type: selectedCust.pizzaCustomization?.type || "INGREDIENT",
+        ingredients: selectedCust.pizzaCustomization?.ingredients,
       })) || [];
 
       return {
-        nombre: name,
-        cantidad: item.quantity,
-        precio: totalItemPrice,
-        modificadores: modifiers,
+        name: name,
+        quantity: item.quantity,
+        price: totalItemPrice,
+        modifiers: modifiers,
         pizzaCustomizations: pizzaCustomizations.length > 0 ? pizzaCustomizations : undefined,
         comments: item.comments,
       };
@@ -95,39 +96,39 @@ export class OrderFormattingService {
 
     return {
       id: order.id,
-      telefono: customerId,
-      informacion_entrega: deliveryInfo,
-      precio_total: totalPrice,
-      fecha_creacion: createdAt,
-      horario_entrega_programado: scheduledDelivery,
-      tiempoEstimado: order.estimatedTime,
-      productos: products,
+      phoneNumber: customerId,
+      deliveryInfo: deliveryInfo,
+      totalPrice: totalPrice,
+      createdAt: createdAt,
+      scheduledDeliveryTime: scheduledDelivery,
+      estimatedTime: order.estimatedTime,
+      products: products,
     };
   }
 
   /**
    * Generate order confirmation message
    */
-  static generateConfirmationMessage(order: any, formattedOrder: NewOrder): string {
+  static generateConfirmationMessage(order: any, formattedOrder: FormattedOrder): string {
     const orderTypeText = order.orderType === "DELIVERY" ? "A domicilio" : 
                          order.orderType === "TAKE_AWAY" ? "Para llevar" : "Para comer aquí";
     
     let message = `🎉 *¡Tu orden #${order.dailyNumber} ha sido creada exitosamente!* 🎉\n\n`;
-    message += `📞 *Teléfono:* ${formattedOrder.telefono}\n`;
-    message += `📅 *Fecha de creación:* ${formattedOrder.fecha_creacion}\n`;
-    message += `🚚 *Información de entrega:* ${orderTypeText} - ${formattedOrder.informacion_entrega}\n`;
-    message += `⏱️ *Tiempo estimado:* ${formattedOrder.tiempoEstimado} minutos\n`;
+    message += `📞 *Teléfono:* ${formattedOrder.phoneNumber}\n`;
+    message += `📅 *Fecha de creación:* ${formattedOrder.createdAt}\n`;
+    message += `🚚 *Información de entrega:* ${orderTypeText} - ${formattedOrder.deliveryInfo}\n`;
+    message += `⏱️ *Tiempo estimado:* ${formattedOrder.estimatedTime} minutos\n`;
 
-    if (formattedOrder.horario_entrega_programado) {
-      message += `📅 *Entrega programada:* ${formattedOrder.horario_entrega_programado}\n`;
+    if (formattedOrder.scheduledDeliveryTime) {
+      message += `📅 *Entrega programada:* ${formattedOrder.scheduledDeliveryTime}\n`;
     }
 
     message += `\n🛒 *Productos:*\n`;
-    formattedOrder.productos.forEach((producto) => {
-      message += this.formatProduct(producto);
+    formattedOrder.products.forEach((product) => {
+      message += this.formatProduct(product);
     });
 
-    message += `\n💰 *Total: $${formattedOrder.precio_total}*\n\n`;
+    message += `\n💰 *Total: $${formattedOrder.totalPrice}*\n\n`;
     message += `📩 Te notificaremos cuando tu pedido sea aceptado. ¡Gracias por tu preferencia! 🙏`;
 
     return message;
@@ -136,21 +137,21 @@ export class OrderFormattingService {
   /**
    * Format a single product for display
    */
-  private static formatProduct(producto: any): string {
-    let summary = `- *${producto.cantidad}x ${producto.nombre}*: $${producto.precio}\n`;
+  private static formatProduct(product: FormattedOrderProduct): string {
+    let summary = `- *${product.quantity}x ${product.name}*: $${product.price}\n`;
 
-    if (producto.pizzaCustomizations?.length > 0) {
-      summary += this.formatPizzaCustomizations(producto.pizzaCustomizations);
+    if (product.pizzaCustomizations && product.pizzaCustomizations.length > 0) {
+      summary += this.formatPizzaCustomizations(product.pizzaCustomizations);
     }
 
-    if (producto.modificadores.length > 0) {
-      summary += `  🔸 Modificadores: ${producto.modificadores
-        .map((mod: any) => mod.nombre)
+    if (product.modifiers.length > 0) {
+      summary += `  🔸 Modificadores: ${product.modifiers
+        .map((mod: any) => mod.name)
         .join(", ")}\n`;
     }
 
-    if (producto.comments) {
-      summary += `  💬 Comentarios: ${producto.comments}\n`;
+    if (product.comments) {
+      summary += `  💬 Comentarios: ${product.comments}\n`;
     }
 
     return summary;
@@ -163,35 +164,35 @@ export class OrderFormattingService {
     let summary = "  🔸 Personalización de pizza:\n";
 
     // Separate flavors and ingredients
-    const flavors = customizations.filter((c: any) => c.tipo === "FLAVOR" && c.action === "ADD");
-    const addedIngredients = customizations.filter((c: any) => c.tipo === "INGREDIENT" && c.action === "ADD");
-    const removedItems = customizations.filter((c: any) => c.action === "REMOVE");
+    const flavors = customizations.filter((c: any) => c.type === CustomizationType.FLAVOR && c.action === CustomizationAction.ADD);
+    const addedIngredients = customizations.filter((c: any) => c.type === CustomizationType.INGREDIENT && c.action === CustomizationAction.ADD);
+    const removedItems = customizations.filter((c: any) => c.action === CustomizationAction.REMOVE);
 
     // Show flavors
     if (flavors.length > 0) {
       const flavorsByHalf = {
-        half1: flavors.filter((f: any) => f.mitad === "HALF_1"),
-        half2: flavors.filter((f: any) => f.mitad === "HALF_2"),
-        full: flavors.filter((f: any) => f.mitad === "FULL"),
+        half1: flavors.filter((f: any) => f.half === PizzaHalf.HALF_1),
+        half2: flavors.filter((f: any) => f.half === PizzaHalf.HALF_2),
+        full: flavors.filter((f: any) => f.half === PizzaHalf.FULL),
       };
 
       if (flavorsByHalf.full.length > 0) {
-        summary += `     • Sabor Completo: ${flavorsByHalf.full.map((f: any) => f.nombre).join(", ")}\n`;
+        summary += `     • Sabor Completo: ${flavorsByHalf.full.map((f: any) => f.name).join(", ")}\n`;
       }
       if (flavorsByHalf.half1.length > 0) {
-        summary += `     • Primera Mitad: ${flavorsByHalf.half1.map((f: any) => f.nombre).join(", ")}\n`;
+        summary += `     • Primera Mitad: ${flavorsByHalf.half1.map((f: any) => f.name).join(", ")}\n`;
       }
       if (flavorsByHalf.half2.length > 0) {
-        summary += `     • Segunda Mitad: ${flavorsByHalf.half2.map((f: any) => f.nombre).join(", ")}\n`;
+        summary += `     • Segunda Mitad: ${flavorsByHalf.half2.map((f: any) => f.name).join(", ")}\n`;
       }
     }
 
     // Show added ingredients
     if (addedIngredients.length > 0) {
       const ingredientsByHalf = {
-        half1: addedIngredients.filter((i: any) => i.mitad === "HALF_1"),
-        half2: addedIngredients.filter((i: any) => i.mitad === "HALF_2"),
-        full: addedIngredients.filter((i: any) => i.mitad === "FULL"),
+        half1: addedIngredients.filter((i: any) => i.half === PizzaHalf.HALF_1),
+        half2: addedIngredients.filter((i: any) => i.half === PizzaHalf.HALF_2),
+        full: addedIngredients.filter((i: any) => i.half === PizzaHalf.FULL),
       };
 
       const half1Items = [...ingredientsByHalf.half1, ...ingredientsByHalf.full];
@@ -199,22 +200,22 @@ export class OrderFormattingService {
 
       if (
         half1Items.length === half2Items.length &&
-        half1Items.every((item: any) => half2Items.some((h2: any) => h2.nombre === item.nombre))
+        half1Items.every((item: any) => half2Items.some((h2: any) => h2.name === item.name))
       ) {
-        summary += `     • Ingredientes Extra: ${half1Items.map((i: any) => i.nombre).join(", ")}\n`;
+        summary += `     • Ingredientes Extra: ${half1Items.map((i: any) => i.name).join(", ")}\n`;
       } else {
         if (half1Items.length > 0) {
-          summary += `     • Extra Primera Mitad: ${half1Items.map((i: any) => i.nombre).join(", ")}\n`;
+          summary += `     • Extra Primera Mitad: ${half1Items.map((i: any) => i.name).join(", ")}\n`;
         }
         if (half2Items.length > 0) {
-          summary += `     • Extra Segunda Mitad: ${half2Items.map((i: any) => i.nombre).join(", ")}\n`;
+          summary += `     • Extra Segunda Mitad: ${half2Items.map((i: any) => i.name).join(", ")}\n`;
         }
       }
     }
 
     // Show removed items
     if (removedItems.length > 0) {
-      summary += `     • ❌ Quitar: ${removedItems.map((r: any) => r.nombre).join(", ")}\n`;
+      summary += `     • ❌ Quitar: ${removedItems.map((r: any) => r.name).join(", ")}\n`;
     }
 
     return summary;

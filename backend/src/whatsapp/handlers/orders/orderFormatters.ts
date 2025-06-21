@@ -4,6 +4,7 @@
  */
 
 import { env } from '../../../common/config/envValidator';
+import { PizzaHalf, CustomizationAction } from '@prisma/client';
 
 // Helper function to generate product summary
 export function generateProductSummary(product: any): string {
@@ -43,10 +44,10 @@ export function generateProductSummary(product: any): string {
 // New function to format pizza customizations in a more intuitive way
 function formatPizzaCustomizations(customizations: any[]): string {
   const addCustomizations = customizations.filter((cust: any) => 
-    !cust.action || cust.action === "add" || cust.action === "ADD"
+    !cust.action || cust.action === CustomizationAction.ADD
   );
   const removeCustomizations = customizations.filter((cust: any) => 
-    cust.action === "remove" || cust.action === "REMOVE"
+    cust.action === CustomizationAction.REMOVE
   );
 
   let result = "";
@@ -54,22 +55,14 @@ function formatPizzaCustomizations(customizations: any[]): string {
   // Format additions
   if (addCustomizations.length > 0) {
     const byHalf = {
-      group1: addCustomizations.filter((cust: any) => 
-        cust.half === "HALF_1" || cust.half === "half_1" || cust.mitad === "HALF_1" || 
-        cust.half === "LEFT" || cust.half === "left" || cust.mitad === "left"
-      ),
-      group2: addCustomizations.filter((cust: any) => 
-        cust.half === "HALF_2" || cust.half === "half_2" || cust.mitad === "HALF_2" || 
-        cust.half === "RIGHT" || cust.half === "right" || cust.mitad === "right"
-      ),
-      full: addCustomizations.filter((cust: any) => 
-        cust.half === "FULL" || cust.half === "full" || cust.mitad === "full" || !cust.half
-      )
+      group1: addCustomizations.filter((cust: any) => cust.half === PizzaHalf.HALF_1),
+      group2: addCustomizations.filter((cust: any) => cust.half === PizzaHalf.HALF_2),
+      full: addCustomizations.filter((cust: any) => cust.half === PizzaHalf.FULL)
     };
 
     // Get all ingredients for each half
-    const group1Names = [...byHalf.group1, ...byHalf.full].map(i => i.name || i.nombre).sort();
-    const group2Names = [...byHalf.group2, ...byHalf.full].map(i => i.name || i.nombre).sort();
+    const group1Names = [...byHalf.group1, ...byHalf.full].map(i => i.name).sort();
+    const group2Names = [...byHalf.group2, ...byHalf.full].map(i => i.name).sort();
     
     // Check if both groups have the same ingredients
     if (JSON.stringify(group1Names) === JSON.stringify(group2Names) && group1Names.length > 0) {
@@ -80,8 +73,8 @@ function formatPizzaCustomizations(customizations: any[]): string {
       const parts = [];
       
       // Collect unique ingredients for each group
-      const group1Only = byHalf.group1.map(i => i.name || i.nombre);
-      const group2Only = byHalf.group2.map(i => i.name || i.nombre);
+      const group1Only = byHalf.group1.map(i => i.name);
+      const group2Only = byHalf.group2.map(i => i.name);
       
       if (group1Only.length > 0 && group2Only.length > 0) {
         // Both halves have different ingredients
@@ -94,7 +87,7 @@ function formatPizzaCustomizations(customizations: any[]): string {
       
       // Add full ingredients if any
       if (byHalf.full.length > 0) {
-        const fullNames = byHalf.full.map(i => i.name || i.nombre).join(", ");
+        const fullNames = byHalf.full.map(i => i.name).join(", ");
         result += `  Con: ${fullNames} (completa)\n`;
       }
     }
@@ -102,7 +95,7 @@ function formatPizzaCustomizations(customizations: any[]): string {
 
   // Format removals
   if (removeCustomizations.length > 0) {
-    const names = removeCustomizations.map(c => c.name || c.nombre).join(", ");
+    const names = removeCustomizations.map(c => c.name).join(", ");
     result += `  Sin: ${names}\n`;
   }
 
