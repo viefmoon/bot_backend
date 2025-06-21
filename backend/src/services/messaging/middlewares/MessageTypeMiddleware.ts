@@ -22,8 +22,6 @@ export class MessageTypeMiddleware implements MessageMiddleware {
         await sendWhatsAppInteractiveMessage(context.message.from, welcomeMessage);
       }
       
-      // La detección de reinicio ahora se maneja a través del agente general
-      
       // Validar tipo de mensaje
       const supportedTypes = ['text', 'interactive', 'audio'];
       if (!supportedTypes.includes(context.message.type)) {

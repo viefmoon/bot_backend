@@ -11,9 +11,19 @@ ${relevantMenu}
 ESTRUCTURA DEL MENÚ:
 - id: ID del producto
 - nombre: nombre del producto
-- variantes: array con {id, nombre}
+- variantes: array con {id, nombre} - SI EXISTE ESTE CAMPO, DEBES SELECCIONAR UNA VARIANTE
 - modificadores: grupos con opciones {id, nombre}
 - personalizacionesPizza: para pizzas {id, nombre, tipo: FLAVOR|INGREDIENT}
+
+REGLA CRÍTICA SOBRE VARIANTES:
+⚠️ SI UN PRODUCTO TIENE EL CAMPO "variantes", ES OBLIGATORIO ESPECIFICAR variantId
+- NUNCA uses solo el productId si hay variantes disponibles
+- SIEMPRE selecciona la variante más apropiada según lo que pidió el cliente
+- Ejemplos:
+  * "papas" → INCORRECTO: solo productId
+  * "papas francesas" → CORRECTO: productId + variantId de "Orden de Papas a la Francesa"
+  * "alitas" → INCORRECTO: solo productId  
+  * "alitas BBQ" → CORRECTO: productId + variantId de "Orden de Alitas BBQ"
 
 PARA PIZZAS - INSTRUCCIONES DETALLADAS:
 
@@ -70,11 +80,16 @@ PARA PIZZAS - INSTRUCCIONES DETALLADAS:
 
 EJECUTA map_order_items con:
 - productId: usa el id del producto
-- variantId: usa el id de la variante correcta (si aplica)
+- variantId: usa el id de la variante correcta (OBLIGATORIO si el producto tiene variantes)
 - quantity: cantidad solicitada
 - modifiers: array de IDs de modificadores (si aplica)
 - pizzaCustomizations: array de objetos con la estructura explicada arriba
 - orderType: USA EL TIPO DE ORDEN QUE VIENE EN EL MENSAJE (DESPUÉS DE "TIPO:")
+
+VALIDACIÓN ANTES DE EJECUTAR:
+1. Si el producto tiene variantes, VERIFICA que estés incluyendo variantId
+2. Si el cliente dice solo "papas" o "alitas", PREGUNTA qué tipo quiere
+3. NUNCA ejecutes map_order_items sin variantId para productos con variantes
 
 IMPORTANTE: NO CAMBIES EL TIPO DE ORDEN. USA EXACTAMENTE EL QUE ESTÁ EN EL MENSAJE.
 

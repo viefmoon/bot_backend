@@ -488,7 +488,30 @@ async function handlePreOrderAction(from: string, buttonId: string): Promise<voi
       whatsappNumber: from
     });
     
-  } catch (error) {
+  } catch (error: any) {
+    // Si es un error de token inválido, limpiar el historial relevante
+    if (error instanceof BusinessLogicError && error.code === ErrorCode.INVALID_TOKEN) {
+      try {
+        // Buscar el cliente y limpiar su historial relevante
+        const customer = await prisma.customer.findUnique({
+          where: { whatsappPhoneNumber: from }
+        });
+        
+        if (customer) {
+          await prisma.customer.update({
+            where: { id: customer.id },
+            data: {
+              relevantChatHistory: JSON.stringify([]),
+              lastInteraction: new Date()
+            }
+          });
+          logger.info(`Cleared relevant chat history for customer ${customer.id} due to invalid token`);
+        }
+      } catch (clearError) {
+        logger.error('Error clearing chat history after invalid token:', clearError);
+      }
+    }
+    
     await ErrorService.handleAndSendError(error, from, {
       userId: from,
       operation: 'handlePreOrderAction'
