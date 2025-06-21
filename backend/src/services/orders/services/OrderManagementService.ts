@@ -4,6 +4,8 @@ import logger from "../../../common/utils/logger";
 import { BusinessLogicError, ErrorCode } from "../../../common/services/errors";
 import { OrderService } from "../OrderService";
 import { CreateOrderDto } from "../dto/create-order.dto";
+import { sendWhatsAppMessage, WhatsAppService } from "../../whatsapp";
+import { OrderFormattingService } from "./OrderFormattingService";
 
 export class OrderManagementService {
   private orderService: OrderService;
@@ -187,5 +189,111 @@ export class OrderManagementService {
     });
 
     logger.info(`PreOrder ${preOrderId} discarded successfully`);
+  }
+
+  /**
+   * Send order confirmation with details and action buttons
+   */
+  async sendOrderConfirmation(
+    whatsappNumber: string,
+    orderId: string,
+    action: "confirmed" | "cancelled" | "modified" = "confirmed"
+  ): Promise<void> {
+    try {
+      // Get complete order details
+      const fullOrder = await prisma.order.findUnique({
+        where: { id: orderId },
+        include: {
+          orderItems: {
+            include: {
+              product: true,
+              productVariant: true,
+              productModifiers: true,
+              selectedPizzaIngredients: {
+                include: { pizzaIngredient: true },
+              },
+            },
+          },
+          deliveryInfo: true,
+        },
+      });
+
+      if (!fullOrder) {
+        throw new BusinessLogicError(
+          ErrorCode.ORDER_NOT_FOUND,
+          'Order not found for confirmation',
+          { metadata: { orderId } }
+        );
+      }
+
+      // Format order for display
+      const formattedOrder = OrderFormattingService.formatOrderForWhatsApp(fullOrder, whatsappNumber);
+      const orderSummary = OrderFormattingService.generateConfirmationMessage(fullOrder, formattedOrder);
+      
+      // Send confirmation message
+      await sendWhatsAppMessage(whatsappNumber, orderSummary);
+
+      // Update messageId for tracking
+      const newMessageId = `order_${fullOrder.id}_${Date.now()}`;
+      await this.updateOrderMessageId(fullOrder.id, newMessageId);
+
+      // Send action buttons if order is in appropriate status
+      await this.sendOrderActionButtons(
+        whatsappNumber,
+        fullOrder.messageId || newMessageId,
+        fullOrder.orderStatus
+      );
+    } catch (error) {
+      logger.error('Error sending order confirmation:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Send interactive buttons for order actions
+   */
+  private async sendOrderActionButtons(
+    whatsappNumber: string,
+    messageId: string,
+    orderStatus: OrderStatus
+  ): Promise<void> {
+    try {
+      // Only send buttons for pending orders
+      if (orderStatus === "PENDING" || orderStatus === "IN_PROGRESS") {
+        const message = {
+          type: "button",
+          header: {
+            type: "text",
+            text: "Opciones de tu orden",
+          },
+          body: {
+            text: "¿Qué deseas hacer con tu orden?",
+          },
+          action: {
+            buttons: [
+              {
+                type: "reply",
+                reply: {
+                  id: "cancel_order",
+                  title: "❌ Cancelar orden",
+                },
+              },
+              {
+                type: "reply",
+                reply: {
+                  id: "pay_online",
+                  title: "💳 Generar enlace de pago",
+                },
+              },
+            ],
+          },
+        };
+
+        await WhatsAppService.sendInteractiveMessage(whatsappNumber, message, messageId);
+      }
+    } catch (error) {
+      logger.error('Error sending action buttons:', error);
+      // Don't throw - button sending failure shouldn't stop the confirmation
+    }
   }
 }

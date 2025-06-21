@@ -1,8 +1,6 @@
-import {
-  handlePreOrderConfirmation,
-  handlePreOrderDiscard,
-  handleOrderCancellation,
-} from "./orderHandlers";
+import { handleOrderCancellation } from "./orders/cancellationHandler";
+import { PreOrderWorkflowService } from "../../services/orders/PreOrderWorkflowService";
+import { PreOrderActionParams } from "../../common/types/preorder.types";
 
 import { prisma } from "../../server";
 import { sendWhatsAppMessage, sendMessageWithUrlButton } from "../../services/whatsapp";
@@ -28,10 +26,11 @@ const stripeClient = env.STRIPE_SECRET_KEY
 
 // ProductService uses static methods, no need to instantiate
 
-const BUTTON_ACTIONS = {
-  confirm_order: handlePreOrderConfirmation,
-  discard_order: handlePreOrderDiscard,
-} as const;
+// Map of button action prefixes to their handlers
+const BUTTON_ACTION_HANDLERS = new Map<string, (from: string, buttonId: string) => Promise<void>>([  
+  ['preorder_confirm', handlePreOrderAction],
+  ['preorder_discard', handlePreOrderAction],
+]);
 
 const LIST_ACTIONS = {
   cancel_order: handleOrderCancellation,
@@ -65,9 +64,15 @@ export async function handleInteractiveMessage(
       } else if (button_reply.id === 'change_address') {
         await handleChangeDeliveryInfo(from);
       } else {
-        const action =
-          BUTTON_ACTIONS[button_reply.id as keyof typeof BUTTON_ACTIONS];
-        if (action) await action(from, messageId);
+        // Check for action handlers by prefix
+        const [actionPrefix] = button_reply.id.split(':');
+        const handler = BUTTON_ACTION_HANDLERS.get(actionPrefix);
+        
+        if (handler) {
+          await handler(from, button_reply.id);
+        } else {
+          logger.warn(`No handler found for button action: ${button_reply.id}`);
+        }
       }
     } else if (type === "list_reply") {
       // Check for address selection
@@ -447,6 +452,46 @@ async function handleAddNewAddress(from: string, messageId: string): Promise<voi
     await ErrorService.handleAndSendError(error, from, {
       userId: from,
       operation: 'handleAddNewAddress'
+    });
+  }
+}
+
+/**
+ * Handles preorder actions (confirm/discard) using the new token-based system
+ */
+async function handlePreOrderAction(from: string, buttonId: string): Promise<void> {
+  try {
+    // Extract action and token from button ID
+    // Format: preorder_confirm:token or preorder_discard:token
+    const [actionType, token] = buttonId.split(':');
+    
+    if (!token) {
+      throw new BusinessLogicError(
+        ErrorCode.INVALID_TOKEN,
+        'Invalid button format - missing token'
+      );
+    }
+    
+    // Determine action based on button prefix
+    const action: 'confirm' | 'discard' = actionType === 'preorder_confirm' ? 'confirm' : 'discard';
+    
+    logger.info('Processing preorder action', { 
+      from, 
+      action, 
+      tokenPrefix: token.substring(0, 8) + '...' 
+    });
+    
+    // Process the action using the workflow service
+    await PreOrderWorkflowService.processAction({
+      action,
+      token,
+      whatsappNumber: from
+    });
+    
+  } catch (error) {
+    await ErrorService.handleAndSendError(error, from, {
+      userId: from,
+      operation: 'handlePreOrderAction'
     });
   }
 }

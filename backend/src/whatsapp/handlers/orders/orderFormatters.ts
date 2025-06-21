@@ -11,83 +11,106 @@ export function generateProductSummary(product: any): string {
   const quantity = product.quantity || product.cantidad || 1;
   
   // Use variant name if available, otherwise use product name
-  const name = product.variantName || product.productName || product.nombre || 'Producto';
+  const displayName = product.variantName || product.productName || product.nombre || 'Producto';
   
-  const price = product.subtotal || product.itemPrice || product.precio || product.price || 0;
+  // Calculate price
+  const unitPrice = product.unitPrice || product.price || 0;
+  const totalPrice = product.subtotal || product.itemPrice || product.precio || (unitPrice * quantity) || 0;
   
-  let summary = `- *${quantity}x ${name}*: $${price}\n`;
+  // Start with product line showing quantity, name and total price
+  let summary = `• *${quantity}x ${displayName}* - $${totalPrice}\n`;
 
   // Show modifiers if they exist
   if (product.modifiers?.length > 0 || product.modificadores?.length > 0) {
     const modifiers = product.modifiers || product.modificadores;
-    summary += `  🔸 Modificadores: ${modifiers
-      .map((mod: any) => mod.name || mod.nombre || mod)
-      .join(", ")}\n`;
+    const modifierNames = modifiers.map((mod: any) => mod.name || mod.nombre || mod).join(", ");
+    summary += `  ${modifierNames}\n`;
   }
 
-  // Show pizza ingredients if they exist
-  if (product.pizzaIngredients?.length > 0 || product.ingredientes_pizza?.length > 0) {
-    summary += generatePizzaIngredientsSummary(product.pizzaIngredients || product.ingredientes_pizza);
+  // Show pizza ingredients if it's a pizza
+  if (product.isPizza && (product.pizzaIngredients?.length > 0 || product.ingredientes_pizza?.length > 0)) {
+    const ingredients = product.pizzaIngredients || product.ingredientes_pizza;
+    summary += formatPizzaIngredients(ingredients);
   }
 
   // Show comments if they exist
   if (product.comments || product.comentarios) {
-    summary += `  💬 Comentarios: ${product.comments || product.comentarios}\n`;
+    summary += `  Nota: ${product.comments || product.comentarios}\n`;
   }
 
   return summary;
 }
 
-// Helper function to generate pizza ingredients summary
+// New function to format pizza ingredients in a more intuitive way
+function formatPizzaIngredients(ingredients: any[]): string {
+  const addIngredients = ingredients.filter((ing: any) => 
+    !ing.action || ing.action === "add" || ing.action === "ADD"
+  );
+  const removeIngredients = ingredients.filter((ing: any) => 
+    ing.action === "remove" || ing.action === "REMOVE"
+  );
+
+  let result = "";
+
+  // Format additions
+  if (addIngredients.length > 0) {
+    const byHalf = {
+      group1: addIngredients.filter((ing: any) => 
+        ing.half === "LEFT" || ing.half === "left" || ing.mitad === "left"
+      ),
+      group2: addIngredients.filter((ing: any) => 
+        ing.half === "RIGHT" || ing.half === "right" || ing.mitad === "right"
+      ),
+      full: addIngredients.filter((ing: any) => 
+        ing.half === "FULL" || ing.half === "full" || ing.mitad === "full" || !ing.half
+      )
+    };
+
+    // Get all ingredients for each half
+    const group1Names = [...byHalf.group1, ...byHalf.full].map(i => i.name || i.nombre).sort();
+    const group2Names = [...byHalf.group2, ...byHalf.full].map(i => i.name || i.nombre).sort();
+    
+    // Check if both groups have the same ingredients
+    if (JSON.stringify(group1Names) === JSON.stringify(group2Names) && group1Names.length > 0) {
+      // Same ingredients on both halves - show as complete
+      result += `  Con: ${group1Names.join(", ")} (completa)\n`;
+    } else {
+      // Different ingredients per half
+      const parts = [];
+      
+      // Collect unique ingredients for each group
+      const group1Only = byHalf.group1.map(i => i.name || i.nombre);
+      const group2Only = byHalf.group2.map(i => i.name || i.nombre);
+      
+      if (group1Only.length > 0 && group2Only.length > 0) {
+        // Both halves have different ingredients
+        result += `  Con: ${group1Only.join(", ")} / ${group2Only.join(", ")}\n`;
+      } else if (group1Only.length > 0 || group2Only.length > 0) {
+        // Only one half has specific ingredients
+        const halfIngredients = group1Only.length > 0 ? group1Only : group2Only;
+        result += `  Con: ${halfIngredients.join(", ")} (mitad)\n`;
+      }
+      
+      // Add full ingredients if any
+      if (byHalf.full.length > 0) {
+        const fullNames = byHalf.full.map(i => i.name || i.nombre).join(", ");
+        result += `  Con: ${fullNames} (completa)\n`;
+      }
+    }
+  }
+
+  // Format removals
+  if (removeIngredients.length > 0) {
+    const names = removeIngredients.map(i => i.name || i.nombre).join(", ");
+    result += `  Sin: ${names}\n`;
+  }
+
+  return result;
+}
+
+// Helper function to generate pizza ingredients summary (kept for backward compatibility)
 export function generatePizzaIngredientsSummary(ingredients: any[]): string {
-  let summary = "  🔸 Ingredientes de pizza:\n";
-
-  const ingredientsByHalf = {
-    left: ingredients
-      .filter((ing: any) => ing.half === "left" || ing.mitad === "left")
-      .map((ing: any) => ing.name || ing.nombre),
-    right: ingredients
-      .filter((ing: any) => ing.half === "right" || ing.mitad === "right")
-      .map((ing: any) => ing.name || ing.nombre),
-    full: ingredients
-      .filter((ing: any) => ing.half === "full" || ing.mitad === "full")
-      .map((ing: any) => ing.name || ing.nombre),
-  };
-
-  const leftIngredients = [
-    ...ingredientsByHalf.left,
-    ...ingredientsByHalf.full,
-  ];
-  const rightIngredients = [
-    ...ingredientsByHalf.right,
-    ...ingredientsByHalf.full,
-  ];
-
-  if (
-    leftIngredients.length === rightIngredients.length &&
-    leftIngredients.every((ing: string) => rightIngredients.includes(ing))
-  ) {
-    // Same ingredients on both halves
-    summary += `     • Completa: ${leftIngredients.join(", ")}\n`;
-  } else {
-    // Different ingredients on each half
-    if (leftIngredients.length > 0) {
-      summary += `     • Mitad Izquierda: ${leftIngredients.join(", ")}\n`;
-    }
-    if (rightIngredients.length > 0) {
-      summary += `     • Mitad Derecha: ${rightIngredients.join(", ")}\n`;
-    }
-  }
-
-  // Show special actions (remove)
-  const removedIngredients = ingredients
-    .filter((ing: any) => ing.action === "remove")
-    .map((ing: any) => ing.name || ing.nombre);
-  if (removedIngredients.length > 0) {
-    summary += `     • ❌ Quitar: ${removedIngredients.join(", ")}\n`;
-  }
-
-  return summary;
+  return formatPizzaIngredients(ingredients);
 }
 
 // Function to generate complete order summary

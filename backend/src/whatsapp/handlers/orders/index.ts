@@ -3,19 +3,11 @@
  * Exports all order-related handlers
  */
 
-export { 
-  handlePreOrderConfirmation,
-  sendOrderConfirmation 
-} from './confirmationHandler';
+// Order confirmation moved to OrderManagementService
 
 export { 
   handleOrderCancellation 
 } from './cancellationHandler';
-
-export {
-  createPreOrderAndSendSummary,
-  handlePreOrderDiscard
-} from './preOrderHandler';
 
 export {
   generateProductSummary,

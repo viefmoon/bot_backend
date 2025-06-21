@@ -1,10 +1,11 @@
 import { MessageStrategy } from './MessageStrategy';
 import { MessageContext } from '../MessageContext';
 import { AgentService } from '../../ai';
-import { PreOrderService } from '../../../services/orders/PreOrderService';
+import { PreOrderWorkflowService } from '../../../services/orders/PreOrderWorkflowService';
 import { sendWhatsAppMessage } from '../../whatsapp';
 import logger from '../../../common/utils/logger';
 import { MessageSplitter } from '../../../common/utils/messageSplitter';
+import { ProcessedOrderData } from '../../../common/types/preorder.types';
 
 // Type definition for content
 interface Content {
@@ -102,52 +103,25 @@ export class TextMessageStrategy extends MessageStrategy {
       await sendWhatsAppMessage(context.message.from, warningMessage);
     }
     
-    // Create pre-order
-    const preOrderService = new PreOrderService();
-    const preOrderResult = await preOrderService.createPreOrder({
+    // Prepare order data
+    const orderData: ProcessedOrderData = {
       orderItems: preprocessedContent.orderItems,
-      whatsappPhoneNumber: context.message.from,
       orderType: preprocessedContent.orderType,
       scheduledAt: preprocessedContent.scheduledAt,
+    };
+    
+    // Use the new PreOrderWorkflowService
+    const workflowResult = await PreOrderWorkflowService.createAndNotify({
+      orderData,
+      customerId: context.customer!.id,
+      whatsappNumber: context.message.from,
     });
     
-    // Generate order summary
-    const { generateOrderSummary } = await import('../../../whatsapp/handlers/orders/orderFormatters');
-    const orderSummary = generateOrderSummary(preOrderResult);
+    // Store the action token in context for potential tracking
+    context.set('lastPreOrderToken', workflowResult.actionToken);
     
-    // Send order summary
-    await sendWhatsAppMessage(context.message.from, orderSummary);
-    
-    // Add interactive confirmation message
-    context.addResponse({
-      interactiveMessage: {
-        type: "button",
-        body: {
-          text: "¿Deseas confirmar tu pedido?"
-        },
-        action: {
-          buttons: [
-            {
-              type: "reply",
-              reply: {
-                id: `confirm_order_${preOrderResult.preOrderId}`,
-                title: "✅ Confirmar"
-              }
-            },
-            {
-              type: "reply",
-              reply: {
-                id: `discard_order_${preOrderResult.preOrderId}`,
-                title: "❌ Cancelar"
-              }
-            }
-          ]
-        }
-      },
-      sendToWhatsApp: true,
-      isRelevant: false,
-      preOrderId: preOrderResult.preOrderId
-    });
+    // Mark that interactive response was already sent by the workflow
+    context.set('interactiveResponseSent', true);
   }
   
   private async processGeminiResponse(response: any, context?: MessageContext): Promise<any[]> {

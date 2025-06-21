@@ -57,6 +57,10 @@ export const ERROR_MESSAGES: Record<ErrorCode, ErrorMessageConfig> = {
     user: "❌ El código OTP es inválido o ha expirado. Por favor, solicita uno nuevo.",
     log: "Invalid or expired OTP"
   },
+  [ErrorCode.INVALID_TOKEN]: {
+    user: "❌ El enlace de confirmación es inválido o ha expirado. Por favor, realiza tu pedido nuevamente.",
+    log: "Invalid or expired action token"
+  },
   
   // Not Found Errors
   [ErrorCode.ADDRESS_NOT_FOUND]: {
