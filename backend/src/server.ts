@@ -200,6 +200,7 @@ app.use(globalErrorHandler);
 
 // Start server
 const PORT = parseInt(env.PORT, 10);
+let preOrderCleanupInterval: NodeJS.Timeout;
 
 async function startServer() {
   try {
@@ -217,6 +218,13 @@ async function startServer() {
     
     // Start OTP cleanup interval
     OTPService.startOTPCleanup();
+    
+    // Start PreOrder cleanup interval
+    const { PreOrderWorkflowService } = await import('./services/orders/PreOrderWorkflowService');
+    preOrderCleanupInterval = setInterval(async () => {
+      await PreOrderWorkflowService.cleanupExpiredPreOrders();
+    }, 5 * 60 * 1000); // Run every 5 minutes
+    logger.info('PreOrder cleanup interval started');
     
     // Initialize embeddings on startup
     const { initializeEmbeddings, scheduleEmbeddingUpdates } = await import('./startup/embeddingInitializer');
@@ -236,6 +244,9 @@ async function startServer() {
 process.on('SIGINT', async () => {
   logger.info('Shutting down server...');
   OTPService.stopOTPCleanup();
+  if (preOrderCleanupInterval) {
+    clearInterval(preOrderCleanupInterval);
+  }
   const { redisService } = await import('./services/redis/RedisService');
   await redisService.disconnect();
   await prisma.$disconnect();
@@ -245,6 +256,9 @@ process.on('SIGINT', async () => {
 process.on('SIGTERM', async () => {
   logger.info('Shutting down server...');
   OTPService.stopOTPCleanup();
+  if (preOrderCleanupInterval) {
+    clearInterval(preOrderCleanupInterval);
+  }
   const { redisService } = await import('./services/redis/RedisService');
   await redisService.disconnect();
   await prisma.$disconnect();

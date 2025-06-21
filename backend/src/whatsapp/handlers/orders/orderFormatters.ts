@@ -11,12 +11,14 @@ export function generateProductSummary(product: any): string {
   // Handle different product structures
   const quantity = product.quantity || product.cantidad || 1;
   
-  // Use variant name if available, otherwise use product name
-  const displayName = product.variantName || product.productName || product.nombre || 'Producto';
+  // Access nested product and variant data
+  const productName = product.product?.name || product.productName || product.nombre || 'Producto';
+  const variantName = product.productVariant?.name || product.variantName || '';
+  const displayName = variantName || productName;
   
-  // Calculate price
-  const unitPrice = product.unitPrice || product.price || 0;
-  const totalPrice = product.subtotal || product.itemPrice || product.precio || (unitPrice * quantity) || 0;
+  // Calculate price - access from nested structures
+  const unitPrice = product.productVariant?.price || product.product?.price || product.unitPrice || product.price || 0;
+  const totalPrice = product.itemPrice || product.subtotal || product.precio || (unitPrice * quantity) || 0;
   
   // Start with product line showing quantity, name and total price
   let summary = `• *${quantity}x ${displayName}* - $${totalPrice}\n`;
@@ -29,7 +31,8 @@ export function generateProductSummary(product: any): string {
   }
 
   // Show pizza customizations if it's a pizza
-  if (product.isPizza && product.pizzaCustomizations?.length > 0) {
+  const isPizza = product.product?.isPizza || product.isPizza;
+  if (isPizza && product.pizzaCustomizations?.length > 0) {
     summary += formatPizzaCustomizations(product.pizzaCustomizations);
   }
 
@@ -162,6 +165,10 @@ export function generateOrderSummary(order: any): string {
     });
     message += `\n⏰ *Programado para:* ${formattedDate} a las ${formattedTime}\n`;
   }
+  
+  // Agregar mensaje informativo
+  message += `\n📝 *¿Deseas agregar más artículos o modificar tu orden?*\n`;
+  message += `Usa el botón *Cancelar* para reiniciar tu pedido desde cero.\n`;
   
   return message;
 }
