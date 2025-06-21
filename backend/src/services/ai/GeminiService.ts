@@ -79,6 +79,8 @@ export class GeminiService {
         config,
       });
       
+      logger.debug('Raw Gemini response:', JSON.stringify(response, null, 2));
+      
       return response;
     } catch (error) {
       logger.error('GeminiService: Error generando contenido con historial', error);

@@ -6,6 +6,7 @@ import { sendWhatsAppMessage } from '../../whatsapp';
 import logger from '../../../common/utils/logger';
 import { MessageSplitter } from '../../../common/utils/messageSplitter';
 import { ProcessedOrderData } from '../../../common/types/preorder.types';
+import { ValidationError, BusinessLogicError, TechnicalError } from '../../../common/services/errors';
 
 // Type definition for content
 interface Content {
@@ -20,6 +21,7 @@ export class TextMessageStrategy extends MessageStrategy {
     return context.message.type === 'text';
   }
   
+  
   async execute(context: MessageContext): Promise<void> {
     if (!context.message.text?.body || !context.customer) return;
     
@@ -28,6 +30,7 @@ export class TextMessageStrategy extends MessageStrategy {
     
     // Crear una copia para trabajar que incluya el mensaje actual
     const workingHistory = [...relevantChatHistory];
+    
     workingHistory.push({ role: "user", content: text });
     
     try {
@@ -39,7 +42,9 @@ export class TextMessageStrategy extends MessageStrategy {
         })
       );
       
+      logger.debug('Calling AgentService.processMessage with messages:', messages);
       const response = await AgentService.processMessage(messages);
+      logger.debug('AgentService response:', JSON.stringify(response, null, 2));
       
       // Convertir respuesta al formato esperado
       const aiResponses = await this.processGeminiResponse(response, context);
@@ -97,42 +102,89 @@ export class TextMessageStrategy extends MessageStrategy {
   }
   
   private async handlePreprocessedContent(context: MessageContext, preprocessedContent: any): Promise<void> {
-    // Handle warnings
-    if (preprocessedContent.warnings && preprocessedContent.warnings.length > 0) {
-      const warningMessage = "📝 Observaciones:\n" + preprocessedContent.warnings.join("\n");
-      await sendWhatsAppMessage(context.message.from, warningMessage);
+    try {
+      // Handle warnings
+      if (preprocessedContent.warnings && preprocessedContent.warnings.length > 0) {
+        const warningMessage = "📝 Observaciones:\n" + preprocessedContent.warnings.join("\n");
+        await sendWhatsAppMessage(context.message.from, warningMessage);
+        
+        // Agregar las observaciones al contexto para que se guarden en el historial relevante
+        context.addResponse({
+          text: warningMessage,
+          sendToWhatsApp: false, // Ya se envió con sendWhatsAppMessage
+          isRelevant: true // Marcar como relevante para que se guarde en el historial
+        });
+      }
+      
+      // Prepare order data
+      const orderData: ProcessedOrderData = {
+        orderItems: preprocessedContent.orderItems,
+        orderType: preprocessedContent.orderType,
+        scheduledAt: preprocessedContent.scheduledAt,
+      };
+      
+      // Use the new PreOrderWorkflowService
+      const workflowResult = await PreOrderWorkflowService.createAndNotify({
+        orderData,
+        customerId: context.customer!.id,
+        whatsappNumber: context.message.from,
+      });
+      
+      // Store the action token in context for potential tracking
+      context.set('lastPreOrderToken', workflowResult.actionToken);
+      
+      // Mark that interactive response was already sent by the workflow
+      context.set('interactiveResponseSent', true);
+    } catch (error: any) {
+      logger.error('Error creating preorder:', error);
+      
+      // Para errores conocidos de negocio, usar el mensaje directo
+      if (error instanceof BusinessLogicError || error instanceof ValidationError) {
+        context.addResponse({
+          text: error.message,
+          isRelevant: true,
+          sendToWhatsApp: true
+        });
+        return;
+      }
+      
+      // Para otros errores, usar mensaje genérico
+      const genericMessage = error instanceof TechnicalError 
+        ? 'Lo siento, hubo un problema técnico. Por favor intenta de nuevo más tarde.'
+        : 'Lo siento, hubo un error al procesar tu pedido. Por favor intenta de nuevo.';
+      
+      context.addResponse({
+        text: genericMessage,
+        isRelevant: true,
+        sendToWhatsApp: true
+      });
     }
-    
-    // Prepare order data
-    const orderData: ProcessedOrderData = {
-      orderItems: preprocessedContent.orderItems,
-      orderType: preprocessedContent.orderType,
-      scheduledAt: preprocessedContent.scheduledAt,
-    };
-    
-    // Use the new PreOrderWorkflowService
-    const workflowResult = await PreOrderWorkflowService.createAndNotify({
-      orderData,
-      customerId: context.customer!.id,
-      whatsappNumber: context.message.from,
-    });
-    
-    // Store the action token in context for potential tracking
-    context.set('lastPreOrderToken', workflowResult.actionToken);
-    
-    // Mark that interactive response was already sent by the workflow
-    context.set('interactiveResponseSent', true);
   }
   
   private async processGeminiResponse(response: any, context?: MessageContext): Promise<any[]> {
     logger.debug('=== processGeminiResponse DEBUG ===');
+    logger.debug('Raw response:', JSON.stringify(response, null, 2));
     const responses: any[] = [];
     
     // Verificar estructura de respuesta válida
     if (!response?.candidates?.[0]?.content?.parts) {
       logger.error('Estructura de respuesta inválida de Gemini API');
+      logger.error('Response structure:', {
+        hasResponse: !!response,
+        hasCandidates: !!response?.candidates,
+        candidatesLength: response?.candidates?.length,
+        firstCandidate: response?.candidates?.[0],
+        hasContent: !!response?.candidates?.[0]?.content,
+        hasParts: !!response?.candidates?.[0]?.content?.parts
+      });
+      
+      // Intentar usar mensaje de error más específico
+      const errorMessage = response?.error?.message || 
+                          response?.candidates?.[0]?.finishReason || 
+                          "Lo siento, hubo un problema al procesar tu solicitud. Por favor intenta de nuevo.";
+      
       return [{
-        text: "Error: Respuesta inválida del modelo",
+        text: errorMessage,
         isRelevant: true
       }];
     }
@@ -251,7 +303,7 @@ export class TextMessageStrategy extends MessageStrategy {
         } catch (error) {
           logger.error('Error obteniendo menú:', error);
           result = {
-            text: "Lo siento, no pude obtener el menú en este momento.",
+            text: '😔 Lo siento, no pude obtener el menú en este momento. Por favor, intenta de nuevo en unos momentos.',
             isRelevant: true
           };
         }
@@ -275,7 +327,7 @@ export class TextMessageStrategy extends MessageStrategy {
         } catch (error) {
           logger.error('Error obteniendo información del restaurante:', error);
           result = {
-            text: "Lo siento, no pude obtener la información del restaurante en este momento.",
+            text: '😔 Lo siento, no pude obtener la información del restaurante. Por favor, intenta más tarde.',
             isRelevant: true
           };
         }
@@ -288,11 +340,12 @@ export class TextMessageStrategy extends MessageStrategy {
           const { MenuSearchService } = await import('../../ai/MenuSearchService');
           const relevantMenu = await MenuSearchService.getRelevantMenu(args.itemsSummary);
           
-          // Si no se encontraron productos relevantes, informar al usuario
+          // Si no se encontraron productos relevantes
           if (relevantMenu === "[]" || JSON.parse(relevantMenu).length === 0) {
             logger.warn('No relevant products found for order context');
+            
             result = {
-              text: `Lo siento, no encontré productos que coincidan exactamente con "${args.itemsSummary}". ¿Podrías ser más específico?\n\nPor ejemplo:\n- "Pizza hawaiana grande"\n- "Hamburguesa con queso"\n- "Alitas BBQ"\n\nO puedes ver nuestro menú completo escribiendo "menú".`,
+              text: `😔 No pude encontrar productos que coincidan con "${args.itemsSummary}". Por favor, intenta con otro nombre o revisa nuestro menú.`,
               isRelevant: true
             };
             break;
@@ -306,10 +359,13 @@ export class TextMessageStrategy extends MessageStrategy {
           };
           
           // Procesar con el agente de órdenes
+          logger.debug('Calling processOrderMapping with context:', orderContext);
           const orderResponse = await AgentService.processOrderMapping(orderContext);
+          logger.debug('Order agent response:', JSON.stringify(orderResponse, null, 2));
           
           // Procesar la respuesta del agente de órdenes
           const orderResults = await this.processGeminiResponse(orderResponse, context);
+          logger.debug('Processed order results:', orderResults);
           
           // El agente de órdenes siempre debe ejecutar map_order_items
           // Así que devolvemos todos los resultados
@@ -318,7 +374,7 @@ export class TextMessageStrategy extends MessageStrategy {
         } catch (error) {
           logger.error('Error preparando contexto de orden:', error);
           result = {
-            text: "Lo siento, hubo un error al procesar tu pedido. Por favor intenta de nuevo.",
+            text: '😔 Hubo un problema al procesar tu orden. Por favor, intenta nuevamente.',
             isRelevant: true
           };
         }
@@ -361,7 +417,7 @@ export class TextMessageStrategy extends MessageStrategy {
         } catch (error) {
           logger.error('Error generando enlace de dirección:', error);
           result = {
-            text: "Lo siento, hubo un error al generar el enlace. Por favor intenta de nuevo.",
+            text: '😔 No pude generar el enlace de actualización. Por favor, intenta más tarde.',
             isRelevant: true
           };
         }
@@ -388,7 +444,7 @@ export class TextMessageStrategy extends MessageStrategy {
         } catch (error) {
           logger.error('Error enviando instrucciones del bot:', error);
           result = {
-            text: "Lo siento, hubo un error al obtener las instrucciones. Por favor intenta de nuevo.",
+            text: '😔 No pude obtener las instrucciones en este momento. Por favor, intenta más tarde.',
             isRelevant: true
           };
         }
@@ -420,7 +476,7 @@ export class TextMessageStrategy extends MessageStrategy {
         } catch (error) {
           logger.error('Error obteniendo tiempos de espera:', error);
           result = {
-            text: "Lo siento, no pude obtener los tiempos de espera en este momento.",
+            text: '😔 No pude obtener los tiempos de espera. Por favor, intenta más tarde.',
             isRelevant: true
           };
         }
@@ -458,6 +514,9 @@ export class TextMessageStrategy extends MessageStrategy {
           // Marcar para que este intercambio completo NO se guarde
           context?.set('skipHistoryUpdate', true);
           
+          // Marcar que se está reseteando la conversación para evitar mensaje de bienvenida
+          context?.set('isResettingConversation', true);
+          
           result = {
             text: CONVERSATION_RESET_MESSAGE,
             isRelevant: false
@@ -466,7 +525,7 @@ export class TextMessageStrategy extends MessageStrategy {
         } catch (error) {
           logger.error('Error reiniciando conversación:', error);
           result = {
-            text: "Lo siento, hubo un error al reiniciar la conversación. Por favor intenta de nuevo.",
+            text: '😔 Hubo un problema al reiniciar la conversación. Por favor, intenta más tarde.',
             isRelevant: true
           };
         }

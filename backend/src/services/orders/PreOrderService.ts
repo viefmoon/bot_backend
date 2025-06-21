@@ -5,6 +5,7 @@ import { ProductCalculationService } from "./services/ProductCalculationService"
 import { DeliveryInfoService } from "./services/DeliveryInfoService";
 import { RestaurantService } from "../restaurant/RestaurantService";
 import { OrderType } from "@prisma/client";
+import { ValidationError, ErrorCode } from "../../common/services/errors";
 
 export class PreOrderService {
   /**
@@ -27,6 +28,20 @@ export class PreOrderService {
     });
 
     try {
+      // Validar que haya al menos un producto
+      if (!orderItems || orderItems.length === 0) {
+        throw new ValidationError(
+          ErrorCode.MISSING_REQUIRED_FIELD,
+          'No se puede crear una orden sin productos',
+          {
+            metadata: {
+              validationFailure: 'EMPTY_ORDER',
+              message: 'Debes agregar al menos un producto a tu pedido'
+            }
+          }
+        );
+      }
+      
       // Get restaurant config
       const config = await RestaurantService.getConfig();
 

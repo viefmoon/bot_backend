@@ -43,6 +43,34 @@ export class ProductCalculationService {
       if (!product) {
         throw new ValidationError(ErrorCode.INVALID_PRODUCT, `Product not found: ${item.productId}`, { metadata: { productId: item.productId } });
       }
+      
+      // Validate that products with variants must have a variant selected
+      if (product.hasVariants && !item.productVariantId) {
+        // Get available variants for this product
+        const variants = await prisma.productVariant.findMany({
+          where: { 
+            productId: product.id,
+            isActive: true 
+          },
+          select: {
+            id: true,
+            name: true
+          }
+        });
+        throw new ValidationError(
+          ErrorCode.INVALID_PRODUCT, 
+          `El producto "${product.name}" requiere seleccionar una variante`, 
+          { 
+            metadata: { 
+              productId: item.productId,
+              productName: product.name,
+              validationFailure: 'MISSING_REQUIRED_VARIANT',
+              availableVariants: variants,
+              requiresVariant: true
+            } 
+          }
+        );
+      }
     }
 
     if (item.productVariantId) {
@@ -243,4 +271,5 @@ export class ProductCalculationService {
       extraCost
     };
   }
+  
 }

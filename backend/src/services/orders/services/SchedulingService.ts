@@ -81,8 +81,7 @@ export class SchedulingService {
     if (!businessHours || businessHours.isClosed || !businessHours.openingTime || !businessHours.closingTime) {
       throw new ValidationError(
         ErrorCode.RESTAURANT_CLOSED,
-        'Restaurant is closed on this day',
-        { metadata: { dayOfWeek } }
+        '😔 El restaurante está cerrado en el horario solicitado. Por favor, elige otro horario cuando estemos abiertos.'
       );
     }
 
