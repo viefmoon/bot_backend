@@ -63,7 +63,6 @@ export class AgentService {
     orderContext: OrderContext
   ): Promise<any> {
     try {
-      const startTime = Date.now();
       
       // Crear mensaje para el agente de órdenes
       const messages: Content[] = [{
@@ -98,7 +97,6 @@ export class AgentService {
       logger.debug('=== END ORDER AGENT INPUT ===');
       
       logger.info('Calling Gemini API for order processing...');
-      const geminiStartTime = Date.now();
       
       const response = await GeminiService.generateContentWithHistory(
         messages,
@@ -107,14 +105,6 @@ export class AgentService {
         toolConfig
       );
       
-      const geminiTime = Date.now() - geminiStartTime;
-      const totalTime = Date.now() - startTime;
-      
-      logger.info(`Order agent timing breakdown:`, {
-        geminiApiTime: `${geminiTime}ms`,
-        totalProcessingTime: `${totalTime}ms`,
-        overheadTime: `${totalTime - geminiTime}ms`
-      });
       return response;
     } catch (error) {
       logger.error('OrderAgent: Error procesando orden', error);
