@@ -1,12 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { addressApi } from '../api/addressApi';
 import type { 
-  VerifyOtpParams, 
-  CreateAddressParams, 
-  UpdateAddressParams,
-  DeleteAddressParams,
-  SetDefaultAddressParams,
-  UpdateCustomerNameParams 
+  VerifyOtpParams
 } from '../api/addressApi';
 
 // Query keys

@@ -1,13 +1,30 @@
 import { create } from 'zustand';
 import { devtools, persist } from 'zustand/middleware';
 
+interface Address {
+  id: string;
+  name: string;
+  street: string;
+  number: string;
+  interiorNumber?: string;
+  neighborhood?: string;
+  city: string;
+  state: string;
+  country: string;
+  zipCode?: string;
+  deliveryInstructions?: string;
+  latitude: number;
+  longitude: number;
+  isDefault: boolean;
+}
+
 interface CustomerData {
   id: string;
   customerId: string;
   firstName?: string;
   lastName?: string;
   hasAddresses: boolean;
-  addresses: any[];
+  addresses: Address[];
 }
 
 interface FormData {
@@ -52,7 +69,7 @@ interface AddressRegistrationState {
   setSession: (customerId: string, otp: string, preOrderId?: string) => void;
   setCustomer: (customer: CustomerData) => void;
   setFormData: (data: Partial<FormData>) => void;
-  updateFormField: (field: keyof FormData, value: any) => void;
+  updateFormField: <K extends keyof FormData>(field: K, value: FormData[K]) => void;
   setLoading: (isLoading: boolean) => void;
   setValidating: (isValidating: boolean) => void;
   setSaving: (isSaving: boolean) => void;

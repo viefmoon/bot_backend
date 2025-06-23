@@ -96,27 +96,7 @@ export function AddressRegistration() {
   const updateCustomerNameMutation = useUpdateCustomerName();
   const setDefaultAddressMutation = useSetDefaultAddress();
 
-  // Handle OTP verification response
-  useEffect(() => {
-    if (otpData) {
-      if (otpData.valid && otpData.customer) {
-        setCustomer(otpData.customer);
-        setValidating(false);
-        
-        // If customer has addresses, load the default one
-        if (otpData.customer.addresses.length > 0) {
-          const defaultAddress = otpData.customer.addresses.find((addr: Address) => addr.isDefault) 
-            || otpData.customer.addresses[0];
-          loadExistingAddress(defaultAddress);
-        }
-      } else {
-        setError('El enlace ha expirado o no es válido.');
-        toast.error('El enlace ha expirado o no es válido.');
-      }
-    }
-  }, [otpData, setCustomer, setValidating, setError]);
-
-  const loadExistingAddress = (address: Address) => {
+  const loadExistingAddress = React.useCallback((address: Address) => {
     setEditingAddressId(address.id);
     
     const formattedData: AddressFormData = {
@@ -135,7 +115,27 @@ export function AddressRegistration() {
     };
 
     setFormData(formattedData);
-  };
+  }, [setFormData, setEditingAddressId]);
+
+  // Handle OTP verification response
+  useEffect(() => {
+    if (otpData) {
+      if (otpData.valid && otpData.customer) {
+        setCustomer(otpData.customer);
+        setValidating(false);
+        
+        // If customer has addresses, load the default one
+        if (otpData.customer.addresses.length > 0) {
+          const defaultAddress = otpData.customer.addresses.find((addr: Address) => addr.isDefault) 
+            || otpData.customer.addresses[0];
+          loadExistingAddress(defaultAddress);
+        }
+      } else {
+        setError('El enlace ha expirado o no es válido.');
+        toast.error('El enlace ha expirado o no es válido.');
+      }
+    }
+  }, [otpData, setCustomer, setValidating, setError, loadExistingAddress]);
 
   const handleLocationSelect = (location: Location) => {
     updateFormField('latitude', location.lat);
@@ -290,9 +290,9 @@ export function AddressRegistration() {
         setViewMode('list');
         setEditingAddressId(null);
       }, 1500); // Esperar un poco para que el usuario vea el mensaje de éxito
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error al guardar la dirección:', error);
-      const errorMessage = error.response?.data?.error || 'Hubo un error al guardar la dirección';
+      const errorMessage = error instanceof Error ? error.message : 'Hubo un error al guardar la dirección';
       toast.error(
         <div className="flex items-center">
           <div className="flex-shrink-0">
@@ -364,19 +364,13 @@ export function AddressRegistration() {
           loadExistingAddress(defaultAddress);
         }
       }
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error updating customer name:', error);
-      console.error('Error response:', error.response?.data);
       
       let errorMessage = 'Error al actualizar tu información';
       
-      if (error.response?.data?.error) {
-        // Si el error es un objeto con propiedades, extraer el mensaje
-        if (typeof error.response.data.error === 'object' && error.response.data.error.message) {
-          errorMessage = error.response.data.error.message;
-        } else if (typeof error.response.data.error === 'string') {
-          errorMessage = error.response.data.error;
-        }
+      if (error instanceof Error) {
+        errorMessage = error.message;
       }
       
       toast.error(errorMessage);
@@ -642,7 +636,7 @@ export function AddressRegistration() {
                                       }));
                                       setCustomer({ ...customer, addresses: updatedAddresses });
                                     }
-                                  } catch (error) {
+                                  } catch {
                                     toast.error(
                                       <div className="flex items-center">
                                         <div className="flex-shrink-0">

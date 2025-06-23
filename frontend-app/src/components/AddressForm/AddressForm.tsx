@@ -9,16 +9,18 @@ const schema = yup.object({
   name: yup.string().trim().required('El nombre de la dirección es obligatorio'),
   street: yup.string().trim().required('La calle es obligatoria'),
   number: yup.string().trim().required('El número es obligatorio'),
-  interiorNumber: yup.string().nullable(),
-  deliveryInstructions: yup.string().nullable(),
-  neighborhood: yup.string().nullable(),
-  zipCode: yup.string().nullable(),
-  city: yup.string().nullable(),
-  state: yup.string().nullable(),
-  country: yup.string().nullable(),
+  interiorNumber: yup.string().transform((value) => value || undefined).optional(),
+  deliveryInstructions: yup.string().transform((value) => value || undefined).optional(),
+  neighborhood: yup.string().transform((value) => value || undefined).optional(),
+  zipCode: yup.string().transform((value) => value || undefined).optional(),
+  city: yup.string().transform((value) => value || undefined).optional(),
+  state: yup.string().transform((value) => value || undefined).optional(),
+  country: yup.string().transform((value) => value || undefined).optional(),
   latitude: yup.number().required('La ubicación es obligatoria'),
   longitude: yup.number().required('La ubicación es obligatoria'),
 });
+
+type FormData = yup.InferType<typeof schema>;
 
 interface AddressFormProps {
   formData: AddressFormData;
@@ -30,18 +32,16 @@ interface AddressFormProps {
 export const AddressForm: React.FC<AddressFormProps> = ({ 
   formData, 
   onSubmit,
-  errors: externalErrors = {},
-  isUpdating = false
+  errors: externalErrors = {}
 }) => {
   const {
     register,
     handleSubmit,
     formState: { errors },
-    setValue,
-    watch,
-  } = useForm<AddressFormData>({
+    setValue
+  } = useForm<FormData>({
     resolver: yupResolver(schema),
-    defaultValues: formData,
+    defaultValues: formData as FormData,
   });
 
   React.useEffect(() => {
@@ -63,8 +63,12 @@ export const AddressForm: React.FC<AddressFormProps> = ({
     references: 'Referencias',
   };
 
+  const handleFormSubmit = (data: FormData) => {
+    return onSubmit(data as AddressFormData);
+  };
+
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+    <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-6">
       {/* Nombre de la dirección */}
       <div className="space-y-4">
         <h3 className="text-sm font-semibold text-gray-700 flex items-center">

@@ -1,7 +1,6 @@
 import api from './api';
 import { endpoints } from '@/config';
 import type { 
-  Customer, 
   Address, 
   AddressFormData, 
   OTPVerificationResponse, 
@@ -81,7 +80,7 @@ class CustomerService {
     return response.data.address;
   }
 
-  async getDeliveryArea(): Promise<{ polygonCoords: any[], center?: { lat: number, lng: number } }> {
+  async getDeliveryArea(): Promise<{ polygonCoords: google.maps.LatLngLiteral[], center?: { lat: number, lng: number } }> {
     try {
       const response = await api.get(endpoints.addressRegistration.getDeliveryArea);
       return response.data;

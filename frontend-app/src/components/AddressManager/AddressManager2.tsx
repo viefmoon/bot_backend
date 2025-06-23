@@ -47,9 +47,9 @@ export function AddressManager2({
       await customerService.deleteAddress(addressId, whatsappPhoneNumber, otp);
       toast.success('Dirección eliminada exitosamente');
       onAddressesChange();
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error deleting address:', error);
-      toast.error(error.response?.data?.error || 'Error al eliminar la dirección');
+      toast.error(error instanceof Error ? error.message : 'Error al eliminar la dirección');
     } finally {
       setIsDeleting(null);
     }
@@ -64,9 +64,9 @@ export function AddressManager2({
       await customerService.setDefaultAddress(addressId, whatsappPhoneNumber, otp);
       toast.success('Dirección principal actualizada');
       onAddressesChange();
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error setting default address:', error);
-      toast.error(error.response?.data?.error || 'Error al establecer dirección principal');
+      toast.error(error instanceof Error ? error.message : 'Error al establecer dirección principal');
     } finally {
       setIsSettingDefault(null);
     }

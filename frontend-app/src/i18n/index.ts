@@ -13,10 +13,14 @@ class I18n {
    */
   t(path: string, params?: Record<string, string>): string {
     const keys = path.split('.');
-    let value: any = translations[this.locale];
+    let value: unknown = translations[this.locale];
 
     for (const key of keys) {
-      value = value?.[key];
+      if (typeof value === 'object' && value !== null) {
+        value = (value as Record<string, unknown>)[key];
+      } else {
+        value = undefined;
+      }
       if (!value) {
         console.warn(`Translation not found for key: ${path}`);
         return path;

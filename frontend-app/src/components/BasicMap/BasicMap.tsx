@@ -30,7 +30,7 @@ export const BasicMap: React.FC<BasicMapProps> = ({
   const markerRef = useRef<google.maps.Marker | null>(null);
   const [isMapLoaded, setIsMapLoaded] = useState(false);
   const [mapError, setMapError] = useState<string | null>(null);
-  const [isDragging, setIsDragging] = useState(false);
+  const [isDragging] = useState(false);
 
   // Update polygon coords ref when prop changes
   useEffect(() => {
@@ -151,7 +151,7 @@ export const BasicMap: React.FC<BasicMapProps> = ({
 
           // Draw polygon if provided
           if (polygonCoords.length > 0) {
-            const polygon = new google.maps.Polygon({
+            new google.maps.Polygon({
               paths: polygonCoords,
               strokeColor: '#10B981',
               strokeOpacity: 0.9,

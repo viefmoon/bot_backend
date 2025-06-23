@@ -26,7 +26,7 @@ export const Input = forwardRef<HTMLInputElement | HTMLTextAreaElement, InputPro
           <p className="text-xs text-gray-500 mb-2">{hint}</p>
         )}
         <Component
-          ref={ref as any}
+          ref={ref as React.Ref<HTMLInputElement> & React.Ref<HTMLTextAreaElement>}
           className={clsx(
             'w-full px-4 py-3 text-sm border rounded-lg transition duration-200',
             'focus:outline-none focus:ring-2 focus:ring-offset-0',

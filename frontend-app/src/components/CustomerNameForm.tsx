@@ -39,7 +39,7 @@ export function CustomerNameForm({ onSubmit, isSubmitting = false }: CustomerNam
     
     try {
       await onSubmit(firstName.trim(), lastName.trim());
-    } catch (error) {
+    } catch {
       toast.error('Error al guardar tu nombre');
     }
   };
