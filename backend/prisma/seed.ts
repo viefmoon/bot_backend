@@ -68,7 +68,7 @@ async function main() {
   // Create business hours for each day of the week
   const businessHours = [
     { dayOfWeek: 0, openingTime: "14:00", closingTime: "21:00", isClosed: false }, // Domingo
-    { dayOfWeek: 1, openingTime: null, closingTime: null, isClosed: true },       // Lunes (cerrado)
+    { dayOfWeek: 1, openingTime: "4:00", closingTime: "23:00", isClosed: false }, // Lunes
     { dayOfWeek: 2, openingTime: "14:00", closingTime: "22:00", isClosed: false }, // Martes
     { dayOfWeek: 3, openingTime: "4:00", closingTime: "23:00", isClosed: false }, // Miércoles
     { dayOfWeek: 4, openingTime: "4:00", closingTime: "22:00", isClosed: false }, // Jueves

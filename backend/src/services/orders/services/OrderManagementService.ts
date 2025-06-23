@@ -45,9 +45,10 @@ export class OrderManagementService {
 
     // Build delivery info if exists
     let deliveryInfo = undefined;
-    if (preOrder.deliveryInfo && preOrder.deliveryInfo.length > 0) {
-      const info = preOrder.deliveryInfo[0];
+    if (preOrder.deliveryInfo?.id) {
+      const info = preOrder.deliveryInfo;
       deliveryInfo = {
+        fullAddress: info.fullAddress || undefined,
         street: info.street || undefined,
         number: info.number || undefined,
         interiorNumber: info.interiorNumber || undefined,
@@ -58,8 +59,9 @@ export class OrderManagementService {
         country: info.country || undefined,
         latitude: info.latitude ? info.latitude.toNumber() : undefined,
         longitude: info.longitude ? info.longitude.toNumber() : undefined,
-        pickupName: info.pickupName || undefined,
-        references: info.references || undefined,
+        recipientName: info.recipientName || undefined,
+        recipientPhone: info.recipientPhone || undefined,
+        deliveryInstructions: info.deliveryInstructions || undefined,
       };
     }
 
@@ -81,7 +83,7 @@ export class OrderManagementService {
       whatsappPhoneNumber: customer.whatsappPhoneNumber,
       orderType: preOrder.orderType,
       scheduledAt: preOrder.scheduledAt ? preOrder.scheduledAt.toISOString() : undefined,
-      ...(deliveryInfo ? { orderDeliveryInfo: deliveryInfo } : {}),
+      ...(deliveryInfo ? { deliveryInfo: deliveryInfo } : {}),
     };
 
     // Create the order

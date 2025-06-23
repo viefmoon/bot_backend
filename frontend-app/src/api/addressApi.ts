@@ -11,6 +11,7 @@ export interface CreateAddressParams {
   whatsappPhoneNumber: string;
   otp: string;
   address: {
+    name: string;
     street: string;
     number: string;
     interiorNumber?: string;
@@ -19,7 +20,7 @@ export interface CreateAddressParams {
     state: string;
     country: string;
     zipCode?: string;
-    references?: string;
+    deliveryInstructions?: string;
     latitude: number;
     longitude: number;
   };
@@ -39,6 +40,13 @@ export interface SetDefaultAddressParams {
   addressId: string;
   whatsappPhoneNumber: string;
   otp: string;
+}
+
+export interface UpdateCustomerNameParams {
+  whatsappPhoneNumber: string;
+  otp: string;
+  firstName: string;
+  lastName: string;
 }
 
 // API client instance
@@ -89,6 +97,12 @@ export const addressApi = {
       customerId,
       preOrderId,
     });
+    return data;
+  },
+
+  // Update customer name
+  updateCustomerName: async (params: UpdateCustomerNameParams) => {
+    const { data } = await apiClient.put('/backend/address-registration/update-customer-name', params);
     return data;
   },
 };

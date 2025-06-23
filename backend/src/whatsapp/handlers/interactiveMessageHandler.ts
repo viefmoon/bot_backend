@@ -369,8 +369,8 @@ async function handleAddressSelection(from: string, selectionId: string, message
     if (selectedAddress.city && selectedAddress.state) {
       addressParts.push(`${selectedAddress.city}, ${selectedAddress.state}`);
     }
-    if (selectedAddress.references) {
-      addressParts.push(`Referencias: ${selectedAddress.references}`);
+    if (selectedAddress.deliveryInstructions) {
+      addressParts.push(`Referencias: ${selectedAddress.deliveryInstructions}`);
     }
     
     const formattedAddress = addressParts.join('\n');

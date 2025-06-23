@@ -2,6 +2,10 @@ import { IsOptional, IsString, IsNumber, IsBoolean } from 'class-validator';
 
 export class UpdateAddressDto {
   @IsOptional()
+  @IsString({ message: 'name must be a string' })
+  name?: string;
+
+  @IsOptional()
   @IsString({ message: 'street must be a string' })
   street?: string;
 
@@ -42,8 +46,8 @@ export class UpdateAddressDto {
   longitude?: number;
 
   @IsOptional()
-  @IsString({ message: 'references must be a string' })
-  references?: string;
+  @IsString({ message: 'deliveryInstructions must be a string' })
+  deliveryInstructions?: string;
 
   @IsOptional()
   @IsBoolean({ message: 'isDefault must be a boolean' })

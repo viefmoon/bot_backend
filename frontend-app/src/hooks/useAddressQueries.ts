@@ -5,21 +5,22 @@ import type {
   CreateAddressParams, 
   UpdateAddressParams,
   DeleteAddressParams,
-  SetDefaultAddressParams 
+  SetDefaultAddressParams,
+  UpdateCustomerNameParams 
 } from '../api/addressApi';
 
 // Query keys
 export const addressQueryKeys = {
   all: ['addresses'] as const,
-  verifyOtp: (customerId: string, otp: string) => 
-    ['addresses', 'verify-otp', customerId, otp] as const,
+  verifyOtp: (whatsappPhoneNumber: string, otp: string) => 
+    ['addresses', 'verify-otp', whatsappPhoneNumber, otp] as const,
   deliveryArea: ['addresses', 'delivery-area'] as const,
 };
 
 // Queries
 export const useVerifyOtp = (params: VerifyOtpParams | null) => {
   return useQuery({
-    queryKey: params ? addressQueryKeys.verifyOtp(params.customerId, params.otp) : [],
+    queryKey: params ? addressQueryKeys.verifyOtp(params.whatsappPhoneNumber, params.otp) : [],
     queryFn: () => params ? addressApi.verifyOtp(params) : Promise.reject('No params'),
     enabled: !!params,
     staleTime: 5 * 60 * 1000, // 5 minutes
@@ -45,7 +46,7 @@ export const useCreateAddress = () => {
     onSuccess: (data, variables) => {
       // Invalidate the OTP verification query to refresh customer data
       queryClient.invalidateQueries({
-        queryKey: addressQueryKeys.verifyOtp(variables.customerId, variables.otp),
+        queryKey: addressQueryKeys.verifyOtp(variables.whatsappPhoneNumber, variables.otp),
       });
     },
   });
@@ -59,7 +60,7 @@ export const useUpdateAddress = () => {
     onSuccess: (data, variables) => {
       // Invalidate the OTP verification query to refresh customer data
       queryClient.invalidateQueries({
-        queryKey: addressQueryKeys.verifyOtp(variables.customerId, variables.otp),
+        queryKey: addressQueryKeys.verifyOtp(variables.whatsappPhoneNumber, variables.otp),
       });
     },
   });
@@ -73,7 +74,7 @@ export const useDeleteAddress = () => {
     onSuccess: (data, variables) => {
       // Invalidate the OTP verification query to refresh customer data
       queryClient.invalidateQueries({
-        queryKey: addressQueryKeys.verifyOtp(variables.customerId, variables.otp),
+        queryKey: addressQueryKeys.verifyOtp(variables.whatsappPhoneNumber, variables.otp),
       });
     },
   });
@@ -87,7 +88,7 @@ export const useSetDefaultAddress = () => {
     onSuccess: (data, variables) => {
       // Invalidate the OTP verification query to refresh customer data
       queryClient.invalidateQueries({
-        queryKey: addressQueryKeys.verifyOtp(variables.customerId, variables.otp),
+        queryKey: addressQueryKeys.verifyOtp(variables.whatsappPhoneNumber, variables.otp),
       });
     },
   });
@@ -97,5 +98,19 @@ export const useSendPreOrderMessage = () => {
   return useMutation({
     mutationFn: ({ customerId, preOrderId }: { customerId: string; preOrderId: string }) =>
       addressApi.sendPreOrderMessage(customerId, preOrderId),
+  });
+};
+
+export const useUpdateCustomerName = () => {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: addressApi.updateCustomerName,
+    onSuccess: (data, variables) => {
+      // Invalidate the OTP verification query to refresh customer data
+      queryClient.invalidateQueries({
+        queryKey: addressQueryKeys.verifyOtp(variables.whatsappPhoneNumber, variables.otp),
+      });
+    },
   });
 };

@@ -11,6 +11,7 @@ interface CustomerData {
 }
 
 interface FormData {
+  name: string;
   street: string;
   number: string;
   interiorNumber: string;
@@ -19,7 +20,7 @@ interface FormData {
   state: string;
   country: string;
   zipCode: string;
-  references: string;
+  deliveryInstructions: string;
   latitude: number;
   longitude: number;
 }
@@ -64,6 +65,7 @@ interface AddressRegistrationState {
 }
 
 const initialFormData: FormData = {
+  name: '',
   street: '',
   number: '',
   interiorNumber: '',
@@ -72,7 +74,7 @@ const initialFormData: FormData = {
   state: '',
   country: 'México',
   zipCode: '',
-  references: '',
+  deliveryInstructions: '',
   latitude: 0,
   longitude: 0,
 };

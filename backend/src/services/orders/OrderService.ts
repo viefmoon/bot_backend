@@ -157,10 +157,10 @@ export class OrderService {
         }
         
         // Create delivery info if provided
-        if (createOrderDto.orderDeliveryInfo) {
-          await tx.orderDeliveryInfo.create({
+        if (createOrderDto.deliveryInfo) {
+          await tx.deliveryInfo.create({
             data: {
-              ...createOrderDto.orderDeliveryInfo,
+              ...createOrderDto.deliveryInfo,
               orderId: newOrder.id,
             }
           });

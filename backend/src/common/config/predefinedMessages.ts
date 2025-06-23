@@ -219,3 +219,13 @@ export const ORDER_CANCELLED_MESSAGE = "Tu orden ha sido eliminada exitosamente.
 export const STRIPE_NOT_AVAILABLE_MESSAGE = "❌ Lo siento, los pagos en línea no están disponibles en este momento. Por favor, realiza el pago en efectivo al recibir tu pedido. 💵";
 
 export const PAYMENT_LINK_EXISTS_MESSAGE = "⚠️ Ya existe un enlace de pago activo para esta orden. Por favor, utiliza el enlace enviado anteriormente o contáctanos si necesitas ayuda. 🔄";
+
+export const DEFAULT_ADDRESS_CHANGED = (address: any): string => {
+  return `✅ *Dirección principal actualizada*\n\n` +
+    `Tu dirección principal ahora es:\n\n` +
+    `📍 *${address.name || 'Dirección'}*\n` +
+    `${address.street} ${address.number}${address.interiorNumber ? ` Int. ${address.interiorNumber}` : ''}\n` +
+    `${address.neighborhood ? `${address.neighborhood}, ` : ''}${address.city}, ${address.state}\n` +
+    `${address.deliveryInstructions ? `\n📝 _${address.deliveryInstructions}_` : ''}\n\n` +
+    `Esta será la dirección que usaremos para tus próximas entregas a domicilio.`;
+};

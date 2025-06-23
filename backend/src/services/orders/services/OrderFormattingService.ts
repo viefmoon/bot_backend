@@ -11,24 +11,41 @@ export class OrderFormattingService {
     let deliveryInfo = "";
 
     // Format delivery information
-    if (orderType === "delivery" && order.deliveryInfo) {
+    if (orderType === "DELIVERY" && order.deliveryInfo) {
       const info = order.deliveryInfo;
-      const parts = [];
-      // Combine street, number, and interior number
-      let fullAddress = info.street || "";
-      if (info.number) {
-        fullAddress += ` ${info.number}`;
+      
+      // Use full address if available (for phone orders)
+      if (info.fullAddress) {
+        deliveryInfo = info.fullAddress;
+      } else {
+        const parts = [];
+        // Combine street, number, and interior number
+        let fullAddress = info.street || "";
+        if (info.number) {
+          fullAddress += ` ${info.number}`;
+        }
+        if (info.interiorNumber) {
+          fullAddress += ` Int. ${info.interiorNumber}`;
+        }
+        if (fullAddress.trim()) parts.push(fullAddress.trim());
+        if (info.neighborhood) parts.push(info.neighborhood);
+        if (info.city) parts.push(info.city);
+        if (info.deliveryInstructions) parts.push(`(${info.deliveryInstructions})`);
+        deliveryInfo = parts.join(", ");
       }
-      if (info.interiorNumber) {
-        fullAddress += ` Int. ${info.interiorNumber}`;
+      
+      // Add recipient info if different from customer
+      if (info.recipientName) {
+        deliveryInfo += ` - Para: ${info.recipientName}`;
       }
-      if (fullAddress.trim()) parts.push(fullAddress.trim());
-      if (info.neighborhood) parts.push(info.neighborhood);
-      if (info.city) parts.push(info.city);
-      if (info.references) parts.push(`(${info.references})`);
-      deliveryInfo = parts.join(", ");
-    } else if (orderType === "pickup" && order.deliveryInfo?.pickupName) {
-      deliveryInfo = order.deliveryInfo.pickupName;
+      if (info.recipientPhone) {
+        deliveryInfo += ` Tel: ${info.recipientPhone}`;
+      }
+    } else if (orderType === "TAKE_AWAY" && order.deliveryInfo?.recipientName) {
+      deliveryInfo = `Recogerá: ${order.deliveryInfo.recipientName}`;
+      if (order.deliveryInfo.recipientPhone) {
+        deliveryInfo += ` - Tel: ${order.deliveryInfo.recipientPhone}`;
+      }
     }
 
     // Calculate total price

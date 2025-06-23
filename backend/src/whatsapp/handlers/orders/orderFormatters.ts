@@ -122,6 +122,13 @@ export function generateOrderSummary(order: any): string {
   }
   
   if (orderType === "delivery" && order.deliveryInfo) {
+    // Show address name if available
+    if (order.deliveryInfo.name) {
+      message += `📍 *Dirección de entrega:* ${order.deliveryInfo.name}\n`;
+    } else {
+      message += `📍 *Dirección de entrega:*\n`;
+    }
+    
     // Combine street, number and interior number
     let fullAddress = order.deliveryInfo.street || "";
     if (order.deliveryInfo.number) {
@@ -130,12 +137,12 @@ export function generateOrderSummary(order: any): string {
     if (order.deliveryInfo.interiorNumber) {
       fullAddress += ` Int. ${order.deliveryInfo.interiorNumber}`;
     }
-    message += `📍 *Dirección de entrega:*\n${fullAddress}\n`;
+    message += `${fullAddress}\n`;
     if (order.deliveryInfo.neighborhood) {
       message += `Colonia: ${order.deliveryInfo.neighborhood}\n`;
     }
-    if (order.deliveryInfo.references) {
-      message += `Referencias: ${order.deliveryInfo.references}\n`;
+    if (order.deliveryInfo.deliveryInstructions) {
+      message += `Referencias: ${order.deliveryInfo.deliveryInstructions}\n`;
     }
     message += "\n";
   }

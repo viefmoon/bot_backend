@@ -1,6 +1,10 @@
 import { IsNotEmpty, IsString, IsNumber, IsOptional, IsBoolean } from 'class-validator';
 
 export class AddressDto {
+  @IsNotEmpty({ message: 'El nombre de la dirección es requerido' })
+  @IsString()
+  name!: string;
+
   @IsNotEmpty({ message: 'La calle es requerida' })
   @IsString()
   street!: string;
@@ -43,7 +47,7 @@ export class AddressDto {
 
   @IsOptional()
   @IsString()
-  references?: string;
+  deliveryInstructions?: string;
 
   @IsOptional()
   @IsBoolean()

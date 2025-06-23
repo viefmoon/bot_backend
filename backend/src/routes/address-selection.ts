@@ -115,9 +115,11 @@ router.post('/send',
         title: "Mis direcciones",
         rows: customer.addresses.map((address) => ({
           id: `select_address_${address.id}`,
-          title: truncateText(`${address.street} ${address.number}`, 24),
+          title: truncateText(address.name || `${address.street} ${address.number}`, 24),
           description: truncateText(
-            `${address.neighborhood ? address.neighborhood + ', ' : ''}${address.city}${address.isDefault ? ' (Principal)' : ''}`,
+            address.name 
+              ? `${address.street} ${address.number}, ${address.neighborhood || address.city}${address.isDefault ? ' (Principal)' : ''}`
+              : `${address.neighborhood ? address.neighborhood + ', ' : ''}${address.city}${address.isDefault ? ' (Principal)' : ''}`,
             72
           )
         }))
@@ -199,6 +201,11 @@ router.post('/update',
 function formatAddress(address: any): string {
   const parts = [];
   
+  // Add name as the first line if available
+  if (address.name) {
+    parts.push(`*${address.name}*`);
+  }
+  
   if (address.street && address.number) {
     let streetLine = `${address.street} ${address.number}`;
     if (address.interiorNumber) {
@@ -212,8 +219,8 @@ function formatAddress(address: any): string {
     parts.push(`${address.city}, ${address.state}`);
   }
   
-  if (address.references) {
-    parts.push(`Referencias: ${address.references}`);
+  if (address.deliveryInstructions) {
+    parts.push(`Referencias: ${address.deliveryInstructions}`);
   }
   
   return parts.join('\n');
@@ -252,6 +259,7 @@ async function updatePreOrderAddress(preOrderId: number, addressId: string): Pro
   }
   
   const deliveryInfoData = {
+    name: address.name,
     street: address.street,
     number: address.number,
     interiorNumber: address.interiorNumber,
@@ -260,22 +268,25 @@ async function updatePreOrderAddress(preOrderId: number, addressId: string): Pro
     state: address.state,
     zipCode: address.zipCode,
     country: address.country,
-    references: address.references,
+    deliveryInstructions: address.deliveryInstructions,
     latitude: address.latitude?.toNumber(),
     longitude: address.longitude?.toNumber(),
     preOrderId: preOrderId
   };
   
-  if (preOrder.deliveryInfo && preOrder.deliveryInfo.length > 0) {
+  if (preOrder.deliveryInfo?.id) {
     // Update existing delivery info
-    await prisma.orderDeliveryInfo.update({
-      where: { id: preOrder.deliveryInfo[0].id },
+    await prisma.deliveryInfo.update({
+      where: { id: preOrder.deliveryInfo.id },
       data: deliveryInfoData
     });
   } else {
-    // Create new delivery info
-    await prisma.orderDeliveryInfo.create({
-      data: deliveryInfoData
+    // Create new delivery info with preOrderId
+    await prisma.deliveryInfo.create({
+      data: {
+        ...deliveryInfoData,
+        preOrderId: preOrderId
+      }
     });
   }
   

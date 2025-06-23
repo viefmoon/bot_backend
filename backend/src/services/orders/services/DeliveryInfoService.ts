@@ -11,7 +11,8 @@ export class DeliveryInfoService {
   static async getOrCreateDeliveryInfo(
     orderType: 'delivery' | 'pickup',
     customerId: string,
-    deliveryInfoInput?: DeliveryInfoInput
+    deliveryInfoInput?: DeliveryInfoInput,
+    customerData?: { firstName?: string | null, lastName?: string | null, whatsappPhoneNumber: string }
   ): Promise<any> {
     // Obtener la dirección predeterminada del cliente o la primera dirección activa
     const customerAddress = await prisma.address.findFirst({
@@ -50,7 +51,10 @@ export class DeliveryInfoService {
         country: deliveryInfoInput?.country || customerAddress.country,
         latitude: deliveryInfoInput?.latitude || customerAddress.latitude?.toNumber(),
         longitude: deliveryInfoInput?.longitude || customerAddress.longitude?.toNumber(),
-        references: deliveryInfoInput?.references || customerAddress.references,
+        deliveryInstructions: deliveryInfoInput?.deliveryInstructions || customerAddress.deliveryInstructions,
+        recipientName: deliveryInfoInput?.recipientName || 
+          (customerData ? `${customerData.firstName || ''} ${customerData.lastName || ''}`.trim() || null : null),
+        recipientPhone: deliveryInfoInput?.recipientPhone || customerData?.whatsappPhoneNumber,
       };
 
       // Validar campos requeridos para entrega
@@ -62,20 +66,22 @@ export class DeliveryInfoService {
         );
       }
     } else if (orderType === "pickup") {
-      // Para órdenes de recogida, quizás solo necesitemos información básica
+      // Para órdenes de recogida, guardar quien recogerá la orden
       deliveryInfoData = {
-        pickupName: customerId, // Usar ID del cliente como referencia de recogida
+        recipientName: deliveryInfoInput?.recipientName || 
+          (customerData ? `${customerData.firstName || ''} ${customerData.lastName || ''}`.trim() || null : null),
+        recipientPhone: deliveryInfoInput?.recipientPhone || customerData?.whatsappPhoneNumber,
       };
     }
 
     // Crear una copia de información de entrega para esta orden específica
     // Esto preserva la dirección en el momento de creación de la orden
-    const orderDeliveryInfo = await prisma.orderDeliveryInfo.create({
+    const deliveryInfo = await prisma.deliveryInfo.create({
       data: deliveryInfoData
     });
 
-    logger.info(`Created order delivery info ${orderDeliveryInfo.id} from customer address`);
-    return orderDeliveryInfo;
+    logger.info(`Created delivery info ${deliveryInfo.id} from customer address`);
+    return deliveryInfo;
   }
 
   /**
@@ -98,24 +104,18 @@ export class DeliveryInfoService {
       );
     }
 
-    if (preOrder.deliveryInfo && preOrder.deliveryInfo.length > 0 && preOrder.deliveryInfo[0].id) {
+    if (preOrder.deliveryInfo?.id) {
       // Actualizar información de entrega existente
-      await prisma.orderDeliveryInfo.update({
-        where: { id: preOrder.deliveryInfo[0].id },
+      await prisma.deliveryInfo.update({
+        where: { id: preOrder.deliveryInfo.id },
         data: deliveryInfo
       });
     } else {
-      // Crear nueva información de entrega y vincularla
-      const newDeliveryInfo = await prisma.orderDeliveryInfo.create({
-        data: deliveryInfo
-      });
-
-      await prisma.preOrder.update({
-        where: { id: preOrderId },
+      // Crear nueva información de entrega con la relación directa
+      await prisma.deliveryInfo.create({
         data: {
-          deliveryInfo: {
-            connect: { id: newDeliveryInfo.id }
-          }
+          ...deliveryInfo,
+          preOrderId: preOrderId
         }
       });
     }
@@ -221,14 +221,28 @@ export class DeliveryInfoService {
 
   /**
    * Copiar dirección del cliente a información de entrega de orden
-   * Este es un método de conveniencia para crear OrderDeliveryInfo desde la Address del cliente
+   * Este es un método de conveniencia para crear DeliveryInfo desde la Address del cliente
    */
   static async copyCustomerAddressToOrder(
     customerId: string,
     orderType: 'delivery' | 'pickup',
     customDeliveryInfo?: DeliveryInfoInput
   ): Promise<any> {
-    return this.getOrCreateDeliveryInfo(orderType, customerId, customDeliveryInfo);
+    // Get customer data for recipient info
+    const customer = await prisma.customer.findUnique({
+      where: { id: customerId },
+      select: { firstName: true, lastName: true, whatsappPhoneNumber: true }
+    });
+    
+    if (!customer) {
+      throw new NotFoundError(
+        ErrorCode.CUSTOMER_NOT_FOUND,
+        'Customer not found',
+        { metadata: { customerId } }
+      );
+    }
+    
+    return this.getOrCreateDeliveryInfo(orderType, customerId, customDeliveryInfo, customer);
   }
 
   /**

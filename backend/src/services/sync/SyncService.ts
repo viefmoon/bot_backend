@@ -28,7 +28,7 @@ export interface LocalAddress {
   state?: string | null;
   zipCode?: string | null;
   country?: string | null;
-  references?: string | null;
+  deliveryInstructions?: string | null;
   latitude?: number | null;
   longitude?: number | null;
   isDefault: boolean;
@@ -135,7 +135,7 @@ export class SyncService {
           state: localAddress.state,
           zipCode: localAddress.zipCode,
           country: localAddress.country,
-          references: localAddress.references,
+          deliveryInstructions: localAddress.deliveryInstructions,
           latitude: localAddress.latitude,
           longitude: localAddress.longitude,
           isDefault: localAddress.isDefault
@@ -212,7 +212,7 @@ export class SyncService {
           state: addr.state,
           zipCode: addr.zipCode,
           country: addr.country,
-          references: addr.references,
+          deliveryInstructions: addr.deliveryInstructions,
           latitude: addr.latitude?.toNumber() || null,
           longitude: addr.longitude?.toNumber() || null,
           isDefault: addr.isDefault

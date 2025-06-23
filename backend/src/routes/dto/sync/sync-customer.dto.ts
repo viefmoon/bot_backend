@@ -40,7 +40,7 @@ class LocalAddressDto {
 
   @IsOptional()
   @IsString()
-  references?: string | null;
+  deliveryInstructions?: string | null;
 
   @IsOptional()
   @IsNumber()

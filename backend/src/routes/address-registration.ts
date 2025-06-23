@@ -13,7 +13,8 @@ import {
   UpdateAddressDto,
   GetAddressesQueryDto,
   DeleteAddressDto,
-  SetDefaultAddressDto
+  SetDefaultAddressDto,
+  UpdateCustomerNameDto
 } from './dto/address-registration';
 
 const router = Router();
@@ -126,6 +127,52 @@ router.post('/create',
     res.json({ 
       success: true,
       address: newAddress
+    });
+  })
+);
+
+/**
+ * Actualizar nombre del cliente
+ * PUT /backend/address-registration/update-customer-name
+ */
+router.put('/update-customer-name',
+  validationMiddleware(UpdateCustomerNameDto),
+  asyncHandler(async (req: Request, res: Response) => {
+    const { whatsappPhoneNumber, otp, firstName, lastName } = req.body as UpdateCustomerNameDto;
+    
+    // Verificar OTP
+    const isValid = await OTPService.verifyOTP(whatsappPhoneNumber, otp);
+    
+    if (!isValid) {
+      throw new ValidationError(
+        ErrorCode.INVALID_OTP,
+        'Invalid or expired OTP'
+      );
+    }
+    
+    // Actualizar nombre del cliente
+    const updatedCustomer = await prisma.customer.update({
+      where: { whatsappPhoneNumber },
+      data: {
+        firstName: firstName.trim(),
+        lastName: lastName.trim()
+      },
+      select: {
+        id: true,
+        whatsappPhoneNumber: true,
+        firstName: true,
+        lastName: true,
+        email: true,
+        addresses: {
+          where: { deletedAt: null },
+          orderBy: { isDefault: 'desc' }
+        }
+      }
+    });
+    
+    res.json({
+      success: true,
+      customer: updatedCustomer
     });
   })
 );
@@ -259,6 +306,19 @@ router.put('/:addressId/default',
       addressId,
       customer.id
     );
+    
+    // Enviar notificación de WhatsApp sobre cambio de dirección principal
+    try {
+      const { sendWhatsAppMessage } = await import('../services/whatsapp');
+      const { DEFAULT_ADDRESS_CHANGED } = await import('../common/config/predefinedMessages');
+      
+      await sendWhatsAppMessage(
+        customer.whatsappPhoneNumber, 
+        DEFAULT_ADDRESS_CHANGED(updatedAddress)
+      );
+    } catch (msgError) {
+      logger.error('Error sending default address notification:', msgError);
+    }
     
     res.json({ 
       success: true,

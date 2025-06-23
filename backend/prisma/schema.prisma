@@ -33,6 +33,19 @@ enum OrderStatus {
 enum PaymentStatus {
   PENDING
   PAID
+  FAILED
+  REFUNDED
+  CANCELLED
+}
+
+enum PaymentMethod {
+  CASH
+  CREDIT_CARD
+  DEBIT_CARD
+  TRANSFER
+  STRIPE
+  PAYPAL
+  OTHER
 }
 
 enum PizzaHalf {
@@ -107,6 +120,7 @@ model Customer {
 model Address {
   id                String   @id @default(uuid()) @db.Uuid // UUID primary key
   customerId        String   @db.Uuid // Foreign key to Customer
+  name              String   @db.VarChar(100) // e.g., "Casa", "Oficina", "Casa de mamá"
   street            String   @db.VarChar(200)
   number            String   @db.VarChar(50)
   interiorNumber    String?  @db.VarChar(50)
@@ -115,7 +129,7 @@ model Address {
   state             String?  @db.VarChar(100)
   zipCode           String?  @db.VarChar(10)
   country           String?  @db.VarChar(100)
-  references        String?  @db.Text
+  deliveryInstructions String?  @db.Text
   latitude          Decimal? @db.Decimal(10, 8)
   longitude         Decimal? @db.Decimal(11, 8)
   isDefault         Boolean  @default(false)
@@ -175,7 +189,7 @@ model ModifierGroup {
 }
 
 model Order {
-  id                   String            @id @default(uuid())
+  id                   String            @id @default(uuid()) @db.Uuid
   dailyNumber          Int
   orderType            OrderType
   orderStatus          OrderStatus       @default(PENDING)
@@ -188,41 +202,58 @@ model Order {
   stripeSessionId      String?
   syncedWithLocal      Boolean           @default(false)
   isFromWhatsApp       Boolean           @default(true)
+  // Additional relations for local backend compatibility
+  dailyCounterId       String?           @db.Uuid
+  userId               String?           @db.Uuid
+  tableId              String?           @db.Uuid
   createdAt            DateTime          @default(now())
   updatedAt            DateTime          @updatedAt
+  // Relations
   orderItems           OrderItem[]
-  deliveryInfo         OrderDeliveryInfo?
+  deliveryInfo         DeliveryInfo?
   customer             Customer          @relation(fields: [customerId], references: [id])
+  payments             Payment[]
+  ticketImpressions    TicketImpression[]
+  adjustments          Adjustment[]
+  dailyCounter         DailyCounter?     @relation(fields: [dailyCounterId], references: [id])
+  table                Table?            @relation(fields: [tableId], references: [id])
+  
+  @@index([dailyCounterId])
+  @@index([tableId])
+  @@index([userId])
 }
 
 // Order's delivery address (snapshot at order time)
 // This is a copy of the customer's address at the time of order creation
 // Preserves historical data even if customer changes their address later
-model OrderDeliveryInfo {
-  id                Int       @id @default(autoincrement())
-  street            String?   @db.VarChar(200)
-  number            String?   @db.VarChar(50)
-  interiorNumber    String?   @db.VarChar(50)
-  neighborhood      String?   @db.VarChar(150)
-  city              String?   @db.VarChar(100)
-  state             String?   @db.VarChar(100)
-  zipCode           String?   @db.VarChar(10)  // Changed from postalCode
-  country           String?   @db.VarChar(100)
-  references        String?   @db.Text // Changed from additionalDetails
-  latitude          Decimal?  @db.Decimal(10, 8) // Changed to Decimal for precision
-  longitude         Decimal?  @db.Decimal(11, 8) // Changed to Decimal for precision
-  pickupName        String?   // For pickup orders
-  preOrderId        Int?
-  orderId           String?   @unique
-  createdAt         DateTime  @default(now())
-  updatedAt         DateTime  @updatedAt
-  order             Order?    @relation(fields: [orderId], references: [id])
-  preOrder          PreOrder? @relation(fields: [preOrderId], references: [id])
+model DeliveryInfo {
+  id                    String    @id @default(uuid()) @db.Uuid
+  orderId               String?   @unique @db.Uuid
+  preOrderId            Int?      @unique
+  name                  String?   @db.VarChar(100) // Address name like "Casa", "Oficina"
+  fullAddress           String?   @db.Text // Full address for phone orders
+  street                String?   @db.VarChar(200)
+  number                String?   @db.VarChar(50)
+  interiorNumber        String?   @db.VarChar(50)
+  neighborhood          String?   @db.VarChar(150)
+  city                  String?   @db.VarChar(100)
+  state                 String?   @db.VarChar(100)
+  zipCode               String?   @db.VarChar(10)
+  country               String?   @db.VarChar(100)
+  recipientName         String?   @db.VarChar(255) // Recipient name
+  recipientPhone        String?   @db.VarChar(50) // Recipient phone
+  deliveryInstructions  String?   @db.Text // Delivery instructions
+  latitude              Decimal?  @db.Decimal(10, 8)
+  longitude             Decimal?  @db.Decimal(11, 8)
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+  order                 Order?    @relation(fields: [orderId], references: [id])
+  preOrder              PreOrder? @relation(fields: [preOrderId], references: [id])
 }
 
 model OrderItem {
-  id                    String                     @id @default(uuid())
-  orderId               String
+  id                    String                     @id @default(uuid()) @db.Uuid
+  orderId               String                     @db.Uuid
   productId             String
   productVariantId      String?
   basePrice             Float
@@ -257,7 +288,7 @@ model PizzaCustomization {
 
 // Configuración específica para pizzas
 model PizzaConfiguration {
-  id                    String   @id @default(uuid())
+  id                    String   @id @default(uuid()) @db.Uuid
   productId             String   @unique
   product               Product  @relation(fields: [productId], references: [id])
   includedToppings      Int      @default(4)      // Valor de toppings incluidos en precio base
@@ -268,12 +299,12 @@ model PreOrder {
   id                    Int                @id @default(autoincrement())
   orderItems            Json
   orderType             OrderType
-  scheduledAt          DateTime?
+  scheduledAt           DateTime?
   whatsappPhoneNumber   String             // Store WhatsApp phone number instead of customerId
   messageId             String?
   createdAt             DateTime           @default(now())
   updatedAt             DateTime           @updatedAt
-  deliveryInfo          OrderDeliveryInfo[]
+  deliveryInfo          DeliveryInfo?
   
   @@index([whatsappPhoneNumber])
 }
@@ -359,8 +390,8 @@ model SeederControl {
 }
 
 model SelectedPizzaCustomization {
-  id                    String               @id @default(uuid())
-  orderItemId           String
+  id                    String               @id @default(uuid()) @db.Uuid
+  orderItemId           String               @db.Uuid
   pizzaCustomizationId  String
   half                  PizzaHalf            @default(FULL)
   action                CustomizationAction  @default(ADD)
@@ -398,4 +429,67 @@ model SyncLog {
   
   @@index([entityType, entityId])
   @@index([syncStatus])
+}
+
+// Payment tracking for orders
+model Payment {
+  id            String         @id @default(uuid()) @db.Uuid
+  orderId       String         @db.Uuid
+  paymentMethod PaymentMethod  @default(CASH)
+  amount        Decimal        @db.Decimal(10, 2)
+  paymentStatus PaymentStatus  @default(PENDING)
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  deletedAt     DateTime?
+  order         Order          @relation(fields: [orderId], references: [id])
+  
+  @@index([orderId])
+  @@index([paymentStatus])
+}
+
+// Placeholder models for local backend compatibility
+// These models are defined but may not be actively used in the WhatsApp bot context
+
+model DailyCounter {
+  id            String         @id @default(uuid()) @db.Uuid
+  date          DateTime       @db.Date
+  counter       Int            @default(0)
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  orders        Order[]
+  
+  @@unique([date])
+}
+
+model Table {
+  id            String         @id @default(uuid()) @db.Uuid
+  tableNumber   String         @unique
+  capacity      Int            @default(4)
+  isActive      Boolean        @default(true)
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  orders        Order[]
+}
+
+model TicketImpression {
+  id            String         @id @default(uuid()) @db.Uuid
+  orderId       String         @db.Uuid
+  printedAt     DateTime       @default(now())
+  printerName   String?
+  order         Order          @relation(fields: [orderId], references: [id])
+  
+  @@index([orderId])
+}
+
+model Adjustment {
+  id            String         @id @default(uuid()) @db.Uuid
+  orderId       String         @db.Uuid
+  type          String         // e.g., "discount", "surcharge", "tip"
+  amount        Decimal        @db.Decimal(10, 2)
+  reason        String?
+  appliedBy     String?        // User who applied the adjustment
+  createdAt     DateTime       @default(now())
+  order         Order          @relation(fields: [orderId], references: [id])
+  
+  @@index([orderId])
 }

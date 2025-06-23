@@ -6,10 +6,11 @@ import { Input } from '@/components/ui';
 import type { AddressFormData } from '@/types';
 
 const schema = yup.object({
-  street: yup.string().required('La calle es obligatoria'),
-  number: yup.string().required('El número es obligatorio'),
+  name: yup.string().trim().required('El nombre de la dirección es obligatorio'),
+  street: yup.string().trim().required('La calle es obligatoria'),
+  number: yup.string().trim().required('El número es obligatorio'),
   interiorNumber: yup.string().nullable(),
-  references: yup.string().nullable(),
+  deliveryInstructions: yup.string().nullable(),
   neighborhood: yup.string().nullable(),
   zipCode: yup.string().nullable(),
   city: yup.string().nullable(),
@@ -64,6 +65,24 @@ export const AddressForm: React.FC<AddressFormProps> = ({
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+      {/* Nombre de la dirección */}
+      <div className="space-y-4">
+        <h3 className="text-sm font-semibold text-gray-700 flex items-center">
+          <svg className="w-4 h-4 mr-2 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+          </svg>
+          Identificación
+        </h3>
+        
+        <Input
+          label="Nombre de la dirección"
+          {...register('name')}
+          error={errors.name?.message || externalErrors.name}
+          required
+          placeholder="Ej: Casa, Oficina, Casa de mamá"
+        />
+      </div>
+
       {/* Dirección principal */}
       <div className="space-y-4">
         <h3 className="text-sm font-semibold text-gray-700 flex items-center">
@@ -104,19 +123,19 @@ export const AddressForm: React.FC<AddressFormProps> = ({
         </div>
       </div>
 
-      {/* Referencias */}
+      {/* Instrucciones de entrega */}
       <div className="space-y-4">
         <h3 className="text-sm font-semibold text-gray-700 flex items-center">
           <svg className="w-4 h-4 mr-2 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
           </svg>
-          Referencias
+          Instrucciones de entrega
         </h3>
         
         <Input
           label=""
-          {...register('references')}
-          error={errors.references?.message}
+          {...register('deliveryInstructions')}
+          error={errors.deliveryInstructions?.message}
           as="textarea"
           rows={3}
           placeholder="Entre calles, puntos de referencia, color de la casa, etc."
@@ -223,6 +242,9 @@ export const AddressForm: React.FC<AddressFormProps> = ({
       {/* Hidden fields for coordinates */}
       <input type="hidden" {...register('latitude')} />
       <input type="hidden" {...register('longitude')} />
+      
+      {/* Submit button for form validation */}
+      <button type="submit" className="hidden" id="address-form-submit">Submit</button>
     </form>
   );
 };

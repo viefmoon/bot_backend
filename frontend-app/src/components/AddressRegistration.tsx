@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useLoadScript } from '@react-google-maps/api';
 import toast, { Toaster } from 'react-hot-toast';
@@ -10,8 +10,11 @@ import {
   useCreateAddress, 
   useUpdateAddress, 
   useDeliveryArea,
-  useSendPreOrderMessage 
+  useSendPreOrderMessage,
+  useUpdateCustomerName,
+  useSetDefaultAddress 
 } from '@/hooks/useAddressQueries';
+import { CustomerNameForm } from '@/components/CustomerNameForm';
 import type { AddressFormData, Address } from '@/types';
 
 const libraries: ('places' | 'geometry')[] = ['places', 'geometry'];
@@ -23,6 +26,9 @@ interface Location {
 
 export function AddressRegistration() {
   const [searchParams] = useSearchParams();
+  
+  // Estado para controlar qué vista mostrar - MUST be before any conditional returns
+  const [viewMode, setViewMode] = useState<'list' | 'form'>('list');
   
   // Get store state and actions
   const {
@@ -47,6 +53,20 @@ export function AddressRegistration() {
 
   // Initialize session from URL params
   useEffect(() => {
+    // Clear old localStorage data with wrong field names
+    const storedData = localStorage.getItem('address-registration-storage');
+    if (storedData) {
+      try {
+        const parsed = JSON.parse(storedData);
+        if (parsed.state?.formData?.references !== undefined) {
+          console.log('Clearing old localStorage data with references field');
+          localStorage.removeItem('address-registration-storage');
+        }
+      } catch (e) {
+        console.error('Error parsing localStorage:', e);
+      }
+    }
+    
     // Get customerId from URL path (e.g., /address-registration/5213320407035)
     const pathParts = window.location.pathname.split('/');
     const urlCustomerId = pathParts[pathParts.length - 1] || searchParams.get('from') || '';
@@ -73,6 +93,8 @@ export function AddressRegistration() {
   const createAddressMutation = useCreateAddress();
   const updateAddressMutation = useUpdateAddress();
   const sendPreOrderMutation = useSendPreOrderMessage();
+  const updateCustomerNameMutation = useUpdateCustomerName();
+  const setDefaultAddressMutation = useSetDefaultAddress();
 
   // Handle OTP verification response
   useEffect(() => {
@@ -98,6 +120,7 @@ export function AddressRegistration() {
     setEditingAddressId(address.id);
     
     const formattedData: AddressFormData = {
+      name: address.name || '',
       street: address.street,
       number: address.number,
       interiorNumber: address.interiorNumber || '',
@@ -106,7 +129,7 @@ export function AddressRegistration() {
       city: address.city,
       state: address.state,
       country: address.country,
-      references: address.references || '',
+      deliveryInstructions: address.deliveryInstructions || '',
       latitude: Number(address.latitude),
       longitude: Number(address.longitude),
     };
@@ -151,6 +174,15 @@ export function AddressRegistration() {
   };
 
   const handleSubmit = async (data: AddressFormData) => {
+    console.log('Submit called with data:', data);
+    console.log('Current form data:', formData);
+    console.log('Session data:', { customerId, otp });
+    
+    if (!data.name || data.name.trim() === '') {
+      toast.error('Por favor ingresa un nombre para identificar esta dirección');
+      return;
+    }
+    
     if (!data.latitude || !data.longitude) {
       toast.error('Por favor selecciona una ubicación en el mapa');
       return;
@@ -166,11 +198,21 @@ export function AddressRegistration() {
     try {
       // Ensure required fields have values
       const addressData = {
-        ...data,
+        name: data.name.trim(), // Ensure name is trimmed
+        street: data.street,
+        number: data.number,
+        interiorNumber: data.interiorNumber || '',
+        neighborhood: data.neighborhood || '',
         city: data.city || 'Ciudad',
         state: data.state || 'Estado',
-        country: data.country || 'México'
+        country: data.country || 'México',
+        zipCode: data.zipCode || '',
+        deliveryInstructions: data.deliveryInstructions || '',
+        latitude: data.latitude,
+        longitude: data.longitude
       };
+      
+      console.log('Sending address data:', addressData);
 
       if (editingAddressId) {
         // Update existing address
@@ -180,7 +222,28 @@ export function AddressRegistration() {
           otp,
           address: addressData,
         });
-        toast.success('¡Dirección actualizada exitosamente!');
+        toast.success(
+          <div className="flex items-center">
+            <div className="flex-shrink-0">
+              <svg className="w-6 h-6 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </div>
+            <div className="ml-3">
+              <p className="text-sm font-semibold text-gray-900">¡Dirección actualizada!</p>
+              <p className="text-xs text-gray-600">Los cambios se guardaron correctamente</p>
+            </div>
+          </div>,
+          {
+            duration: 4000,
+            style: {
+              background: '#f0fdf4',
+              border: '1px solid #86efac',
+              padding: '16px',
+              maxWidth: '420px',
+            },
+          }
+        );
       } else {
         // Create new address
         await createAddressMutation.mutateAsync({
@@ -188,15 +251,29 @@ export function AddressRegistration() {
           otp,
           address: addressData,
         });
-        toast.success('¡Dirección registrada exitosamente!');
+        toast.success(
+          <div className="flex items-center">
+            <div className="flex-shrink-0">
+              <svg className="w-6 h-6 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </div>
+            <div className="ml-3">
+              <p className="text-sm font-semibold text-gray-900">¡Dirección guardada!</p>
+              <p className="text-xs text-gray-600">Tu nueva dirección está lista para usar</p>
+            </div>
+          </div>,
+          {
+            duration: 4000,
+            style: {
+              background: '#f0fdf4',
+              border: '1px solid #86efac',
+              padding: '16px',
+              maxWidth: '420px',
+            },
+          }
+        );
       }
-
-      // Success feedback
-      setTimeout(() => {
-        toast.success('Ahora puedes cerrar esta ventana y continuar con tu pedido en WhatsApp', {
-          duration: 6000,
-        });
-      }, 1000);
 
       // If updating for a pre-order, notify backend
       if (preOrderId && customer) {
@@ -204,16 +281,105 @@ export function AddressRegistration() {
           customerId: customer.id,
           preOrderId,
         });
-        toast.success('Tu pedido ha sido actualizado con la nueva dirección');
       }
       
       resetForm();
+      
+      // Siempre volver a la lista de direcciones
+      setTimeout(() => {
+        setViewMode('list');
+        setEditingAddressId(null);
+      }, 1500); // Esperar un poco para que el usuario vea el mensaje de éxito
     } catch (error: any) {
       console.error('Error al guardar la dirección:', error);
       const errorMessage = error.response?.data?.error || 'Hubo un error al guardar la dirección';
-      toast.error(errorMessage);
+      toast.error(
+        <div className="flex items-center">
+          <div className="flex-shrink-0">
+            <svg className="w-6 h-6 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          </div>
+          <div className="ml-3">
+            <p className="text-sm font-semibold text-gray-900">Error al guardar</p>
+            <p className="text-xs text-gray-600">{errorMessage}</p>
+          </div>
+        </div>,
+        {
+          duration: 5000,
+          style: {
+            background: '#fef2f2',
+            border: '1px solid #fecaca',
+            padding: '16px',
+            maxWidth: '420px',
+          },
+        }
+      );
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleUpdateCustomerName = async (firstName: string, lastName: string) => {
+    try {
+      console.log('Updating customer name:', { firstName, lastName, customerId, otp });
+      console.log('Full params being sent:', {
+        whatsappPhoneNumber: customerId,
+        otp,
+        firstName,
+        lastName,
+      });
+      
+      if (!customerId || !otp) {
+        console.error('Missing required data:', { customerId, otp });
+        toast.error('Información de sesión no válida. Por favor, recarga la página.');
+        return;
+      }
+      
+      const result = await updateCustomerNameMutation.mutateAsync({
+        whatsappPhoneNumber: customerId,
+        otp,
+        firstName,
+        lastName,
+      });
+      
+      console.log('Update result:', result);
+      
+      if (result.success && result.customer) {
+        console.log('Updated customer:', result.customer);
+        
+        // Update the customer state with the new data
+        const updatedCustomer = {
+          ...result.customer,
+          addresses: result.customer.addresses || []
+        };
+        
+        setCustomer(updatedCustomer);
+        toast.success('¡Información actualizada correctamente!');
+        
+        // If customer has addresses, load the default one
+        if (updatedCustomer.addresses.length > 0) {
+          const defaultAddress = updatedCustomer.addresses.find((addr: Address) => addr.isDefault) 
+            || updatedCustomer.addresses[0];
+          loadExistingAddress(defaultAddress);
+        }
+      }
+    } catch (error: any) {
+      console.error('Error updating customer name:', error);
+      console.error('Error response:', error.response?.data);
+      
+      let errorMessage = 'Error al actualizar tu información';
+      
+      if (error.response?.data?.error) {
+        // Si el error es un objeto con propiedades, extraer el mensaje
+        if (typeof error.response.data.error === 'object' && error.response.data.error.message) {
+          errorMessage = error.response.data.error.message;
+        } else if (typeof error.response.data.error === 'string') {
+          errorMessage = error.response.data.error;
+        }
+      }
+      
+      toast.error(errorMessage);
     }
   };
 
@@ -235,6 +401,19 @@ export function AddressRegistration() {
       toast.error('Tu navegador no soporta geolocalización');
     }
   };
+
+  // Si el usuario tiene direcciones, mostrar la lista primero
+  useEffect(() => {
+    if (customer?.addresses?.length > 0) {
+      setViewMode('list');
+    } else {
+      setViewMode('form');
+    }
+  }, [customer?.addresses?.length]);
+
+  const selectedLocation = formData.latitude && formData.longitude 
+    ? { lat: formData.latitude, lng: formData.longitude } 
+    : null;
 
   // Loading states
   if (isVerifying || isValidating) {
@@ -294,9 +473,15 @@ export function AddressRegistration() {
     );
   }
 
-  const selectedLocation = formData.latitude && formData.longitude 
-    ? { lat: formData.latitude, lng: formData.longitude } 
-    : null;
+  // Debug logs
+  console.log('Render state:', {
+    customer,
+    hasFirstName: customer?.firstName,
+    hasLastName: customer?.lastName,
+    shouldShowNameForm: customer && (!customer.firstName || !customer.lastName),
+    shouldShowAddressForm: customer && customer.firstName && customer.lastName,
+    viewMode
+  });
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-orange-50 via-red-50 to-pink-50">
@@ -305,16 +490,24 @@ export function AddressRegistration() {
           {/* Header con gradiente naranja-rosa */}
           <div className="bg-gradient-to-r from-orange-500 to-pink-600 p-4 sm:p-6 text-white">
             <h1 className="text-xl sm:text-2xl md:text-3xl font-bold mb-2 drop-shadow-lg">
-              📍 {editingAddressId ? 'Actualizar Dirección' : 'Registrar Dirección de Entrega'}
+              📍 {viewMode === 'list' 
+                ? 'Mis Direcciones de Entrega' 
+                : editingAddressId 
+                  ? `Actualizar: ${formData.name || 'Dirección'}` 
+                  : 'Registrar Dirección de Entrega'}
             </h1>
-            <div className="space-y-1">
+            <div className="flex items-center gap-3 flex-wrap">
               <p className="text-sm sm:text-base text-white font-medium drop-shadow">
-                ¡Hola{customer.firstName ? ` ${customer.firstName}` : ''}! Por favor completa tu información de entrega.
+                {customer.firstName && customer.lastName 
+                  ? `${customer.firstName} ${customer.lastName}`
+                  : customer.firstName 
+                    ? customer.firstName
+                    : 'Cliente'}
               </p>
               {customerId && (
-                <div className="inline-block bg-white/20 backdrop-blur-sm rounded-lg px-3 py-1 mt-2">
+                <div className="inline-block bg-white/20 backdrop-blur-sm rounded-lg px-3 py-1">
                   <p className="text-xs sm:text-sm text-white font-medium">
-                    📱 Tu número: {customerId}
+                    📱 {customerId}
                   </p>
                 </div>
               )}
@@ -322,100 +515,286 @@ export function AddressRegistration() {
           </div>
           
           <div className="p-4 sm:p-6">
+            {/* Show name form if customer doesn't have firstName or lastName */}
+            {customer && (!customer.firstName || !customer.lastName) && (
+              <CustomerNameForm
+                onSubmit={handleUpdateCustomerName}
+                isSubmitting={updateCustomerNameMutation.isPending}
+              />
+            )}
 
+            {/* Show list view if customer has addresses and viewMode is 'list' */}
+            {customer && customer.firstName && customer.lastName && viewMode === 'list' && customer.addresses.length > 0 && (
+              <div>
+                <div className="grid gap-4 mb-6">
+                  {customer.addresses.map((address: Address) => (
+                    <div 
+                      key={address.id} 
+                      className={`relative group transition-all duration-300 ${
+                        address.isDefault 
+                          ? 'ring-2 ring-orange-400 shadow-lg' 
+                          : 'hover:shadow-lg'
+                      }`}
+                    >
+                      <div className="bg-white rounded-2xl p-6 border border-gray-100">
+                        <div className="flex justify-between items-start gap-4">
+                          <div className="flex-1">
+                            {/* Address Name with Icon */}
+                            <div className="flex items-center gap-3 mb-3">
+                              <div className={`p-2 rounded-lg ${
+                                address.isDefault 
+                                  ? 'bg-gradient-to-r from-orange-100 to-pink-100' 
+                                  : 'bg-gray-100'
+                              }`}>
+                                <svg className="w-5 h-5 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                                </svg>
+                              </div>
+                              <h3 className="font-bold text-xl text-gray-800">{address.name}</h3>
+                              {/* Default Badge inline */}
+                              {address.isDefault && (
+                                <span className="inline-flex items-center gap-1 bg-gradient-to-r from-orange-400 to-pink-500 text-white text-xs font-semibold px-3 py-1 rounded-full">
+                                  <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                                  </svg>
+                                  Principal
+                                </span>
+                              )}
+                            </div>
 
-            {/* Use my location button */}
-            <div className="mb-6">
-            <button
-              type="button"
-              onClick={handleUseMyLocation}
-              className="w-full sm:w-auto px-6 py-3 bg-gradient-to-r from-orange-500 to-pink-600 text-white font-semibold rounded-xl shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200 flex items-center justify-center"
-            >
-              <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-              </svg>
-              Usar mi ubicación actual
-            </button>
-            </div>
+                            {/* Address Details */}
+                            <div className="space-y-1 text-gray-600">
+                              <p className="font-medium">
+                                {address.street} {address.number}
+                                {address.interiorNumber && ` Int. ${address.interiorNumber}`}
+                              </p>
+                              <p className="text-sm">
+                                {address.neighborhood && `${address.neighborhood}, `}
+                                {address.city}, {address.state}
+                              </p>
+                            </div>
 
-            {/* Map */}
-            <div className="mb-6">
-            <Map
+                            {/* Delivery Instructions */}
+                            {address.deliveryInstructions && (
+                              <div className="mt-3 flex items-start gap-2">
+                                <svg className="w-4 h-4 text-gray-400 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" />
+                                </svg>
+                                <p className="text-sm text-gray-500">{address.deliveryInstructions}</p>
+                              </div>
+                            )}
+                          </div>
+
+                          {/* Actions Column */}
+                          <div className="flex flex-col gap-2">
+                            {/* Edit Button */}
+                            <button
+                              onClick={() => {
+                                loadExistingAddress(address);
+                                setViewMode('form');
+                              }}
+                              className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 text-gray-700 rounded-lg hover:bg-gray-50 hover:border-gray-300 transition-all duration-200 group"
+                            >
+                              <svg className="w-4 h-4 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                              </svg>
+                              <span className="text-sm font-medium">Editar</span>
+                            </button>
+
+                            {/* Set as Default Button */}
+                            {!address.isDefault && (
+                              <button
+                                onClick={async () => {
+                                  try {
+                                    await setDefaultAddressMutation.mutateAsync({
+                                      addressId: address.id,
+                                      whatsappPhoneNumber: customerId!,
+                                      otp: otp!
+                                    });
+                                    toast.success(
+                                      <div className="flex items-center">
+                                        <div className="flex-shrink-0">
+                                          <svg className="w-6 h-6 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                          </svg>
+                                        </div>
+                                        <div className="ml-3">
+                                          <p className="text-sm font-semibold text-gray-900">¡Dirección principal actualizada!</p>
+                                          <p className="text-xs text-gray-600">{address.name} es ahora tu dirección principal</p>
+                                        </div>
+                                      </div>,
+                                      {
+                                        duration: 4000,
+                                        style: {
+                                          background: '#f0fdf4',
+                                          border: '1px solid #86efac',
+                                          padding: '16px',
+                                          maxWidth: '420px',
+                                        },
+                                      }
+                                    );
+                                    // Actualizar el estado del cliente
+                                    if (customer) {
+                                      const updatedAddresses = customer.addresses.map((addr: Address) => ({
+                                        ...addr,
+                                        isDefault: addr.id === address.id
+                                      }));
+                                      setCustomer({ ...customer, addresses: updatedAddresses });
+                                    }
+                                  } catch (error) {
+                                    toast.error(
+                                      <div className="flex items-center">
+                                        <div className="flex-shrink-0">
+                                          <svg className="w-6 h-6 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                          </svg>
+                                        </div>
+                                        <div className="ml-3">
+                                          <p className="text-sm font-semibold text-gray-900">Error</p>
+                                          <p className="text-xs text-gray-600">No se pudo cambiar la dirección principal</p>
+                                        </div>
+                                      </div>,
+                                      {
+                                        duration: 5000,
+                                        style: {
+                                          background: '#fef2f2',
+                                          border: '1px solid #fecaca',
+                                          padding: '16px',
+                                          maxWidth: '420px',
+                                        },
+                                      }
+                                    );
+                                  }
+                                }}
+                                disabled={setDefaultAddressMutation.isPending}
+                                className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-orange-500 to-pink-600 text-white rounded-lg hover:shadow-md transition-all duration-200 group disabled:opacity-50 disabled:cursor-not-allowed"
+                              >
+                                {setDefaultAddressMutation.isPending ? (
+                                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                                ) : (
+                                  <svg className="w-4 h-4 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                  </svg>
+                                )}
+                                <span className="text-sm font-medium">Hacer principal</span>
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                
+                <button
+                  onClick={() => {
+                    resetForm();
+                    setEditingAddressId(null);
+                    setViewMode('form');
+                  }}
+                  className="w-full px-6 py-4 bg-gradient-to-r from-orange-500 to-pink-600 text-white font-bold rounded-xl shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200"
+                >
+                  <span className="flex items-center justify-center">
+                    <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                    </svg>
+                    Agregar nueva dirección
+                  </span>
+                </button>
+              </div>
+            )}
+
+            {/* Show form view if viewMode is 'form' or no addresses */}
+            {customer && customer.firstName && customer.lastName && (viewMode === 'form' || customer.addresses.length === 0) && (
+              <>
+                {/* Botón para volver a la lista si hay direcciones */}
+                {customer.addresses.length > 0 && (
+                  <div className="mb-4">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setViewMode('list');
+                        setEditingAddressId(null);
+                        resetForm();
+                      }}
+                      className="flex items-center text-gray-600 hover:text-gray-800 font-medium"
+                    >
+                      <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                      </svg>
+                      Volver a mis direcciones
+                    </button>
+                  </div>
+                )}
+                
+                {/* Use my location button */}
+                <div className="mb-6">
+                  <button
+                    type="button"
+                    onClick={handleUseMyLocation}
+                    className="w-full sm:w-auto px-6 py-3 bg-gradient-to-r from-orange-500 to-pink-600 text-white font-semibold rounded-xl shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200 flex items-center justify-center"
+                  >
+                    <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                    </svg>
+                    Usar mi ubicación actual
+                  </button>
+                </div>
+
+                {/* Map */}
+                <div className="mb-6">
+                  <Map
               center={selectedLocation || { lat: 20.6597, lng: -103.3496 }}
               onLocationSelect={handleLocationSelect}
               selectedLocation={selectedLocation}
               polygonCoords={deliveryAreaData?.polygonCoords || []}
               onLocationError={(error) => toast.error(error)}
-            />
-            </div>
+                  />
+                </div>
 
-            {/* Address Form */}
-            <AddressForm
-            formData={formData}
-            onSubmit={handleSubmit}
-            isUpdating={!!editingAddressId}
-            />
+                {/* Address Form */}
+                <AddressForm
+                  formData={formData}
+                  onSubmit={handleSubmit}
+                  isUpdating={!!editingAddressId}
+                />
 
-            {/* Submit Button */}
-            <div className="mt-6">
-            <button
-              type="submit"
-              onClick={() => handleSubmit(formData)}
-              disabled={isSaving || !selectedLocation}
-              className={`w-full px-6 py-4 font-bold text-white rounded-xl shadow-lg transform transition-all duration-200 ${
-                isSaving || !selectedLocation
-                  ? 'bg-gray-400 cursor-not-allowed'
-                  : 'bg-gradient-to-r from-orange-500 to-pink-600 hover:shadow-xl hover:scale-105'
-              }`}
-            >
-              {isSaving 
-                ? (
-                  <div className="flex items-center justify-center">
-                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
-                    Guardando...
-                  </div>
-                )
-                : editingAddressId 
-                  ? 'Actualizar dirección' 
-                  : 'Registrar dirección'
-              }
-            </button>
-            </div>
-
-            {/* List existing addresses */}
-            {customer.addresses.length > 0 && !editingAddressId && (
-            <div className="mt-8 border-t-2 border-gray-100 pt-6">
-              <h3 className="text-xl font-bold text-gray-800 mb-4">Mis direcciones guardadas</h3>
-              <div className="space-y-3">
-                {customer.addresses.map((address: Address) => (
-                  <div 
-                    key={address.id} 
-                    className="p-4 border-2 border-gray-200 rounded-xl hover:border-indigo-400 hover:shadow-md transform hover:scale-102 transition-all duration-200 cursor-pointer bg-gradient-to-r from-gray-50 to-white"
-                    onClick={() => loadExistingAddress(address)}
+                {/* Submit Button */}
+                <div className="mt-6 space-y-3">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      // Trigger the form's submit to use its validation
+                      const submitButton = document.getElementById('address-form-submit') as HTMLButtonElement;
+                      if (submitButton) {
+                        submitButton.click();
+                      }
+                    }}
+                    disabled={isSaving || !selectedLocation}
+                    className={`w-full px-6 py-4 font-bold text-white rounded-xl shadow-lg transform transition-all duration-200 ${
+                      isSaving || !selectedLocation
+                        ? 'bg-gray-400 cursor-not-allowed'
+                        : 'bg-gradient-to-r from-orange-500 to-pink-600 hover:shadow-xl hover:scale-105'
+                    }`}
                   >
-                    <div className="flex justify-between items-start">
-                      <div>
-                        <p className="font-medium">
-                          {address.street} {address.number}
-                          {address.interiorNumber && ` Int. ${address.interiorNumber}`}
-                        </p>
-                        <p className="text-sm text-gray-600">
-                          {address.neighborhood && `${address.neighborhood}, `}
-                          {address.city}, {address.state}
-                        </p>
-                      </div>
-                      {address.isDefault && (
-                        <span className="text-xs bg-gradient-to-r from-orange-400 to-pink-500 text-white px-3 py-1 rounded-full font-semibold shadow-sm">
-                          Principal
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                ))}
-              </div>
-              </div>
+                    {isSaving 
+                      ? (
+                        <div className="flex items-center justify-center">
+                          <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
+                          Guardando...
+                        </div>
+                      )
+                      : editingAddressId 
+                        ? 'Actualizar dirección' 
+                        : 'Registrar dirección'
+                    }
+                  </button>
+                </div>
+              </>
             )}
+
           </div>
         </div>
       </div>

@@ -53,10 +53,14 @@ class SelectedModifierDto {
   modifierId: string;
 }
 
-class OrderDeliveryInfoDto {
-  @IsNumber()
+class DeliveryInfoDto {
+  @IsString()
   @IsOptional()
-  id?: number;
+  id?: string; // UUID now
+
+  @IsString()
+  @IsOptional()
+  fullAddress?: string;
 
   @IsString()
   @IsOptional()
@@ -100,20 +104,23 @@ class OrderDeliveryInfoDto {
 
   @IsString()
   @IsOptional()
-  pickupName?: string;
-
+  recipientName?: string;
 
   @IsString()
   @IsOptional()
-  references?: string;
+  recipientPhone?: string;
+
+  @IsString()
+  @IsOptional()
+  deliveryInstructions?: string;
 
   @IsNumber()
   @IsOptional()
   preOrderId?: number;
 
-  @IsNumber()
+  @IsString()
   @IsOptional()
-  orderId?: number;
+  orderId?: string;
 }
 
 export class CreateOrderDto {
@@ -127,8 +134,8 @@ export class CreateOrderDto {
 
   @IsOptional()
   @ValidateNested()
-  @Type(() => OrderDeliveryInfoDto)
-  orderDeliveryInfo?: OrderDeliveryInfoDto;
+  @Type(() => DeliveryInfoDto)
+  deliveryInfo?: DeliveryInfoDto;
 
   @IsString()
   whatsappPhoneNumber: string;

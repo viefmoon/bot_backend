@@ -8,13 +8,19 @@ CREATE TYPE "OrderType" AS ENUM ('DINE_IN', 'TAKE_AWAY', 'DELIVERY');
 CREATE TYPE "OrderStatus" AS ENUM ('PENDING', 'IN_PROGRESS', 'IN_PREPARATION', 'READY', 'IN_DELIVERY', 'DELIVERED', 'COMPLETED', 'CANCELLED');
 
 -- CreateEnum
-CREATE TYPE "PaymentStatus" AS ENUM ('PENDING', 'PAID');
+CREATE TYPE "PaymentStatus" AS ENUM ('PENDING', 'PAID', 'FAILED', 'REFUNDED', 'CANCELLED');
 
 -- CreateEnum
-CREATE TYPE "PizzaHalf" AS ENUM ('LEFT', 'RIGHT', 'FULL');
+CREATE TYPE "PaymentMethod" AS ENUM ('CASH', 'CREDIT_CARD', 'DEBIT_CARD', 'TRANSFER', 'STRIPE', 'PAYPAL', 'OTHER');
 
 -- CreateEnum
-CREATE TYPE "IngredientAction" AS ENUM ('ADD', 'REMOVE');
+CREATE TYPE "PizzaHalf" AS ENUM ('FULL', 'HALF_1', 'HALF_2');
+
+-- CreateEnum
+CREATE TYPE "CustomizationAction" AS ENUM ('ADD', 'REMOVE');
+
+-- CreateEnum
+CREATE TYPE "CustomizationType" AS ENUM ('FLAVOR', 'INGREDIENT');
 
 -- CreateEnum
 CREATE TYPE "PreparationStatus" AS ENUM ('PENDING', 'IN_PROGRESS', 'READY', 'DELIVERED', 'CANCELLED');
@@ -64,6 +70,7 @@ CREATE TABLE "Customer" (
 CREATE TABLE "Address" (
     "id" UUID NOT NULL,
     "customerId" UUID NOT NULL,
+    "name" VARCHAR(100) NOT NULL,
     "street" VARCHAR(200) NOT NULL,
     "number" VARCHAR(50) NOT NULL,
     "interiorNumber" VARCHAR(50),
@@ -72,7 +79,7 @@ CREATE TABLE "Address" (
     "state" VARCHAR(100),
     "zipCode" VARCHAR(10),
     "country" VARCHAR(100),
-    "references" TEXT,
+    "deliveryInstructions" TEXT,
     "latitude" DECIMAL(10,8),
     "longitude" DECIMAL(11,8),
     "isDefault" BOOLEAN NOT NULL DEFAULT false,
@@ -139,7 +146,7 @@ CREATE TABLE "ModifierGroup" (
 
 -- CreateTable
 CREATE TABLE "Order" (
-    "id" TEXT NOT NULL,
+    "id" UUID NOT NULL,
     "dailyNumber" INTEGER NOT NULL,
     "orderType" "OrderType" NOT NULL,
     "orderStatus" "OrderStatus" NOT NULL DEFAULT 'PENDING',
@@ -152,6 +159,9 @@ CREATE TABLE "Order" (
     "stripeSessionId" TEXT,
     "syncedWithLocal" BOOLEAN NOT NULL DEFAULT false,
     "isFromWhatsApp" BOOLEAN NOT NULL DEFAULT true,
+    "dailyCounterId" UUID,
+    "userId" UUID,
+    "tableId" UUID,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
 
@@ -159,8 +169,12 @@ CREATE TABLE "Order" (
 );
 
 -- CreateTable
-CREATE TABLE "OrderDeliveryInfo" (
-    "id" SERIAL NOT NULL,
+CREATE TABLE "DeliveryInfo" (
+    "id" UUID NOT NULL,
+    "orderId" UUID,
+    "preOrderId" INTEGER,
+    "name" VARCHAR(100),
+    "fullAddress" TEXT,
     "street" VARCHAR(200),
     "number" VARCHAR(50),
     "interiorNumber" VARCHAR(50),
@@ -169,22 +183,21 @@ CREATE TABLE "OrderDeliveryInfo" (
     "state" VARCHAR(100),
     "zipCode" VARCHAR(10),
     "country" VARCHAR(100),
-    "references" TEXT,
+    "recipientName" VARCHAR(255),
+    "recipientPhone" VARCHAR(50),
+    "deliveryInstructions" TEXT,
     "latitude" DECIMAL(10,8),
     "longitude" DECIMAL(11,8),
-    "pickupName" TEXT,
-    "preOrderId" INTEGER,
-    "orderId" TEXT,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
 
-    CONSTRAINT "OrderDeliveryInfo_pkey" PRIMARY KEY ("id")
+    CONSTRAINT "DeliveryInfo_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
 CREATE TABLE "OrderItem" (
-    "id" TEXT NOT NULL,
-    "orderId" TEXT NOT NULL,
+    "id" UUID NOT NULL,
+    "orderId" UUID NOT NULL,
     "productId" TEXT NOT NULL,
     "productVariantId" TEXT,
     "basePrice" DOUBLE PRECISION NOT NULL,
@@ -200,19 +213,28 @@ CREATE TABLE "OrderItem" (
 );
 
 -- CreateTable
-CREATE TABLE "PizzaIngredient" (
+CREATE TABLE "PizzaCustomization" (
     "id" TEXT NOT NULL,
     "name" TEXT NOT NULL,
-    "ingredientValue" INTEGER NOT NULL DEFAULT 1,
+    "type" "CustomizationType" NOT NULL,
     "ingredients" TEXT,
+    "toppingValue" INTEGER NOT NULL DEFAULT 1,
     "isActive" BOOLEAN NOT NULL DEFAULT true,
     "sortOrder" INTEGER NOT NULL DEFAULT 0,
-    "productIds" TEXT[],
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
-    "deletedAt" TIMESTAMP(3),
 
-    CONSTRAINT "PizzaIngredient_pkey" PRIMARY KEY ("id")
+    CONSTRAINT "PizzaCustomization_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "PizzaConfiguration" (
+    "id" UUID NOT NULL,
+    "productId" TEXT NOT NULL,
+    "includedToppings" INTEGER NOT NULL DEFAULT 4,
+    "extraToppingCost" DOUBLE PRECISION NOT NULL DEFAULT 20,
+
+    CONSTRAINT "PizzaConfiguration_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
@@ -307,14 +329,14 @@ CREATE TABLE "SeederControl" (
 );
 
 -- CreateTable
-CREATE TABLE "SelectedPizzaIngredient" (
-    "id" SERIAL NOT NULL,
+CREATE TABLE "SelectedPizzaCustomization" (
+    "id" UUID NOT NULL,
+    "orderItemId" UUID NOT NULL,
+    "pizzaCustomizationId" TEXT NOT NULL,
     "half" "PizzaHalf" NOT NULL DEFAULT 'FULL',
-    "pizzaIngredientId" TEXT NOT NULL,
-    "orderItemId" TEXT NOT NULL,
-    "action" "IngredientAction" NOT NULL DEFAULT 'ADD',
+    "action" "CustomizationAction" NOT NULL DEFAULT 'ADD',
 
-    CONSTRAINT "SelectedPizzaIngredient_pkey" PRIMARY KEY ("id")
+    CONSTRAINT "SelectedPizzaCustomization_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
@@ -348,19 +370,79 @@ CREATE TABLE "SyncLog" (
 );
 
 -- CreateTable
+CREATE TABLE "Payment" (
+    "id" UUID NOT NULL,
+    "orderId" UUID NOT NULL,
+    "paymentMethod" "PaymentMethod" NOT NULL DEFAULT 'CASH',
+    "amount" DECIMAL(10,2) NOT NULL,
+    "paymentStatus" "PaymentStatus" NOT NULL DEFAULT 'PENDING',
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+    "deletedAt" TIMESTAMP(3),
+
+    CONSTRAINT "Payment_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "DailyCounter" (
+    "id" UUID NOT NULL,
+    "date" DATE NOT NULL,
+    "counter" INTEGER NOT NULL DEFAULT 0,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "DailyCounter_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "Table" (
+    "id" UUID NOT NULL,
+    "tableNumber" TEXT NOT NULL,
+    "capacity" INTEGER NOT NULL DEFAULT 4,
+    "isActive" BOOLEAN NOT NULL DEFAULT true,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "Table_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "TicketImpression" (
+    "id" UUID NOT NULL,
+    "orderId" UUID NOT NULL,
+    "printedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "printerName" TEXT,
+
+    CONSTRAINT "TicketImpression_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "Adjustment" (
+    "id" UUID NOT NULL,
+    "orderId" UUID NOT NULL,
+    "type" TEXT NOT NULL,
+    "amount" DECIMAL(10,2) NOT NULL,
+    "reason" TEXT,
+    "appliedBy" TEXT,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "Adjustment_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
 CREATE TABLE "_OrderItemProductModifiers" (
-    "A" TEXT NOT NULL,
+    "A" UUID NOT NULL,
     "B" TEXT NOT NULL,
 
     CONSTRAINT "_OrderItemProductModifiers_AB_pkey" PRIMARY KEY ("A","B")
 );
 
 -- CreateTable
-CREATE TABLE "_ProductPizzaIngredients" (
+CREATE TABLE "_ProductPizzaCustomizations" (
     "A" TEXT NOT NULL,
     "B" TEXT NOT NULL,
 
-    CONSTRAINT "_ProductPizzaIngredients_AB_pkey" PRIMARY KEY ("A","B")
+    CONSTRAINT "_ProductPizzaCustomizations_AB_pkey" PRIMARY KEY ("A","B")
 );
 
 -- CreateIndex
@@ -394,13 +476,31 @@ CREATE UNIQUE INDEX "MessageLog_messageId_key" ON "MessageLog"("messageId");
 CREATE UNIQUE INDEX "MessageRateLimit_whatsappPhoneNumber_key" ON "MessageRateLimit"("whatsappPhoneNumber");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "OrderDeliveryInfo_orderId_key" ON "OrderDeliveryInfo"("orderId");
+CREATE INDEX "Order_dailyCounterId_idx" ON "Order"("dailyCounterId");
+
+-- CreateIndex
+CREATE INDEX "Order_tableId_idx" ON "Order"("tableId");
+
+-- CreateIndex
+CREATE INDEX "Order_userId_idx" ON "Order"("userId");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "DeliveryInfo_orderId_key" ON "DeliveryInfo"("orderId");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "DeliveryInfo_preOrderId_key" ON "DeliveryInfo"("preOrderId");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "PizzaConfiguration_productId_key" ON "PizzaConfiguration"("productId");
 
 -- CreateIndex
 CREATE INDEX "PreOrder_whatsappPhoneNumber_idx" ON "PreOrder"("whatsappPhoneNumber");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "BusinessHours_restaurantConfigId_dayOfWeek_key" ON "BusinessHours"("restaurantConfigId", "dayOfWeek");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "SelectedPizzaCustomization_orderItemId_pizzaCustomizationId_key" ON "SelectedPizzaCustomization"("orderItemId", "pizzaCustomizationId", "half", "action");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "Subcategory_name_key" ON "Subcategory"("name");
@@ -412,10 +512,28 @@ CREATE INDEX "SyncLog_entityType_entityId_idx" ON "SyncLog"("entityType", "entit
 CREATE INDEX "SyncLog_syncStatus_idx" ON "SyncLog"("syncStatus");
 
 -- CreateIndex
+CREATE INDEX "Payment_orderId_idx" ON "Payment"("orderId");
+
+-- CreateIndex
+CREATE INDEX "Payment_paymentStatus_idx" ON "Payment"("paymentStatus");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "DailyCounter_date_key" ON "DailyCounter"("date");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "Table_tableNumber_key" ON "Table"("tableNumber");
+
+-- CreateIndex
+CREATE INDEX "TicketImpression_orderId_idx" ON "TicketImpression"("orderId");
+
+-- CreateIndex
+CREATE INDEX "Adjustment_orderId_idx" ON "Adjustment"("orderId");
+
+-- CreateIndex
 CREATE INDEX "_OrderItemProductModifiers_B_index" ON "_OrderItemProductModifiers"("B");
 
 -- CreateIndex
-CREATE INDEX "_ProductPizzaIngredients_B_index" ON "_ProductPizzaIngredients"("B");
+CREATE INDEX "_ProductPizzaCustomizations_B_index" ON "_ProductPizzaCustomizations"("B");
 
 -- AddForeignKey
 ALTER TABLE "Address" ADD CONSTRAINT "Address_customerId_fkey" FOREIGN KEY ("customerId") REFERENCES "Customer"("id") ON DELETE CASCADE ON UPDATE CASCADE;
@@ -430,10 +548,16 @@ ALTER TABLE "ModifierGroup" ADD CONSTRAINT "ModifierGroup_productId_fkey" FOREIG
 ALTER TABLE "Order" ADD CONSTRAINT "Order_customerId_fkey" FOREIGN KEY ("customerId") REFERENCES "Customer"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "OrderDeliveryInfo" ADD CONSTRAINT "OrderDeliveryInfo_orderId_fkey" FOREIGN KEY ("orderId") REFERENCES "Order"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+ALTER TABLE "Order" ADD CONSTRAINT "Order_dailyCounterId_fkey" FOREIGN KEY ("dailyCounterId") REFERENCES "DailyCounter"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "OrderDeliveryInfo" ADD CONSTRAINT "OrderDeliveryInfo_preOrderId_fkey" FOREIGN KEY ("preOrderId") REFERENCES "PreOrder"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+ALTER TABLE "Order" ADD CONSTRAINT "Order_tableId_fkey" FOREIGN KEY ("tableId") REFERENCES "Table"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "DeliveryInfo" ADD CONSTRAINT "DeliveryInfo_orderId_fkey" FOREIGN KEY ("orderId") REFERENCES "Order"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "DeliveryInfo" ADD CONSTRAINT "DeliveryInfo_preOrderId_fkey" FOREIGN KEY ("preOrderId") REFERENCES "PreOrder"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "OrderItem" ADD CONSTRAINT "OrderItem_orderId_fkey" FOREIGN KEY ("orderId") REFERENCES "Order"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
@@ -445,6 +569,9 @@ ALTER TABLE "OrderItem" ADD CONSTRAINT "OrderItem_productId_fkey" FOREIGN KEY ("
 ALTER TABLE "OrderItem" ADD CONSTRAINT "OrderItem_productVariantId_fkey" FOREIGN KEY ("productVariantId") REFERENCES "ProductVariant"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
+ALTER TABLE "PizzaConfiguration" ADD CONSTRAINT "PizzaConfiguration_productId_fkey" FOREIGN KEY ("productId") REFERENCES "Product"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
 ALTER TABLE "Product" ADD CONSTRAINT "Product_subcategoryId_fkey" FOREIGN KEY ("subcategoryId") REFERENCES "Subcategory"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
@@ -454,13 +581,22 @@ ALTER TABLE "ProductVariant" ADD CONSTRAINT "ProductVariant_productId_fkey" FORE
 ALTER TABLE "BusinessHours" ADD CONSTRAINT "BusinessHours_restaurantConfigId_fkey" FOREIGN KEY ("restaurantConfigId") REFERENCES "RestaurantConfig"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "SelectedPizzaIngredient" ADD CONSTRAINT "SelectedPizzaIngredient_orderItemId_fkey" FOREIGN KEY ("orderItemId") REFERENCES "OrderItem"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "SelectedPizzaCustomization" ADD CONSTRAINT "SelectedPizzaCustomization_orderItemId_fkey" FOREIGN KEY ("orderItemId") REFERENCES "OrderItem"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "SelectedPizzaIngredient" ADD CONSTRAINT "SelectedPizzaIngredient_pizzaIngredientId_fkey" FOREIGN KEY ("pizzaIngredientId") REFERENCES "PizzaIngredient"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "SelectedPizzaCustomization" ADD CONSTRAINT "SelectedPizzaCustomization_pizzaCustomizationId_fkey" FOREIGN KEY ("pizzaCustomizationId") REFERENCES "PizzaCustomization"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "Subcategory" ADD CONSTRAINT "Subcategory_categoryId_fkey" FOREIGN KEY ("categoryId") REFERENCES "Category"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "Payment" ADD CONSTRAINT "Payment_orderId_fkey" FOREIGN KEY ("orderId") REFERENCES "Order"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "TicketImpression" ADD CONSTRAINT "TicketImpression_orderId_fkey" FOREIGN KEY ("orderId") REFERENCES "Order"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "Adjustment" ADD CONSTRAINT "Adjustment_orderId_fkey" FOREIGN KEY ("orderId") REFERENCES "Order"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "_OrderItemProductModifiers" ADD CONSTRAINT "_OrderItemProductModifiers_A_fkey" FOREIGN KEY ("A") REFERENCES "OrderItem"("id") ON DELETE CASCADE ON UPDATE CASCADE;
@@ -469,7 +605,7 @@ ALTER TABLE "_OrderItemProductModifiers" ADD CONSTRAINT "_OrderItemProductModifi
 ALTER TABLE "_OrderItemProductModifiers" ADD CONSTRAINT "_OrderItemProductModifiers_B_fkey" FOREIGN KEY ("B") REFERENCES "ProductModifier"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "_ProductPizzaIngredients" ADD CONSTRAINT "_ProductPizzaIngredients_A_fkey" FOREIGN KEY ("A") REFERENCES "PizzaIngredient"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "_ProductPizzaCustomizations" ADD CONSTRAINT "_ProductPizzaCustomizations_A_fkey" FOREIGN KEY ("A") REFERENCES "PizzaCustomization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "_ProductPizzaIngredients" ADD CONSTRAINT "_ProductPizzaIngredients_B_fkey" FOREIGN KEY ("B") REFERENCES "Product"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "_ProductPizzaCustomizations" ADD CONSTRAINT "_ProductPizzaCustomizations_B_fkey" FOREIGN KEY ("B") REFERENCES "Product"("id") ON DELETE CASCADE ON UPDATE CASCADE;
