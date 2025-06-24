@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useLoadScript } from '@react-google-maps/api';
 import toast, { Toaster } from 'react-hot-toast';
@@ -29,6 +29,7 @@ export function AddressRegistration() {
   
   // Estado para controlar qué vista mostrar - MUST be before any conditional returns
   const [viewMode, setViewMode] = useState<'list' | 'form'>('list');
+  const [isEditingCustomerName, setIsEditingCustomerName] = useState(false);
   
   // Get store state and actions
   const {
@@ -96,7 +97,7 @@ export function AddressRegistration() {
   const updateCustomerNameMutation = useUpdateCustomerName();
   const setDefaultAddressMutation = useSetDefaultAddress();
 
-  const loadExistingAddress = React.useCallback((address: Address) => {
+  const loadExistingAddress = useCallback((address: Address) => {
     setEditingAddressId(address.id);
     
     const formattedData: AddressFormData = {
@@ -491,13 +492,26 @@ export function AddressRegistration() {
                   : 'Registrar Dirección de Entrega'}
             </h1>
             <div className="flex items-center gap-3 flex-wrap">
-              <p className="text-sm sm:text-base text-white font-medium drop-shadow">
-                {customer.firstName && customer.lastName 
-                  ? `${customer.firstName} ${customer.lastName}`
-                  : customer.firstName 
-                    ? customer.firstName
-                    : 'Cliente'}
-              </p>
+              <div className="flex items-center gap-2">
+                <p className="text-sm sm:text-base text-white font-medium drop-shadow">
+                  {customer.firstName && customer.lastName 
+                    ? `${customer.firstName} ${customer.lastName}`
+                    : customer.firstName 
+                      ? customer.firstName
+                      : 'Cliente'}
+                </p>
+                {customer.firstName && customer.lastName && (
+                  <button
+                    onClick={() => setIsEditingCustomerName(true)}
+                    className="p-1.5 rounded-lg bg-white/20 hover:bg-white/30 transition-colors"
+                    title="Editar nombre"
+                  >
+                    <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                    </svg>
+                  </button>
+                )}
+              </div>
               {customerId && (
                 <div className="inline-block bg-white/20 backdrop-blur-sm rounded-lg px-3 py-1">
                   <p className="text-xs sm:text-sm text-white font-medium">
@@ -509,16 +523,23 @@ export function AddressRegistration() {
           </div>
           
           <div className="p-4 sm:p-6">
-            {/* Show name form if customer doesn't have firstName or lastName */}
-            {customer && (!customer.firstName || !customer.lastName) && (
+            {/* Show name form if customer doesn't have firstName or lastName OR if editing */}
+            {customer && ((!customer.firstName || !customer.lastName) || isEditingCustomerName) && (
               <CustomerNameForm
-                onSubmit={handleUpdateCustomerName}
+                onSubmit={async (firstName, lastName) => {
+                  await handleUpdateCustomerName(firstName, lastName);
+                  setIsEditingCustomerName(false);
+                }}
                 isSubmitting={updateCustomerNameMutation.isPending}
+                initialFirstName={customer.firstName || ''}
+                initialLastName={customer.lastName || ''}
+                isEditing={isEditingCustomerName}
+                onCancel={() => setIsEditingCustomerName(false)}
               />
             )}
 
-            {/* Show list view if customer has addresses and viewMode is 'list' */}
-            {customer && customer.firstName && customer.lastName && viewMode === 'list' && customer.addresses.length > 0 && (
+            {/* Show list view if customer has addresses and viewMode is 'list' AND not editing name */}
+            {customer && customer.firstName && customer.lastName && !isEditingCustomerName && viewMode === 'list' && customer.addresses.length > 0 && (
               <div>
                 <div className="grid gap-4 mb-6">
                   {customer.addresses.map((address: Address) => (
@@ -699,8 +720,8 @@ export function AddressRegistration() {
               </div>
             )}
 
-            {/* Show form view if viewMode is 'form' or no addresses */}
-            {customer && customer.firstName && customer.lastName && (viewMode === 'form' || customer.addresses.length === 0) && (
+            {/* Show form view if viewMode is 'form' or no addresses AND not editing name */}
+            {customer && customer.firstName && customer.lastName && !isEditingCustomerName && (viewMode === 'form' || customer.addresses.length === 0) && (
               <>
                 {/* Botón para volver a la lista si hay direcciones */}
                 {customer.addresses.length > 0 && (

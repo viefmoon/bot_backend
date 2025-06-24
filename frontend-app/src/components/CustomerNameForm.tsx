@@ -4,11 +4,22 @@ import toast from 'react-hot-toast';
 interface CustomerNameFormProps {
   onSubmit: (firstName: string, lastName: string) => Promise<void>;
   isSubmitting?: boolean;
+  initialFirstName?: string;
+  initialLastName?: string;
+  isEditing?: boolean;
+  onCancel?: () => void;
 }
 
-export function CustomerNameForm({ onSubmit, isSubmitting = false }: CustomerNameFormProps) {
-  const [firstName, setFirstName] = useState('');
-  const [lastName, setLastName] = useState('');
+export function CustomerNameForm({ 
+  onSubmit, 
+  isSubmitting = false,
+  initialFirstName = '',
+  initialLastName = '',
+  isEditing = false,
+  onCancel
+}: CustomerNameFormProps) {
+  const [firstName, setFirstName] = useState(initialFirstName);
+  const [lastName, setLastName] = useState(initialLastName);
   const [errors, setErrors] = useState<{ firstName?: string; lastName?: string }>({});
 
   const validateForm = () => {
@@ -51,10 +62,13 @@ export function CustomerNameForm({ onSubmit, isSubmitting = false }: CustomerNam
           <span className="text-3xl">👤</span>
         </div>
         <h3 className="text-2xl font-bold text-gray-800 mb-2">
-          ¡Casi listo! Solo falta tu nombre
+          {isEditing ? 'Actualizar tu nombre' : '¡Casi listo! Solo falta tu nombre'}
         </h3>
         <p className="text-base text-gray-600 max-w-md mx-auto">
-          <span className="font-semibold text-orange-600">Es necesario completar tu información personal</span> para poder registrar tus direcciones de entrega y procesar tus pedidos.
+          {isEditing 
+            ? 'Modifica tu información personal para mantener tus datos actualizados.'
+            : <><span className="font-semibold text-orange-600">Es necesario completar tu información personal</span> para poder registrar tus direcciones de entrega y procesar tus pedidos.</>
+          }
         </p>
       </div>
       
@@ -105,7 +119,7 @@ export function CustomerNameForm({ onSubmit, isSubmitting = false }: CustomerNam
           )}
         </div>
         
-        <div className="pt-4">
+        <div className="pt-4 space-y-3">
           <button
             type="submit"
             disabled={isSubmitting}
@@ -122,13 +136,24 @@ export function CustomerNameForm({ onSubmit, isSubmitting = false }: CustomerNam
               </div>
             ) : (
               <span className="flex items-center justify-center">
-                Continuar al registro de dirección
+                {isEditing ? 'Guardar cambios' : 'Continuar al registro de dirección'}
                 <svg className="ml-2 w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                 </svg>
               </span>
             )}
           </button>
+          
+          {isEditing && onCancel && (
+            <button
+              type="button"
+              onClick={onCancel}
+              disabled={isSubmitting}
+              className="w-full px-6 py-3 font-semibold text-gray-700 bg-white border-2 border-gray-300 rounded-xl hover:bg-gray-50 transition-colors"
+            >
+              Cancelar
+            </button>
+          )}
         </div>
       </form>
     </div>
