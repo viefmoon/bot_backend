@@ -120,7 +120,7 @@ async function handleOnlinePayment(
       );
     }
 
-    if (order.stripeSessionId || order.paymentStatus === "PENDING") {
+    if (order.stripeSessionId) {
       throw new BusinessLogicError(
         ErrorCode.PAYMENT_LINK_EXISTS,
         'Payment link already exists for this order',
@@ -206,7 +206,7 @@ async function handleOnlinePayment(
                 order.dailyNumber
               } - ${(await getCurrentMexicoTime()).format("DD/MM/YYYY")}`,
             },
-            unit_amount: Math.round(order.totalCost * 100),
+            unit_amount: Math.round(order.total * 100),
           },
           quantity: 1,
         },
@@ -220,7 +220,6 @@ async function handleOnlinePayment(
       where: { id: order.id },
       data: {
         stripeSessionId: session.id,
-        paymentStatus: "PENDING",
       }
     });
 

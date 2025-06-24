@@ -3,6 +3,7 @@ import { Prisma } from '@prisma/client';
 import logger from '../../common/utils/logger';
 import { Customer } from '../../common/types';
 import { BusinessLogicError, ErrorCode } from '../../common/services/errors';
+import { SyncMetadataService } from '../sync/SyncMetadataService';
 
 /**
  * Service for managing customer-related operations
@@ -67,6 +68,9 @@ export class CustomerService {
           data: { whatsappPhoneNumber }
         });
         logger.info(`Created new customer with phone: ${whatsappPhoneNumber}`);
+        
+        // Mark for sync
+        await SyncMetadataService.markForSync('Customer', customer.id, 'REMOTE');
       }
 
       return customer;
@@ -94,6 +98,10 @@ export class CustomerService {
       });
 
       logger.info(`Updated customer ${customerId}:`, data);
+      
+      // Mark for sync
+      await SyncMetadataService.markForSync('Customer', customer.id, 'REMOTE');
+      
       return customer;
     } catch (error) {
       logger.error('Error updating customer:', error);
@@ -119,6 +127,10 @@ export class CustomerService {
       });
 
       logger.info(`Updated customer with phone ${whatsappPhoneNumber}:`, data);
+      
+      // Mark for sync
+      await SyncMetadataService.markForSync('Customer', customer.id, 'REMOTE');
+      
       return customer;
     } catch (error) {
       logger.error('Error updating customer by phone:', error);
@@ -135,7 +147,7 @@ export class CustomerService {
    */
   static async banCustomer(whatsappPhoneNumber: string, reason?: string): Promise<void> {
     try {
-      await prisma.customer.update({
+      const customer = await prisma.customer.update({
         where: { whatsappPhoneNumber },
         data: { 
           isBanned: true,
@@ -146,6 +158,9 @@ export class CustomerService {
       });
 
       logger.warn(`Customer with phone ${whatsappPhoneNumber} has been banned. Reason: ${reason || 'Not specified'}`);
+      
+      // Mark for sync
+      await SyncMetadataService.markForSync('Customer', customer.id, 'REMOTE');
     } catch (error) {
       logger.error('Error banning customer:', error);
       throw new BusinessLogicError(
@@ -161,7 +176,7 @@ export class CustomerService {
    */
   static async unbanCustomer(whatsappPhoneNumber: string): Promise<void> {
     try {
-      await prisma.customer.update({
+      const customer = await prisma.customer.update({
         where: { whatsappPhoneNumber },
         data: { 
           isBanned: false,
@@ -172,6 +187,9 @@ export class CustomerService {
       });
 
       logger.info(`Customer with phone ${whatsappPhoneNumber} has been unbanned`);
+      
+      // Mark for sync
+      await SyncMetadataService.markForSync('Customer', customer.id, 'REMOTE');
     } catch (error) {
       logger.error('Error unbanning customer:', error);
       throw new BusinessLogicError(

@@ -79,6 +79,7 @@ model Category {
   description  String?
   isActive     Boolean       @default(true)
   photoId      String?
+  sortOrder    Int           @default(0)
   createdAt    DateTime      @default(now())
   updatedAt    DateTime      @updatedAt
   deletedAt    DateTime?
@@ -103,8 +104,6 @@ model Customer {
   bannedAt            DateTime?
   banReason           String?              @db.Text
   deletedAt           DateTime?            // Soft delete
-  lastSyncAt          DateTime?            // Last sync timestamp
-  syncVersion         Int                  @default(0) // For optimistic locking
   createdAt           DateTime             @default(now())
   updatedAt           DateTime             @updatedAt
   addresses           Address[]            // One-to-Many relationship
@@ -112,7 +111,6 @@ model Customer {
   
   @@index([whatsappPhoneNumber])
   @@index([email])
-  @@index([lastSyncAt])
 }
 
 // Customer addresses (1:N relationship)
@@ -157,7 +155,7 @@ model MessageRateLimit {
 
 model ProductModifier {
   id               String             @id
-  groupId          String
+  modifierGroupId  String
   name             String
   description      String?
   price            Float?
@@ -167,7 +165,7 @@ model ProductModifier {
   createdAt        DateTime           @default(now())
   updatedAt        DateTime           @updatedAt
   deletedAt        DateTime?
-  modifierGroup    ModifierGroup      @relation(fields: [groupId], references: [id])
+  modifierGroup    ModifierGroup      @relation(fields: [modifierGroupId], references: [id])
   orderItems       OrderItem[]        @relation("OrderItemProductModifiers")
 }
 
@@ -180,34 +178,35 @@ model ModifierGroup {
   isRequired              Boolean           @default(false)
   allowMultipleSelections Boolean           @default(false)
   isActive                Boolean           @default(true)
-  productId               String
+  sortOrder               Int               @default(0)
   createdAt               DateTime          @default(now())
   updatedAt               DateTime          @updatedAt
   deletedAt               DateTime?
-  product                 Product           @relation(fields: [productId], references: [id])
+  products                Product[]         @relation("ProductModifierGroups")
   productModifiers        ProductModifier[]
 }
 
 model Order {
   id                   String            @id @default(uuid()) @db.Uuid
-  dailyNumber          Int
+  dailyNumber          Int?
   orderType            OrderType
   orderStatus          OrderStatus       @default(PENDING)
-  paymentStatus        PaymentStatus?
-  totalCost            Float
+  subtotal             Float             @default(0)
+  total                Float             @default(0)
   customerId           String            @db.Uuid
-  estimatedTime        Int               @default(0)
+  estimatedDeliveryTime DateTime?
   scheduledAt          DateTime?
+  notes                String?
   messageId            String?
   stripeSessionId      String?
-  syncedWithLocal      Boolean           @default(false)
   isFromWhatsApp       Boolean           @default(true)
   // Additional relations for local backend compatibility
-  dailyCounterId       String?           @db.Uuid
+  dailyOrderCounterId  String?           @db.Uuid
   userId               String?           @db.Uuid
   tableId              String?           @db.Uuid
   createdAt            DateTime          @default(now())
   updatedAt            DateTime          @updatedAt
+  deletedAt            DateTime?
   // Relations
   orderItems           OrderItem[]
   deliveryInfo         DeliveryInfo?
@@ -215,10 +214,11 @@ model Order {
   payments             Payment[]
   ticketImpressions    TicketImpression[]
   adjustments          Adjustment[]
-  dailyCounter         DailyCounter?     @relation(fields: [dailyCounterId], references: [id])
+  dailyOrderCounter    DailyOrderCounter? @relation(fields: [dailyOrderCounterId], references: [id])
   table                Table?            @relation(fields: [tableId], references: [id])
+  user                 User?             @relation(fields: [userId], references: [id])
   
-  @@index([dailyCounterId])
+  @@index([dailyOrderCounterId])
   @@index([tableId])
   @@index([userId])
 }
@@ -253,7 +253,8 @@ model DeliveryInfo {
 
 model OrderItem {
   id                    String                     @id @default(uuid()) @db.Uuid
-  orderId               String                     @db.Uuid
+  orderId               String?                    @db.Uuid
+  preOrderId            Int?
   productId             String
   productVariantId      String?
   basePrice             Float
@@ -264,11 +265,16 @@ model OrderItem {
   createdAt             DateTime                   @default(now())
   updatedAt             DateTime                   @updatedAt
   deletedAt             DateTime?
-  order                 Order                      @relation(fields: [orderId], references: [id])
+  order                 Order?                     @relation(fields: [orderId], references: [id])
+  preOrder              PreOrder?                  @relation(fields: [preOrderId], references: [id])
   product               Product                    @relation(fields: [productId], references: [id])
   productVariant        ProductVariant?            @relation(fields: [productVariantId], references: [id])
   productModifiers      ProductModifier[]          @relation("OrderItemProductModifiers")
   selectedPizzaCustomizations SelectedPizzaCustomization[]
+  adjustments           Adjustment[]
+  
+  @@index([orderId])
+  @@index([preOrderId])
 }
 
 // Nueva estructura para personalización de pizzas
@@ -282,6 +288,7 @@ model PizzaCustomization {
   sortOrder             Int                          @default(0)
   createdAt             DateTime                     @default(now())
   updatedAt             DateTime                     @updatedAt
+  deletedAt             DateTime?
   products              Product[]                    @relation("ProductPizzaCustomizations")
   selectedPizzaCustomizations SelectedPizzaCustomization[]
 }
@@ -293,18 +300,26 @@ model PizzaConfiguration {
   product               Product  @relation(fields: [productId], references: [id])
   includedToppings      Int      @default(4)      // Valor de toppings incluidos en precio base
   extraToppingCost      Float    @default(20)     // Costo por topping adicional
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+  deletedAt             DateTime?
 }
 
 model PreOrder {
   id                    Int                @id @default(autoincrement())
-  orderItems            Json
   orderType             OrderType
+  estimatedDeliveryTime Int                @default(0)
   scheduledAt           DateTime?
+  notes                 String?
+  subtotal              Float              @default(0)
+  total                 Float              @default(0)
   whatsappPhoneNumber   String             // Store WhatsApp phone number instead of customerId
   messageId             String?
   createdAt             DateTime           @default(now())
   updatedAt             DateTime           @updatedAt
+  orderItems            OrderItem[]
   deliveryInfo          DeliveryInfo?
+  adjustments           Adjustment[]
   
   @@index([whatsappPhoneNumber])
 }
@@ -321,6 +336,7 @@ model Product {
   preparationScreenId  String?
   photoId              String?
   estimatedPrepTime    Int                 @default(0)
+  sortOrder            Int                 @default(0)
   createdAt            DateTime            @default(now())
   updatedAt            DateTime            @updatedAt
   deletedAt            DateTime?
@@ -328,7 +344,7 @@ model Product {
   embedding            Unsupported("vector(768)")?
   subcategory          Subcategory         @relation(fields: [subcategoryId], references: [id])
   variants             ProductVariant[]
-  modifierGroups       ModifierGroup[]
+  modifierGroups       ModifierGroup[]     @relation("ProductModifierGroups")
   pizzaConfiguration   PizzaConfiguration?
   pizzaCustomizations  PizzaCustomization[] @relation("ProductPizzaCustomizations")
   orderItems           OrderItem[]
@@ -340,6 +356,7 @@ model ProductVariant {
   name        String
   price       Float
   isActive    Boolean     @default(true)
+  sortOrder   Int         @default(0)
   createdAt   DateTime    @default(now())
   updatedAt   DateTime    @updatedAt
   deletedAt   DateTime?
@@ -408,6 +425,7 @@ model Subcategory {
   description String?
   isActive    Boolean   @default(true)
   photoId     String?
+  sortOrder   Int       @default(0)
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
   deletedAt   DateTime?
@@ -417,18 +435,16 @@ model Subcategory {
 
 // Sync tracking between local and cloud backends
 model SyncLog {
-  id            Int       @id @default(autoincrement())
-  entityType    String    // 'customer', 'order', etc.
-  entityId      String    // Entity UUID
-  action        String    // 'create', 'update', 'delete'
-  syncDirection String    // 'local_to_cloud' or 'cloud_to_local'
-  syncStatus    String    // 'pending', 'success', 'failed'
-  errorMessage  String?   @db.Text
-  createdAt     DateTime  @default(now())
-  completedAt   DateTime?
+  id              String    @id @default(uuid())
+  syncType        String    // MENU_PULL | ORDERS_PUSH | CUSTOMERS_SYNC
+  recordsAffected Int       @default(0)
+  status          String    // SUCCESS | FAILED
+  error           String?   @db.Text
+  startedAt       DateTime  @default(now())
+  completedAt     DateTime?
   
-  @@index([entityType, entityId])
-  @@index([syncStatus])
+  @@index([syncType])
+  @@index([status])
 }
 
 // Payment tracking for orders
@@ -437,20 +453,22 @@ model Payment {
   orderId       String         @db.Uuid
   paymentMethod PaymentMethod  @default(CASH)
   amount        Decimal        @db.Decimal(10, 2)
-  paymentStatus PaymentStatus  @default(PENDING)
+  status        PaymentStatus  @default(PENDING)
+  stripePaymentId String?      // Stripe payment intent ID
+  metadata      Json?          // Additional payment metadata
   createdAt     DateTime       @default(now())
   updatedAt     DateTime       @updatedAt
   deletedAt     DateTime?
   order         Order          @relation(fields: [orderId], references: [id])
   
   @@index([orderId])
-  @@index([paymentStatus])
+  @@index([status])
 }
 
 // Placeholder models for local backend compatibility
 // These models are defined but may not be actively used in the WhatsApp bot context
 
-model DailyCounter {
+model DailyOrderCounter {
   id            String         @id @default(uuid()) @db.Uuid
   date          DateTime       @db.Date
   counter       Int            @default(0)
@@ -471,6 +489,19 @@ model Table {
   orders        Order[]
 }
 
+model User {
+  id            String         @id @default(uuid()) @db.Uuid
+  username      String         @unique
+  email         String?        @unique
+  firstName     String?
+  lastName      String?
+  isActive      Boolean        @default(true)
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  deletedAt     DateTime?
+  orders        Order[]
+}
+
 model TicketImpression {
   id            String         @id @default(uuid()) @db.Uuid
   orderId       String         @db.Uuid
@@ -483,13 +514,49 @@ model TicketImpression {
 
 model Adjustment {
   id            String         @id @default(uuid()) @db.Uuid
-  orderId       String         @db.Uuid
+  orderId       String?        @db.Uuid
+  preOrderId    Int?
+  orderItemId   String?        @db.Uuid
   type          String         // e.g., "discount", "surcharge", "tip"
   amount        Decimal        @db.Decimal(10, 2)
   reason        String?
   appliedBy     String?        // User who applied the adjustment
   createdAt     DateTime       @default(now())
-  order         Order          @relation(fields: [orderId], references: [id])
+  updatedAt     DateTime       @updatedAt
+  deletedAt     DateTime?
+  order         Order?         @relation(fields: [orderId], references: [id])
+  preOrder      PreOrder?      @relation(fields: [preOrderId], references: [id])
+  orderItem     OrderItem?     @relation(fields: [orderItemId], references: [id])
   
   @@index([orderId])
+  @@index([preOrderId])
+  @@index([orderItemId])
+}
+
+// Simple sync configuration
+model SyncConfig {
+  id              String    @id @default(uuid())
+  apiKey          String    @unique // Key that LOCAL uses to connect
+  apiKeyHash      String    // Hash for validation
+  lastSyncAt      DateTime?
+  isActive        Boolean   @default(true)
+  createdAt       DateTime  @default(now())
+}
+
+// Sync metadata for all entities
+model SyncMetadata {
+  id              String    @id @default(uuid())
+  entityType      String    // Customer | Order | Address | Product | etc
+  entityId        String    // UUID of the entity
+  lastModifiedAt  DateTime  @updatedAt
+  modifiedBy      String    @default("REMOTE") // LOCAL | REMOTE
+  syncPending     Boolean   @default(false)
+  syncVersion     Int       @default(1)
+  metadata        Json?     // Additional sync data if needed
+  createdAt       DateTime  @default(now())
+  
+  @@unique([entityType, entityId])
+  @@index([syncPending, entityType])
+  @@index([lastModifiedAt])
+  @@index([entityId])
 }

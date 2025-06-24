@@ -6,6 +6,8 @@ import { OrderService } from "../OrderService";
 import { CreateOrderDto } from "../dto/create-order.dto";
 import { sendWhatsAppMessage, WhatsAppService } from "../../whatsapp";
 import { OrderFormattingService } from "./OrderFormattingService";
+import { extractBaseOrderItem, CalculatedOrderItem } from "../../../common/types";
+import { SyncMetadataService } from "../../sync/SyncMetadataService";
 
 export class OrderManagementService {
   private orderService: OrderService;
@@ -22,6 +24,18 @@ export class OrderManagementService {
       where: { id: preOrderId },
       include: {
         deliveryInfo: true,
+        orderItems: {
+          include: {
+            product: true,
+            productVariant: true,
+            productModifiers: true,
+            selectedPizzaCustomizations: {
+              include: {
+                pizzaCustomization: true
+              }
+            }
+          }
+        }
       },
     });
 
@@ -33,14 +47,17 @@ export class OrderManagementService {
       );
     }
 
-    // Build order items from preOrder.orderItems JSON
-    const orderItems = (preOrder.orderItems as any[]).map((item) => ({
+    // Build order items from preOrder.orderItems relation
+    const orderItems = preOrder.orderItems.map(item => ({
       productId: item.productId,
       productVariantId: item.productVariantId,
-      quantity: item.quantity,
-      comments: item.comments,
-      selectedModifiers: item.selectedModifiers || [],
-      selectedPizzaCustomizations: item.selectedPizzaCustomizations || [],
+      selectedModifiers: item.productModifiers.map(m => m.id),
+      selectedPizzaCustomizations: item.selectedPizzaCustomizations.map(sc => ({
+        pizzaCustomizationId: sc.pizzaCustomizationId,
+        half: sc.half,
+        action: sc.action
+      })),
+      quantity: 1
     }));
 
     // Build delivery info if exists
@@ -78,11 +95,27 @@ export class OrderManagementService {
       );
     }
 
+    // Transform BaseOrderItem[] to match OrderItemDto[]
+    const orderItemsDto = orderItems.map(item => ({
+      productId: item.productId,
+      productVariantId: item.productVariantId || undefined, // Convert null to undefined
+      quantity: item.quantity,
+      comments: undefined, // Comments not supported in current flow
+      selectedModifiers: item.selectedModifiers || [],
+      selectedPizzaCustomizations: (item.selectedPizzaCustomizations || []).map(pc => ({
+        pizzaCustomizationId: pc.pizzaCustomizationId,
+        half: pc.half,
+        action: pc.action
+      }))
+    }));
+
     const orderData: CreateOrderDto = {
-      orderItems,
+      orderItems: orderItemsDto,
       whatsappPhoneNumber: customer.whatsappPhoneNumber,
       orderType: preOrder.orderType,
       scheduledAt: preOrder.scheduledAt ? preOrder.scheduledAt.toISOString() : undefined,
+      subtotal: preOrder.subtotal,
+      total: preOrder.total,
       ...(deliveryInfo ? { deliveryInfo: deliveryInfo } : {}),
     };
 
@@ -93,6 +126,18 @@ export class OrderManagementService {
     await prisma.preOrder.delete({ where: { id: preOrderId } });
 
     logger.info(`PreOrder ${preOrderId} converted to Order ${order.id}`);
+    
+    // Mark order for sync
+    await SyncMetadataService.markForSync('Order', order.id, 'REMOTE');
+    
+    // Notify local backends about new order via WebSocket
+    try {
+      const { SyncNotificationService } = await import('../../sync/SyncNotificationService');
+      await SyncNotificationService.notifyNewOrder(order.id);
+    } catch (error) {
+      logger.warn('Could not notify sync service about new order:', error);
+    }
+    
     return order;
   }
 
@@ -123,6 +168,10 @@ export class OrderManagementService {
     });
 
     logger.info(`Order ${orderId} cancelled successfully`);
+    
+    // Mark order for sync after status change
+    await SyncMetadataService.markForSync('Order', orderId, 'REMOTE');
+    
     return cancelledOrder;
   }
 
@@ -194,7 +243,7 @@ export class OrderManagementService {
   }
 
   /**
-   * Send order confirmation with details and action buttons
+   * Send order confirmation with details and action buttons in a single message
    */
   async sendOrderConfirmation(
     whatsappNumber: string,
@@ -206,6 +255,7 @@ export class OrderManagementService {
       const fullOrder = await prisma.order.findUnique({
         where: { id: orderId },
         include: {
+          customer: true,
           orderItems: {
             include: {
               product: true,
@@ -228,23 +278,50 @@ export class OrderManagementService {
         );
       }
 
-      // Format order for display
-      const formattedOrder = OrderFormattingService.formatOrderForWhatsApp(fullOrder, whatsappNumber);
-      const orderSummary = OrderFormattingService.generateConfirmationMessage(fullOrder, formattedOrder);
-      
-      // Send confirmation message
-      await sendWhatsAppMessage(whatsappNumber, orderSummary);
-
       // Update messageId for tracking
       const newMessageId = `order_${fullOrder.id}_${Date.now()}`;
       await this.updateOrderMessageId(fullOrder.id, newMessageId);
 
-      // Send action buttons if order is in appropriate status
-      await this.sendOrderActionButtons(
-        whatsappNumber,
-        fullOrder.messageId || newMessageId,
-        fullOrder.orderStatus
-      );
+      // Format order for display
+      const formattedOrder = OrderFormattingService.formatOrderForWhatsApp(fullOrder, whatsappNumber);
+      const orderSummary = OrderFormattingService.generateConfirmationMessage(fullOrder, formattedOrder);
+      
+      // Send confirmation message with action buttons in a single interactive message
+      if (fullOrder.orderStatus === "PENDING" || fullOrder.orderStatus === "IN_PROGRESS") {
+        const message = {
+          type: "button",
+          header: {
+            type: "text",
+            text: "✅ Orden Confirmada",
+          },
+          body: {
+            text: orderSummary,
+          },
+          action: {
+            buttons: [
+              {
+                type: "reply",
+                reply: {
+                  id: "cancel_order",
+                  title: "❌ Cancelar orden",
+                },
+              },
+              {
+                type: "reply",
+                reply: {
+                  id: "pay_online",
+                  title: "💳 Pagar en línea",
+                },
+              },
+            ],
+          },
+        };
+
+        await WhatsAppService.sendInteractiveMessage(whatsappNumber, message, fullOrder.messageId || newMessageId);
+      } else {
+        // For other statuses, just send the confirmation message without buttons
+        await sendWhatsAppMessage(whatsappNumber, orderSummary);
+      }
     } catch (error) {
       logger.error('Error sending order confirmation:', error);
       throw error;
@@ -284,7 +361,7 @@ export class OrderManagementService {
                 type: "reply",
                 reply: {
                   id: "pay_online",
-                  title: "💳 Generar enlace de pago",
+                  title: "💳 Pagar en línea",
                 },
               },
             ],

@@ -108,5 +108,15 @@ export const ERROR_MESSAGES: Record<ErrorCode, ErrorMessageConfig> = {
   [ErrorCode.RATE_LIMIT_EXCEEDED]: {
     user: "⏳ Has alcanzado el límite de mensajes. Por favor espera unos minutos antes de enviar más mensajes.",
     log: "Rate limit exceeded"
+  },
+  
+  [ErrorCode.AUTHENTICATION_REQUIRED]: {
+    user: 'Authentication required',
+    log: 'Missing authentication credentials'
+  },
+  
+  [ErrorCode.INVALID_CREDENTIALS]: {
+    user: 'Invalid credentials',
+    log: 'Invalid or expired authentication credentials'
   }
 };

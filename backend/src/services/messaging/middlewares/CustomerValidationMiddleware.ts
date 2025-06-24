@@ -4,6 +4,7 @@ import { prisma } from '../../../server';
 import { sendWhatsAppMessage } from '../../whatsapp';
 import { BANNED_USER_MESSAGE } from '../../../common/config/predefinedMessages';
 import { ConfigService } from '../../../services/config/ConfigService';
+import { SyncMetadataService } from '../../../services/sync/SyncMetadataService';
 import logger from '../../../common/utils/logger';
 
 export class CustomerValidationMiddleware implements MessageMiddleware {
@@ -48,6 +49,9 @@ export class CustomerValidationMiddleware implements MessageMiddleware {
           },
           include: { addresses: true }
         });
+        
+        // Mark for sync
+        await SyncMetadataService.markForSync('Customer', customer.id, 'REMOTE');
         
         // Marcar como cliente nuevo para mensaje de bienvenida
         context.set('isNewCustomer', true);

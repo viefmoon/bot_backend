@@ -1,32 +1,35 @@
 import { prisma } from "../../../server";
 import { ValidationError, ErrorCode } from "../../../common/services/errors";
 import logger from "../../../common/utils/logger";
-import { OrderItemInput, CalculatedItem } from "../../../common/types";
+import { BaseOrderItem, CalculatedOrderItem } from "../../../common/types";
 
 export class ProductCalculationService {
   /**
    * Calculate items and prices for an order
    */
-  static async calculateOrderItems(orderItems: OrderItemInput[]): Promise<{
-    items: CalculatedItem[];
-    totalCost: number;
+  static async calculateOrderItems(orderItems: BaseOrderItem[]): Promise<{
+    items: CalculatedOrderItem[];
+    subtotal: number;
+    total: number;
   }> {
     const calculatedItems = await Promise.all(
       orderItems.map(async (item) => await this.calculateSingleItem(item))
     );
 
-    const totalCost = calculatedItems.reduce((sum, item) => sum + item.itemPrice, 0);
+    const subtotal = calculatedItems.reduce((sum, item) => sum + item.totalPrice, 0);
+    const total = subtotal; // For now, total = subtotal. Can add taxes, fees, etc. later
 
     return {
       items: calculatedItems,
-      totalCost
+      subtotal,
+      total
     };
   }
 
   /**
    * Calculate a single order item
    */
-  private static async calculateSingleItem(item: OrderItemInput): Promise<CalculatedItem> {
+  private static async calculateSingleItem(item: BaseOrderItem): Promise<CalculatedOrderItem> {
     logger.info("Processing item:", JSON.stringify(item, null, 2));
 
     let product, productVariant;
@@ -118,15 +121,40 @@ export class ProductCalculationService {
     
     logger.info(`Final item price after quantity (${item.quantity}): ${itemPrice}`);
 
-    return {
-      product,
-      productVariant,
+    // At this point, product is guaranteed to exist due to validation above
+    if (!product) {
+      throw new ValidationError(ErrorCode.INVALID_PRODUCT, 'Product not found');
+    }
+
+    // Build the calculated item with only necessary data
+    const calculatedItem: CalculatedOrderItem = {
+      productId: product.id,
+      productVariantId: productVariant?.id || null,
       quantity: item.quantity,
-      itemPrice,
       comments: item.comments,
-      modifiers: modifiers.items,
-      pizzaCustomizations: customizations
+      selectedModifiers: item.selectedModifiers,
+      selectedPizzaCustomizations: item.selectedPizzaCustomizations,
+      // Pricing information
+      basePrice: productVariant?.price || product.price || 0,
+      modifiersPrice: modifiers.totalPrice,
+      unitPrice: (productVariant?.price || product.price || 0) + modifiers.totalPrice + extraCost,
+      totalPrice: itemPrice,
+      // Display information
+      productName: product.name,
+      variantName: productVariant?.name || null,
+      // Add modifier names for display
+      modifierNames: modifiers.items.map((mod: any) => mod.name),
+      // Add pizza customization details for display
+      pizzaCustomizationDetails: customizations.map((cust: any) => ({
+        pizzaCustomizationId: cust.id,
+        name: cust.name,
+        type: cust.type,
+        half: item.selectedPizzaCustomizations?.find(sc => sc.pizzaCustomizationId === cust.id)?.half || 'FULL',
+        action: item.selectedPizzaCustomizations?.find(sc => sc.pizzaCustomizationId === cust.id)?.action || 'ADD'
+      }))
     };
+
+    return calculatedItem;
   }
 
   /**

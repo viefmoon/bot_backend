@@ -182,7 +182,29 @@ app.post('/backend/pre-orders/create',
   validationMiddleware(CreateOrderDto),
   asyncHandler(async (req: Request, res: Response) => {
     const preOrderService = new PreOrderService();
-    const result = await preOrderService.createPreOrder(req.body as CreateOrderDto);
+    const dto = req.body as CreateOrderDto;
+    
+    // Transform DTO to match PreOrderService expectations
+    const orderData = {
+      orderItems: dto.orderItems.map(item => ({
+        productId: item.productId,
+        productVariantId: item.productVariantId || null,
+        quantity: item.quantity,
+        comments: item.comments,
+        selectedModifiers: item.selectedModifiers,
+        selectedPizzaCustomizations: item.selectedPizzaCustomizations.map(pc => ({
+          pizzaCustomizationId: pc.pizzaCustomizationId,
+          half: pc.half as "FULL" | "HALF_1" | "HALF_2",
+          action: pc.action as "ADD" | "REMOVE"
+        }))
+      })),
+      whatsappPhoneNumber: dto.whatsappPhoneNumber,
+      orderType: dto.orderType,
+      scheduledAt: dto.scheduledAt,
+      deliveryInfo: dto.deliveryInfo
+    };
+    
+    const result = await preOrderService.createPreOrder(orderData);
   res.status(200).json(result);
 }));
 
@@ -231,9 +253,23 @@ async function startServer() {
     await initializeEmbeddings();
     scheduleEmbeddingUpdates();
     
-    app.listen(PORT, () => {
+    const server = app.listen(PORT, () => {
       logger.info(`Server is running on port ${PORT}`);
     });
+    
+    // Initialize WebSocket for sync notifications
+    const io = await import('socket.io');
+    const socketServer = new io.Server(server, {
+      cors: {
+        origin: '*', // Configure this properly in production
+        methods: ['GET', 'POST']
+      },
+      path: '/socket.io/'
+    });
+    
+    const { SyncNotificationService } = await import('./services/sync/SyncNotificationService');
+    SyncNotificationService.initialize(socketServer);
+    logger.info('WebSocket server initialized for sync notifications');
   } catch (error) {
     logger.error('Failed to start server:', error);
     process.exit(1);

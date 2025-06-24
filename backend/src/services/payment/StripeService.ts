@@ -102,17 +102,31 @@ export class StripeService {
     try {
       logger.info('Checkout session completed:', session.id);
       
-      // Update order payment status
+      // Update order with stripe session ID
       if (session.metadata?.orderId) {
         await prisma.order.update({
           where: { id: session.metadata.orderId },
           data: {
-            paymentStatus: 'PAID',
             stripeSessionId: session.id
           }
         });
         
-        logger.info(`Order ${session.metadata.orderId} marked as paid`);
+        // Create payment record
+        await prisma.payment.create({
+          data: {
+            orderId: session.metadata.orderId,
+            amount: session.amount_total! / 100, // Convert from cents
+            paymentMethod: 'CREDIT_CARD',
+            status: 'PAID',
+            stripePaymentId: session.payment_intent as string,
+            metadata: {
+              sessionId: session.id,
+              customerEmail: session.customer_details?.email
+            }
+          }
+        });
+        
+        logger.info(`Order ${session.metadata.orderId} payment recorded`);
       }
     } catch (error) {
       logger.error('Error handling completed checkout:', error);

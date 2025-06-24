@@ -70,7 +70,6 @@ export class GeminiService {
       // Agregar toolConfig si se proporciona
       if (toolConfig) {
         config.toolConfig = toolConfig;
-        logger.debug(`Tool Config: ${JSON.stringify(toolConfig, null, 2)}`);
       }
       
       const response = await client.models.generateContent({
@@ -79,7 +78,50 @@ export class GeminiService {
         config,
       });
       
-      logger.debug('Raw Gemini response:', JSON.stringify(response, null, 2));
+      // El problema es que response no es serializable directamente con JSON.stringify
+      // Vamos a extraer solo las partes importantes para el debug
+      // Intentar múltiples formas de loggear la respuesta
+      logger.debug('Response object exists:', !!response);
+      logger.debug('Response type:', typeof response);
+      
+      // Método 1: Intentar con util.inspect
+      try {
+        const util = require('util');
+        logger.debug('Raw Gemini response (inspect):', util.inspect(response, { depth: 4, colors: false }));
+      } catch (e1) {
+        logger.debug('Could not use util.inspect');
+      }
+      
+      // Método 2: Intentar acceder directamente a las propiedades
+      try {
+        if (response?.candidates?.[0]) {
+          const candidate = response.candidates[0];
+          logger.debug('Candidate content:', {
+            role: candidate.content?.role,
+            partsCount: candidate.content?.parts?.length,
+            firstPart: candidate.content?.parts?.[0]
+          });
+        }
+      } catch (e2) {
+        logger.debug('Could not access candidate properties');
+      }
+      
+      // Método 3: Intentar JSON.stringify con reemplazador
+      try {
+        const seen = new WeakSet();
+        const debugResponse = JSON.stringify(response, (key, value) => {
+          if (typeof value === 'object' && value !== null) {
+            if (seen.has(value)) {
+              return '[Circular]';
+            }
+            seen.add(value);
+          }
+          return value;
+        }, 2);
+        logger.debug('Raw Gemini response (JSON):', debugResponse);
+      } catch (e3) {
+        logger.debug('Could not JSON.stringify response');
+      }
       
       return response;
     } catch (error) {

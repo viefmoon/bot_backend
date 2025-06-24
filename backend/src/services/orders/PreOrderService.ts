@@ -6,17 +6,18 @@ import { DeliveryInfoService } from "./services/DeliveryInfoService";
 import { RestaurantService } from "../restaurant/RestaurantService";
 import { OrderType } from "@prisma/client";
 import { ValidationError, ErrorCode } from "../../common/services/errors";
+import { BaseOrderItem, DeliveryInfoInput } from "../../common/types";
 
 export class PreOrderService {
   /**
    * Create a preorder with selected products
    */
   async createPreOrder(orderData: {
-    orderItems: any[];
+    orderItems: BaseOrderItem[];
     whatsappPhoneNumber: string;
     orderType: OrderType;
     scheduledAt?: string | Date;
-    deliveryInfo?: any;
+    deliveryInfo?: DeliveryInfoInput;
   }) {
     const { orderItems, whatsappPhoneNumber, orderType, scheduledAt, deliveryInfo: inputDeliveryInfo } = orderData;
 
@@ -44,6 +45,11 @@ export class PreOrderService {
       
       // Get restaurant config
       const config = await RestaurantService.getConfig();
+      
+      // Calculate estimated time based on order type
+      const estimatedDeliveryTime = orderType === 'DELIVERY' 
+        ? config.estimatedDeliveryTime 
+        : config.estimatedPickupTime;
 
       // Convert OrderType enum to string
       const orderTypeString = orderType === 'DELIVERY' ? 'delivery' : orderType === 'TAKE_AWAY' ? 'pickup' : 'pickup';
@@ -68,8 +74,8 @@ export class PreOrderService {
         );
       }
 
-      // Calculate items and total cost
-      const { items: calculatedItems, totalCost } = await ProductCalculationService.calculateOrderItems(
+      // Calculate items and totals
+      const { items: calculatedItems, subtotal, total } = await ProductCalculationService.calculateOrderItems(
         orderItems
       );
 
@@ -77,7 +83,7 @@ export class PreOrderService {
       const preOrderData: any = {
         whatsappPhoneNumber,
         orderType,
-        orderItems: JSON.parse(JSON.stringify(calculatedItems)), // Convert to JSON-compatible format
+        estimatedDeliveryTime,
       };
       
       // Only add scheduledAt if it exists and is valid
@@ -90,12 +96,49 @@ export class PreOrderService {
         orderType: preOrderData.orderType,
         scheduledAt: preOrderData.scheduledAt,
         itemCount: calculatedItems.length,
-        totalCost
+        subtotal,
+        total
       });
       
-      // Create pre-order
+      // Create pre-order with related order items and calculated totals
       const preOrder = await prisma.preOrder.create({
-        data: preOrderData,
+        data: {
+          ...preOrderData,
+          subtotal,
+          total,
+          orderItems: {
+            create: calculatedItems.map(item => ({
+              productId: item.productId,
+              productVariantId: item.productVariantId,
+              basePrice: item.basePrice,
+              finalPrice: item.totalPrice,
+              productModifiers: item.selectedModifiers && item.selectedModifiers.length > 0 ? {
+                connect: item.selectedModifiers.map(modId => ({ id: modId }))
+              } : undefined,
+              selectedPizzaCustomizations: item.selectedPizzaCustomizations && item.selectedPizzaCustomizations.length > 0 ? {
+                create: item.selectedPizzaCustomizations.map(customization => ({
+                  pizzaCustomizationId: customization.pizzaCustomizationId,
+                  half: customization.half,
+                  action: customization.action
+                }))
+              } : undefined
+            }))
+          }
+        },
+        include: {
+          orderItems: {
+            include: {
+              product: true,
+              productVariant: true,
+              productModifiers: true,
+              selectedPizzaCustomizations: {
+                include: {
+                  pizzaCustomization: true
+                }
+              }
+            }
+          }
+        }
       });
 
       logger.info(`Created pre-order ${preOrder.id} for phone ${whatsappPhoneNumber}`, {
@@ -116,15 +159,32 @@ export class PreOrderService {
         }
       }
 
+      // Format order items from the created preOrder
+      const formattedItems = preOrder.orderItems.map(item => ({
+        ...item,
+        productName: item.product.name,
+        variantName: item.productVariant?.name,
+        modifierNames: item.productModifiers.map(m => m.name),
+        pizzaCustomizationDetails: item.selectedPizzaCustomizations.map(sc => ({
+          pizzaCustomizationId: sc.pizzaCustomizationId,
+          name: sc.pizzaCustomization.name,
+          type: sc.pizzaCustomization.type,
+          half: sc.half,
+          action: sc.action
+        })),
+        quantity: 1, // Quantity is always 1 per item in our current model
+        totalPrice: item.finalPrice
+      }));
+
       return {
         preOrderId: preOrder.id,
         orderType,
-        items: calculatedItems,
-        total: totalCost,
+        items: formattedItems,
+        subtotal: preOrder.subtotal,
+        total: preOrder.total,
         deliveryInfo,
         scheduledAt: validatedScheduledTime,
-        estimatedPickupTime: config.estimatedPickupTime,
-        estimatedDeliveryTime: config.estimatedDeliveryTime,
+        estimatedDeliveryTime: estimatedDeliveryTime,
       };
     } catch (error) {
       logger.error("Error in createPreOrder:", error);

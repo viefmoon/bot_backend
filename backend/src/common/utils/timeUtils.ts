@@ -206,37 +206,6 @@ export async function getBusinessStatus(): Promise<{
   }
 }
 
-export async function getNextDailyOrderNumber(): Promise<number> {
-  try {
-    // Obtener la fecha actual en la zona horaria del restaurante
-    const timeZone = await getTimeZone();
-    const todayInMexico = moment.tz(timeZone);
-
-    // Definir el inicio y fin del día en UTC
-    const startOfDayUTC = todayInMexico.clone().startOf("day").utc();
-    const endOfDayUTC = todayInMexico.clone().endOf("day").utc();
-
-    const lastOrder = await prisma.order.findFirst({
-      where: {
-        createdAt: {
-          gte: startOfDayUTC.toDate(),
-          lt: endOfDayUTC.toDate(),
-        },
-      },
-      orderBy: {
-        dailyNumber: "desc"
-      },
-    });
-
-    return lastOrder ? lastOrder.dailyNumber + 1 : 1;
-  } catch (error) {
-    logger.error(
-      "Error al obtener el siguiente número de orden diaria:",
-      error
-    );
-    throw error;
-  }
-}
 
 export async function getMexicoDayRange(dateString: string): Promise<{
   startDate: Date;

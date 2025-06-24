@@ -65,6 +65,7 @@ export interface OrderCreationResult {
 export interface PreOrderCreationResult {
   preOrderId: number;
   products: any[];
-  totalCost: number;
-  estimatedTime: number;
+  subtotal: number;
+  total: number;
+  estimatedDeliveryTime: number;
 }

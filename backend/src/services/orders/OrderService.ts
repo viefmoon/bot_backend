@@ -3,6 +3,7 @@ import { PizzaHalf, CustomizationAction } from '@prisma/client';
 import { CreateOrderDto } from './dto/create-order.dto';
 import logger from '../../common/utils/logger';
 import { NotFoundError, ErrorCode } from '../../common/services/errors';
+import { SyncMetadataService } from '../sync/SyncMetadataService';
 
 export class OrderService {
   async create(createOrderDto: CreateOrderDto) {
@@ -20,44 +21,33 @@ export class OrderService {
         );
       }
       
-      // Generar el número de orden diario
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-      
-      const lastOrder = await prisma.order.findFirst({
-        where: {
-          createdAt: {
-            gte: today
-          }
-        },
-        orderBy: {
-          dailyNumber: 'desc'
-        }
-      });
-      
-      const dailyNumber = lastOrder ? lastOrder.dailyNumber + 1 : 1;
-      
       // Get restaurant config for estimated times
       const config = await prisma.restaurantConfig.findFirst();
-      const estimatedTime = createOrderDto.orderType === 'DELIVERY' 
+      const estimatedMinutes = createOrderDto.orderType === 'DELIVERY' 
         ? (config?.estimatedDeliveryTime || 40)
         : (config?.estimatedPickupTime || 20);
       
-      // Initialize total cost - will be calculated after creating items
-      let totalCost = 0;
+      // Calculate estimated delivery time as a DateTime
+      const now = new Date();
+      const estimatedDeliveryTime = new Date(now.getTime() + estimatedMinutes * 60 * 1000);
+      
+      // Initialize totals - use provided values if available, otherwise will be calculated
+      let subtotal = createOrderDto.subtotal || 0;
+      let total = createOrderDto.total || 0;
+      const hasProvidedTotals = createOrderDto.subtotal !== undefined && createOrderDto.total !== undefined;
       
       // Use Prisma transaction for atomic operations
       const order = await prisma.$transaction(async (tx) => {
-        // Create the order
+        // Create the order without dailyNumber (will be assigned during sync)
         const newOrder = await tx.order.create({
           data: {
             orderType: createOrderDto.orderType as "DINE_IN" | "TAKE_AWAY" | "DELIVERY",
             customerId: customer.id,
             scheduledAt: createOrderDto.scheduledAt ? new Date(createOrderDto.scheduledAt) : null,
             orderStatus: 'PENDING',
-            dailyNumber,
-            totalCost,
-            estimatedTime,
+            subtotal,
+            total,
+            estimatedDeliveryTime,
             isFromWhatsApp: true,
             createdAt: new Date(),
             updatedAt: new Date()
@@ -68,6 +58,15 @@ export class OrderService {
         if (createOrderDto.orderItems && createOrderDto.orderItems.length > 0) {
           const orderItemsWithPrices = await Promise.all(
             createOrderDto.orderItems.map(async (item) => {
+              // Validate productId exists
+              if (!item.productId) {
+                throw new NotFoundError(
+                  ErrorCode.MISSING_REQUIRED_FIELD,
+                  'Product ID is required for each order item',
+                  { metadata: { item } }
+                );
+              }
+              
               // Get product and variant info to calculate price
               const product = await tx.product.findUnique({
                 where: { id: item.productId },
@@ -96,7 +95,7 @@ export class OrderService {
               // First calculate total price including modifiers
               let modifierIds: string[] = [];
               if (item.selectedModifiers && item.selectedModifiers.length > 0) {
-                modifierIds = item.selectedModifiers.map(sm => sm.modifierId);
+                modifierIds = item.selectedModifiers; // Now directly an array of strings
                 
                 // Get modifier prices
                 const modifiers = await tx.productModifier.findMany({
@@ -147,9 +146,11 @@ export class OrderService {
                 }
               }
               
-              // Calculate total price for all items of this type
-              const itemTotal = itemPrice * quantity;
-              totalCost += itemTotal;
+              // Calculate total price for all items of this type only if totals weren't provided
+              if (!hasProvidedTotals) {
+                const itemTotal = itemPrice * quantity;
+                subtotal += itemTotal;
+              }
               
               return orderItems;
             })
@@ -166,14 +167,22 @@ export class OrderService {
           });
         }
         
-        // Update order with calculated total cost
+        // Calculate total only if not provided (for now, total = subtotal, but can add taxes, delivery fees, etc. later)
+        if (!hasProvidedTotals) {
+          total = subtotal;
+        }
+        
+        // Update order with calculated totals
         const updatedOrder = await tx.order.update({
           where: { id: newOrder.id },
-          data: { totalCost }
+          data: { subtotal, total }
         });
         
         return updatedOrder;
       });
+      
+      // Mark order for sync
+      await SyncMetadataService.markForSync('Order', order.id, 'REMOTE');
       
       return order;
     } catch (error) {

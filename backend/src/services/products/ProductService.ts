@@ -330,9 +330,10 @@ export class ProductService {
           },
           variants: {
             where: { isActive: true },
-            orderBy: { name: 'asc' }
+            orderBy: { sortOrder: 'asc' }
           },
           modifierGroups: {
+            orderBy: { sortOrder: 'asc' },
             include: {
               productModifiers: {
                 where: { isActive: true },
@@ -341,11 +342,12 @@ export class ProductService {
             }
           },
           pizzaCustomizations: {
-            where: { isActive: true }
+            where: { isActive: true },
+            orderBy: { sortOrder: 'asc' }
           },
           pizzaConfiguration: true
         },
-        orderBy: { name: 'asc' }
+        orderBy: { sortOrder: 'asc' }
       });
 
       // Agrupar por categorías

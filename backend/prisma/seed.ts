@@ -17,7 +17,7 @@ async function main() {
     // Clean up existing data in reverse dependency order
     await prisma.selectedPizzaCustomization.deleteMany();
     await prisma.orderItem.deleteMany();
-    await prisma.orderDeliveryInfo.deleteMany();
+    await prisma.deliveryInfo.deleteMany();
     await prisma.order.deleteMany();
     await prisma.preOrder.deleteMany();
     await prisma.pizzaCustomization.deleteMany();

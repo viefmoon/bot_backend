@@ -85,7 +85,7 @@ router.post('/send',
                 type: "reply",
                 reply: {
                   id: `confirm_address_${customer.addresses[0].id}`,
-                  title: "✅ Usar esta dirección"
+                  title: "✅ Usar dirección"
                 }
               },
               {
@@ -129,7 +129,7 @@ router.post('/send',
     // Add option to add new address
     sections[0].rows.push({
       id: "add_new_address",
-      title: "➕ Agregar nueva dirección",
+      title: "➕ Nueva dirección",
       description: "Registrar una nueva dirección de entrega"
     });
     

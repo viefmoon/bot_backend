@@ -4,6 +4,72 @@ import { PizzaHalf, CustomizationAction, CustomizationType } from "@prisma/clien
 
 export class OrderFormattingService {
   /**
+   * Format a pre-order for WhatsApp message display
+   */
+  static formatPreOrderForWhatsApp(preOrder: any, whatsappPhoneNumber: string): FormattedOrder {
+    const orderType = preOrder.orderType;
+    let deliveryInfo = "";
+
+    // Format delivery information
+    if (orderType === "DELIVERY" && preOrder.deliveryInfo) {
+      const info = preOrder.deliveryInfo;
+      const parts = [];
+      if (info.street) parts.push(`${info.street} ${info.number || ''} ${info.interiorNumber ? 'Int. ' + info.interiorNumber : ''}`);
+      if (info.neighborhood) parts.push(info.neighborhood);
+      if (info.city) parts.push(info.city);
+      deliveryInfo = parts.join(", ");
+    }
+
+    // Format products
+    const products = preOrder.items?.map((item: any) => {
+      // For CalculatedOrderItem structure - when product has variants, show only variant name
+      const name = item.variantName || item.productName;
+
+      return {
+        name: name,
+        quantity: item.quantity,
+        price: item.totalPrice,
+        modifiers: [], // We only have IDs
+        pizzaCustomizations: item.selectedPizzaCustomizations?.length > 0 
+          ? item.selectedPizzaCustomizations 
+          : undefined,
+        comments: item.comments,
+      };
+    }) || [];
+
+    // Use the total from preOrder directly
+    const totalPrice = preOrder.total || 0;
+
+    // Format dates
+    const createdAt = new Date().toLocaleString(env.DEFAULT_LOCALE, {
+      timeZone: env.DEFAULT_TIMEZONE,
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+
+    return {
+      dailyNumber: preOrder.preOrderId || 0,
+      orderType: orderType,
+      phoneNumber: whatsappPhoneNumber,
+      products: products,
+      totalPrice: totalPrice,
+      deliveryInfo: deliveryInfo,
+      createdAt: createdAt,
+      scheduledDeliveryTime: preOrder.scheduledAt ? new Date(preOrder.scheduledAt).toLocaleString(env.DEFAULT_LOCALE, {
+        timeZone: env.DEFAULT_TIMEZONE,
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+      }) : null,
+    };
+  }
+
+  /**
    * Format an order for WhatsApp message display
    */
   static formatOrderForWhatsApp(order: any, customerId: string): FormattedOrder {
@@ -48,30 +114,37 @@ export class OrderFormattingService {
       }
     }
 
-    // Calculate total price
-    let totalPrice = 0;
-    const products = order.orderItems?.map((item: any) => {
-      const productName = item.product?.name || "Producto";
-      const variantName = item.productVariant?.name || "";
-      const name = variantName ? `${productName} ${variantName}` : productName;
+    // Group items by product and variant
+    const itemGroups: { [key: string]: any[] } = {};
+    
+    // Group items by product and variant
+    order.orderItems?.forEach((item: any) => {
+      const key = `${item.productId}_${item.productVariantId || 'null'}`;
+      if (!itemGroups[key]) {
+        itemGroups[key] = [];
+      }
+      itemGroups[key].push(item);
+    });
+    
+    const products = Object.values(itemGroups).map((items: any[]) => {
+      const item = items[0]; // Take first item as reference
+      const productName = item.product?.name || item.productName || "Producto";
+      const variantName = item.productVariant?.name || item.variantName || "";
+      // When product has variants, show only the variant name
+      const name = variantName || productName;
       
-      // Calculate base price
-      let itemPrice = item.productVariant?.price || 0;
+      // Calculate total for all items in this group
+      const quantity = items.length;
+      const unitPrice = item.finalPrice || item.basePrice || 0;
+      const groupTotalPrice = unitPrice * quantity;
       
-      // Add modifier prices
+      // Modifiers are already included in finalPrice during order creation
       const modifiers = item.productModifiers?.map((mod: any) => ({
         name: mod.name || "Modificador",
         price: mod.price || 0,
       })) || [];
-      
-      modifiers.forEach((mod: any) => {
-        itemPrice += mod.price;
-      });
-      
-      const totalItemPrice = itemPrice * item.quantity;
-      totalPrice += totalItemPrice;
 
-      // Map pizza customizations
+      // Map pizza customizations from first item (they should be the same)
       const pizzaCustomizations = item.selectedPizzaCustomizations?.map((selectedCust: any) => ({
         half: selectedCust.half as string,
         name: selectedCust.pizzaCustomization?.name || "Personalización",
@@ -82,13 +155,13 @@ export class OrderFormattingService {
 
       return {
         name: name,
-        quantity: item.quantity,
-        price: totalItemPrice,
+        quantity: quantity,
+        price: groupTotalPrice,
         modifiers: modifiers,
-        pizzaCustomizations: pizzaCustomizations.length > 0 ? pizzaCustomizations : undefined,
+        pizzaCustomizations: pizzaCustomizations?.length > 0 ? pizzaCustomizations : undefined,
         comments: item.comments,
       };
-    }) || [];
+    });
 
     // Format dates
     const createdAt = order.createdAt.toLocaleString(env.DEFAULT_LOCALE, {
@@ -111,14 +184,29 @@ export class OrderFormattingService {
         })
       : null;
 
+    // Use the total from order directly
+    const totalPrice = order.total || 0;
+
     return {
       id: order.id,
-      phoneNumber: customerId,
+      dailyNumber: order.dailyNumber,
+      orderType: order.orderType,
+      customerId: order.customerId,
+      phoneNumber: order.customer?.whatsappPhoneNumber || customerId,
       deliveryInfo: deliveryInfo,
       totalPrice: totalPrice,
       createdAt: createdAt,
       scheduledDeliveryTime: scheduledDelivery,
-      estimatedTime: order.estimatedTime,
+      estimatedDeliveryTime: order.estimatedDeliveryTime 
+        ? new Date(order.estimatedDeliveryTime).toLocaleString('es-MX', {
+            timeZone: 'America/Mexico_City',
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+          })
+        : undefined,
       products: products,
     };
   }
@@ -130,11 +218,14 @@ export class OrderFormattingService {
     const orderTypeText = order.orderType === "DELIVERY" ? "A domicilio" : 
                          order.orderType === "TAKE_AWAY" ? "Para llevar" : "Para comer aquí";
     
-    let message = `🎉 *¡Tu orden #${order.dailyNumber} ha sido creada exitosamente!* 🎉\n\n`;
+    let message = `🎉 *¡Tu orden ha sido creada exitosamente!* 🎉\n\n`;
     message += `📞 *Teléfono:* ${formattedOrder.phoneNumber}\n`;
     message += `📅 *Fecha de creación:* ${formattedOrder.createdAt}\n`;
     message += `🚚 *Información de entrega:* ${orderTypeText} - ${formattedOrder.deliveryInfo}\n`;
-    message += `⏱️ *Tiempo estimado:* ${formattedOrder.estimatedTime} minutos\n`;
+    
+    if (formattedOrder.estimatedDeliveryTime) {
+      message += `⏱️ *Hora estimada de entrega:* ${formattedOrder.estimatedDeliveryTime}\n`;
+    }
 
     if (formattedOrder.scheduledDeliveryTime) {
       message += `📅 *Entrega programada:* ${formattedOrder.scheduledDeliveryTime}\n`;
@@ -178,63 +269,78 @@ export class OrderFormattingService {
    * Format pizza customizations for display
    */
   private static formatPizzaCustomizations(customizations: any[]): string {
-    let summary = "  🔸 Personalización de pizza:\n";
-
-    // Separate flavors and ingredients
-    const flavors = customizations.filter((c: any) => c.type === CustomizationType.FLAVOR && c.action === CustomizationAction.ADD);
-    const addedIngredients = customizations.filter((c: any) => c.type === CustomizationType.INGREDIENT && c.action === CustomizationAction.ADD);
-    const removedItems = customizations.filter((c: any) => c.action === CustomizationAction.REMOVE);
-
-    // Show flavors
-    if (flavors.length > 0) {
-      const flavorsByHalf = {
-        half1: flavors.filter((f: any) => f.half === PizzaHalf.HALF_1),
-        half2: flavors.filter((f: any) => f.half === PizzaHalf.HALF_2),
-        full: flavors.filter((f: any) => f.half === PizzaHalf.FULL),
-      };
-
-      if (flavorsByHalf.full.length > 0) {
-        summary += `     • Sabor Completo: ${flavorsByHalf.full.map((f: any) => f.name).join(", ")}\n`;
+    const addCustomizations = customizations.filter((c: any) => c.action === CustomizationAction.ADD);
+    const removeCustomizations = customizations.filter((c: any) => c.action === CustomizationAction.REMOVE);
+    
+    let result = "";
+    
+    // Group by type and half
+    const flavors = {
+      HALF_1: addCustomizations.filter(c => c.type === CustomizationType.FLAVOR && c.half === PizzaHalf.HALF_1),
+      HALF_2: addCustomizations.filter(c => c.type === CustomizationType.FLAVOR && c.half === PizzaHalf.HALF_2),
+      FULL: addCustomizations.filter(c => c.type === CustomizationType.FLAVOR && c.half === PizzaHalf.FULL)
+    };
+    
+    const ingredients = {
+      HALF_1: addCustomizations.filter(c => c.type === CustomizationType.INGREDIENT && c.half === PizzaHalf.HALF_1),
+      HALF_2: addCustomizations.filter(c => c.type === CustomizationType.INGREDIENT && c.half === PizzaHalf.HALF_2),
+      FULL: addCustomizations.filter(c => c.type === CustomizationType.INGREDIENT && c.half === PizzaHalf.FULL)
+    };
+    
+    const removed = {
+      HALF_1: removeCustomizations.filter(c => c.half === PizzaHalf.HALF_1),
+      HALF_2: removeCustomizations.filter(c => c.half === PizzaHalf.HALF_2),
+      FULL: removeCustomizations.filter(c => c.half === PizzaHalf.FULL)
+    };
+    
+    // Format full pizza
+    if (flavors.FULL.length > 0 || ingredients.FULL.length > 0 || removed.FULL.length > 0) {
+      const parts = [];
+      if (flavors.FULL.length > 0) {
+        parts.push(flavors.FULL.map(f => f.name).join(", "));
       }
-      if (flavorsByHalf.half1.length > 0) {
-        summary += `     • Primera Mitad: ${flavorsByHalf.half1.map((f: any) => f.name).join(", ")}\n`;
+      if (ingredients.FULL.length > 0) {
+        parts.push(`con: ${ingredients.FULL.map(i => i.name).join(", ")}`);
       }
-      if (flavorsByHalf.half2.length > 0) {
-        summary += `     • Segunda Mitad: ${flavorsByHalf.half2.map((f: any) => f.name).join(", ")}\n`;
+      if (removed.FULL.length > 0) {
+        parts.push(`sin: ${removed.FULL.map(r => r.name).join(", ")}`);
       }
+      result += `  🔸 ${parts.join(" - ")}\n`;
     }
-
-    // Show added ingredients
-    if (addedIngredients.length > 0) {
-      const ingredientsByHalf = {
-        half1: addedIngredients.filter((i: any) => i.half === PizzaHalf.HALF_1),
-        half2: addedIngredients.filter((i: any) => i.half === PizzaHalf.HALF_2),
-        full: addedIngredients.filter((i: any) => i.half === PizzaHalf.FULL),
-      };
-
-      const half1Items = [...ingredientsByHalf.half1, ...ingredientsByHalf.full];
-      const half2Items = [...ingredientsByHalf.half2, ...ingredientsByHalf.full];
-
-      if (
-        half1Items.length === half2Items.length &&
-        half1Items.every((item: any) => half2Items.some((h2: any) => h2.name === item.name))
-      ) {
-        summary += `     • Ingredientes Extra: ${half1Items.map((i: any) => i.name).join(", ")}\n`;
-      } else {
-        if (half1Items.length > 0) {
-          summary += `     • Extra Primera Mitad: ${half1Items.map((i: any) => i.name).join(", ")}\n`;
-        }
-        if (half2Items.length > 0) {
-          summary += `     • Extra Segunda Mitad: ${half2Items.map((i: any) => i.name).join(", ")}\n`;
-        }
+    
+    // Format half pizzas
+    const hasHalf1 = flavors.HALF_1.length > 0 || ingredients.HALF_1.length > 0 || removed.HALF_1.length > 0;
+    const hasHalf2 = flavors.HALF_2.length > 0 || ingredients.HALF_2.length > 0 || removed.HALF_2.length > 0;
+    
+    if (hasHalf1 && hasHalf2) {
+      const half1Parts = [];
+      const half2Parts = [];
+      
+      // Build half 1
+      if (flavors.HALF_1.length > 0) {
+        half1Parts.push(flavors.HALF_1.map(f => f.name).join(", "));
       }
+      if (ingredients.HALF_1.length > 0) {
+        half1Parts.push(`con: ${ingredients.HALF_1.map(i => i.name).join(", ")}`);
+      }
+      if (removed.HALF_1.length > 0) {
+        half1Parts.push(`sin: ${removed.HALF_1.map(r => r.name).join(", ")}`);
+      }
+      
+      // Build half 2
+      if (flavors.HALF_2.length > 0) {
+        half2Parts.push(flavors.HALF_2.map(f => f.name).join(", "));
+      }
+      if (ingredients.HALF_2.length > 0) {
+        half2Parts.push(`con: ${ingredients.HALF_2.map(i => i.name).join(", ")}`);
+      }
+      if (removed.HALF_2.length > 0) {
+        half2Parts.push(`sin: ${removed.HALF_2.map(r => r.name).join(", ")}`);
+      }
+      
+      result += `  🔸 (${half1Parts.join(" ")} / ${half2Parts.join(" ")})\n`;
     }
-
-    // Show removed items
-    if (removedItems.length > 0) {
-      summary += `     • ❌ Quitar: ${removedItems.map((r: any) => r.name).join(", ")}\n`;
-    }
-
-    return summary;
+    
+    return result;
   }
 }

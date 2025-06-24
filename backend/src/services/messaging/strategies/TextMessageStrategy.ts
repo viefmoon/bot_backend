@@ -6,6 +6,7 @@ import { sendWhatsAppMessage } from '../../whatsapp';
 import logger from '../../../common/utils/logger';
 import { MessageSplitter } from '../../../common/utils/messageSplitter';
 import { ProcessedOrderData } from '../../../common/types/preorder.types';
+import { AIOrderItem, transformAIOrderItem } from '../../../common/types';
 import { ValidationError, BusinessLogicError, TechnicalError } from '../../../common/services/errors';
 
 // Type definition for content
@@ -163,7 +164,37 @@ export class TextMessageStrategy extends MessageStrategy {
   
   private async processGeminiResponse(response: any, context?: MessageContext): Promise<any[]> {
     logger.debug('=== processGeminiResponse DEBUG ===');
-    logger.debug('Raw response:', JSON.stringify(response, null, 2));
+    logger.debug('Response type:', typeof response);
+    logger.debug('Response keys:', response ? Object.keys(response) : 'null');
+    logger.debug('Has candidates:', !!response?.candidates);
+    logger.debug('Candidates length:', response?.candidates?.length || 0);
+    
+    if (response?.candidates?.[0]) {
+      const candidate = response.candidates[0];
+      logger.debug('First candidate:', {
+        hasContent: !!candidate.content,
+        hasParts: !!candidate.content?.parts,
+        partsLength: candidate.content?.parts?.length || 0
+      });
+      
+      // Intentar mostrar el contenido de las partes
+      if (candidate.content?.parts) {
+        candidate.content.parts.forEach((part: any, index: number) => {
+          logger.debug(`Part ${index}:`, {
+            hasText: !!part.text,
+            hasFunctionCall: !!part.functionCall,
+            functionName: part.functionCall?.name,
+            textPreview: part.text ? part.text.substring(0, 100) + '...' : null
+          });
+          
+          // Si hay function call, mostrar los argumentos
+          if (part.functionCall) {
+            logger.debug(`Function call args:`, JSON.stringify(part.functionCall.args));
+          }
+        });
+      }
+    }
+    
     const responses: any[] = [];
     
     // Verificar estructura de respuesta válida
@@ -232,33 +263,10 @@ export class TextMessageStrategy extends MessageStrategy {
     
     switch (name) {
       case "map_order_items":
-        // Procesar mapeo de items del pedido
-        // Asegurar que cada item tenga el formato correcto
-        const processedItems = (args.orderItems || []).map((item: any) => ({
-          productId: item.productId,
-          productVariantId: item.variantId || null, // Map variantId to productVariantId
-          quantity: item.quantity || 1,
-          selectedModifiers: item.modifiers || [], // Map modifiers to selectedModifiers
-          // Transform pizzaCustomizations to match expected structure
-          selectedPizzaCustomizations: (item.pizzaCustomizations || []).map((pc: any) => {
-            // Handle both old format (string IDs) and new format (objects)
-            if (typeof pc === 'string') {
-              // Legacy format - just ID string
-              return {
-                customizationId: pc,
-                half: 'FULL',
-                action: 'ADD'
-              };
-            } else {
-              // New format with full structure
-              return {
-                customizationId: pc.customizationId,
-                half: pc.half || 'FULL',
-                action: pc.action || 'ADD'
-              };
-            }
-          })
-        }));
+        // Transform AI order items to consistent format
+        const processedItems = (args.orderItems || []).map((item: AIOrderItem) => 
+          transformAIOrderItem(item)
+        );
         
         result = {
           preprocessedContent: {
@@ -506,6 +514,10 @@ export class TextMessageStrategy extends MessageStrategy {
               lastInteraction: new Date()
             }
           });
+          
+          // Import and mark for sync
+          const { SyncMetadataService } = await import('../../../services/sync/SyncMetadataService');
+          await SyncMetadataService.markForSync('Customer', customerId, 'REMOTE');
           
           // Limpiar el historial del contexto actual COMPLETAMENTE
           context?.set('relevantChatHistory', []);

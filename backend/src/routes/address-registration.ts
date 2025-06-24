@@ -7,6 +7,7 @@ import { asyncHandler } from '../common/middlewares/errorHandler';
 import { ValidationError, NotFoundError, ErrorCode } from '../common/services/errors';
 import { validationMiddleware, queryValidationMiddleware } from '../common/middlewares/validation.middleware';
 import { otpAuthMiddleware, AuthenticatedRequest } from '../common/middlewares/otp.middleware';
+import { SyncMetadataService } from '../services/sync/SyncMetadataService';
 import {
   VerifyOtpDto,
   CreateAddressDto,
@@ -91,6 +92,9 @@ router.post('/create',
     
     const newAddress = await DeliveryInfoService.createCustomerAddress(addressData);
     
+    // Mark customer for sync since addresses are part of customer data
+    await SyncMetadataService.markForSync('Customer', customer.id, 'REMOTE');
+    
     // Enviar mensaje de confirmación a WhatsApp
     try {
       const { sendWhatsAppMessage, sendWhatsAppInteractiveMessage } = await import('../services/whatsapp');
@@ -170,6 +174,9 @@ router.put('/update-customer-name',
       }
     });
     
+    // Mark for sync
+    await SyncMetadataService.markForSync('Customer', updatedCustomer.id, 'REMOTE');
+    
     res.json({
       success: true,
       customer: updatedCustomer
@@ -239,6 +246,9 @@ router.put('/:addressId',
         }
       });
       
+      // Mark for sync
+      await SyncMetadataService.markForSync('Customer', customer.id, 'REMOTE');
+      
     } catch (sendError) {
       logger.error('Failed to send WhatsApp notification:', sendError);
       // Continuar aunque WhatsApp falle
@@ -283,6 +293,9 @@ router.delete('/:addressId',
       customer.id
     );
     
+    // Mark customer for sync since addresses are part of customer data
+    await SyncMetadataService.markForSync('Customer', customer.id, 'REMOTE');
+    
     res.json({ 
       success: true,
       message: 'Address deleted successfully'
@@ -306,6 +319,9 @@ router.put('/:addressId/default',
       addressId,
       customer.id
     );
+    
+    // Mark customer for sync since addresses are part of customer data
+    await SyncMetadataService.markForSync('Customer', customer.id, 'REMOTE');
     
     // Enviar notificación de WhatsApp sobre cambio de dirección principal
     try {

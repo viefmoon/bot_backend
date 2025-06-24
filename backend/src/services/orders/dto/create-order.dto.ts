@@ -25,9 +25,8 @@ class OrderItemDto {
   selectedPizzaCustomizations: SelectedPizzaCustomizationDto[];
 
   @IsArray()
-  @ValidateNested({ each: true })
-  @Type(() => SelectedModifierDto)
-  selectedModifiers: SelectedModifierDto[];
+  @IsString({ each: true })
+  selectedModifiers: string[]; // Array of modifier IDs
 
   @IsNotEmpty()
   quantity: number;
@@ -46,11 +45,6 @@ class SelectedPizzaCustomizationDto {
 
   @IsString()
   action: string;
-}
-
-class SelectedModifierDto {
-  @IsString()
-  modifierId: string;
 }
 
 class DeliveryInfoDto {
@@ -143,4 +137,12 @@ export class CreateOrderDto {
   @IsOptional()
   @IsDateString()
   scheduledAt?: string;
+
+  @IsOptional()
+  @IsNumber()
+  subtotal?: number;
+
+  @IsOptional()
+  @IsNumber()
+  total?: number;
 }

@@ -3,6 +3,7 @@ import { ValidationError, ErrorCode, NotFoundError } from "../../../common/servi
 import logger from "../../../common/utils/logger";
 import { DeliveryInfoInput } from "../../../common/types";
 import { Address, Prisma } from "@prisma/client";
+import { SyncMetadataService } from "../../sync/SyncMetadataService";
 
 export class DeliveryInfoService {
   /**
@@ -178,6 +179,9 @@ export class DeliveryInfoService {
         data: addressData
       });
       
+      // Mark for sync
+      await SyncMetadataService.markForSync('Address', address.id, 'REMOTE');
+      
       logger.info(`Created customer address ${address.id} for customer ${address.customerId}`);
       return address;
     } catch (error) {
@@ -198,6 +202,9 @@ export class DeliveryInfoService {
         where: { id: addressId },
         data
       });
+      
+      // Mark for sync
+      await SyncMetadataService.markForSync('Address', addressId, 'REMOTE');
       
       logger.info(`Updated address ${addressId}`);
       return deliveryInfo;
@@ -349,6 +356,14 @@ export class DeliveryInfoService {
       }
       
       // Desmarcar otras predeterminadas
+      const previousDefaults = await prisma.address.findMany({
+        where: { 
+          customerId: actualCustomerId,
+          isDefault: true
+        },
+        select: { id: true }
+      });
+      
       await prisma.address.updateMany({
         where: { 
           customerId: actualCustomerId,
@@ -357,11 +372,19 @@ export class DeliveryInfoService {
         data: { isDefault: false }
       });
       
+      // Mark previous defaults for sync
+      for (const prevDefault of previousDefaults) {
+        await SyncMetadataService.markForSync('Address', prevDefault.id, 'REMOTE');
+      }
+      
       // Establecer esta como predeterminada
       const updatedAddress = await prisma.address.update({
         where: { id: addressId },
         data: { isDefault: true }
       });
+      
+      // Mark new default for sync
+      await SyncMetadataService.markForSync('Address', addressId, 'REMOTE');
       
       logger.info(`Set address ${addressId} as default for customer ${actualCustomerId}`);
       return updatedAddress;
@@ -416,6 +439,9 @@ export class DeliveryInfoService {
           deletedAt: new Date()
         }
       });
+      
+      // Mark for sync
+      await SyncMetadataService.markForSync('Address', addressId, 'REMOTE');
       
       // Si era predeterminada, establecer otra como predeterminada
       if (address.isDefault) {

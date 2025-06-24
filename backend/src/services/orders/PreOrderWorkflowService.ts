@@ -7,6 +7,7 @@ import { sendWhatsAppMessage, WhatsAppService } from '../whatsapp';
 import { generateOrderSummary } from '../../whatsapp/handlers/orders/orderFormatters';
 import { BusinessLogicError, ErrorCode, ValidationError } from '../../common/services/errors';
 import logger from '../../common/utils/logger';
+import { SyncMetadataService } from '../sync/SyncMetadataService';
 import {
   ProcessedOrderData,
   PreOrderWorkflowResult,
@@ -382,6 +383,9 @@ export class PreOrderWorkflowService {
           lastInteraction: new Date()
         }
       });
+      
+      // Mark for sync
+      await SyncMetadataService.markForSync('Customer', customer.id, 'REMOTE');
       
       logger.info('Chat history updated with preorder information');
     } catch (error) {

@@ -9,6 +9,7 @@ import { MessageProcessingMiddleware } from '../middlewares/MessageProcessingMid
 import { prisma } from '../../../server';
 import logger from '../../../common/utils/logger';
 import { sendWhatsAppMessage, sendWhatsAppInteractiveMessage } from '../../whatsapp';
+import { SyncMetadataService } from '../../../services/sync/SyncMetadataService';
 
 export class MessagePipeline {
   private middlewares: MessageMiddleware[] = [];
@@ -156,6 +157,9 @@ export class MessagePipeline {
         lastInteraction: new Date()
       }
     });
+    
+    // Mark for sync
+    await SyncMetadataService.markForSync('Customer', context.customer.id, 'REMOTE');
   }
   
   private async handleError(context: MessageContext, error: Error): Promise<void> {
