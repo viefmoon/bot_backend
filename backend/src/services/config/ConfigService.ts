@@ -1,6 +1,7 @@
 import { prisma } from '../../server';
 import logger from '../../common/utils/logger';
 import { RestaurantInfo } from '../../common/types/restaurant';
+import { TechnicalError, ErrorCode } from '../../common/services/errors';
 
 interface CachedConfig {
   restaurantInfo: RestaurantInfo;
@@ -23,7 +24,10 @@ export class ConfigService {
       const dbConfig = await prisma.restaurantConfig.findFirst();
       
       if (!dbConfig) {
-        throw new Error('Restaurant configuration not found in database');
+        throw new TechnicalError(
+          ErrorCode.DATABASE_ERROR,
+          'Restaurant configuration not found in database'
+        );
       }
       
       // Map database config to RestaurantInfo type

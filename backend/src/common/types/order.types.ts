@@ -1,11 +1,14 @@
 export interface FormattedOrder {
-  id: number;
+  id?: string;
+  dailyNumber?: number;
+  orderType?: string;
+  customerId?: string;
   phoneNumber: string;
   deliveryInfo: string;
   totalPrice: number;
   createdAt: string;
   scheduledDeliveryTime: string | null;
-  estimatedTime: number;
+  estimatedDeliveryTime?: string;
   products: FormattedOrderProduct[];
 }
 

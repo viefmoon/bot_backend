@@ -28,6 +28,9 @@ export enum ErrorCode {
   // Not Found
   ADDRESS_NOT_FOUND = 'NF001',
   
+  // Validation - Address
+  ADDRESS_OUTSIDE_COVERAGE = 'VAL008',
+  
   // Technical
   DATABASE_ERROR = 'TECH001',
   WHATSAPP_API_ERROR = 'TECH002',
@@ -36,6 +39,7 @@ export enum ErrorCode {
   TRANSCRIPTION_ERROR = 'TECH005',
   AUTHENTICATION_REQUIRED = 'TECH006',
   INVALID_CREDENTIALS = 'TECH007',
+  EMBEDDING_GENERATION_FAILED = 'TECH008',
   
   // External Service
   STRIPE_ERROR = 'EXT001',
@@ -49,7 +53,7 @@ export enum ErrorCode {
 export interface ErrorContext {
   userId?: string;
   customerId?: string;
-  orderId?: number;
+  orderId?: number | string; // Support both numeric and UUID order IDs
   operation?: string;
   metadata?: Record<string, any>;
   [key: string]: any; // Allow additional properties

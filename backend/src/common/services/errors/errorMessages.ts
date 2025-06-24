@@ -61,6 +61,10 @@ export const ERROR_MESSAGES: Record<ErrorCode, ErrorMessageConfig> = {
     user: "⏰ Esta orden ha expirado o ya no está disponible.\n\n🔄 Tu historial ha sido reiniciado. Puedes realizar un nuevo pedido escribiendo lo que deseas ordenar.",
     log: "Invalid or expired action token"
   },
+  [ErrorCode.ADDRESS_OUTSIDE_COVERAGE]: {
+    user: "📍 La dirección seleccionada está fuera de nuestra área de cobertura. Por favor, selecciona una dirección dentro de la zona de entrega.",
+    log: "Address outside delivery coverage area"
+  },
   
   // Not Found Errors
   [ErrorCode.ADDRESS_NOT_FOUND]: {
@@ -118,5 +122,10 @@ export const ERROR_MESSAGES: Record<ErrorCode, ErrorMessageConfig> = {
   [ErrorCode.INVALID_CREDENTIALS]: {
     user: 'Invalid credentials',
     log: 'Invalid or expired authentication credentials'
+  },
+  
+  [ErrorCode.EMBEDDING_GENERATION_FAILED]: {
+    user: '🤖 Hubo un problema al procesar tu búsqueda. Por favor, intenta de nuevo.',
+    log: 'Failed to generate embedding for search query'
   }
 };

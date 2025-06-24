@@ -7,7 +7,7 @@ import logger from '../../../common/utils/logger';
 import { MessageSplitter } from '../../../common/utils/messageSplitter';
 import { ProcessedOrderData } from '../../../common/types/preorder.types';
 import { AIOrderItem, transformAIOrderItem } from '../../../common/types';
-import { ValidationError, BusinessLogicError, TechnicalError } from '../../../common/services/errors';
+import { ValidationError, BusinessLogicError, TechnicalError, ErrorCode } from '../../../common/services/errors';
 
 // Type definition for content
 interface Content {
@@ -400,7 +400,10 @@ export class TextMessageStrategy extends MessageStrategy {
           // Obtener el customerId del contexto
           const customerId = context?.message?.from;
           if (!customerId) {
-            throw new Error('No se pudo obtener el ID del cliente');
+            throw new TechnicalError(
+              ErrorCode.CUSTOMER_NOT_FOUND,
+              'No se pudo obtener el ID del cliente desde el contexto del mensaje'
+            );
           }
           
           // Generar OTP
@@ -502,7 +505,10 @@ export class TextMessageStrategy extends MessageStrategy {
           // Obtener el customerId del contexto
           const customerId = context?.customer?.id;
           if (!customerId) {
-            throw new Error('No se pudo obtener el ID del cliente');
+            throw new TechnicalError(
+              ErrorCode.CUSTOMER_NOT_FOUND,
+              'No se pudo obtener el ID del cliente desde el contexto'
+            );
           }
           
           // Reiniciar historial de chat relevante y completo INMEDIATAMENTE

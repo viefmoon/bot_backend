@@ -2,6 +2,7 @@ import logger from '../../common/utils/logger';
 import { prisma } from '../../server';
 import { GoogleGenAI } from '@google/genai';
 import { env } from '../../common/config/envValidator';
+import { TechnicalError, ErrorCode } from '../../common/services/errors';
 
 /**
  * Service for searching and matching menu items based on natural language input
@@ -29,7 +30,11 @@ export class MenuSearchService {
       
       if (queryEmbedding.length === 0) {
         logger.error('Failed to generate embedding for query');
-        throw new Error('Embedding generation failed');
+        throw new TechnicalError(
+          ErrorCode.EMBEDDING_GENERATION_FAILED,
+          'Failed to generate embedding for menu search query',
+          { query: itemsSummary }
+        );
       }
 
       // 2. Search database for most similar products using pgvector
