@@ -15,8 +15,7 @@ import {
   GetAddressesQueryDto,
   DeleteAddressDto,
   SetDefaultAddressDto,
-  UpdateCustomerNameDto,
-  ValidateCoverageDto
+  UpdateCustomerNameDto
 } from './dto/address-registration';
 
 const router = Router();
@@ -74,30 +73,6 @@ router.post('/verify-otp',
   });
 }));
 
-/**
- * Validar si las coordenadas están dentro del área de cobertura
- * POST /backend/address-registration/validate-coverage
- */
-router.post('/validate-coverage',
-  validationMiddleware(ValidateCoverageDto),
-  asyncHandler(async (req: Request, res: Response) => {
-    const { latitude, longitude } = req.body as ValidateCoverageDto;
-    
-    // Validar que las coordenadas estén dentro del área de cobertura
-    const isWithinCoverage = await DeliveryInfoService.validateDeliveryArea(
-      latitude,
-      longitude
-    );
-    
-    res.json({
-      success: true,
-      isWithinCoverage,
-      message: isWithinCoverage 
-        ? 'La ubicación está dentro del área de cobertura' 
-        : 'La ubicación está fuera de nuestra área de cobertura'
-    });
-  })
-);
 
 /**
  * Crear nueva dirección para el cliente

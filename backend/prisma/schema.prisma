@@ -401,10 +401,6 @@ model BusinessHours {
   @@unique([restaurantConfigId, dayOfWeek]) // Un solo horario por día
 }
 
-model SeederControl {
-  id      String   @id
-  lastRun DateTime
-}
 
 model SelectedPizzaCustomization {
   id                    String               @id @default(uuid()) @db.Uuid
@@ -533,15 +529,6 @@ model Adjustment {
   @@index([orderItemId])
 }
 
-// Simple sync configuration
-model SyncConfig {
-  id              String    @id @default(uuid())
-  apiKey          String    @unique // Key that LOCAL uses to connect
-  apiKeyHash      String    // Hash for validation
-  lastSyncAt      DateTime?
-  isActive        Boolean   @default(true)
-  createdAt       DateTime  @default(now())
-}
 
 // Sync metadata for all entities
 model SyncMetadata {

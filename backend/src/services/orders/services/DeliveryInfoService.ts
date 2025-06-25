@@ -124,62 +124,6 @@ export class DeliveryInfoService {
     logger.info(`Updated delivery info for preorder ${preOrderId}`);
   }
 
-  /**
-   * Validar que la dirección de entrega esté dentro del área de cobertura
-   */
-  static async validateDeliveryArea(
-    addressLatitude: number,
-    addressLongitude: number
-  ): Promise<boolean> {
-    const config = await prisma.restaurantConfig.findFirst();
-    
-    if (!config || !config.deliveryCoverageArea) {
-      // Si no se define área de cobertura, aceptar todas las entregas
-      return true;
-    }
-    
-    if (!addressLatitude || !addressLongitude) {
-      // Si no hay coordenadas, aceptar la entrega pero loggear advertencia
-      logger.warn('Address without coordinates, accepting delivery by default');
-      return true;
-    }
-    
-    try {
-      // El área de cobertura debe ser un polígono GeoJSON
-      const coverageArea = config.deliveryCoverageArea as any;
-      
-      if (!coverageArea.type || coverageArea.type !== 'Polygon' || !coverageArea.coordinates) {
-        logger.error('Invalid delivery coverage area format in config');
-        return true; // Aceptar por defecto si el formato es inválido
-      }
-      
-      // Implementar algoritmo de punto en polígono (ray casting)
-      const point = { lat: Number(addressLatitude), lng: Number(addressLongitude) };
-      const polygon = coverageArea.coordinates[0]; // GeoJSON polygon outer ring
-      
-      let inside = false;
-      for (let i = 0, j = polygon.length - 1; i < polygon.length; j = i++) {
-        const xi = polygon[i][0], yi = polygon[i][1];
-        const xj = polygon[j][0], yj = polygon[j][1];
-        
-        const intersect = ((yi > point.lat) !== (yj > point.lat))
-            && (point.lng < (xj - xi) * (point.lat - yi) / (yj - yi) + xi);
-        if (intersect) inside = !inside;
-      }
-      
-      if (!inside) {
-        logger.info('Address outside delivery area', {
-          coordinates: { latitude: addressLatitude, longitude: addressLongitude }
-        });
-      }
-      
-      return inside;
-    } catch (error) {
-      logger.error('Error validating delivery area:', error);
-      // En caso de error, aceptar la entrega por defecto
-      return true;
-    }
-  }
 
   /**
    * Crear dirección del cliente
