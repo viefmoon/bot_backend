@@ -1,5 +1,6 @@
 import logger from '../../common/utils/logger';
 import { prisma } from '../../server';
+import { Prisma } from '@prisma/client';
 import { GoogleGenAI } from '@google/genai';
 import { env } from '../../common/config/envValidator';
 import { TechnicalError, ErrorCode } from '../../common/services/errors';
@@ -43,9 +44,11 @@ export class MenuSearchService {
       // Use pgvector for efficient similarity search with threshold
       try {
         // First, get products with similarity scores
+        // Use Prisma.sql to safely build the query with proper parameterization
+        const embeddingVector = `[${queryEmbedding.join(',')}]`;
         const relevantProductsResult: { id: string, distance: number }[] = await prisma.$queryRaw`
           SELECT id, 
-                 (embedding <=> ${`[${queryEmbedding.join(',')}]`}::vector) as distance
+                 (embedding <=> ${Prisma.sql`${embeddingVector}::vector`}) as distance
           FROM "Product"
           WHERE embedding IS NOT NULL
           ORDER BY distance

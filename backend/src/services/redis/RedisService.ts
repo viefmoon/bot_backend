@@ -2,9 +2,6 @@ import Redis from 'ioredis';
 import logger from '../../common/utils/logger';
 import { env } from '../../common/config/envValidator';
 
-/**
- * Centralized Redis service for managing Redis connections and operations
- */
 export class RedisService {
   private static instance: RedisService;
   private client: Redis | null = null;
@@ -19,9 +16,6 @@ export class RedisService {
     return RedisService.instance;
   }
 
-  /**
-   * Initialize Redis connection
-   */
   async connect(): Promise<void> {
     if (this.isConnected && this.client) {
       return;
@@ -54,7 +48,6 @@ export class RedisService {
         this.isConnected = false;
       });
 
-      // Test connection
       await this.client.ping();
     } catch (error) {
       logger.error('Failed to connect to Redis:', error);
@@ -64,23 +57,14 @@ export class RedisService {
     }
   }
 
-  /**
-   * Get Redis client
-   */
   getClient(): Redis | null {
     return this.client;
   }
 
-  /**
-   * Check if Redis is available
-   */
   isAvailable(): boolean {
     return this.isConnected && this.client !== null;
   }
 
-  /**
-   * Set a key with optional expiration
-   */
   async set(key: string, value: string, expiresInSeconds?: number): Promise<boolean> {
     if (!this.isAvailable() || !this.client) {
       return false;
@@ -99,9 +83,6 @@ export class RedisService {
     }
   }
 
-  /**
-   * Get a value by key
-   */
   async get(key: string): Promise<string | null> {
     if (!this.isAvailable() || !this.client) {
       return null;
@@ -115,9 +96,6 @@ export class RedisService {
     }
   }
 
-  /**
-   * Delete a key
-   */
   async del(key: string): Promise<boolean> {
     if (!this.isAvailable() || !this.client) {
       return false;
@@ -132,9 +110,6 @@ export class RedisService {
     }
   }
 
-  /**
-   * Check if a key exists
-   */
   async exists(key: string): Promise<boolean> {
     if (!this.isAvailable() || !this.client) {
       return false;
@@ -149,9 +124,6 @@ export class RedisService {
     }
   }
 
-  /**
-   * Get all keys matching a pattern
-   */
   async keys(pattern: string): Promise<string[]> {
     if (!this.isAvailable() || !this.client) {
       return [];
@@ -165,9 +137,6 @@ export class RedisService {
     }
   }
 
-  /**
-   * Set JSON object with optional expiration
-   */
   async setJSON(key: string, value: any, expiresInSeconds?: number): Promise<boolean> {
     try {
       const jsonString = JSON.stringify(value);
@@ -178,9 +147,6 @@ export class RedisService {
     }
   }
 
-  /**
-   * Get JSON object
-   */
   async getJSON<T>(key: string): Promise<T | null> {
     try {
       const value = await this.get(key);
@@ -192,9 +158,6 @@ export class RedisService {
     }
   }
 
-  /**
-   * Disconnect from Redis
-   */
   async disconnect(): Promise<void> {
     if (this.client) {
       await this.client.quit();
@@ -205,5 +168,4 @@ export class RedisService {
   }
 }
 
-// Export singleton instance
 export const redisService = RedisService.getInstance();

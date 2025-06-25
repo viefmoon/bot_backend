@@ -6,7 +6,7 @@ import { NotFoundError, ErrorCode } from '../../common/services/errors';
 import { SyncMetadataService } from '../sync/SyncMetadataService';
 
 export class OrderService {
-  async create(createOrderDto: CreateOrderDto) {
+  static async create(createOrderDto: CreateOrderDto) {
     try {
       // Get customer by WhatsApp phone number
       const customer = await prisma.customer.findUnique({
@@ -178,11 +178,11 @@ export class OrderService {
           data: { subtotal, total }
         });
         
+        // Mark order for sync within the transaction to ensure consistency
+        await SyncMetadataService.markForSync('Order', updatedOrder.id, 'REMOTE');
+        
         return updatedOrder;
       });
-      
-      // Mark order for sync
-      await SyncMetadataService.markForSync('Order', order.id, 'REMOTE');
       
       return order;
     } catch (error) {
@@ -191,7 +191,7 @@ export class OrderService {
     }
   }
 
-  async findOne(id: string) {
+  static async findOne(id: string) {
     return prisma.order.findUnique({
       where: { id },
       include: {
@@ -212,7 +212,7 @@ export class OrderService {
     });
   }
 
-  async update(id: string, updateData: any) {
+  static async update(id: string, updateData: any) {
     try {
       const order = await prisma.order.update({
         where: { id },
@@ -222,13 +222,21 @@ export class OrderService {
         }
       });
       return order;
-    } catch (error) {
-      // If the order doesn't exist, Prisma will throw an error
-      return null;
+    } catch (error: any) {
+      // Handle specific Prisma errors
+      if (error.code === 'P2025') {
+        throw new NotFoundError(
+          ErrorCode.ORDER_NOT_FOUND,
+          'Order not found',
+          { orderId: id }
+        );
+      }
+      // Re-throw other errors
+      throw error;
     }
   }
 
-  async cancel(id: string) {
+  static async cancel(id: string) {
     return this.update(id, { orderStatus: 'CANCELLED' });
   }
 

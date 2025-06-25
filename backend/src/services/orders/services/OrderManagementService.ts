@@ -6,19 +6,9 @@ import { OrderService } from "../OrderService";
 import { CreateOrderDto } from "../dto/create-order.dto";
 import { sendWhatsAppMessage, WhatsAppService } from "../../whatsapp";
 import { OrderFormattingService } from "./OrderFormattingService";
-import { extractBaseOrderItem, CalculatedOrderItem } from "../../../common/types";
 import { SyncMetadataService } from "../../sync/SyncMetadataService";
 
 export class OrderManagementService {
-  private orderService: OrderService;
-
-  constructor() {
-    this.orderService = new OrderService();
-  }
-
-  /**
-   * Convert a preorder to a confirmed order
-   */
   async confirmPreOrder(preOrderId: number): Promise<Order> {
     const preOrder = await prisma.preOrder.findUnique({
       where: { id: preOrderId },
@@ -47,7 +37,6 @@ export class OrderManagementService {
       );
     }
 
-    // Build order items from preOrder.orderItems relation
     const orderItems = preOrder.orderItems.map(item => ({
       productId: item.productId,
       productVariantId: item.productVariantId,
@@ -60,7 +49,6 @@ export class OrderManagementService {
       quantity: 1
     }));
 
-    // Build delivery info if exists
     let deliveryInfo = undefined;
     if (preOrder.deliveryInfo?.id) {
       const info = preOrder.deliveryInfo;
@@ -82,7 +70,6 @@ export class OrderManagementService {
       };
     }
 
-    // Get customer by WhatsApp phone number
     const customer = await prisma.customer.findUnique({
       where: { whatsappPhoneNumber: preOrder.whatsappPhoneNumber }
     });
@@ -95,12 +82,11 @@ export class OrderManagementService {
       );
     }
 
-    // Transform BaseOrderItem[] to match OrderItemDto[]
     const orderItemsDto = orderItems.map(item => ({
       productId: item.productId,
-      productVariantId: item.productVariantId || undefined, // Convert null to undefined
+      productVariantId: item.productVariantId || undefined,
       quantity: item.quantity,
-      comments: undefined, // Comments not supported in current flow
+      comments: undefined,
       selectedModifiers: item.selectedModifiers || [],
       selectedPizzaCustomizations: (item.selectedPizzaCustomizations || []).map(pc => ({
         pizzaCustomizationId: pc.pizzaCustomizationId,
@@ -119,18 +105,14 @@ export class OrderManagementService {
       ...(deliveryInfo ? { deliveryInfo: deliveryInfo } : {}),
     };
 
-    // Create the order
-    const order = await this.orderService.create(orderData);
+    const order = await OrderService.create(orderData);
 
-    // Delete the preorder after successful confirmation
     await prisma.preOrder.delete({ where: { id: preOrderId } });
 
     logger.info(`PreOrder ${preOrderId} converted to Order ${order.id}`);
     
-    // Mark order for sync
     await SyncMetadataService.markForSync('Order', order.id, 'REMOTE');
     
-    // Notify local backends about new order via WebSocket
     try {
       const { SyncNotificationService } = await import('../../sync/SyncNotificationService');
       await SyncNotificationService.notifyNewOrder(order.id);
@@ -141,9 +123,6 @@ export class OrderManagementService {
     return order;
   }
 
-  /**
-   * Cancel an order if it's in a cancellable state
-   */
   async cancelOrder(orderId: string): Promise<Order> {
     const order = await prisma.order.findUnique({
       where: { id: orderId },
@@ -169,15 +148,11 @@ export class OrderManagementService {
 
     logger.info(`Order ${orderId} cancelled successfully`);
     
-    // Mark order for sync after status change
     await SyncMetadataService.markForSync('Order', orderId, 'REMOTE');
     
     return cancelledOrder;
   }
 
-  /**
-   * Get order by message ID
-   */
   async getOrderByMessageId(messageId: string): Promise<Order | null> {
     return await prisma.order.findFirst({
       where: { messageId },
@@ -197,9 +172,6 @@ export class OrderManagementService {
     });
   }
 
-  /**
-   * Get preorder by message ID
-   */
   async getPreOrderByMessageId(messageId: string): Promise<PreOrder | null> {
     return await prisma.preOrder.findFirst({
       where: { messageId },
@@ -209,9 +181,6 @@ export class OrderManagementService {
     });
   }
 
-  /**
-   * Update order message ID for tracking
-   */
   async updateOrderMessageId(orderId: string, messageId: string): Promise<void> {
     await prisma.order.update({
       where: { id: orderId },
@@ -219,9 +188,6 @@ export class OrderManagementService {
     });
   }
 
-  /**
-   * Discard a preorder
-   */
   async discardPreOrder(preOrderId: number): Promise<void> {
     const preOrder = await prisma.preOrder.findUnique({
       where: { id: preOrderId },
@@ -242,16 +208,12 @@ export class OrderManagementService {
     logger.info(`PreOrder ${preOrderId} discarded successfully`);
   }
 
-  /**
-   * Send order confirmation with details and action buttons in a single message
-   */
   async sendOrderConfirmation(
     whatsappNumber: string,
     orderId: string,
-    action: "confirmed" | "cancelled" | "modified" = "confirmed"
+    _action: "confirmed" | "cancelled" | "modified" = "confirmed"
   ): Promise<void> {
     try {
-      // Get complete order details
       const fullOrder = await prisma.order.findUnique({
         where: { id: orderId },
         include: {
@@ -278,15 +240,12 @@ export class OrderManagementService {
         );
       }
 
-      // Update messageId for tracking
       const newMessageId = `order_${fullOrder.id}_${Date.now()}`;
       await this.updateOrderMessageId(fullOrder.id, newMessageId);
 
-      // Format order for display
       const formattedOrder = OrderFormattingService.formatOrderForWhatsApp(fullOrder, whatsappNumber);
       const orderSummary = OrderFormattingService.generateConfirmationMessage(fullOrder, formattedOrder);
       
-      // Send confirmation message with action buttons in a single interactive message
       if (fullOrder.orderStatus === "PENDING" || fullOrder.orderStatus === "IN_PROGRESS") {
         const message = {
           type: "button",
@@ -319,7 +278,6 @@ export class OrderManagementService {
 
         await WhatsAppService.sendInteractiveMessage(whatsappNumber, message, fullOrder.messageId || newMessageId);
       } else {
-        // For other statuses, just send the confirmation message without buttons
         await sendWhatsAppMessage(whatsappNumber, orderSummary);
       }
     } catch (error) {
@@ -328,16 +286,12 @@ export class OrderManagementService {
     }
   }
 
-  /**
-   * Send interactive buttons for order actions
-   */
-  private async sendOrderActionButtons(
+  private async _sendOrderActionButtons(
     whatsappNumber: string,
     messageId: string,
     orderStatus: OrderStatus
   ): Promise<void> {
     try {
-      // Only send buttons for pending orders
       if (orderStatus === "PENDING" || orderStatus === "IN_PROGRESS") {
         const message = {
           type: "button",
@@ -372,7 +326,6 @@ export class OrderManagementService {
       }
     } catch (error) {
       logger.error('Error sending action buttons:', error);
-      // Don't throw - button sending failure shouldn't stop the confirmation
     }
   }
 }

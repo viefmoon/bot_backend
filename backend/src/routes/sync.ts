@@ -8,21 +8,13 @@ import logger from '../common/utils/logger';
 
 const router = Router();
 
-// All sync routes require authentication
 router.use(syncAuthMiddleware);
 
-/**
- * Helper function to validate custom ID format
- */
 function isValidCustomId(id: string, prefix: string): boolean {
   const pattern = new RegExp(`^${prefix}-\\d+$`);
   return pattern.test(id);
 }
 
-/**
- * POST /api/sync/menu
- * Receive complete menu from local with exact structure
- */
 router.post('/menu', asyncHandler(async (req: Request, res: Response) => {
   logger.info('Sync: Menu push received');
   
@@ -42,12 +34,9 @@ router.post('/menu', asyncHandler(async (req: Request, res: Response) => {
   }
   
   try {
-    // Transaction to update menu
     await prisma.$transaction(async (tx) => {
-      // Process each category
       for (const categoryData of categories) {
         
-        // Validate category ID format
         if (!isValidCustomId(categoryData.id, 'CAT')) {
           throw new Error(`Invalid category ID format: ${categoryData.id}`);
         }
@@ -165,7 +154,7 @@ router.post('/menu', asyncHandler(async (req: Request, res: Response) => {
                         id: variantData.id,
                         productId: product.id,
                         name: variantData.name,
-                        price: parseFloat(variantData.price.toString()),
+                        price: variantData.price != null ? parseFloat(variantData.price.toString()) : 0,
                         isActive: variantData.isActive !== false,
                         sortOrder: variantData.sortOrder || 0,
                         createdAt: variantData.createdAt ? new Date(variantData.createdAt) : new Date(),
@@ -173,7 +162,7 @@ router.post('/menu', asyncHandler(async (req: Request, res: Response) => {
                       },
                       update: {
                         name: variantData.name,
-                        price: parseFloat(variantData.price.toString()),
+                        price: variantData.price != null ? parseFloat(variantData.price.toString()) : 0,
                         isActive: variantData.isActive !== false,
                         sortOrder: variantData.sortOrder || 0,
                         updatedAt: new Date(),
@@ -220,11 +209,12 @@ router.post('/menu', asyncHandler(async (req: Request, res: Response) => {
                       }
                     });
                     
-                    // Connect to product
+                    // Connect to product (disconnect first to avoid duplicates)
                     await tx.product.update({
                       where: { id: product.id },
                       data: {
                         modifierGroups: {
+                          disconnect: { id: modifierGroup.id },
                           connect: { id: modifierGroup.id }
                         }
                       }
@@ -291,11 +281,12 @@ router.post('/menu', asyncHandler(async (req: Request, res: Response) => {
                       }
                     });
                     
-                    // Connect to product
+                    // Connect to product (disconnect first to avoid duplicates)
                     await tx.product.update({
                       where: { id: product.id },
                       data: {
                         pizzaCustomizations: {
+                          disconnect: { id: customData.id },
                           connect: { id: customData.id }
                         }
                       }
@@ -352,10 +343,6 @@ router.post('/menu', asyncHandler(async (req: Request, res: Response) => {
   }
 }));
 
-/**
- * POST /api/sync/config
- * Receive restaurant configuration from local with exact structure
- */
 router.post('/config', asyncHandler(async (req: Request, res: Response) => {
   logger.info('Sync: Restaurant config push received');
   
@@ -425,10 +412,14 @@ router.post('/config', asyncHandler(async (req: Request, res: Response) => {
       for (const hoursData of config.businessHours) {
         // Format time to HH:mm if it includes seconds
         const formatTime = (time: string | null) => {
-          if (time && time.length > 5) {
-            return time.substring(0, 5);
+          if (!time) return null;
+          // Validate time format
+          const timeRegex = /^([0-1]?[0-9]|2[0-3]):[0-5][0-9](:[0-5][0-9])?$/;
+          if (!timeRegex.test(time)) {
+            throw new Error(`Invalid time format: ${time}. Expected HH:mm or HH:mm:ss`);
           }
-          return time;
+          // Remove seconds if present
+          return time.substring(0, 5);
         };
         
         await prisma.businessHours.upsert({
@@ -477,10 +468,6 @@ router.post('/config', asyncHandler(async (req: Request, res: Response) => {
   }
 }));
 
-/**
- * GET /api/sync/orders/pending
- * Get orders that haven't been synced to local with exact structure
- */
 router.get('/orders/pending', asyncHandler(async (_req: Request, res: Response) => {
   logger.info('Sync: Pending orders requested');
   
@@ -609,10 +596,6 @@ router.get('/orders/pending', asyncHandler(async (_req: Request, res: Response) 
   }
 }));
 
-/**
- * POST /api/sync/orders/confirm
- * Confirm orders have been synced and update dailyNumbers
- */
 router.post('/orders/confirm', asyncHandler(async (req: Request, res: Response) => {
   logger.info('Sync: Order confirmation received');
   
@@ -671,10 +654,6 @@ router.post('/orders/confirm', asyncHandler(async (req: Request, res: Response) 
   }
 }));
 
-/**
- * GET /api/sync/customers/changes
- * Get customer changes since last sync with exact structure
- */
 router.get('/customers/changes', asyncHandler(async (req: Request, res: Response) => {
   const { since } = req.query;
   
@@ -788,10 +767,6 @@ router.get('/customers/changes', asyncHandler(async (req: Request, res: Response
   }
 }));
 
-/**
- * POST /api/sync/customers/bulk
- * Bulk update customers from local with exact structure
- */
 router.post('/customers/bulk', asyncHandler(async (req: Request, res: Response) => {
   logger.info('Sync: Customer bulk update received');
   
@@ -885,10 +860,6 @@ router.post('/customers/bulk', asyncHandler(async (req: Request, res: Response) 
   }
 }));
 
-/**
- * GET /api/sync/status
- * Get sync status and health check
- */
 router.get('/status', asyncHandler(async (_req: Request, res: Response) => {
   const recentLogs = await prisma.syncLog.findMany({
     orderBy: { startedAt: 'desc' },

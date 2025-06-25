@@ -16,18 +16,11 @@ import {
   TokenValidationResult
 } from '../../common/types/preorder.types';
 
-/**
- * Centralized service for handling the complete PreOrder workflow
- * Manages creation, notification, and action processing with secure tokens
- */
 export class PreOrderWorkflowService {
   private static readonly TOKEN_PREFIX = 'preorder:token:';
   private static readonly TOKEN_TTL_SECONDS = 600; // 10 minutes
   private static readonly PREORDER_EXPIRY_MINUTES = 10; // Same as token TTL
   
-  /**
-   * Creates a preorder and sends confirmation to the customer
-   */
   static async createAndNotify(params: {
     orderData: ProcessedOrderData;
     customerId: string;
@@ -39,8 +32,7 @@ export class PreOrderWorkflowService {
         orderType: params.orderData.orderType 
       });
       
-      // Validate that there are items in the order
-      if (!params.orderData.orderItems || params.orderData.orderItems.length === 0) {
+        if (!params.orderData.orderItems || params.orderData.orderItems.length === 0) {
         throw new ValidationError(
           ErrorCode.MISSING_REQUIRED_FIELD,
           'No se puede crear una orden sin productos',
@@ -53,13 +45,10 @@ export class PreOrderWorkflowService {
         );
       }
       
-      // 1. Clean up any expired preorders from all users
       await this.cleanupExpiredPreOrders();
       
-      // 2. Discard any active preorders for this user
       await this.discardActivePreOrders(params.whatsappNumber);
       
-      // 3. Create preorder using existing service
       const preOrderService = new PreOrderService();
       const preOrderResult = await preOrderService.createPreOrder({
         orderItems: params.orderData.orderItems,
@@ -68,11 +57,9 @@ export class PreOrderWorkflowService {
         whatsappPhoneNumber: params.whatsappNumber,
       });
       
-      // 2. Generate unique token for actions
       const actionToken = await this.generateActionToken(preOrderResult.preOrderId);
       const expiresAt = new Date(Date.now() + this.TOKEN_TTL_SECONDS * 1000);
       
-      // 3. Send order summary with action buttons in a single message
       const messageId = await this.sendOrderSummaryWithButtons(
         params.whatsappNumber, 
         preOrderResult,
@@ -80,10 +67,8 @@ export class PreOrderWorkflowService {
         preOrderResult.preOrderId
       );
       
-      // 4. Update chat history with preorder information
       await this.updateChatHistoryWithPreOrder(params.whatsappNumber, preOrderResult);
       
-      // 5. Update preorder with messageId for tracking
       await prisma.preOrder.update({
         where: { id: preOrderResult.preOrderId },
         data: { messageId }
@@ -105,9 +90,6 @@ export class PreOrderWorkflowService {
     }
   }
   
-  /**
-   * Processes customer action on the preorder
-   */
   static async processAction(params: PreOrderActionParams): Promise<void> {
     try {
       logger.info('Processing preorder action', { 
@@ -115,7 +97,6 @@ export class PreOrderWorkflowService {
         token: params.token.substring(0, 8) + '...' 
       });
       
-      // 1. Validate and decode token
       const validation = await this.validateActionToken(params.token);
       if (!validation.isValid || !validation.preOrderId) {
         // Don't send messages here - let the error handler do it
@@ -126,14 +107,12 @@ export class PreOrderWorkflowService {
         );
       }
       
-      // 2. Execute action
       if (params.action === 'confirm') {
         await this.confirmPreOrder(validation.preOrderId, params.whatsappNumber);
       } else {
         await this.discardPreOrder(validation.preOrderId, params.whatsappNumber);
       }
       
-      // 3. Clean up token after use
       await this.deleteActionToken(params.token);
       
     } catch (error) {
@@ -142,14 +121,10 @@ export class PreOrderWorkflowService {
     }
   }
   
-  /**
-   * Generates a secure action token for the preorder
-   */
   private static async generateActionToken(preOrderId: number): Promise<string> {
     const token = randomUUID();
     const key = `${this.TOKEN_PREFIX}${token}`;
     
-    // Store in Redis with TTL
     await redisService.set(key, preOrderId.toString(), this.TOKEN_TTL_SECONDS);
     
     logger.debug('Generated action token', { 
@@ -160,9 +135,6 @@ export class PreOrderWorkflowService {
     return token;
   }
   
-  /**
-   * Validates an action token and returns the associated preOrderId
-   */
   private static async validateActionToken(token: string): Promise<TokenValidationResult> {
     const key = `${this.TOKEN_PREFIX}${token}`;
     
@@ -178,13 +150,11 @@ export class PreOrderWorkflowService {
       
       const preOrderId = parseInt(preOrderIdStr, 10);
       
-      // Verify preorder still exists
       const preOrder = await prisma.preOrder.findUnique({
         where: { id: preOrderId }
       });
       
       if (!preOrder) {
-        // The preorder was deleted (likely because a new one was created)
         return { 
           isValid: false, 
           error: 'Esta preorden ya no está disponible. Por favor, realiza un nuevo pedido.' 
@@ -205,24 +175,17 @@ export class PreOrderWorkflowService {
     }
   }
   
-  /**
-   * Deletes an action token
-   */
   private static async deleteActionToken(token: string): Promise<void> {
     const key = `${this.TOKEN_PREFIX}${token}`;
     await redisService.del(key);
   }
   
-  /**
-   * Sends order summary with action buttons in a single interactive message
-   */
   private static async sendOrderSummaryWithButtons(
     whatsappNumber: string, 
     preOrderResult: any,
     token: string,
     preOrderId: number
   ): Promise<string> {
-    // Generate the order summary text
     let orderSummary = generateOrderSummary(preOrderResult);
     
     // WhatsApp button messages have a 1024 character limit for the body
@@ -233,7 +196,6 @@ export class PreOrderWorkflowService {
       logger.warn(`Order summary truncated from ${orderSummary.length} to ${MAX_BODY_LENGTH} characters`);
     }
     
-    // Create interactive message with summary and buttons
     const message = {
       type: "button",
       body: {
@@ -259,7 +221,6 @@ export class PreOrderWorkflowService {
       }
     };
     
-    // Generate a unique message ID for tracking
     const messageId = `preorder_${preOrderId}_${Date.now()}`;
     
     await WhatsAppService.sendInteractiveMessage(
@@ -353,10 +314,8 @@ export class PreOrderWorkflowService {
         relevantChatHistory = [];
       }
       
-      // Crear mensaje sanitizado para el historial
       const historyMarker = this.createHistoryMarker(preOrderResult);
       
-      // Agregar al historial completo (con toda la información)
       const fullMessage = generateOrderSummary(preOrderResult);
       fullChatHistory.push({
         role: 'assistant',
@@ -364,7 +323,6 @@ export class PreOrderWorkflowService {
         timestamp: new Date()
       });
       
-      // Agregar al historial relevante (sin información sensible)
       relevantChatHistory.push({
         role: 'assistant',
         content: historyMarker,
@@ -374,7 +332,6 @@ export class PreOrderWorkflowService {
       // Limitar historial relevante a 20 mensajes
       const limitedRelevantHistory = relevantChatHistory.slice(-20);
       
-      // Actualizar en la base de datos
       await prisma.customer.update({
         where: { id: customer.id },
         data: {
@@ -384,7 +341,6 @@ export class PreOrderWorkflowService {
         }
       });
       
-      // Mark for sync
       await SyncMetadataService.markForSync('Customer', customer.id, 'REMOTE');
       
       logger.info('Chat history updated with preorder information');
@@ -394,9 +350,6 @@ export class PreOrderWorkflowService {
     }
   }
   
-  /**
-   * Confirms a preorder and converts it to an order
-   */
   private static async confirmPreOrder(
     preOrderId: number, 
     whatsappNumber: string
@@ -405,7 +358,6 @@ export class PreOrderWorkflowService {
     
     const orderManagementService = new OrderManagementService();
     
-    // Convert preorder to order
     const order = await orderManagementService.confirmPreOrder(preOrderId);
     
     logger.info('Order created successfully', { 
@@ -413,13 +365,9 @@ export class PreOrderWorkflowService {
       dailyNumber: order.dailyNumber 
     });
     
-    // Send confirmation using OrderManagementService
     await orderManagementService.sendOrderConfirmation(whatsappNumber, order.id, 'confirmed');
   }
   
-  /**
-   * Discards a preorder and clears relevant chat history
-   */
   private static async discardPreOrder(
     preOrderId: number, 
     whatsappNumber: string
@@ -428,10 +376,8 @@ export class PreOrderWorkflowService {
     
     const orderManagementService = new OrderManagementService();
     
-    // Delete the preorder
     await orderManagementService.discardPreOrder(preOrderId);
     
-    // Clear relevant chat history for the customer
     const customer = await prisma.customer.findUnique({
       where: { whatsappPhoneNumber: whatsappNumber }
     });
@@ -447,7 +393,6 @@ export class PreOrderWorkflowService {
       logger.info(`Cleared relevant chat history for customer ${customer.id}`);
     }
     
-    // Send cancellation message with instructions
     await sendWhatsAppMessage(
       whatsappNumber,
       "❌ Tu pedido ha sido cancelado y tu historial de conversación ha sido reiniciado.\n\n" +
@@ -456,12 +401,8 @@ export class PreOrderWorkflowService {
     );
   }
   
-  /**
-   * Discard all active preorders for a user
-   */
   private static async discardActivePreOrders(whatsappNumber: string): Promise<void> {
     try {
-      // Find all active preorders for this phone number
       const activePreOrders = await prisma.preOrder.findMany({
         where: { whatsappPhoneNumber: whatsappNumber }
       });
@@ -472,7 +413,6 @@ export class PreOrderWorkflowService {
       
       logger.info(`Found ${activePreOrders.length} active preorders for ${whatsappNumber}. Discarding them.`);
       
-      // Delete all associated tokens from Redis
       const tokenKeys = await redisService.keys(`${this.TOKEN_PREFIX}*`);
       for (const key of tokenKeys) {
         const preOrderIdStr = await redisService.get(key);
@@ -485,7 +425,6 @@ export class PreOrderWorkflowService {
         }
       }
       
-      // Delete all preorders
       await prisma.preOrder.deleteMany({
         where: { whatsappPhoneNumber: whatsappNumber }
       });
@@ -497,15 +436,11 @@ export class PreOrderWorkflowService {
     }
   }
   
-  /**
-   * Clean up expired preorders (called periodically or before creating new ones)
-   */
   static async cleanupExpiredPreOrders(): Promise<void> {
     try {
       const expiryDate = new Date();
       expiryDate.setMinutes(expiryDate.getMinutes() - this.PREORDER_EXPIRY_MINUTES);
       
-      // Find all expired preorders
       const expiredPreOrders = await prisma.preOrder.findMany({
         where: {
           createdAt: {
@@ -520,7 +455,6 @@ export class PreOrderWorkflowService {
       
       logger.info(`Found ${expiredPreOrders.length} expired preorders to clean up`);
       
-      // Delete associated tokens from Redis
       const tokenKeys = await redisService.keys(`${this.TOKEN_PREFIX}*`);
       for (const key of tokenKeys) {
         const preOrderIdStr = await redisService.get(key);
@@ -533,7 +467,6 @@ export class PreOrderWorkflowService {
         }
       }
       
-      // Delete expired preorders
       const result = await prisma.preOrder.deleteMany({
         where: {
           createdAt: {

@@ -7,9 +7,6 @@ import { env } from '../../common/config/envValidator';
 import { ExternalServiceError, ErrorCode } from '../../common/services/errors';
 import { MessageSplitter } from '../../common/utils/messageSplitter';
 
-/**
- * Service for WhatsApp Business API communication
- */
 export class WhatsAppService {
   private static readonly WHATSAPP_API_URL = 'https://graph.facebook.com/v17.0';
   private static readonly PHONE_NUMBER_ID = env.WHATSAPP_PHONE_NUMBER_MESSAGING_ID;
@@ -17,9 +14,6 @@ export class WhatsAppService {
   private static readonly VERIFY_TOKEN = env.WHATSAPP_VERIFY_TOKEN;
   private static readonly MAX_MESSAGE_LENGTH = 4000; // WhatsApp message length limit with margin
 
-  /**
-   * Verify webhook for WhatsApp
-   */
   static verifyWebhook(query: any): { verified: boolean; challenge?: string } {
     const mode = query['hub.mode'];
     const token = query['hub.verify_token'];
@@ -35,9 +29,6 @@ export class WhatsAppService {
     return { verified: false };
   }
 
-  /**
-   * Handle incoming webhook from WhatsApp
-   */
   static async handleWebhook(req: Request, res: Response): Promise<void> {
     try {
       const body = JSON.parse(req.body.toString());
@@ -63,15 +54,11 @@ export class WhatsAppService {
     }
   }
 
-  /**
-   * Process an incoming message
-   */
   private static async processIncomingMessage(message: any): Promise<void> {
     try {
       const messageId = message.id;
       const from = message.from;
       
-      // Check if message was already processed
       const existingLog = await prisma.messageLog.findUnique({
         where: { messageId }
       });
@@ -81,14 +68,12 @@ export class WhatsAppService {
         return;
       }
       
-      // Mark message as being processed
       await prisma.messageLog.upsert({
         where: { messageId },
         update: { processed: true },
         create: { messageId, processed: true }
       });
       
-      // Process the message
       await MessageProcessor.processWithPipeline({
         ...message,
         from
@@ -99,9 +84,6 @@ export class WhatsAppService {
     }
   }
 
-  /**
-   * Send a text message via WhatsApp
-   */
   static async sendMessage(to: string, message: string): Promise<{ success: boolean; messageId?: string; error?: string }> {
     try {
       const response = await axios.post(
@@ -129,9 +111,6 @@ export class WhatsAppService {
     }
   }
 
-  /**
-   * Send an interactive message via WhatsApp
-   */
   static async sendInteractiveMessage(to: string, interactive: any, contextMessageId?: string): Promise<string> {
     try {
       const payload: any = {
@@ -141,7 +120,6 @@ export class WhatsAppService {
         interactive
       };
 
-      // Add context if provided
       if (contextMessageId) {
         payload.context = { message_id: contextMessageId };
       }
@@ -171,9 +149,6 @@ export class WhatsAppService {
     }
   }
 
-  /**
-   * Get media URL from WhatsApp
-   */
   static async getMediaUrl(mediaId: string): Promise<string | null> {
     try {
       const response = await axios.get(
@@ -192,9 +167,6 @@ export class WhatsAppService {
     }
   }
 
-  /**
-   * Download media from WhatsApp
-   */
   static async downloadMedia(mediaUrl: string): Promise<Buffer | null> {
     try {
       const response = await axios.get(mediaUrl, {
@@ -211,9 +183,6 @@ export class WhatsAppService {
     }
   }
 
-  /**
-   * Mark message as read
-   */
   static async markMessageAsRead(messageId: string): Promise<boolean> {
     try {
       await axios.post(
@@ -238,9 +207,6 @@ export class WhatsAppService {
     }
   }
 
-  /**
-   * Send a message with a URL button
-   */
   static async sendMessageWithUrlButton(
     to: string, 
     headerText: string,
