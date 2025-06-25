@@ -63,7 +63,7 @@ app.get('/backend', (_, res) => {
 
 // Routes
 app.use('/backend/webhook', webhookRoutes);
-app.use('/backend/sync', syncRoutes);
+app.use('/api/sync', syncRoutes);
 app.use('/backend/address-registration', addressRegistrationRoutes);
 app.use('/backend/address-selection', addressSelectionRoutes);
 

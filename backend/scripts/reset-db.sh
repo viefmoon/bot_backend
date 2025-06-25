@@ -7,7 +7,4 @@ npx prisma migrate reset --force --skip-seed
 echo "📝 Creating initial migration..."
 npx prisma migrate dev --name initial_schema --skip-seed
 
-echo "🌱 Seeding database..."
-npm run seed
-
 echo "✅ Database reset complete!"

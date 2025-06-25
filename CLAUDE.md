@@ -30,7 +30,6 @@ npm run generate      # Generate Prisma client after schema changes
 npm run migrate:dev   # Create and apply migrations in development
 npm run migrate       # Apply migrations in production
 npm run studio        # Open Prisma Studio to view/edit database
-npm run seed          # Seed database with initial restaurant data
 ```
 
 ### Build & Production
@@ -436,7 +435,7 @@ Railway deployment:
 cd backend && npm install && npm run build
 
 # Start command  
-cd backend && npm run migrate && npm run seed && npm start
+cd backend && npm run migrate && npm start
 ```
 
 Auto-deploys on push to connected repository.

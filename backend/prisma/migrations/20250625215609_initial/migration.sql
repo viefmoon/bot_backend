@@ -331,14 +331,6 @@ CREATE TABLE "BusinessHours" (
 );
 
 -- CreateTable
-CREATE TABLE "SeederControl" (
-    "id" TEXT NOT NULL,
-    "lastRun" TIMESTAMP(3) NOT NULL,
-
-    CONSTRAINT "SeederControl_pkey" PRIMARY KEY ("id")
-);
-
--- CreateTable
 CREATE TABLE "SelectedPizzaCustomization" (
     "id" UUID NOT NULL,
     "orderItemId" UUID NOT NULL,
@@ -457,18 +449,6 @@ CREATE TABLE "Adjustment" (
     "deletedAt" TIMESTAMP(3),
 
     CONSTRAINT "Adjustment_pkey" PRIMARY KEY ("id")
-);
-
--- CreateTable
-CREATE TABLE "SyncConfig" (
-    "id" TEXT NOT NULL,
-    "apiKey" TEXT NOT NULL,
-    "apiKeyHash" TEXT NOT NULL,
-    "lastSyncAt" TIMESTAMP(3),
-    "isActive" BOOLEAN NOT NULL DEFAULT true,
-    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-
-    CONSTRAINT "SyncConfig_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
@@ -608,9 +588,6 @@ CREATE INDEX "Adjustment_preOrderId_idx" ON "Adjustment"("preOrderId");
 
 -- CreateIndex
 CREATE INDEX "Adjustment_orderItemId_idx" ON "Adjustment"("orderItemId");
-
--- CreateIndex
-CREATE UNIQUE INDEX "SyncConfig_apiKey_key" ON "SyncConfig"("apiKey");
 
 -- CreateIndex
 CREATE INDEX "SyncMetadata_syncPending_entityType_idx" ON "SyncMetadata"("syncPending", "entityType");

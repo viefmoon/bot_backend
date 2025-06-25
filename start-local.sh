@@ -235,10 +235,6 @@ npm run generate
 echo -e "\n${YELLOW}5. Creando tablas en la base de datos...${NC}"
 npx prisma migrate deploy 2>/dev/null || npx prisma migrate dev --name init
 
-# Paso 6: Ejecutar seed
-echo -e "\n${YELLOW}6. Agregando datos iniciales (menú)...${NC}"
-npm run seed
-
 # Paso 6.5: Configurar pgvector si está disponible
 echo -e "\n${YELLOW}6.5. Configurando búsqueda semántica (pgvector)...${NC}"
 if [ -f "./scripts/setup-local-pgvector.sh" ]; then

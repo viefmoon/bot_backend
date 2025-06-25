@@ -24,10 +24,23 @@ export class ConfigService {
       const dbConfig = await prisma.restaurantConfig.findFirst();
       
       if (!dbConfig) {
-        throw new TechnicalError(
-          ErrorCode.DATABASE_ERROR,
-          'Restaurant configuration not found in database'
-        );
+        // Use default configuration if none exists
+        logger.warn('No restaurant configuration found in database, using defaults');
+        const defaultInfo: RestaurantInfo = {
+          restaurantName: "Restaurante (Pendiente Sincronización)",
+          phoneMain: "",
+          phoneSecondary: "",
+          address: "",
+          city: "",
+          state: "",
+          postalCode: ""
+        };
+        
+        this.config = {
+          restaurantInfo: defaultInfo,
+          lastUpdated: new Date()
+        };
+        return;
       }
       
       // Map database config to RestaurantInfo type
@@ -49,7 +62,22 @@ export class ConfigService {
       logger.info('Restaurant configuration loaded and cached successfully');
     } catch (error) {
       logger.error('Failed to load restaurant configuration:', error);
-      throw error;
+      
+      // Use default configuration on error
+      const defaultInfo: RestaurantInfo = {
+        restaurantName: "Restaurante (Error al cargar)",
+        phoneMain: "",
+        phoneSecondary: "",
+        address: "",
+        city: "",
+        state: "",
+        postalCode: ""
+      };
+      
+      this.config = {
+        restaurantInfo: defaultInfo,
+        lastUpdated: new Date()
+      };
     }
   }
 
