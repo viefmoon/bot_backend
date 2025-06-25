@@ -27,6 +27,7 @@ interface EnvironmentVariables {
   REDIS_HOST?: string;
   REDIS_PORT?: string;
   REDIS_PASSWORD?: string;
+  SYNC_API_KEY?: string;
 }
 
 class EnvironmentValidator {
@@ -129,7 +130,8 @@ class EnvironmentValidator {
       DEFAULT_LOCALE: process.env.DEFAULT_LOCALE!,
       REDIS_HOST: process.env.REDIS_HOST,
       REDIS_PORT: process.env.REDIS_PORT,
-      REDIS_PASSWORD: process.env.REDIS_PASSWORD
+      REDIS_PASSWORD: process.env.REDIS_PASSWORD,
+      SYNC_API_KEY: process.env.SYNC_API_KEY
     };
   }
 }
