@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import { TechnicalError, ErrorCode } from '../services/errors';
+import logger from '../utils/logger';
 
 export interface SyncAuthRequest extends Request {
   syncApiKey?: string;
@@ -12,7 +13,7 @@ export async function syncAuthMiddleware(
 ): Promise<void> {
   try {
     // Get API key from header
-    const apiKey = req.headers['x-sync-api-key'] as string;
+    const apiKey = req.headers['x-api-key'] as string;
     
     if (!apiKey) {
       throw new TechnicalError(
@@ -25,6 +26,7 @@ export async function syncAuthMiddleware(
     const validApiKey = process.env.SYNC_API_KEY;
     
     if (!validApiKey) {
+      logger.error('SYNC_API_KEY not configured in environment');
       throw new TechnicalError(
         ErrorCode.DATABASE_ERROR,
         'Sync API key not configured'

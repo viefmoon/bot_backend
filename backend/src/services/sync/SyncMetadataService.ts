@@ -1,7 +1,7 @@
 import { prisma } from '../../server';
 import logger from '../../common/utils/logger';
 
-export type SyncEntityType = 'Customer' | 'Order' | 'Address' | 'Product' | 'Category';
+export type SyncEntityType = 'Order' | 'Customer' | 'Address' | 'Product' | 'Category';
 export type ModifiedBy = 'LOCAL' | 'REMOTE';
 
 export class SyncMetadataService {

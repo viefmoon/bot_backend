@@ -1,5 +1,5 @@
 import { Router, Request, Response } from 'express';
-import { asyncHandler } from '../common/utils/asyncHandler';
+import { asyncHandler } from '../common/middlewares/errorHandler';
 import { syncAuthMiddleware } from '../common/middlewares/syncAuth.middleware';
 import { SyncService } from '../services/sync/SyncService';
 import { SyncMetadataService } from '../services/sync/SyncMetadataService';
@@ -275,15 +275,17 @@ router.post('/menu', asyncHandler(async (req: Request, res: Response) => {
                       create: {
                         id: customData.id,
                         name: customData.name,
-                        type: 'INGREDIENT',
-                        ingredients: customData.description,
-                        toppingValue: 1,
+                        type: customData.type || 'INGREDIENT',
+                        ingredients: customData.ingredients || customData.description,
+                        toppingValue: customData.toppingValue || 1,
                         isActive: customData.isActive !== false,
                         sortOrder: customData.sortOrder || 0
                       },
                       update: {
                         name: customData.name,
-                        ingredients: customData.description,
+                        type: customData.type || 'INGREDIENT',
+                        ingredients: customData.ingredients || customData.description,
+                        toppingValue: customData.toppingValue || 1,
                         isActive: customData.isActive !== false,
                         sortOrder: customData.sortOrder || 0
                       }
@@ -307,12 +309,12 @@ router.post('/menu', asyncHandler(async (req: Request, res: Response) => {
                     where: { productId: product.id },
                     create: {
                       productId: product.id,
-                      includedToppings: 4,
-                      extraToppingCost: 20
+                      includedToppings: productData.pizzaConfiguration?.includedToppings || 4,
+                      extraToppingCost: productData.pizzaConfiguration?.extraToppingCost || 20
                     },
                     update: {
-                      includedToppings: 4,
-                      extraToppingCost: 20
+                      includedToppings: productData.pizzaConfiguration?.includedToppings || 4,
+                      extraToppingCost: productData.pizzaConfiguration?.extraToppingCost || 20
                     }
                   });
                 }
@@ -501,14 +503,7 @@ router.get('/orders/pending', asyncHandler(async (_req: Request, res: Response) 
         isFromWhatsApp: true
       },
       include: {
-        customer: {
-          include: {
-            addresses: {
-              where: { isDefault: true },
-              take: 1
-            }
-          }
-        },
+        customer: true,
         orderItems: {
           include: {
             product: true,
@@ -528,10 +523,8 @@ router.get('/orders/pending', asyncHandler(async (_req: Request, res: Response) 
       dailyNumber: order.dailyNumber,
       orderType: order.orderType,
       orderStatus: order.orderStatus,
-      paymentStatus: 'PENDING', // Using enum value
+      paymentStatus: order.payments[0]?.status || 'PENDING',
       subtotal: order.subtotal,
-      deliveryFee: 30.00, // Default delivery fee
-      serviceFee: 0.00,
       total: order.total,
       paymentMethod: order.payments[0]?.paymentMethod || 'CASH',
       notes: order.notes || '',
@@ -553,7 +546,7 @@ router.get('/orders/pending', asyncHandler(async (_req: Request, res: Response) 
         orderId: order.id,
         productId: item.productId,
         productVariantId: item.productVariantId,
-        quantity: 1, // Default quantity
+        quantity: 1, // TODO: Add quantity field to OrderItem model
         price: item.finalPrice,
         notes: item.preparationNotes || '',
         isPizzaHalf: false,
@@ -573,11 +566,11 @@ router.get('/orders/pending', asyncHandler(async (_req: Request, res: Response) 
           quantity: 1
         }))
       })),
-      deliveryInfo: order.deliveryInfo && order.customer.addresses[0] ? {
+      deliveryInfo: order.deliveryInfo ? {
         id: order.deliveryInfo.id,
         address: {
-          id: order.customer.addresses[0].id,
-          name: order.customer.addresses[0].name,
+          id: order.deliveryInfo.id,
+          name: order.deliveryInfo.recipientName || '',
           street: order.deliveryInfo.street || '',
           number: order.deliveryInfo.number || '',
           interiorNumber: order.deliveryInfo.interiorNumber || null,
