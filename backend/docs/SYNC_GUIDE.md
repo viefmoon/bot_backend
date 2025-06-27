@@ -37,7 +37,7 @@ Sistema de sincronización simple entre tu backend local (restaurante) y el back
 
 ```bash
 # En el archivo .env del backend remoto
-SYNC_API_KEY=1234  # Cambia esto por un key seguro
+CLOUD_API_KEY=1234  # Cambia esto por un key seguro
 ```
 
 ### 2. Backend Local - Configuración
