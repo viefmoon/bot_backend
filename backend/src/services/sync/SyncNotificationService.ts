@@ -25,7 +25,7 @@ export class SyncNotificationService {
         }
         
         // Validate API key
-        if (!env.SYNC_API_KEY || apiKey !== env.SYNC_API_KEY) {
+        if (!env.CLOUD_API_KEY || apiKey !== env.CLOUD_API_KEY) {
           return next(new Error('Invalid API key'));
         }
         

@@ -9,7 +9,8 @@
 - **Búsqueda Semántica**: MenuSearchService con embeddings pre-calculados (text-embedding-004, 768 dimensiones)
 - **pgvector**: Índice HNSW para búsqueda eficiente O(log n)
 
-### Estructura de OrderItems
+### Estructura de Datos
+
 ```typescript
 // Formato AI (entrada)
 interface AIOrderItem {
@@ -24,13 +25,25 @@ interface AIOrderItem {
   }>;
 }
 
-// Formato Base (procesamiento interno)
-interface BaseOrderItem {
-  productId: string;
-  productVariantId?: string;
-  quantity: number;
-  selectedModifiers?: string[];
-  selectedPizzaCustomizations?: PizzaCustomizationData[];
+// Información de Entrega
+interface DeliveryInfoData {
+  fullAddress?: string;         // Dirección completa
+  recipientName?: string;       // Nombre del destinatario
+  recipientPhone?: string;      // Teléfono del destinatario
+}
+
+// Entrega Programada
+interface ScheduledDeliveryData {
+  time?: string; // Hora en formato HH:mm (solo captura la hora del audio)
+}
+
+// Respuesta del Procesamiento
+interface AudioProcessingResult {
+  orderItems?: AIOrderItem[];
+  orderType?: "DELIVERY" | "TAKE_AWAY" | "DINE_IN";
+  deliveryInfo?: DeliveryInfoData;
+  scheduledDelivery?: ScheduledDeliveryData;
+  warnings?: string;
 }
 ```
 
@@ -40,13 +53,20 @@ interface BaseOrderItem {
 ```
 POST /api/v1/audio/process-order
 Content-Type: multipart/form-data
+X-API-Key: {CLOUD_API_KEY}
 
 Body:
-- audio: File (archivo de audio desde Expo)
+- audio: File (archivo de audio desde app de trabajadores)
 - transcription: string (transcripción nativa de Google)
-- orderType: "DELIVERY" | "TAKE_AWAY"
-- customerId: string (UUID del cliente)
 ```
+
+**Campos Soportados en la Extracción:**
+- **orderItems**: Productos del menú con cantidades, variantes y modificadores
+- **orderType**: Tipo de orden inferido (DELIVERY si menciona dirección, TAKE_AWAY si menciona recoger, DINE_IN por defecto)
+- **deliveryInfo**: Información de entrega (dirección, destinatario, teléfono)
+- **scheduledDelivery**: Hora de entrega programada
+
+Todos los campos son opcionales y solo se extraen si son mencionados explícitamente en el audio.
 
 ### 2. Flujo de Procesamiento
 
@@ -59,10 +79,14 @@ graph TD
     D --> F[Productos Relevantes]
     E --> F
     F --> G[Procesamiento Multimodal Gemini]
-    G --> H[map_order_items Function]
-    H --> I[Transformar AI → Base Format]
-    I --> J[PreOrderWorkflowService]
-    J --> K[Respuesta con PreOrder]
+    G --> H[extract_order_data Function]
+    H --> I{Datos Extraídos}
+    I --> J[OrderItems]
+    I --> K[DeliveryInfo]
+    I --> L[ScheduledDelivery]
+    J --> M[Respuesta Estructurada]
+    K --> M
+    L --> M
 ```
 
 ### 3. Ventajas del Diseño
@@ -81,7 +105,7 @@ graph TD
 #### Simplicidad
 - **Sin Dos Agentes**: Procesamiento directo con función forzada
 - **Respuesta Estructurada**: Garantizada por `mode: "ANY"`
-- **Creación Directa**: PreOrder sin pasos intermedios
+- **Solo Mapeo**: Devuelve items procesados sin crear órdenes
 
 ### 4. Prompt Especializado para Audio
 
@@ -92,12 +116,28 @@ Características del prompt:
 3. Incluye solo productos relevantes del menú
 4. Instrucciones claras sobre variantes obligatorias
 5. Mapeo directo a IDs del menú
+6. Extracción inteligente de múltiples tipos de datos
+7. Solo captura información mencionada explícitamente
 ```
 
-### 5. Integración con Expo
+**Ejemplos de Extracción Inteligente:**
+
+- **Solo productos**: "Quiero dos pizzas grandes hawaianas"
+  - Resultado: Solo `orderItems` con los productos
+
+- **Productos + dirección**: "Una hamburguesa para entregar en Calle Juárez 123"
+  - Resultado: `orderItems` + `deliveryInfo.fullAddress`
+
+- **Entrega programada**: "Dos tacos al pastor para las 3 de la tarde"
+  - Resultado: `orderItems` + `scheduledDelivery.time` (15:00)
+
+- **Información completa**: "Pedido para Juan Pérez, teléfono 555-1234, entregar en Av. Reforma 222, a las 8 de la noche"
+  - Resultado: Todos los campos de `deliveryInfo` + `scheduledDelivery.time` (20:00)
+
+### 5. Integración con App de Trabajadores
 
 ```typescript
-// Cliente Expo
+// Cliente App Trabajadores
 const formData = new FormData();
 formData.append('audio', {
   uri: audioUri,
@@ -105,16 +145,40 @@ formData.append('audio', {
   name: 'order.mp4'
 });
 formData.append('transcription', googleTranscription);
-formData.append('orderType', selectedOrderType);
-formData.append('customerId', userId);
 
 const response = await fetch(`${API_URL}/api/v1/audio/process-order`, {
   method: 'POST',
   body: formData,
   headers: {
-    'Authorization': `Bearer ${token}`
+    'X-API-Key': CLOUD_API_KEY
   }
 });
+
+// Respuesta
+{
+  "success": true,
+  "data": {
+    "orderItems": [
+      {
+        "productId": "PZ",
+        "variantId": "PZ-V-1",
+        "quantity": 2,
+        "modifiers": [],
+        "pizzaCustomizations": [...]
+      }
+    ],
+    "orderType": "DELIVERY",
+    "deliveryInfo": {
+      "fullAddress": "Calle Juárez 123, Colonia Centro",
+      "recipientName": "Juan Pérez",
+      "recipientPhone": "555-1234567"
+    },
+    "scheduledDelivery": {
+      "time": "14:30"
+    },
+    "warnings": "No pude identificar el tamaño de las bebidas"
+  }
+}
 ```
 
 ### 6. Manejo de Errores
@@ -126,24 +190,23 @@ const response = await fetch(`${API_URL}/api/v1/audio/process-order`, {
 
 ### 7. Consideraciones de Seguridad
 
-- **Autenticación**: Bearer token requerido
-- **Validación de Cliente**: Verificar que customerId existe
-- **Rate Limiting**: Limitar peticiones por cliente
+- **Autenticación**: X-API-Key header con CLOUD_API_KEY
+- **Middleware**: Adaptar o crear middleware similar a `syncAuthMiddleware`
+- **Rate Limiting**: Limitar peticiones globalmente por API key
 - **Tamaño de Audio**: Límite máximo configurable
 
 ### 8. Métricas de Rendimiento Esperadas
 
 - **Búsqueda Semántica**: ~50ms (índice HNSW)
 - **Procesamiento Gemini**: ~2-3s (audio + función)
-- **Creación PreOrder**: ~100ms
-- **Total**: ~3-4s end-to-end
+- **Total**: ~2-3s end-to-end
 
 ### 9. Próximos Pasos para Implementación
 
 1. Crear el servicio `AudioOrderService`
 2. Implementar la ruta en Express
 3. Agregar validación con DTOs
-4. Implementar middleware de autenticación
+4. Crear o adaptar middleware de autenticación para CLOUD_API_KEY
 5. Agregar logging y métricas
 6. Pruebas unitarias y de integración
 7. Documentación de API

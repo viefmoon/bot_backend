@@ -67,6 +67,10 @@ app.use('/api/sync', syncRoutes);
 app.use('/backend/address-registration', addressRegistrationRoutes);
 app.use('/backend/address-selection', addressSelectionRoutes);
 
+// Import and use audio routes
+import audioOrderRoutes from './api/audio/audioOrder.routes';
+app.use('/api/v1/audio', audioOrderRoutes);
+
 // OTP endpoints
 app.post('/backend/otp/verify',
   validationMiddleware(VerifyOtpDto),

@@ -31,6 +31,18 @@ export const ERROR_MESSAGES: Record<ErrorCode, ErrorMessageConfig> = {
     user: "❌ No se encontró información del cliente.",
     log: "Customer not found"
   },
+  [ErrorCode.USER_BANNED]: {
+    user: "🚫 Tu cuenta ha sido suspendida.",
+    log: "User is banned"
+  },
+  [ErrorCode.NO_PRODUCTS_FOUND]: {
+    user: "❌ No encontré productos que coincidan con tu pedido. Por favor intenta de nuevo.",
+    log: "No products found matching search"
+  },
+  [ErrorCode.EMPTY_ORDER]: {
+    user: "❌ No pude identificar productos válidos en tu pedido. Por favor intenta de nuevo.",
+    log: "Empty order - no valid items identified"
+  },
   
   // Validation Errors
   [ErrorCode.INVALID_PRODUCT]: {
@@ -64,6 +76,10 @@ export const ERROR_MESSAGES: Record<ErrorCode, ErrorMessageConfig> = {
   [ErrorCode.ADDRESS_OUTSIDE_COVERAGE]: {
     user: "📍 La dirección seleccionada está fuera de nuestra área de cobertura. Por favor, selecciona una dirección dentro de la zona de entrega.",
     log: "Address outside delivery coverage area"
+  },
+  [ErrorCode.FILE_TOO_LARGE]: {
+    user: "❌ El archivo es demasiado grande. Por favor envía un archivo más pequeño.",
+    log: "File size exceeds maximum allowed"
   },
   
   // Not Found Errors
@@ -127,5 +143,10 @@ export const ERROR_MESSAGES: Record<ErrorCode, ErrorMessageConfig> = {
   [ErrorCode.EMBEDDING_GENERATION_FAILED]: {
     user: '🤖 Hubo un problema al procesar tu búsqueda. Por favor, intenta de nuevo.',
     log: 'Failed to generate embedding for search query'
+  },
+  
+  [ErrorCode.AI_PROCESSING_ERROR]: {
+    user: '🤖 No se pudo procesar tu pedido. Por favor intenta de nuevo.',
+    log: 'AI processing failed'
   }
 };
