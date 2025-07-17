@@ -9,7 +9,7 @@ module.exports = {
     {
       // API Server Configuration
       name: 'whatsapp-api',
-      script: 'dist/server.js',
+      script: 'dist/src/server.js',
       instances: 1, // API usually needs only one instance
       autorestart: true,
       watch: false,
@@ -25,7 +25,7 @@ module.exports = {
     {
       // Worker Configuration
       name: 'whatsapp-worker',
-      script: 'dist/run-workers.js',
+      script: 'dist/src/workers/messageWorker.js',
       instances: parseInt(process.env.NUM_WORKERS || '1', 10), // Read from .env
       autorestart: true,
       watch: false,
