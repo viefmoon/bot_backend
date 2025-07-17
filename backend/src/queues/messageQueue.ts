@@ -39,7 +39,7 @@ async function acquireUserLock(userId: string, timeoutSeconds: number = 60): Pro
     // SET key value NX EX seconds
     // NX: Only set if key doesn't exist
     // EX: Set expiry in seconds to prevent permanent locks
-    const result = await redisClient.set(lockKey, 'processing', 'NX', 'EX', timeoutSeconds);
+    const result = await redisClient.set(lockKey, 'processing', 'EX', timeoutSeconds, 'NX');
     return result === 'OK';
   } catch (error) {
     logger.error(`Failed to acquire lock for user ${userId}:`, error);

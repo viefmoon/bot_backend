@@ -198,7 +198,7 @@ router.put('/:addressId',
   otpAuthMiddleware,
   asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
     const { addressId } = req.params;
-    const { address } = req.body as UpdateAddressDto;
+    const addressData = req.body as UpdateAddressDto;
     const customer = req.customer; // Customer already validated by middleware
     
     // Verificar que la dirección pertenece al cliente
@@ -220,7 +220,7 @@ router.put('/:addressId',
     // Actualizar dirección
     const updatedAddress = await DeliveryInfoService.updateCustomerAddress(
       addressId,
-      address
+      addressData
     );
     
     // Enviar notificación de WhatsApp sobre actualización de dirección

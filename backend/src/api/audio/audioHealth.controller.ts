@@ -18,11 +18,11 @@ interface HealthCheckResponse {
 export class AudioHealthController {
   static async checkHealth(req: Request, res: Response): Promise<void> {
     const startTime = Date.now();
-    const services = {
-      server: 'healthy' as const,
-      database: 'disconnected' as const,
-      ai: 'disconnected' as const,
-      embeddings: 'unavailable' as const
+    const services: HealthCheckResponse['services'] = {
+      server: 'healthy',
+      database: 'disconnected',
+      ai: 'disconnected',
+      embeddings: 'unavailable'
     };
 
     try {
@@ -63,7 +63,7 @@ export class AudioHealthController {
         // Check if embeddings table has data
         const embeddingsCount = await prisma.product.count({
           where: {
-            embedding: { not: null }
+            embeddingVector: { not: null }
           }
         });
         
