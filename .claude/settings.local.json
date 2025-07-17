@@ -30,7 +30,10 @@
       "Bash(file:*)",
       "Bash(ls:*)",
       "Bash(cat:*)",
-      "Bash(del nul)"
+      "Bash(del nul)",
+      "Bash(npm i:*)",
+      "Bash(npm uninstall:*)",
+      "Bash(npm run generate:*)"
     ],
     "deny": []
   }
