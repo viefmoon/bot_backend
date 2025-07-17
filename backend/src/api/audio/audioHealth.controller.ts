@@ -63,7 +63,7 @@ export class AudioHealthController {
         // Check if embeddings table has data
         const embeddingsCount = await prisma.product.count({
           where: {
-            embeddingVector: { not: null }
+            embedding: { not: null }
           }
         });
         
