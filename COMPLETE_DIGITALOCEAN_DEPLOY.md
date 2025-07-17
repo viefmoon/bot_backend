@@ -260,10 +260,10 @@ cd ~/bot_backend
 
 1. **API Backend:**
    ```bash
-   curl http://localhost:5000/health
+   curl http://localhost:5000/backend
    ```
-   - También visita: https://cloudbiteapp.com/api/health
-   - Deberías ver: `{"status":"ok","timestamp":"..."}`
+   - También visita: https://cloudbiteapp.com/api/backend
+   - Deberías ver: `{"message":"Bot Backend API is running","version":"2.0.0","timestamp":"..."}`
 
 2. **Frontend React:**
    - Visita: https://cloudbiteapp.com
@@ -274,7 +274,7 @@ cd ~/bot_backend
 1. Ve a [Meta for Developers](https://developers.facebook.com)
 2. Selecciona tu app de WhatsApp
 3. En **Configuration** → **Webhooks**:
-   - **Callback URL**: `https://cloudbiteapp.com/api/webhook`
+   - **Callback URL**: `https://cloudbiteapp.com/api/backend/webhook`
    - **Verify Token**: El valor que pusiste en `WHATSAPP_VERIFY_TOKEN`
 4. Suscríbete a los eventos: `messages`
 

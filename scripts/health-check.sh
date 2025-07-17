@@ -111,7 +111,7 @@ fi
 print_header "CONECTIVIDAD"
 
 # API Health
-if curl -s -o /dev/null -w "%{http_code}" http://localhost:5000/health | grep -q "200"; then
+if curl -s -o /dev/null -w "%{http_code}" http://localhost:5000/backend | grep -q "200"; then
     echo -e "${GREEN}✓${NC} API Health: ${GREEN}OK${NC}"
 else
     echo -e "${RED}✗${NC} API Health: ${RED}Error${NC}"

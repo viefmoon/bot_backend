@@ -290,7 +290,7 @@ Comandos útiles:
 - Renovar SSL: certbot renew
 
 Webhook URL para WhatsApp:
-https://$DOMAIN/webhook
+https://$DOMAIN/api/backend/webhook
 
 =====================================
 INFO
@@ -303,8 +303,8 @@ print_success "¡Configuración completada!"
 echo ""
 echo "Tu aplicación está disponible en:"
 echo "Frontend: ${GREEN}https://$DOMAIN${NC}"
-echo "API: ${GREEN}https://$DOMAIN/api${NC}"
+echo "API: ${GREEN}https://$DOMAIN/api/backend${NC}"
 echo ""
-echo "Webhook URL para WhatsApp: ${GREEN}https://$DOMAIN/api/webhook${NC}"
+echo "Webhook URL para WhatsApp: ${GREEN}https://$DOMAIN/api/backend/webhook${NC}"
 echo ""
 print_warning "Asegúrate de que la aplicación esté ejecutándose en el puerto $BACKEND_PORT"

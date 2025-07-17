@@ -2,6 +2,7 @@ import { MessageProcessor } from '../services/messaging/MessageProcessor';
 import { IncomingMessage } from '../services/messaging/types';
 import { WhatsAppMessageJob } from '../queues/types';
 import logger from '../common/utils/logger';
+import { startMessageWorker } from '../queues/messageQueue';
 
 /**
  * Process a WhatsApp message job from the queue
@@ -37,4 +38,10 @@ export async function processMessageJob(messageData: WhatsAppMessageJob): Promis
     // Re-throw the error so BullMQ can handle retries according to configuration
     throw error;
   }
+}
+
+// Start the worker when this file is executed directly
+if (require.main === module) {
+  logger.info('Starting message worker process...');
+  startMessageWorker();
 }
