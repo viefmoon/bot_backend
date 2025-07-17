@@ -1,6 +1,6 @@
 import { Router, Request, Response } from 'express';
 import { asyncHandler } from '../common/middlewares/errorHandler';
-import { syncAuthMiddleware } from '../common/middlewares/syncAuth.middleware';
+import { apiKeyAuthMiddleware } from '../common/middlewares/apiKeyAuth.middleware';
 import { SyncService } from '../services/sync/SyncService';
 import { SyncMetadataService } from '../services/sync/SyncMetadataService';
 import { prisma } from '../server';
@@ -8,7 +8,7 @@ import logger from '../common/utils/logger';
 
 const router = Router();
 
-router.use(syncAuthMiddleware);
+router.use(apiKeyAuthMiddleware);
 
 function isValidCustomId(id: string, prefix: string): boolean {
   const pattern = new RegExp(`^${prefix}-\\d+$`);
@@ -533,7 +533,6 @@ router.get('/orders/pending', asyncHandler(async (_req: Request, res: Response) 
         orderId: order.id,
         productId: item.productId,
         productVariantId: item.productVariantId,
-        quantity: 1, // TODO: Add quantity field to OrderItem model
         price: item.finalPrice,
         notes: item.preparationNotes || '',
         isPizzaHalf: false,
@@ -549,8 +548,7 @@ router.get('/orders/pending', asyncHandler(async (_req: Request, res: Response) 
         selectedModifiers: item.productModifiers.map(mod => ({
           id: mod.id,
           name: mod.name,
-          price: mod.price || 0,
-          quantity: 1
+          price: mod.price || 0
         }))
       })),
       deliveryInfo: order.deliveryInfo ? {

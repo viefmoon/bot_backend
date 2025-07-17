@@ -1,7 +1,6 @@
 import { prisma } from '../../server';
 import logger from '../../common/utils/logger';
 import { RestaurantInfo } from '../../common/types/restaurant';
-import { TechnicalError, ErrorCode } from '../../common/services/errors';
 
 interface CachedConfig {
   restaurantInfo: RestaurantInfo;

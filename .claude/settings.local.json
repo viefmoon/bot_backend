@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(node:*)",
+      "Bash(find:*)",
+      "Bash(rm:*)",
+      "Bash(del cloudAuth.middleware.ts syncAuth.middleware.ts)"
+    ],
+    "deny": []
+  }
+}

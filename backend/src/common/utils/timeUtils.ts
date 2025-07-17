@@ -1,5 +1,4 @@
 import moment from "moment-timezone";
-import { prisma } from "../../server";
 import logger from "./logger";
 import { RestaurantService } from "../../services/restaurant/RestaurantService";
 

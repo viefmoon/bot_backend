@@ -2,7 +2,7 @@ import { Router } from 'express';
 import multer from 'multer';
 import { AudioOrderController } from './audioOrder.controller';
 import { AudioHealthController } from './audioHealth.controller';
-import { cloudAuthMiddleware } from '../../common/middlewares/cloudAuth.middleware';
+import { apiKeyAuthMiddleware } from '../../common/middlewares/apiKeyAuth.middleware';
 import { validationMiddleware } from '../../common/middlewares/validation.middleware';
 import { asyncHandler } from '../../common/middlewares/errorHandler';
 import { ProcessAudioOrderDto } from './dto/processAudioOrder.dto';
@@ -35,14 +35,14 @@ const upload = multer({
 // Health check endpoint
 router.get(
   '/health',
-  cloudAuthMiddleware,
+  apiKeyAuthMiddleware,
   asyncHandler(AudioHealthController.checkHealth)
 );
 
 // Process audio order endpoint
 router.post(
   '/process-order',
-  cloudAuthMiddleware,
+  apiKeyAuthMiddleware,
   upload.single('audio'),
   validationMiddleware(ProcessAudioOrderDto),
   asyncHandler(AudioOrderController.processAudioOrder)

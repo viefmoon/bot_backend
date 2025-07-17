@@ -14,7 +14,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 # Or run separately:
 npm run dev          # Runs both backend and frontend concurrently
-cd backend && npm run dev    # Backend only (port 3001)
+cd backend && npm run dev    # Backend only (port 5000)
 cd frontend-app && npm run dev   # Frontend only (port 3000)
 
 # Other development scripts
@@ -56,7 +56,7 @@ cd frontend-app && npm run lint    # ESLint for frontend
 ./start-local.sh
 
 # 2. In another terminal, expose webhook with ngrok
-ngrok http 3001
+ngrok http 5000
 
 # 3. Update webhook URL in Meta Business dashboard to:
 # https://[your-ngrok-id].ngrok.io/backend/webhook
@@ -452,3 +452,31 @@ Auto-deploys on push to connected repository.
 - OTP-secured registration flow
 - Google Maps integration for address selection
 - Communicates with backend via REST API
+
+## Testing
+
+Currently no automated tests are configured. The project would benefit from:
+- Unit tests for services and utilities
+- Integration tests for API endpoints
+- E2E tests for WhatsApp message flows
+
+## Code Quality
+
+- **Frontend**: ESLint configured (`npm run lint` in frontend-app)
+- **Backend**: No linting configured (consider adding ESLint/Prettier)
+- **TypeScript**: Strict mode enabled for both frontend and backend
+
+## Local Development Dependencies
+
+- **PostgreSQL**: Runs on port 5433 (via Docker)
+- **Redis**: Runs on port 6380 (via Docker, optional for OTP/cache)
+- **Docker Compose**: Manages local database and cache services
+
+## Important Notes
+
+- Backend port is 5000 (not 3001 as sometimes referenced)
+- Use `start-local.sh` to ensure Docker containers are running
+- Database uses port 5433 to avoid conflicts with system PostgreSQL
+- Redis is optional but recommended for production deployments
+- All services follow stateless pattern with static methods
+- Semantic search requires embeddings generation (`npm run seed:embeddings`)

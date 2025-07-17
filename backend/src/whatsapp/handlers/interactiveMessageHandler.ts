@@ -1,6 +1,5 @@
 import { handleOrderCancellation } from "./orders/cancellationHandler";
 import { PreOrderWorkflowService } from "../../services/orders/PreOrderWorkflowService";
-import { PreOrderActionParams } from "../../common/types/preorder.types";
 
 import { prisma } from "../../server";
 import { sendWhatsAppMessage, sendMessageWithUrlButton } from "../../services/whatsapp";
@@ -385,7 +384,7 @@ async function handleAddressSelection(from: string, selectionId: string, message
     if (preOrder) {
       // Update preorder with selected address
       const axios = (await import('axios')).default;
-      await axios.post(`${process.env.BACKEND_BASE_URL || 'http://localhost:3001'}/backend/address-selection/update`, {
+      await axios.post(`${env.FRONTEND_BASE_URL}/backend/address-selection/update`, {
         preOrderId: preOrder.id,
         addressId: selectedAddress.id,
         customerId: customer.id

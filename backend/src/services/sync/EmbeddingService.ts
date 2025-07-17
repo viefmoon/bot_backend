@@ -2,7 +2,7 @@ import { prisma } from '../../server';
 import { GoogleGenAI } from '@google/genai';
 import { env } from '../../common/config/envValidator';
 import logger from '../../common/utils/logger';
-import { Product, Prisma } from '@prisma/client';
+import { Product } from '@prisma/client';
 
 interface ProductWithRelations extends Product {
   subcategory: {
