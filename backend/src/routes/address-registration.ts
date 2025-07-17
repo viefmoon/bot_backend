@@ -9,14 +9,18 @@ import { validationMiddleware, queryValidationMiddleware } from '../common/middl
 import { otpAuthMiddleware, AuthenticatedRequest } from '../common/middlewares/otp.middleware';
 import { SyncMetadataService } from '../services/sync/SyncMetadataService';
 import {
-  VerifyOtpDto,
+  VerifyOtpDto
+} from '../dto/auth';
+import {
   CreateAddressDto,
   UpdateAddressDto,
   GetAddressesQueryDto,
   DeleteAddressDto,
-  SetDefaultAddressDto,
+  SetDefaultAddressDto
+} from '../dto/address';
+import {
   UpdateCustomerNameDto
-} from './dto/address-registration';
+} from '../dto/customer';
 
 const router = Router();
 

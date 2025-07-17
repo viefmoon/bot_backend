@@ -5,7 +5,9 @@
       "Bash(find:*)",
       "Bash(rm:*)",
       "Bash(del cloudAuth.middleware.ts syncAuth.middleware.ts)",
-      "Bash(mkdir:*)"
+      "Bash(mkdir:*)",
+      "Bash(mv:*)",
+      "Bash(cp:*)"
     ],
     "deny": []
   }

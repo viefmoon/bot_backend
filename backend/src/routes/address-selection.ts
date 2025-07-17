@@ -5,7 +5,7 @@ import { sendWhatsAppInteractiveMessage } from '../services/whatsapp';
 import { asyncHandler } from '../common/middlewares/errorHandler';
 import { NotFoundError, ErrorCode } from '../common/services/errors';
 import { validationMiddleware } from '../common/middlewares/validation.middleware';
-import { SendAddressSelectionDto, UpdateAddressSelectionDto } from './dto/address-selection';
+import { SendAddressSelectionDto, UpdateAddressSelectionDto } from '../dto/address';
 
 const router = Router();
 

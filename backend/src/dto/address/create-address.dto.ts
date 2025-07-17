@@ -1,8 +1,8 @@
 import { IsNotEmpty, IsString, IsObject, ValidateNested } from 'class-validator';
 import { Type } from 'class-transformer';
-import { AddressDto } from '../../../dto/address/address.dto';
+import { AddressDto } from './address.dto';
 
-export class UpdateAddressDto {
+export class CreateAddressDto {
   @IsNotEmpty({ message: 'whatsappPhoneNumber is required' })
   @IsString({ message: 'whatsappPhoneNumber must be a string' })
   whatsappPhoneNumber!: string;

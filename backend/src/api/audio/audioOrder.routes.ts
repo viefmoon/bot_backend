@@ -5,7 +5,7 @@ import { AudioHealthController } from './audioHealth.controller';
 import { apiKeyAuthMiddleware } from '../../common/middlewares/apiKeyAuth.middleware';
 import { validationMiddleware } from '../../common/middlewares/validation.middleware';
 import { asyncHandler } from '../../common/middlewares/errorHandler';
-import { ProcessAudioOrderDto } from './dto/processAudioOrder.dto';
+import { ProcessAudioOrderDto } from '../../dto/order';
 
 const router = Router();
 

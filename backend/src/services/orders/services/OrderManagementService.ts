@@ -3,7 +3,7 @@ import { Order, OrderStatus, PreOrder } from "@prisma/client";
 import logger from "../../../common/utils/logger";
 import { BusinessLogicError, ErrorCode } from "../../../common/services/errors";
 import { OrderService } from "../OrderService";
-import { CreateOrderDto } from "../dto/create-order.dto";
+import { CreateOrderDto } from '../../../dto/order';
 import { sendWhatsAppMessage, WhatsAppService } from "../../whatsapp";
 import { OrderFormattingService } from "./OrderFormattingService";
 import { SyncMetadataService } from "../../sync/SyncMetadataService";

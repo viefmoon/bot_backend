@@ -14,10 +14,10 @@ import { DeliveryInfoService } from './services/orders/services/DeliveryInfoServ
 import { envValidator, env } from './common/config/envValidator';
 import { globalErrorHandler, asyncHandler } from './common/middlewares/errorHandler';
 import { validationMiddleware, queryValidationMiddleware } from './common/middlewares/validation.middleware';
-import { VerifyOtpDto, InvalidateOtpDto } from './dto/otp';
+import { VerifyOtpDto, InvalidateOtpDto } from './dto/auth';
 import { AddressDto, GetAddressesQueryDto, UpdateAddressDto } from './dto/address';
 import { SendMessageDto } from './dto/whatsapp';
-import { CreateOrderDto } from './services/orders/dto/create-order.dto';
+import { CreateOrderDto } from './dto/order';
 import { ConfigService } from './services/config/ConfigService';
 
 // Validate environment variables

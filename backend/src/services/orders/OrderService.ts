@@ -1,6 +1,6 @@
 import { prisma } from '../../server';
 import { PizzaHalf, CustomizationAction } from '@prisma/client';
-import { CreateOrderDto } from './dto/create-order.dto';
+import { CreateOrderDto } from '../../dto/order';
 import logger from '../../common/utils/logger';
 import { NotFoundError, ErrorCode } from '../../common/services/errors';
 import { SyncMetadataService } from '../sync/SyncMetadataService';
