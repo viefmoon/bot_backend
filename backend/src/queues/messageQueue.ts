@@ -97,7 +97,12 @@ export function startMessageWorker(): void {
         }
         
         logger.info(`Processing job ${job.id} for user ${userId}`);
+        
+        // Process the message
         await processMessageJob(job.data);
+        
+        // Small delay to ensure BullMQ completes its internal operations
+        await new Promise(resolve => setTimeout(resolve, 100));
         
       } finally {
         // Always release the lock if we acquired it
@@ -110,6 +115,8 @@ export function startMessageWorker(): void {
     { 
       connection, 
       concurrency: workerConcurrency,
+      lockDuration: 60000, // Increase default lock duration to 60 seconds
+      lockRenewTime: 20000, // Renew lock every 20 seconds
     }
   );
 
