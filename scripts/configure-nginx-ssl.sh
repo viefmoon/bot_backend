@@ -52,8 +52,57 @@ if [[ ! $REPLY =~ ^[Ss]$ ]]; then
     exit 1
 fi
 
-# Crear configuración de Nginx
-print_step "Creando configuración de Nginx..."
+# Primero crear configuración temporal para obtener SSL
+print_step "Creando configuración temporal de Nginx para SSL..."
+
+cat > /etc/nginx/sites-available/bot-backend-temp <<EOF
+server {
+    listen 80;
+    listen [::]:80;
+    server_name $DOMAIN;
+    
+    # Permitir validación de Let's Encrypt
+    location /.well-known/acme-challenge/ {
+        root /var/www/html;
+    }
+    
+    # Redirigir todo lo demás a HTTPS (después de obtener SSL)
+    location / {
+        return 444;
+    }
+}
+EOF
+
+# Activar configuración temporal
+ln -sf /etc/nginx/sites-available/bot-backend-temp /etc/nginx/sites-enabled/
+rm -f /etc/nginx/sites-enabled/default
+rm -f /etc/nginx/sites-enabled/bot-backend
+
+# Verificar y recargar Nginx
+nginx -t
+systemctl reload nginx
+
+print_success "Configuración temporal creada"
+
+# Obtener certificado SSL
+print_step "Obteniendo certificado SSL con Let's Encrypt..."
+
+# Crear directorio para validación
+mkdir -p /var/www/html
+
+# Obtener certificado
+certbot certonly --webroot -w /var/www/html -d $DOMAIN --email $EMAIL --agree-tos --non-interactive
+
+if [ $? -ne 0 ]; then
+    print_error "Error al obtener certificado SSL"
+    print_warning "Verifica que el dominio $DOMAIN apunte a este servidor"
+    exit 1
+fi
+
+print_success "Certificado SSL obtenido exitosamente"
+
+# Ahora crear la configuración completa con SSL
+print_step "Creando configuración final de Nginx con SSL..."
 
 cat > /etc/nginx/sites-available/bot-backend <<EOF
 # Redirigir HTTP a HTTPS
@@ -176,59 +225,45 @@ EOF
 
 print_success "Configuración de Nginx creada"
 
-# Verificar configuración
-print_step "Verificando configuración de Nginx..."
-nginx -t
+# Desactivar configuración temporal y activar la final
+print_step "Activando configuración final..."
 
-# Activar el sitio
-print_step "Activando sitio..."
+rm -f /etc/nginx/sites-enabled/bot-backend-temp
 ln -sf /etc/nginx/sites-available/bot-backend /etc/nginx/sites-enabled/
 
-# Desactivar default si existe
-if [ -L /etc/nginx/sites-enabled/default ]; then
-    rm /etc/nginx/sites-enabled/default
-    print_success "Sitio default desactivado"
+# Verificar configuración final
+nginx -t
+
+if [ $? -ne 0 ]; then
+    print_error "Error en la configuración de Nginx"
+    exit 1
 fi
 
-# Recargar Nginx (sin SSL por ahora)
+# Recargar Nginx con la configuración completa
 systemctl reload nginx
-print_success "Nginx recargado"
+print_success "Nginx configurado con SSL"
 
-# Instalar certificado SSL
-print_step "Obteniendo certificado SSL con Let's Encrypt..."
+# Configurar renovación automática
+print_step "Configurando renovación automática de SSL..."
 
-# Crear directorio para validación
-mkdir -p /var/www/html
+# Crear directorio si no existe
+mkdir -p /etc/letsencrypt/renewal-hooks/deploy/
 
-# Obtener certificado
-certbot certonly --webroot -w /var/www/html -d $DOMAIN --email $EMAIL --agree-tos --non-interactive
-
-if [ $? -eq 0 ]; then
-    print_success "Certificado SSL obtenido exitosamente"
-    
-    # Recargar Nginx con SSL
-    systemctl reload nginx
-    print_success "Nginx recargado con SSL"
-    
-    # Configurar renovación automática
-    print_step "Configurando renovación automática..."
-    
-    # Crear script de renovación
-    cat > /etc/letsencrypt/renewal-hooks/deploy/reload-nginx.sh <<'RENEW'
+# Crear script de renovación
+cat > /etc/letsencrypt/renewal-hooks/deploy/reload-nginx.sh <<'RENEW'
 #!/bin/bash
 systemctl reload nginx
 RENEW
-    
-    chmod +x /etc/letsencrypt/renewal-hooks/deploy/reload-nginx.sh
-    
-    # Test renovación
-    certbot renew --dry-run
-    
+
+chmod +x /etc/letsencrypt/renewal-hooks/deploy/reload-nginx.sh
+
+# Test renovación
+certbot renew --dry-run
+
+if [ $? -eq 0 ]; then
     print_success "Renovación automática configurada"
 else
-    print_error "Error al obtener certificado SSL"
-    print_warning "Verifica que el dominio $DOMAIN apunte a este servidor"
-    exit 1
+    print_warning "Renovación automática puede tener problemas, verifica manualmente"
 fi
 
 # Crear archivo de información

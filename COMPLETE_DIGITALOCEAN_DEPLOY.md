@@ -135,6 +135,8 @@ Ejecuta este comando único que instalará todo automáticamente:
 wget https://raw.githubusercontent.com/viefmoon/bot_backend/main/scripts/quick-deploy.sh && chmod +x quick-deploy.sh && sudo ./quick-deploy.sh
 ```
 
+> **Nota**: Si durante la actualización del sistema aparece un diálogo sobre `/etc/ssh/sshd_config`, selecciona **"keep the local version currently installed"** (mantener versión local)
+
 El script automáticamente:
 - ✅ Actualiza el sistema
 - ✅ Instala Node.js 20, PostgreSQL 15, Redis, Nginx
