@@ -48,7 +48,7 @@ clear
 print_header "BOT BACKEND - INSTALACIÓN RÁPIDA"
 
 # Configuración predefinida
-APP_USER="appuser"
+APP_USER="cloudbite"
 GIT_REPO="https://github.com/viefmoon/bot_backend.git"
 DOMAIN="cloudbiteapp.com"
 SSL_EMAIL="viefmoon@gmail.com"

@@ -42,26 +42,54 @@ Esta guía te llevará desde cero hasta tener tu Bot Backend y Frontend funciona
 
 ### 🌐 En DigitalOcean
 
-1. Ve a **Networking** → **Domains**
-2. Añade tu dominio: `cloudbiteapp.com`
-3. Crea los siguientes registros:
+> **Importante**: La configuración de dominios NO se hace desde la página del Droplet
 
-```
-Tipo    Hostname    Value               TTL
-A       @          [IP-DEL-DROPLET]    3600
-A       www        [IP-DEL-DROPLET]    3600
-```
+1. **Acceder a la sección de dominios:**
+   - En el panel lateral izquierdo, haz clic en **"Networking"**
+   - Luego selecciona **"Domains"** en la parte superior
+   - O accede directamente a: `https://cloud.digitalocean.com/networking/domains`
 
-### 🌐 En tu Registrador de Dominio
+2. **Agregar tu dominio:**
+   - Haz clic en el botón **"Add Domain"**
+   - Ingresa: `cloudbiteapp.com`
+   - Selecciona tu droplet de la lista desplegable (aparecerá con su IP)
+   - Haz clic en **"Add Domain"**
 
-Actualiza los nameservers a:
-```
-ns1.digitalocean.com
-ns2.digitalocean.com
-ns3.digitalocean.com
-```
+3. **Registros DNS creados automáticamente:**
+   ```
+   Tipo    Hostname    Value               TTL
+   A       @          [IP-DEL-DROPLET]    3600
+   A       www        [IP-DEL-DROPLET]    3600
+   NS      @          ns1.digitalocean.com
+   NS      @          ns2.digitalocean.com
+   NS      @          ns3.digitalocean.com
+   ```
 
-> ⏱️ **Nota**: Los cambios DNS pueden tardar hasta 48 horas en propagarse
+### 🌐 En Namecheap (tu registrador de dominio)
+
+1. **Inicia sesión** en tu cuenta de [Namecheap](https://www.namecheap.com)
+
+2. **Accede a la gestión del dominio:**
+   - En el Dashboard, busca `cloudbiteapp.com`
+   - Haz clic en el botón **"MANAGE"** al lado del dominio
+
+3. **Cambiar los nameservers:**
+   - En la pestaña **"Domain"**
+   - Busca la sección **"NAMESERVERS"**
+   - Selecciona **"Custom DNS"** del menú desplegable
+   - Ingresa los nameservers de DigitalOcean:
+     ```
+     ns1.digitalocean.com
+     ns2.digitalocean.com
+     ns3.digitalocean.com
+     ```
+   - Haz clic en el ✓ (check verde) para guardar
+
+4. **Verificar el cambio:**
+   - Deberías ver un mensaje de confirmación
+   - Los nameservers ahora mostrarán los de DigitalOcean
+
+> ⏱️ **Nota**: Los cambios DNS pueden tardar hasta 48 horas en propagarse, aunque normalmente toman 15-30 minutos. Puedes verificar la propagación en [whatsmydns.net](https://www.whatsmydns.net/)
 
 ---
 
@@ -87,7 +115,7 @@ Si usaste contraseña, te la pedirá. Si usaste SSH key, conectará automáticam
 # Cambiar contraseña root
 passwd
 
-# Crear usuario no-root
+# Crear usuario no-root (mismo nombre que el dominio para consistencia)
 adduser cloudbite
 usermod -aG sudo cloudbite
 
@@ -134,7 +162,7 @@ chmod +x setup-database.sh
 sudo ./setup-database.sh
 
 # 3. Cambiar al usuario de la aplicación
-su - appuser
+su - cloudbite
 
 # 4. Clonar y configurar aplicación
 git clone https://github.com/viefmoon/bot_backend.git
@@ -143,7 +171,7 @@ cd bot_backend
 
 # 5. Configurar Nginx + SSL
 exit  # Volver a root
-cd /home/appuser/bot_backend
+cd /home/cloudbite/bot_backend
 sudo ./scripts/configure-nginx-ssl.sh
 ```
 
@@ -155,7 +183,7 @@ sudo ./scripts/configure-nginx-ssl.sh
 
 1. **Cambiar al usuario de la aplicación:**
    ```bash
-   su - appuser
+   su - cloudbite
    ```
 
 2. **Editar el archivo .env:**

@@ -108,7 +108,7 @@ server {
     
     # Servir el frontend React
     location / {
-        root /home/appuser/bot_backend/frontend-app/dist;
+        root /home/cloudbite/bot_backend/frontend-app/dist;
         try_files \$uri \$uri/ /index.html;
         
         # Cache para assets estáticos
