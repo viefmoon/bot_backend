@@ -30,27 +30,31 @@ export class WhatsAppService {
   }
 
   static async handleWebhook(req: Request, res: Response): Promise<void> {
-    try {
-      const body = JSON.parse(req.body.toString());
-      
-      if (body.entry && body.entry.length > 0) {
-        for (const entry of body.entry) {
-          if (entry.changes && entry.changes.length > 0) {
-            for (const change of entry.changes) {
-              if (change.value.messages && change.value.messages.length > 0) {
-                for (const message of change.value.messages) {
-                  await this.processIncomingMessage(message);
-                }
-              }
+    const body = JSON.parse(req.body.toString());
+    
+    // Process messages asynchronously to respond quickly to WhatsApp
+    if (body.entry && body.entry.length > 0) {
+      // Don't await - process in background to respond immediately
+      this.processWebhookMessages(body).catch(error => {
+        logger.error('Error processing WhatsApp webhook messages:', error);
+      });
+    }
+    
+    // Always respond 200 immediately to WhatsApp to prevent retries
+    res.sendStatus(200);
+  }
+
+  private static async processWebhookMessages(body: any): Promise<void> {
+    for (const entry of body.entry) {
+      if (entry.changes && entry.changes.length > 0) {
+        for (const change of entry.changes) {
+          if (change.value.messages && change.value.messages.length > 0) {
+            for (const message of change.value.messages) {
+              await this.processIncomingMessage(message);
             }
           }
         }
       }
-      
-      res.sendStatus(200);
-    } catch (error) {
-      logger.error('Error processing WhatsApp webhook:', error);
-      res.sendStatus(500);
     }
   }
 

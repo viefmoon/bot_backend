@@ -2,7 +2,7 @@ import { Request, Response } from 'express';
 import Stripe from 'stripe';
 import logger from '../../common/utils/logger';
 import { env } from '../../common/config/envValidator';
-import { ExternalServiceError, ErrorCode } from '../../common/services/errors';
+import { ExternalServiceError, ValidationError, ErrorCode } from '../../common/services/errors';
 import { prisma } from '../../server';
 
 /**
@@ -54,87 +54,75 @@ export class StripeService {
     this.initialize();
     
     if (!this.stripe) {
-      logger.warn('Stripe webhook called but Stripe is not configured');
-      res.status(503).json({ error: 'Stripe service unavailable' });
-      return;
+      throw new ExternalServiceError(
+        ErrorCode.STRIPE_ERROR,
+        'Stripe service is not configured'
+      );
     }
     
+    const sig = req.headers['stripe-signature'] as string;
+    
+    let event: Stripe.Event;
+    
     try {
-      const sig = req.headers['stripe-signature'] as string;
-      
-      let event: Stripe.Event;
-      
-      try {
-        event = this.stripe.webhooks.constructEvent(req.body, sig, this.webhookSecret);
-      } catch (err: any) {
-        logger.error('Webhook signature verification failed:', err.message);
-        res.status(400).send(`Webhook Error: ${err.message}`);
-        return;
-      }
-      
-      // Handle the event
-      switch (event.type) {
-        case 'checkout.session.completed':
-          const session = event.data.object as Stripe.Checkout.Session;
-          await this.handleCompletedCheckout(session);
-          break;
-          
-        case 'payment_intent.succeeded':
-          const paymentIntent = event.data.object as Stripe.PaymentIntent;
-          logger.info('Payment succeeded:', paymentIntent.id);
-          break;
-          
-        default:
-          logger.info(`Unhandled event type ${event.type}`);
-      }
-      
-      res.json({ received: true });
-    } catch (error) {
-      logger.error('Error handling Stripe webhook:', error);
-      res.status(500).send('Internal Server Error');
+      event = this.stripe.webhooks.constructEvent(req.body, sig, this.webhookSecret);
+    } catch (err: any) {
+      throw new ValidationError(
+        ErrorCode.WEBHOOK_VERIFICATION_FAILED,
+        `Webhook signature verification failed: ${err.message}`
+      );
     }
+    
+    // Handle the event
+    switch (event.type) {
+      case 'checkout.session.completed':
+        const session = event.data.object as Stripe.Checkout.Session;
+        await this.handleCompletedCheckout(session);
+        break;
+        
+      case 'payment_intent.succeeded':
+        const paymentIntent = event.data.object as Stripe.PaymentIntent;
+        logger.info('Payment succeeded:', paymentIntent.id);
+        break;
+        
+      default:
+        logger.info(`Unhandled event type ${event.type}`);
+    }
+    
+    res.json({ received: true });
   }
 
   /**
    * Handle completed checkout session
    */
   private static async handleCompletedCheckout(session: Stripe.Checkout.Session): Promise<void> {
-    try {
-      logger.info('Checkout session completed:', session.id);
+    logger.info('Checkout session completed:', session.id);
+    
+    // Update order with stripe session ID
+    if (session.metadata?.orderId) {
+      await prisma.order.update({
+        where: { id: session.metadata.orderId },
+        data: {
+          stripeSessionId: session.id
+        }
+      });
       
-      // Update order with stripe session ID
-      if (session.metadata?.orderId) {
-        await prisma.order.update({
-          where: { id: session.metadata.orderId },
-          data: {
-            stripeSessionId: session.id
+      // Create payment record
+      await prisma.payment.create({
+        data: {
+          orderId: session.metadata.orderId,
+          amount: session.amount_total! / 100, // Convert from cents
+          paymentMethod: 'CREDIT_CARD',
+          status: 'PAID',
+          stripePaymentId: session.payment_intent as string,
+          metadata: {
+            sessionId: session.id,
+            customerEmail: session.customer_details?.email
           }
-        });
-        
-        // Create payment record
-        await prisma.payment.create({
-          data: {
-            orderId: session.metadata.orderId,
-            amount: session.amount_total! / 100, // Convert from cents
-            paymentMethod: 'CREDIT_CARD',
-            status: 'PAID',
-            stripePaymentId: session.payment_intent as string,
-            metadata: {
-              sessionId: session.id,
-              customerEmail: session.customer_details?.email
-            }
-          }
-        });
-        
-        logger.info(`Order ${session.metadata.orderId} payment recorded`);
-      }
-    } catch (error) {
-      logger.error('Error handling completed checkout:', error);
-      throw new ExternalServiceError(
-        ErrorCode.STRIPE_ERROR,
-        'Failed to handle completed checkout',
-        { metadata: { sessionId: session.id } }
-      );
+        }
+      });
+      
+      logger.info(`Order ${session.metadata.orderId} payment recorded`);
     }
   }
 

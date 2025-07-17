@@ -9,20 +9,12 @@ import logger from '../../../../common/utils/logger';
  * Returns restaurant information and business hours
  */
 export const handleGetBusinessHours: ToolHandler = async (): Promise<ToolResponse> => {
-  try {
-    const config = ConfigService.getConfig();
-    const formattedHours = await getFormattedBusinessHours();
-    const infoMessage = RESTAURANT_INFO_MESSAGE(config, formattedHours);
-    
-    return {
-      text: infoMessage,
-      isRelevant: true
-    };
-  } catch (error) {
-    logger.error('Error getting restaurant info:', error);
-    return {
-      text: '😔 Lo siento, no pude obtener la información del restaurante. Por favor, intenta más tarde.',
-      isRelevant: true
-    };
-  }
+  const config = ConfigService.getConfig();
+  const formattedHours = await getFormattedBusinessHours();
+  const infoMessage = RESTAURANT_INFO_MESSAGE(config, formattedHours);
+  
+  return {
+    text: infoMessage,
+    isRelevant: true
+  };
 };

@@ -81,6 +81,10 @@ export const ERROR_MESSAGES: Record<ErrorCode, ErrorMessageConfig> = {
     user: "❌ El archivo es demasiado grande. Por favor envía un archivo más pequeño.",
     log: "File size exceeds maximum allowed"
   },
+  [ErrorCode.WEBHOOK_VERIFICATION_FAILED]: {
+    user: "❌ Error de verificación del webhook.",
+    log: "Webhook signature verification failed"
+  },
   
   // Not Found Errors
   [ErrorCode.ADDRESS_NOT_FOUND]: {

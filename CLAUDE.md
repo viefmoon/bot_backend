@@ -187,20 +187,19 @@ Middleware Pipeline:
 
 ### Error Handling
 
-**Global Error Handler Middleware**: All Express routes now use a centralized error handling system:
+**Consolidated Error Handling**: The project uses a unified error handling approach:
 
-1. **Error Handler Middleware** (`/backend/src/common/middlewares/errorHandler.ts`):
+1. **For HTTP Routes** - Global Error Handler Middleware (`/backend/src/common/middlewares/errorHandler.ts`):
    - Consistent error response format across all APIs
    - Automatic HTTP status code mapping
    - Request ID tracking for debugging
    - Environment-aware error details (more info in development)
    - Special handling for Prisma database errors
 
-2. **Usage Pattern**:
    ```typescript
    // Routes use asyncHandler wrapper
    router.post('/route', asyncHandler(async (req, res) => {
-     // Throw custom errors - no try/catch needed
+     // Throw custom errors directly - no try/catch needed
      throw new BusinessLogicError(
        ErrorCode.CUSTOMER_NOT_FOUND,
        'Customer not found',
@@ -208,6 +207,24 @@ Middleware Pipeline:
      );
    }));
    ```
+
+2. **For WhatsApp Handlers** - Use `handleWhatsAppError` helper (`/backend/src/common/utils/whatsappErrorHandler.ts`):
+   - Logs errors with context
+   - Sends appropriate error messages to users via WhatsApp
+   - Handles both custom and unexpected errors
+
+   ```typescript
+   try {
+     // Handler logic
+   } catch (error) {
+     await handleWhatsAppError(error, whatsappNumber, {
+       operation: 'operationName',
+       metadata: { /* additional context */ }
+     });
+   }
+   ```
+
+3. **Deprecated**: ErrorService is deprecated. Use direct error throwing instead.
 
 3. **Error Response Format**:
    ```json

@@ -235,7 +235,12 @@ export class TextProcessingService {
         return result;
       } catch (error) {
         logger.error(`Error in handler ${name}:`, error);
-        throw error;
+        
+        // Return a formatted error response instead of throwing
+        return {
+          text: '😔 Lo siento, hubo un problema al procesar tu solicitud. Por favor, intenta de nuevo.',
+          isRelevant: true
+        };
       }
     }
     

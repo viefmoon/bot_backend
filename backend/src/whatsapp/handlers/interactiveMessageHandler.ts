@@ -15,7 +15,8 @@ import { ProductService } from "../../services/products/ProductService";
 import logger from "../../common/utils/logger";
 import { getCurrentMexicoTime, getFormattedBusinessHours } from "../../common/utils/timeUtils";
 import { env } from "../../common/config/envValidator";
-import { ErrorService, BusinessLogicError, ErrorCode } from "../../common/services/errors";
+import { BusinessLogicError, ErrorCode } from "../../common/services/errors";
+import { handleWhatsAppError } from "../../common/utils/whatsappErrorHandler";
 
 const stripeClient = env.STRIPE_SECRET_KEY 
   ? new Stripe(env.STRIPE_SECRET_KEY, {
@@ -90,7 +91,7 @@ export async function handleInteractiveMessage(
       }
     }
   } catch (error) {
-    await ErrorService.handleAndSendError(error, from, {
+    await handleWhatsAppError(error, from, {
       userId: from,
       operation: 'handleInteractiveMessage'
     });
@@ -102,14 +103,13 @@ async function handleOnlinePayment(
   customerId: string,
   messageId: string
 ): Promise<void> {
-  try {
-    if (!stripeClient) {
-      throw new BusinessLogicError(
-        ErrorCode.STRIPE_ERROR,
-        'Stripe client not configured',
-        { userId: customerId, operation: 'handleOnlinePayment' }
-      );
-    }
+  if (!stripeClient) {
+    throw new BusinessLogicError(
+      ErrorCode.STRIPE_ERROR,
+      'Stripe client not configured',
+      { userId: customerId, operation: 'handleOnlinePayment' }
+    );
+  }
     const order = await prisma.order.findFirst({ where: { messageId } });
     if (!order) {
       throw new BusinessLogicError(
@@ -175,8 +175,10 @@ async function handleOnlinePayment(
     let customer = await prisma.customer.findUnique({ where: { id: customerId } });
     
     if (!customer) {
-      await sendWhatsAppMessage(customerId, "❌ Error al procesar el pago. Cliente no encontrado.");
-      return;
+      throw new BusinessLogicError(
+        ErrorCode.CUSTOMER_NOT_FOUND,
+        'Customer not found during payment process'
+      );
     }
     
     let stripeCustomerId = customer.stripeCustomerId;
@@ -227,75 +229,38 @@ async function handleOnlinePayment(
       customerId,
       `💳 Por favor, haz clic en el siguiente enlace para proceder con el pago: 🔗 ${paymentLink} 💰`
     );
-    // await sendWhatsAppNotification("Se ha generado un link de pago");
-  } catch (error) {
-    await ErrorService.handleAndSendError(error, customerId, {
-      userId: customerId,
-      operation: 'handleOnlinePayment',
-      metadata: { messageId }
-    });
-  }
 }
 
 async function sendMenu(phoneNumber: string): Promise<boolean> {
-  try {
-    const fullMenu = await ProductService.getActiveProducts({ formatForAI: true });
-    // La utilidad messageSender se encarga de dividir mensajes largos automáticamente
-    const success = await sendWhatsAppMessage(phoneNumber, String(fullMenu));
-    return success;
-  } catch (error) {
-    await ErrorService.handleAndSendError(error, phoneNumber, {
-      userId: phoneNumber,
-      operation: 'sendMenu'
-    });
-    return false;
-  }
+  const fullMenu = await ProductService.getActiveProducts({ formatForAI: true });
+  // La utilidad messageSender se encarga de dividir mensajes largos automáticamente
+  const success = await sendWhatsAppMessage(phoneNumber, String(fullMenu));
+  return success;
 }
 
 async function handleWaitTimes(customerId: string): Promise<void> {
-  try {
-    const config = await prisma.restaurantConfig.findFirst();
-    if (!config) {
-      throw new BusinessLogicError(ErrorCode.DATABASE_ERROR, 'Restaurant configuration not found');
-    }
-    const message = WAIT_TIMES_MESSAGE(
-      config.estimatedPickupTime,
-      config.estimatedDeliveryTime
-    );
-    await sendWhatsAppMessage(customerId, message);
-  } catch (error) {
-    await ErrorService.handleAndSendError(error, customerId, {
-      userId: customerId,
-      operation: 'handleWaitTimes'
-    });
+  const config = await prisma.restaurantConfig.findFirst();
+  if (!config) {
+    throw new BusinessLogicError(ErrorCode.DATABASE_ERROR, 'Restaurant configuration not found');
   }
+  const message = WAIT_TIMES_MESSAGE(
+    config.estimatedPickupTime,
+    config.estimatedDeliveryTime
+  );
+  await sendWhatsAppMessage(customerId, message);
 }
 
 async function handleRestaurantInfo(customerId: string): Promise<void> {
-  try {
-    const config = ConfigService.getConfig();
-    const formattedHours = await getFormattedBusinessHours();
-    const message = RESTAURANT_INFO_MESSAGE(config, formattedHours);
-    await sendWhatsAppMessage(customerId, message);
-  } catch (error) {
-    await ErrorService.handleAndSendError(error, customerId, {
-      userId: customerId,
-      operation: 'handleRestaurantInfo'
-    });
-  }
+  const config = ConfigService.getConfig();
+  const formattedHours = await getFormattedBusinessHours();
+  const message = RESTAURANT_INFO_MESSAGE(config, formattedHours);
+  await sendWhatsAppMessage(customerId, message);
 }
 
 async function handleChatbotHelp(whatsappPhoneNumber: string): Promise<void> {
-  try {
-    const config = ConfigService.getConfig();
-    const message = CHATBOT_HELP_MESSAGE(config);
-    await sendWhatsAppMessage(whatsappPhoneNumber, message);
-  } catch (error) {
-    await ErrorService.handleAndSendError(error, whatsappPhoneNumber, {
-      userId: whatsappPhoneNumber,
-      operation: 'handleChatbotHelp'
-    });
-  }
+  const config = ConfigService.getConfig();
+  const message = CHATBOT_HELP_MESSAGE(config);
+  await sendWhatsAppMessage(whatsappPhoneNumber, message);
 }
 
 async function handleChangeDeliveryInfo(from: string): Promise<void> {
@@ -314,25 +279,16 @@ async function handleChangeDeliveryInfo(from: string): Promise<void> {
 }
 
 async function handleAddressConfirmation(from: string, confirmationId: string, messageId: string): Promise<void> {
-  try {
-    // Extract address ID from confirmation ID
-    const addressId = extractIdFromAction(confirmationId, INTERACTIVE_ACTIONS.CONFIRM_ADDRESS);
-    
-    // This is the same as selecting an address
-    await handleAddressSelection(from, `${INTERACTIVE_ACTIONS.SELECT_ADDRESS}${addressId}`, messageId);
-    
-  } catch (error) {
-    await ErrorService.handleAndSendError(error, from, {
-      userId: from,
-      operation: 'handleAddressConfirmation'
-    });
-  }
+  // Extract address ID from confirmation ID
+  const addressId = extractIdFromAction(confirmationId, INTERACTIVE_ACTIONS.CONFIRM_ADDRESS);
+  
+  // This is the same as selecting an address
+  await handleAddressSelection(from, `${INTERACTIVE_ACTIONS.SELECT_ADDRESS}${addressId}`, messageId);
 }
 
 async function handleAddressSelection(from: string, selectionId: string, messageId: string): Promise<void> {
-  try {
-    // Extract address ID from selection ID
-    const addressId = extractIdFromAction(selectionId, INTERACTIVE_ACTIONS.SELECT_ADDRESS);
+  // Extract address ID from selection ID
+  const addressId = extractIdFromAction(selectionId, INTERACTIVE_ACTIONS.SELECT_ADDRESS);
     
     // Get customer
     const customer = await prisma.customer.findUnique({
@@ -401,29 +357,21 @@ async function handleAddressSelection(from: string, selectionId: string, message
         `✅ *Dirección seleccionada*\n\n📍 *Dirección de entrega:*\n${formattedAddress}\n\nEsta dirección se usará para tu próximo pedido.`
       );
     }
-    
-  } catch (error) {
-    await ErrorService.handleAndSendError(error, from, {
-      userId: from,
-      operation: 'handleAddressSelection'
-    });
-  }
 }
 
 async function handleAddNewAddress(from: string, messageId: string): Promise<void> {
-  try {
-    // Get customer
-    const customer = await prisma.customer.findUnique({
-      where: { whatsappPhoneNumber: from }
-    });
-    
-    if (!customer) {
-      throw new BusinessLogicError(
-        ErrorCode.CUSTOMER_NOT_FOUND,
-        'Customer not found',
-        { userId: from }
-      );
-    }
+  // Get customer
+  const customer = await prisma.customer.findUnique({
+    where: { whatsappPhoneNumber: from }
+  });
+  
+  if (!customer) {
+    throw new BusinessLogicError(
+      ErrorCode.CUSTOMER_NOT_FOUND,
+      'Customer not found',
+      { userId: from }
+    );
+  }
     
     // Check if this is for a preorder
     const preOrder = await prisma.preOrder.findFirst({
@@ -445,30 +393,22 @@ async function handleAddNewAddress(from: string, messageId: string): Promise<voi
       "Agregar Dirección",
       updateLink
     );
-    
-  } catch (error) {
-    await ErrorService.handleAndSendError(error, from, {
-      userId: from,
-      operation: 'handleAddNewAddress'
-    });
-  }
 }
 
 /**
  * Handles preorder actions (confirm/discard) using the new token-based system
  */
 async function handlePreOrderAction(from: string, buttonId: string): Promise<void> {
-  try {
-    // Extract action and token from button ID
-    // Format: preorder_confirm:token or preorder_discard:token
-    const [actionType, token] = buttonId.split(':');
-    
-    if (!token) {
-      throw new BusinessLogicError(
-        ErrorCode.INVALID_TOKEN,
-        'Invalid button format - missing token'
-      );
-    }
+  // Extract action and token from button ID
+  // Format: preorder_confirm:token or preorder_discard:token
+  const [actionType, token] = buttonId.split(':');
+  
+  if (!token) {
+    throw new BusinessLogicError(
+      ErrorCode.INVALID_TOKEN,
+      'Invalid button format - missing token'
+    );
+  }
     
     // Determine action based on button prefix
     const action: 'confirm' | 'discard' = 
@@ -486,34 +426,4 @@ async function handlePreOrderAction(from: string, buttonId: string): Promise<voi
       token,
       whatsappNumber: from
     });
-    
-  } catch (error: any) {
-    // Si es un error de token inválido, limpiar el historial relevante
-    if (error instanceof BusinessLogicError && error.code === ErrorCode.INVALID_TOKEN) {
-      try {
-        // Buscar el cliente y limpiar su historial relevante
-        const customer = await prisma.customer.findUnique({
-          where: { whatsappPhoneNumber: from }
-        });
-        
-        if (customer) {
-          await prisma.customer.update({
-            where: { id: customer.id },
-            data: {
-              relevantChatHistory: JSON.stringify([]),
-              lastInteraction: new Date()
-            }
-          });
-          logger.info(`Cleared relevant chat history for customer ${customer.id} due to invalid token`);
-        }
-      } catch (clearError) {
-        logger.error('Error clearing chat history after invalid token:', clearError);
-      }
-    }
-    
-    await ErrorService.handleAndSendError(error, from, {
-      userId: from,
-      operation: 'handlePreOrderAction'
-    });
-  }
 }

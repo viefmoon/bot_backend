@@ -91,34 +91,28 @@ export class PreOrderWorkflowService {
   }
   
   static async processAction(params: PreOrderActionParams): Promise<void> {
-    try {
-      logger.info('Processing preorder action', { 
-        action: params.action,
-        token: params.token.substring(0, 8) + '...' 
-      });
-      
-      const validation = await this.validateActionToken(params.token);
-      if (!validation.isValid || !validation.preOrderId) {
-        // Don't send messages here - let the error handler do it
-        // The error message will be sent by ErrorService.handleAndSendError
-        throw new BusinessLogicError(
-          ErrorCode.INVALID_TOKEN,
-          validation.error || 'Token inválido o expirado'
-        );
-      }
-      
-      if (params.action === 'confirm') {
-        await this.confirmPreOrder(validation.preOrderId, params.whatsappNumber);
-      } else {
-        await this.discardPreOrder(validation.preOrderId, params.whatsappNumber);
-      }
-      
-      await this.deleteActionToken(params.token);
-      
-    } catch (error) {
-      logger.error('Error processing preorder action', error);
-      throw error;
+    logger.info('Processing preorder action', { 
+      action: params.action,
+      token: params.token.substring(0, 8) + '...' 
+    });
+    
+    const validation = await this.validateActionToken(params.token);
+    if (!validation.isValid || !validation.preOrderId) {
+      // Don't send messages here - let the error handler do it
+      // The error will be caught and handled by the WhatsApp handler
+      throw new BusinessLogicError(
+        ErrorCode.INVALID_TOKEN,
+        validation.error || 'Token inválido o expirado'
+      );
     }
+    
+    if (params.action === 'confirm') {
+      await this.confirmPreOrder(validation.preOrderId, params.whatsappNumber);
+    } else {
+      await this.discardPreOrder(validation.preOrderId, params.whatsappNumber);
+    }
+    
+    await this.deleteActionToken(params.token);
   }
   
   private static async generateActionToken(preOrderId: number): Promise<string> {
