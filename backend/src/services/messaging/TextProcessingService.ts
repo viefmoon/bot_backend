@@ -2,10 +2,9 @@ import { MessageContext } from './MessageContext';
 import { AgentService } from '../ai';
 import { PreOrderWorkflowService } from '../orders/PreOrderWorkflowService';
 import { sendWhatsAppMessage } from '../whatsapp';
+import { getToolHandler } from '../ai/tools/toolHandlers';
 import logger from '../../common/utils/logger';
-import { MessageSplitter } from '../../common/utils/messageSplitter';
 import { ProcessedOrderData } from '../../common/types/preorder.types';
-import { AIOrderItem, transformAIOrderItem } from '../../common/types';
 import { ValidationError, BusinessLogicError, TechnicalError, ErrorCode } from '../../common/services/errors';
 
 // Type definition for content
@@ -164,7 +163,11 @@ export class TextProcessingService {
     }
   }
 
-  private static async processGeminiResponse(response: any, context?: MessageContext): Promise<any[]> {
+  /**
+   * Process Gemini API response and extract meaningful content
+   * This method is public so it can be used by tool handlers that need it
+   */
+  public static async processGeminiResponse(response: any, context?: MessageContext): Promise<any[]> {
     logger.debug('=== processGeminiResponse DEBUG ===');
     logger.debug('Response type:', typeof response);
     logger.debug('Response keys:', response ? Object.keys(response) : 'null');
@@ -222,273 +225,21 @@ export class TextProcessingService {
   private static async handleFunctionCall(name: string, args: any, context?: MessageContext): Promise<any | null> {
     logger.debug(`=== handleFunctionCall: ${name} ===`);
     
-    let result: any = null;
+    // Get the handler for this function
+    const handler = getToolHandler(name);
     
-    switch (name) {
-      case "map_order_items":
-        // Transform AI order items to consistent format
-        const processedItems = (args.orderItems || []).map((item: AIOrderItem) => 
-          transformAIOrderItem(item)
-        );
-        
-        result = {
-          preprocessedContent: {
-            orderItems: processedItems,
-            orderType: args.orderType || 'DELIVERY',
-            warnings: args.warnings ? [args.warnings] : [],
-            scheduledAt: args.scheduledAt || null
-          }
-        };
-        break;
-        
-      case "send_menu":
-        // Send menu
-        try {
-          const { ProductService } = await import('../products/ProductService');
-          const menu = await ProductService.getActiveProducts({ formatForAI: true });
-          const menuText = String(menu);
-          
-          // If menu is too long, split it
-          const maxLength = 4000;
-          if (menuText.length > maxLength) {
-            const parts = MessageSplitter.splitMenu(menuText, maxLength);
-            logger.debug(`Menu split into ${parts.length} parts`);
-            result = parts.map((part, index) => ({
-              text: part,
-              isRelevant: false,
-              sendToWhatsApp: true,
-              ...(index === parts.length - 1 && { 
-                historyMarker: "MENÚ ENVIADO" 
-              })
-            }));
-          } else {
-            result = {
-              text: menuText,
-              isRelevant: false,
-              sendToWhatsApp: true,
-              historyMarker: "MENÚ ENVIADO"
-            };
-          }
-        } catch (error) {
-          logger.error('Error getting menu:', error);
-          result = {
-            text: '😔 Lo siento, no pude obtener el menú en este momento. Por favor, intenta de nuevo en unos momentos.',
-            isRelevant: true
-          };
-        }
-        break;
-        
-      case "get_business_hours":
-        // Get restaurant info and hours
-        try {
-          const { RESTAURANT_INFO_MESSAGE } = await import('../../common/config/predefinedMessages');
-          const { ConfigService } = await import('../config/ConfigService');
-          const { getFormattedBusinessHours } = await import('../../common/utils/timeUtils');
-          
-          const config = ConfigService.getConfig();
-          const formattedHours = await getFormattedBusinessHours();
-          const infoMessage = RESTAURANT_INFO_MESSAGE(config, formattedHours);
-          
-          result = {
-            text: infoMessage,
-            isRelevant: true
-          };
-        } catch (error) {
-          logger.error('Error getting restaurant info:', error);
-          result = {
-            text: '😔 Lo siento, no pude obtener la información del restaurante. Por favor, intenta más tarde.',
-            isRelevant: true
-          };
-        }
-        break;
-        
-      case "prepare_order_context":
-        // Prepare context for order agent
-        try {
-          const { MenuSearchService } = await import('../ai/MenuSearchService');
-          const relevantMenu = await MenuSearchService.getRelevantMenu(args.itemsSummary);
-          
-          if (relevantMenu === "[]" || JSON.parse(relevantMenu).length === 0) {
-            logger.warn('No relevant products found for order context');
-            
-            result = {
-              text: `😔 No pude encontrar productos que coincidan con "${args.itemsSummary}". Por favor, intenta con otro nombre o revisa nuestro menú.`,
-              isRelevant: true
-            };
-            break;
-          }
-          
-          const orderContext = {
-            itemsSummary: args.itemsSummary,
-            relevantMenu: relevantMenu,
-            orderType: args.orderType
-          };
-          
-          logger.debug('Calling processOrderMapping with context:', orderContext);
-          const orderResponse = await AgentService.processOrderMapping(orderContext);
-          logger.debug('Order agent response:', JSON.stringify(orderResponse, null, 2));
-          
-          const orderResults = await this.processGeminiResponse(orderResponse, context);
-          logger.debug('Processed order results:', orderResults);
-          
-          result = orderResults;
-          
-        } catch (error) {
-          logger.error('Error preparing order context:', error);
-          result = {
-            text: '😔 Hubo un problema al procesar tu orden. Por favor, intenta nuevamente.',
-            isRelevant: true
-          };
-        }
-        break;
-        
-      case "generate_address_update_link":
-        // Generate address update link
-        try {
-          logger.debug('Generating address update link:', args);
-          
-          const { OTPService } = await import('../security/OTPService');
-          const { env } = await import('../../common/config/envValidator');
-          
-          const customerId = context?.message?.from;
-          if (!customerId) {
-            throw new TechnicalError(
-              ErrorCode.CUSTOMER_NOT_FOUND,
-              'Could not get customer ID from message context'
-            );
-          }
-          
-          const otp = OTPService.generateOTP();
-          await OTPService.storeOTP(customerId, otp, true);
-          
-          const registrationLink = `${env.FRONTEND_BASE_URL}/address-registration/${customerId}?otp=${otp}`;
-          
-          result = {
-            urlButton: {
-              title: "📍 Actualizar Dirección",
-              body: "Te he generado un enlace seguro para que puedas actualizar o agregar una nueva dirección de entrega.\n\n" +
-                    "Este enlace es temporal y expirará en 10 minutos por seguridad.",
-              buttonText: "Actualizar Dirección",
-              url: registrationLink
-            },
-            isRelevant: true
-          };
-          
-        } catch (error) {
-          logger.error('Error generating address link:', error);
-          result = {
-            text: '😔 No pude generar el enlace de actualización. Por favor, intenta más tarde.',
-            isRelevant: true
-          };
-        }
-        break;
-        
-      case "send_bot_instructions":
-        // Send bot instructions
-        try {
-          logger.debug('Sending bot instructions');
-          
-          const { CHATBOT_HELP_MESSAGE } = await import('../../common/config/predefinedMessages');
-          const { ConfigService } = await import('../config/ConfigService');
-          
-          const config = ConfigService.getConfig();
-          const instructions = CHATBOT_HELP_MESSAGE(config);
-          
-          result = {
-            text: instructions,
-            isRelevant: true
-          };
-          
-        } catch (error) {
-          logger.error('Error sending bot instructions:', error);
-          result = {
-            text: '😔 No pude obtener las instrucciones en este momento. Por favor, intenta más tarde.',
-            isRelevant: true
-          };
-        }
-        break;
-        
-      case "get_wait_times":
-        // Get wait times
-        try {
-          logger.debug('Getting wait times');
-          
-          const { WAIT_TIMES_MESSAGE } = await import('../../common/config/predefinedMessages');
-          const { RestaurantService } = await import('../restaurant/RestaurantService');
-          
-          const config = await RestaurantService.getConfig();
-          
-          const waitTimesMessage = WAIT_TIMES_MESSAGE(
-            config.estimatedPickupTime,
-            config.estimatedDeliveryTime
-          );
-          
-          result = {
-            text: waitTimesMessage,
-            isRelevant: true
-          };
-          
-        } catch (error) {
-          logger.error('Error getting wait times:', error);
-          result = {
-            text: '😔 No pude obtener los tiempos de espera. Por favor, intenta más tarde.',
-            isRelevant: true
-          };
-        }
-        break;
-        
-      case "reset_conversation":
-        // Reset conversation
-        try {
-          logger.debug('Resetting conversation');
-          
-          const { prisma } = await import('../../server');
-          const { CONVERSATION_RESET_MESSAGE } = await import('../../common/config/predefinedMessages');
-          
-          const customerId = context?.customer?.id;
-          if (!customerId) {
-            throw new TechnicalError(
-              ErrorCode.CUSTOMER_NOT_FOUND,
-              'Could not get customer ID from context'
-            );
-          }
-          
-          await prisma.customer.update({
-            where: { id: customerId },
-            data: { 
-              relevantChatHistory: JSON.stringify([]),
-              fullChatHistory: JSON.stringify([]),
-              lastInteraction: new Date()
-            }
-          });
-          
-          const { SyncMetadataService } = await import('../sync/SyncMetadataService');
-          await SyncMetadataService.markForSync('Customer', customerId, 'REMOTE');
-          
-          context?.set('relevantChatHistory', []);
-          context?.set('fullChatHistory', []);
-          context?.set('skipHistoryUpdate', true);
-          context?.set('isResettingConversation', true);
-          
-          result = {
-            text: CONVERSATION_RESET_MESSAGE,
-            isRelevant: false
-          };
-          
-        } catch (error) {
-          logger.error('Error resetting conversation:', error);
-          result = {
-            text: '😔 Hubo un problema al reiniciar la conversación. Por favor, intenta más tarde.',
-            isRelevant: true
-          };
-        }
-        break;
-        
-      default:
-        logger.warn(`Unrecognized function call: ${name}`);
+    if (handler) {
+      try {
+        const result = await handler(args, context);
+        logger.debug(`Handler ${name} completed successfully`);
+        return result;
+      } catch (error) {
+        logger.error(`Error in handler ${name}:`, error);
+        throw error;
+      }
     }
     
-    logger.debug('=== End handleFunctionCall ===');
-    return result;
+    logger.warn(`Unrecognized function call: ${name}`);
+    return null;
   }
 }

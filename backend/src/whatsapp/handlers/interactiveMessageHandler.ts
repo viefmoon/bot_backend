@@ -1,6 +1,6 @@
 import { handleOrderCancellation } from "./orders/cancellationHandler";
 import { PreOrderWorkflowService } from "../../services/orders/PreOrderWorkflowService";
-
+import { INTERACTIVE_ACTIONS, startsWithAction, extractIdFromAction } from "../../common/constants/interactiveActions";
 import { prisma } from "../../server";
 import { sendWhatsAppMessage, sendMessageWithUrlButton } from "../../services/whatsapp";
 import Stripe from "stripe";
@@ -27,18 +27,18 @@ const stripeClient = env.STRIPE_SECRET_KEY
 
 // Map of button action prefixes to their handlers
 const BUTTON_ACTION_HANDLERS = new Map<string, (from: string, buttonId: string) => Promise<void>>([  
-  ['preorder_confirm', handlePreOrderAction],
-  ['preorder_discard', handlePreOrderAction],
+  [INTERACTIVE_ACTIONS.PREORDER_CONFIRM.slice(0, -1), handlePreOrderAction], // Remove trailing colon
+  [INTERACTIVE_ACTIONS.PREORDER_DISCARD.slice(0, -1), handlePreOrderAction], // Remove trailing colon
 ]);
 
 const LIST_ACTIONS = {
-  cancel_order: handleOrderCancellation,
-  pay_online: handleOnlinePayment,
-  wait_times: handleWaitTimes,
-  view_menu: sendMenu,
-  restaurant_info: handleRestaurantInfo,
-  chatbot_help: handleChatbotHelp,
-  change_delivery_info: handleChangeDeliveryInfo,
+  [INTERACTIVE_ACTIONS.CANCEL_ORDER]: handleOrderCancellation,
+  [INTERACTIVE_ACTIONS.PAY_ONLINE]: handleOnlinePayment,
+  [INTERACTIVE_ACTIONS.WAIT_TIMES]: handleWaitTimes,
+  [INTERACTIVE_ACTIONS.VIEW_MENU]: sendMenu,
+  [INTERACTIVE_ACTIONS.RESTAURANT_INFO]: handleRestaurantInfo,
+  [INTERACTIVE_ACTIONS.CHATBOT_HELP]: handleChatbotHelp,
+  [INTERACTIVE_ACTIONS.CHANGE_DELIVERY_INFO]: handleChangeDeliveryInfo,
 } as const;
 
 export async function handleInteractiveMessage(
@@ -58,9 +58,9 @@ export async function handleInteractiveMessage(
 
     if (type === "button_reply") {
       // Check for address confirmation
-      if (button_reply.id.startsWith('confirm_address_')) {
+      if (startsWithAction(button_reply.id, INTERACTIVE_ACTIONS.CONFIRM_ADDRESS)) {
         await handleAddressConfirmation(from, button_reply.id, messageId);
-      } else if (button_reply.id === 'change_address') {
+      } else if (button_reply.id === INTERACTIVE_ACTIONS.CHANGE_ADDRESS) {
         await handleChangeDeliveryInfo(from);
       } else {
         // Check for action handlers by prefix
@@ -75,9 +75,9 @@ export async function handleInteractiveMessage(
       }
     } else if (type === "list_reply") {
       // Check for address selection
-      if (list_reply.id.startsWith('select_address_')) {
+      if (startsWithAction(list_reply.id, INTERACTIVE_ACTIONS.SELECT_ADDRESS)) {
         await handleAddressSelection(from, list_reply.id, messageId);
-      } else if (list_reply.id === 'add_new_address') {
+      } else if (list_reply.id === INTERACTIVE_ACTIONS.ADD_NEW_ADDRESS) {
         await handleAddNewAddress(from, messageId);
       } else {
         const action = LIST_ACTIONS[list_reply.id as keyof typeof LIST_ACTIONS];
@@ -316,10 +316,10 @@ async function handleChangeDeliveryInfo(from: string): Promise<void> {
 async function handleAddressConfirmation(from: string, confirmationId: string, messageId: string): Promise<void> {
   try {
     // Extract address ID from confirmation ID
-    const addressId = confirmationId.replace('confirm_address_', '');
+    const addressId = extractIdFromAction(confirmationId, INTERACTIVE_ACTIONS.CONFIRM_ADDRESS);
     
     // This is the same as selecting an address
-    await handleAddressSelection(from, `select_address_${addressId}`, messageId);
+    await handleAddressSelection(from, `${INTERACTIVE_ACTIONS.SELECT_ADDRESS}${addressId}`, messageId);
     
   } catch (error) {
     await ErrorService.handleAndSendError(error, from, {
@@ -332,7 +332,7 @@ async function handleAddressConfirmation(from: string, confirmationId: string, m
 async function handleAddressSelection(from: string, selectionId: string, messageId: string): Promise<void> {
   try {
     // Extract address ID from selection ID
-    const addressId = selectionId.replace('select_address_', '');
+    const addressId = extractIdFromAction(selectionId, INTERACTIVE_ACTIONS.SELECT_ADDRESS);
     
     // Get customer
     const customer = await prisma.customer.findUnique({
@@ -471,7 +471,8 @@ async function handlePreOrderAction(from: string, buttonId: string): Promise<voi
     }
     
     // Determine action based on button prefix
-    const action: 'confirm' | 'discard' = actionType === 'preorder_confirm' ? 'confirm' : 'discard';
+    const action: 'confirm' | 'discard' = 
+      startsWithAction(buttonId, INTERACTIVE_ACTIONS.PREORDER_CONFIRM) ? 'confirm' : 'discard';
     
     logger.info('Processing preorder action', { 
       from, 
