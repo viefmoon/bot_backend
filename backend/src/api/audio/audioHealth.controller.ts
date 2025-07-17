@@ -60,12 +60,14 @@ export class AudioHealthController {
 
       // Check embeddings availability
       try {
-        // Check if embeddings table has data
-        const embeddingsCount = await prisma.product.count({
-          where: {
-            embedding: { not: null }
-          }
-        });
+        // Check if embeddings table has data using raw SQL
+        const result = await prisma.$queryRaw<{ count: bigint }[]>`
+          SELECT COUNT(*) as count 
+          FROM "Product" 
+          WHERE embedding IS NOT NULL
+        `;
+        
+        const embeddingsCount = Number(result[0]?.count || 0);
         
         if (embeddingsCount > 0) {
           services.embeddings = 'available';
