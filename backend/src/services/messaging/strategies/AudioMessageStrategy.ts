@@ -3,6 +3,7 @@ import { MessageContext } from '../MessageContext';
 import { GeminiService } from '../../ai';
 import { sendWhatsAppMessage, getWhatsAppMediaUrl } from '../../whatsapp';
 import { AUDIO_TRANSCRIPTION_ERROR } from '../../../common/config/predefinedMessages';
+import { TextProcessingService } from '../TextProcessingService';
 import logger from '../../../common/utils/logger';
 import { env } from '../../../common/config/envValidator';
 import axios from 'axios';
@@ -72,12 +73,11 @@ export class AudioMessageStrategy extends MessageStrategy {
         `🎤 Entendí: "${transcription}"\n\nProcesando tu mensaje...`
       );
       
-      // Convertir a mensaje de texto y procesar
-      context.message.type = 'text';
-      context.message.text = { body: transcription };
+      // Process the transcribed text directly using the shared service
+      await TextProcessingService.processTextMessage(transcription, context);
       
-      // Dejar que la estrategia de mensajes de texto lo maneje
-      // Esto se hará cuando el pipeline continúe al siguiente middleware
+      // Stop the pipeline here since we've already processed the message
+      context.stop();
       
     } catch (error) {
       logger.error('Error processing audio message:', error);
