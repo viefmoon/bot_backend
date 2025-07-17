@@ -1,4 +1,4 @@
-import { prisma } from '../../server';
+import { prisma } from '../../lib/prisma';
 import { Product, Category, ProductVariant } from '@prisma/client';
 import logger from '../../common/utils/logger';
 import { NotFoundError, ErrorCode } from '../../common/services/errors';

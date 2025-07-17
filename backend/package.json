@@ -4,10 +4,12 @@
   "private": true,
   "scripts": {
     "dev": "ts-node --transpile-only src/server.ts",
+    "dev:worker": "ts-node --transpile-only src/run-workers.ts",
     "dev:all": "cd .. && ./dev.sh",
     "dev:frontend": "cd .. && ./dev-frontend.sh",
     "build": "tsc",
     "start": "node dist/server.js",
+    "start:worker": "node dist/run-workers.js",
     "start:prod": "node dist/server.js",
     "migrate": "prisma migrate deploy",
     "migrate:dev": "prisma migrate dev",
@@ -15,7 +17,13 @@
     "studio": "prisma studio",
     "seed:embeddings": "ts-node --transpile-only scripts/generate-embeddings.ts",
     "reset-db": "./scripts/reset-db.sh",
-    "postinstall": "prisma generate"
+    "postinstall": "prisma generate",
+    "pm2:start": "npm run build && pm2 start ecosystem.config.js",
+    "pm2:stop": "pm2 stop ecosystem.config.js",
+    "pm2:delete": "pm2 delete ecosystem.config.js",
+    "pm2:reload": "pm2 reload ecosystem.config.js",
+    "pm2:logs": "pm2 logs",
+    "pm2:monit": "pm2 monit"
   },
   "dependencies": {
     "@google/genai": "^1.5.1",
@@ -25,6 +33,7 @@
     "@types/ioredis": "^4.28.10",
     "@types/multer": "^1.4.13",
     "axios": "^1.7.7",
+    "bullmq": "^5.56.4",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.2",
     "cors": "^2.8.5",

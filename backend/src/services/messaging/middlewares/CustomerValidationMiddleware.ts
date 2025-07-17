@@ -1,6 +1,6 @@
 import { MessageMiddleware } from '../types';
 import { MessageContext } from '../MessageContext';
-import { prisma } from '../../../server';
+import { prisma } from '../../../lib/prisma';
 import { sendWhatsAppMessage } from '../../whatsapp';
 import { BANNED_USER_MESSAGE } from '../../../common/config/predefinedMessages';
 import { ConfigService } from '../../../services/config/ConfigService';

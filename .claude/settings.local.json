@@ -10,7 +10,27 @@
       "Bash(cp:*)",
       "Bash(npx tsc:*)",
       "Bash(grep:*)",
-      "Bash(true)"
+      "Bash(true)",
+      "Bash(npm install:*)",
+      "Bash(npm run build:*)",
+      "Bash(chmod:*)",
+      "Bash(npx prisma migrate dev:*)",
+      "Bash(npx prisma:*)",
+      "Bash(start-dev.bat)",
+      "Bash(cmd:*)",
+      "Bash(curl:*)",
+      "Bash(npm run dev:worker:*)",
+      "Bash(copy .env.example .env)",
+      "Bash(npm run migrate:dev:*)",
+      "Bash(docker compose:*)",
+      "Bash(npm run dev:*)",
+      "Bash(npm ls:*)",
+      "Bash(npm outdated)",
+      "Bash(del update-prisma-imports.js)",
+      "Bash(file:*)",
+      "Bash(ls:*)",
+      "Bash(cat:*)",
+      "Bash(del nul)"
     ],
     "deny": []
   }

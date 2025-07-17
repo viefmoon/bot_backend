@@ -1,7 +1,6 @@
 import 'reflect-metadata';
 import express, { Request, Response } from 'express';
 import cors from 'cors';
-import { PrismaClient } from '@prisma/client';
 import webhookRoutes from './routes/webhook';
 import syncRoutes from './routes/sync';
 import addressRegistrationRoutes from './routes/address-registration';
@@ -19,6 +18,7 @@ import { AddressDto, GetAddressesQueryDto, UpdateAddressDto } from './dto/addres
 import { SendMessageDto } from './dto/whatsapp';
 import { CreateOrderDto } from './dto/order';
 import { ConfigService } from './services/config/ConfigService';
+import { prisma } from './lib/prisma';
 
 // Validate environment variables
 try {
@@ -30,7 +30,6 @@ try {
 
 // Initialize Express app
 const app: express.Application = express();
-const prisma = new PrismaClient();
 
 // Configure CORS
 app.use(cors({

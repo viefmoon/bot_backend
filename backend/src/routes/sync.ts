@@ -3,7 +3,7 @@ import { asyncHandler } from '../common/middlewares/errorHandler';
 import { apiKeyAuthMiddleware } from '../common/middlewares/apiKeyAuth.middleware';
 import { SyncService } from '../services/sync/SyncService';
 import { SyncMetadataService } from '../services/sync/SyncMetadataService';
-import { prisma } from '../server';
+import { prisma } from '../lib/prisma';
 import logger from '../common/utils/logger';
 
 const router = Router();

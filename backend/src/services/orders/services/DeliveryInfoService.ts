@@ -1,4 +1,4 @@
-import { prisma } from "../../../server";
+import { prisma } from '../../../lib/prisma';
 import { ValidationError, ErrorCode, NotFoundError } from "../../../common/services/errors";
 import logger from "../../../common/utils/logger";
 import { DeliveryInfoInput } from "../../../common/types";

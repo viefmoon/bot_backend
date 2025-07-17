@@ -1,7 +1,7 @@
 import { handleOrderCancellation } from "./orders/cancellationHandler";
 import { PreOrderWorkflowService } from "../../services/orders/PreOrderWorkflowService";
 import { INTERACTIVE_ACTIONS, startsWithAction, extractIdFromAction } from "../../common/constants/interactiveActions";
-import { prisma } from "../../server";
+import { prisma } from '../../lib/prisma';
 import { sendWhatsAppMessage, sendMessageWithUrlButton } from "../../services/whatsapp";
 import Stripe from "stripe";
 import { OTPService } from "../../services/security/OTPService";

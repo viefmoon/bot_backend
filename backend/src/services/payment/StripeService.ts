@@ -3,7 +3,7 @@ import Stripe from 'stripe';
 import logger from '../../common/utils/logger';
 import { env } from '../../common/config/envValidator';
 import { ExternalServiceError, ValidationError, ErrorCode } from '../../common/services/errors';
-import { prisma } from '../../server';
+import { prisma } from '../../lib/prisma';
 
 /**
  * Service for handling Stripe payment operations

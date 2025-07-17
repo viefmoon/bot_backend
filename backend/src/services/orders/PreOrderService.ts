@@ -1,4 +1,4 @@
-import { prisma } from "../../server";
+import { prisma } from '../../lib/prisma';
 import logger from "../../common/utils/logger";
 import { SchedulingService } from "./services/SchedulingService";
 import { ProductCalculationService } from "./services/ProductCalculationService";

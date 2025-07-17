@@ -1,5 +1,5 @@
 import { Router, Request, Response } from 'express';
-import { prisma } from '../server';
+import { prisma } from '../lib/prisma';
 import logger from '../common/utils/logger';
 import { sendWhatsAppInteractiveMessage } from '../services/whatsapp';
 import { asyncHandler } from '../common/middlewares/errorHandler';

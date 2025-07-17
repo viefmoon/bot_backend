@@ -1,4 +1,4 @@
-import { prisma } from '../../server';
+import { prisma } from '../../lib/prisma';
 import { PizzaHalf, CustomizationAction } from '@prisma/client';
 import { CreateOrderDto } from '../../dto/order';
 import logger from '../../common/utils/logger';

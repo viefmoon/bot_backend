@@ -99,16 +99,6 @@ CREATE TABLE "MessageLog" (
 );
 
 -- CreateTable
-CREATE TABLE "MessageRateLimit" (
-    "id" SERIAL NOT NULL,
-    "whatsappPhoneNumber" TEXT NOT NULL,
-    "messageCount" INTEGER NOT NULL DEFAULT 0,
-    "lastMessageTime" TIMESTAMP(3) NOT NULL,
-
-    CONSTRAINT "MessageRateLimit_pkey" PRIMARY KEY ("id")
-);
-
--- CreateTable
 CREATE TABLE "ProductModifier" (
     "id" TEXT NOT NULL,
     "modifierGroupId" TEXT NOT NULL,
@@ -513,9 +503,6 @@ CREATE INDEX "Address_zipCode_idx" ON "Address"("zipCode");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "MessageLog_messageId_key" ON "MessageLog"("messageId");
-
--- CreateIndex
-CREATE UNIQUE INDEX "MessageRateLimit_whatsappPhoneNumber_key" ON "MessageRateLimit"("whatsappPhoneNumber");
 
 -- CreateIndex
 CREATE INDEX "Order_dailyOrderCounterId_idx" ON "Order"("dailyOrderCounterId");

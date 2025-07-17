@@ -1,7 +1,7 @@
 import { Router, Request, Response } from 'express';
 import { OTPService } from '../services/security/OTPService';
 import { DeliveryInfoService } from '../services/orders/services/DeliveryInfoService';
-import { prisma } from '../server';
+import { prisma } from '../lib/prisma';
 import logger from '../common/utils/logger';
 import { asyncHandler } from '../common/middlewares/errorHandler';
 import { ValidationError, NotFoundError, ErrorCode } from '../common/services/errors';

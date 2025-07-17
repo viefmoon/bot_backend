@@ -146,13 +146,6 @@ model MessageLog {
   processed Boolean @default(false)
 }
 
-model MessageRateLimit {
-  id              Int      @id @default(autoincrement())
-  whatsappPhoneNumber String   @unique
-  messageCount    Int      @default(0)
-  lastMessageTime DateTime
-}
-
 model ProductModifier {
   id               String             @id
   modifierGroupId  String

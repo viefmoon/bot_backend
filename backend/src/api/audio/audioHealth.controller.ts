@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import { GeminiService } from '../../services/ai/GeminiService';
-import { prisma } from '../../server';
+import { prisma } from '../../lib/prisma';
 import logger from '../../common/utils/logger';
 
 interface HealthCheckResponse {

@@ -6,7 +6,7 @@ import { RestaurantHoursMiddleware } from '../middlewares/RestaurantHoursMiddlew
 import { AddressRequiredMiddleware } from '../middlewares/AddressRequiredMiddleware';
 import { MessageTypeMiddleware } from '../middlewares/MessageTypeMiddleware';
 import { MessageProcessingMiddleware } from '../middlewares/MessageProcessingMiddleware';
-import { prisma } from '../../../server';
+import { prisma } from '../../../lib/prisma';
 import logger from '../../../common/utils/logger';
 import { sendWhatsAppMessage, sendWhatsAppInteractiveMessage } from '../../whatsapp';
 import { SyncMetadataService } from '../../../services/sync/SyncMetadataService';

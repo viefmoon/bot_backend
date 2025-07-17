@@ -1,5 +1,5 @@
 import logger from '../../common/utils/logger';
-import { prisma } from '../../server';
+import { prisma } from '../../lib/prisma';
 import { Prisma } from '@prisma/client';
 import { GoogleGenAI } from '@google/genai';
 import { env } from '../../common/config/envValidator';

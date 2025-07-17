@@ -1,5 +1,4 @@
 import * as winston from 'winston';
-import { env } from '../config/envValidator';
 
 // Helper function to format JSON for better readability
 const formatJSON = (obj: any, indent = 2): string => {
@@ -20,7 +19,7 @@ const formatJSON = (obj: any, indent = 2): string => {
 };
 
 const logger = winston.createLogger({
-  level: env.NODE_ENV === 'production' ? 'info' : 'debug',
+  level: process.env.NODE_ENV === 'production' ? 'info' : 'debug',
   format: winston.format.combine(
     winston.format.timestamp(),
     winston.format.printf(({ timestamp, level, message, ...meta }) => {

@@ -2,20 +2,48 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## First Time Setup
+
+**IMPORTANT**: Before running the development scripts for the first time, you need to set up the database:
+
+```bash
+# 1. Start Docker containers
+docker compose up -d
+
+# 2. Wait a few seconds for PostgreSQL to be ready
+
+# 3. Run database migrations (creates all tables)
+cd backend && npm run migrate:dev
+
+# 4. Now you can run the development script
+start-dev.bat       # Windows
+./start-dev.sh      # Linux/Mac
+```
+
 ## Commands
 
 ### Development
 ```bash
-# Start local development (both backend and frontend)
-./start-local.sh
+# Start everything (Docker + Backend API + Worker + Frontend)
+./start-dev.sh      # Linux/Mac
+start-dev.bat       # Windows
 
-# Clean up ports if they're stuck (e.g., docker-proxy processes)
+# This script:
+# - Cleans up ports and Docker containers
+# - Starts PostgreSQL and Redis via Docker
+# - Installs dependencies if needed
+# - Runs database migrations (ONLY if migrations already exist)
+# - Starts Backend API (port 5000)
+# - Starts BullMQ Worker for async processing
+# - Starts Frontend (port 3000) if present
+
+# Clean up stuck ports manually if needed
 ./cleanup-ports.sh
 
-# Or run separately:
-npm run dev          # Runs both backend and frontend concurrently
-cd backend && npm run dev    # Backend only (port 5000)
-cd frontend-app && npm run dev   # Frontend only (port 3000)
+# Or run services manually:
+cd backend && npm run dev         # Terminal 1: API Server
+cd backend && npm run dev:worker  # Terminal 2: Message Worker
+cd frontend-app && npm run dev    # Terminal 3: Frontend (optional)
 ```
 
 ### Database Management
@@ -27,6 +55,12 @@ npm run migrate       # Apply migrations in production
 npm run studio        # Open Prisma Studio to view/edit database
 npm run seed:embeddings  # Generate embeddings for semantic search
 ```
+
+**Important Notes about Migrations**:
+- Migrations are NOT automatic - you must run them manually
+- First time setup: Always run `npm run migrate:dev` to create initial tables
+- After schema changes: Run `npm run migrate:dev` to update database structure
+- The `start-dev.bat` script runs `migrate deploy` which only applies existing migrations, it does NOT create new ones
 
 ### Build & Production
 ```bash
@@ -64,12 +98,16 @@ This is a WhatsApp restaurant ordering bot with AI-powered natural language proc
 
 ### Message Processing Pipeline
 
-WhatsApp messages flow through a sophisticated middleware pipeline:
+WhatsApp messages now flow through an asynchronous queue-based system using BullMQ:
 
 ```
 Webhook Entry (/backend/webhook)
     ↓
 WhatsAppService.handleWebhook()
+    ↓
+Enqueue message to BullMQ (immediate 200 OK response)
+    ↓
+BullMQ Worker (separate process)
     ↓
 MessageProcessor.processWithPipeline()
     ↓
@@ -84,6 +122,19 @@ Middleware Pipeline:
         - InteractiveMessageStrategy (button/list responses)
         - TextMessageStrategy (AI agent processing)
 ```
+
+**Key Benefits of Async Processing**:
+- Webhook responds immediately (prevents WhatsApp timeouts)
+- Messages from same user processed sequentially (prevents race conditions)
+- Messages from different users processed in parallel
+- Automatic retry on failures with exponential backoff
+- Scalable: can run multiple worker processes
+
+**Sequential Processing Implementation**:
+- Uses Redis-based distributed locking to ensure messages from the same user are processed one at a time
+- Works correctly with multiple worker processes (PM2 cluster mode)
+- Lock automatically expires after 5 minutes to prevent permanent blocks
+- Exponential backoff when waiting for locks
 
 ### AI Agent Architecture
 
@@ -243,6 +294,39 @@ cd backend && npm install && npm run build
 # Start command  
 cd backend && npm run migrate && npm start
 ```
+
+### Production with PM2
+
+The recommended way to run in production is using PM2 for process management:
+
+```bash
+# Install PM2 globally
+npm install pm2 -g
+
+# Configure workers via .env
+BULLMQ_WORKER_CONCURRENCY=10  # Jobs per worker process
+NUM_WORKERS=4                  # Number of worker processes
+
+# Start all services with PM2
+cd backend && npm run pm2:start
+
+# Other PM2 commands
+npm run pm2:stop      # Stop all services
+npm run pm2:reload    # Reload with zero downtime
+npm run pm2:logs      # View logs
+npm run pm2:monit     # Monitor processes
+```
+
+**Scaling Strategy**:
+- `BULLMQ_WORKER_CONCURRENCY`: Controls concurrent jobs per worker (I/O bound tasks)
+- `NUM_WORKERS`: Controls number of worker processes (CPU bound scaling)
+- Total capacity = NUM_WORKERS × BULLMQ_WORKER_CONCURRENCY
+- **Important**: The implementation uses Redis-based distributed locking to ensure sequential processing per user across all worker processes
+
+For manual deployment:
+- Deploy API server and worker as separate services
+- Both share same Redis instance for BullMQ
+- Set concurrency in worker based on available resources
 
 Auto-deploys on push to connected repository.
 

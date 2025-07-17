@@ -1,4 +1,4 @@
-import { prisma } from "../../../server";
+import { prisma } from '../../../lib/prisma';
 import { Order, OrderStatus, PreOrder } from "@prisma/client";
 import logger from "../../../common/utils/logger";
 import { BusinessLogicError, ErrorCode } from "../../../common/services/errors";

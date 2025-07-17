@@ -1,6 +1,6 @@
 #!/bin/bash
 
-echo "🚀 Iniciando backend localmente..."
+echo "🚀 Iniciando backend con workers localmente..."
 
 # Colores
 GREEN='\033[0;32m'
@@ -185,43 +185,53 @@ fi
 echo -e "\n${YELLOW}2. Verificando configuración...${NC}"
 cd backend
 
-# Verificar configuración en .env.local
-echo -e "${YELLOW}Verificando .env.local...${NC}"
-
-# Verificar API Key de Google
-if grep -q "TU_API_KEY_AQUI" .env.local || grep -q "tu_api_key_real_aqui" .env.local; then
-    echo -e "\n${RED}❌ FALTA: Google AI API Key${NC}"
-    echo "   Edita backend/.env.local y configura GOOGLE_AI_API_KEY"
-    echo "   Obtén una en: https://makersuite.google.com/app/apikey"
-    missing_config=true
-else
-    echo -e "${GREEN}✅ Google AI API Key configurada${NC}"
+# Verificar si existe .env.local (para compatibilidad con instalaciones anteriores)
+if [ -f ".env.local" ]; then
+    # Verificar configuración en .env.local
+    echo -e "${YELLOW}Verificando .env.local...${NC}"
+    
+    # Verificar API Key de Google
+    if grep -q "TU_API_KEY_AQUI" .env.local || grep -q "tu_api_key_real_aqui" .env.local; then
+        echo -e "\n${RED}❌ FALTA: Google AI API Key${NC}"
+        echo "   Edita backend/.env.local y configura GOOGLE_AI_API_KEY"
+        echo "   Obtén una en: https://makersuite.google.com/app/apikey"
+        missing_config=true
+    else
+        echo -e "${GREEN}✅ Google AI API Key configurada${NC}"
+    fi
+    
+    # Verificar credenciales de WhatsApp
+    if grep -q "tu_phone_number_id" .env.local || grep -q "tu_access_token_permanente" .env.local || grep -q "un_token_secreto_que_tu_elijas" .env.local; then
+        echo -e "\n${RED}❌ FALTA: Credenciales de WhatsApp${NC}"
+        echo "   Edita backend/.env.local y configura:"
+        echo "   - WHATSAPP_PHONE_NUMBER_MESSAGING_ID"
+        echo "   - WHATSAPP_ACCESS_TOKEN"
+        echo "   - WHATSAPP_VERIFY_TOKEN"
+        echo "   - BOT_WHATSAPP_NUMBER"
+        echo "   Obtén las credenciales en: https://developers.facebook.com"
+        missing_config=true
+    else
+        echo -e "${GREEN}✅ Credenciales de WhatsApp configuradas${NC}"
+    fi
+    
+    if [ "$missing_config" = true ]; then
+        echo -e "\n${YELLOW}Ver QUICK_START.md para instrucciones detalladas${NC}"
+        echo ""
+        read -p "Presiona ENTER cuando hayas configurado todo..."
+    fi
+    
+    # Copiar archivo de entorno
+    echo -e "\n${YELLOW}Copiando .env.local a .env...${NC}"
+    cp .env.local .env
+    echo -e "${GREEN}✅ Archivo .env creado${NC}"
+elif [ ! -f ".env" ]; then
+    # Si no existe .env ni .env.local, crear uno desde .env.example
+    echo -e "${YELLOW}No se encontró .env, creándolo desde .env.example...${NC}"
+    cp .env.example .env
+    echo -e "${RED}❌ IMPORTANTE: Debes configurar el archivo backend/.env con tus credenciales${NC}"
+    echo -e "${YELLOW}Ver QUICK_START.md para instrucciones detalladas${NC}"
+    exit 1
 fi
-
-# Verificar credenciales de WhatsApp
-if grep -q "tu_phone_number_id" .env.local || grep -q "tu_access_token_permanente" .env.local || grep -q "un_token_secreto_que_tu_elijas" .env.local; then
-    echo -e "\n${RED}❌ FALTA: Credenciales de WhatsApp${NC}"
-    echo "   Edita backend/.env.local y configura:"
-    echo "   - WHATSAPP_PHONE_NUMBER_MESSAGING_ID"
-    echo "   - WHATSAPP_ACCESS_TOKEN"
-    echo "   - WHATSAPP_VERIFY_TOKEN"
-    echo "   - BOT_WHATSAPP_NUMBER"
-    echo "   Obtén las credenciales en: https://developers.facebook.com"
-    missing_config=true
-else
-    echo -e "${GREEN}✅ Credenciales de WhatsApp configuradas${NC}"
-fi
-
-if [ "$missing_config" = true ]; then
-    echo -e "\n${YELLOW}Ver QUICK_START.md para instrucciones detalladas${NC}"
-    echo ""
-    read -p "Presiona ENTER cuando hayas configurado todo..."
-fi
-
-# Copiar archivo de entorno
-echo -e "\n${YELLOW}Copiando .env.local a .env...${NC}"
-cp .env.local .env
-echo -e "${GREEN}✅ Archivo .env creado${NC}"
 
 # Paso 3: Instalar dependencias
 echo -e "\n${YELLOW}3. Instalando dependencias...${NC}"
@@ -260,14 +270,24 @@ if [ -d "../frontend-app" ] && [ -f "../frontend-app/package.json" ]; then
     cd ../backend
 fi
 
+# Variables de proceso
+BACKEND_PID=""
+WORKER_PID=""
+FRONTEND_PID=""
+
 # Función para limpiar al salir
 cleanup() {
     echo -e "\n${YELLOW}⏹️  Deteniendo servicios...${NC}"
     
-    # Matar procesos hijos (backend y frontend)
+    # Matar procesos hijos (backend, worker y frontend)
     if [ ! -z "$BACKEND_PID" ]; then
         echo -e "${YELLOW}   Deteniendo proceso backend (PID: $BACKEND_PID)...${NC}"
         kill $BACKEND_PID 2>/dev/null || true
+    fi
+    
+    if [ ! -z "$WORKER_PID" ]; then
+        echo -e "${YELLOW}   Deteniendo proceso worker (PID: $WORKER_PID)...${NC}"
+        kill $WORKER_PID 2>/dev/null || true
     fi
     
     if [ ! -z "$FRONTEND_PID" ]; then
@@ -302,13 +322,18 @@ trap cleanup INT TERM EXIT
 # Paso 8: Iniciar servicios
 echo -e "\n${GREEN}✅ Todo listo! Iniciando servicios...${NC}"
 
-# Iniciar backend
-echo -e "${YELLOW}🖥️  Iniciando Backend...${NC}"
-npm run dev 2>&1 | sed 's/^/[Backend] /' &
+# Iniciar backend API
+echo -e "${YELLOW}🖥️  Iniciando Backend API...${NC}"
+npm run dev 2>&1 | sed 's/^/[API] /' &
 BACKEND_PID=$!
 
-# Esperar un poco para que el backend inicie
+# Esperar un poco para que el backend API inicie
 sleep 3
+
+# Iniciar worker de BullMQ
+echo -e "${YELLOW}⚙️  Iniciando Worker de BullMQ...${NC}"
+npm run dev:worker 2>&1 | sed 's/^/[Worker] /' &
+WORKER_PID=$!
 
 # Iniciar frontend si existe
 if [ -d "../frontend-app" ] && [ -f "../frontend-app/package.json" ]; then
@@ -318,18 +343,28 @@ if [ -d "../frontend-app" ] && [ -f "../frontend-app/package.json" ]; then
     cd ../backend
 fi
 
+# Leer configuración de workers
+WORKER_CONCURRENCY=$(grep BULLMQ_WORKER_CONCURRENCY .env | cut -d '=' -f2 || echo "2")
+NUM_WORKERS=$(grep NUM_WORKERS .env | cut -d '=' -f2 || echo "1")
+
 echo -e "\n${GREEN}✅ Servicios iniciados:${NC}"
-echo -e "   Backend:  ${BLUE}http://localhost:5000${NC}"
+echo -e "   Backend API:  ${BLUE}http://localhost:5000${NC}"
+echo -e "   Worker:       ${GREEN}Procesando mensajes (Concurrencia: $WORKER_CONCURRENCY)${NC}"
 if [ ! -z "$FRONTEND_PID" ]; then
-    echo -e "   Frontend: ${BLUE}http://localhost:3000${NC}"
+    echo -e "   Frontend:     ${BLUE}http://localhost:3000${NC}"
 fi
-echo -e "   Prisma Studio: ${YELLOW}npx prisma studio${NC}"
+echo -e "\n${YELLOW}📊 Herramientas adicionales:${NC}"
+echo -e "   Prisma Studio: ${YELLOW}cd backend && npx prisma studio${NC}"
 echo -e "   Logs de Docker: ${YELLOW}docker compose logs -f${NC}"
 echo -e "\n${BLUE}📱 Para conectar WhatsApp:${NC}"
 echo -e "   1. En otra terminal ejecuta: ${YELLOW}ngrok http 5000${NC}"
 echo -e "   2. Copia la URL HTTPS que te da ngrok"
 echo -e "   3. Configura el webhook en Meta Developers"
 echo -e "   4. ¡Envía mensajes a tu número de WhatsApp!"
+echo -e "\n${GREEN}🚀 Configuración de Workers:${NC}"
+echo -e "   Concurrencia por worker: ${YELLOW}$WORKER_CONCURRENCY trabajos simultáneos${NC}"
+echo -e "   Número de workers (dev): ${YELLOW}1 (para producción usa PM2)${NC}"
+echo -e "   Para cambiar: edita ${YELLOW}BULLMQ_WORKER_CONCURRENCY${NC} en backend/.env"
 echo -e "\n${YELLOW}Para detener todo: Ctrl+C (el script limpiará todo automáticamente)${NC}"
 echo ""
 

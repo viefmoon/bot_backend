@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import { OTPService } from '../../services/security/OTPService';
-import { prisma } from '../../server';
+import { prisma } from '../../lib/prisma';
 import { ValidationError, NotFoundError, ErrorCode } from '../services/errors';
 import { asyncHandler } from './errorHandler';
 

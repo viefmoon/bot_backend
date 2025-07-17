@@ -28,6 +28,8 @@ interface EnvironmentVariables {
   REDIS_PORT?: string;
   REDIS_PASSWORD?: string;
   CLOUD_API_KEY?: string;
+  BULLMQ_WORKER_CONCURRENCY?: string;
+  NUM_WORKERS?: string;
 }
 
 class EnvironmentValidator {
@@ -131,7 +133,9 @@ class EnvironmentValidator {
       REDIS_HOST: process.env.REDIS_HOST,
       REDIS_PORT: process.env.REDIS_PORT,
       REDIS_PASSWORD: process.env.REDIS_PASSWORD,
-      CLOUD_API_KEY: process.env.CLOUD_API_KEY
+      CLOUD_API_KEY: process.env.CLOUD_API_KEY,
+      BULLMQ_WORKER_CONCURRENCY: process.env.BULLMQ_WORKER_CONCURRENCY,
+      NUM_WORKERS: process.env.NUM_WORKERS
     };
   }
 }

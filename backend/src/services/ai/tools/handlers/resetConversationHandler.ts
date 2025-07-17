@@ -1,6 +1,6 @@
 import { ToolHandler, ToolResponse } from '../types';
 import { MessageContext } from '../../../messaging/MessageContext';
-import { prisma } from '../../../../server';
+import { prisma } from '../../../../lib/prisma';
 import { CONVERSATION_RESET_MESSAGE } from '../../../../common/config/predefinedMessages';
 import { SyncMetadataService } from '../../../sync/SyncMetadataService';
 import { TechnicalError, ErrorCode } from '../../../../common/services/errors';

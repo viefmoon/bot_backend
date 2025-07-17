@@ -1,4 +1,4 @@
-import { prisma } from '../../server';
+import { prisma } from '../../lib/prisma';
 import { RestaurantConfig, BusinessHours } from '../../common/types';
 import logger from '../../common/utils/logger';
 import { BusinessLogicError, ErrorCode } from '../../common/services/errors';

@@ -1,5 +1,5 @@
 import { randomUUID } from 'crypto';
-import { prisma } from '../../server';
+import { prisma } from '../../lib/prisma';
 import { redisService } from '../redis/RedisService';
 import { PreOrderService } from './PreOrderService';
 import { OrderManagementService } from './services/OrderManagementService';

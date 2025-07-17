@@ -1,11 +1,12 @@
 import { Request, Response } from 'express';
 import axios from 'axios';
-import { prisma } from '../../server';
+import { prisma } from '../../lib/prisma';
 import logger from '../../common/utils/logger';
-import { MessageProcessor } from '../messaging/MessageProcessor';
 import { env } from '../../common/config/envValidator';
 import { ExternalServiceError, ErrorCode } from '../../common/services/errors';
 import { MessageSplitter } from '../../common/utils/messageSplitter';
+import { messageQueue } from '../../queues/messageQueue';
+import { WhatsAppMessageJob } from '../../queues/types';
 
 export class WhatsAppService {
   private static readonly WHATSAPP_API_URL = 'https://graph.facebook.com/v17.0';
@@ -63,28 +64,44 @@ export class WhatsAppService {
       const messageId = message.id;
       const from = message.from;
       
+      // Check if message already processed
       const existingLog = await prisma.messageLog.findUnique({
         where: { messageId }
       });
       
       if (existingLog?.processed) {
-        logger.info(`Message ${messageId} already processed`);
+        logger.info(`Message ${messageId} already processed, skipping queue`);
         return;
       }
       
+      // Mark as processed to prevent duplicate processing
       await prisma.messageLog.upsert({
         where: { messageId },
         update: { processed: true },
         create: { messageId, processed: true }
       });
       
-      await MessageProcessor.processWithPipeline({
-        ...message,
-        from
+      // Prepare job data
+      const jobData: WhatsAppMessageJob = {
+        id: message.id,
+        from: message.from,
+        type: message.type,
+        timestamp: message.timestamp,
+        text: message.text,
+        interactive: message.interactive,
+        audio: message.audio
+      };
+      
+      // Enqueue message for async processing
+      // Note: For sequential processing per user, we'll use a different approach
+      await messageQueue.add(`msg-${from}`, jobData, {
+        jobId: messageId, // Use WhatsApp message ID for deduplication
       });
       
+      logger.info(`Message ${messageId} from ${from} enqueued for processing`);
+      
     } catch (error) {
-      logger.error('Error processing incoming message:', error);
+      logger.error('Error enqueuing incoming message:', error);
     }
   }
 

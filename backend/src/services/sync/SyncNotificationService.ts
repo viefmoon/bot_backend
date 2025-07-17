@@ -1,6 +1,6 @@
 import { Server as SocketIOServer } from 'socket.io';
 import logger from '../../common/utils/logger';
-import { prisma } from '../../server';
+import { prisma } from '../../lib/prisma';
 import { env } from '../../common/config/envValidator';
 
 export class SyncNotificationService {
