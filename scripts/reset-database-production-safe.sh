@@ -1,9 +1,9 @@
 #!/bin/bash
 
-# Script para resetear completamente la base de datos en producción
-# ADVERTENCIA: Este script ELIMINARÁ TODOS LOS DATOS
-# Autor: Bot Backend Reset Script
-# Uso: ./reset-database-production.sh
+# Script SEGURO para resetear completamente la base de datos en producción
+# Este script maneja las limitaciones de permisos en producción
+# Autor: Bot Backend Reset Script (Production Safe)
+# Uso: ./reset-database-production-safe.sh
 
 set -e
 
@@ -92,11 +92,8 @@ if [ -f .env ]; then
     DB_HOST=$(echo $DATABASE_URL | sed -n 's/.*@\([^:]*\):.*/\1/p')
     DB_PORT=$(echo $DATABASE_URL | sed -n 's/.*:\([0-9]*\)\/.*/\1/p')
 else
-    # Valores por defecto si no encuentra .env
-    DB_USER="bot_user"
-    DB_NAME="bot_db"
-    DB_HOST="localhost"
-    DB_PORT="5432"
+    print_error "No se encontró archivo .env"
+    exit 1
 fi
 
 PGPASSWORD=$(echo $DATABASE_URL | sed -n 's/.*:\/\/[^:]*:\([^@]*\)@.*/\1/p') pg_dump -U $DB_USER -h $DB_HOST -p $DB_PORT $DB_NAME > ~/$BACKUP_FILE 2>/dev/null || true
@@ -107,17 +104,26 @@ else
     print_warning "No se pudo crear el backup, pero continuando..."
 fi
 
-# Paso 3: Eliminar todas las tablas (más seguro que eliminar la base de datos completa)
-print_step "Eliminando todas las tablas de la base de datos..."
+# Paso 3: Limpiar la base de datos completamente
+print_step "Limpiando la base de datos..."
 
-# Crear script SQL para eliminar todas las tablas
-cat > /tmp/drop_all_tables.sql << 'EOF'
+# Método 1: Intentar eliminar y recrear la base de datos (requiere permisos)
+print_step "Intentando recrear la base de datos..."
+PGPASSWORD=$(echo $DATABASE_URL | sed -n 's/.*:\/\/[^:]*:\([^@]*\)@.*/\1/p') psql -U $DB_USER -h $DB_HOST -p $DB_PORT -d postgres -c "DROP DATABASE IF EXISTS $DB_NAME;" 2>/dev/null || {
+    print_warning "No se pudo eliminar la base de datos (permisos limitados)"
+    print_step "Usando método alternativo: eliminando todas las tablas..."
+    
+    # Método 2: Eliminar todas las tablas manualmente
+    cat > /tmp/drop_all_tables.sql << 'EOF'
 DO $$ 
 DECLARE
     r RECORD;
 BEGIN
+    -- Primero eliminar la tabla de migraciones de Prisma
+    DROP TABLE IF EXISTS "_prisma_migrations" CASCADE;
+    
     -- Eliminar todas las tablas en el schema public
-    FOR r IN (SELECT tablename FROM pg_tables WHERE schemaname = 'public') LOOP
+    FOR r IN (SELECT tablename FROM pg_tables WHERE schemaname = 'public' AND tablename != '_prisma_migrations') LOOP
         EXECUTE 'DROP TABLE IF EXISTS ' || quote_ident(r.tablename) || ' CASCADE';
     END LOOP;
     
@@ -131,30 +137,63 @@ BEGIN
         EXECUTE 'DROP TYPE IF EXISTS ' || quote_ident(r.typname) || ' CASCADE';
     END LOOP;
     
-    -- Eliminar la tabla _prisma_migrations si existe
-    DROP TABLE IF EXISTS "_prisma_migrations" CASCADE;
+    -- Eliminar todas las funciones
+    FOR r IN (SELECT proname, oidvectortypes(proargtypes) as args 
+              FROM pg_proc 
+              WHERE pronamespace = (SELECT oid FROM pg_namespace WHERE nspname = 'public')) LOOP
+        EXECUTE 'DROP FUNCTION IF EXISTS ' || quote_ident(r.proname) || '(' || r.args || ') CASCADE';
+    END LOOP;
 END $$;
 EOF
+    
+    PGPASSWORD=$(echo $DATABASE_URL | sed -n 's/.*:\/\/[^:]*:\([^@]*\)@.*/\1/p') psql -U $DB_USER -h $DB_HOST -p $DB_PORT $DB_NAME < /tmp/drop_all_tables.sql
+}
 
-PGPASSWORD=$(echo $DATABASE_URL | sed -n 's/.*:\/\/[^:]*:\([^@]*\)@.*/\1/p') psql -U $DB_USER -h $DB_HOST -p $DB_PORT $DB_NAME < /tmp/drop_all_tables.sql
+# Si se pudo eliminar la base de datos, recrearla
+if [ $? -eq 0 ]; then
+    PGPASSWORD=$(echo $DATABASE_URL | sed -n 's/.*:\/\/[^:]*:\([^@]*\)@.*/\1/p') psql -U $DB_USER -h $DB_HOST -p $DB_PORT -d postgres -c "CREATE DATABASE $DB_NAME;" 2>/dev/null || true
+fi
 
 print_success "Base de datos limpiada"
 
-# Paso 4: Eliminar el historial de migraciones de Prisma
+# Paso 4: Eliminar el historial de migraciones
 print_step "Eliminando historial de migraciones..."
 rm -rf prisma/migrations
+mkdir -p prisma/migrations
 print_success "Historial de migraciones eliminado"
 
-# Paso 5: Crear nueva migración inicial
-print_step "Creando nueva migración inicial..."
-# En producción, usar --create-only para evitar el error de shadow database
-npx prisma migrate dev --name initial_migration --create-only
-print_success "Migración inicial creada"
+# Paso 5: Crear migración inicial usando un método seguro
+print_step "Preparando nueva migración inicial..."
 
-# Paso 6: Aplicar migraciones
-print_step "Aplicando migraciones..."
-npm run migrate
-print_success "Migraciones aplicadas"
+# Crear directorio de migración manualmente
+MIGRATION_NAME="$(date +%Y%m%d%H%M%S)_initial_migration"
+MIGRATION_DIR="prisma/migrations/$MIGRATION_NAME"
+mkdir -p "$MIGRATION_DIR"
+
+# Generar SQL de migración desde el esquema
+print_step "Generando SQL de migración desde el esquema..."
+npx prisma migrate diff \
+  --from-empty \
+  --to-schema-datamodel prisma/schema.prisma \
+  --script > "$MIGRATION_DIR/migration.sql"
+
+# Verificar que se generó el SQL
+if [ ! -s "$MIGRATION_DIR/migration.sql" ]; then
+    print_error "No se pudo generar el SQL de migración"
+    exit 1
+fi
+
+print_success "SQL de migración generado"
+
+# Paso 6: Aplicar la migración manualmente
+print_step "Aplicando migración inicial..."
+PGPASSWORD=$(echo $DATABASE_URL | sed -n 's/.*:\/\/[^:]*:\([^@]*\)@.*/\1/p') psql -U $DB_USER -h $DB_HOST -p $DB_PORT $DB_NAME < "$MIGRATION_DIR/migration.sql"
+
+# Marcar la migración como aplicada en Prisma
+print_step "Registrando migración en Prisma..."
+npx prisma migrate resolve --applied "$MIGRATION_NAME"
+
+print_success "Migración aplicada y registrada"
 
 # Paso 7: Generar cliente Prisma
 print_step "Generando cliente Prisma..."
