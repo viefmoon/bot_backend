@@ -98,7 +98,7 @@ export function AddressRegistration() {
   const setDefaultAddressMutation = useSetDefaultAddress();
 
   const loadExistingAddress = useCallback((address: Address) => {
-    setEditingAddressId(address.id);
+    setEditingAddressId(address.id.toString());
     
     const formattedData: AddressFormData = {
       name: address.name || '',
@@ -107,9 +107,9 @@ export function AddressRegistration() {
       interiorNumber: address.interiorNumber || '',
       neighborhood: address.neighborhood || '',
       zipCode: address.zipCode || '',
-      city: address.city,
-      state: address.state,
-      country: address.country,
+      city: address.city || '',
+      state: address.state || '',
+      country: address.country || '',
       deliveryInstructions: address.deliveryInstructions || '',
       latitude: Number(address.latitude),
       longitude: Number(address.longitude),
@@ -399,7 +399,7 @@ export function AddressRegistration() {
 
   // Si el usuario tiene direcciones, mostrar la lista primero
   useEffect(() => {
-    if (customer?.addresses?.length > 0) {
+    if (customer?.addresses && customer.addresses.length > 0) {
       setViewMode('list');
     } else {
       setViewMode('form');
@@ -542,7 +542,7 @@ export function AddressRegistration() {
             {customer && customer.firstName && customer.lastName && !isEditingCustomerName && viewMode === 'list' && customer.addresses.length > 0 && (
               <div>
                 <div className="grid gap-4 mb-6">
-                  {customer.addresses.map((address: Address) => (
+                  {customer.addresses.map((address) => (
                     <div 
                       key={address.id} 
                       className={`relative group transition-all duration-300 ${
@@ -651,7 +651,7 @@ export function AddressRegistration() {
                                     );
                                     // Actualizar el estado del cliente
                                     if (customer) {
-                                      const updatedAddresses = customer.addresses.map((addr: Address) => ({
+                                      const updatedAddresses = customer.addresses.map((addr) => ({
                                         ...addr,
                                         isDefault: addr.id === address.id
                                       }));

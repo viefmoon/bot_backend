@@ -7,8 +7,8 @@ export interface Customer {
 }
 
 export interface Address {
-  id: number;
-  localId?: string | null;
+  id: string;
+  name: string;
   customerId: string;
   street: string;
   number: string;
@@ -18,7 +18,7 @@ export interface Address {
   state?: string | null;
   zipCode?: string | null;
   country?: string | null;
-  references?: string | null;
+  deliveryInstructions?: string | null;
   latitude?: number | null;
   longitude?: number | null;
   isDefault: boolean;
@@ -28,6 +28,7 @@ export interface Address {
 }
 
 export interface AddressFormData {
+  name: string;
   street: string;
   number: string;
   interiorNumber?: string;
@@ -36,7 +37,7 @@ export interface AddressFormData {
   state?: string;
   zipCode?: string;
   country?: string;
-  references?: string;
+  deliveryInstructions?: string;
   latitude: number;
   longitude: number;
   isDefault?: boolean;

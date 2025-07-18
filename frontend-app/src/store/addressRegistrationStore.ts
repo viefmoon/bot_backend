@@ -1,46 +1,12 @@
 import { create } from 'zustand';
 import { devtools, persist } from 'zustand/middleware';
+import type { Customer, AddressFormData } from '@/types';
 
-interface Address {
+interface CustomerData extends Customer {
   id: string;
-  name: string;
-  street: string;
-  number: string;
-  interiorNumber?: string;
-  neighborhood?: string;
-  city: string;
-  state: string;
-  country: string;
-  zipCode?: string;
-  deliveryInstructions?: string;
-  latitude: number;
-  longitude: number;
-  isDefault: boolean;
 }
 
-interface CustomerData {
-  id: string;
-  customerId: string;
-  firstName?: string;
-  lastName?: string;
-  hasAddresses: boolean;
-  addresses: Address[];
-}
-
-interface FormData {
-  name: string;
-  street: string;
-  number: string;
-  interiorNumber: string;
-  neighborhood: string;
-  city: string;
-  state: string;
-  country: string;
-  zipCode: string;
-  deliveryInstructions: string;
-  latitude: number;
-  longitude: number;
-}
+type FormData = AddressFormData;
 
 interface AddressRegistrationState {
   // Estado de la sesión

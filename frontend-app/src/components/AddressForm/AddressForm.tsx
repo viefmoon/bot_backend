@@ -20,8 +20,6 @@ const schema = yup.object({
   longitude: yup.number().required('La ubicación es obligatoria'),
 });
 
-type FormData = yup.InferType<typeof schema>;
-
 interface AddressFormProps {
   formData: AddressFormData;
   onSubmit: (data: AddressFormData) => Promise<void>;
@@ -39,9 +37,9 @@ export const AddressForm: React.FC<AddressFormProps> = ({
     handleSubmit,
     formState: { errors },
     setValue
-  } = useForm<FormData>({
-    resolver: yupResolver(schema),
-    defaultValues: formData as FormData,
+  } = useForm<AddressFormData>({
+    resolver: yupResolver(schema) as any,
+    defaultValues: formData,
   });
 
   React.useEffect(() => {
@@ -60,11 +58,11 @@ export const AddressForm: React.FC<AddressFormProps> = ({
     city: 'Ciudad',
     state: 'Estado',
     country: 'País',
-    references: 'Referencias',
+    deliveryInstructions: 'Instrucciones de entrega',
   };
 
-  const handleFormSubmit = (data: FormData) => {
-    return onSubmit(data as AddressFormData);
+  const handleFormSubmit = (data: AddressFormData) => {
+    return onSubmit(data);
   };
 
   return (

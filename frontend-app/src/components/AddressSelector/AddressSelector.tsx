@@ -67,9 +67,9 @@ export function AddressSelector({
                 {address.neighborhood && `${address.neighborhood}, `}
                 {address.city}, {address.state}
               </p>
-              {address.references && (
+              {address.deliveryInstructions && (
                 <p className="text-xs text-gray-500 mt-1">
-                  Ref: {address.references}
+                  {address.deliveryInstructions}
                 </p>
               )}
             </div>

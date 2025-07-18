@@ -38,7 +38,7 @@ export const useCreateAddress = () => {
   
   return useMutation({
     mutationFn: addressApi.createAddress,
-    onSuccess: (data, variables) => {
+    onSuccess: (_, variables) => {
       // Invalidate the OTP verification query to refresh customer data
       queryClient.invalidateQueries({
         queryKey: addressQueryKeys.verifyOtp(variables.whatsappPhoneNumber, variables.otp),
@@ -52,7 +52,7 @@ export const useUpdateAddress = () => {
   
   return useMutation({
     mutationFn: addressApi.updateAddress,
-    onSuccess: (data, variables) => {
+    onSuccess: (_, variables) => {
       // Invalidate the OTP verification query to refresh customer data
       queryClient.invalidateQueries({
         queryKey: addressQueryKeys.verifyOtp(variables.whatsappPhoneNumber, variables.otp),
@@ -66,7 +66,7 @@ export const useDeleteAddress = () => {
   
   return useMutation({
     mutationFn: addressApi.deleteAddress,
-    onSuccess: (data, variables) => {
+    onSuccess: (_, variables) => {
       // Invalidate the OTP verification query to refresh customer data
       queryClient.invalidateQueries({
         queryKey: addressQueryKeys.verifyOtp(variables.whatsappPhoneNumber, variables.otp),
@@ -80,7 +80,7 @@ export const useSetDefaultAddress = () => {
   
   return useMutation({
     mutationFn: addressApi.setDefaultAddress,
-    onSuccess: (data, variables) => {
+    onSuccess: (_, variables) => {
       // Invalidate the OTP verification query to refresh customer data
       queryClient.invalidateQueries({
         queryKey: addressQueryKeys.verifyOtp(variables.whatsappPhoneNumber, variables.otp),
@@ -101,7 +101,7 @@ export const useUpdateCustomerName = () => {
   
   return useMutation({
     mutationFn: addressApi.updateCustomerName,
-    onSuccess: (data, variables) => {
+    onSuccess: (_, variables) => {
       // Invalidate the OTP verification query to refresh customer data
       queryClient.invalidateQueries({
         queryKey: addressQueryKeys.verifyOtp(variables.whatsappPhoneNumber, variables.otp),
