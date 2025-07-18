@@ -77,10 +77,10 @@ export class ProductService {
   }
 
   /**
-   * Format menu for WhatsApp - Simple and clean format
+   * Format menu for WhatsApp - Improved formatting with better readability
    */
   private static formatMenuForWhatsApp(products: any[], restaurantName: string = "Nuestro Restaurante"): string {
-    let menuText = `🍽️ MENÚ ${restaurantName.toUpperCase()}\n`;
+    let menuText = `*🍽️ MENÚ ${restaurantName.toUpperCase()} 🍽️*\n`;
     menuText += "━━━━━━━━━━━━━━━━━━━━━━\n";
 
     // Agrupar por categoría con sortOrder
@@ -105,7 +105,7 @@ export class ProductService {
 
     // Formatear por categoría
     for (const [category, data] of sortedCategories) {
-      menuText += `\n▪️ *${category.toUpperCase()}*\n`;
+      menuText += `\n*◆ ${category.toUpperCase()} ◆*\n`;
       
       // Productos ya vienen ordenados por sortOrder desde la consulta
       for (let i = 0; i < (data as any).products.length; i++) {
@@ -116,18 +116,18 @@ export class ProductService {
           menuText += '─────────\n';
         }
         
-        menuText += `${product.name}`;
+        menuText += `*${product.name}*`;
         
         // Precio si no tiene variantes
         if (!product.hasVariants && product.price) {
-          menuText += ` - $${product.price.toFixed(2)}`;
+          menuText += ` → \`$${product.price.toFixed(2)}\``;
         }
         menuText += '\n';
         
         // Variantes con precios (ya ordenadas)
         if (product.variants?.length > 0 && product.hasVariants) {
           for (const variant of product.variants) {
-            menuText += ` • ${variant.name}: $${variant.price.toFixed(2)}\n`;
+            menuText += ` _${variant.name}_: \`$${variant.price.toFixed(2)}\`\n`;
           }
         }
         
@@ -135,7 +135,7 @@ export class ProductService {
         if (product.isPizza && product.pizzaCustomizations?.length > 0) {
           const flavors = product.pizzaCustomizations.filter((c: any) => c.type === 'FLAVOR');
           if (flavors.length > 0) {
-            menuText += ` _Sabores disponibles:_\n`;
+            menuText += ` _◇ Sabores:_\n`;
             
             // Obtener configuración de pizza
             const pizzaConfig = product.pizzaConfiguration;
@@ -147,37 +147,37 @@ export class ProductService {
               
               // Agregar ingredientes si existen
               if (flavor.ingredients) {
-                flavorText += ` (${flavor.ingredients})`;
+                flavorText += ` _(${flavor.ingredients})_`;
               }
               
               // Calcular precio extra si el sabor excede los toppings incluidos
               if (flavor.toppingValue > includedToppings) {
                 const extraToppings = flavor.toppingValue - includedToppings;
                 const extraCost = extraToppings * extraToppingCost;
-                flavorText += ` (+$${extraCost.toFixed(2)})`;
+                flavorText += ` \`+$${extraCost.toFixed(2)}\``;
               }
               
               menuText += `${flavorText}\n`;
             }
             
-            menuText += ` _Nota: Puedes elegir hasta 2 mitades diferentes_\n`;
+            menuText += ` _◇ Máx. 2 mitades_\n`;
           }
         }
         
         // Mostrar todos los modificadores agrupados
         if (product.modifierGroups?.length > 0) {
-          menuText += ` _Extras:_\n`;
           for (const group of product.modifierGroups) {
             const activeModifiers = group.productModifiers?.filter((m: any) => m.isActive) || [];
             if (activeModifiers.length > 0) {
+              menuText += ` _◇ ${group.name}:_\n`;
               const modifierDetails = activeModifiers.map((m: any) => {
                 // Solo agregar precio si es mayor a 0
                 if (m.price && m.price > 0) {
-                  return `${m.name} (+$${m.price.toFixed(2)})`;
+                  return `  • ${m.name} \`+$${m.price.toFixed(2)}\``;
                 }
-                return m.name;
-              }).join(', ');
-              menuText += `  • ${group.name}: ${modifierDetails}\n`;
+                return `  • ${m.name}`;
+              }).join('\n');
+              menuText += `${modifierDetails}\n`;
             }
           }
         }
@@ -185,7 +185,7 @@ export class ProductService {
     }
 
     menuText += "\n━━━━━━━━━━━━━━━━━━━━━━\n";
-    menuText += "📱 Para ordenar: menciona el producto";
+    menuText += "_📱 Para ordenar: menciona el producto completo con variante, extras y comentarios_";
 
     return menuText;
   }
