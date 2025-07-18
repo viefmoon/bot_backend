@@ -19,6 +19,7 @@ export class ProductService {
     try {
       const products = await prisma.product.findMany({
         where: { isActive: true },
+        orderBy: { sortOrder: 'asc' },
         include: options?.includeRelations !== false ? {
           subcategory: {
             include: {
@@ -26,17 +27,21 @@ export class ProductService {
             }
           },
           variants: {
-            where: { isActive: true }
+            where: { isActive: true },
+            orderBy: { sortOrder: 'asc' }
           },
           modifierGroups: {
+            orderBy: { sortOrder: 'asc' },
             include: {
               productModifiers: {
-                where: { isActive: true }
+                where: { isActive: true },
+                orderBy: { sortOrder: 'asc' }
               }
             }
           },
           pizzaCustomizations: {
-            where: { isActive: true }
+            where: { isActive: true },
+            orderBy: { sortOrder: 'asc' }
           },
           pizzaConfiguration: true
         } : undefined
@@ -75,24 +80,36 @@ export class ProductService {
    * Format menu for WhatsApp - Simple and clean format
    */
   private static formatMenuForWhatsApp(products: any[], restaurantName: string = "Nuestro Restaurante"): string {
-    let menuText = `🍽️ MENÚ ${restaurantName.toUpperCase()} 🍽️\n`;
-    menuText += "━━━━━━━━━━━━━━━━━━━━━━\n\n";
+    let menuText = `🍽️ MENÚ ${restaurantName.toUpperCase()}\n`;
+    menuText += "━━━━━━━━━━━━━━━━━━━━━━\n";
 
-    // Agrupar por categoría
+    // Agrupar por categoría con sortOrder
     const productsByCategory = products.reduce((acc, product) => {
-      const categoryName = product.subcategory?.category?.name || 'Sin categoría';
-      if (!acc[categoryName]) acc[categoryName] = [];
-      acc[categoryName].push(product);
+      const category = product.subcategory?.category;
+      const categoryName = category?.name || 'Sin categoría';
+      const categorySortOrder = category?.sortOrder || 999;
+      
+      if (!acc[categoryName]) {
+        acc[categoryName] = {
+          sortOrder: categorySortOrder,
+          products: []
+        };
+      }
+      acc[categoryName].products.push(product);
       return acc;
-    }, {} as Record<string, any[]>);
+    }, {} as Record<string, { sortOrder: number; products: any[] }>);
+
+    // Ordenar categorías por sortOrder
+    const sortedCategories = Object.entries(productsByCategory)
+      .sort(([, a], [, b]) => (a as any).sortOrder - (b as any).sortOrder);
 
     // Formatear por categoría
-    for (const [category, categoryProducts] of Object.entries(productsByCategory)) {
+    for (const [category, data] of sortedCategories) {
       menuText += `\n▪️ *${category.toUpperCase()}*\n`;
       
-      for (const product of categoryProducts as any[]) {
-        // Nombre del producto
-        menuText += `*${product.name}*`;
+      // Productos ya vienen ordenados por sortOrder desde la consulta
+      for (const product of (data as any).products) {
+        menuText += `${product.name}`;
         
         // Precio si no tiene variantes
         if (!product.hasVariants && product.price) {
@@ -100,29 +117,35 @@ export class ProductService {
         }
         menuText += '\n';
         
-        // Variantes con precios
+        // Variantes con precios (ya ordenadas)
         if (product.variants?.length > 0 && product.hasVariants) {
           for (const variant of product.variants) {
-            menuText += `  • ${variant.name}: $${variant.price.toFixed(2)}\n`;
+            menuText += ` • ${variant.name}: $${variant.price.toFixed(2)}\n`;
           }
         }
         
-        // Solo mostrar modificadores si existen
+        // Mostrar modificadores si existen
         if (product.modifierGroups?.length > 0) {
-          const hasActiveModifiers = product.modifierGroups.some((g: any) => 
-            g.productModifiers?.some((m: any) => m.isActive)
-          );
-          if (hasActiveModifiers) {
-            menuText += `  _Extras disponibles_\n`;
+          for (const group of product.modifierGroups) {
+            const activeModifiers = group.productModifiers?.filter((m: any) => m.isActive) || [];
+            if (activeModifiers.length > 0) {
+              // Solo mostrar los primeros 3 modificadores para ahorrar espacio
+              const modifiersToShow = activeModifiers.slice(0, 3);
+              const modifierNames = modifiersToShow.map((m: any) => m.name).join(', ');
+              if (activeModifiers.length > 3) {
+                menuText += ` _Extras: ${modifierNames}, +${activeModifiers.length - 3} más_\n`;
+              } else {
+                menuText += ` _Extras: ${modifierNames}_\n`;
+              }
+              break; // Solo mostrar el primer grupo con modificadores
+            }
           }
         }
       }
     }
 
-    menuText += "━━━━━━━━━━━━━━━━━━━━━━\n";
-    menuText += "📱 *Para ordenar:*\n";
-    menuText += "Menciona el producto y tamaño que deseas\n";
-    menuText += "━━━━━━━━━━━━━━━━━━━━━━";
+    menuText += "\n━━━━━━━━━━━━━━━━━━━━━━\n";
+    menuText += "📱 Para ordenar: menciona el producto";
 
     return menuText;
   }
