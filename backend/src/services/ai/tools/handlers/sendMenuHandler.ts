@@ -11,30 +11,33 @@ export async function getMenuResponses(): Promise<ToolResponse | ToolResponse[]>
   const menu = await ProductService.getActiveProducts({ formatForWhatsApp: true });
   const menuText = String(menu);
     
-  // If menu is too long, split it into parts
-  const maxLength = 3500; // Reduced to ensure safety margin for WhatsApp's 4096 limit
-  if (menuText.length > maxLength) {
-    const parts = MessageSplitter.splitMenu(menuText, maxLength);
-    logger.info(`Menu split into ${parts.length} parts, lengths: ${parts.map(p => p.length).join(', ')}`);
-    
-    // Return multiple responses
+  logger.info(`Menu total length: ${menuText.length} characters`);
+  
+  // Always use MessageSplitter to ensure proper division
+  const maxLength = 3000; // Conservative limit to ensure it fits in WhatsApp
+  const parts = MessageSplitter.splitMenu(menuText, maxLength);
+  
+  logger.info(`Menu split into ${parts.length} parts, lengths: ${parts.map(p => p.length).join(', ')}`);
+  
+  if (parts.length === 1) {
+    // Single message
+    return {
+      text: parts[0],
+      isRelevant: false,
+      sendToWhatsApp: true,
+      historyMarker: "MENÚ ENVIADO"
+    };
+  } else {
+    // Multiple messages
     return parts.map((part, index) => ({
       text: part,
-      isRelevant: false, // Don't save full menu in relevant history
+      isRelevant: false,
       sendToWhatsApp: true,
       // For the last message, add history marker
       ...(index === parts.length - 1 && { 
         historyMarker: "MENÚ ENVIADO" 
       })
     }));
-  } else {
-    logger.info(`Menu fits in one message: ${menuText.length} chars`);
-    return {
-      text: menuText,
-      isRelevant: false,
-      sendToWhatsApp: true,
-      historyMarker: "MENÚ ENVIADO"
-    };
   }
 }
 
