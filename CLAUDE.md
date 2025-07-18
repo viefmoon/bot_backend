@@ -92,6 +92,24 @@ ngrok http 5000
 # https://[your-ngrok-id].ngrok.io/backend/webhook
 ```
 
+### Production PM2 - Update Environment Variables
+**Important**: `pm2 reload` does NOT update environment variables from .env file. You must restart:
+```bash
+# Edit .env file
+cd backend && nano .env
+
+# Option 1: Delete and start fresh (recommended)
+pm2 delete all
+pm2 start ecosystem.config.js
+
+# Option 2: Stop and start
+pm2 stop all
+pm2 start ecosystem.config.js
+
+# Verify the change
+pm2 env 0 | grep YOUR_VARIABLE_NAME
+```
+
 ## Architecture Overview
 
 This is a WhatsApp restaurant ordering bot with AI-powered natural language processing.

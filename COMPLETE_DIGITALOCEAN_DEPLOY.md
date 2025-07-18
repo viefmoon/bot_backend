@@ -330,6 +330,37 @@ pm2 reload all
 pm2 monit
 ```
 
+### ⚠️ Actualizar Variables de Entorno (.env)
+
+**IMPORTANTE**: Si modificas el archivo `.env`, el comando `pm2 reload` NO actualiza las variables de entorno. Debes hacer un reinicio completo:
+
+```bash
+# 1. Editar el archivo .env
+cd ~/bot_backend/backend
+nano .env
+
+# 2. Detener y eliminar los procesos actuales
+pm2 delete all
+
+# 3. Iniciar nuevamente con las nuevas variables
+pm2 start ecosystem.config.js
+
+# 4. Verificar que las variables se actualizaron (ejemplo con GOOGLE_AI_API_KEY)
+pm2 env 0 | grep GOOGLE_AI_API_KEY
+```
+
+**Alternativa más rápida:**
+```bash
+# Detener todos los procesos
+pm2 stop all
+
+# Iniciarlos de nuevo (esto recarga el .env)
+pm2 start ecosystem.config.js
+
+# Verificar
+pm2 status
+```
+
 ### 🗄️ Backup de Base de Datos
 
 ```bash
