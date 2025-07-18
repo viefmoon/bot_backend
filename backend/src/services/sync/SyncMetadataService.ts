@@ -1,4 +1,4 @@
-import { prisma } from '../../lib/prisma';
+import { prisma } from '../../server';
 import logger from '../../common/utils/logger';
 
 export type SyncEntityType = 'Order' | 'Customer' | 'Address' | 'Product' | 'Category';

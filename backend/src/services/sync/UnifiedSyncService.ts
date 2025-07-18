@@ -1,4 +1,4 @@
-import { prisma } from '../../lib/prisma';
+import { prisma } from '../../server';
 import logger from '../../common/utils/logger';
 import { SyncMetadataService } from './SyncMetadataService';
 import axios from 'axios';

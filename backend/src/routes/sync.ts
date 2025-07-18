@@ -35,20 +35,41 @@ router.post('/sync-restaurant-data', apiKeyAuthMiddleware, asyncHandler(async (r
 // Unified sync endpoint - Pull pending changes and confirm processed ones
 router.post('/pull-changes', apiKeyAuthMiddleware, asyncHandler(async (req: Request, res: Response) => {
   try {
+    logger.info('Pull changes request received', { 
+      body: req.body,
+      headers: req.headers 
+    });
+    
     // Extract confirmations from request body
     const { confirmedOrders = [], confirmedCustomerIds = [] } = req.body;
+    
+    logger.info('Processing confirmations', { 
+      confirmedOrdersCount: confirmedOrders.length,
+      confirmedCustomerIdsCount: confirmedCustomerIds.length 
+    });
     
     // Process confirmations if any
     if (confirmedOrders.length > 0 || confirmedCustomerIds.length > 0) {
       await UnifiedSyncService.confirmSyncedItems(confirmedOrders, confirmedCustomerIds);
+      logger.info('Confirmations processed successfully');
     }
     
     // Get pending changes (excluding confirmed ones)
+    logger.info('Fetching pending changes...');
     const changes = await UnifiedSyncService.pullChanges();
+    
+    logger.info('Pull changes response', {
+      ordersCount: changes.orders?.length || 0,
+      customersCount: changes.customers?.length || 0
+    });
     
     res.json(changes);
   } catch (error: any) {
-    logger.error('Unified sync error:', error);
+    logger.error('Unified sync error:', {
+      error: error.message,
+      stack: error.stack,
+      name: error.name
+    });
     res.status(500).json({
       error: {
         code: 'SYNC_ERROR',
