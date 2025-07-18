@@ -90,7 +90,7 @@ export class ProductService {
     for (const [category, categoryProducts] of Object.entries(productsByCategory)) {
       menuText += `\n▪️ *${category.toUpperCase()}*\n`;
       
-      for (const product of categoryProducts) {
+      for (const product of categoryProducts as any[]) {
         // Nombre del producto
         menuText += `*${product.name}*`;
         
