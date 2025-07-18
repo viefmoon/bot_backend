@@ -43,7 +43,7 @@ app.use(cors({
 
 // Middleware for parsing JSON (except for webhook route)
 app.use((req, res, next) => {
-  if (req.path === '/backend/webhook' && req.method === 'POST') {
+  if (req.path === '/api/webhook' && req.method === 'POST') {
     // Skip JSON parsing for webhook verification
     next();
   } else {
@@ -61,7 +61,7 @@ app.get('/backend', (_, res) => {
 });
 
 // Routes
-app.use('/backend/webhook', webhookRoutes);
+app.use('/api/webhook', webhookRoutes);
 app.use('/api/sync', syncRoutes);
 app.use('/backend/address-registration', addressRegistrationRoutes);
 app.use('/backend/address-selection', addressSelectionRoutes);
