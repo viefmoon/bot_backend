@@ -116,6 +116,9 @@ if [ "$DB_EXISTS" == "1" ]; then
     PGPASSWORD=$(echo $DATABASE_URL | sed -n 's/.*:\/\/[^:]*:\([^@]*\)@.*/\1/p') psql -U $DB_USER -h $DB_HOST -p $DB_PORT -d postgres -c "DROP DATABASE IF EXISTS $DB_NAME;" 2>/dev/null || {
         print_warning "No se pudo eliminar la base de datos (permisos limitados)"
         print_step "Usando método alternativo: eliminando todas las tablas..."
+        
+        # Asegurar permisos antes de intentar eliminar tablas
+        sudo -u postgres psql -d $DB_NAME -c "GRANT ALL ON SCHEMA public TO $DB_USER;" 2>/dev/null || true
     
     # Método 2: Eliminar todas las tablas manualmente
     cat > /tmp/drop_all_tables.sql << 'EOF'
@@ -213,11 +216,38 @@ if [ "$DB_EXISTS" != "1" ]; then
             exit 1
         }
         
-        # Si se creó con postgres, dar permisos al usuario
-        sudo -u postgres psql -c "GRANT ALL PRIVILEGES ON DATABASE $DB_NAME TO $DB_USER;" 2>/dev/null || true
+        # Si se creó con postgres, dar permisos completos al usuario
+        sudo -u postgres psql -d $DB_NAME << EOF
+-- Dar permisos completos en el esquema public
+GRANT ALL ON SCHEMA public TO $DB_USER;
+GRANT CREATE ON SCHEMA public TO $DB_USER;
+ALTER DATABASE $DB_NAME OWNER TO $DB_USER;
+
+-- Crear extensión vector si es necesaria
+CREATE EXTENSION IF NOT EXISTS vector;
+EOF
+        
+        print_success "Permisos configurados correctamente"
     }
     
     print_success "Base de datos creada"
+fi
+
+# Verificar y configurar permisos antes de aplicar migración
+print_step "Verificando permisos del usuario..."
+HAS_CREATE_PERMISSION=$(PGPASSWORD=$(echo $DATABASE_URL | sed -n 's/.*:\/\/[^:]*:\([^@]*\)@.*/\1/p') psql -U $DB_USER -h $DB_HOST -p $DB_PORT $DB_NAME -tAc "SELECT has_schema_privilege('$DB_USER', 'public', 'CREATE');" 2>/dev/null)
+
+if [ "$HAS_CREATE_PERMISSION" != "t" ]; then
+    print_warning "El usuario no tiene permisos CREATE, configurando..."
+    sudo -u postgres psql -d $DB_NAME << EOF
+-- Dar permisos completos en el esquema public
+GRANT ALL ON SCHEMA public TO $DB_USER;
+GRANT CREATE ON SCHEMA public TO $DB_USER;
+
+-- Crear extensión vector si es necesaria
+CREATE EXTENSION IF NOT EXISTS vector;
+EOF
+    print_success "Permisos actualizados"
 fi
 
 # Aplicar la migración
