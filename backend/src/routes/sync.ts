@@ -6,21 +6,36 @@ import logger from '../common/utils/logger';
 
 const router = Router();
 
-// Sync restaurant data from local system
-router.post('/sync-restaurant-data', apiKeyAuthMiddleware, asyncHandler(async (req: Request, res: Response) => {
-  const lastSyncDate = req.body.lastSyncDate ? new Date(req.body.lastSyncDate) : undefined;
-  
+// Sync restaurant data from local system (PUSH method)
+router.post('/push-restaurant-data', apiKeyAuthMiddleware, asyncHandler(async (req: Request, res: Response) => {
   try {
-    const wasUpdated = await UnifiedSyncService.syncRestaurantData(lastSyncDate);
+    logger.info('Restaurant data push received', {
+      hasMenu: !!req.body.menu,
+      hasConfig: !!req.body.config
+    });
+    
+    // Validate request body
+    if (!req.body.menu || !req.body.config) {
+      return res.status(400).json({
+        error: {
+          code: 'INVALID_REQUEST',
+          message: 'Missing menu or config data',
+          details: {}
+        }
+      });
+    }
+    
+    // Process the restaurant data
+    const wasUpdated = await UnifiedSyncService.processRestaurantDataPush(req.body);
     
     res.json({
       success: true,
       updated: wasUpdated,
-      message: wasUpdated ? 'Restaurant data synchronized successfully' : 'No updates available',
+      message: wasUpdated ? 'Restaurant data synchronized successfully' : 'No changes detected',
       timestamp: new Date().toISOString()
     });
   } catch (error: any) {
-    logger.error('Restaurant data sync error:', error);
+    logger.error('Restaurant data push error:', error);
     
     res.status(500).json({
       error: {

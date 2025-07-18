@@ -1,8 +1,6 @@
 import { prisma } from '../../server';
 import logger from '../../common/utils/logger';
 import { SyncMetadataService } from './SyncMetadataService';
-import axios from 'axios';
-import { env } from '../../common/config/envValidator';
 
 interface PullChangesResponse {
   pending_orders: any[];
@@ -25,6 +23,38 @@ interface LocalSystemResponse {
 }
 
 export class UnifiedSyncService {
+  /**
+   * Process restaurant data pushed from local system
+   */
+  static async processRestaurantDataPush(data: LocalSystemResponse): Promise<boolean> {
+    logger.info('Processing restaurant data push');
+    
+    try {
+      // Check if data has changed
+      const existingConfig = await prisma.restaurantConfig.findFirst();
+      const existingMenu = await prisma.category.findMany({
+        include: { products: true }
+      });
+      
+      // Simple change detection (you can make this more sophisticated)
+      const configChanged = JSON.stringify(existingConfig) !== JSON.stringify(data.config?.restaurantConfig);
+      const menuChanged = existingMenu.length !== data.menu?.categories?.length;
+      
+      if (!configChanged && !menuChanged) {
+        logger.info('No changes detected in restaurant data');
+        return false;
+      }
+      
+      // Process the data
+      await this.processRestaurantData(data);
+      logger.info('Restaurant data processed successfully');
+      return true;
+    } catch (error) {
+      logger.error('Error processing restaurant data push:', error);
+      throw error;
+    }
+  }
+
   /**
    * Pull all pending changes without token complexity
    */
@@ -221,60 +251,11 @@ export class UnifiedSyncService {
     }));
   }
 
-  /**
-   * Sync restaurant data from local system
-   * Fetches menu and configuration from local backend and updates local database
-   * @param lastSyncDate - Optional date of last sync to get only updates
-   * @returns true if data was synced, false if no updates
-   */
-  static async syncRestaurantData(lastSyncDate?: Date): Promise<boolean> {
-    logger.info('UnifiedSync: Syncing restaurant data from local system', { lastSyncDate });
-
-    try {
-      // Prepare the URL with optional if_modified_since parameter
-      const localBackendUrl = env.LOCAL_BACKEND_URL || 'http://localhost:3001';
-      const url = new URL('/api/v1/sync-local/restaurant-data', localBackendUrl);
-      
-      if (lastSyncDate) {
-        url.searchParams.append('if_modified_since', lastSyncDate.toISOString());
-      }
-
-      // Make request to local backend
-      const response = await axios.get<LocalSystemResponse>(url.toString(), {
-        headers: {
-          'X-Sync-Api-Key': env.CLOUD_API_KEY
-        },
-        timeout: 30000 // 30 seconds timeout
-      });
-
-      // Handle 304 Not Modified
-      if (response.status === 304 || response.data.statusCode === 304) {
-        logger.info('UnifiedSync: No changes since last sync');
-        return false;
-      }
-
-      // Process the response
-      if (response.data.menu && response.data.config) {
-        await this.processRestaurantData(response.data);
-        logger.info('UnifiedSync: Restaurant data synced successfully');
-        return true;
-      } else {
-        throw new Error('Invalid response structure from local backend');
-      }
-    } catch (error: any) {
-      if (error.response?.status === 304) {
-        logger.info('UnifiedSync: No changes since last sync');
-        return false;
-      }
-      logger.error('UnifiedSync: Error syncing restaurant data', error);
-      throw error;
-    }
-  }
 
   /**
    * Process and save restaurant data received from local system
    */
-  private static async processRestaurantData(data: LocalSystemResponse): Promise<void> {
+  static async processRestaurantData(data: LocalSystemResponse): Promise<void> {
     await prisma.$transaction(async (tx) => {
       // Process menu data
       if (data.menu?.categories) {

@@ -30,7 +30,6 @@ interface EnvironmentVariables {
   CLOUD_API_KEY?: string;
   BULLMQ_WORKER_CONCURRENCY?: string;
   NUM_WORKERS?: string;
-  LOCAL_BACKEND_URL?: string;
 }
 
 class EnvironmentValidator {
