@@ -9,9 +9,22 @@ const router = Router();
 // Sync restaurant data from local system (PUSH method)
 router.post('/push-restaurant-data', apiKeyAuthMiddleware, asyncHandler(async (req: Request, res: Response) => {
   try {
+    // Log detailed information about received data
     logger.info('Restaurant data push received', {
       hasMenu: !!req.body.menu,
-      hasConfig: !!req.body.config
+      hasConfig: !!req.body.config,
+      menuCategories: req.body.menu?.categories?.length || 0,
+      configKeys: req.body.config ? Object.keys(req.body.config) : [],
+      requestBodyKeys: Object.keys(req.body),
+      // Log first category and product as sample
+      sampleCategory: req.body.menu?.categories?.[0] ? {
+        name: req.body.menu.categories[0].name,
+        productsCount: req.body.menu.categories[0].products?.length || 0
+      } : null,
+      sampleProduct: req.body.menu?.categories?.[0]?.products?.[0] ? {
+        name: req.body.menu.categories[0].products[0].name,
+        price: req.body.menu.categories[0].products[0].price
+      } : null
     });
     
     // Process the restaurant data

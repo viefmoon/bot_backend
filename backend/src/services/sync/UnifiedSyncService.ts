@@ -36,7 +36,15 @@ export class UnifiedSyncService {
       hasDirectConfig: !!data.restaurantConfig,
       hasDirectBusinessHours: !!data.businessHours,
       hasNestedConfig: !!data.config,
-      hasMenu: !!data.menu || !!data.categories
+      hasMenu: !!data.menu || !!data.categories,
+      // Restaurant config details
+      restaurantName: data.restaurantConfig?.restaurantName || data.config?.restaurantConfig?.restaurantName,
+      phoneMain: data.restaurantConfig?.phoneMain || data.config?.restaurantConfig?.phoneMain,
+      // Business hours
+      businessHoursCount: data.businessHours?.length || data.config?.businessHours?.length || 0,
+      // Menu details
+      categoriesCount: data.categories?.length || data.menu?.categories?.length || 0,
+      allCategoryNames: (data.categories || data.menu?.categories || []).map((c: any) => c.name)
     });
     
     try {
@@ -294,7 +302,18 @@ export class UnifiedSyncService {
       menuCategoriesCount: data.menu?.categories?.length || 0,
       configHasRestaurantConfig: !!data.config?.restaurantConfig,
       configHasBusinessHours: !!data.config?.businessHours,
-      businessHoursCount: data.config?.businessHours?.length || 0
+      businessHoursCount: data.config?.businessHours?.length || 0,
+      // Detailed config info
+      restaurantName: data.config?.restaurantConfig?.restaurantName,
+      phoneNumbers: {
+        main: data.config?.restaurantConfig?.phoneMain,
+        whatsapp: data.config?.restaurantConfig?.phoneWhatsapp
+      },
+      deliverySettings: {
+        isEnabled: data.config?.restaurantConfig?.isDeliveryEnabled,
+        minimumOrder: data.config?.restaurantConfig?.minimumOrderAmountForDelivery,
+        cost: data.config?.restaurantConfig?.deliveryCost
+      }
     });
     
     await prisma.$transaction(async (tx) => {
@@ -316,6 +335,16 @@ export class UnifiedSyncService {
    * Process and save menu data (categories, subcategories, products)
    */
   private static async processMenuData(categories: any[], tx: any): Promise<void> {
+    logger.info('UnifiedSync: Processing menu data', {
+      totalCategories: categories.length,
+      categoryNames: categories.map(c => c.name),
+      categoriesWithProducts: categories.map(c => ({
+        name: c.name,
+        productsCount: c.products?.length || 0,
+        subcategoriesCount: c.subcategories?.length || 0
+      }))
+    });
+    
     for (const categoryData of categories) {
       // Upsert category
       const category = await tx.category.upsert({
@@ -370,6 +399,18 @@ export class UnifiedSyncService {
           
           // Process products
           if (subData.products && Array.isArray(subData.products)) {
+            // Log first product of subcategory as sample
+            if (subData.products.length > 0) {
+              logger.debug('UnifiedSync: Sample product in subcategory', {
+                subcategoryName: subData.name,
+                productName: subData.products[0].name,
+                price: subData.products[0].price,
+                hasVariants: subData.products[0].hasVariants,
+                variantsCount: subData.products[0].variants?.length || 0,
+                modifierGroupsCount: subData.products[0].modifierGroups?.length || 0
+              });
+            }
+            
             for (const productData of subData.products) {
               // Upsert product
               const product = await tx.product.upsert({
@@ -574,10 +615,17 @@ export class UnifiedSyncService {
   private static async processConfigData(configData: any, tx: any): Promise<void> {
     const { restaurantConfig, businessHours } = configData;
     
-    logger.info('Processing config data', {
+    logger.info('UnifiedSync: Processing config data', {
       hasRestaurantConfig: !!restaurantConfig,
       hasBusinessHours: !!businessHours,
-      businessHoursCount: businessHours?.length || 0
+      businessHoursCount: businessHours?.length || 0,
+      // Business hours details
+      businessHoursDays: businessHours ? businessHours.map((h: any) => ({
+        dayOfWeek: h.dayOfWeek,
+        openTime: h.openTime,
+        closeTime: h.closeTime,
+        isOpen: h.isOpen
+      })) : []
     });
 
     // Upsert restaurant config
