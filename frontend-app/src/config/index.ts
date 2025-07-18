@@ -5,11 +5,6 @@ export const config = {
     prefix: import.meta.env.VITE_API_PREFIX || '/backend',
   },
   
-  // WhatsApp Configuration
-  whatsapp: {
-    botNumber: import.meta.env.VITE_BOT_WHATSAPP_NUMBER || '521234567890',
-    baseUrl: 'https://wa.me',
-  },
   
   // Regional Configuration
   regional: {

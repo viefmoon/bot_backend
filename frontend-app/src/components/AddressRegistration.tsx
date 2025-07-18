@@ -32,6 +32,7 @@ export function AddressRegistration() {
   const [isEditingCustomerName, setIsEditingCustomerName] = useState(false);
   const [isGettingLocation, setIsGettingLocation] = useState(false);
   const [showSuccessScreen, setShowSuccessScreen] = useState(false);
+  const [showOTPErrorScreen, setShowOTPErrorScreen] = useState(false);
   
   // Get store state and actions
   const {
@@ -143,7 +144,30 @@ export function AddressRegistration() {
         }
       } else {
         setError('El enlace ha expirado o no es válido.');
-        toast.error('El enlace ha expirado o no es válido.');
+        toast.error(
+          <div className="flex items-center">
+            <div className="flex-shrink-0">
+              <svg className="w-6 h-6 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v2m0 2h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </div>
+            <div className="ml-3">
+              <p className="text-sm font-semibold text-gray-900">🕒 Enlace Expirado</p>
+              <p className="text-xs text-gray-600">
+                Por seguridad, los enlaces expiran después de 10 minutos.
+              </p>
+            </div>
+          </div>,
+          {
+            duration: 5000,
+            style: {
+              background: '#fef2f2',
+              border: '1px solid #fecaca',
+              padding: '16px',
+              maxWidth: '420px',
+            },
+          }
+        );
       }
     }
   }, [otpData, setCustomer, setValidating, setError, loadExistingAddress]);
@@ -306,30 +330,77 @@ export function AddressRegistration() {
           setEditingAddressId(null);
         }, 1500);
       }
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Hubo un error al guardar la dirección';
-      toast.error(
-        <div className="flex items-center">
-          <div className="flex-shrink-0">
-            <svg className="w-6 h-6 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-          </div>
-          <div className="ml-3">
-            <p className="text-sm font-semibold text-gray-900">Error al guardar</p>
-            <p className="text-xs text-gray-600">{errorMessage}</p>
-          </div>
-        </div>,
-        {
-          duration: 5000,
-          style: {
-            background: '#fef2f2',
-            border: '1px solid #fecaca',
-            padding: '16px',
-            maxWidth: '420px',
-          },
-        }
-      );
+    } catch (error: any) {
+      // Verificar si es un error de OTP expirado
+      const isOTPError = error?.response?.data?.code === 'VAL006' || 
+                        error?.response?.data?.error?.includes('OTP') ||
+                        error?.message?.toLowerCase().includes('otp');
+      
+      if (isOTPError) {
+        // Error de OTP expirado
+        toast.error(
+          <div className="flex items-center">
+            <div className="flex-shrink-0">
+              <svg className="w-6 h-6 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v2m0 2h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </div>
+            <div className="ml-3">
+              <p className="text-sm font-semibold text-gray-900">🕒 Enlace Expirado</p>
+              <p className="text-xs text-gray-600">
+                Tu enlace de registro ha expirado por seguridad.
+                Por favor, solicita un nuevo enlace desde WhatsApp.
+              </p>
+            </div>
+          </div>,
+          {
+            duration: 6000,
+            style: {
+              background: '#fef2f2',
+              border: '1px solid #fecaca',
+              padding: '16px',
+              maxWidth: '420px',
+            },
+          }
+        );
+        
+        // Mostrar pantalla de error después de 2 segundos
+        setTimeout(() => {
+          setShowOTPErrorScreen(true);
+          // Intentar cerrar automáticamente después de 5 segundos
+          setTimeout(() => {
+            window.close();
+          }, 5000);
+        }, 2000);
+      } else {
+        // Otros errores
+        const errorMessage = error?.response?.data?.error || 
+                           error?.message || 
+                           'Hubo un error al guardar la dirección';
+        
+        toast.error(
+          <div className="flex items-center">
+            <div className="flex-shrink-0">
+              <svg className="w-6 h-6 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </div>
+            <div className="ml-3">
+              <p className="text-sm font-semibold text-gray-900">Error al guardar</p>
+              <p className="text-xs text-gray-600">{errorMessage}</p>
+            </div>
+          </div>,
+          {
+            duration: 5000,
+            style: {
+              background: '#fef2f2',
+              border: '1px solid #fecaca',
+              padding: '16px',
+              maxWidth: '420px',
+            },
+          }
+        );
+      }
     } finally {
       setSaving(false);
     }
@@ -487,14 +558,6 @@ export function AddressRegistration() {
           <p className="text-gray-600">
             Este enlace ha expirado o no es válido. Por favor, solicita un nuevo enlace desde WhatsApp.
           </p>
-          <div className="mt-6">
-            <a
-              href={`https://wa.me/${import.meta.env.VITE_WHATSAPP_NUMBER}`}
-              className="inline-flex items-center px-6 py-3 text-white font-semibold rounded-xl bg-gradient-to-r from-green-500 to-emerald-600 hover:shadow-lg transform hover:scale-105 transition-all duration-200"
-            >
-              Abrir WhatsApp
-            </a>
-          </div>
         </div>
         <Toaster position="top-center" />
       </div>
@@ -547,17 +610,75 @@ export function AddressRegistration() {
             >
               Cerrar ventana
             </button>
-            
-            <a
-              href={`https://wa.me/${import.meta.env.VITE_WHATSAPP_NUMBER}`}
-              className="block w-full px-6 py-3 bg-gray-100 text-gray-700 font-semibold rounded-xl hover:bg-gray-200 transition-all duration-200"
-            >
-              Volver a WhatsApp
-            </a>
           </div>
           
           <p className="text-xs text-gray-500 mt-6">
             Esta ventana se cerrará automáticamente en unos segundos...
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  // Pantalla de error de OTP expirado
+  if (showOTPErrorScreen) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-red-50 to-orange-100 p-4">
+        <div className="max-w-md w-full bg-white p-8 rounded-2xl shadow-xl text-center">
+          <div className="mb-6">
+            <div className="w-20 h-20 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <svg className="w-10 h-10 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </div>
+            <h2 className="text-2xl font-bold text-gray-900 mb-2">🕒 Enlace Expirado</h2>
+            <p className="text-gray-600 mb-2">
+              Tu enlace ha expirado por seguridad.
+            </p>
+            <p className="text-sm text-gray-500 mb-6">
+              Los enlaces son válidos por 10 minutos para proteger tu información.
+            </p>
+          </div>
+          
+          <div className="space-y-3">
+            <button
+              onClick={() => {
+                toast('📱 Por favor, solicita un nuevo enlace desde WhatsApp', {
+                  duration: 4000,
+                  icon: 'ℹ️',
+                  style: {
+                    background: '#f0f9ff',
+                    border: '1px solid #3b82f6',
+                    padding: '16px',
+                  },
+                });
+              }}
+              className="block w-full px-6 py-3 bg-gradient-to-r from-green-500 to-emerald-600 text-white font-semibold rounded-xl hover:shadow-lg transform hover:scale-105 transition-all duration-200"
+            >
+              <span className="flex items-center justify-center gap-2">
+                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981zm11.387-5.464c-.074-.124-.272-.198-.57-.347-.297-.149-1.758-.868-2.031-.967-.272-.099-.47-.149-.669.149-.198.297-.768.967-.941 1.165-.173.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.611-.916-2.206-.242-.579-.487-.501-.669-.51l-.57-.01c-.198 0-.52.074-.792.372s-1.04 1.016-1.04 2.479 1.065 2.876 1.213 3.074c.149.198 2.095 3.2 5.076 4.487.709.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.695.248-1.29.173-1.414z"/>
+                </svg>
+                Solicitar nuevo enlace
+              </span>
+            </button>
+            
+            <button
+              onClick={() => {
+                window.close();
+                // Si no se puede cerrar, al menos limpiar la pantalla
+                setTimeout(() => {
+                  window.location.href = 'about:blank';
+                }, 500);
+              }}
+              className="w-full px-6 py-3 bg-gray-100 text-gray-700 font-semibold rounded-xl hover:bg-gray-200 transition-all duration-200"
+            >
+              Cerrar ventana
+            </button>
+          </div>
+          
+          <p className="text-xs text-gray-500 mt-6">
+            Esta ventana se cerrará automáticamente...
           </p>
         </div>
       </div>
