@@ -34,7 +34,8 @@
       "Bash(npm i:*)",
       "Bash(npm uninstall:*)",
       "Bash(npm run generate:*)",
-      "Bash(sed:*)"
+      "Bash(sed:*)",
+      "Bash(git add:*)"
     ],
     "deny": []
   }

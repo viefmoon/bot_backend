@@ -40,8 +40,11 @@ export class UnifiedSyncService {
       // Restaurant config details
       restaurantName: data.restaurantConfig?.restaurantName || data.config?.restaurantConfig?.restaurantName,
       phoneMain: data.restaurantConfig?.phoneMain || data.config?.restaurantConfig?.phoneMain,
-      // Business hours
-      businessHoursCount: data.businessHours?.length || data.config?.businessHours?.length || 0,
+      // Business hours - check nested in restaurantConfig too
+      businessHoursCount: data.businessHours?.length || 
+                         data.config?.businessHours?.length || 
+                         data.restaurantConfig?.businessHours?.length ||
+                         data.config?.restaurantConfig?.businessHours?.length || 0,
       // Menu details
       categoriesCount: data.categories?.length || data.menu?.categories?.length || 0,
       allCategoryNames: (data.categories || data.menu?.categories || []).map((c: any) => c.name)
@@ -55,9 +58,12 @@ export class UnifiedSyncService {
       
       // If data comes with direct structure, normalize it
       if (!normalizedData.config && (data.restaurantConfig || data.businessHours)) {
+        // Extract businessHours from restaurantConfig if nested there
+        const businessHours = data.businessHours || data.restaurantConfig?.businessHours || [];
+        
         normalizedData.config = {
           restaurantConfig: data.restaurantConfig,
-          businessHours: data.businessHours || [],
+          businessHours: businessHours,
           lastUpdated: data.lastUpdated || new Date().toISOString()
         };
       }
@@ -613,19 +619,21 @@ export class UnifiedSyncService {
    * Process and save configuration data
    */
   private static async processConfigData(configData: any, tx: any): Promise<void> {
-    const { restaurantConfig, businessHours } = configData;
+    const { restaurantConfig } = configData;
+    // Business hours can be at config level or nested in restaurantConfig
+    const businessHours = configData.businessHours || restaurantConfig?.businessHours || [];
     
     logger.info('UnifiedSync: Processing config data', {
       hasRestaurantConfig: !!restaurantConfig,
-      hasBusinessHours: !!businessHours,
-      businessHoursCount: businessHours?.length || 0,
+      hasBusinessHours: businessHours.length > 0,
+      businessHoursCount: businessHours.length,
       // Business hours details
-      businessHoursDays: businessHours ? businessHours.map((h: any) => ({
+      businessHoursDays: businessHours.map((h: any) => ({
         dayOfWeek: h.dayOfWeek,
-        openTime: h.openTime,
-        closeTime: h.closeTime,
-        isOpen: h.isOpen
-      })) : []
+        openTime: h.openingTime || h.openTime,
+        closeTime: h.closingTime || h.closeTime,
+        isOpen: h.isOpen !== false && !h.isClosed
+      }))
     });
 
     // Upsert restaurant config
