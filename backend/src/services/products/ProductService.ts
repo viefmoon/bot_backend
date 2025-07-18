@@ -131,8 +131,42 @@ export class ProductService {
           }
         }
         
+        // Para pizzas, mostrar sabores disponibles
+        if (product.isPizza && product.pizzaCustomizations?.length > 0) {
+          const flavors = product.pizzaCustomizations.filter((c: any) => c.type === 'FLAVOR');
+          if (flavors.length > 0) {
+            menuText += ` _Sabores disponibles:_\n`;
+            
+            // Obtener configuración de pizza
+            const pizzaConfig = product.pizzaConfiguration;
+            const includedToppings = pizzaConfig?.includedToppings || 4;
+            const extraToppingCost = pizzaConfig?.extraToppingCost || 20;
+            
+            for (const flavor of flavors) {
+              let flavorText = `  • ${flavor.name}`;
+              
+              // Agregar ingredientes si existen
+              if (flavor.ingredients) {
+                flavorText += ` (${flavor.ingredients})`;
+              }
+              
+              // Calcular precio extra si el sabor excede los toppings incluidos
+              if (flavor.toppingValue > includedToppings) {
+                const extraToppings = flavor.toppingValue - includedToppings;
+                const extraCost = extraToppings * extraToppingCost;
+                flavorText += ` (+$${extraCost.toFixed(2)})`;
+              }
+              
+              menuText += `${flavorText}\n`;
+            }
+            
+            menuText += ` _Nota: Puedes elegir hasta 2 mitades diferentes_\n`;
+          }
+        }
+        
         // Mostrar todos los modificadores agrupados
         if (product.modifierGroups?.length > 0) {
+          menuText += ` _Extras:_\n`;
           for (const group of product.modifierGroups) {
             const activeModifiers = group.productModifiers?.filter((m: any) => m.isActive) || [];
             if (activeModifiers.length > 0) {
@@ -143,7 +177,7 @@ export class ProductService {
                 }
                 return m.name;
               }).join(', ');
-              menuText += ` _${group.name}: ${modifierDetails}_\n`;
+              menuText += `  • ${group.name}: ${modifierDetails}\n`;
             }
           }
         }
