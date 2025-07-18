@@ -269,6 +269,12 @@ cd ~/bot_backend
    - Visita: https://cloudbiteapp.com
    - Deberías ver tu aplicación React funcionando
 
+3. **WebSocket (Socket.IO):**
+   ```bash
+   curl https://cloudbiteapp.com/socket.io/\?EIO\=4\&transport\=polling
+   ```
+   - Deberías ver una respuesta JSON con `sid` y configuración de Socket.IO
+
 ### 📱 Configurar WhatsApp Webhook
 
 1. Ve a [Meta for Developers](https://developers.facebook.com)
@@ -433,11 +439,41 @@ Tu Bot Backend está ahora funcionando en producción.
 echo "=== ESTADO DEL SISTEMA ==="
 pm2 status
 echo -e "\n=== HEALTH CHECK ==="
-curl -s http://localhost:5000/health | jq
+curl -s http://localhost:5000/backend | jq
 echo -e "\n=== ÚLTIMOS LOGS ==="
 pm2 logs --nostream --lines 5
 echo -e "\n=== URL DE TU BOT ==="
 echo "https://cloudbiteapp.com"
+```
+
+### 🔌 Conexión WebSocket para Sincronización
+
+Para conectarte al WebSocket de sincronización:
+
+**URL del WebSocket:**
+```
+wss://cloudbiteapp.com/socket.io/
+```
+
+**Ejemplo con Socket.IO Client (JavaScript):**
+```javascript
+const socket = io('https://cloudbiteapp.com', {
+  path: '/socket.io/',
+  transports: ['websocket', 'polling']
+});
+
+socket.on('connect', () => {
+  console.log('Conectado al WebSocket');
+});
+
+socket.on('sync:update', (data) => {
+  console.log('Actualización de sincronización:', data);
+});
+```
+
+**Verificar conexión:**
+```bash
+curl https://cloudbiteapp.com/socket.io/\?EIO\=4\&transport\=polling
 ```
 
 ¡Tu bot está listo para recibir mensajes! 🚀
