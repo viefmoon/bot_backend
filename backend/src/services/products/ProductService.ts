@@ -13,6 +13,7 @@ export class ProductService {
   static async getActiveProducts(options?: {
     includeRelations?: boolean;
     formatForAI?: boolean;
+    formatForWhatsApp?: boolean;
     restaurantName?: string;
   }): Promise<Product[] | string> {
     try {
@@ -41,19 +42,25 @@ export class ProductService {
         } : undefined
       });
 
-      // Si se solicita formato para AI, formatear el menú
-      if (options?.formatForAI) {
-        // Obtener nombre del restaurante si no se proporciona
-        let restaurantName = options.restaurantName;
-        if (!restaurantName) {
-          try {
-            const { RestaurantService } = await import('../restaurant/RestaurantService');
-            const config = await RestaurantService.getConfig();
-            restaurantName = config.restaurantName;
-          } catch (error) {
-            restaurantName = "Nuestro Restaurante";
-          }
+      // Obtener nombre del restaurante si no se proporciona
+      let restaurantName = options?.restaurantName;
+      if (!restaurantName && (options?.formatForAI || options?.formatForWhatsApp)) {
+        try {
+          const { RestaurantService } = await import('../restaurant/RestaurantService');
+          const config = await RestaurantService.getConfig();
+          restaurantName = config.restaurantName;
+        } catch (error) {
+          restaurantName = "Nuestro Restaurante";
         }
+      }
+
+      // Si se solicita formato para WhatsApp, usar formato simplificado
+      if (options?.formatForWhatsApp) {
+        return this.formatMenuForWhatsApp(products, restaurantName);
+      }
+
+      // Si se solicita formato para AI, formatear el menú con markdown
+      if (options?.formatForAI) {
         return this.formatMenuForAI(products, restaurantName);
       }
 
@@ -62,6 +69,96 @@ export class ProductService {
       logger.error('Error fetching active products:', error);
       throw error;
     }
+  }
+
+  /**
+   * Format menu for WhatsApp - Clear and readable format
+   */
+  private static formatMenuForWhatsApp(products: any[], restaurantName: string = "Nuestro Restaurante"): string {
+    let menuText = `🍽️ MENÚ ${restaurantName.toUpperCase()} 🍽️\n`;
+    menuText += "━━━━━━━━━━━━━━━━━━━━━━\n\n";
+
+    // Agrupar por categoría y subcategoría
+    const productsByCategory = products.reduce((acc, product) => {
+      const categoryName = product.subcategory?.category?.name || 'Sin categoría';
+      const subcategoryName = product.subcategory?.name || 'Sin subcategoría';
+      
+      if (!acc[categoryName]) acc[categoryName] = {};
+      if (!acc[categoryName][subcategoryName]) {
+        acc[categoryName][subcategoryName] = [];
+      }
+      acc[categoryName][subcategoryName].push(product);
+      return acc;
+    }, {} as Record<string, Record<string, any[]>>);
+
+    // Emojis simples por categoría
+    const categoryEmojis: Record<string, string> = {
+      'pizza': '🍕',
+      'pizzas': '🍕',
+      'hamburguesa': '🍔',
+      'hamburguesas': '🍔',
+      'bebida': '🥤',
+      'bebidas': '🥤',
+      'postre': '🍰',
+      'postres': '🍰'
+    };
+
+    const getEmoji = (categoryName: string): string => {
+      const lowerName = categoryName.toLowerCase();
+      for (const [key, emoji] of Object.entries(categoryEmojis)) {
+        if (lowerName.includes(key)) return emoji;
+      }
+      return '🍽️';
+    };
+
+    // Formatear por categoría y subcategoría
+    for (const [category, subcategories] of Object.entries(productsByCategory)) {
+      const emoji = getEmoji(category);
+      menuText += `${emoji} *${category.toUpperCase()}* ${emoji}\n`;
+      menuText += `──────────────────\n`;
+      
+      for (const [subcategory, products] of Object.entries(subcategories)) {
+        if (subcategory !== 'Sin subcategoría' && subcategory !== category) {
+          menuText += `\n▸ ${subcategory}\n`;
+        }
+        
+        for (const product of products) {
+          // Nombre del producto
+          menuText += `\n*${product.name}*`;
+          
+          // Precio si no tiene variantes
+          if (!product.hasVariants && product.price) {
+            menuText += ` - $${product.price.toFixed(2)}`;
+          }
+          menuText += '\n';
+          
+          // Variantes con precios
+          if (product.variants?.length > 0 && product.hasVariants) {
+            for (const variant of product.variants) {
+              menuText += `  • ${variant.name}: $${variant.price.toFixed(2)}\n`;
+            }
+          }
+          
+          // Solo mostrar modificadores si existen
+          if (product.modifierGroups?.length > 0) {
+            const hasActiveModifiers = product.modifierGroups.some((g: any) => 
+              g.productModifiers?.some((m: any) => m.isActive)
+            );
+            if (hasActiveModifiers) {
+              menuText += `  _Extras disponibles_\n`;
+            }
+          }
+        }
+      }
+      menuText += "\n";
+    }
+
+    menuText += "━━━━━━━━━━━━━━━━━━━━━━\n";
+    menuText += "📱 *Para ordenar:*\n";
+    menuText += "Menciona el producto y tamaño que deseas\n";
+    menuText += "━━━━━━━━━━━━━━━━━━━━━━";
+
+    return menuText;
   }
 
   /**

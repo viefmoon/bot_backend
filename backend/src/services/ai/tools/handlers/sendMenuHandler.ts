@@ -4,18 +4,18 @@ import { MessageSplitter } from '../../../../common/utils/messageSplitter';
 import logger from '../../../../common/utils/logger';
 
 /**
- * Handles the send_menu function call
- * Retrieves and sends the restaurant menu
+ * Core logic for sending menu - can be used by both AI tools and interactive handlers
  */
-export const handleSendMenu: ToolHandler = async (): Promise<ToolResponse | ToolResponse[]> => {
-  const menu = await ProductService.getActiveProducts({ formatForAI: true });
+export async function getMenuResponses(): Promise<ToolResponse | ToolResponse[]> {
+  // Use WhatsApp format for customers
+  const menu = await ProductService.getActiveProducts({ formatForWhatsApp: true });
   const menuText = String(menu);
-  
+    
   // If menu is too long, split it into parts
-  const maxLength = 4000; // Leave margin for WhatsApp
+  const maxLength = 3500; // Reduced to ensure safety margin for WhatsApp's 4096 limit
   if (menuText.length > maxLength) {
     const parts = MessageSplitter.splitMenu(menuText, maxLength);
-    logger.debug(`Menu split into ${parts.length} parts`);
+    logger.info(`Menu split into ${parts.length} parts, lengths: ${parts.map(p => p.length).join(', ')}`);
     
     // Return multiple responses
     return parts.map((part, index) => ({
@@ -28,6 +28,7 @@ export const handleSendMenu: ToolHandler = async (): Promise<ToolResponse | Tool
       })
     }));
   } else {
+    logger.info(`Menu fits in one message: ${menuText.length} chars`);
     return {
       text: menuText,
       isRelevant: false,
@@ -35,4 +36,11 @@ export const handleSendMenu: ToolHandler = async (): Promise<ToolResponse | Tool
       historyMarker: "MENÚ ENVIADO"
     };
   }
+}
+
+/**
+ * Handles the send_menu function call for AI tools
+ */
+export const handleSendMenu: ToolHandler = async (): Promise<ToolResponse | ToolResponse[]> => {
+  return getMenuResponses();
 };

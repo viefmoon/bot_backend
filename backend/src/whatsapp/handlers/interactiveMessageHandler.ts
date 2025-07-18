@@ -17,6 +17,7 @@ import { getCurrentMexicoTime, getFormattedBusinessHours } from "../../common/ut
 import { env } from "../../common/config/envValidator";
 import { BusinessLogicError, ErrorCode } from "../../common/services/errors";
 import { handleWhatsAppError } from "../../common/utils/whatsappErrorHandler";
+import { getMenuResponses } from "../../services/ai/tools/handlers/sendMenuHandler";
 
 const stripeClient = env.STRIPE_SECRET_KEY 
   ? new Stripe(env.STRIPE_SECRET_KEY, {
@@ -232,10 +233,35 @@ async function handleOnlinePayment(
 }
 
 async function sendMenu(phoneNumber: string): Promise<boolean> {
-  const fullMenu = await ProductService.getActiveProducts({ formatForAI: true });
-  // La utilidad messageSender se encarga de dividir mensajes largos automáticamente
-  const success = await sendWhatsAppMessage(phoneNumber, String(fullMenu));
-  return success;
+  try {
+    // Usa la lógica centralizada para obtener y dividir el menú
+    const toolResponse = await getMenuResponses();
+    
+    // Normaliza a array para manejar ambos casos (respuesta única o múltiple)
+    const responses = Array.isArray(toolResponse) ? toolResponse : [toolResponse];
+    
+    // Envía cada parte del menú por separado
+    // La división ya fue manejada por getMenuResponses usando splitMenu
+    for (const response of responses) {
+      if (response && response.text) {
+        // sendWhatsAppMessage no volverá a dividir porque cada parte es < 3500 chars
+        const result = await sendWhatsAppMessage(phoneNumber, response.text);
+        if (!result) {
+          logger.error(`Failed to send menu part to ${phoneNumber}`);
+          return false;
+        }
+      }
+    }
+    
+    return true;
+  } catch (error) {
+    logger.error(`Error sending menu from interactive handler for ${phoneNumber}:`, error);
+    await sendWhatsAppMessage(
+      phoneNumber, 
+      "Lo siento, tuvimos un problema al generar el menú. Por favor, intenta de nuevo más tarde."
+    );
+    return false;
+  }
 }
 
 async function handleWaitTimes(customerId: string): Promise<void> {
