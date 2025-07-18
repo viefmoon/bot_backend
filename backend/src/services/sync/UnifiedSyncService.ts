@@ -32,9 +32,7 @@ export class UnifiedSyncService {
     try {
       // Check if data has changed
       const existingConfig = await prisma.restaurantConfig.findFirst();
-      const existingMenu = await prisma.category.findMany({
-        include: { products: true }
-      });
+      const existingMenu = await prisma.category.findMany();
       
       // Simple change detection (you can make this more sophisticated)
       const configChanged = JSON.stringify(existingConfig) !== JSON.stringify(data.config?.restaurantConfig);
