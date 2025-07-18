@@ -59,8 +59,8 @@ router.post('/pull-changes', apiKeyAuthMiddleware, asyncHandler(async (req: Requ
     const changes = await UnifiedSyncService.pullChanges();
     
     logger.info('Pull changes response', {
-      ordersCount: changes.orders?.length || 0,
-      customersCount: changes.customers?.length || 0
+      ordersCount: changes.pending_orders?.length || 0,
+      customersCount: changes.updated_customers?.length || 0
     });
     
     res.json(changes);
