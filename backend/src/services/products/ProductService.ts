@@ -143,7 +143,7 @@ export class ProductService {
                 }
                 return m.name;
               }).join(', ');
-              menuText += ` _Extras: ${modifierDetails}_\n`;
+              menuText += ` _${group.name}: ${modifierDetails}_\n`;
             }
           }
         }
