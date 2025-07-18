@@ -1,4 +1,4 @@
-import { IsNotEmpty, IsString, IsObject, ValidateNested } from 'class-validator';
+import { IsNotEmpty, IsString, IsObject, ValidateNested, IsOptional } from 'class-validator';
 import { Type } from 'class-transformer';
 import { AddressDto } from './address.dto';
 
@@ -16,4 +16,8 @@ export class CreateAddressDto {
   @ValidateNested()
   @Type(() => AddressDto)
   address!: AddressDto;
+  
+  @IsOptional()
+  @IsString({ message: 'preOrderId must be a string' })
+  preOrderId?: string;
 }
