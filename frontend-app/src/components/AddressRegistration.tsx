@@ -253,6 +253,14 @@ export function AddressRegistration() {
         );
       } else {
         // Create new address
+        console.log('Creating address with preOrderId:', preOrderId);
+        console.log('Full params:', {
+          whatsappPhoneNumber: customerId,
+          otp,
+          address: addressData,
+          preOrderId: preOrderId || undefined,
+        });
+        
         await createAddressMutation.mutateAsync({
           whatsappPhoneNumber: customerId,
           otp,

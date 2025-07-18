@@ -65,10 +65,17 @@ export const addressApi = {
   },
 
   createAddress: async (params: CreateAddressParams & { preOrderId?: string }) => {
-    const url = params.preOrderId 
-      ? `/backend/address-registration/create?preOrderId=${params.preOrderId}`
+    // Extract preOrderId from params to avoid sending it in body
+    const { preOrderId, ...bodyParams } = params;
+    
+    const url = preOrderId 
+      ? `/backend/address-registration/create?preOrderId=${preOrderId}`
       : '/backend/address-registration/create';
-    const { data } = await apiClient.post(url, params);
+    
+    console.log('Creating address with URL:', url);
+    console.log('Body params:', bodyParams);
+    
+    const { data } = await apiClient.post(url, bodyParams);
     return data;
   },
 

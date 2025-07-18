@@ -102,12 +102,21 @@ router.post('/create',
     await SyncMetadataService.markForSync('Customer', customer.id, 'REMOTE');
     
     // Si viene de un preOrder, actualizar la dirección del preOrder
+    logger.info('Checking for preOrderId:', {
+      queryPreOrderId: req.query.preOrderId,
+      bodyPreOrderId: req.body.preOrderId,
+      fullQuery: req.query,
+      fullBody: req.body
+    });
+    
     const preOrderId = req.query.preOrderId || req.body.preOrderId;
     if (preOrderId) {
       logger.info(`Updating preOrder ${preOrderId} with new address ${newAddress.id}`);
       
       // Update preOrder with the new address
       await updatePreOrderWithAddress(parseInt(preOrderId as string), newAddress);
+    } else {
+      logger.info('No preOrderId found, treating as regular address creation');
     }
     
     // Enviar mensaje de confirmación a WhatsApp
