@@ -301,6 +301,8 @@ router.post('/regenerate-confirmation',
   asyncHandler(async (req: Request, res: Response) => {
     const { preOrderId, customerId } = req.body;
     
+    logger.info('Regenerate confirmation request', { preOrderId, customerId });
+    
     if (!preOrderId) {
       res.json({ 
         success: true,
@@ -335,16 +337,16 @@ router.post('/regenerate-confirmation',
       );
     }
     
-    // Get customer
+    // Get customer from preOrder's whatsappPhoneNumber
     const customer = await prisma.customer.findUnique({
-      where: { id: customerId }
+      where: { whatsappPhoneNumber: preOrder.whatsappPhoneNumber }
     });
     
     if (!customer) {
       throw new NotFoundError(
         ErrorCode.CUSTOMER_NOT_FOUND,
         'Customer not found',
-        { customerId }
+        { whatsappPhoneNumber: preOrder.whatsappPhoneNumber }
       );
     }
     
