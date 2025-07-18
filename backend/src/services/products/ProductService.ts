@@ -117,7 +117,7 @@ export class ProductService {
       menuText += `${emoji} *${category.toUpperCase()}* ${emoji}\n`;
       menuText += `──────────────────\n`;
       
-      for (const [subcategory, products] of Object.entries(subcategories)) {
+      for (const [subcategory, products] of Object.entries(subcategories as Record<string, any[]>)) {
         if (subcategory !== 'Sin subcategoría' && subcategory !== category) {
           menuText += `\n▸ ${subcategory}\n`;
         }
