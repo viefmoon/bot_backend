@@ -22,17 +22,24 @@ export class MessageSplitter {
       intelligentSplit = true
     } = options;
     
+    console.log(`[MessageSplitter.split] Input text length: ${text.length}, maxLength: ${maxLength}`);
+    
     // Si el mensaje cabe en una parte, devolverlo tal cual
     if (text.length <= maxLength) {
+      console.log(`[MessageSplitter.split] Text fits in one part, returning as is`);
       return [text];
     }
     
     // Usar división inteligente si está habilitada
     if (intelligentSplit) {
-      return this.intelligentSplit(text, maxLength, preserveFormatting);
+      console.log(`[MessageSplitter.split] Using intelligent split`);
+      const result = this.intelligentSplit(text, maxLength, preserveFormatting);
+      console.log(`[MessageSplitter.split] Intelligent split result: ${result.length} parts with lengths: ${result.map(p => p.length).join(', ')}`);
+      return result;
     }
     
     // División simple por longitud
+    console.log(`[MessageSplitter.split] Using simple split`);
     return this.simpleSplit(text, maxLength);
   }
   
@@ -49,27 +56,35 @@ export class MessageSplitter {
     let currentPart = '';
     let currentSection = '';
     
+    console.log(`[intelligentSplit] Processing ${lines.length} lines, maxLength: ${maxLength}`);
+    
     for (let i = 0; i < lines.length; i++) {
       const line = lines[i];
       
       // Detectar encabezados de sección
       const isSectionHeader = this.isSectionHeader(line);
       
+      const totalLength = currentPart.length + currentSection.length + line.length + 1;
+      console.log(`[intelligentSplit] Line ${i}: currentPart=${currentPart.length}, currentSection=${currentSection.length}, line=${line.length}, total=${totalLength}, isSectionHeader=${isSectionHeader}`);
+      
       // Si encontramos un nuevo encabezado y la parte actual + sección excede el límite
       if (isSectionHeader && currentSection && 
           (currentPart.length + currentSection.length > maxLength)) {
         // Guardar la parte actual si tiene contenido
         if (currentPart.trim()) {
+          console.log(`[intelligentSplit] Saving part due to section header, length: ${currentPart.length}`);
           parts.push(currentPart.trim());
         }
         currentPart = currentSection;
         currentSection = line + '\n';
-      } else if (currentPart.length + currentSection.length + line.length + 1 > maxLength) {
+      } else if (totalLength > maxLength) {
         // Si agregar la línea actual excedería el límite
         
         // Primero, guardar lo que tenemos hasta ahora
         if (currentPart.trim() || currentSection.trim()) {
-          parts.push((currentPart + currentSection).trim());
+          const partToSave = (currentPart + currentSection).trim();
+          console.log(`[intelligentSplit] Saving part due to length limit, length: ${partToSave.length}`);
+          parts.push(partToSave);
         }
         
         // Reiniciar con la línea actual

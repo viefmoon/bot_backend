@@ -10,12 +10,22 @@ export async function getMenuResponses(): Promise<ToolResponse | ToolResponse[]>
   // Use WhatsApp format for customers
   const menu = await ProductService.getActiveProducts({ formatForWhatsApp: true });
   const menuText = String(menu);
-    
+  
+  logger.info(`[getMenuResponses] Menu total length: ${menuText.length} characters`);
+  
   // If menu is too long, split it into parts
   const maxLength = 3500; // Reduced to ensure safety margin for WhatsApp's 4096 limit
+  logger.info(`[getMenuResponses] Max length per part: ${maxLength}`);
+  
   if (menuText.length > maxLength) {
+    logger.info(`[getMenuResponses] Menu exceeds maxLength, splitting...`);
     const parts = MessageSplitter.splitMenu(menuText, maxLength);
-    logger.info(`Menu split into ${parts.length} parts, lengths: ${parts.map(p => p.length).join(', ')}`);
+    logger.info(`[getMenuResponses] Menu split into ${parts.length} parts, lengths: ${parts.map(p => p.length).join(', ')}`);
+    
+    // Log first 100 chars of each part for debugging
+    parts.forEach((part, index) => {
+      logger.debug(`[getMenuResponses] Part ${index + 1} preview: ${part.substring(0, 100)}...`);
+    });
     
     // Return multiple responses
     return parts.map((part, index) => ({
@@ -28,7 +38,7 @@ export async function getMenuResponses(): Promise<ToolResponse | ToolResponse[]>
       })
     }));
   } else {
-    logger.info(`Menu fits in one message: ${menuText.length} chars`);
+    logger.info(`[getMenuResponses] Menu fits in one message: ${menuText.length} chars`);
     return {
       text: menuText,
       isRelevant: false,
