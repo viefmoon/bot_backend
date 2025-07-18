@@ -6,7 +6,6 @@
 interface SplitOptions {
   maxLength?: number;
   preserveFormatting?: boolean;
-  intelligentSplit?: boolean;
 }
 
 const DEFAULT_MAX_LENGTH = 4000; // Límite de WhatsApp con margen de seguridad
@@ -18,91 +17,16 @@ export class MessageSplitter {
   static split(text: string, options: SplitOptions = {}): string[] {
     const {
       maxLength = DEFAULT_MAX_LENGTH,
-      preserveFormatting = true,
-      intelligentSplit = true
+      preserveFormatting = true
     } = options;
-    
-    console.log(`[MessageSplitter.split] Input text length: ${text.length}, maxLength: ${maxLength}`);
     
     // Si el mensaje cabe en una parte, devolverlo tal cual
     if (text.length <= maxLength) {
-      console.log(`[MessageSplitter.split] Text fits in one part, returning as is`);
       return [text];
     }
     
-    // Usar división inteligente si está habilitada
-    if (intelligentSplit) {
-      console.log(`[MessageSplitter.split] Using intelligent split`);
-      const result = this.intelligentSplit(text, maxLength, preserveFormatting);
-      console.log(`[MessageSplitter.split] Intelligent split result: ${result.length} parts with lengths: ${result.map(p => p.length).join(', ')}`);
-      return result;
-    }
-    
     // División simple por longitud
-    console.log(`[MessageSplitter.split] Using simple split`);
-    return this.simpleSplit(text, maxLength);
-  }
-  
-  /**
-   * División inteligente que respeta estructura del contenido
-   */
-  private static intelligentSplit(
-    text: string, 
-    maxLength: number, 
-    preserveFormatting: boolean
-  ): string[] {
-    const parts: string[] = [];
-    const lines = text.split('\n');
-    let currentPart = '';
-    let currentSection = '';
-    
-    console.log(`[intelligentSplit] Processing ${lines.length} lines, maxLength: ${maxLength}`);
-    
-    for (let i = 0; i < lines.length; i++) {
-      const line = lines[i];
-      
-      // Detectar encabezados de sección
-      const isSectionHeader = this.isSectionHeader(line);
-      
-      const totalLength = currentPart.length + currentSection.length + line.length + 1;
-      console.log(`[intelligentSplit] Line ${i}: currentPart=${currentPart.length}, currentSection=${currentSection.length}, line=${line.length}, total=${totalLength}, isSectionHeader=${isSectionHeader}`);
-      
-      // Si encontramos un nuevo encabezado y la parte actual + sección excede el límite
-      if (isSectionHeader && currentSection && 
-          (currentPart.length + currentSection.length > maxLength)) {
-        // Guardar la parte actual si tiene contenido
-        if (currentPart.trim()) {
-          console.log(`[intelligentSplit] Saving part due to section header, length: ${currentPart.length}`);
-          parts.push(currentPart.trim());
-        }
-        currentPart = currentSection;
-        currentSection = line + '\n';
-      } else if (totalLength > maxLength) {
-        // Si agregar la línea actual excedería el límite
-        
-        // Primero, guardar lo que tenemos hasta ahora
-        if (currentPart.trim() || currentSection.trim()) {
-          const partToSave = (currentPart + currentSection).trim();
-          console.log(`[intelligentSplit] Saving part due to length limit, length: ${partToSave.length}`);
-          parts.push(partToSave);
-        }
-        
-        // Reiniciar con la línea actual
-        currentPart = '';
-        currentSection = line + '\n';
-      } else {
-        // Agregar línea a la sección actual
-        currentSection += line + '\n';
-      }
-    }
-    
-    // Agregar cualquier contenido restante
-    if (currentSection) {
-      currentPart += currentSection;
-    }
-    if (currentPart.trim()) {
-      parts.push(currentPart.trim());
-    }
+    const parts = this.simpleSplit(text, maxLength);
     
     // Agregar indicadores de continuación si se preserva el formato
     if (preserveFormatting && parts.length > 1) {
@@ -112,96 +36,65 @@ export class MessageSplitter {
     return parts;
   }
   
+  
   /**
-   * División simple por longitud máxima
+   * División simple por longitud respetando saltos de línea
    */
   private static simpleSplit(text: string, maxLength: number): string[] {
     const parts: string[] = [];
     let currentPart = '';
     
-    const words = text.split(/\s+/);
+    // Dividir por líneas para mantener la estructura
+    const lines = text.split('\n');
     
-    for (const word of words) {
-      if (currentPart.length + word.length + 1 > maxLength) {
-        if (currentPart) {
+    for (const line of lines) {
+      // Si agregar esta línea excede el límite
+      if (currentPart.length + line.length + 1 > maxLength) {
+        // Si la parte actual tiene contenido, guardarla
+        if (currentPart.trim()) {
           parts.push(currentPart.trim());
-          currentPart = word;
+          currentPart = '';
+        }
+        
+        // Si la línea sola excede el límite, dividirla por palabras
+        if (line.length > maxLength) {
+          const words = line.split(/\s+/);
+          let tempLine = '';
+          
+          for (const word of words) {
+            if (tempLine.length + word.length + 1 > maxLength) {
+              if (tempLine) {
+                parts.push(tempLine.trim());
+                tempLine = word;
+              } else {
+                // Palabra muy larga, añadirla tal cual
+                parts.push(word);
+              }
+            } else {
+              tempLine += (tempLine ? ' ' : '') + word;
+            }
+          }
+          
+          if (tempLine) {
+            currentPart = tempLine;
+          }
         } else {
-          // La palabra es más larga que el límite, cortarla
-          const chunks = this.chunkString(word, maxLength);
-          parts.push(...chunks.slice(0, -1));
-          currentPart = chunks[chunks.length - 1];
+          currentPart = line;
         }
       } else {
-        currentPart += (currentPart ? ' ' : '') + word;
+        // Agregar la línea a la parte actual
+        currentPart += (currentPart ? '\n' : '') + line;
       }
     }
     
-    if (currentPart) {
+    // Agregar cualquier contenido restante
+    if (currentPart.trim()) {
       parts.push(currentPart.trim());
     }
     
     return parts;
   }
   
-  /**
-   * Dividir una línea larga por palabras
-   */
-  private static splitLongLine(line: string, maxLength: number): string[] {
-    const parts: string[] = [];
-    const words = line.split(' ');
-    let tempLine = '';
-    
-    for (const word of words) {
-      if (tempLine.length + word.length + 1 <= maxLength) {
-        tempLine += (tempLine ? ' ' : '') + word;
-      } else {
-        if (tempLine) parts.push(tempLine);
-        
-        // Si una sola palabra excede el límite, cortarla
-        if (word.length > maxLength) {
-          const chunks = this.chunkString(word, maxLength);
-          parts.push(...chunks.slice(0, -1));
-          tempLine = chunks[chunks.length - 1];
-        } else {
-          tempLine = word;
-        }
-      }
-    }
-    
-    if (tempLine) {
-      parts.push(tempLine);
-    }
-    
-    return parts;
-  }
-  
-  /**
-   * Verificar si una línea es un encabezado de sección
-   */
-  private static isSectionHeader(line: string): boolean {
-    // Patrones comunes de encabezados
-    const patterns = [
-      /^[🍕🍔🥤🍗🥗🍝🍰🌮🥟🍛📋🛒💰📍👤📅⏰]/,  // Emojis al inicio
-      /^[A-Z\s]{3,}:/,                                  // MAYÚSCULAS:
-      /^\*\*.*\*\*$/,                                   // **Negrita**
-      /^#+\s/,                                          // # Markdown headers
-      /^[-=]{3,}$/,                                     // Líneas divisorias
-    ];
-    
-    return patterns.some(pattern => pattern.test(line));
-  }
-  
-  /**
-   * Dividir una cadena en chunks de tamaño fijo
-   */
-  private static chunkString(str: string, size: number): string[] {
-    const chunks: string[] = [];
-    for (let i = 0; i < str.length; i += size) {
-      chunks.push(str.slice(i, i + size));
-    }
-    return chunks;
-  }
   
   /**
    * Agregar indicadores de continuación a las partes
@@ -220,24 +113,22 @@ export class MessageSplitter {
   }
   
   /**
-   * Dividir un menú preservando categorías completas
+   * Dividir un menú sin indicadores de continuación
    */
   static splitMenu(menuText: string, maxLength: number = DEFAULT_MAX_LENGTH): string[] {
     return this.split(menuText, {
       maxLength,
-      preserveFormatting: false, // No agregar indicadores de continuación
-      intelligentSplit: true
+      preserveFormatting: false // No agregar indicadores de continuación
     });
   }
   
   /**
-   * Dividir un mensaje de chat normal
+   * Dividir un mensaje de chat normal con indicadores
    */
   static splitMessage(message: string, maxLength: number = DEFAULT_MAX_LENGTH): string[] {
     return this.split(message, {
       maxLength,
-      preserveFormatting: true,
-      intelligentSplit: true
+      preserveFormatting: true
     });
   }
 }
