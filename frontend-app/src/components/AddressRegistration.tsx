@@ -79,9 +79,11 @@ export function AddressRegistration() {
       setSession(urlCustomerId, urlOtp, urlPreOrderId || undefined);
     }
     
-    // If viewMode=form is specified, go directly to form view
+    // If viewMode=form is specified, go directly to form view with clean form
     if (urlViewMode === 'form') {
       setViewMode('form');
+      resetForm();
+      setEditingAddressId(null);
     }
   }, [searchParams, setSession]);
 
@@ -130,8 +132,10 @@ export function AddressRegistration() {
         setCustomer(otpData.customer);
         setValidating(false);
         
-        // If customer has addresses, load the default one
-        if (otpData.customer.addresses.length > 0) {
+        // If customer has addresses, load the default one ONLY if not creating new
+        // Check if viewMode=form is in URL (which means user wants to create new)
+        const urlViewMode = new URLSearchParams(window.location.search).get('viewMode');
+        if (otpData.customer.addresses.length > 0 && urlViewMode !== 'form') {
           const defaultAddress = otpData.customer.addresses.find((addr: Address) => addr.isDefault) 
             || otpData.customer.addresses[0];
           loadExistingAddress(defaultAddress);
