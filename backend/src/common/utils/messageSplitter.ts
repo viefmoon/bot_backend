@@ -64,20 +64,17 @@ export class MessageSplitter {
         }
         currentPart = currentSection;
         currentSection = line + '\n';
-      } else if (currentPart.length + line.length + 1 > maxLength) {
+      } else if (currentPart.length + currentSection.length + line.length + 1 > maxLength) {
         // Si agregar la línea actual excedería el límite
         
-        if (!currentPart.trim() && line.length > maxLength) {
-          // Si la línea es muy larga, dividirla por palabras
-          const splitLine = this.splitLongLine(line, maxLength);
-          parts.push(...splitLine.slice(0, -1));
-          currentPart = splitLine[splitLine.length - 1] + '\n';
-        } else {
-          // Guardar la parte actual y empezar una nueva
-          parts.push(currentPart.trim());
-          currentPart = currentSection + line + '\n';
-          currentSection = '';
+        // Primero, guardar lo que tenemos hasta ahora
+        if (currentPart.trim() || currentSection.trim()) {
+          parts.push((currentPart + currentSection).trim());
         }
+        
+        // Reiniciar con la línea actual
+        currentPart = '';
+        currentSection = line + '\n';
       } else {
         // Agregar línea a la sección actual
         currentSection += line + '\n';
