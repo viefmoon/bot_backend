@@ -561,6 +561,10 @@ export class PreOrderWorkflowService {
         }
       };
       
+      // Mark that we're updating a preOrder to prevent welcome message
+      const updateKey = `preorder:updating:${params.whatsappNumber}`;
+      await redisService.set(updateKey, 'true', 60); // 60 seconds TTL
+      
       // Discard the old preOrder
       const orderManagementService = new OrderManagementService();
       await orderManagementService.discardPreOrder(params.oldPreOrderId);
@@ -576,11 +580,16 @@ export class PreOrderWorkflowService {
       }
       
       // Create new preOrder with new address
-      return await this.createAndNotify({
+      const result = await this.createAndNotify({
         orderData,
         customerId: newAddress.customerId,
         whatsappNumber: params.whatsappNumber
       });
+      
+      // Clean up the update flag
+      await redisService.del(updateKey);
+      
+      return result;
     } catch (error) {
       logger.error('Error recreating preOrder with new address', error);
       throw error;

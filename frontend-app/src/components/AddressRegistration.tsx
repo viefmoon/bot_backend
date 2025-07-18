@@ -74,9 +74,15 @@ export function AddressRegistration() {
     const urlCustomerId = pathParts[pathParts.length - 1] || searchParams.get('from') || '';
     const urlOtp = searchParams.get('otp') || '';
     const urlPreOrderId = searchParams.get('preOrderId') || null;
+    const urlViewMode = searchParams.get('viewMode');
     
     if (urlCustomerId && urlOtp) {
       setSession(urlCustomerId, urlOtp, urlPreOrderId || undefined);
+    }
+    
+    // If viewMode=form is specified, go directly to form view
+    if (urlViewMode === 'form') {
+      setViewMode('form');
     }
   }, [searchParams, setSession]);
 

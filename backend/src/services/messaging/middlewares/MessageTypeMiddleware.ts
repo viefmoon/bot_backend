@@ -15,8 +15,14 @@ export class MessageTypeMiddleware implements MessageMiddleware {
       const isVeryNewCustomer = customer && customer.createdAt && 
         (new Date().getTime() - new Date(customer.createdAt).getTime() < 5 * 60 * 1000); // Created less than 5 minutes ago
       
+      // Check if we're in the middle of updating a preOrder
+      const { redisService } = await import('../../redis/RedisService');
+      const updateKey = `preorder:updating:${context.message.from}`;
+      const isUpdatingPreOrder = await redisService.get(updateKey);
+      
       // Only send welcome if it's a new conversation (not a brand new customer who just registered)
-      if (context.get('isNewConversation') && !isVeryNewCustomer) {
+      // and we're not in the middle of updating a preOrder
+      if (context.get('isNewConversation') && !isVeryNewCustomer && !isUpdatingPreOrder) {
         const config = ConfigService.getConfig();
         const welcomeMessage = WELCOME_MESSAGE_INTERACTIVE(config);
         await sendWhatsAppInteractiveMessage(context.message.from, welcomeMessage);

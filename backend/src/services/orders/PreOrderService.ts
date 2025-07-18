@@ -151,9 +151,18 @@ export class PreOrderService {
       if (orderType === 'DELIVERY' && customer) {
         const customerWithAddresses = await prisma.customer.findUnique({
           where: { id: customer.id },
-          include: { addresses: { where: { deletedAt: null } } }
+          include: { 
+            addresses: { 
+              where: { deletedAt: null },
+              orderBy: [
+                { isDefault: 'desc' },  // First priority: default address
+                { createdAt: 'desc' }   // Second priority: most recent
+              ]
+            } 
+          }
         });
         
+        // Will get the default address if exists, otherwise the most recent one
         if (customerWithAddresses?.addresses?.[0]) {
           deliveryInfo = customerWithAddresses.addresses[0];
         }

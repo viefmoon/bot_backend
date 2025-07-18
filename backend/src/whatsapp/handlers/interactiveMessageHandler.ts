@@ -470,7 +470,8 @@ async function handleAddNewAddress(from: string): Promise<void> {
     const otp = OTPService.generateOTP();
     await OTPService.storeOTP(customer.whatsappPhoneNumber, otp, true);
     
-    const updateLink = `${env.FRONTEND_BASE_URL}/address-registration/${customer.whatsappPhoneNumber}?otp=${otp}${preOrder ? `&preOrderId=${preOrder.id}` : ''}`;
+    // Add viewMode=form to go directly to the form
+    const updateLink = `${env.FRONTEND_BASE_URL}/address-registration/${customer.whatsappPhoneNumber}?otp=${otp}${preOrder ? `&preOrderId=${preOrder.id}` : ''}&viewMode=form`;
     
     await sendMessageWithUrlButton(
       from,
@@ -500,7 +501,8 @@ async function handleAddNewAddressForPreOrder(from: string, preOrderId: number):
   const otp = OTPService.generateOTP();
   await OTPService.storeOTP(customer.whatsappPhoneNumber, otp, true);
   
-  const updateLink = `${env.FRONTEND_BASE_URL}/address-registration/${customer.whatsappPhoneNumber}?otp=${otp}&preOrderId=${preOrderId}`;
+  // Add viewMode=form to go directly to the form
+  const updateLink = `${env.FRONTEND_BASE_URL}/address-registration/${customer.whatsappPhoneNumber}?otp=${otp}&preOrderId=${preOrderId}&viewMode=form`;
   
   logger.info(`Generated address registration link: ${updateLink}`);
   
