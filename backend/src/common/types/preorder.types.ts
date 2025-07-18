@@ -16,6 +16,20 @@ export interface ProcessedOrderData {
   }>;
   orderType: 'DELIVERY' | 'TAKE_AWAY';
   scheduledAt?: Date | null;
+  deliveryInfo?: {
+    name?: string | null;
+    street?: string;
+    number?: string;
+    interiorNumber?: string | null;
+    neighborhood?: string | null;
+    city?: string | null;
+    state?: string | null;
+    zipCode?: string | null;
+    country?: string | null;
+    deliveryInstructions?: string | null;
+    latitude?: number | null;
+    longitude?: number | null;
+  };
 }
 
 export interface PreOrderWorkflowResult {

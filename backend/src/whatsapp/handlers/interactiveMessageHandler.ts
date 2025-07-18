@@ -413,118 +413,32 @@ async function handleAddressSelection(from: string, selectionId: string): Promis
     
     // If we have a specific preOrderId, use it. Otherwise, check for recent preorder
     if (preOrderId) {
-      // Update specific preorder with selected address
-      const axios = (await import('axios')).default;
-      await axios.post(`${env.FRONTEND_BASE_URL}/backend/address-selection/update`, {
-        preOrderId: preOrderId,
-        addressId: selectedAddress.id,
-        customerId: customer.id
-      });
+      // Recreate preorder with selected address
+      const { PreOrderWorkflowService } = await import('../../services/orders/PreOrderWorkflowService');
       
-      // Get the updated preorder and regenerate summary
-      const updatedPreOrder = await prisma.preOrder.findUnique({
-        where: { id: preOrderId },
-        include: {
-          orderItems: {
-            include: {
-              product: true,
-              productVariant: true,
-              productModifiers: true,
-              selectedPizzaCustomizations: {
-                include: { pizzaCustomization: true }
-              }
-            }
-          },
-          deliveryInfo: true
-        }
-      });
-      
-      if (updatedPreOrder) {
-        // Format the preorder for display
-        const { ProductCalculationService } = await import('../../services/orders/services/ProductCalculationService');
-        
-        // Calculate items and totals
-        const calculatedItems = await ProductCalculationService.calculateOrderItems(
-          updatedPreOrder.orderItems.map(item => ({
-            productId: item.productId,
-            productVariantId: item.productVariantId || undefined,
-            quantity: 1,
-            comments: undefined,
-            selectedModifiers: item.productModifiers.map(m => m.id),
-            selectedPizzaCustomizations: item.selectedPizzaCustomizations.map(pc => ({
-              pizzaCustomizationId: pc.pizzaCustomizationId,
-              half: pc.half,
-              action: pc.action
-            }))
-          }))
-        );
-        
-        const formattedPreOrder = {
-          preOrderId: updatedPreOrder.id,
-          orderType: updatedPreOrder.orderType,
-          items: calculatedItems.items,
-          total: calculatedItems.total,
-          deliveryInfo: updatedPreOrder.deliveryInfo,
-          scheduledAt: updatedPreOrder.scheduledAt
-        };
-        
-        // Get the token for this preorder
-        const tokenKeys = await redisService.keys('preorder:token:*');
-        let token = null;
-        for (const key of tokenKeys) {
-          const storedPreOrderId = await redisService.get(key);
-          if (storedPreOrderId === preOrderId.toString()) {
-            token = key.split(':')[2];
-            break;
-          }
-        }
-        
-        if (token) {
-          // Resend the order summary with updated address
-          await PreOrderWorkflowService.sendOrderSummaryWithButtons(
-            from,
-            formattedPreOrder,
-            token
-          );
-        }
-      }
-      
-      await sendWhatsAppMessage(
-        from,
-        `✅ *Dirección actualizada exitosamente*\n\n📍 *Nueva dirección de entrega:*\n${formattedAddress}`
-      );
-    } else {
-      // Check if this is for a recent preorder
-      const preOrder = await prisma.preOrder.findFirst({
-        where: { 
-          whatsappPhoneNumber: customer.whatsappPhoneNumber,
-          createdAt: {
-            gte: new Date(Date.now() - 10 * 60 * 1000) // Last 10 minutes
-          }
-        },
-        orderBy: { createdAt: 'desc' }
-      });
-      
-      if (preOrder) {
-        // Update preorder with selected address
-        const axios = (await import('axios')).default;
-        await axios.post(`${env.FRONTEND_BASE_URL}/backend/address-selection/update`, {
-          preOrderId: preOrder.id,
-          addressId: selectedAddress.id,
-          customerId: customer.id
+      try {
+        // This will create a new preOrder with the new address and discard the old one
+        await PreOrderWorkflowService.recreatePreOrderWithNewAddress({
+          oldPreOrderId: preOrderId,
+          newAddressId: selectedAddress.id,
+          whatsappNumber: from
         });
         
+        // The new preOrder summary is automatically sent by recreatePreOrderWithNewAddress
+        // No need to send additional messages
+      } catch (error) {
+        logger.error('Error recreating preOrder with new address:', error);
         await sendWhatsAppMessage(
           from,
-          `✅ *Dirección seleccionada exitosamente*\n\n📍 *Dirección de entrega:*\n${formattedAddress}\n\nTu pedido será entregado en esta dirección.`
-        );
-      } else {
-        // Just confirming address selection
-        await sendWhatsAppMessage(
-          from,
-          `✅ *Dirección seleccionada*\n\n📍 *Dirección de entrega:*\n${formattedAddress}\n\nEsta dirección se usará para tu próximo pedido.`
+          `❌ Hubo un error al actualizar la dirección. Por favor intenta nuevamente.`
         );
       }
+    } else {
+      // No preOrderId provided, just confirming address selection for future use
+      await sendWhatsAppMessage(
+        from,
+        `✅ *Dirección seleccionada*\n\n📍 *Dirección de entrega:*\n${formattedAddress}\n\nEsta dirección se usará para tu próximo pedido.`
+      );
     }
 }
 

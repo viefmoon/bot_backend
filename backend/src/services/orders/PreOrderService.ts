@@ -192,11 +192,5 @@ export class PreOrderService {
     }
   }
 
-  /**
-   * Update delivery info for a preorder
-   */
-  async updateDeliveryInfo(preOrderId: number, deliveryInfo: any): Promise<void> {
-    await DeliveryInfoService.updatePreOrderDeliveryInfo(preOrderId, deliveryInfo);
-  }
 
 }

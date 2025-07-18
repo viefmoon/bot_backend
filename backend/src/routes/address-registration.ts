@@ -400,15 +400,14 @@ router.get('/debug/otp-status', asyncHandler(async (_req: Request, res: Response
 }));
 
 /**
- * Helper function to update preOrder with new address
+ * Helper function to recreate preOrder with new address
  */
 async function updatePreOrderWithAddress(preOrderId: number, address: Address): Promise<void> {
-  logger.info(`Updating preOrder ${preOrderId} with address ${address.id}`);
+  logger.info(`Recreating preOrder ${preOrderId} with new address ${address.id}`);
   
-  // Get the preOrder to check if it has delivery info
+  // Get the preOrder to get whatsappPhoneNumber
   const preOrder = await prisma.preOrder.findUnique({
-    where: { id: preOrderId },
-    include: { deliveryInfo: true }
+    where: { id: preOrderId }
   });
   
   if (!preOrder) {
@@ -416,28 +415,20 @@ async function updatePreOrderWithAddress(preOrderId: number, address: Address): 
     return;
   }
   
-  // Create delivery info data from the address
-  const deliveryInfoData = {
-    name: address.name,
-    street: address.street,
-    number: address.number,
-    interiorNumber: address.interiorNumber,
-    neighborhood: address.neighborhood,
-    city: address.city,
-    state: address.state,
-    zipCode: address.zipCode,
-    country: address.country,
-    deliveryInstructions: address.deliveryInstructions,
-    latitude: address.latitude?.toNumber(),
-    longitude: address.longitude?.toNumber(),
-    recipientName: null,
-    recipientPhone: null
-  };
-  
-  // Update or create delivery info for the preOrder
-  await DeliveryInfoService.updatePreOrderDeliveryInfo(preOrderId, deliveryInfoData);
-  
-  logger.info(`Successfully updated preOrder ${preOrderId} with address ${address.id}`);
+  try {
+    // Use PreOrderWorkflowService to recreate the preOrder with new address
+    const { PreOrderWorkflowService } = await import('../services/orders/PreOrderWorkflowService');
+    await PreOrderWorkflowService.recreatePreOrderWithNewAddress({
+      oldPreOrderId: preOrderId,
+      newAddressId: address.id,
+      whatsappNumber: preOrder.whatsappPhoneNumber
+    });
+    
+    logger.info(`Successfully recreated preOrder with new address ${address.id}`);
+  } catch (error) {
+    logger.error(`Error recreating preOrder with new address:`, error);
+    throw error;
+  }
 }
 
 export default router;

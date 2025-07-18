@@ -85,44 +85,6 @@ export class DeliveryInfoService {
     return deliveryInfo;
   }
 
-  /**
-   * Actualizar información de entrega para una preorden
-   */
-  static async updatePreOrderDeliveryInfo(
-    preOrderId: number,
-    deliveryInfo: DeliveryInfoInput
-  ): Promise<void> {
-    const preOrder = await prisma.preOrder.findUnique({
-      where: { id: preOrderId },
-      include: { deliveryInfo: true }
-    });
-
-    if (!preOrder) {
-      throw new ValidationError(
-        ErrorCode.ORDER_NOT_FOUND,
-        'PreOrder not found',
-        { metadata: { preOrderId } }
-      );
-    }
-
-    if (preOrder.deliveryInfo?.id) {
-      // Actualizar información de entrega existente
-      await prisma.deliveryInfo.update({
-        where: { id: preOrder.deliveryInfo.id },
-        data: deliveryInfo
-      });
-    } else {
-      // Crear nueva información de entrega con la relación directa
-      await prisma.deliveryInfo.create({
-        data: {
-          ...deliveryInfo,
-          preOrderId: preOrderId
-        }
-      });
-    }
-
-    logger.info(`Updated delivery info for preorder ${preOrderId}`);
-  }
 
 
   /**

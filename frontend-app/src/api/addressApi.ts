@@ -94,14 +94,6 @@ export const addressApi = {
     return data;
   },
 
-  // Send pre-order message
-  sendPreOrderMessage: async (customerId: string, preOrderId: string) => {
-    const { data } = await apiClient.post('/backend/address-selection/regenerate-confirmation', {
-      customerId,
-      preOrderId,
-    });
-    return data;
-  },
 
   // Update customer name
   updateCustomerName: async (params: UpdateCustomerNameParams) => {

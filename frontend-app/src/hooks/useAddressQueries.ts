@@ -89,12 +89,6 @@ export const useSetDefaultAddress = () => {
   });
 };
 
-export const useSendPreOrderMessage = () => {
-  return useMutation({
-    mutationFn: ({ customerId, preOrderId }: { customerId: string; preOrderId: string }) =>
-      addressApi.sendPreOrderMessage(customerId, preOrderId),
-  });
-};
 
 export const useUpdateCustomerName = () => {
   const queryClient = useQueryClient();

@@ -10,7 +10,6 @@ import {
   useCreateAddress, 
   useUpdateAddress, 
   useDeliveryArea,
-  useSendPreOrderMessage,
   useUpdateCustomerName,
   useSetDefaultAddress 
 } from '@/hooks/useAddressQueries';
@@ -95,7 +94,6 @@ export function AddressRegistration() {
   const { data: deliveryAreaData } = useDeliveryArea();
   const createAddressMutation = useCreateAddress();
   const updateAddressMutation = useUpdateAddress();
-  const sendPreOrderMutation = useSendPreOrderMessage();
   const updateCustomerNameMutation = useUpdateCustomerName();
   const setDefaultAddressMutation = useSetDefaultAddress();
 
@@ -279,13 +277,8 @@ export function AddressRegistration() {
         );
       }
 
-      // If updating for a pre-order, notify backend
-      if (preOrderId && customer) {
-        await sendPreOrderMutation.mutateAsync({
-          customerId: customer.id,
-          preOrderId,
-        });
-      }
+      // Note: If updating for a pre-order, the backend automatically
+      // recreates the preOrder with the new address when it's created
       
       resetForm();
       

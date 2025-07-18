@@ -476,4 +476,114 @@ export class PreOrderWorkflowService {
       logger.error('Error cleaning up expired preorders', error);
     }
   }
+  
+  /**
+   * Recreate preOrder with new address
+   * This is used when customer changes address during preorder flow
+   */
+  static async recreatePreOrderWithNewAddress(params: {
+    oldPreOrderId: number;
+    newAddressId: string;
+    whatsappNumber: string;
+  }): Promise<PreOrderWorkflowResult> {
+    try {
+      logger.info('Recreating preOrder with new address', params);
+      
+      // Get the old preOrder with all details
+      const oldPreOrder = await prisma.preOrder.findUnique({
+        where: { id: params.oldPreOrderId },
+        include: {
+          orderItems: {
+            include: {
+              product: true,
+              productVariant: true,
+              productModifiers: true,
+              selectedPizzaCustomizations: {
+                include: {
+                  pizzaCustomization: true
+                }
+              }
+            }
+          }
+        }
+      });
+      
+      if (!oldPreOrder) {
+        throw new BusinessLogicError(
+          ErrorCode.ORDER_NOT_FOUND,
+          'PreOrder not found',
+          { metadata: { preOrderId: params.oldPreOrderId } }
+        );
+      }
+      
+      // Get the new address
+      const newAddress = await prisma.address.findUnique({
+        where: { id: params.newAddressId },
+        include: { customer: true }
+      });
+      
+      if (!newAddress) {
+        throw new BusinessLogicError(
+          ErrorCode.ADDRESS_NOT_FOUND,
+          'Address not found',
+          { metadata: { addressId: params.newAddressId } }
+        );
+      }
+      
+      // Prepare order data from old preOrder
+      const orderData: ProcessedOrderData = {
+        orderItems: oldPreOrder.orderItems.map(item => ({
+          productId: item.productId,
+          productVariantId: item.productVariantId || undefined,
+          quantity: 1,
+          selectedModifiers: item.productModifiers.map(m => m.id),
+          selectedPizzaCustomizations: item.selectedPizzaCustomizations.map(pc => ({
+            pizzaCustomizationId: pc.pizzaCustomizationId,
+            half: pc.half,
+            action: pc.action
+          }))
+        })),
+        orderType: oldPreOrder.orderType as 'DELIVERY' | 'TAKE_AWAY',
+        scheduledAt: oldPreOrder.scheduledAt || undefined,
+        deliveryInfo: {
+          name: newAddress.name,
+          street: newAddress.street,
+          number: newAddress.number,
+          interiorNumber: newAddress.interiorNumber,
+          neighborhood: newAddress.neighborhood,
+          city: newAddress.city,
+          state: newAddress.state,
+          zipCode: newAddress.zipCode,
+          country: newAddress.country,
+          deliveryInstructions: newAddress.deliveryInstructions,
+          latitude: newAddress.latitude?.toNumber() || null,
+          longitude: newAddress.longitude?.toNumber() || null
+        }
+      };
+      
+      // Discard the old preOrder
+      const orderManagementService = new OrderManagementService();
+      await orderManagementService.discardPreOrder(params.oldPreOrderId);
+      
+      // Delete old token
+      const tokenKeys = await redisService.keys(`${this.TOKEN_PREFIX}*`);
+      for (const key of tokenKeys) {
+        const storedPreOrderId = await redisService.get(key);
+        if (storedPreOrderId === params.oldPreOrderId.toString()) {
+          await redisService.del(key);
+          break;
+        }
+      }
+      
+      // Create new preOrder with new address
+      return await this.createAndNotify({
+        orderData,
+        customerId: newAddress.customerId,
+        whatsappNumber: params.whatsappNumber
+      });
+    } catch (error) {
+      logger.error('Error recreating preOrder with new address', error);
+      throw error;
+    }
+  }
 }
