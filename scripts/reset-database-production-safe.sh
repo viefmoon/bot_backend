@@ -107,11 +107,15 @@ fi
 # Paso 3: Limpiar la base de datos completamente
 print_step "Limpiando la base de datos..."
 
-# Método 1: Intentar eliminar y recrear la base de datos (requiere permisos)
-print_step "Intentando recrear la base de datos..."
-PGPASSWORD=$(echo $DATABASE_URL | sed -n 's/.*:\/\/[^:]*:\([^@]*\)@.*/\1/p') psql -U $DB_USER -h $DB_HOST -p $DB_PORT -d postgres -c "DROP DATABASE IF EXISTS $DB_NAME;" 2>/dev/null || {
-    print_warning "No se pudo eliminar la base de datos (permisos limitados)"
-    print_step "Usando método alternativo: eliminando todas las tablas..."
+# Verificar si la base de datos existe
+DB_EXISTS=$(PGPASSWORD=$(echo $DATABASE_URL | sed -n 's/.*:\/\/[^:]*:\([^@]*\)@.*/\1/p') psql -U $DB_USER -h $DB_HOST -p $DB_PORT -d postgres -tAc "SELECT 1 FROM pg_database WHERE datname='$DB_NAME'" 2>/dev/null)
+
+if [ "$DB_EXISTS" == "1" ]; then
+    # La base de datos existe, intentar eliminarla
+    print_step "Intentando eliminar la base de datos existente..."
+    PGPASSWORD=$(echo $DATABASE_URL | sed -n 's/.*:\/\/[^:]*:\([^@]*\)@.*/\1/p') psql -U $DB_USER -h $DB_HOST -p $DB_PORT -d postgres -c "DROP DATABASE IF EXISTS $DB_NAME;" 2>/dev/null || {
+        print_warning "No se pudo eliminar la base de datos (permisos limitados)"
+        print_step "Usando método alternativo: eliminando todas las tablas..."
     
     # Método 2: Eliminar todas las tablas manualmente
     cat > /tmp/drop_all_tables.sql << 'EOF'
@@ -146,15 +150,13 @@ BEGIN
 END $$;
 EOF
     
-    PGPASSWORD=$(echo $DATABASE_URL | sed -n 's/.*:\/\/[^:]*:\([^@]*\)@.*/\1/p') psql -U $DB_USER -h $DB_HOST -p $DB_PORT $DB_NAME < /tmp/drop_all_tables.sql
-}
-
-# Si se pudo eliminar la base de datos, recrearla
-if [ $? -eq 0 ]; then
-    PGPASSWORD=$(echo $DATABASE_URL | sed -n 's/.*:\/\/[^:]*:\([^@]*\)@.*/\1/p') psql -U $DB_USER -h $DB_HOST -p $DB_PORT -d postgres -c "CREATE DATABASE $DB_NAME;" 2>/dev/null || true
+        PGPASSWORD=$(echo $DATABASE_URL | sed -n 's/.*:\/\/[^:]*:\([^@]*\)@.*/\1/p') psql -U $DB_USER -h $DB_HOST -p $DB_PORT $DB_NAME < /tmp/drop_all_tables.sql
+    }
+else
+    print_warning "La base de datos no existe, se creará una nueva"
 fi
 
-print_success "Base de datos limpiada"
+print_success "Preparación de base de datos completada"
 
 # Paso 4: Eliminar el historial de migraciones
 print_step "Eliminando historial de migraciones..."
@@ -185,7 +187,40 @@ fi
 
 print_success "SQL de migración generado"
 
-# Paso 6: Aplicar la migración manualmente
+# Paso 6: Verificar que la base de datos existe antes de aplicar migración
+print_step "Verificando que la base de datos existe..."
+DB_EXISTS=$(PGPASSWORD=$(echo $DATABASE_URL | sed -n 's/.*:\/\/[^:]*:\([^@]*\)@.*/\1/p') psql -U $DB_USER -h $DB_HOST -p $DB_PORT -d postgres -tAc "SELECT 1 FROM pg_database WHERE datname='$DB_NAME'" 2>/dev/null)
+
+if [ "$DB_EXISTS" != "1" ]; then
+    print_warning "La base de datos no existe, intentando crearla..."
+    
+    # Intentar crear como el usuario normal
+    PGPASSWORD=$(echo $DATABASE_URL | sed -n 's/.*:\/\/[^:]*:\([^@]*\)@.*/\1/p') psql -U $DB_USER -h $DB_HOST -p $DB_PORT -d postgres -c "CREATE DATABASE $DB_NAME;" 2>/dev/null || {
+        print_error "No se pudo crear la base de datos con el usuario $DB_USER"
+        print_warning "Intentando con sudo postgres..."
+        
+        # Intentar con sudo postgres
+        sudo -u postgres psql -c "CREATE DATABASE $DB_NAME;" 2>/dev/null || {
+            print_error "No se pudo crear la base de datos"
+            print_error ""
+            print_error "Por favor, ejecuta manualmente como administrador:"
+            print_error "  sudo -u postgres psql"
+            print_error "  CREATE DATABASE $DB_NAME;"
+            print_error "  GRANT ALL PRIVILEGES ON DATABASE $DB_NAME TO $DB_USER;"
+            print_error "  \\q"
+            print_error ""
+            print_error "Luego vuelve a ejecutar este script"
+            exit 1
+        }
+        
+        # Si se creó con postgres, dar permisos al usuario
+        sudo -u postgres psql -c "GRANT ALL PRIVILEGES ON DATABASE $DB_NAME TO $DB_USER;" 2>/dev/null || true
+    }
+    
+    print_success "Base de datos creada"
+fi
+
+# Aplicar la migración
 print_step "Aplicando migración inicial..."
 PGPASSWORD=$(echo $DATABASE_URL | sed -n 's/.*:\/\/[^:]*:\([^@]*\)@.*/\1/p') psql -U $DB_USER -h $DB_HOST -p $DB_PORT $DB_NAME < "$MIGRATION_DIR/migration.sql"
 
