@@ -118,7 +118,11 @@ if [ "$DB_EXISTS" == "1" ]; then
         print_step "Usando método alternativo: eliminando todas las tablas..."
         
         # Asegurar permisos antes de intentar eliminar tablas
-        sudo -u postgres psql -d $DB_NAME -c "GRANT ALL ON SCHEMA public TO $DB_USER;" 2>/dev/null || true
+        sudo -u postgres psql << EOF
+\c $DB_NAME
+GRANT ALL ON SCHEMA public TO $DB_USER;
+CREATE EXTENSION IF NOT EXISTS vector;
+EOF
     
     # Método 2: Eliminar todas las tablas manualmente
     cat > /tmp/drop_all_tables.sql << 'EOF'
@@ -234,21 +238,26 @@ EOF
 fi
 
 # Verificar y configurar permisos antes de aplicar migración
-print_step "Verificando permisos del usuario..."
-HAS_CREATE_PERMISSION=$(PGPASSWORD=$(echo $DATABASE_URL | sed -n 's/.*:\/\/[^:]*:\([^@]*\)@.*/\1/p') psql -U $DB_USER -h $DB_HOST -p $DB_PORT $DB_NAME -tAc "SELECT has_schema_privilege('$DB_USER', 'public', 'CREATE');" 2>/dev/null)
+print_step "Configurando permisos y extensiones necesarias..."
 
-if [ "$HAS_CREATE_PERMISSION" != "t" ]; then
-    print_warning "El usuario no tiene permisos CREATE, configurando..."
-    sudo -u postgres psql -d $DB_NAME << EOF
--- Dar permisos completos en el esquema public
+# Siempre ejecutar esto para asegurar que todo esté configurado correctamente
+sudo -u postgres psql << EOF
+-- Conectar a la base de datos
+\c $DB_NAME
+
+-- Dar permisos completos al usuario
 GRANT ALL ON SCHEMA public TO $DB_USER;
 GRANT CREATE ON SCHEMA public TO $DB_USER;
+ALTER SCHEMA public OWNER TO $DB_USER;
 
--- Crear extensión vector si es necesaria
+-- Crear extensión vector (requerida para embeddings)
 CREATE EXTENSION IF NOT EXISTS vector;
+
+-- Dar permisos de creación de bases de datos al usuario (útil para futuros resets)
+ALTER USER $DB_USER CREATEDB;
 EOF
-    print_success "Permisos actualizados"
-fi
+
+print_success "Permisos y extensiones configurados correctamente"
 
 # Aplicar la migración
 print_step "Aplicando migración inicial..."
