@@ -30,6 +30,10 @@ print_warning() {
     echo -e "${YELLOW}!${NC} $1"
 }
 
+print_info() {
+    echo -e "${BLUE}ℹ${NC} $1"
+}
+
 # Banner de advertencia
 echo ""
 echo "================================================"
@@ -42,7 +46,8 @@ echo "2. Hacer backup de la base de datos actual"
 echo "3. ELIMINAR completamente la base de datos"
 echo "4. Recrear la base de datos vacía"
 echo "5. Ejecutar las nuevas migraciones"
-echo "6. Reiniciar los servicios"
+echo "6. Limpiar y recompilar el proyecto"
+echo "7. Reiniciar los servicios desde cero"
 echo ""
 echo -e "${RED}TODOS LOS DATOS SERÁN ELIMINADOS${NC}"
 echo ""
@@ -274,22 +279,38 @@ print_step "Generando cliente Prisma..."
 npm run generate
 print_success "Cliente Prisma generado"
 
-# Paso 8: Generar embeddings si está configurado
+# Paso 8: Limpiar y recompilar el proyecto
+print_step "Limpiando código compilado anterior..."
+rm -rf dist/
+print_success "Código compilado eliminado"
+print_info "Esto previene errores de código obsoleto en el cache"
+
+print_step "Recompilando proyecto TypeScript..."
+npm run build
+print_success "Proyecto recompilado con código actualizado"
+
+# Paso 9: Generar embeddings si está configurado
 if grep -q "GOOGLE_AI_API_KEY=" .env && grep -q "^GOOGLE_AI_API_KEY=." .env; then
-    print_step "Generando embeddings para búsqueda semántica..."
-    npm run seed:embeddings || print_warning "No se pudieron generar embeddings"
+    print_step "Preparando generación de embeddings..."
+    print_info "Los embeddings se generarán automáticamente después de la primera sincronización del menú"
+    print_info "También puedes generarlos manualmente con: npm run seed:embeddings"
 else
-    print_warning "GOOGLE_AI_API_KEY no configurado, omitiendo embeddings"
+    print_warning "GOOGLE_AI_API_KEY no configurado, búsqueda semántica deshabilitada"
 fi
 
-# Paso 9: Reiniciar servicios
-print_step "Reiniciando servicios PM2..."
-pm2 start ecosystem.config.js
-print_success "Servicios reiniciados"
+# Paso 10: Detener servicios existentes completamente
+print_step "Deteniendo servicios PM2 existentes..."
+pm2 delete all 2>/dev/null || true
+print_success "Servicios detenidos y eliminados"
 
-# Paso 10: Verificar estado
+# Paso 11: Iniciar servicios limpios
+print_step "Iniciando servicios PM2 desde cero..."
+pm2 start ecosystem.config.js
+print_success "Servicios iniciados"
+
+# Paso 12: Verificar estado
 print_step "Verificando estado de la aplicación..."
-sleep 3
+sleep 5
 pm2 status
 
 # Resumen
@@ -300,7 +321,8 @@ echo "================================================"
 echo ""
 echo "✅ Base de datos completamente limpia"
 echo "✅ Nuevas migraciones aplicadas"
-echo "✅ Servicios reiniciados"
+echo "✅ Proyecto recompilado (sin código antiguo)"
+echo "✅ Servicios reiniciados desde cero"
 echo ""
 if [ -f ~/$BACKUP_FILE ]; then
     echo -e "${YELLOW}Backup guardado en: ~/$BACKUP_FILE${NC}"

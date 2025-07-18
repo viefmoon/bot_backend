@@ -1,6 +1,7 @@
 import { prisma } from '../../server';
 import logger from '../../common/utils/logger';
 import { SyncMetadataService } from './SyncMetadataService';
+import { EmbeddingManager } from './EmbeddingManager';
 
 interface PullChangesResponse {
   pending_orders: any[];
@@ -335,6 +336,16 @@ export class UnifiedSyncService {
         await this.processConfigData(data.config, tx);
       }
     });
+
+    // Generate embeddings after menu sync (non-blocking)
+    if (data.menu?.categories) {
+      logger.info('Triggering embedding generation after menu sync');
+      setTimeout(() => {
+        EmbeddingManager.generateEmbeddingsAfterSync().catch(error => {
+          logger.error('Failed to generate embeddings after sync:', error);
+        });
+      }, 2000); // Small delay to ensure transaction is committed
+    }
   }
 
   /**

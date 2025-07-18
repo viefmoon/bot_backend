@@ -197,7 +197,11 @@ else
         print_success "No hay migraciones pendientes"
     fi
     
-    # Compilar proyecto
+    # Limpiar y compilar proyecto
+    print_step "Limpiando código compilado anterior..."
+    rm -rf dist/
+    print_success "Código compilado eliminado"
+    
     print_step "Compilando proyecto..."
     npm run build
     print_success "Proyecto compilado"

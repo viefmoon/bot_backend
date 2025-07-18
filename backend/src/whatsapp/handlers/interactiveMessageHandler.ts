@@ -30,6 +30,8 @@ const BUTTON_ACTION_HANDLERS = new Map<string, (from: string, buttonId: string) 
   [INTERACTIVE_ACTIONS.PREORDER_DISCARD.slice(0, -1), handlePreOrderAction], // Remove trailing colon
   [INTERACTIVE_ACTIONS.PREORDER_CHANGE_ADDRESS.slice(0, -1), handlePreOrderChangeAddress], // Remove trailing colon
   ['pay_online', handleOnlinePaymentWithId],
+  ['add_new_address_preorder', handleAddNewAddressFromButton], // New handler for add new address button
+  ['select_address', handleAddressSelectionButton], // Handler for address selection buttons
 ]);
 
 const LIST_ACTIONS = {
@@ -56,17 +58,23 @@ export async function handleInteractiveMessage(
     const messageId = message.context?.id || null;
 
     if (type === "button_reply") {
+      logger.info(`Processing button_reply: ${button_reply.id}`);
+      
       // Check for address confirmation
       if (startsWithAction(button_reply.id, INTERACTIVE_ACTIONS.CONFIRM_ADDRESS)) {
+        logger.info(`Handling address confirmation: ${button_reply.id}`);
         await handleAddressConfirmation(from, button_reply.id);
       } else if (button_reply.id === INTERACTIVE_ACTIONS.CHANGE_ADDRESS) {
+        logger.info(`Handling change address`);
         await handleChangeDeliveryInfo(from);
       } else {
         // Check for action handlers by prefix
         const [actionPrefix] = button_reply.id.split(':');
+        logger.info(`Looking for handler with prefix: ${actionPrefix}`);
         const handler = BUTTON_ACTION_HANDLERS.get(actionPrefix);
         
         if (handler) {
+          logger.info(`Found handler for prefix: ${actionPrefix}`);
           await handler(from, button_reply.id);
         } else {
           logger.warn(`No handler found for button action: ${button_reply.id}`);
@@ -560,6 +568,8 @@ async function handleAddNewAddress(from: string): Promise<void> {
 }
 
 async function handleAddNewAddressForPreOrder(from: string, preOrderId: number): Promise<void> {
+  logger.info(`Handling add new address for preorder ${preOrderId} from ${from}`);
+  
   // Get customer
   const customer = await prisma.customer.findUnique({
     where: { whatsappPhoneNumber: from }
@@ -578,6 +588,8 @@ async function handleAddNewAddressForPreOrder(from: string, preOrderId: number):
   
   const updateLink = `${env.FRONTEND_BASE_URL}/address-registration/${customer.whatsappPhoneNumber}?otp=${otp}&preOrderId=${preOrderId}`;
   
+  logger.info(`Generated address registration link: ${updateLink}`);
+  
   await sendMessageWithUrlButton(
     from,
     "📍 Agregar Nueva Dirección",
@@ -585,6 +597,41 @@ async function handleAddNewAddressForPreOrder(from: string, preOrderId: number):
     "Agregar Dirección",
     updateLink
   );
+}
+
+/**
+ * Handler for add new address button (from button reply)
+ */
+async function handleAddNewAddressFromButton(from: string, buttonId: string): Promise<void> {
+  logger.info(`Handling add new address button: ${buttonId}`);
+  
+  // Extract preOrderId from buttonId (format: "add_new_address_preorder:preOrderId")
+  const parts = buttonId.split(':');
+  if (parts.length < 2) {
+    logger.error(`Invalid button ID format: ${buttonId}`);
+    await sendWhatsAppMessage(from, "❌ Error al procesar la solicitud. Por favor intenta nuevamente.");
+    return;
+  }
+  
+  const preOrderId = parseInt(parts[1], 10);
+  if (isNaN(preOrderId)) {
+    logger.error(`Invalid preOrderId in button: ${buttonId}`);
+    await sendWhatsAppMessage(from, "❌ Error al procesar la solicitud. Por favor intenta nuevamente.");
+    return;
+  }
+  
+  // Use the existing function
+  await handleAddNewAddressForPreOrder(from, preOrderId);
+}
+
+/**
+ * Handler for address selection button (from button reply)
+ */
+async function handleAddressSelectionButton(from: string, buttonId: string): Promise<void> {
+  logger.info(`Handling address selection button: ${buttonId}`);
+  
+  // Use the existing handleAddressSelection function
+  await handleAddressSelection(from, buttonId);
 }
 
 /**

@@ -15,7 +15,7 @@
     "migrate:dev": "prisma migrate dev",
     "generate": "prisma generate",
     "studio": "prisma studio",
-    "seed:embeddings": "ts-node --transpile-only scripts/generate-embeddings.ts",
+    "seed:embeddings": "node scripts/generate-embeddings.js",
     "reset-db": "./scripts/reset-db.sh",
     "postinstall": "prisma generate",
     "pm2:start": "npm run build && pm2 start ecosystem.config.js",
