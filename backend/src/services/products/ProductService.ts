@@ -72,85 +72,51 @@ export class ProductService {
   }
 
   /**
-   * Format menu for WhatsApp - Clear and readable format
+   * Format menu for WhatsApp - Simple and clean format
    */
   private static formatMenuForWhatsApp(products: any[], restaurantName: string = "Nuestro Restaurante"): string {
     let menuText = `🍽️ MENÚ ${restaurantName.toUpperCase()} 🍽️\n`;
     menuText += "━━━━━━━━━━━━━━━━━━━━━━\n\n";
 
-    // Agrupar por categoría y subcategoría
+    // Agrupar por categoría
     const productsByCategory = products.reduce((acc, product) => {
       const categoryName = product.subcategory?.category?.name || 'Sin categoría';
-      const subcategoryName = product.subcategory?.name || 'Sin subcategoría';
-      
-      if (!acc[categoryName]) acc[categoryName] = {};
-      if (!acc[categoryName][subcategoryName]) {
-        acc[categoryName][subcategoryName] = [];
-      }
-      acc[categoryName][subcategoryName].push(product);
+      if (!acc[categoryName]) acc[categoryName] = [];
+      acc[categoryName].push(product);
       return acc;
-    }, {} as Record<string, Record<string, any[]>>);
+    }, {} as Record<string, any[]>);
 
-    // Emojis simples por categoría
-    const categoryEmojis: Record<string, string> = {
-      'pizza': '🍕',
-      'pizzas': '🍕',
-      'hamburguesa': '🍔',
-      'hamburguesas': '🍔',
-      'bebida': '🥤',
-      'bebidas': '🥤',
-      'postre': '🍰',
-      'postres': '🍰'
-    };
-
-    const getEmoji = (categoryName: string): string => {
-      const lowerName = categoryName.toLowerCase();
-      for (const [key, emoji] of Object.entries(categoryEmojis)) {
-        if (lowerName.includes(key)) return emoji;
-      }
-      return '🍽️';
-    };
-
-    // Formatear por categoría y subcategoría
-    for (const [category, subcategories] of Object.entries(productsByCategory)) {
-      const emoji = getEmoji(category);
-      menuText += `${emoji} *${category.toUpperCase()}* ${emoji}\n`;
-      menuText += `──────────────────\n`;
+    // Formatear por categoría
+    for (const [category, categoryProducts] of Object.entries(productsByCategory)) {
+      menuText += `\n▪️ *${category.toUpperCase()}*\n`;
       
-      for (const [subcategory, products] of Object.entries(subcategories as Record<string, any[]>)) {
-        if (subcategory !== 'Sin subcategoría' && subcategory !== category) {
-          menuText += `\n▸ ${subcategory}\n`;
+      for (const product of categoryProducts) {
+        // Nombre del producto
+        menuText += `*${product.name}*`;
+        
+        // Precio si no tiene variantes
+        if (!product.hasVariants && product.price) {
+          menuText += ` - $${product.price.toFixed(2)}`;
+        }
+        menuText += '\n';
+        
+        // Variantes con precios
+        if (product.variants?.length > 0 && product.hasVariants) {
+          for (const variant of product.variants) {
+            menuText += `  • ${variant.name}: $${variant.price.toFixed(2)}\n`;
+          }
         }
         
-        for (const product of products) {
-          // Nombre del producto
-          menuText += `\n*${product.name}*`;
-          
-          // Precio si no tiene variantes
-          if (!product.hasVariants && product.price) {
-            menuText += ` - $${product.price.toFixed(2)}`;
-          }
-          menuText += '\n';
-          
-          // Variantes con precios
-          if (product.variants?.length > 0 && product.hasVariants) {
-            for (const variant of product.variants) {
-              menuText += `  • ${variant.name}: $${variant.price.toFixed(2)}\n`;
-            }
-          }
-          
-          // Solo mostrar modificadores si existen
-          if (product.modifierGroups?.length > 0) {
-            const hasActiveModifiers = product.modifierGroups.some((g: any) => 
-              g.productModifiers?.some((m: any) => m.isActive)
-            );
-            if (hasActiveModifiers) {
-              menuText += `  _Extras disponibles_\n`;
-            }
+        // Solo mostrar modificadores si existen
+        if (product.modifierGroups?.length > 0) {
+          const hasActiveModifiers = product.modifierGroups.some((g: any) => 
+            g.productModifiers?.some((m: any) => m.isActive)
+          );
+          if (hasActiveModifiers) {
+            menuText += `  _Extras disponibles_\n`;
           }
         }
       }
-      menuText += "\n";
     }
 
     menuText += "━━━━━━━━━━━━━━━━━━━━━━\n";
