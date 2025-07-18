@@ -193,6 +193,23 @@ server {
         proxy_cache_bypass \$http_upgrade;
     }
     
+    # Backend routes (address-registration, address-selection, etc)
+    location /backend/ {
+        proxy_pass http://localhost:$BACKEND_PORT/backend/;
+        proxy_http_version 1.1;
+        
+        # Headers importantes
+        proxy_set_header Host \$host;
+        proxy_set_header X-Real-IP \$remote_addr;
+        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto \$scheme;
+        
+        # Timeouts
+        proxy_connect_timeout 60s;
+        proxy_send_timeout 60s;
+        proxy_read_timeout 60s;
+    }
+    
     # Configuración específica para el webhook de WhatsApp
     location /api/webhook {
         proxy_pass http://localhost:$BACKEND_PORT/webhook;
