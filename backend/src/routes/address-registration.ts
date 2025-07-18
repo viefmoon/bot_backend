@@ -102,22 +102,9 @@ router.post('/create',
     await SyncMetadataService.markForSync('Customer', customer.id, 'REMOTE');
     
     // Si viene de un preOrder, actualizar la dirección del preOrder
-    logger.info('Checking for preOrderId:', {
-      queryPreOrderId: req.query.preOrderId,
-      bodyPreOrderId: req.body.preOrderId,
-      fullQuery: req.query,
-      fullBody: req.body
-    });
-    
-    // Buscar preOrderId en query params o en el body
     const preOrderId = req.query.preOrderId || req.body.preOrderId;
     if (preOrderId) {
-      logger.info(`Updating preOrder ${preOrderId} with new address ${newAddress.id}`);
-      
-      // Update preOrder with the new address
       await updatePreOrderWithAddress(parseInt(preOrderId as string), newAddress);
-    } else {
-      logger.info('No preOrderId found, treating as regular address creation');
     }
     
     // Enviar mensaje de confirmación a WhatsApp
@@ -144,7 +131,6 @@ router.post('/create',
         const welcomeMessage = WELCOME_MESSAGE_INTERACTIVE(config);
         await sendWhatsAppInteractiveMessage(customer.whatsappPhoneNumber, welcomeMessage);
       }
-      // Si es de un preOrder, no enviar nada aquí porque el frontend llamará a regenerate-confirmation
       
       // Siempre actualizar lastInteraction
       await prisma.customer.update({
@@ -397,48 +383,25 @@ router.get('/delivery-area', asyncHandler(async (_req: Request, res: Response) =
   })
 );
 
-/**
- * Estado de depuración del OTP (TEMPORAL - ELIMINAR EN PRODUCCIÓN)
- * GET /backend/address-registration/debug/otp-status
- */
-router.get('/debug/otp-status', asyncHandler(async (_req: Request, res: Response) => {
-  const stats = await OTPService.getStats();
-  res.json({ 
-    otpStats: stats,
-    message: 'Check server logs for detailed OTP information'
-  });
-}));
 
 /**
  * Helper function to recreate preOrder with new address
  */
 async function updatePreOrderWithAddress(preOrderId: number, address: Address): Promise<void> {
-  logger.info(`Recreating preOrder ${preOrderId} with new address ${address.id}`);
-  
-  // Get the preOrder to get whatsappPhoneNumber
   const preOrder = await prisma.preOrder.findUnique({
     where: { id: preOrderId }
   });
   
   if (!preOrder) {
-    logger.error(`PreOrder ${preOrderId} not found`);
     return;
   }
   
-  try {
-    // Use PreOrderWorkflowService to recreate the preOrder with new address
-    const { PreOrderWorkflowService } = await import('../services/orders/PreOrderWorkflowService');
-    await PreOrderWorkflowService.recreatePreOrderWithNewAddress({
-      oldPreOrderId: preOrderId,
-      newAddressId: address.id,
-      whatsappNumber: preOrder.whatsappPhoneNumber
-    });
-    
-    logger.info(`Successfully recreated preOrder with new address ${address.id}`);
-  } catch (error) {
-    logger.error(`Error recreating preOrder with new address:`, error);
-    throw error;
-  }
+  const { PreOrderWorkflowService } = await import('../services/orders/PreOrderWorkflowService');
+  await PreOrderWorkflowService.recreatePreOrderWithNewAddress({
+    oldPreOrderId: preOrderId,
+    newAddressId: address.id,
+    whatsappNumber: preOrder.whatsappPhoneNumber
+  });
 }
 
 export default router;

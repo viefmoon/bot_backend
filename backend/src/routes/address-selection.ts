@@ -6,6 +6,7 @@ import { asyncHandler } from '../common/middlewares/errorHandler';
 import { NotFoundError, ErrorCode } from '../common/services/errors';
 import { validationMiddleware } from '../common/middlewares/validation.middleware';
 import { SendAddressSelectionDto, UpdateAddressSelectionDto } from '../dto/address';
+import { formatAddressFull } from '../common/utils/addressFormatter';
 
 const router = Router();
 
@@ -47,7 +48,7 @@ router.post('/send',
       const otp = OTPService.generateOTP();
       await OTPService.storeOTP(customer.whatsappPhoneNumber, otp, true);
       
-      const updateLink = `${process.env.FRONTEND_BASE_URL}/address-registration/${customer.whatsappPhoneNumber}?otp=${otp}${preOrderId ? `&preOrderId=${preOrderId}` : ''}`;
+      const updateLink = `${process.env.FRONTEND_BASE_URL}/address-registration/${customer.whatsappPhoneNumber}?otp=${otp}${preOrderId ? `&preOrderId=${preOrderId}` : ''}&viewMode=form`;
       
       const { sendMessageWithUrlButton } = await import('../services/whatsapp');
       await sendMessageWithUrlButton(
@@ -75,7 +76,7 @@ router.post('/send',
         {
           type: "button",
           body: {
-            text: `📍 *Dirección de entrega:*\n${formatAddress(customer.addresses[0])}\n\n¿Deseas usar esta dirección o cambiarla?`
+            text: `📍 *Dirección de entrega:*\n${formatAddressFull(customer.addresses[0])}\n\n¿Deseas usar esta dirección o cambiarla?`
           },
           action: {
             buttons: [
@@ -216,34 +217,6 @@ router.post('/update',
 }));
 
 // Helper functions
-function formatAddress(address: any): string {
-  const parts = [];
-  
-  // Add name as the first line if available
-  if (address.name) {
-    parts.push(`*${address.name}*`);
-  }
-  
-  if (address.street && address.number) {
-    let streetLine = `${address.street} ${address.number}`;
-    if (address.interiorNumber) {
-      streetLine += ` Int. ${address.interiorNumber}`;
-    }
-    parts.push(streetLine);
-  }
-  
-  if (address.neighborhood) parts.push(address.neighborhood);
-  if (address.city && address.state) {
-    parts.push(`${address.city}, ${address.state}`);
-  }
-  
-  if (address.deliveryInstructions) {
-    parts.push(`Referencias: ${address.deliveryInstructions}`);
-  }
-  
-  return parts.join('\n');
-}
-
 function truncateText(text: string, maxLength: number): string {
   if (text.length <= maxLength) return text;
   return text.substring(0, maxLength - 3) + '...';

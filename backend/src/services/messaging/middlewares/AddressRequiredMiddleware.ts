@@ -21,8 +21,8 @@ export class AddressRequiredMiddleware implements MessageMiddleware {
         const otp = OTPService.generateOTP();
         await OTPService.storeOTP(customerId, otp, true); // true = address registration
         
-        // Crear enlace de registro
-        const registrationLink = `${env.FRONTEND_BASE_URL}/address-registration/${customerId}?otp=${otp}`;
+        // Crear enlace de registro - directo al formulario para primera vez
+        const registrationLink = `${env.FRONTEND_BASE_URL}/address-registration/${customerId}?otp=${otp}&viewMode=form`;
         
         // Enviar mensaje con botón URL
         await sendMessageWithUrlButton(

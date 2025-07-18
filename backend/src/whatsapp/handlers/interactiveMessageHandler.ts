@@ -17,6 +17,7 @@ import { env } from "../../common/config/envValidator";
 import { BusinessLogicError, ErrorCode } from "../../common/services/errors";
 import { handleWhatsAppError } from "../../common/utils/whatsappErrorHandler";
 import { getMenuResponses } from "../../services/ai/tools/handlers/sendMenuHandler";
+import { formatAddressFull, formatAddressShort, formatAddressDescription } from "../../common/utils/addressFormatter";
 
 const stripeClient = env.STRIPE_SECRET_KEY 
   ? new Stripe(env.STRIPE_SECRET_KEY, {
@@ -391,25 +392,7 @@ async function handleAddressSelection(from: string, selectionId: string): Promis
     }
     
     const selectedAddress = customer.addresses[0];
-    
-    // Format address for confirmation
-    const addressParts = [];
-    if (selectedAddress.street && selectedAddress.number) {
-      let streetLine = `${selectedAddress.street} ${selectedAddress.number}`;
-      if (selectedAddress.interiorNumber) {
-        streetLine += ` Int. ${selectedAddress.interiorNumber}`;
-      }
-      addressParts.push(streetLine);
-    }
-    if (selectedAddress.neighborhood) addressParts.push(selectedAddress.neighborhood);
-    if (selectedAddress.city && selectedAddress.state) {
-      addressParts.push(`${selectedAddress.city}, ${selectedAddress.state}`);
-    }
-    if (selectedAddress.deliveryInstructions) {
-      addressParts.push(`Referencias: ${selectedAddress.deliveryInstructions}`);
-    }
-    
-    const formattedAddress = addressParts.join('\n');
+    const formattedAddress = formatAddressFull(selectedAddress);
     
     // If we have a specific preOrderId, use it. Otherwise, check for recent preorder
     if (preOrderId) {
@@ -443,7 +426,6 @@ async function handleAddressSelection(from: string, selectionId: string): Promis
 }
 
 async function handleAddNewAddress(from: string): Promise<void> {
-  // Get customer
   const customer = await prisma.customer.findUnique({
     where: { whatsappPhoneNumber: from }
   });
@@ -456,36 +438,31 @@ async function handleAddNewAddress(from: string): Promise<void> {
     );
   }
     
-    // Check if this is for a preorder - find the most recent one
-    const preOrder = await prisma.preOrder.findFirst({
-      where: { 
-        whatsappPhoneNumber: customer.whatsappPhoneNumber,
-        createdAt: {
-          gte: new Date(Date.now() - 10 * 60 * 1000) // Last 10 minutes
-        }
-      },
-      orderBy: { createdAt: 'desc' }
-    });
-    
-    const otp = OTPService.generateOTP();
-    await OTPService.storeOTP(customer.whatsappPhoneNumber, otp, true);
-    
-    // Add viewMode=form to go directly to the form
-    const updateLink = `${env.FRONTEND_BASE_URL}/address-registration/${customer.whatsappPhoneNumber}?otp=${otp}${preOrder ? `&preOrderId=${preOrder.id}` : ''}&viewMode=form`;
-    
-    await sendMessageWithUrlButton(
-      from,
-      "📍 Agregar Nueva Dirección",
-      "Haz clic en el botón de abajo para registrar una nueva dirección de entrega.",
-      "Agregar Dirección",
-      updateLink
-    );
+  const preOrder = await prisma.preOrder.findFirst({
+    where: { 
+      whatsappPhoneNumber: customer.whatsappPhoneNumber,
+      createdAt: {
+        gte: new Date(Date.now() - 10 * 60 * 1000)
+      }
+    },
+    orderBy: { createdAt: 'desc' }
+  });
+  
+  const otp = OTPService.generateOTP();
+  await OTPService.storeOTP(customer.whatsappPhoneNumber, otp, true);
+  
+  const updateLink = `${env.FRONTEND_BASE_URL}/address-registration/${customer.whatsappPhoneNumber}?otp=${otp}${preOrder ? `&preOrderId=${preOrder.id}` : ''}&viewMode=form`;
+  
+  await sendMessageWithUrlButton(
+    from,
+    "📍 Agregar Nueva Dirección",
+    "Haz clic en el botón de abajo para registrar una nueva dirección de entrega.",
+    "Agregar Dirección",
+    updateLink
+  );
 }
 
 async function handleAddNewAddressForPreOrder(from: string, preOrderId: number): Promise<void> {
-  logger.info(`Handling add new address for preorder ${preOrderId} from ${from}`);
-  
-  // Get customer
   const customer = await prisma.customer.findUnique({
     where: { whatsappPhoneNumber: from }
   });
@@ -501,10 +478,7 @@ async function handleAddNewAddressForPreOrder(from: string, preOrderId: number):
   const otp = OTPService.generateOTP();
   await OTPService.storeOTP(customer.whatsappPhoneNumber, otp, true);
   
-  // Add viewMode=form to go directly to the form
   const updateLink = `${env.FRONTEND_BASE_URL}/address-registration/${customer.whatsappPhoneNumber}?otp=${otp}&preOrderId=${preOrderId}&viewMode=form`;
-  
-  logger.info(`Generated address registration link: ${updateLink}`);
   
   await sendMessageWithUrlButton(
     from,
@@ -519,24 +493,18 @@ async function handleAddNewAddressForPreOrder(from: string, preOrderId: number):
  * Handler for add new address button (from button reply)
  */
 async function handleAddNewAddressFromButton(from: string, buttonId: string): Promise<void> {
-  logger.info(`Handling add new address button: ${buttonId}`);
-  
-  // Extract preOrderId from buttonId (format: "add_new_address_preorder:preOrderId")
   const parts = buttonId.split(':');
   if (parts.length < 2) {
-    logger.error(`Invalid button ID format: ${buttonId}`);
     await sendWhatsAppMessage(from, "❌ Error al procesar la solicitud. Por favor intenta nuevamente.");
     return;
   }
   
   const preOrderId = parseInt(parts[1], 10);
   if (isNaN(preOrderId)) {
-    logger.error(`Invalid preOrderId in button: ${buttonId}`);
     await sendWhatsAppMessage(from, "❌ Error al procesar la solicitud. Por favor intenta nuevamente.");
     return;
   }
   
-  // Use the existing function
   await handleAddNewAddressForPreOrder(from, preOrderId);
 }
 
@@ -544,9 +512,6 @@ async function handleAddNewAddressFromButton(from: string, buttonId: string): Pr
  * Handler for address selection button (from button reply)
  */
 async function handleAddressSelectionButton(from: string, buttonId: string): Promise<void> {
-  logger.info(`Handling address selection button: ${buttonId}`);
-  
-  // Use the existing handleAddressSelection function
   await handleAddressSelection(from, buttonId);
 }
 
@@ -685,26 +650,6 @@ async function handlePreOrderChangeAddress(from: string, buttonId: string): Prom
   });
 }
 
-// Helper function to format address for display
-function formatAddressShort(address: any): string {
-  const parts = [];
-  if (address.name) parts.push(`*${address.name}*`);
-  parts.push(`${address.street} ${address.number}${address.interiorNumber ? ` Int. ${address.interiorNumber}` : ''}`);
-  if (address.neighborhood) parts.push(address.neighborhood);
-  parts.push(`${address.city}, ${address.state}`);
-  return parts.join('\n');
-}
-
-function formatAddressDescription(address: any): string {
-  const parts = [];
-  if (address.street && address.number) {
-    parts.push(`${address.street} ${address.number}`);
-  }
-  if (address.neighborhood) parts.push(address.neighborhood);
-  if (address.city) parts.push(address.city);
-  if (address.isDefault) parts.push('(Principal)');
-  return parts.join(', ');
-}
 
 /**
  * Handles preorder actions (confirm/discard) using the new token-based system

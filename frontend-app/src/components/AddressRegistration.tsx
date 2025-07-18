@@ -61,11 +61,10 @@ export function AddressRegistration() {
       try {
         const parsed = JSON.parse(storedData);
         if (parsed.state?.formData?.references !== undefined) {
-          console.log('Clearing old localStorage data with references field');
           localStorage.removeItem('address-registration-storage');
         }
       } catch (e) {
-        console.error('Error parsing localStorage:', e);
+        // Ignore parse errors
       }
     }
     
@@ -181,9 +180,6 @@ export function AddressRegistration() {
   };
 
   const handleSubmit = async (data: AddressFormData) => {
-    console.log('Submit called with data:', data);
-    console.log('Current form data:', formData);
-    console.log('Session data:', { customerId, otp });
     
     if (!data.name || data.name.trim() === '') {
       toast.error('Por favor ingresa un nombre para identificar esta dirección');
@@ -219,7 +215,6 @@ export function AddressRegistration() {
         longitude: data.longitude
       };
       
-      console.log('Sending address data:', addressData);
 
       if (editingAddressId) {
         // Update existing address
@@ -253,14 +248,6 @@ export function AddressRegistration() {
         );
       } else {
         // Create new address
-        console.log('Creating address with preOrderId:', preOrderId);
-        console.log('Full params:', {
-          whatsappPhoneNumber: customerId,
-          otp,
-          address: addressData,
-          preOrderId: preOrderId || undefined,
-        });
-        
         await createAddressMutation.mutateAsync({
           whatsappPhoneNumber: customerId,
           otp,
@@ -291,8 +278,6 @@ export function AddressRegistration() {
         );
       }
 
-      // Note: If updating for a pre-order, the backend automatically
-      // recreates the preOrder with the new address when it's created
       
       resetForm();
       
@@ -302,7 +287,6 @@ export function AddressRegistration() {
         setEditingAddressId(null);
       }, 1500); // Esperar un poco para que el usuario vea el mensaje de éxito
     } catch (error) {
-      console.error('Error al guardar la dirección:', error);
       const errorMessage = error instanceof Error ? error.message : 'Hubo un error al guardar la dirección';
       toast.error(
         <div className="flex items-center">
@@ -333,16 +317,8 @@ export function AddressRegistration() {
 
   const handleUpdateCustomerName = async (firstName: string, lastName: string) => {
     try {
-      console.log('Updating customer name:', { firstName, lastName, customerId, otp });
-      console.log('Full params being sent:', {
-        whatsappPhoneNumber: customerId,
-        otp,
-        firstName,
-        lastName,
-      });
       
       if (!customerId || !otp) {
-        console.error('Missing required data:', { customerId, otp });
         toast.error('Información de sesión no válida. Por favor, recarga la página.');
         return;
       }
@@ -354,10 +330,8 @@ export function AddressRegistration() {
         lastName,
       });
       
-      console.log('Update result:', result);
       
       if (result.success && result.customer) {
-        console.log('Updated customer:', result.customer);
         
         // Update the customer state with the new data
         const updatedCustomer = {
@@ -376,7 +350,6 @@ export function AddressRegistration() {
         }
       }
     } catch (error) {
-      console.error('Error updating customer name:', error);
       
       let errorMessage = 'Error al actualizar tu información';
       
@@ -410,7 +383,6 @@ export function AddressRegistration() {
           }
         } catch {
           // La API de permisos no está disponible en todos los navegadores, continuar
-          console.log('Permissions API not available');
         }
       }
 
@@ -425,7 +397,6 @@ export function AddressRegistration() {
           toast.success('Ubicación obtenida exitosamente');
         },
         (error) => {
-          console.error('Geolocation error:', error);
           setIsGettingLocation(false);
           
           // Manejar diferentes tipos de error
@@ -450,20 +421,24 @@ export function AddressRegistration() {
         }
       );
     } catch (error) {
-      console.error('Unexpected error:', error);
       setIsGettingLocation(false);
       toast.error(t('geolocation.unknownError'));
     }
   };
 
   // Si el usuario tiene direcciones, mostrar la lista primero
+  // PERO respetar si viewMode viene de la URL
   useEffect(() => {
-    if (customer?.addresses && customer.addresses.length > 0) {
-      setViewMode('list');
-    } else {
-      setViewMode('form');
+    // Solo cambiar viewMode si no se especificó en la URL
+    const urlViewMode = searchParams.get('viewMode');
+    if (!urlViewMode) {
+      if (customer?.addresses && customer.addresses.length > 0) {
+        setViewMode('list');
+      } else {
+        setViewMode('form');
+      }
     }
-  }, [customer?.addresses?.length]);
+  }, [customer?.addresses?.length, searchParams]);
 
   const selectedLocation = formData.latitude && formData.longitude 
     ? { lat: formData.latitude, lng: formData.longitude } 
@@ -527,15 +502,6 @@ export function AddressRegistration() {
     );
   }
 
-  // Debug logs
-  console.log('Render state:', {
-    customer,
-    hasFirstName: customer?.firstName,
-    hasLastName: customer?.lastName,
-    shouldShowNameForm: customer && (!customer.firstName || !customer.lastName),
-    shouldShowAddressForm: customer && customer.firstName && customer.lastName,
-    viewMode
-  });
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-orange-50 via-red-50 to-pink-50">

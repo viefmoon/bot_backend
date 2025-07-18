@@ -488,8 +488,6 @@ export class PreOrderWorkflowService {
     whatsappNumber: string;
   }): Promise<PreOrderWorkflowResult> {
     try {
-      logger.info('Recreating preOrder with new address', params);
-      
       // Get the old preOrder with all details
       const oldPreOrder = await prisma.preOrder.findUnique({
         where: { id: params.oldPreOrderId },
