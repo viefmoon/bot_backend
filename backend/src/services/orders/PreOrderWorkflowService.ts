@@ -54,6 +54,7 @@ export class PreOrderWorkflowService {
         orderType: params.orderData.orderType,
         scheduledAt: params.orderData.scheduledAt || undefined,
         whatsappPhoneNumber: params.whatsappNumber,
+        deliveryInfo: params.orderData.deliveryInfo,
       });
       
       const actionToken = await this.generateActionToken(preOrderResult.preOrderId);

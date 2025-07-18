@@ -148,23 +148,29 @@ export class PreOrderService {
 
       // Get delivery info if it's a delivery order
       let deliveryInfo = null;
-      if (orderType === 'DELIVERY' && customer) {
-        const customerWithAddresses = await prisma.customer.findUnique({
-          where: { id: customer.id },
-          include: { 
-            addresses: { 
-              where: { deletedAt: null },
-              orderBy: [
-                { isDefault: 'desc' },  // First priority: default address
-                { createdAt: 'desc' }   // Second priority: most recent
-              ]
-            } 
+      if (orderType === 'DELIVERY') {
+        // If deliveryInfo was provided (e.g., when recreating preOrder with new address), use it
+        if (inputDeliveryInfo) {
+          deliveryInfo = inputDeliveryInfo;
+        } else if (customer) {
+          // Otherwise, get the default address
+          const customerWithAddresses = await prisma.customer.findUnique({
+            where: { id: customer.id },
+            include: { 
+              addresses: { 
+                where: { deletedAt: null },
+                orderBy: [
+                  { isDefault: 'desc' },  // First priority: default address
+                  { createdAt: 'desc' }   // Second priority: most recent
+                ]
+              } 
+            }
+          });
+          
+          // Will get the default address if exists, otherwise the most recent one
+          if (customerWithAddresses?.addresses?.[0]) {
+            deliveryInfo = customerWithAddresses.addresses[0];
           }
-        });
-        
-        // Will get the default address if exists, otherwise the most recent one
-        if (customerWithAddresses?.addresses?.[0]) {
-          deliveryInfo = customerWithAddresses.addresses[0];
         }
       }
 
