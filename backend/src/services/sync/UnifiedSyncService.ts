@@ -19,7 +19,12 @@ interface LocalSystemResponse {
     businessHours: any[];
     lastUpdated: string;
   };
+  // Direct structure from local system (alternative format)
+  restaurantConfig?: any;
+  businessHours?: any[];
+  categories?: any[];
   timestamp?: string;
+  lastUpdated?: string;
 }
 
 export class UnifiedSyncService {
@@ -27,16 +32,45 @@ export class UnifiedSyncService {
    * Process restaurant data pushed from local system
    */
   static async processRestaurantDataPush(data: LocalSystemResponse): Promise<boolean> {
-    logger.info('Processing restaurant data push');
+    logger.info('Processing restaurant data push', {
+      hasDirectConfig: !!data.restaurantConfig,
+      hasDirectBusinessHours: !!data.businessHours,
+      hasNestedConfig: !!data.config,
+      hasMenu: !!data.menu || !!data.categories
+    });
     
     try {
+      // Normalize the data structure to handle both formats
+      const normalizedData: LocalSystemResponse = {
+        ...data
+      };
+      
+      // If data comes with direct structure, normalize it
+      if (!normalizedData.config && (data.restaurantConfig || data.businessHours)) {
+        normalizedData.config = {
+          restaurantConfig: data.restaurantConfig,
+          businessHours: data.businessHours || [],
+          lastUpdated: data.lastUpdated || new Date().toISOString()
+        };
+      }
+      
+      if (!normalizedData.menu && data.categories) {
+        normalizedData.menu = {
+          categories: data.categories,
+          lastUpdated: data.lastUpdated || new Date().toISOString()
+        };
+      }
+      
       // Check if data has changed
       const existingConfig = await prisma.restaurantConfig.findFirst();
       const existingMenu = await prisma.category.findMany();
       
-      // Simple change detection (you can make this more sophisticated)
-      const configChanged = JSON.stringify(existingConfig) !== JSON.stringify(data.config?.restaurantConfig);
-      const menuChanged = existingMenu.length !== data.menu?.categories?.length;
+      // Simple change detection
+      const configData = normalizedData.config?.restaurantConfig;
+      const categoriesData = normalizedData.menu?.categories;
+      
+      const configChanged = !existingConfig || JSON.stringify(existingConfig) !== JSON.stringify(configData);
+      const menuChanged = !categoriesData || existingMenu.length !== categoriesData.length;
       
       if (!configChanged && !menuChanged) {
         logger.info('No changes detected in restaurant data');
@@ -44,7 +78,7 @@ export class UnifiedSyncService {
       }
       
       // Process the data
-      await this.processRestaurantData(data);
+      await this.processRestaurantData(normalizedData);
       logger.info('Restaurant data processed successfully');
       return true;
     } catch (error) {
@@ -254,14 +288,25 @@ export class UnifiedSyncService {
    * Process and save restaurant data received from local system
    */
   static async processRestaurantData(data: LocalSystemResponse): Promise<void> {
+    logger.info('Processing restaurant data', {
+      hasMenu: !!data.menu,
+      hasConfig: !!data.config,
+      menuCategoriesCount: data.menu?.categories?.length || 0,
+      configHasRestaurantConfig: !!data.config?.restaurantConfig,
+      configHasBusinessHours: !!data.config?.businessHours,
+      businessHoursCount: data.config?.businessHours?.length || 0
+    });
+    
     await prisma.$transaction(async (tx) => {
       // Process menu data
       if (data.menu?.categories) {
+        logger.info('Processing menu data with categories:', data.menu.categories.length);
         await this.processMenuData(data.menu.categories, tx);
       }
 
       // Process configuration data
       if (data.config) {
+        logger.info('Processing configuration data');
         await this.processConfigData(data.config, tx);
       }
     });
@@ -528,6 +573,12 @@ export class UnifiedSyncService {
    */
   private static async processConfigData(configData: any, tx: any): Promise<void> {
     const { restaurantConfig, businessHours } = configData;
+    
+    logger.info('Processing config data', {
+      hasRestaurantConfig: !!restaurantConfig,
+      hasBusinessHours: !!businessHours,
+      businessHoursCount: businessHours?.length || 0
+    });
 
     // Upsert restaurant config
     await tx.restaurantConfig.upsert({

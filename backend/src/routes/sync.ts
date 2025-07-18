@@ -14,17 +14,6 @@ router.post('/push-restaurant-data', apiKeyAuthMiddleware, asyncHandler(async (r
       hasConfig: !!req.body.config
     });
     
-    // Validate request body
-    if (!req.body.menu || !req.body.config) {
-      return res.status(400).json({
-        error: {
-          code: 'INVALID_REQUEST',
-          message: 'Missing menu or config data',
-          details: {}
-        }
-      });
-    }
-    
     // Process the restaurant data
     const wasUpdated = await UnifiedSyncService.processRestaurantDataPush(req.body);
     
