@@ -108,7 +108,14 @@ export class ProductService {
       menuText += `\n▪️ *${category.toUpperCase()}*\n`;
       
       // Productos ya vienen ordenados por sortOrder desde la consulta
-      for (const product of (data as any).products) {
+      for (let i = 0; i < (data as any).products.length; i++) {
+        const product = (data as any).products[i];
+        
+        // Agregar separación entre productos (excepto el primero)
+        if (i > 0) {
+          menuText += '─────────\n';
+        }
+        
         menuText += `${product.name}`;
         
         // Precio si no tiene variantes
@@ -124,20 +131,19 @@ export class ProductService {
           }
         }
         
-        // Mostrar modificadores si existen
+        // Mostrar todos los modificadores agrupados
         if (product.modifierGroups?.length > 0) {
           for (const group of product.modifierGroups) {
             const activeModifiers = group.productModifiers?.filter((m: any) => m.isActive) || [];
             if (activeModifiers.length > 0) {
-              // Solo mostrar los primeros 3 modificadores para ahorrar espacio
-              const modifiersToShow = activeModifiers.slice(0, 3);
-              const modifierNames = modifiersToShow.map((m: any) => m.name).join(', ');
-              if (activeModifiers.length > 3) {
-                menuText += ` _Extras: ${modifierNames}, +${activeModifiers.length - 3} más_\n`;
-              } else {
-                menuText += ` _Extras: ${modifierNames}_\n`;
-              }
-              break; // Solo mostrar el primer grupo con modificadores
+              const modifierDetails = activeModifiers.map((m: any) => {
+                // Solo agregar precio si es mayor a 0
+                if (m.price && m.price > 0) {
+                  return `${m.name} (+$${m.price.toFixed(2)})`;
+                }
+                return m.name;
+              }).join(', ');
+              menuText += ` _Extras: ${modifierDetails}_\n`;
             }
           }
         }
