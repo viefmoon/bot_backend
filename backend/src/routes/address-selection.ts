@@ -399,10 +399,6 @@ router.post('/regenerate-confirmation',
         token
       );
       
-      await sendWhatsAppMessage(
-        customer.whatsappPhoneNumber,
-        `✅ *Dirección actualizada exitosamente*\n\nTu pedido ahora será entregado en la nueva dirección seleccionada.`
-      );
     }
     
     res.json({ 

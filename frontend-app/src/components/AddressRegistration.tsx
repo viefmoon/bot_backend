@@ -16,6 +16,7 @@ import {
 } from '@/hooks/useAddressQueries';
 import { CustomerNameForm } from '@/components/CustomerNameForm';
 import type { AddressFormData, Address } from '@/types';
+import { t } from '@/i18n';
 
 const libraries: ('places' | 'geometry')[] = ['places', 'geometry'];
 
@@ -30,6 +31,7 @@ export function AddressRegistration() {
   // Estado para controlar qué vista mostrar - MUST be before any conditional returns
   const [viewMode, setViewMode] = useState<'list' | 'form'>('list');
   const [isEditingCustomerName, setIsEditingCustomerName] = useState(false);
+  const [isGettingLocation, setIsGettingLocation] = useState(false);
   
   // Get store state and actions
   const {
@@ -251,6 +253,7 @@ export function AddressRegistration() {
           whatsappPhoneNumber: customerId,
           otp,
           address: addressData,
+          preOrderId: preOrderId || undefined,
         });
         toast.success(
           <div className="flex items-center">

@@ -21,6 +21,7 @@ import {
 import {
   UpdateCustomerNameDto
 } from '../dto/customer';
+import { Address } from '@prisma/client';
 
 const router = Router();
 
@@ -100,28 +101,42 @@ router.post('/create',
     // Mark customer for sync since addresses are part of customer data
     await SyncMetadataService.markForSync('Customer', customer.id, 'REMOTE');
     
+    // Si viene de un preOrder, actualizar la dirección del preOrder
+    const preOrderId = req.query.preOrderId || req.body.preOrderId;
+    if (preOrderId) {
+      logger.info(`Updating preOrder ${preOrderId} with new address ${newAddress.id}`);
+      
+      // Update preOrder with the new address
+      await updatePreOrderWithAddress(parseInt(preOrderId as string), newAddress);
+    }
+    
     // Enviar mensaje de confirmación a WhatsApp
     try {
       const { sendWhatsAppMessage, sendWhatsAppInteractiveMessage } = await import('../services/whatsapp');
       const { ADDRESS_REGISTRATION_SUCCESS, WELCOME_MESSAGE_INTERACTIVE } = await import('../common/config/predefinedMessages');
       const { ConfigService } = await import('../services/config/ConfigService');
       
-      // Usar whatsappPhoneNumber del customer autenticado
-      await sendWhatsAppMessage(
-        customer.whatsappPhoneNumber,
-        ADDRESS_REGISTRATION_SUCCESS(newAddress)
-      );
+      // Verificar si viene de un preOrder (el frontend lo pasa como query param)
+      const isFromPreOrder = preOrderId;
       
-      // Pequeño retraso para asegurar el orden correcto de mensajes
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      if (!isFromPreOrder) {
+        // Solo enviar estos mensajes si NO es parte de un preorder
+        await sendWhatsAppMessage(
+          customer.whatsappPhoneNumber,
+          ADDRESS_REGISTRATION_SUCCESS(newAddress)
+        );
+        
+        // Pequeño retraso para asegurar el orden correcto de mensajes
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        
+        // Enviar mensaje de bienvenida
+        const config = ConfigService.getConfig();
+        const welcomeMessage = WELCOME_MESSAGE_INTERACTIVE(config);
+        await sendWhatsAppInteractiveMessage(customer.whatsappPhoneNumber, welcomeMessage);
+      }
+      // Si es de un preOrder, no enviar nada aquí porque el frontend llamará a regenerate-confirmation
       
-      // Enviar mensaje de bienvenida inmediatamente después
-      const config = ConfigService.getConfig();
-      const welcomeMessage = WELCOME_MESSAGE_INTERACTIVE(config);
-      await sendWhatsAppInteractiveMessage(customer.whatsappPhoneNumber, welcomeMessage);
-      
-      // Marcar que el mensaje de bienvenida fue enviado para evitar duplicados
-      // Actualizar lastInteraction a la hora actual para prevenir la detección de isNewConversation
+      // Siempre actualizar lastInteraction
       await prisma.customer.update({
         where: { id: customer.id },
         data: { 
@@ -383,5 +398,46 @@ router.get('/debug/otp-status', asyncHandler(async (_req: Request, res: Response
     message: 'Check server logs for detailed OTP information'
   });
 }));
+
+/**
+ * Helper function to update preOrder with new address
+ */
+async function updatePreOrderWithAddress(preOrderId: number, address: Address): Promise<void> {
+  logger.info(`Updating preOrder ${preOrderId} with address ${address.id}`);
+  
+  // Get the preOrder to check if it has delivery info
+  const preOrder = await prisma.preOrder.findUnique({
+    where: { id: preOrderId },
+    include: { deliveryInfo: true }
+  });
+  
+  if (!preOrder) {
+    logger.error(`PreOrder ${preOrderId} not found`);
+    return;
+  }
+  
+  // Create delivery info data from the address
+  const deliveryInfoData = {
+    name: address.name,
+    street: address.street,
+    number: address.number,
+    interiorNumber: address.interiorNumber,
+    neighborhood: address.neighborhood,
+    city: address.city,
+    state: address.state,
+    zipCode: address.zipCode,
+    country: address.country,
+    deliveryInstructions: address.deliveryInstructions,
+    latitude: address.latitude?.toNumber(),
+    longitude: address.longitude?.toNumber(),
+    recipientName: null,
+    recipientPhone: null
+  };
+  
+  // Update or create delivery info for the preOrder
+  await DeliveryInfoService.updatePreOrderDeliveryInfo(preOrderId, deliveryInfoData);
+  
+  logger.info(`Successfully updated preOrder ${preOrderId} with address ${address.id}`);
+}
 
 export default router;
