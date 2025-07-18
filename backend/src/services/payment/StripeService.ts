@@ -98,29 +98,46 @@ export class StripeService {
   private static async handleCompletedCheckout(session: Stripe.Checkout.Session): Promise<void> {
     logger.info('Checkout session completed:', session.id);
     
-    // Update order with stripe session ID
     if (session.metadata?.orderId) {
-      await prisma.order.update({
-        where: { id: session.metadata.orderId },
-        data: {
-          stripeSessionId: session.id
+      // Find existing payment record with this session ID
+      const existingPayment = await prisma.payment.findFirst({
+        where: {
+          orderId: session.metadata.orderId,
+          stripePaymentId: session.id
         }
       });
       
-      // Create payment record
-      await prisma.payment.create({
-        data: {
-          orderId: session.metadata.orderId,
-          amount: session.amount_total! / 100, // Convert from cents
-          paymentMethod: 'CREDIT_CARD',
-          status: 'PAID',
-          stripePaymentId: session.payment_intent as string,
-          metadata: {
-            sessionId: session.id,
-            customerEmail: session.customer_details?.email
+      if (existingPayment) {
+        // Update existing payment to PAID
+        await prisma.payment.update({
+          where: { id: existingPayment.id },
+          data: {
+            status: 'PAID',
+            stripePaymentId: session.payment_intent as string,
+            metadata: {
+              sessionId: session.id,
+              customerEmail: session.customer_details?.email,
+              completedAt: new Date().toISOString()
+            }
           }
-        }
-      });
+        });
+      } else {
+        // This shouldn't happen as payment should be created when session starts
+        // But create it just in case
+        await prisma.payment.create({
+          data: {
+            orderId: session.metadata.orderId,
+            amount: session.amount_total! / 100, // Convert from cents
+            paymentMethod: 'STRIPE',
+            status: 'PAID',
+            stripePaymentId: session.payment_intent as string,
+            metadata: {
+              sessionId: session.id,
+              customerEmail: session.customer_details?.email
+            }
+          }
+        });
+      }
       
       logger.info(`Order ${session.metadata.orderId} payment recorded`);
     }

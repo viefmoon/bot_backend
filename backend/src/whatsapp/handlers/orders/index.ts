@@ -4,10 +4,7 @@
  */
 
 // Order confirmation moved to OrderManagementService
-
-export { 
-  handleOrderCancellation 
-} from './cancellationHandler';
+// Order cancellation functionality has been removed
 
 export {
   generateProductSummary,

@@ -162,7 +162,7 @@ export class UnifiedSyncService {
     // Transform to expected format
     return orders.map(order => ({
       id: order.id,
-      dailyNumber: order.dailyNumber,
+      shiftOrderNumber: order.shiftOrderNumber,
       orderType: order.orderType,
       orderStatus: order.orderStatus,
       paymentStatus: order.payments[0]?.status || 'PENDING',
@@ -719,7 +719,7 @@ export class UnifiedSyncService {
    * Marks them as no longer pending synchronization
    */
   static async confirmSyncedItems(
-    confirmedOrders: Array<{ orderId: string; dailyNumber: number }>,
+    confirmedOrders: Array<{ orderId: string; shiftOrderNumber: number }>,
     customerIds: string[]
   ): Promise<void> {
     logger.info('UnifiedSync: Confirming synced items', {
@@ -733,7 +733,7 @@ export class UnifiedSyncService {
     for (const order of confirmedOrders) {
       await prisma.order.update({
         where: { id: order.orderId },
-        data: { dailyNumber: order.dailyNumber }
+        data: { shiftOrderNumber: order.shiftOrderNumber }
       });
       entities.push({ entityType: 'Order', entityId: order.orderId });
     }

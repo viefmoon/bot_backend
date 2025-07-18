@@ -138,7 +138,7 @@ Error codes follow a pattern: `[PREFIX][NUMBER]`
 5. **wrapWhatsAppHandler** - Wrapper for WhatsApp message handlers
 
 ### Recent Updates (January 2025)
-- Refactored `cancellationHandler` to use `wrapWhatsAppHandler`
+- Removed order cancellation functionality entirely
 - Removed redundant try-catch from `AudioOrderController`
 - Added `WEBHOOK_VERIFICATION_FAILED` error code
 - Confirmed `INVALID_TOKEN` error message is user-friendly

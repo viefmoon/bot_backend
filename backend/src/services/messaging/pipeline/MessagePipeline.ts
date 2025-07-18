@@ -65,20 +65,10 @@ export class MessagePipeline {
         }
         
         if (response.interactiveMessage) {
-          const messageId = await sendWhatsAppInteractiveMessage(
+          await sendWhatsAppInteractiveMessage(
             context.message.from, 
             response.interactiveMessage
           );
-          
-          // Actualizar preOrder con messageId si es necesario
-          if (response.preOrderId && messageId) {
-            logger.info(`Updating pre-order ${response.preOrderId} with WhatsApp messageId: ${messageId}`);
-            await prisma.preOrder.update({
-              where: { id: response.preOrderId },
-              data: { messageId }
-            });
-            logger.info(`Pre-order ${response.preOrderId} updated successfully with messageId`);
-          }
         }
         
         if (response.confirmationMessage) {

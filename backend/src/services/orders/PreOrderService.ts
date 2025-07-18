@@ -79,7 +79,7 @@ export class PreOrderService {
         orderItems
       );
 
-      // Create pre-order data without messageId (will be added after WhatsApp message is sent)
+      // Create pre-order data
       const preOrderData: any = {
         whatsappPhoneNumber,
         orderType,

@@ -23,7 +23,6 @@ export interface UnifiedResponse {
     // IDs relacionados
     preOrderId?: number;
     orderId?: number;
-    messageId?: string;
   };
   
   // Datos procesados (para pedidos)

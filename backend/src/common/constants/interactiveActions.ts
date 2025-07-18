@@ -6,6 +6,7 @@ export const INTERACTIVE_ACTIONS = {
   // PreOrder actions
   PREORDER_CONFIRM: 'preorder_confirm:',
   PREORDER_DISCARD: 'preorder_discard:',
+  PREORDER_CHANGE_ADDRESS: 'preorder_change_address:',
   
   // Address actions
   CONFIRM_ADDRESS: 'confirm_address_',
@@ -14,7 +15,6 @@ export const INTERACTIVE_ACTIONS = {
   ADD_NEW_ADDRESS: 'add_new_address',
   
   // Order actions
-  CANCEL_ORDER: 'cancel_order',
   PAY_ONLINE: 'pay_online',
   
   // Menu and info actions

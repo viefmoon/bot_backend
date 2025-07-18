@@ -10,7 +10,6 @@ export enum ErrorType {
 export enum ErrorCode {
   // Business Logic
   ORDER_NOT_FOUND = 'BL001',
-  ORDER_CANNOT_CANCEL = 'BL003',
   RESTAURANT_CLOSED = 'BL004',
   NOT_ACCEPTING_ORDERS = 'BL005',
   PAYMENT_LINK_EXISTS = 'BL006',

@@ -250,9 +250,9 @@ Middleware Pipeline:
 
 2. **Order Flow**:
    - User message → AI extracts items → Creates PreOrder
-   - Shows summary with confirm/cancel buttons
+   - Shows summary with confirm/discard buttons
    - Confirmation converts PreOrder to Order
-   - Generates unique daily order number
+   - Shift order numbers assigned during sync (not at creation)
 
 3. **Message History Management**:
    - Full history stored for context

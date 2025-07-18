@@ -93,7 +93,7 @@ export const addressApi = {
 
   // Send pre-order message
   sendPreOrderMessage: async (customerId: string, preOrderId: string) => {
-    const { data } = await apiClient.post('/backend/address-selection/send', {
+    const { data } = await apiClient.post('/backend/address-selection/regenerate-confirmation', {
       customerId,
       preOrderId,
     });

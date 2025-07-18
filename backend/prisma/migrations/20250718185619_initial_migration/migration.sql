@@ -136,7 +136,7 @@ CREATE TABLE "ModifierGroup" (
 -- CreateTable
 CREATE TABLE "Order" (
     "id" UUID NOT NULL,
-    "dailyNumber" INTEGER,
+    "shiftOrderNumber" INTEGER,
     "orderType" "OrderType" NOT NULL,
     "orderStatus" "OrderStatus" NOT NULL DEFAULT 'PENDING',
     "subtotal" DOUBLE PRECISION NOT NULL DEFAULT 0,
@@ -145,10 +145,9 @@ CREATE TABLE "Order" (
     "estimatedDeliveryTime" TIMESTAMP(3),
     "scheduledAt" TIMESTAMP(3),
     "notes" TEXT,
-    "messageId" TEXT,
-    "stripeSessionId" TEXT,
     "isFromWhatsApp" BOOLEAN NOT NULL DEFAULT true,
-    "dailyOrderCounterId" UUID,
+    "finalizedAt" TIMESTAMP(3),
+    "shiftId" UUID,
     "userId" UUID,
     "tableId" UUID,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -242,7 +241,6 @@ CREATE TABLE "PreOrder" (
     "subtotal" DOUBLE PRECISION NOT NULL DEFAULT 0,
     "total" DOUBLE PRECISION NOT NULL DEFAULT 0,
     "whatsappPhoneNumber" TEXT NOT NULL,
-    "messageId" TEXT,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
 
@@ -377,14 +375,17 @@ CREATE TABLE "Payment" (
 );
 
 -- CreateTable
-CREATE TABLE "DailyOrderCounter" (
+CREATE TABLE "Shift" (
     "id" UUID NOT NULL,
-    "date" DATE NOT NULL,
-    "counter" INTEGER NOT NULL DEFAULT 0,
+    "shiftDate" DATE NOT NULL,
+    "shiftNumber" INTEGER NOT NULL DEFAULT 1,
+    "startTime" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "endTime" TIMESTAMP(3),
+    "orderCounter" INTEGER NOT NULL DEFAULT 0,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
 
-    CONSTRAINT "DailyOrderCounter_pkey" PRIMARY KEY ("id")
+    CONSTRAINT "Shift_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
@@ -505,7 +506,7 @@ CREATE INDEX "Address_zipCode_idx" ON "Address"("zipCode");
 CREATE UNIQUE INDEX "MessageLog_messageId_key" ON "MessageLog"("messageId");
 
 -- CreateIndex
-CREATE INDEX "Order_dailyOrderCounterId_idx" ON "Order"("dailyOrderCounterId");
+CREATE INDEX "Order_shiftId_idx" ON "Order"("shiftId");
 
 -- CreateIndex
 CREATE INDEX "Order_tableId_idx" ON "Order"("tableId");
@@ -553,7 +554,13 @@ CREATE INDEX "Payment_orderId_idx" ON "Payment"("orderId");
 CREATE INDEX "Payment_status_idx" ON "Payment"("status");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "DailyOrderCounter_date_key" ON "DailyOrderCounter"("date");
+CREATE INDEX "Shift_shiftDate_idx" ON "Shift"("shiftDate");
+
+-- CreateIndex
+CREATE INDEX "Shift_startTime_idx" ON "Shift"("startTime");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "Shift_shiftDate_shiftNumber_key" ON "Shift"("shiftDate", "shiftNumber");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "Table_tableNumber_key" ON "Table"("tableNumber");
@@ -607,7 +614,7 @@ ALTER TABLE "ProductModifier" ADD CONSTRAINT "ProductModifier_modifierGroupId_fk
 ALTER TABLE "Order" ADD CONSTRAINT "Order_customerId_fkey" FOREIGN KEY ("customerId") REFERENCES "Customer"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "Order" ADD CONSTRAINT "Order_dailyOrderCounterId_fkey" FOREIGN KEY ("dailyOrderCounterId") REFERENCES "DailyOrderCounter"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+ALTER TABLE "Order" ADD CONSTRAINT "Order_shiftId_fkey" FOREIGN KEY ("shiftId") REFERENCES "Shift"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "Order" ADD CONSTRAINT "Order_tableId_fkey" FOREIGN KEY ("tableId") REFERENCES "Table"("id") ON DELETE SET NULL ON UPDATE CASCADE;

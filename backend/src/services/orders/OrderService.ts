@@ -38,7 +38,7 @@ export class OrderService {
       
       // Use Prisma transaction for atomic operations
       const order = await prisma.$transaction(async (tx) => {
-        // Create the order without dailyNumber (will be assigned during sync)
+        // Create the order without shiftOrderNumber (will be assigned during sync)
         const newOrder = await tx.order.create({
           data: {
             orderType: createOrderDto.orderType as "DINE_IN" | "TAKE_AWAY" | "DELIVERY",
@@ -56,7 +56,7 @@ export class OrderService {
         
         // Create order items if provided
         if (createOrderDto.orderItems && createOrderDto.orderItems.length > 0) {
-          const orderItemsWithPrices = await Promise.all(
+          await Promise.all(
             createOrderDto.orderItems.map(async (item) => {
               // Validate productId exists
               if (!item.productId) {
@@ -214,6 +214,12 @@ export class OrderService {
 
   static async update(id: string, updateData: any) {
     try {
+      // Check if order is being finalized
+      const finalizedStatuses = ['COMPLETED', 'DELIVERED', 'CANCELLED'];
+      if (updateData.orderStatus && finalizedStatuses.includes(updateData.orderStatus)) {
+        updateData.finalizedAt = new Date();
+      }
+      
       const order = await prisma.order.update({
         where: { id },
         data: {
@@ -234,10 +240,6 @@ export class OrderService {
       // Re-throw other errors
       throw error;
     }
-  }
-
-  static async cancel(id: string) {
-    return this.update(id, { orderStatus: 'CANCELLED' });
   }
 
 }

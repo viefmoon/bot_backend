@@ -12,7 +12,6 @@ import {
   ProcessedOrderData,
   PreOrderWorkflowResult,
   PreOrderActionParams,
-  PreOrderSummary,
   TokenValidationResult
 } from '../../common/types/preorder.types';
 
@@ -60,19 +59,13 @@ export class PreOrderWorkflowService {
       const actionToken = await this.generateActionToken(preOrderResult.preOrderId);
       const expiresAt = new Date(Date.now() + this.TOKEN_TTL_SECONDS * 1000);
       
-      const messageId = await this.sendOrderSummaryWithButtons(
+      await this.sendOrderSummaryWithButtons(
         params.whatsappNumber, 
         preOrderResult,
-        actionToken,
-        preOrderResult.preOrderId
+        actionToken
       );
       
       await this.updateChatHistoryWithPreOrder(params.whatsappNumber, preOrderResult);
-      
-      await prisma.preOrder.update({
-        where: { id: preOrderResult.preOrderId },
-        data: { messageId }
-      });
       
       logger.info('PreOrder workflow completed', { 
         preOrderId: preOrderResult.preOrderId,
@@ -174,12 +167,11 @@ export class PreOrderWorkflowService {
     await redisService.del(key);
   }
   
-  private static async sendOrderSummaryWithButtons(
+  static async sendOrderSummaryWithButtons(
     whatsappNumber: string, 
     preOrderResult: any,
-    token: string,
-    preOrderId: number
-  ): Promise<string> {
+    token: string
+  ): Promise<void> {
     let orderSummary = generateOrderSummary(preOrderResult);
     
     // WhatsApp button messages have a 1024 character limit for the body
@@ -190,40 +182,50 @@ export class PreOrderWorkflowService {
       logger.warn(`Order summary truncated from ${orderSummary.length} to ${MAX_BODY_LENGTH} characters`);
     }
     
+    // Build buttons array
+    const buttons = [
+      {
+        type: "reply",
+        reply: {
+          id: `preorder_confirm:${token}`,
+          title: "✅ Confirmar"
+        }
+      }
+    ];
+    
+    // Add change address button only for delivery orders
+    if (preOrderResult.orderType === 'DELIVERY') {
+      buttons.push({
+        type: "reply",
+        reply: {
+          id: `preorder_change_address:${token}`,
+          title: "📍 Cambiar dirección"
+        }
+      });
+    }
+    
+    buttons.push({
+      type: "reply",
+      reply: {
+        id: `preorder_discard:${token}`,
+        title: "❌ Cancelar"
+      }
+    });
+    
     const message = {
       type: "button",
       body: {
         text: orderSummary
       },
       action: {
-        buttons: [
-          {
-            type: "reply",
-            reply: {
-              id: `preorder_confirm:${token}`,
-              title: "✅ Confirmar"
-            }
-          },
-          {
-            type: "reply",
-            reply: {
-              id: `preorder_discard:${token}`,
-              title: "❌ Cancelar"
-            }
-          }
-        ]
+        buttons: buttons
       }
     };
     
-    const messageId = `preorder_${preOrderId}_${Date.now()}`;
-    
     await WhatsAppService.sendInteractiveMessage(
       whatsappNumber, 
-      message, 
-      messageId
+      message
     );
-    
-    return messageId;
   }
   
   /**
@@ -356,7 +358,7 @@ export class PreOrderWorkflowService {
     
     logger.info('Order created successfully', { 
       orderId: order.id,
-      dailyNumber: order.dailyNumber 
+      shiftOrderNumber: order.shiftOrderNumber 
     });
     
     await orderManagementService.sendOrderConfirmation(whatsappNumber, order.id, 'confirmed');
@@ -389,7 +391,7 @@ export class PreOrderWorkflowService {
     
     await sendWhatsAppMessage(
       whatsappNumber,
-      "❌ Tu pedido ha sido cancelado y tu historial de conversación ha sido reiniciado.\n\n" +
+      "❌ Tu pedido ha sido descartado y tu historial de conversación ha sido reiniciado.\n\n" +
       "🍕 Puedes comenzar un nuevo pedido desde cero cuando gustes.\n\n" +
       "💡 *Tip:* Para hacer un pedido, simplemente escribe lo que deseas ordenar e indica si es para entrega a domicilio o recolección en el restaurante."
     );

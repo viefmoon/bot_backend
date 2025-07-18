@@ -1,17 +1,16 @@
-import { handleOrderCancellation } from "./orders/cancellationHandler";
 import { PreOrderWorkflowService } from "../../services/orders/PreOrderWorkflowService";
 import { INTERACTIVE_ACTIONS, startsWithAction, extractIdFromAction } from "../../common/constants/interactiveActions";
 import { prisma } from '../../lib/prisma';
-import { sendWhatsAppMessage, sendMessageWithUrlButton } from "../../services/whatsapp";
+import { sendWhatsAppMessage, sendMessageWithUrlButton, WhatsAppService } from "../../services/whatsapp";
 import Stripe from "stripe";
 import { OTPService } from "../../services/security/OTPService";
+import { redisService } from "../../services/redis/RedisService";
 import {
   WAIT_TIMES_MESSAGE,
   RESTAURANT_INFO_MESSAGE,
   CHATBOT_HELP_MESSAGE,
 } from "../../common/config/predefinedMessages";
 import { ConfigService } from "../../services/config/ConfigService";
-import { ProductService } from "../../services/products/ProductService";
 import logger from "../../common/utils/logger";
 import { getCurrentMexicoTime, getFormattedBusinessHours } from "../../common/utils/timeUtils";
 import { env } from "../../common/config/envValidator";
@@ -25,17 +24,15 @@ const stripeClient = env.STRIPE_SECRET_KEY
     })
   : null;
 
-// ProductService uses static methods, no need to instantiate
-
 // Map of button action prefixes to their handlers
 const BUTTON_ACTION_HANDLERS = new Map<string, (from: string, buttonId: string) => Promise<void>>([  
   [INTERACTIVE_ACTIONS.PREORDER_CONFIRM.slice(0, -1), handlePreOrderAction], // Remove trailing colon
   [INTERACTIVE_ACTIONS.PREORDER_DISCARD.slice(0, -1), handlePreOrderAction], // Remove trailing colon
+  [INTERACTIVE_ACTIONS.PREORDER_CHANGE_ADDRESS.slice(0, -1), handlePreOrderChangeAddress], // Remove trailing colon
+  ['pay_online', handleOnlinePaymentWithId],
 ]);
 
 const LIST_ACTIONS = {
-  [INTERACTIVE_ACTIONS.CANCEL_ORDER]: handleOrderCancellation,
-  [INTERACTIVE_ACTIONS.PAY_ONLINE]: handleOnlinePayment,
   [INTERACTIVE_ACTIONS.WAIT_TIMES]: handleWaitTimes,
   [INTERACTIVE_ACTIONS.VIEW_MENU]: sendMenu,
   [INTERACTIVE_ACTIONS.RESTAURANT_INFO]: handleRestaurantInfo,
@@ -61,7 +58,7 @@ export async function handleInteractiveMessage(
     if (type === "button_reply") {
       // Check for address confirmation
       if (startsWithAction(button_reply.id, INTERACTIVE_ACTIONS.CONFIRM_ADDRESS)) {
-        await handleAddressConfirmation(from, button_reply.id, messageId);
+        await handleAddressConfirmation(from, button_reply.id);
       } else if (button_reply.id === INTERACTIVE_ACTIONS.CHANGE_ADDRESS) {
         await handleChangeDeliveryInfo(from);
       } else {
@@ -78,14 +75,18 @@ export async function handleInteractiveMessage(
     } else if (type === "list_reply") {
       // Check for address selection
       if (startsWithAction(list_reply.id, INTERACTIVE_ACTIONS.SELECT_ADDRESS)) {
-        await handleAddressSelection(from, list_reply.id, messageId);
+        await handleAddressSelection(from, list_reply.id);
       } else if (list_reply.id === INTERACTIVE_ACTIONS.ADD_NEW_ADDRESS) {
-        await handleAddNewAddress(from, messageId);
+        await handleAddNewAddress(from);
+      } else if (startsWithAction(list_reply.id, 'add_new_address_preorder:')) {
+        // Handle add new address from preorder flow
+        const preOrderId = parseInt(list_reply.id.split(':')[1], 10);
+        await handleAddNewAddressForPreOrder(from, preOrderId);
       } else {
         const action = LIST_ACTIONS[list_reply.id as keyof typeof LIST_ACTIONS];
         if (action) {
           logger.info(`Executing action: ${list_reply.id}`);
-          await action(from, messageId);
+          await action(from);
         } else {
           logger.error(`No action found for: ${list_reply.id}`);
         }
@@ -100,9 +101,27 @@ export async function handleInteractiveMessage(
 }
 
 
+
+async function handleOnlinePaymentWithId(
+  customerId: string,
+  buttonId: string
+): Promise<void> {
+  // Extract orderId from buttonId (format: "pay_online:orderId")
+  const [, orderId] = buttonId.split(':');
+  if (!orderId) {
+    throw new BusinessLogicError(
+      ErrorCode.ORDER_NOT_FOUND,
+      'Invalid button ID format',
+      { userId: customerId, operation: 'handleOnlinePayment' }
+    );
+  }
+  
+  return handleOnlinePayment(customerId, orderId);
+}
+
 async function handleOnlinePayment(
   customerId: string,
-  messageId: string
+  orderId: string
 ): Promise<void> {
   if (!stripeClient) {
     throw new BusinessLogicError(
@@ -111,7 +130,7 @@ async function handleOnlinePayment(
       { userId: customerId, operation: 'handleOnlinePayment' }
     );
   }
-    const order = await prisma.order.findFirst({ where: { messageId } });
+    const order = await prisma.order.findUnique({ where: { id: orderId } });
     if (!order) {
       throw new BusinessLogicError(
         ErrorCode.ORDER_NOT_FOUND,
@@ -120,7 +139,16 @@ async function handleOnlinePayment(
       );
     }
 
-    if (order.stripeSessionId) {
+    // Check if a payment session already exists
+    const existingPayment = await prisma.payment.findFirst({
+      where: {
+        orderId: order.id,
+        paymentMethod: 'STRIPE',
+        stripePaymentId: { not: null }
+      }
+    });
+    
+    if (existingPayment) {
       throw new BusinessLogicError(
         ErrorCode.PAYMENT_LINK_EXISTS,
         'Payment link already exists for this order',
@@ -205,7 +233,7 @@ async function handleOnlinePayment(
             currency: "mxn",
             product_data: {
               name: `Orden #${
-                order.dailyNumber
+                order.shiftOrderNumber
               } - ${(await getCurrentMexicoTime()).format("DD/MM/YYYY")}`,
             },
             unit_amount: Math.round(order.total * 100),
@@ -218,10 +246,18 @@ async function handleOnlinePayment(
       cancel_url: `${env.FRONTEND_BASE_URL}/payment-cancel`,
     });
 
-    await prisma.order.update({
-      where: { id: order.id },
+    // Create payment record with Stripe session ID
+    await prisma.payment.create({
       data: {
-        stripeSessionId: session.id,
+        orderId: order.id,
+        paymentMethod: 'STRIPE',
+        amount: order.total,
+        status: 'PENDING',
+        stripePaymentId: session.id,
+        metadata: {
+          sessionUrl: session.url,
+          createdAt: new Date().toISOString()
+        }
       }
     });
 
@@ -304,17 +340,29 @@ async function handleChangeDeliveryInfo(from: string): Promise<void> {
   );
 }
 
-async function handleAddressConfirmation(from: string, confirmationId: string, messageId: string): Promise<void> {
+async function handleAddressConfirmation(from: string, confirmationId: string): Promise<void> {
   // Extract address ID from confirmation ID
   const addressId = extractIdFromAction(confirmationId, INTERACTIVE_ACTIONS.CONFIRM_ADDRESS);
   
   // This is the same as selecting an address
-  await handleAddressSelection(from, `${INTERACTIVE_ACTIONS.SELECT_ADDRESS}${addressId}`, messageId);
+  await handleAddressSelection(from, `${INTERACTIVE_ACTIONS.SELECT_ADDRESS}${addressId}`);
 }
 
-async function handleAddressSelection(from: string, selectionId: string, messageId: string): Promise<void> {
-  // Extract address ID from selection ID
-  const addressId = extractIdFromAction(selectionId, INTERACTIVE_ACTIONS.SELECT_ADDRESS);
+async function handleAddressSelection(from: string, selectionId: string): Promise<void> {
+  // Check if this is from a preorder change address flow
+  // Format can be: select_address_[addressId] or select_address_[addressId]:[preOrderId]
+  let addressId: string;
+  let preOrderId: number | null = null;
+  
+  if (selectionId.includes(':')) {
+    // This is from preorder change address flow
+    const baseId = selectionId.split(':')[0];
+    addressId = extractIdFromAction(baseId, INTERACTIVE_ACTIONS.SELECT_ADDRESS);
+    preOrderId = parseInt(selectionId.split(':')[1], 10);
+  } else {
+    // Regular address selection
+    addressId = extractIdFromAction(selectionId, INTERACTIVE_ACTIONS.SELECT_ADDRESS);
+  }
     
     // Get customer
     const customer = await prisma.customer.findUnique({
@@ -355,37 +403,124 @@ async function handleAddressSelection(from: string, selectionId: string, message
     
     const formattedAddress = addressParts.join('\n');
     
-    // Check if this is for a preorder
-    const preOrder = await prisma.preOrder.findFirst({
-      where: { 
-        whatsappPhoneNumber: customer.whatsappPhoneNumber,
-        messageId: { contains: messageId }
-      }
-    });
-    
-    if (preOrder) {
-      // Update preorder with selected address
+    // If we have a specific preOrderId, use it. Otherwise, check for recent preorder
+    if (preOrderId) {
+      // Update specific preorder with selected address
       const axios = (await import('axios')).default;
       await axios.post(`${env.FRONTEND_BASE_URL}/backend/address-selection/update`, {
-        preOrderId: preOrder.id,
+        preOrderId: preOrderId,
         addressId: selectedAddress.id,
         customerId: customer.id
       });
       
+      // Get the updated preorder and regenerate summary
+      const updatedPreOrder = await prisma.preOrder.findUnique({
+        where: { id: preOrderId },
+        include: {
+          orderItems: {
+            include: {
+              product: true,
+              productVariant: true,
+              productModifiers: true,
+              selectedPizzaCustomizations: {
+                include: { pizzaCustomization: true }
+              }
+            }
+          },
+          deliveryInfo: true
+        }
+      });
+      
+      if (updatedPreOrder) {
+        // Format the preorder for display
+        const { ProductCalculationService } = await import('../../services/orders/services/ProductCalculationService');
+        
+        // Calculate items and totals
+        const calculatedItems = await ProductCalculationService.calculateOrderItems(
+          updatedPreOrder.orderItems.map(item => ({
+            productId: item.productId,
+            productVariantId: item.productVariantId || undefined,
+            quantity: 1,
+            comments: undefined,
+            selectedModifiers: item.productModifiers.map(m => m.id),
+            selectedPizzaCustomizations: item.selectedPizzaCustomizations.map(pc => ({
+              pizzaCustomizationId: pc.pizzaCustomizationId,
+              half: pc.half,
+              action: pc.action
+            }))
+          }))
+        );
+        
+        const formattedPreOrder = {
+          preOrderId: updatedPreOrder.id,
+          orderType: updatedPreOrder.orderType,
+          items: calculatedItems.items,
+          total: calculatedItems.total,
+          deliveryInfo: updatedPreOrder.deliveryInfo,
+          scheduledAt: updatedPreOrder.scheduledAt
+        };
+        
+        // Get the token for this preorder
+        const tokenKeys = await redisService.keys('preorder:token:*');
+        let token = null;
+        for (const key of tokenKeys) {
+          const storedPreOrderId = await redisService.get(key);
+          if (storedPreOrderId === preOrderId.toString()) {
+            token = key.split(':')[2];
+            break;
+          }
+        }
+        
+        if (token) {
+          // Resend the order summary with updated address
+          await PreOrderWorkflowService.sendOrderSummaryWithButtons(
+            from,
+            formattedPreOrder,
+            token
+          );
+        }
+      }
+      
       await sendWhatsAppMessage(
         from,
-        `✅ *Dirección seleccionada exitosamente*\n\n📍 *Dirección de entrega:*\n${formattedAddress}\n\nTu pedido será entregado en esta dirección.`
+        `✅ *Dirección actualizada exitosamente*\n\n📍 *Nueva dirección de entrega:*\n${formattedAddress}`
       );
     } else {
-      // Just confirming address selection
-      await sendWhatsAppMessage(
-        from,
-        `✅ *Dirección seleccionada*\n\n📍 *Dirección de entrega:*\n${formattedAddress}\n\nEsta dirección se usará para tu próximo pedido.`
-      );
+      // Check if this is for a recent preorder
+      const preOrder = await prisma.preOrder.findFirst({
+        where: { 
+          whatsappPhoneNumber: customer.whatsappPhoneNumber,
+          createdAt: {
+            gte: new Date(Date.now() - 10 * 60 * 1000) // Last 10 minutes
+          }
+        },
+        orderBy: { createdAt: 'desc' }
+      });
+      
+      if (preOrder) {
+        // Update preorder with selected address
+        const axios = (await import('axios')).default;
+        await axios.post(`${env.FRONTEND_BASE_URL}/backend/address-selection/update`, {
+          preOrderId: preOrder.id,
+          addressId: selectedAddress.id,
+          customerId: customer.id
+        });
+        
+        await sendWhatsAppMessage(
+          from,
+          `✅ *Dirección seleccionada exitosamente*\n\n📍 *Dirección de entrega:*\n${formattedAddress}\n\nTu pedido será entregado en esta dirección.`
+        );
+      } else {
+        // Just confirming address selection
+        await sendWhatsAppMessage(
+          from,
+          `✅ *Dirección seleccionada*\n\n📍 *Dirección de entrega:*\n${formattedAddress}\n\nEsta dirección se usará para tu próximo pedido.`
+        );
+      }
     }
 }
 
-async function handleAddNewAddress(from: string, messageId: string): Promise<void> {
+async function handleAddNewAddress(from: string): Promise<void> {
   // Get customer
   const customer = await prisma.customer.findUnique({
     where: { whatsappPhoneNumber: from }
@@ -399,12 +534,15 @@ async function handleAddNewAddress(from: string, messageId: string): Promise<voi
     );
   }
     
-    // Check if this is for a preorder
+    // Check if this is for a preorder - find the most recent one
     const preOrder = await prisma.preOrder.findFirst({
       where: { 
         whatsappPhoneNumber: customer.whatsappPhoneNumber,
-        messageId: { contains: messageId }
-      }
+        createdAt: {
+          gte: new Date(Date.now() - 10 * 60 * 1000) // Last 10 minutes
+        }
+      },
+      orderBy: { createdAt: 'desc' }
     });
     
     const otp = OTPService.generateOTP();
@@ -421,13 +559,198 @@ async function handleAddNewAddress(from: string, messageId: string): Promise<voi
     );
 }
 
+async function handleAddNewAddressForPreOrder(from: string, preOrderId: number): Promise<void> {
+  // Get customer
+  const customer = await prisma.customer.findUnique({
+    where: { whatsappPhoneNumber: from }
+  });
+  
+  if (!customer) {
+    throw new BusinessLogicError(
+      ErrorCode.CUSTOMER_NOT_FOUND,
+      'Customer not found',
+      { userId: from }
+    );
+  }
+  
+  const otp = OTPService.generateOTP();
+  await OTPService.storeOTP(customer.whatsappPhoneNumber, otp, true);
+  
+  const updateLink = `${env.FRONTEND_BASE_URL}/address-registration/${customer.whatsappPhoneNumber}?otp=${otp}&preOrderId=${preOrderId}`;
+  
+  await sendMessageWithUrlButton(
+    from,
+    "📍 Agregar Nueva Dirección",
+    "Haz clic en el botón de abajo para registrar una nueva dirección de entrega para tu pedido actual.",
+    "Agregar Dirección",
+    updateLink
+  );
+}
+
+/**
+ * Handles preorder change address action
+ */
+async function handlePreOrderChangeAddress(from: string, buttonId: string): Promise<void> {
+  // Extract token from button ID
+  const parts = buttonId.split(':');
+  const token = parts[1];
+  
+  if (!token) {
+    throw new BusinessLogicError(
+      ErrorCode.INVALID_TOKEN,
+      'Invalid button format - missing token'
+    );
+  }
+  
+  // Validate token and get preOrderId
+  const key = `preorder:token:${token}`;
+  const preOrderIdStr = await redisService.get(key);
+  
+  if (!preOrderIdStr) {
+    throw new BusinessLogicError(
+      ErrorCode.INVALID_TOKEN,
+      'Token no encontrado o expirado'
+    );
+  }
+  
+  const preOrderId = parseInt(preOrderIdStr, 10);
+  
+  // Get customer
+  const customer = await prisma.customer.findUnique({
+    where: { whatsappPhoneNumber: from },
+    include: {
+      addresses: {
+        where: { deletedAt: null },
+        orderBy: [
+          { isDefault: 'desc' },
+          { createdAt: 'desc' }
+        ],
+        take: 5
+      }
+    }
+  });
+  
+  if (!customer) {
+    throw new BusinessLogicError(
+      ErrorCode.CUSTOMER_NOT_FOUND,
+      'Customer not found'
+    );
+  }
+  
+  // If no addresses, send link to add one
+  if (customer.addresses.length === 0) {
+    const otp = OTPService.generateOTP();
+    await OTPService.storeOTP(from, otp, true);
+    const updateLink = `${env.FRONTEND_BASE_URL}/address-registration/${from}?otp=${otp}&preOrderId=${preOrderId}`;
+    
+    await sendMessageWithUrlButton(
+      from,
+      "📍 Registrar Dirección",
+      "No tienes direcciones guardadas. Por favor, registra una dirección de entrega haciendo clic en el botón de abajo.",
+      "Agregar Dirección",
+      updateLink
+    );
+    return;
+  }
+  
+  // If only one address, offer to add a new one
+  if (customer.addresses.length === 1) {
+    const message = {
+      type: "button",
+      body: {
+        text: `📍 *Dirección actual:*\n${formatAddressShort(customer.addresses[0])}\n\n¿Deseas usar esta dirección o agregar una nueva?`
+      },
+      action: {
+        buttons: [
+          {
+            type: "reply",
+            reply: {
+              id: `select_address_${customer.addresses[0].id}:${preOrderId}`,
+              title: "✅ Usar esta"
+            }
+          },
+          {
+            type: "reply",
+            reply: {
+              id: `add_new_address_preorder:${preOrderId}`,
+              title: "➕ Nueva dirección"
+            }
+          }
+        ]
+      }
+    };
+    
+    await WhatsAppService.sendInteractiveMessage(from, message);
+    return;
+  }
+  
+  // Multiple addresses - send selection list
+  const sections = [
+    {
+      title: "Mis direcciones",
+      rows: customer.addresses.map((address) => ({
+        id: `select_address_${address.id}:${preOrderId}`,
+        title: address.name || `${address.street} ${address.number}`.substring(0, 24),
+        description: formatAddressDescription(address).substring(0, 72)
+      }))
+    }
+  ];
+  
+  // Add option for new address
+  sections[0].rows.push({
+    id: `add_new_address_preorder:${preOrderId}`,
+    title: "➕ Nueva dirección",
+    description: "Registrar una nueva dirección de entrega"
+  });
+  
+  await WhatsAppService.sendInteractiveMessage(from, {
+    type: "list",
+    header: {
+      type: "text",
+      text: "📍 Cambiar Dirección"
+    },
+    body: {
+      text: "Selecciona la nueva dirección de entrega para tu pedido:"
+    },
+    footer: {
+      text: "Elige una opción"
+    },
+    action: {
+      button: "Ver direcciones",
+      sections
+    }
+  });
+}
+
+// Helper function to format address for display
+function formatAddressShort(address: any): string {
+  const parts = [];
+  if (address.name) parts.push(`*${address.name}*`);
+  parts.push(`${address.street} ${address.number}${address.interiorNumber ? ` Int. ${address.interiorNumber}` : ''}`);
+  if (address.neighborhood) parts.push(address.neighborhood);
+  parts.push(`${address.city}, ${address.state}`);
+  return parts.join('\n');
+}
+
+function formatAddressDescription(address: any): string {
+  const parts = [];
+  if (address.street && address.number) {
+    parts.push(`${address.street} ${address.number}`);
+  }
+  if (address.neighborhood) parts.push(address.neighborhood);
+  if (address.city) parts.push(address.city);
+  if (address.isDefault) parts.push('(Principal)');
+  return parts.join(', ');
+}
+
 /**
  * Handles preorder actions (confirm/discard) using the new token-based system
  */
 async function handlePreOrderAction(from: string, buttonId: string): Promise<void> {
-  // Extract action and token from button ID
+  // Extract token from button ID
   // Format: preorder_confirm:token or preorder_discard:token
-  const [actionType, token] = buttonId.split(':');
+  const parts = buttonId.split(':');
+  const token = parts[1];
   
   if (!token) {
     throw new BusinessLogicError(

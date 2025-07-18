@@ -75,37 +75,49 @@ export const CHATBOT_HELP_MESSAGE = (config: RestaurantInfo): string => {
 
 Este asistente virtual está potenciado por inteligencia artificial para brindarte una experiencia fluida y natural. Aquí te explicamos cómo usarlo:
 
-🚀 *Iniciar una conversación:*
-Envía cualquier mensaje para comenzar. Recibirás opciones para:
-   📜 Consultar el menú
-   ⏱️ Ver tiempos de espera
-   🔄 Reordenar
-   ℹ️ Información del restaurante
+🚀 *Opciones disponibles:*
+Al enviar cualquier mensaje, recibirás un menú con las siguientes opciones:
+   📜 Ver Menú - Consulta nuestros productos disponibles
+   ⏱️ Tiempos de espera - Conoce el tiempo estimado de preparación
+   ℹ️ Información y horarios - Dirección, teléfonos y horarios
+   🚚 Actualizar entrega - Cambia tu dirección de entrega registrada
+   🤖 ¿Cómo usar el bot? - Esta ayuda
 
 🍽️ *Realizar un pedido:*
-Escribe o envía un audio con tu pedido. Opciones:
-   🏠 Entrega a domicilio: Incluye la dirección completa
-   🏃 Recolección en establecimiento: Indica el nombre para recoger
+1. Escribe o envía un audio con los productos que deseas, especificando:
+   - Cantidad de cada producto
+   - Detalles o especificaciones (sin cebolla, extra queso, etc.)
+   - Tipo de pedido: entrega a domicilio o recolección
+
+2. Para entrega a domicilio:
+   - Usaremos la dirección predeterminadaque registraste al inicio
+   - Si necesitas cambiarla, usa la opción "🚚 Actualizar entrega"
+
+3. Para recolección en establecimiento:
+   - Indica que es para recoger y la recolectaras con el nombre que registraste al inicio
+
 Ejemplos:
-   '2 platos principales y una bebida para entrega a Morelos 66 poniente'
-   'Un combo familiar y una ensalada para recoger, nombre: Juan Pérez'
+   '2 hamburguesas tradicionales con papas y una coca cola para entrega a domicilio'
+   'Una pizza grande especial sin piña para recoger'
 
-Una vez generado tu pedido, recibirás un mensaje de confirmación cuando lo aceptemos o un mensaje de rechazo en caso de que no podamos procesarlo.
+📝 *Proceso del pedido:*
+1. Recibirás un resumen con botones de Confirmar o Descartar
+2. Al confirmar, tu pedido será enviado al restaurante
+3. Recibirás opciones para pagar en línea o por defecto en efectivo
 
-✏️ *Modificar un pedido:*
-Usa la opción en el mensaje de confirmación, solo si aún no lo hemos aceptado.
-
-❌ *Cancelar un pedido:*
-Disponible en las opciones del mensaje de confirmación, solo se puede cancelar si aún no hemos aceptado el pedido.
-
-💳 *Pagar:*
-Genera un enlace de pago desde las opciones del mensaje de confirmación. Si no pagas en línea, el pago se realizará en efectivo al momento de la entrega.
-
-🔁 *Reordenar:*
-Selecciona 'Reordenar' en el mensaje de bienvenida para ver tus últimas 3 órdenes y poder reordenar con solo un click.
+💳 *Pago:*
+- Después de confirmar tu pedido, puedes generar un enlace de pago
+- Si no pagas en línea, el pago será en efectivo al recibir tu pedido
 
 ⚠️ *IMPORTANTE:*
-Envía un mensaje a la vez y espera la respuesta antes del siguiente para evitar confusiones.
+- Los pedidos confirmados NO se pueden modificar ni cancelar
+- Tu dirección de entrega debe estar registrada antes de ordenar
+- Envía un mensaje a la vez y espera la respuesta
+
+📞 *¿Necesitas hacer cambios en tu pedido?*
+Si necesitas modificar algo después de confirmar, comunícate directamente con el restaurante:
+${config.phoneMain ? `   📱 ${config.phoneMain}` : ''}
+${config.phoneSecondary ? `   📱 ${config.phoneSecondary}` : ''}
 
 ¡Disfruta tu experiencia con nuestro chatbot! 🍽️🤖
 `;
@@ -202,19 +214,6 @@ export const RATE_LIMIT_MESSAGE = "Has alcanzado el límite de mensajes. Por fav
 
 export const ORDER_NOT_FOUND_MESSAGE = "❌ Lo siento, no se pudo encontrar tu orden. 🚫🔍";
 
-export const ORDER_CANNOT_BE_CANCELLED_MESSAGE = (status: string): string => {
-  const statusMessages: Record<string, string> = {
-    IN_PROGRESS: "Lo sentimos, pero esta orden ya no se puede cancelar porque ya fue aceptada. ⚠️",
-    IN_PREPARATION: "Lo sentimos, pero esta orden ya está en preparación y no se puede cancelar. 👨‍🍳",
-    READY: "Lo sentimos, pero esta orden ya está preparada y no se puede cancelar. 🍽️",
-    IN_DELIVERY: "Lo sentimos, pero esta orden ya está en camino y no se puede cancelar. 🚚",
-    DELIVERED: "Lo sentimos, pero esta orden ya fue entregada y no se puede cancelar. ✅",
-    COMPLETED: "Lo sentimos, pero esta orden ya fue completada y no se puede cancelar. ✅",
-  };
-  return statusMessages[status] || "Lo sentimos, esta orden no se puede cancelar en su estado actual.";
-};
-
-export const ORDER_CANCELLED_MESSAGE = "Tu orden ha sido eliminada exitosamente. ✅";
 
 export const STRIPE_NOT_AVAILABLE_MESSAGE = "❌ Lo siento, los pagos en línea no están disponibles en este momento. Por favor, realiza el pago en efectivo al recibir tu pedido. 💵";
 

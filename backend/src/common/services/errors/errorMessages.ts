@@ -11,10 +11,6 @@ export const ERROR_MESSAGES: Record<ErrorCode, ErrorMessageConfig> = {
     user: "❌ Lo siento, no se pudo encontrar tu orden. 🔍",
     log: "Order not found"
   },
-  [ErrorCode.ORDER_CANNOT_CANCEL]: {
-    user: "⚠️ Lo siento, esta orden ya no se puede cancelar.",
-    log: "Cannot cancel order - invalid status"
-  },
   [ErrorCode.RESTAURANT_CLOSED]: {
     user: "🚫 Lo sentimos, estamos cerrados en este momento. 😴",
     log: "Restaurant is closed"

@@ -1,5 +1,5 @@
 import { prisma } from '../../../lib/prisma';
-import { Order, OrderStatus, PreOrder } from "@prisma/client";
+import { Order, OrderStatus } from "@prisma/client";
 import logger from "../../../common/utils/logger";
 import { BusinessLogicError, ErrorCode } from "../../../common/services/errors";
 import { OrderService } from "../OrderService";
@@ -123,39 +123,11 @@ export class OrderManagementService {
     return order;
   }
 
-  async cancelOrder(orderId: string): Promise<Order> {
-    const order = await prisma.order.findUnique({
+
+  
+  async getOrderById(orderId: string): Promise<Order | null> {
+    return await prisma.order.findUnique({
       where: { id: orderId },
-    });
-
-    if (!order) {
-      throw new BusinessLogicError(
-        ErrorCode.ORDER_NOT_FOUND,
-        'Order not found',
-        { metadata: { orderId } }
-      );
-    }
-
-    const cancellableStatuses: OrderStatus[] = ["PENDING", "IN_PROGRESS"];
-    if (!cancellableStatuses.includes(order.orderStatus)) {
-      throw new BusinessLogicError(ErrorCode.ORDER_CANNOT_CANCEL, 'Cannot cancel order with status: ${order.orderStatus}', { metadata: { orderId, currentStatus: order.orderStatus } });
-    }
-
-    const cancelledOrder = await prisma.order.update({
-      where: { id: orderId },
-      data: { orderStatus: 'CANCELLED' },
-    });
-
-    logger.info(`Order ${orderId} cancelled successfully`);
-    
-    await SyncMetadataService.markForSync('Order', orderId, 'REMOTE');
-    
-    return cancelledOrder;
-  }
-
-  async getOrderByMessageId(messageId: string): Promise<Order | null> {
-    return await prisma.order.findFirst({
-      where: { messageId },
       include: {
         orderItems: {
           include: {
@@ -169,22 +141,6 @@ export class OrderManagementService {
         },
         deliveryInfo: true,
       },
-    });
-  }
-
-  async getPreOrderByMessageId(messageId: string): Promise<PreOrder | null> {
-    return await prisma.preOrder.findFirst({
-      where: { messageId },
-      include: {
-        deliveryInfo: true,
-      },
-    });
-  }
-
-  async updateOrderMessageId(orderId: string, messageId: string): Promise<void> {
-    await prisma.order.update({
-      where: { id: orderId },
-      data: { messageId },
     });
   }
 
@@ -240,11 +196,9 @@ export class OrderManagementService {
         );
       }
 
-      const newMessageId = `order_${fullOrder.id}_${Date.now()}`;
-      await this.updateOrderMessageId(fullOrder.id, newMessageId);
 
       const formattedOrder = OrderFormattingService.formatOrderForWhatsApp(fullOrder, whatsappNumber);
-      const orderSummary = OrderFormattingService.generateConfirmationMessage(fullOrder, formattedOrder);
+      const orderSummary = await OrderFormattingService.generateConfirmationMessage(fullOrder, formattedOrder);
       
       if (fullOrder.orderStatus === "PENDING" || fullOrder.orderStatus === "IN_PROGRESS") {
         const message = {
@@ -261,14 +215,7 @@ export class OrderManagementService {
               {
                 type: "reply",
                 reply: {
-                  id: "cancel_order",
-                  title: "❌ Cancelar orden",
-                },
-              },
-              {
-                type: "reply",
-                reply: {
-                  id: "pay_online",
+                  id: `pay_online:${fullOrder.id}`,
                   title: "💳 Pagar en línea",
                 },
               },
@@ -276,7 +223,7 @@ export class OrderManagementService {
           },
         };
 
-        await WhatsAppService.sendInteractiveMessage(whatsappNumber, message, fullOrder.messageId || newMessageId);
+        await WhatsAppService.sendInteractiveMessage(whatsappNumber, message);
       } else {
         await sendWhatsAppMessage(whatsappNumber, orderSummary);
       }
@@ -286,46 +233,5 @@ export class OrderManagementService {
     }
   }
 
-  private async _sendOrderActionButtons(
-    whatsappNumber: string,
-    messageId: string,
-    orderStatus: OrderStatus
-  ): Promise<void> {
-    try {
-      if (orderStatus === "PENDING" || orderStatus === "IN_PROGRESS") {
-        const message = {
-          type: "button",
-          header: {
-            type: "text",
-            text: "Opciones de tu orden",
-          },
-          body: {
-            text: "¿Qué deseas hacer con tu orden?",
-          },
-          action: {
-            buttons: [
-              {
-                type: "reply",
-                reply: {
-                  id: "cancel_order",
-                  title: "❌ Cancelar orden",
-                },
-              },
-              {
-                type: "reply",
-                reply: {
-                  id: "pay_online",
-                  title: "💳 Pagar en línea",
-                },
-              },
-            ],
-          },
-        };
-
-        await WhatsAppService.sendInteractiveMessage(whatsappNumber, message, messageId);
-      }
-    } catch (error) {
-      logger.error('Error sending action buttons:', error);
-    }
-  }
+  // Removed _sendOrderActionButtons - functionality integrated into sendOrderConfirmation
 }

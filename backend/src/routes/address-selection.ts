@@ -1,7 +1,7 @@
 import { Router, Request, Response } from 'express';
 import { prisma } from '../lib/prisma';
 import logger from '../common/utils/logger';
-import { sendWhatsAppInteractiveMessage } from '../services/whatsapp';
+import { sendWhatsAppInteractiveMessage, sendWhatsAppMessage } from '../services/whatsapp';
 import { asyncHandler } from '../common/middlewares/errorHandler';
 import { NotFoundError, ErrorCode } from '../common/services/errors';
 import { validationMiddleware } from '../common/middlewares/validation.middleware';
@@ -292,5 +292,121 @@ async function updatePreOrderAddress(preOrderId: number, addressId: string): Pro
   
   logger.info(`Updated preorder ${preOrderId} with address ${addressId}`);
 }
+
+/**
+ * Regenerate preorder confirmation after address update from frontend
+ * POST /backend/address-selection/regenerate-confirmation
+ */
+router.post('/regenerate-confirmation',
+  asyncHandler(async (req: Request, res: Response) => {
+    const { preOrderId, customerId } = req.body;
+    
+    if (!preOrderId) {
+      res.json({ 
+        success: true,
+        message: 'No preOrderId provided, skipping regeneration'
+      });
+      return;
+    }
+    
+    // Get the preorder with all details
+    const preOrder = await prisma.preOrder.findUnique({
+      where: { id: parseInt(preOrderId) },
+      include: {
+        orderItems: {
+          include: {
+            product: true,
+            productVariant: true,
+            productModifiers: true,
+            selectedPizzaCustomizations: {
+              include: { pizzaCustomization: true }
+            }
+          }
+        },
+        deliveryInfo: true
+      }
+    });
+    
+    if (!preOrder) {
+      throw new NotFoundError(
+        ErrorCode.ORDER_NOT_FOUND,
+        'PreOrder not found',
+        { preOrderId }
+      );
+    }
+    
+    // Get customer
+    const customer = await prisma.customer.findUnique({
+      where: { id: customerId }
+    });
+    
+    if (!customer) {
+      throw new NotFoundError(
+        ErrorCode.CUSTOMER_NOT_FOUND,
+        'Customer not found',
+        { customerId }
+      );
+    }
+    
+    // Import required services
+    const { ProductCalculationService } = await import('../services/orders/services/ProductCalculationService');
+    const { PreOrderWorkflowService } = await import('../services/orders/PreOrderWorkflowService');
+    const { redisService } = await import('../services/redis/RedisService');
+    
+    // Calculate items and totals
+    const calculatedItems = await ProductCalculationService.calculateOrderItems(
+      preOrder.orderItems.map(item => ({
+        productId: item.productId,
+        productVariantId: item.productVariantId || undefined,
+        quantity: 1,
+        comments: undefined,
+        selectedModifiers: item.productModifiers.map(m => m.id),
+        selectedPizzaCustomizations: item.selectedPizzaCustomizations.map(pc => ({
+          pizzaCustomizationId: pc.pizzaCustomizationId,
+          half: pc.half,
+          action: pc.action
+        }))
+      }))
+    );
+    
+    const formattedPreOrder = {
+      preOrderId: preOrder.id,
+      orderType: preOrder.orderType,
+      items: calculatedItems.items,
+      total: calculatedItems.total,
+      deliveryInfo: preOrder.deliveryInfo,
+      scheduledAt: preOrder.scheduledAt
+    };
+    
+    // Get the token for this preorder
+    const tokenKeys = await redisService.keys('preorder:token:*');
+    let token = null;
+    for (const key of tokenKeys) {
+      const storedPreOrderId = await redisService.get(key);
+      if (storedPreOrderId === preOrderId.toString()) {
+        token = key.split(':')[2];
+        break;
+      }
+    }
+    
+    if (token) {
+      // Resend the order summary with updated address
+      await PreOrderWorkflowService.sendOrderSummaryWithButtons(
+        customer.whatsappPhoneNumber,
+        formattedPreOrder,
+        token
+      );
+      
+      await sendWhatsAppMessage(
+        customer.whatsappPhoneNumber,
+        `✅ *Dirección actualizada exitosamente*\n\nTu pedido ahora será entregado en la nueva dirección seleccionada.`
+      );
+    }
+    
+    res.json({ 
+      success: true,
+      message: 'PreOrder confirmation regenerated successfully'
+    });
+}));
 
 export default router;

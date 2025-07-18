@@ -1,6 +1,7 @@
 import { FormattedOrder, FormattedOrderProduct } from "../../../common/types/order.types";
 import { env } from "../../../common/config/envValidator";
 import { PizzaHalf, CustomizationAction, CustomizationType } from "@prisma/client";
+import { ConfigService } from "../../config/ConfigService";
 
 export class OrderFormattingService {
   /**
@@ -51,7 +52,7 @@ export class OrderFormattingService {
     });
 
     return {
-      dailyNumber: preOrder.preOrderId || 0,
+      shiftOrderNumber: preOrder.preOrderId || 0,
       orderType: orderType,
       phoneNumber: whatsappPhoneNumber,
       products: products,
@@ -189,7 +190,7 @@ export class OrderFormattingService {
 
     return {
       id: order.id,
-      dailyNumber: order.dailyNumber,
+      shiftOrderNumber: order.shiftOrderNumber,
       orderType: order.orderType,
       customerId: order.customerId,
       phoneNumber: order.customer?.whatsappPhoneNumber || customerId,
@@ -214,9 +215,11 @@ export class OrderFormattingService {
   /**
    * Generate order confirmation message
    */
-  static generateConfirmationMessage(order: any, formattedOrder: FormattedOrder): string {
+  static async generateConfirmationMessage(order: any, formattedOrder: FormattedOrder): Promise<string> {
     const orderTypeText = order.orderType === "DELIVERY" ? "A domicilio" : 
                          order.orderType === "TAKE_AWAY" ? "Para llevar" : "Para comer aquí";
+    
+    const config = await ConfigService.getConfig();
     
     let message = `🎉 *¡Tu orden ha sido creada exitosamente!* 🎉\n\n`;
     message += `📞 *Teléfono:* ${formattedOrder.phoneNumber}\n`;
@@ -237,7 +240,19 @@ export class OrderFormattingService {
     });
 
     message += `\n💰 *Total: $${formattedOrder.totalPrice}*\n\n`;
-    message += `📩 Te notificaremos cuando tu pedido sea aceptado. ¡Gracias por tu preferencia! 🙏`;
+    message += `📩 Te notificaremos cuando tu pedido sea aceptado.\n\n`;
+    
+    // Add restaurant contact info
+    message += `📞 *¿Necesitas hacer cambios?*\n`;
+    message += `Comunícate directamente con el restaurante:\n`;
+    if (config.phoneMain) {
+      message += `📱 ${config.phoneMain}\n`;
+    }
+    if (config.phoneSecondary) {
+      message += `📱 ${config.phoneSecondary}\n`;
+    }
+    
+    message += `\n¡Gracias por tu preferencia! 🙏`;
 
     return message;
   }

@@ -1,6 +1,6 @@
 export interface FormattedOrder {
   id?: string;
-  dailyNumber?: number;
+  shiftOrderNumber?: number;
   orderType?: string;
   customerId?: string;
   phoneNumber: string;
