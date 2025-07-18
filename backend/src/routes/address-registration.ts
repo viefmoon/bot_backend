@@ -109,6 +109,7 @@ router.post('/create',
       fullBody: req.body
     });
     
+    // Buscar preOrderId en query params o en el body
     const preOrderId = req.query.preOrderId || req.body.preOrderId;
     if (preOrderId) {
       logger.info(`Updating preOrder ${preOrderId} with new address ${newAddress.id}`);
