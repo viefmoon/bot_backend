@@ -411,6 +411,27 @@ sudo tail -f /var/log/nginx/error.log
 sudo systemctl restart nginx
 ```
 
+### ❌ Error 500 o "Permission denied" en el frontend
+
+Si ves errores como `stat() failed (13: Permission denied)` en los logs de Nginx:
+
+```bash
+# El problema es que el directorio home no tiene permisos para www-data
+# Solución:
+chmod 755 /home/cloudbite
+chmod 755 /home/cloudbite/bot_backend
+chmod 755 /home/cloudbite/bot_backend/frontend-app
+chmod -R 755 /home/cloudbite/bot_backend/frontend-app/dist
+
+# Verificar que www-data puede acceder
+sudo -u www-data ls /home/cloudbite/bot_backend/frontend-app/dist/
+
+# Recargar Nginx
+sudo nginx -s reload
+```
+
+**Nota**: Este problema ya está prevenido en los scripts de instalación actualizados.
+
 ---
 
 ## 📞 Información de Contacto

@@ -115,6 +115,22 @@ print_step "Compilando proyecto..."
 npm run build
 print_success "Proyecto compilado"
 
+# Actualizar frontend si existe
+if [ -d "../frontend-app" ]; then
+    print_step "Actualizando frontend..."
+    cd ../frontend-app
+    npm install
+    npm run build || print_warning "Build del frontend tuvo advertencias"
+    
+    # Asegurar permisos correctos
+    chmod -R 755 dist/
+    chmod 755 ~/bot_backend
+    chmod 755 ~/bot_backend/frontend-app
+    print_success "Frontend actualizado"
+    
+    cd ../backend
+fi
+
 # Reload PM2 con zero-downtime
 print_step "Recargando aplicación con PM2..."
 pm2 reload ecosystem.config.js

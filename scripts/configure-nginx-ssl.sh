@@ -248,6 +248,14 @@ EOF
 
 print_success "Configuración de Nginx creada"
 
+# Asegurar permisos correctos para los directorios
+print_step "Verificando permisos de directorios..."
+chmod 755 /home/$APP_USER
+chmod 755 /home/$APP_USER/bot_backend
+chmod 755 /home/$APP_USER/bot_backend/frontend-app
+[ -d "/home/$APP_USER/bot_backend/frontend-app/dist" ] && chmod -R 755 /home/$APP_USER/bot_backend/frontend-app/dist
+print_success "Permisos verificados"
+
 # Desactivar configuración temporal y activar la final
 print_step "Activando configuración final..."
 

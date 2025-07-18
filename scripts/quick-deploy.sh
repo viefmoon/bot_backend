@@ -119,6 +119,11 @@ else
     print_success "Usuario $APP_USER ya existe"
 fi
 
+# IMPORTANTE: Asegurar permisos correctos para el directorio home
+# Esto permite que Nginx (www-data) pueda acceder a los archivos del frontend
+chmod 755 /home/$APP_USER
+print_success "Permisos del directorio home configurados"
+
 # Configurar sudoers para PM2
 echo "$APP_USER ALL=(ALL) NOPASSWD: /usr/bin/pm2" >> /etc/sudoers.d/pm2
 
@@ -156,6 +161,9 @@ npm install --production
 cd ../frontend-app
 npm install
 npm run build || print_warning "Frontend build tuvo errores, pero continuando..."
+
+# Asegurar permisos correctos para el directorio dist del frontend
+chmod -R 755 dist/
 
 # Volver al backend y crear archivo .env
 cd ../backend
