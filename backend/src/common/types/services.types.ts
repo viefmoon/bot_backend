@@ -20,28 +20,3 @@ export interface DeliveryInfoInput {
   longitude?: number | null;
   isDefault?: boolean;
 }
-
-// AI Context types
-export enum ContextType {
-  NEW_ORDER = "nuevo_pedido",
-  CUSTOMER_SERVICE = "servicio_cliente",
-  GENERAL_INQUIRY = "consulta_general",
-  MENU_INQUIRY = "consulta_menu",
-  COMPLAINT = "queja",
-  UNKNOWN = "desconocido"
-}
-
-// Order Management types
-export interface OrderCreationResult {
-  order: any;
-  formattedOrder: any;
-  message: string;
-}
-
-export interface PreOrderCreationResult {
-  preOrderId: number;
-  products: any[];
-  subtotal: number;
-  total: number;
-  estimatedDeliveryTime: number;
-}

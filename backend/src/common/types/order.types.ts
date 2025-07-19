@@ -26,8 +26,3 @@ export interface FormattedOrderProduct {
   }[];
   comments?: string;
 }
-
-export interface OrderSummaryResult {
-  formattedOrder: FormattedOrder;
-  orderSummary: string;
-}

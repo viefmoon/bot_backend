@@ -14,9 +14,7 @@ import {
 import {
   CreateAddressDto,
   UpdateAddressDto,
-  GetAddressesQueryDto,
-  DeleteAddressDto,
-  SetDefaultAddressDto
+  GetAddressesQueryDto
 } from '../dto/address';
 import {
   UpdateCustomerNameDto
@@ -297,7 +295,6 @@ router.get('/:customerId/addresses',
  * DELETE /backend/address-registration/:addressId
  */
 router.delete('/:addressId',
-  validationMiddleware(DeleteAddressDto),
   otpAuthMiddleware,
   asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
     const { addressId } = req.params;
@@ -324,7 +321,6 @@ router.delete('/:addressId',
  * PUT /backend/address-registration/:addressId/default
  */
 router.put('/:addressId/default',
-  validationMiddleware(SetDefaultAddressDto),
   otpAuthMiddleware,
   asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
     const { addressId } = req.params;
