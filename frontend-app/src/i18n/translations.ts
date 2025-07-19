@@ -57,65 +57,6 @@ export const translations = {
       unknownError: 'Error desconocido al obtener ubicación',
     },
   },
-  'en-US': {
-    common: {
-      loading: 'Loading...',
-      error: 'Error',
-      success: 'Success',
-      save: 'Save',
-      cancel: 'Cancel',
-      continue: 'Continue',
-      back: 'Back',
-      close: 'Close',
-    },
-    otp: {
-      verifying: 'Verifying link...',
-      invalidLink: 'Invalid link',
-      expiredLink: 'This link has expired or is invalid. Please request a new link from WhatsApp.',
-      continueWhatsApp: 'Continue on WhatsApp',
-    },
-    address: {
-      title: 'Register Delivery Address',
-      updateTitle: 'Update Address',
-      welcome: 'Hello{name}! Please complete your delivery information.',
-      yourNumber: 'Your number: {number}',
-      useMyLocation: 'Use my current location',
-      searchPlaceholder: 'Search for your address...',
-      mapError: 'Error loading map. Please reload the page.',
-      locationError: 'Could not get your location',
-      addressDetails: 'Address details',
-      
-      // Form fields
-      street: 'Street and number',
-      neighborhood: 'Neighborhood',
-      zipCode: 'ZIP code',
-      city: 'City',
-      state: 'State',
-      country: 'Country',
-      references: 'References to find your address',
-      referencesPlaceholder: 'Between streets, house color, landmarks...',
-      
-      // Messages
-      selectLocation: 'Please select a location on the map',
-      completeFields: 'Please complete all required fields',
-      outOfDeliveryArea: 'Address is outside delivery area',
-      savingAddress: 'Saving address...',
-      updatingAddress: 'Updating address...',
-      addressSaved: 'Address saved successfully',
-      addressUpdated: 'Address updated successfully',
-      redirecting: 'Redirecting to WhatsApp...',
-      errorSaving: 'Error saving address',
-      errorUpdating: 'Error updating address',
-    },
-    geolocation: {
-      notSupported: 'Your browser does not support geolocation',
-      permissionDenied: 'Location permission denied',
-      positionUnavailable: 'Location unavailable',
-      timeout: 'Request timeout',
-      unknownError: 'Unknown error getting location',
-    },
-  },
 };
 
 export type TranslationKey = keyof typeof translations['es-MX'];
-export type Locale = keyof typeof translations;

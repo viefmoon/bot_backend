@@ -147,8 +147,7 @@ export class OrderManagementService {
 
   async sendOrderConfirmation(
     whatsappNumber: string,
-    orderId: string,
-    _action: "confirmed" | "cancelled" | "modified" = "confirmed"
+    orderId: string
   ): Promise<void> {
     try {
       const fullOrder = await prisma.order.findUnique({

@@ -1,19 +1,12 @@
-import { translations, type Locale } from './translations';
-import { config } from '@/config';
+import { translations } from './translations';
 
 class I18n {
-  private locale: Locale;
-
-  constructor() {
-    this.locale = (config.regional.locale || 'es-MX') as Locale;
-  }
-
   /**
    * Get translated text
    */
   t(path: string, params?: Record<string, string>): string {
     const keys = path.split('.');
-    let value: unknown = translations[this.locale];
+    let value: unknown = translations['es-MX'];
 
     for (const key of keys) {
       if (typeof value === 'object' && value !== null) {
@@ -38,24 +31,6 @@ class I18n {
     }
 
     return value;
-  }
-
-  /**
-   * Change locale
-   */
-  setLocale(locale: Locale): void {
-    if (translations[locale]) {
-      this.locale = locale;
-    } else {
-      console.warn(`Locale ${locale} not found`);
-    }
-  }
-
-  /**
-   * Get current locale
-   */
-  getLocale(): Locale {
-    return this.locale;
   }
 }
 

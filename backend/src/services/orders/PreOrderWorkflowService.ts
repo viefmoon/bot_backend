@@ -382,7 +382,7 @@ export class PreOrderWorkflowService {
       await SyncMetadataService.markForSync('Customer', customer.id, 'REMOTE');
     }
     
-    await orderManagementService.sendOrderConfirmation(whatsappNumber, order.id, 'confirmed');
+    await orderManagementService.sendOrderConfirmation(whatsappNumber, order.id);
   }
   
   /**
