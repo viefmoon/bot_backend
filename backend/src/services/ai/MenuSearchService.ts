@@ -14,9 +14,9 @@ export class MenuSearchService {
   
   // Constants for vector search optimization
   // Based on testing: 0.0-0.3 = very similar, 0.3-0.4 = somewhat similar, >0.4 = different
-  private static readonly SIMILARITY_THRESHOLD = 0.35; // More strict for better relevance
-  private static readonly RESULTS_LIMIT = 10; // Limit to most relevant results
-  private static readonly FALLBACK_THRESHOLD = 0.4; // Still flexible for edge cases
+  private static readonly SIMILARITY_THRESHOLD = 0.45; // Balanced between strict and flexible
+  private static readonly RESULTS_LIMIT = 12; // Good amount of relevant results
+  private static readonly FALLBACK_THRESHOLD = 0.5; // More flexible for edge cases
 
   /**
    * Gets relevant menu items based on keywords using semantic search
