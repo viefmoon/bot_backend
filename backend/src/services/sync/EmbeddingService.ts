@@ -32,53 +32,41 @@ export class EmbeddingService {
    * Generate embedding text for a product
    */
   private static createProductText(product: ProductWithRelations): string {
-    let text = `Producto: ${product.name}. Categoría: ${product.subcategory.category.name}, ${product.subcategory.name}.`;
+    // Estructura más concisa y enfocada en términos de búsqueda
+    const parts: string[] = [];
     
-    if (product.description) {
-      text += ` Descripción: ${product.description}.`;
-    }
+    // Nombre del producto (más importante)
+    parts.push(product.name);
     
+    // Subcategoría (muy importante para búsquedas por categoría)
+    parts.push(product.subcategory.name);
+    
+    // Categoría principal
+    parts.push(product.subcategory.category.name);
+    
+    // Para pizzas, incluir sabores principales
     if (product.isPizza && product.pizzaCustomizations && product.pizzaCustomizations.length > 0) {
       const flavors = product.pizzaCustomizations
         .filter(c => c.isActive && c.type === 'FLAVOR')
         .map(c => c.name)
-        .join(', ');
-      const ingredients = product.pizzaCustomizations
-        .filter(c => c.isActive && c.type === 'INGREDIENT')
-        .map(c => c.name)
-        .join(', ');
+        .slice(0, 3); // Solo los primeros 3 sabores
       
-      if (flavors) {
-        text += ` Sabores disponibles: ${flavors}.`;
-      }
-      if (ingredients) {
-        text += ` Ingredientes adicionales: ${ingredients}.`;
+      if (flavors.length > 0) {
+        parts.push(...flavors);
       }
     }
     
+    // Variantes (solo nombres)
     if (product.variants && product.variants.length > 0) {
       const variantNames = product.variants
         .filter(v => v.isActive)
         .map(v => v.name)
-        .join(', ');
-      if (variantNames) {
-        text += ` Opciones o tamaños: ${variantNames}.`;
-      }
+        .slice(0, 2); // Solo las primeras 2 variantes
+      parts.push(...variantNames);
     }
     
-    if (product.modifierGroups && product.modifierGroups.length > 0) {
-      const modifiers = product.modifierGroups
-        .filter(g => g.isActive)
-        .flatMap(g => g.productModifiers || [])
-        .filter(m => m.isActive)
-        .map(m => m.name)
-        .join(', ');
-      if (modifiers) {
-        text += ` Modificadores disponibles: ${modifiers}.`;
-      }
-    }
-    
-    return text;
+    // Unir todo con espacios, sin puntuación excesiva
+    return parts.join(' ');
   }
 
   /**
