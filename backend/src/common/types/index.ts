@@ -6,7 +6,6 @@
 // Order types
 export * from './order.types';
 export * from './order-item.types';
-export * from './otp.types';
 export * from './preorder.types';
 
 // Menu types

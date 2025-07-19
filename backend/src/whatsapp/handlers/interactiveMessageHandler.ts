@@ -1,4 +1,4 @@
-import { PreOrderWorkflowService } from "../../services/orders/PreOrderWorkflowService";
+import { PreOrderWorkflowService } from "../../services/orders/preOrderWorkflowService";
 import { INTERACTIVE_ACTIONS, startsWithAction, extractIdFromAction } from "../../common/constants/interactiveActions";
 import { prisma } from '../../lib/prisma';
 import { sendWhatsAppMessage, sendMessageWithUrlButton, WhatsAppService } from "../../services/whatsapp";
@@ -397,7 +397,7 @@ async function handleAddressSelection(from: string, selectionId: string): Promis
     // If we have a specific preOrderId, use it. Otherwise, check for recent preorder
     if (preOrderId) {
       // Recreate preorder with selected address
-      const { PreOrderWorkflowService } = await import('../../services/orders/PreOrderWorkflowService');
+      const { PreOrderWorkflowService } = await import('../../services/orders/preOrderWorkflowService');
       
       try {
         // This will create a new preOrder with the new address and discard the old one

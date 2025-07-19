@@ -43,10 +43,3 @@ export function extractIdFromAction(str: string, actionPrefix: string): string {
   return str.substring(actionPrefix.length);
 }
 
-/**
- * Create an action string with an ID
- * For example: ('select_address_', '123') -> 'select_address_123'
- */
-export function createActionWithId(actionPrefix: string, id: string): string {
-  return `${actionPrefix}${id}`;
-}

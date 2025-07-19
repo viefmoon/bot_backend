@@ -21,30 +21,6 @@ export interface DeliveryInfoInput {
   isDefault?: boolean;
 }
 
-// Product Calculation types
-export interface OrderItemInput {
-  productId?: string;
-  productVariantId?: string;
-  quantity: number;
-  comments?: string;
-  selectedModifiers?: string[];
-  selectedPizzaCustomizations?: Array<{
-    pizzaCustomizationId: string;
-    half: string;
-    action: string;
-  }>;
-}
-
-export interface CalculatedItem {
-  product: any;
-  productVariant: any;
-  quantity: number;
-  itemPrice: number;
-  comments?: string;
-  modifiers: any[];
-  pizzaCustomizations: any[];
-}
-
 // AI Context types
 export enum ContextType {
   NEW_ORDER = "nuevo_pedido",

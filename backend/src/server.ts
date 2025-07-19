@@ -245,16 +245,15 @@ async function startServer() {
     OTPService.startOTPCleanup();
     
     // Start PreOrder cleanup interval
-    const { PreOrderWorkflowService } = await import('./services/orders/PreOrderWorkflowService');
+    const { PreOrderWorkflowService } = await import('./services/orders/preOrderWorkflowService');
     preOrderCleanupInterval = setInterval(async () => {
       await PreOrderWorkflowService.cleanupExpiredPreOrders();
     }, 5 * 60 * 1000); // Run every 5 minutes
     logger.info('PreOrder cleanup interval started');
     
     // Initialize embeddings on startup
-    const { initializeEmbeddings, scheduleEmbeddingUpdates } = await import('./startup/embeddingInitializer');
+    const { initializeEmbeddings } = await import('./startup/embeddingInitializer');
     await initializeEmbeddings();
-    scheduleEmbeddingUpdates();
     
     const server = app.listen(PORT, () => {
       logger.info(`Server is running on port ${PORT}`);

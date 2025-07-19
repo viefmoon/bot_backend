@@ -49,8 +49,21 @@ export class OrderManagementService {
       quantity: 1
     }));
 
+    const customer = await prisma.customer.findUnique({
+      where: { whatsappPhoneNumber: preOrder.whatsappPhoneNumber }
+    });
+
+    if (!customer) {
+      throw new BusinessLogicError(
+        ErrorCode.CUSTOMER_NOT_FOUND,
+        'Customer not found for this phone number',
+        { metadata: { whatsappPhoneNumber: preOrder.whatsappPhoneNumber } }
+      );
+    }
+
+    // Usar el deliveryInfo del preOrder si existe
     let deliveryInfo = undefined;
-    if (preOrder.deliveryInfo?.id) {
+    if (preOrder.deliveryInfo) {
       const info = preOrder.deliveryInfo;
       deliveryInfo = {
         fullAddress: info.fullAddress || undefined,
@@ -68,18 +81,6 @@ export class OrderManagementService {
         recipientPhone: info.recipientPhone || undefined,
         deliveryInstructions: info.deliveryInstructions || undefined,
       };
-    }
-
-    const customer = await prisma.customer.findUnique({
-      where: { whatsappPhoneNumber: preOrder.whatsappPhoneNumber }
-    });
-
-    if (!customer) {
-      throw new BusinessLogicError(
-        ErrorCode.CUSTOMER_NOT_FOUND,
-        'Customer not found for this phone number',
-        { metadata: { whatsappPhoneNumber: preOrder.whatsappPhoneNumber } }
-      );
     }
 
     const orderItemsDto = orderItems.map(item => ({

@@ -15,13 +15,3 @@ export async function initializeEmbeddings(): Promise<void> {
     logger.warn('⚠️  Server starting without embedding manager - semantic search may not work properly');
   }
 }
-
-/**
- * Schedule periodic embedding updates
- * Now handled internally by EmbeddingManager
- * @deprecated Use EmbeddingManager.initialize() instead
- */
-export function scheduleEmbeddingUpdates(): void {
-  // This is now handled internally by EmbeddingManager
-  logger.debug('Embedding updates are now managed by EmbeddingManager');
-}

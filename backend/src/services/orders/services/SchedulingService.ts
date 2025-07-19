@@ -1,6 +1,7 @@
 import { RestaurantService } from "../../restaurant/RestaurantService";
 import { ValidationError, ErrorCode } from "../../../common/services/errors";
 import { env } from "../../../common/config/envValidator";
+import { OrderType } from '@prisma/client';
 
 export class SchedulingService {
   /**
@@ -8,7 +9,7 @@ export class SchedulingService {
    */
   static async validateScheduledTime(
     scheduledAt: string | Date | undefined,
-    orderType: 'delivery' | 'pickup'
+    orderType: OrderType
   ): Promise<Date | null> {
     if (!scheduledAt || scheduledAt === "null") {
       return null;
@@ -60,7 +61,7 @@ export class SchedulingService {
    */
   private static async validateAgainstBusinessHours(
     scheduledTime: Date,
-    orderType: 'delivery' | 'pickup'
+    orderType: OrderType
   ): Promise<void> {
     const config = await RestaurantService.getConfig();
     
@@ -127,7 +128,7 @@ export class SchedulingService {
     }
 
     // Check minimum time requirement
-    const minTimeRequired = orderType === "pickup" 
+    const minTimeRequired = orderType === OrderType.TAKE_AWAY 
       ? config.estimatedPickupTime 
       : config.estimatedDeliveryTime;
     

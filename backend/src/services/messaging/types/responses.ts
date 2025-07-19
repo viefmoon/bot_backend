@@ -28,7 +28,7 @@ export interface UnifiedResponse {
   // Datos procesados (para pedidos)
   processedData?: {
     orderItems?: any[];
-    orderType?: 'delivery' | 'pickup';
+    orderType?: string; // OrderType enum as string
     warnings?: string[];
     scheduledAt?: Date;
   };

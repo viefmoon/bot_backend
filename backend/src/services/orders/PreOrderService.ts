@@ -51,13 +51,10 @@ export class PreOrderService {
         ? config.estimatedDeliveryTime 
         : config.estimatedPickupTime;
 
-      // Convert OrderType enum to string
-      const orderTypeString = orderType === 'DELIVERY' ? 'delivery' : orderType === 'TAKE_AWAY' ? 'pickup' : 'pickup';
-
       // Validate scheduled time if provided
       const validatedScheduledTime = await SchedulingService.validateScheduledTime(
         scheduledAt,
-        orderTypeString
+        orderType
       );
 
       // Get customerId from whatsapp phone number for delivery info
@@ -66,12 +63,15 @@ export class PreOrderService {
       });
       
       // Get or create delivery info
-      if (customer) {
-        await DeliveryInfoService.getOrCreateDeliveryInfo(
-          orderTypeString,
+      let deliveryInfoId = null;
+      if (customer && (orderType === 'DELIVERY' || orderType === 'TAKE_AWAY')) {
+        const deliveryInfo = await DeliveryInfoService.getOrCreateDeliveryInfo(
+          orderType,  // Pass the enum directly
           customer.id,
-          inputDeliveryInfo
+          inputDeliveryInfo,
+          customer
         );
+        deliveryInfoId = deliveryInfo.id;
       }
 
       // Calculate items and totals
@@ -106,6 +106,7 @@ export class PreOrderService {
           ...preOrderData,
           subtotal,
           total,
+          ...(deliveryInfoId ? { deliveryInfo: { connect: { id: deliveryInfoId } } } : {}),
           orderItems: {
             create: calculatedItems.map(item => ({
               productId: item.productId,
@@ -137,7 +138,8 @@ export class PreOrderService {
                 }
               }
             }
-          }
+          },
+          deliveryInfo: true
         }
       });
 
@@ -146,33 +148,8 @@ export class PreOrderService {
         createdAt: preOrder.createdAt
       });
 
-      // Get delivery info if it's a delivery order
-      let deliveryInfo = null;
-      if (orderType === 'DELIVERY') {
-        // If deliveryInfo was provided (e.g., when recreating preOrder with new address), use it
-        if (inputDeliveryInfo) {
-          deliveryInfo = inputDeliveryInfo;
-        } else if (customer) {
-          // Otherwise, get the default address
-          const customerWithAddresses = await prisma.customer.findUnique({
-            where: { id: customer.id },
-            include: { 
-              addresses: { 
-                where: { deletedAt: null },
-                orderBy: [
-                  { isDefault: 'desc' },  // First priority: default address
-                  { createdAt: 'desc' }   // Second priority: most recent
-                ]
-              } 
-            }
-          });
-          
-          // Will get the default address if exists, otherwise the most recent one
-          if (customerWithAddresses?.addresses?.[0]) {
-            deliveryInfo = customerWithAddresses.addresses[0];
-          }
-        }
-      }
+      // Delivery info is now attached to the preOrder
+      const deliveryInfo = preOrder.deliveryInfo;
 
       // Format order items from the created preOrder
       const formattedItems = preOrder.orderItems.map(item => ({

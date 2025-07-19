@@ -1,6 +1,6 @@
 import { MessageContext } from './MessageContext';
 import { AgentService } from '../ai';
-import { PreOrderWorkflowService } from '../orders/PreOrderWorkflowService';
+import { PreOrderWorkflowService } from '../orders/preOrderWorkflowService';
 import { sendWhatsAppMessage } from '../whatsapp';
 import { getToolHandler } from '../ai/tools/toolHandlers';
 import logger from '../../common/utils/logger';

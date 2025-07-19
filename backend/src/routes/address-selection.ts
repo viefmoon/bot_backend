@@ -202,7 +202,7 @@ router.post('/update',
   }
   
   // Recreate preOrder with new address
-  const { PreOrderWorkflowService } = await import('../services/orders/PreOrderWorkflowService');
+  const { PreOrderWorkflowService } = await import('../services/orders/preOrderWorkflowService');
   const result = await PreOrderWorkflowService.recreatePreOrderWithNewAddress({
     oldPreOrderId: preOrderId,
     newAddressId: addressId,

@@ -151,7 +151,12 @@ export class UnifiedSyncService {
           include: {
             product: true,
             productVariant: true,
-            productModifiers: true
+            productModifiers: true,
+            selectedPizzaCustomizations: {
+              include: {
+                pizzaCustomization: true
+              }
+            }
           }
         },
         deliveryInfo: true,
@@ -166,68 +171,131 @@ export class UnifiedSyncService {
       shiftOrderNumber: order.shiftOrderNumber,
       orderType: order.orderType,
       orderStatus: order.orderStatus,
-      paymentStatus: order.payments[0]?.status || 'PENDING',
       subtotal: order.subtotal,
       total: order.total,
-      paymentMethod: order.payments[0]?.paymentMethod || 'CASH',
-      notes: order.notes || '',
-      estimatedTime: order.orderType === 'DELIVERY' ? 40 : 20,
+      customerId: order.customerId,
+      estimatedDeliveryTime: order.estimatedDeliveryTime?.toISOString() || null,
+      scheduledAt: order.scheduledAt?.toISOString() || null,
+      notes: order.notes || null,
       isFromWhatsApp: order.isFromWhatsApp,
+      finalizedAt: order.finalizedAt?.toISOString() || null,
+      shiftId: order.shiftId || null,
+      userId: order.userId || null,
+      tableId: order.tableId || null,
       customer: {
         id: order.customer.id,
-        firstName: order.customer.firstName || '',
-        lastName: order.customer.lastName || '',
         whatsappPhoneNumber: order.customer.whatsappPhoneNumber,
+        firstName: order.customer.firstName || null,
+        lastName: order.customer.lastName || null,
         email: order.customer.email || null,
+        birthDate: order.customer.birthDate?.toISOString() || null,
+        stripeCustomerId: order.customer.stripeCustomerId || null,
+        lastInteraction: order.customer.lastInteraction?.toISOString() || null,
         totalOrders: order.customer.totalOrders,
         totalSpent: order.customer.totalSpent.toNumber(),
         isActive: order.customer.isActive,
-        isBanned: order.customer.isBanned
+        isBanned: order.customer.isBanned,
+        bannedAt: order.customer.bannedAt?.toISOString() || null,
+        banReason: order.customer.banReason || null,
+        createdAt: order.customer.createdAt.toISOString(),
+        updatedAt: order.customer.updatedAt.toISOString()
       },
       orderItems: order.orderItems.map(item => ({
         id: item.id,
-        orderId: order.id,
+        orderId: item.orderId,
         productId: item.productId,
         productVariantId: item.productVariantId,
-        price: item.finalPrice,
-        notes: item.preparationNotes || '',
-        isPizzaHalf: false,
-        pizzaHalfPosition: null,
+        basePrice: item.basePrice,
+        finalPrice: item.finalPrice,
+        preparationStatus: item.preparationStatus,
+        statusChangedAt: item.statusChangedAt.toISOString(),
+        preparationNotes: item.preparationNotes || null,
+        createdAt: item.createdAt.toISOString(),
+        updatedAt: item.updatedAt.toISOString(),
         product: {
           id: item.product.id,
           name: item.product.name
         },
-        variant: item.productVariant ? {
+        productVariant: item.productVariant ? {
           id: item.productVariant.id,
           name: item.productVariant.name
         } : null,
-        selectedModifiers: item.productModifiers.map(mod => ({
+        productModifiers: item.productModifiers.map(mod => ({
           id: mod.id,
           name: mod.name,
           price: mod.price || 0
+        })),
+        selectedPizzaCustomizations: item.selectedPizzaCustomizations.map(customization => ({
+          id: customization.id,
+          orderItemId: customization.orderItemId,
+          pizzaCustomizationId: customization.pizzaCustomizationId,
+          half: customization.half,
+          action: customization.action,
+          pizzaCustomization: {
+            id: customization.pizzaCustomization.id,
+            name: customization.pizzaCustomization.name,
+            type: customization.pizzaCustomization.type,
+            ingredients: customization.pizzaCustomization.ingredients || null,
+            toppingValue: customization.pizzaCustomization.toppingValue
+          }
         }))
       })),
       deliveryInfo: order.deliveryInfo ? {
+        // Si existe deliveryInfo en BD (DELIVERY y TAKE_AWAY)
         id: order.deliveryInfo.id,
-        address: {
-          id: order.deliveryInfo.id,
-          name: order.deliveryInfo.recipientName || '',
-          street: order.deliveryInfo.street || '',
-          number: order.deliveryInfo.number || '',
-          interiorNumber: order.deliveryInfo.interiorNumber || null,
-          neighborhood: order.deliveryInfo.neighborhood || '',
-          city: order.deliveryInfo.city || '',
-          state: order.deliveryInfo.state || '',
-          zipCode: order.deliveryInfo.zipCode || '',
-          country: order.deliveryInfo.country || 'México',
-          deliveryInstructions: order.deliveryInfo.deliveryInstructions || '',
-          latitude: order.deliveryInfo.latitude?.toNumber() || null,
-          longitude: order.deliveryInfo.longitude?.toNumber() || null,
-          isDefault: true
-        },
-        deliveryPersonName: null,
-        estimatedDeliveryTime: order.estimatedDeliveryTime?.toISOString() || null
-      } : null,
+        orderId: order.deliveryInfo.orderId,
+        name: order.deliveryInfo.name || null,
+        fullAddress: order.deliveryInfo.fullAddress || null,
+        street: order.deliveryInfo.street || null,
+        number: order.deliveryInfo.number || null,
+        interiorNumber: order.deliveryInfo.interiorNumber || null,
+        neighborhood: order.deliveryInfo.neighborhood || null,
+        city: order.deliveryInfo.city || null,
+        state: order.deliveryInfo.state || null,
+        zipCode: order.deliveryInfo.zipCode || null,
+        country: order.deliveryInfo.country || null,
+        recipientName: order.deliveryInfo.recipientName || null,
+        recipientPhone: order.deliveryInfo.recipientPhone || null,
+        deliveryInstructions: order.deliveryInfo.deliveryInstructions || null,
+        latitude: order.deliveryInfo.latitude?.toNumber() || null,
+        longitude: order.deliveryInfo.longitude?.toNumber() || null,
+        createdAt: order.deliveryInfo.createdAt.toISOString(),
+        updatedAt: order.deliveryInfo.updatedAt.toISOString()
+      } : {
+        // Para órdenes sin deliveryInfo en BD (DINE_IN o casos legacy)
+        id: null,
+        orderId: order.id,
+        name: null,
+        fullAddress: null,
+        street: null,
+        number: null,
+        interiorNumber: null,
+        neighborhood: null,
+        city: null,
+        state: null,
+        zipCode: null,
+        country: null,
+        recipientName: order.orderType === 'TAKE_AWAY' ? 
+          `${order.customer.firstName || ''} ${order.customer.lastName || ''}`.trim() || order.customer.whatsappPhoneNumber : null,
+        recipientPhone: order.orderType === 'TAKE_AWAY' ? 
+          order.customer.whatsappPhoneNumber : null,
+        deliveryInstructions: null,
+        latitude: null,
+        longitude: null,
+        createdAt: order.createdAt.toISOString(),
+        updatedAt: order.updatedAt.toISOString()
+      },
+      payments: order.payments.map(payment => ({
+        id: payment.id,
+        orderId: payment.orderId,
+        paymentMethod: payment.paymentMethod,
+        amount: payment.amount.toNumber(),
+        status: payment.status,
+        stripePaymentId: payment.stripePaymentId || null,
+        metadata: payment.metadata || null,
+        createdAt: payment.createdAt.toISOString(),
+        updatedAt: payment.updatedAt.toISOString()
+      })),
       createdAt: order.createdAt.toISOString(),
       updatedAt: order.updatedAt.toISOString()
     }));
