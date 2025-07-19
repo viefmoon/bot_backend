@@ -5,6 +5,5 @@ export type {
   AddressFormData,
   OTPVerificationResponse,
   AddressRegistrationResponse,
-  CustomerDeliveryInfo,
   Location
 } from './customer.types';

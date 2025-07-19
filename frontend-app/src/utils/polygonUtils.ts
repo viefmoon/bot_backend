@@ -28,27 +28,3 @@ export function isPointInPolygon(
 
   return inside;
 }
-
-/**
- * Get the center point of a polygon
- * @param polygon The polygon vertices
- * @returns The center point
- */
-export function getPolygonCenter(polygon: { lat: number; lng: number }[]): { lat: number; lng: number } {
-  if (polygon.length === 0) {
-    return { lat: 0, lng: 0 };
-  }
-
-  let totalLat = 0;
-  let totalLng = 0;
-
-  polygon.forEach(point => {
-    totalLat += point.lat;
-    totalLng += point.lng;
-  });
-
-  return {
-    lat: totalLat / polygon.length,
-    lng: totalLng / polygon.length
-  };
-}

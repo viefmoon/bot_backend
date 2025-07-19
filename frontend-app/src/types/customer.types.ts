@@ -53,21 +53,6 @@ export interface AddressRegistrationResponse {
   address: Address;
 }
 
-// Legacy types for backward compatibility
-export interface CustomerDeliveryInfo {
-  customerId?: string;
-  pickupName?: string;
-  streetAddress?: string;
-  neighborhood?: string | null;
-  postalCode?: string | null;
-  city?: string | null;
-  state?: string | null;
-  country?: string | null;
-  latitude?: string | number;
-  longitude?: string | number;
-  additionalDetails?: string | null;
-}
-
 // Location type
 export interface Location {
   lat: number;
