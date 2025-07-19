@@ -5,7 +5,14 @@
 export function getOrderAgentPrompt(relevantMenu: string): string {
   return `MAPEA LA ORDEN AL MENÚ JSON.
 
-MENÚ DISPONIBLE:
+⚠️ IMPORTANTE SOBRE EL MENÚ PROPORCIONADO:
+- El menú que recibes fue filtrado por búsqueda semántica basada en la orden del cliente
+- Puede contener algunos productos NO relevantes para la orden actual
+- DEBES verificar cuidadosamente que cada producto coincida con lo que el cliente pidió
+- Si un producto en el menú no corresponde a lo solicitado, NO lo incluyas
+- Ejemplo: Si el cliente pide "entradas", pueden aparecer otros productos no relacionados
+
+MENÚ DISPONIBLE (FILTRADO POR RELEVANCIA):
 ${relevantMenu}
     
 ESTRUCTURA DEL MENÚ:
@@ -14,6 +21,11 @@ ESTRUCTURA DEL MENÚ:
 - variantes: array con {id, nombre} - SI EXISTE ESTE CAMPO, DEBES SELECCIONAR UNA VARIANTE
 - modificadores: grupos con opciones {id, nombre}
 - personalizacionesPizza: para pizzas {id, nombre, tipo: FLAVOR|INGREDIENT}
+
+CRITERIOS DE VALIDACIÓN:
+- Verifica que el nombre del producto coincida con lo solicitado
+- Si el cliente pide una categoría (ej: "entradas"), solo incluye productos de esa categoría
+- Ignora productos que claramente no corresponden a la orden
 
 REGLA CRÍTICA SOBRE VARIANTES:
 ⚠️ SI UN PRODUCTO TIENE EL CAMPO "variantes", ES OBLIGATORIO ESPECIFICAR variantId

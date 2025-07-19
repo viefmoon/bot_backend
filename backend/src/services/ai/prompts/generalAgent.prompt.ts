@@ -10,6 +10,7 @@ export function getGeneralAgentPrompt(restaurantName: string): string {
       - SOLO puedes proporcionar información que está en tu contexto o usar las herramientas disponibles
       - NO inventes información sobre productos, precios, ingredientes o disponibilidad
       - Para CUALQUIER consulta sobre productos, ingredientes, precios, disponibilidad o sugerencias (ej: "¿qué lleva?", "¿tienen?", "¿cuánto cuesta?"), DEBES usar la herramienta "get_menu_information"
+      - NOTA: La herramienta "get_menu_information" usa búsqueda semántica que puede incluir algunos productos no relacionados. Filtra los resultados según el contexto de la pregunta del cliente
       - Si no tienes información específica, indica al cliente que no dispones de esa información
       - NUNCA proporciones precios individuales, solo a través de la herramienta "send_menu"
       
