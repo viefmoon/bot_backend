@@ -12,11 +12,12 @@ import { BusinessLogicError, ErrorCode } from '../../../common/services/errors';
 import { redisKeys } from '../../../common/constants';
 import { formatAddressShort, formatAddressDescription } from '../../../common/utils/addressFormatter';
 import logger from '../../../common/utils/logger';
+import { UnifiedResponse, ResponseBuilder } from '../../../services/messaging/types';
 
 /**
  * Handles preorder actions (confirm/discard) using the token-based system
  */
-export async function handlePreOrderAction(from: string, buttonId: string): Promise<void> {
+export async function handlePreOrderAction(from: string, buttonId: string): Promise<UnifiedResponse> {
   // Extract token from button ID
   // Format: preorder_confirm:token or preorder_discard:token
   const parts = buttonId.split(':');
@@ -39,18 +40,34 @@ export async function handlePreOrderAction(from: string, buttonId: string): Prom
       tokenPrefix: token.substring(0, 8) + '...' 
     });
     
-    // Process the action using the workflow service
-    await PreOrderWorkflowService.processAction({
-      action,
-      token,
-      whatsappNumber: from
-    });
+    try {
+      // Process the action using the workflow service
+      await PreOrderWorkflowService.processAction({
+        action,
+        token,
+        whatsappNumber: from
+      });
+      
+      // Return empty response since the workflow service handles sending messages
+      return ResponseBuilder.empty();
+    } catch (error) {
+      // Handle expired token or other errors
+      if (error instanceof BusinessLogicError && error.code === ErrorCode.INVALID_TOKEN) {
+        logger.warn('Invalid or expired preorder token', { token: token.substring(0, 8) + '...' });
+        return ResponseBuilder.text(
+          '⚠️ Esta pre-orden ya no está disponible. Solo puedes confirmar o cancelar la pre-orden más reciente.',
+          true
+        );
+      }
+      // Re-throw other errors
+      throw error;
+    }
 }
 
 /**
  * Handles preorder change address action
  */
-export async function handlePreOrderChangeAddress(from: string, buttonId: string): Promise<void> {
+export async function handlePreOrderChangeAddress(from: string, buttonId: string): Promise<UnifiedResponse> {
   // Extract token from button ID
   const parts = buttonId.split(':');
   const token = parts[1];
@@ -67,9 +84,10 @@ export async function handlePreOrderChangeAddress(from: string, buttonId: string
   const preOrderIdStr = await redisService.get(key);
   
   if (!preOrderIdStr) {
-    throw new BusinessLogicError(
-      ErrorCode.INVALID_TOKEN,
-      'Token no encontrado o expirado'
+    logger.warn('Invalid or expired preorder token for change address', { token: token.substring(0, 8) + '...' });
+    return ResponseBuilder.text(
+      '⚠️ Esta pre-orden ya no está disponible. Solo puedes cambiar la dirección de la pre-orden más reciente.',
+      true
     );
   }
   
@@ -103,14 +121,12 @@ export async function handlePreOrderChangeAddress(from: string, buttonId: string
     await OTPService.storeOTP(from, otp, true);
     const updateLink = `${env.FRONTEND_BASE_URL}/address-registration/${from}?otp=${otp}&preOrderId=${preOrderId}`;
     
-    await sendMessageWithUrlButton(
-      from,
+    return ResponseBuilder.urlButton(
       "📍 Registrar Dirección",
       "No tienes direcciones guardadas. Por favor, registra una dirección de entrega haciendo clic en el botón de abajo.",
       "Agregar Dirección",
       updateLink
     );
-    return;
   }
   
   // Always use list for consistency (even with one address)
@@ -137,7 +153,7 @@ export async function handlePreOrderChangeAddress(from: string, buttonId: string
     ? "Puedes usar tu dirección actual o agregar una nueva:"
     : "Selecciona la nueva dirección de entrega para tu pedido:";
   
-  await WhatsAppService.sendInteractiveMessage(from, {
+  return ResponseBuilder.interactive({
     type: "list",
     header: {
       type: "text",

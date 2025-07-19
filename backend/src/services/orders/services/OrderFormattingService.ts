@@ -178,7 +178,6 @@ export class OrderFormattingService {
     
     let message = `📅 *Fecha de creación:* ${formattedOrder.createdAt}\n`;
     message += `🚚 *Información de entrega:* ${orderTypeText} - ${formattedOrder.deliveryInfo}\n`;
-    message += `📞 *Teléfono:* ${formattedOrder.phoneNumber}\n`;
     
     if (formattedOrder.estimatedDeliveryTime) {
       message += `⏱️ *Hora estimada de entrega:* ${formattedOrder.estimatedDeliveryTime}\n`;

@@ -364,7 +364,10 @@ export class PreOrderWorkflowService {
       shiftOrderNumber: order.shiftOrderNumber 
     });
     
-    // Clear relevant chat history after confirming order
+    // Send order confirmation BEFORE clearing history
+    await orderManagementService.sendOrderConfirmation(whatsappNumber, order.id);
+    
+    // Clear relevant chat history AFTER sending confirmation
     const customer = await prisma.customer.findUnique({
       where: { whatsappPhoneNumber: whatsappNumber }
     });
@@ -382,8 +385,6 @@ export class PreOrderWorkflowService {
       // Mark for sync
       await SyncMetadataService.markForSync('Customer', customer.id, 'REMOTE');
     }
-    
-    await orderManagementService.sendOrderConfirmation(whatsappNumber, order.id);
   }
   
   /**
