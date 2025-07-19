@@ -362,6 +362,25 @@ export class PreOrderWorkflowService {
       shiftOrderNumber: order.shiftOrderNumber 
     });
     
+    // Clear relevant chat history after confirming order
+    const customer = await prisma.customer.findUnique({
+      where: { whatsappPhoneNumber: whatsappNumber }
+    });
+    
+    if (customer) {
+      await prisma.customer.update({
+        where: { id: customer.id },
+        data: {
+          relevantChatHistory: [],
+          updatedAt: new Date()
+        }
+      });
+      logger.info(`Cleared relevant chat history for customer ${customer.id} after order confirmation`);
+      
+      // Mark for sync
+      await SyncMetadataService.markForSync('Customer', customer.id, 'REMOTE');
+    }
+    
     await orderManagementService.sendOrderConfirmation(whatsappNumber, order.id, 'confirmed');
   }
   
