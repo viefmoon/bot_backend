@@ -118,51 +118,146 @@ DB_EXISTS=$(PGPASSWORD=$(echo $DATABASE_URL | sed -n 's/.*:\/\/[^:]*:\([^@]*\)@.
 if [ "$DB_EXISTS" == "1" ]; then
     # La base de datos existe, intentar eliminarla
     print_step "Intentando eliminar la base de datos existente..."
-    PGPASSWORD=$(echo $DATABASE_URL | sed -n 's/.*:\/\/[^:]*:\([^@]*\)@.*/\1/p') psql -U $DB_USER -h $DB_HOST -p $DB_PORT -d postgres -c "DROP DATABASE IF EXISTS $DB_NAME;" 2>/dev/null || {
-        print_warning "No se pudo eliminar la base de datos (permisos limitados)"
-        print_step "Usando método alternativo: eliminando todas las tablas..."
-        
-        # Asegurar permisos antes de intentar eliminar tablas
-        sudo -u postgres psql << EOF
-\c $DB_NAME
-GRANT ALL ON SCHEMA public TO $DB_USER;
-CREATE EXTENSION IF NOT EXISTS vector;
+    
+    # Primero, cerrar todas las conexiones activas a la base de datos
+    print_step "Cerrando conexiones activas a la base de datos..."
+    sudo -u postgres psql << EOF
+SELECT pg_terminate_backend(pg_stat_activity.pid)
+FROM pg_stat_activity
+WHERE pg_stat_activity.datname = '$DB_NAME'
+  AND pid <> pg_backend_pid();
 EOF
     
-    # Método 2: Eliminar todas las tablas manualmente
-    cat > /tmp/drop_all_tables.sql << 'EOF'
-DO $$ 
-DECLARE
+    # Intentar eliminar la base de datos
+    PGPASSWORD=$(echo $DATABASE_URL | sed -n 's/.*:\/\/[^:]*:\([^@]*\)@.*/\1/p') psql -U $DB_USER -h $DB_HOST -p $DB_PORT -d postgres -c "DROP DATABASE IF EXISTS $DB_NAME;" 2>/dev/null || {
+        print_warning "No se pudo eliminar la base de datos con usuario normal"
+        
+        # Intentar con sudo postgres
+        print_step "Intentando eliminar con permisos de superusuario..."
+        sudo -u postgres psql -d postgres -c "DROP DATABASE IF EXISTS $DB_NAME;" 2>/dev/null || {
+            print_warning "No se pudo eliminar la base de datos completa"
+            print_step "Usando método alternativo: eliminando TODO el contenido..."
+            
+            # Método alternativo mejorado: Eliminar TODO el contenido
+            sudo -u postgres psql -d $DB_NAME << 'EOF'
+-- Desactivar validación de foreign keys temporalmente
+SET session_replication_role = 'replica';
+
+-- Eliminar todas las vistas
+DO $$ DECLARE
     r RECORD;
 BEGIN
-    -- Primero eliminar la tabla de migraciones de Prisma
-    DROP TABLE IF EXISTS "_prisma_migrations" CASCADE;
-    
-    -- Eliminar todas las tablas en el schema public
-    FOR r IN (SELECT tablename FROM pg_tables WHERE schemaname = 'public' AND tablename != '_prisma_migrations') LOOP
-        EXECUTE 'DROP TABLE IF EXISTS ' || quote_ident(r.tablename) || ' CASCADE';
-    END LOOP;
-    
-    -- Eliminar todas las secuencias
-    FOR r IN (SELECT sequence_name FROM information_schema.sequences WHERE sequence_schema = 'public') LOOP
-        EXECUTE 'DROP SEQUENCE IF EXISTS ' || quote_ident(r.sequence_name) || ' CASCADE';
-    END LOOP;
-    
-    -- Eliminar todos los tipos enum
-    FOR r IN (SELECT typname FROM pg_type WHERE typnamespace = (SELECT oid FROM pg_namespace WHERE nspname = 'public') AND typtype = 'e') LOOP
-        EXECUTE 'DROP TYPE IF EXISTS ' || quote_ident(r.typname) || ' CASCADE';
-    END LOOP;
-    
-    -- Eliminar todas las funciones
-    FOR r IN (SELECT proname, oidvectortypes(proargtypes) as args 
-              FROM pg_proc 
-              WHERE pronamespace = (SELECT oid FROM pg_namespace WHERE nspname = 'public')) LOOP
-        EXECUTE 'DROP FUNCTION IF EXISTS ' || quote_ident(r.proname) || '(' || r.args || ') CASCADE';
+    FOR r IN (SELECT schemaname, viewname FROM pg_views WHERE schemaname = 'public') LOOP
+        EXECUTE 'DROP VIEW IF EXISTS ' || quote_ident(r.schemaname) || '.' || quote_ident(r.viewname) || ' CASCADE';
     END LOOP;
 END $$;
+
+-- Eliminar todas las tablas (incluidas las de extensiones)
+DO $$ DECLARE
+    r RECORD;
+BEGIN
+    FOR r IN (SELECT schemaname, tablename FROM pg_tables WHERE schemaname = 'public') LOOP
+        EXECUTE 'DROP TABLE IF EXISTS ' || quote_ident(r.schemaname) || '.' || quote_ident(r.tablename) || ' CASCADE';
+    END LOOP;
+END $$;
+
+-- Eliminar todas las secuencias
+DO $$ DECLARE
+    r RECORD;
+BEGIN
+    FOR r IN (SELECT sequence_schema, sequence_name FROM information_schema.sequences WHERE sequence_schema = 'public') LOOP
+        EXECUTE 'DROP SEQUENCE IF EXISTS ' || quote_ident(r.sequence_schema) || '.' || quote_ident(r.sequence_name) || ' CASCADE';
+    END LOOP;
+END $$;
+
+-- Eliminar todos los tipos (incluidos los de extensiones)
+DO $$ DECLARE
+    r RECORD;
+BEGIN
+    FOR r IN (SELECT n.nspname, t.typname 
+              FROM pg_type t 
+              JOIN pg_namespace n ON n.oid = t.typnamespace 
+              WHERE n.nspname = 'public' 
+              AND t.typtype IN ('c', 'e', 'd', 'r')) LOOP
+        BEGIN
+            EXECUTE 'DROP TYPE IF EXISTS ' || quote_ident(r.nspname) || '.' || quote_ident(r.typname) || ' CASCADE';
+        EXCEPTION WHEN others THEN
+            -- Ignorar errores de tipos que no se pueden eliminar
+            NULL;
+        END;
+    END LOOP;
+END $$;
+
+-- Eliminar todas las funciones
+DO $$ DECLARE
+    r RECORD;
+BEGIN
+    FOR r IN (SELECT n.nspname, p.proname, pg_catalog.pg_get_function_identity_arguments(p.oid) as args
+              FROM pg_proc p
+              JOIN pg_namespace n ON n.oid = p.pronamespace
+              WHERE n.nspname = 'public'
+              AND p.prokind = 'f') LOOP
+        BEGIN
+            EXECUTE 'DROP FUNCTION IF EXISTS ' || quote_ident(r.nspname) || '.' || quote_ident(r.proname) || '(' || r.args || ') CASCADE';
+        EXCEPTION WHEN others THEN
+            -- Ignorar errores de funciones que no se pueden eliminar
+            NULL;
+        END;
+    END LOOP;
+END $$;
+
+-- Eliminar todos los procedimientos almacenados
+DO $$ DECLARE
+    r RECORD;
+BEGIN
+    FOR r IN (SELECT n.nspname, p.proname, pg_catalog.pg_get_function_identity_arguments(p.oid) as args
+              FROM pg_proc p
+              JOIN pg_namespace n ON n.oid = p.pronamespace
+              WHERE n.nspname = 'public'
+              AND p.prokind = 'p') LOOP
+        BEGIN
+            EXECUTE 'DROP PROCEDURE IF EXISTS ' || quote_ident(r.nspname) || '.' || quote_ident(r.proname) || '(' || r.args || ') CASCADE';
+        EXCEPTION WHEN others THEN
+            NULL;
+        END;
+    END LOOP;
+END $$;
+
+-- Eliminar todos los triggers
+DO $$ DECLARE
+    r RECORD;
+BEGIN
+    FOR r IN (SELECT DISTINCT trigger_name, event_object_table 
+              FROM information_schema.triggers 
+              WHERE trigger_schema = 'public') LOOP
+        BEGIN
+            EXECUTE 'DROP TRIGGER IF EXISTS ' || quote_ident(r.trigger_name) || ' ON ' || quote_ident(r.event_object_table) || ' CASCADE';
+        EXCEPTION WHEN others THEN
+            NULL;
+        END;
+    END LOOP;
+END $$;
+
+-- Eliminar todas las extensiones excepto plpgsql
+DO $$ DECLARE
+    r RECORD;
+BEGIN
+    FOR r IN (SELECT extname FROM pg_extension WHERE extname != 'plpgsql') LOOP
+        EXECUTE 'DROP EXTENSION IF EXISTS ' || quote_ident(r.extname) || ' CASCADE';
+    END LOOP;
+END $$;
+
+-- Reactivar validación de foreign keys
+SET session_replication_role = 'origin';
+
+-- Verificar que todo se eliminó
+SELECT 'Tablas restantes: ' || count(*) FROM pg_tables WHERE schemaname = 'public';
+SELECT 'Tipos restantes: ' || count(*) FROM pg_type t JOIN pg_namespace n ON n.oid = t.typnamespace WHERE n.nspname = 'public' AND t.typtype IN ('c', 'e');
+SELECT 'Funciones restantes: ' || count(*) FROM pg_proc p JOIN pg_namespace n ON n.oid = p.pronamespace WHERE n.nspname = 'public';
 EOF
-    
-        PGPASSWORD=$(echo $DATABASE_URL | sed -n 's/.*:\/\/[^:]*:\([^@]*\)@.*/\1/p') psql -U $DB_USER -h $DB_HOST -p $DB_PORT $DB_NAME < /tmp/drop_all_tables.sql
+            
+            print_success "Contenido de la base de datos eliminado"
+        }
     }
 else
     print_warning "La base de datos no existe, se creará una nueva"
