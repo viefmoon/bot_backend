@@ -1,7 +1,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { useLoadScript } from '@react-google-maps/api';
 import toast, { Toaster } from 'react-hot-toast';
+import { loadGoogleMaps } from '@/utils/loadGoogleMaps';
 import { AddressForm } from '@/components/AddressForm';
 import { BasicMap as Map } from '@/components/BasicMap';
 import { useAddressRegistrationStore } from '@/store/addressRegistrationStore';
@@ -16,8 +16,6 @@ import {
 import { CustomerNameForm } from '@/components/CustomerNameForm';
 import type { AddressFormData, Address } from '@/types';
 import { t } from '@/i18n';
-
-const libraries: ('places' | 'geometry')[] = ['places', 'geometry'];
 
 interface Location {
   lat: number;
@@ -89,11 +87,16 @@ export function AddressRegistration() {
     }
   }, [searchParams, setSession]);
 
-  // Google Maps
-  const { isLoaded, loadError } = useLoadScript({
-    googleMapsApiKey: import.meta.env.VITE_GOOGLE_MAPS_API_KEY,
-    libraries,
-  });
+  // Google Maps loading state
+  const [isLoaded, setIsLoaded] = useState(false);
+  const [loadError, setLoadError] = useState<Error | null>(null);
+
+  // Load Google Maps
+  useEffect(() => {
+    loadGoogleMaps()
+      .then(() => setIsLoaded(true))
+      .catch((error) => setLoadError(error));
+  }, []);
 
   // React Query hooks
   const { data: otpData, isLoading: isVerifying } = useVerifyOtp(
