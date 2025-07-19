@@ -1,9 +1,10 @@
 import { Customer } from '@prisma/client';
+import { IncomingMessage } from '../../common/types/whatsapp-messages.types';
 
 export * from './types/responses';
 
 // Re-exportar tipos de WhatsApp desde la ubicación centralizada
-export { IncomingMessage } from '../../common/types/whatsapp-messages.types';
+export { IncomingMessage };
 
 export interface MessageContext {
   message: IncomingMessage;

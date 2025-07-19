@@ -1,11 +1,12 @@
-import { IncomingMessage, MessageResponse } from './types';
+import { IncomingMessage, MessageResponse, UnifiedResponse } from './types';
 import { Customer } from '../../common/types';
 
 export class MessageContext {
   public message: IncomingMessage;
   public customer?: Customer;
   public chatHistory: any[] = [];
-  public responses: MessageResponse[] = [];
+  public responses: MessageResponse[] = []; // Mantener para compatibilidad
+  public unifiedResponses: UnifiedResponse[] = []; // Nuevo array para respuestas unificadas
   public metadata: Map<string, any> = new Map();
   public shouldStop: boolean = false;
   public error?: Error;
@@ -14,8 +15,14 @@ export class MessageContext {
     this.message = message;
   }
 
+  // Método antiguo - mantener para compatibilidad
   addResponse(response: MessageResponse) {
     this.responses.push(response);
+  }
+  
+  // Nuevo método para respuestas unificadas
+  addUnifiedResponse(response: UnifiedResponse) {
+    this.unifiedResponses.push(response);
   }
 
   setCustomer(customer: Customer) {

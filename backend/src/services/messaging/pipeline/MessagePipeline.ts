@@ -1,4 +1,4 @@
-import { IncomingMessage, MessageMiddleware } from '../types';
+import { IncomingMessage, MessageMiddleware, UnifiedResponse } from '../types';
 import { MessageContext } from '../MessageContext';
 import { RateLimitMiddleware } from '../middlewares/RateLimitMiddleware';
 import { CustomerValidationMiddleware } from '../middlewares/CustomerValidationMiddleware';
@@ -10,6 +10,7 @@ import { prisma } from '../../../lib/prisma';
 import logger from '../../../common/utils/logger';
 import { sendWhatsAppMessage, sendWhatsAppInteractiveMessage } from '../../whatsapp';
 import { SyncMetadataService } from '../../../services/sync/SyncMetadataService';
+import { adaptMessageResponseToUnified } from '../responseAdapter';
 
 export class MessagePipeline {
   private middlewares: MessageMiddleware[] = [];
@@ -55,24 +56,29 @@ export class MessagePipeline {
   
   
   private async sendResponses(context: MessageContext): Promise<void> {
-    for (const response of context.responses) {
-      if (!response.sendToWhatsApp) continue;
+    // 1. Adaptar todas las respuestas antiguas al nuevo formato
+    const adaptedResponses = context.responses.map(adaptMessageResponseToUnified);
+    
+    // 2. Combinar respuestas adaptadas con respuestas unificadas nativas
+    const allResponses: UnifiedResponse[] = [...adaptedResponses, ...context.unifiedResponses];
+    
+    // 3. Enviar solo las respuestas que deben enviarse
+    for (const response of allResponses) {
+      if (!response.metadata.shouldSend) continue;
       
       try {
-        if (response.text) {
+        // Enviar texto si existe
+        if (response.content?.text) {
           // La utilidad messageSender se encarga de dividir mensajes largos automáticamente
-          await sendWhatsAppMessage(context.message.from, response.text);
+          await sendWhatsAppMessage(context.message.from, response.content.text);
         }
         
-        if (response.interactiveMessage) {
+        // Enviar mensaje interactivo si existe
+        if (response.content?.interactive) {
           await sendWhatsAppInteractiveMessage(
             context.message.from, 
-            response.interactiveMessage
+            response.content.interactive
           );
-        }
-        
-        if (response.confirmationMessage) {
-          await sendWhatsAppMessage(context.message.from, response.confirmationMessage);
         }
       } catch (error) {
         logger.error('Error sending response:', error);
@@ -106,30 +112,36 @@ export class MessagePipeline {
       timestamp: new Date()
     });
     
-    // Agregar respuestas al historial
-    for (const response of context.responses) {
-      if (response.text || response.historyMarker) {
-        // Para el historial completo, siempre usar el texto completo
-        if (response.text) {
-          fullChatHistory.push({
-            role: 'assistant',
-            content: response.text,
-            timestamp: new Date()
-          });
-        }
-        
-        // Para el historial relevante
-        if (response.isRelevant || response.historyMarker) {
-          // Si hay marcador, usarlo siempre. Si no, usar el texto solo si es relevante
-          const contentToSave = response.historyMarker || (response.isRelevant ? response.text : null);
-          if (contentToSave) {
-            relevantChatHistory.push({
-              role: 'assistant',
-              content: contentToSave,
-              timestamp: new Date()
-            });
-          }
-        }
+    // Convertir respuestas antiguas y combinar con las nuevas
+    const adaptedResponses = context.responses.map(adaptMessageResponseToUnified);
+    const allResponses: UnifiedResponse[] = [...adaptedResponses, ...context.unifiedResponses];
+    
+    // Agregar respuestas al historial usando la lógica unificada
+    for (const response of allResponses) {
+      const textContent = response.content?.text;
+      const historyMarker = response.metadata.historyMarker;
+      const isRelevant = response.metadata.isRelevant;
+      
+      // Para el historial completo, siempre usar el texto completo si existe
+      if (textContent) {
+        fullChatHistory.push({
+          role: 'assistant',
+          content: textContent,
+          timestamp: new Date()
+        });
+      }
+      
+      // Para el historial relevante, aplicar las reglas de prioridad:
+      // 1. Si hay historyMarker, usarlo siempre
+      // 2. Si no hay historyMarker pero isRelevant es true, usar el texto
+      // 3. Si isRelevant es false y no hay historyMarker, no guardar
+      if (historyMarker || (isRelevant && textContent)) {
+        const contentToSave = historyMarker || textContent;
+        relevantChatHistory.push({
+          role: 'assistant',
+          content: contentToSave!,
+          timestamp: new Date()
+        });
       }
     }
     
