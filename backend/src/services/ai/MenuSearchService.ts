@@ -11,6 +11,11 @@ import { TechnicalError, ErrorCode } from '../../common/services/errors';
  */
 export class MenuSearchService {
   private static genAI = new GoogleGenAI({ apiKey: env.GOOGLE_AI_API_KEY });
+  
+  // Configurable constants for vector search
+  private static readonly SIMILARITY_THRESHOLD = parseFloat(env.MENU_SEARCH_SIMILARITY_THRESHOLD || '0.4');
+  private static readonly RESULTS_LIMIT = parseInt(env.MENU_SEARCH_RESULTS_LIMIT || '15', 10);
+  private static readonly FALLBACK_THRESHOLD = 0.45; // Slightly higher threshold for fallback
 
   /**
    * Gets relevant menu items based on keywords using semantic search
@@ -43,31 +48,37 @@ export class MenuSearchService {
 
       // Use pgvector for efficient similarity search with threshold
       try {
-        // First, get products with similarity scores
-        // Use Prisma.sql to safely build the query with proper parameterization
+        // Use optimized query that filters by similarity threshold directly in SQL
+        // This leverages the HNSW index more efficiently
         const embeddingVector = `[${queryEmbedding.join(',')}]`;
         const relevantProductsResult: { id: string, distance: number }[] = await prisma.$queryRaw`
           SELECT id, 
                  (embedding <=> ${Prisma.sql`${embeddingVector}::vector`}) as distance
           FROM "Product"
           WHERE embedding IS NOT NULL
+            AND (embedding <=> ${Prisma.sql`${embeddingVector}::vector`}) < ${this.SIMILARITY_THRESHOLD}
           ORDER BY distance
-          LIMIT 20
+          LIMIT ${this.RESULTS_LIMIT}
         `;
         
-        // Filter by similarity threshold (lower distance = more similar)
-        // Based on testing: 0.0-0.3 = very similar, 0.3-0.4 = somewhat similar, >0.4 = different
-        const SIMILARITY_THRESHOLD = 0.4; // Only include products with strong similarity
-        
-        const filteredProducts = relevantProductsResult.filter(p => p.distance < SIMILARITY_THRESHOLD);
-        
-        // If no products meet the strict threshold, but the top result is reasonably close, include it
-        if (filteredProducts.length === 0 && relevantProductsResult.length > 0 && relevantProductsResult[0].distance < 0.45) {
-          filteredProducts.push(relevantProductsResult[0]);
-          // Including top match even though it's slightly above threshold
+        // If no results found, try again with fallback threshold
+        if (relevantProductsResult.length === 0) {
+          const fallbackResult: { id: string, distance: number }[] = await prisma.$queryRaw`
+            SELECT id, 
+                   (embedding <=> ${Prisma.sql`${embeddingVector}::vector`}) as distance
+            FROM "Product"
+            WHERE embedding IS NOT NULL
+              AND (embedding <=> ${Prisma.sql`${embeddingVector}::vector`}) < ${this.FALLBACK_THRESHOLD}
+            ORDER BY distance
+            LIMIT 1
+          `;
+          
+          if (fallbackResult.length > 0) {
+            relevantProductsResult.push(fallbackResult[0]);
+          }
         }
         
-        relevantProductIds = filteredProducts.map(p => p.id);
+        relevantProductIds = relevantProductsResult.map(p => p.id);
       } catch (error) {
         logger.error('Error in vector search:', error);
         return "[]";

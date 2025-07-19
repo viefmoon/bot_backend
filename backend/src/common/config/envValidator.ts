@@ -30,6 +30,8 @@ interface EnvironmentVariables {
   CLOUD_API_KEY?: string;
   BULLMQ_WORKER_CONCURRENCY?: string;
   NUM_WORKERS?: string;
+  MENU_SEARCH_SIMILARITY_THRESHOLD?: string;
+  MENU_SEARCH_RESULTS_LIMIT?: string;
 }
 
 class EnvironmentValidator {
@@ -135,7 +137,9 @@ class EnvironmentValidator {
       REDIS_PASSWORD: process.env.REDIS_PASSWORD,
       CLOUD_API_KEY: process.env.CLOUD_API_KEY,
       BULLMQ_WORKER_CONCURRENCY: process.env.BULLMQ_WORKER_CONCURRENCY,
-      NUM_WORKERS: process.env.NUM_WORKERS
+      NUM_WORKERS: process.env.NUM_WORKERS,
+      MENU_SEARCH_SIMILARITY_THRESHOLD: process.env.MENU_SEARCH_SIMILARITY_THRESHOLD,
+      MENU_SEARCH_RESULTS_LIMIT: process.env.MENU_SEARCH_RESULTS_LIMIT
     };
   }
 }
