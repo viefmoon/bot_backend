@@ -373,11 +373,13 @@ model RestaurantConfig {
   estimatedDeliveryTime Int                @default(40) // Tiempo estimado de entrega a domicilio en minutos
   openingGracePeriod    Int                @default(30) // Minutos después de abrir antes de aceptar pedidos
   closingGracePeriod    Int                @default(30) // Minutos antes de cerrar para dejar de aceptar pedidos
+  scheduledOrdersLeadTime Int              @default(60) // Tiempo mínimo de anticipación para pedidos programados en minutos
   timeZone              String             @default("America/Mexico_City") // Zona horaria del restaurante
   businessHours         BusinessHours[]
   
   // Configuración de delivery
   deliveryCoverageArea  Json?              // Polígono de cobertura - Array de objetos {lat: number, lng: number}
+  minimumOrderValueForDelivery Decimal?   @db.Decimal(10, 2) // Pedido mínimo para entrega a domicilio. Null o 0 para desactivar
 }
 
 model BusinessHours {

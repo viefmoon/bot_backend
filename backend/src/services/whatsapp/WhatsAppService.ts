@@ -14,6 +14,7 @@ export class WhatsAppService {
   private static readonly ACCESS_TOKEN = env.WHATSAPP_ACCESS_TOKEN;
   private static readonly VERIFY_TOKEN = env.WHATSAPP_VERIFY_TOKEN;
   private static readonly MAX_MESSAGE_LENGTH = 4000; // WhatsApp message length limit with margin
+  private static readonly MESSAGE_MAX_AGE_MINUTES = 5; // Ignore messages older than 5 minutes
 
   static verifyWebhook(query: any): { verified: boolean; challenge?: string } {
     const mode = query['hub.mode'];
@@ -64,24 +65,42 @@ export class WhatsAppService {
       const messageId = message.id;
       const from = message.from;
       
-      // Check if message already processed
+      // 1. Check if message already seen (processed or discarded)
       const existingLog = await prisma.messageLog.findUnique({
         where: { messageId }
       });
       
-      if (existingLog?.processed) {
-        logger.info(`Message ${messageId} already processed, skipping queue`);
+      if (existingLog) { // Simply existing is enough - it was already seen
+        logger.info(`Message ${messageId} already seen, skipping`);
         return;
       }
       
-      // Mark as processed to prevent duplicate processing
+      // 2. Mark as seen immediately to prevent race conditions
       await prisma.messageLog.upsert({
         where: { messageId },
         update: { processed: true },
         create: { messageId, processed: true }
       });
       
-      // Prepare job data
+      // 3. Check message age
+      if (this.MESSAGE_MAX_AGE_MINUTES > 0 && message.timestamp) {
+        const messageTimestampSeconds = parseInt(message.timestamp, 10);
+        const currentTimestampSeconds = Math.floor(Date.now() / 1000);
+        const messageAgeSeconds = currentTimestampSeconds - messageTimestampSeconds;
+        const maxAgeSeconds = this.MESSAGE_MAX_AGE_MINUTES * 60;
+        
+        if (messageAgeSeconds > maxAgeSeconds) {
+          const ageMinutes = Math.floor(messageAgeSeconds / 60);
+          logger.warn(
+            `Ignoring stale webhook message from ${from}. ` +
+            `Age: ${ageMinutes} minutes (max allowed: ${this.MESSAGE_MAX_AGE_MINUTES} minutes). ` +
+            `Message ID: ${messageId}`
+          );
+          return; // Stop processing - message is too old
+        }
+      }
+      
+      // 4. Prepare job data if message passed age check
       const jobData: WhatsAppMessageJob = {
         id: message.id,
         from: message.from,

@@ -300,8 +300,10 @@ CREATE TABLE "RestaurantConfig" (
     "estimatedDeliveryTime" INTEGER NOT NULL DEFAULT 40,
     "openingGracePeriod" INTEGER NOT NULL DEFAULT 30,
     "closingGracePeriod" INTEGER NOT NULL DEFAULT 30,
+    "scheduledOrdersLeadTime" INTEGER NOT NULL DEFAULT 60,
     "timeZone" TEXT NOT NULL DEFAULT 'America/Mexico_City',
     "deliveryCoverageArea" JSONB,
+    "minimumOrderValueForDelivery" DECIMAL(10,2),
 
     CONSTRAINT "RestaurantConfig_pkey" PRIMARY KEY ("id")
 );

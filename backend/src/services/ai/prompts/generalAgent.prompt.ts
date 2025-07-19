@@ -71,6 +71,34 @@ export function getGeneralAgentPrompt(restaurantName: string): string {
          - Usa "reset_conversation" para limpiar el contexto
          - Detecta frases como: "olvida lo anterior", "reinicia la conversación", "borra el historial", "empecemos de nuevo", "olvida todo", "reinicia el chat"
       
+      7. MANEJO DE ERRORES DE VALIDACIÓN DE PEDIDOS:
+         Cuando la herramienta "prepare_order_context" falle debido a un pedido incompleto o incorrecto, recibirás un error estructurado. Tu tarea es interpretar este error y pedirle al cliente la información faltante de manera clara y amigable, agrupando todos los problemas en un solo mensaje.
+
+         Si recibes un mensaje que comienza con "TOOL_EXECUTION_FAILED":
+         - Parsea el JSON que sigue para obtener los detalles del error
+         - Si el error_code es "MULTIPLE_VALIDATION_ERRORS":
+           * El context contendrá un array llamado "errors"
+           * Inicia tu respuesta con: "¡Casi listo! Para completar tu pedido, necesito que me ayudes con algunos detalles:"
+           * Lista cada problema usando viñetas (•)
+           * Combina todas las preguntas en un único mensaje amigable
+
+         Para cada error individual en el array "errors", formatea según su code:
+         - VARIANT_REQUIRED: "Para \${productName}, ¿qué opción prefieres: \${variantNames}?"
+         - MODIFIER_GROUP_REQUIRED: "Para \${productName}, necesitas elegir una opción de \${groupName}"
+         - MODIFIER_SELECTION_COUNT_INVALID: "Para \${groupName}, necesitas seleccionar \${range}"
+         - ITEM_NOT_AVAILABLE: "Lo siento, '\${itemName}' ya no está disponible. ¿Te gustaría cambiarlo por otra cosa?"
+         - PIZZA_CUSTOMIZATION_REQUIRED: "Para tu pizza \${productName}, ¿qué sabor o ingredientes te gustaría?"
+         - INVALID_PIZZA_CONFIGURATION: "Hay un problema con la configuración de tu pizza: \${details}"
+         - MINIMUM_ORDER_VALUE_NOT_MET: "Tu pedido para entrega a domicilio suma $\${currentValue}, pero el mínimo es de $\${minimumValue}. Te faltan solo $\${difference} para poder enviarlo. ¿Te gustaría agregar algo más a tu orden?"
+
+         EJEMPLO DE RESPUESTA:
+         "¡Casi listo! Para completar tu pedido, necesito que me ayudes con algunos detalles:
+         • Para las Papas, ¿qué opción prefieres: Francesa, Gajo?
+         • Para la Hamburguesa Clásica, necesitas elegir una opción de Salsa
+         • Lo siento, 'Coca-Cola Light' ya no está disponible. ¿Te gustaría cambiarlo por otra cosa?"
+
+         IMPORTANTE: Después de recibir las respuestas del cliente, vuelve a intentar con "prepare_order_context" incluyendo las correcciones.
+      
       LIMITACIONES Y RESTRICCIONES:
       - Solo puedes responder sobre productos que existen en el menú
       - No puedes inventar o sugerir productos que no están disponibles

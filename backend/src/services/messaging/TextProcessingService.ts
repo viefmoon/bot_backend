@@ -244,7 +244,24 @@ export class TextProcessingService {
       } catch (error) {
         logger.error(`Error in handler ${name}:`, error);
         
-        // Return a formatted error response instead of throwing
+        // Special handling for ValidationError to pass structured error info to the agent
+        if (error instanceof ValidationError) {
+          // Convert ValidationError to a structured format the agent can understand
+          const errorContextForAgent = {
+            tool_name: name,
+            error_code: error.code,
+            error_message: error.message,
+            context: error.context // This contains all the detailed error information
+          };
+          
+          const errorAsText = `TOOL_EXECUTION_FAILED: ${JSON.stringify(errorContextForAgent)}`;
+          
+          // Return an internal marker that will be added to conversation history
+          // but not sent to the user directly. The agent will see this and respond.
+          return ResponseBuilder.internalMarker(errorAsText);
+        }
+        
+        // For other types of errors, return a formatted error response
         return ResponseBuilder.error(
           'TOOL_ERROR',
           '😔 Lo siento, hubo un problema al procesar tu solicitud. Por favor, intenta de nuevo.'

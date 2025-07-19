@@ -741,7 +741,8 @@ export class UnifiedSyncService {
         openingGracePeriod: restaurantConfig.openingGracePeriod || 30,
         closingGracePeriod: restaurantConfig.closingGracePeriod || 30,
         timeZone: restaurantConfig.timeZone || 'America/Mexico_City',
-        deliveryCoverageArea: restaurantConfig.deliveryCoverageArea || []
+        deliveryCoverageArea: restaurantConfig.deliveryCoverageArea || [],
+        minimumOrderValueForDelivery: restaurantConfig.minimumOrderValueForDelivery || null
       },
       update: {
         restaurantName: restaurantConfig.restaurantName,
@@ -758,7 +759,8 @@ export class UnifiedSyncService {
         openingGracePeriod: restaurantConfig.openingGracePeriod || 30,
         closingGracePeriod: restaurantConfig.closingGracePeriod || 30,
         timeZone: restaurantConfig.timeZone || 'America/Mexico_City',
-        deliveryCoverageArea: restaurantConfig.deliveryCoverageArea || []
+        deliveryCoverageArea: restaurantConfig.deliveryCoverageArea || [],
+        minimumOrderValueForDelivery: restaurantConfig.minimumOrderValueForDelivery || null
       }
     });
     

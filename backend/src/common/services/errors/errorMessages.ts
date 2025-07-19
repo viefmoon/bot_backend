@@ -144,5 +144,39 @@ export const ERROR_MESSAGES: Record<ErrorCode, ErrorMessageConfig> = {
   [ErrorCode.AI_PROCESSING_ERROR]: {
     user: '🤖 No se pudo procesar tu pedido. Por favor intenta de nuevo.',
     log: 'AI processing failed'
+  },
+  
+  // Order Item Validation Errors
+  [ErrorCode.VARIANT_REQUIRED]: {
+    user: "❌ El producto '${productName}' requiere que elijas una de las siguientes opciones: ${variantNames}.",
+    log: "Missing required variant for product"
+  },
+  [ErrorCode.MODIFIER_GROUP_REQUIRED]: {
+    user: "❌ Para el producto '${productName}', es necesario que elijas una opción del grupo '${groupName}'.",
+    log: "Required modifier group selection is missing"
+  },
+  [ErrorCode.MODIFIER_SELECTION_COUNT_INVALID]: {
+    user: "❌ Para el grupo de modificadores '${groupName}', debes seleccionar ${range} opción(es).",
+    log: "Invalid number of selections for modifier group"
+  },
+  [ErrorCode.PIZZA_CUSTOMIZATION_REQUIRED]: {
+    user: "🍕 Para pedir la pizza '${productName}', debes seleccionar al menos un sabor o ingrediente.",
+    log: "Pizza requires at least one customization with action ADD"
+  },
+  [ErrorCode.INVALID_PIZZA_CONFIGURATION]: {
+    user: "🍕❌ La configuración de la pizza '${productName}' es inválida. ${details}",
+    log: "Invalid pizza customization configuration"
+  },
+  [ErrorCode.ITEM_NOT_AVAILABLE]: {
+    user: "🚫 Lo sentimos, '${itemName}' ya no está disponible. Por favor, elimínalo de tu pedido.",
+    log: "Item not available (inactive)"
+  },
+  [ErrorCode.MULTIPLE_VALIDATION_ERRORS]: {
+    user: "❌ Encontramos algunos problemas con tu pedido. Por favor, revisa los siguientes puntos.",
+    log: "Multiple validation errors occurred"
+  },
+  [ErrorCode.MINIMUM_ORDER_VALUE_NOT_MET]: {
+    user: "💰 El pedido mínimo para entrega a domicilio es de $${minimumValue}. Te faltan $${difference} para alcanzarlo. ¿Deseas agregar algo más?",
+    log: "Minimum order value for delivery not met"
   }
 };

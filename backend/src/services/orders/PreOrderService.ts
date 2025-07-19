@@ -7,6 +7,7 @@ import { RestaurantService } from "../restaurant/RestaurantService";
 import { OrderType } from "@prisma/client";
 import { ValidationError, ErrorCode } from "../../common/services/errors";
 import { BaseOrderItem, DeliveryInfoInput } from "../../common/types";
+import { OrderItemValidatorService } from './services/OrderItemValidatorService';
 
 export class PreOrderService {
   /**
@@ -29,19 +30,8 @@ export class PreOrderService {
     });
 
     try {
-      // Validar que haya al menos un producto
-      if (!orderItems || orderItems.length === 0) {
-        throw new ValidationError(
-          ErrorCode.MISSING_REQUIRED_FIELD,
-          'No se puede crear una orden sin productos',
-          {
-            metadata: {
-              validationFailure: 'EMPTY_ORDER',
-              message: 'Debes agregar al menos un producto a tu pedido'
-            }
-          }
-        );
-      }
+      // Validate all order items before any other operation
+      await OrderItemValidatorService.validateOrderItems(orderItems);
 
       // Flatten order items based on quantity
       const flattenedOrderItems: BaseOrderItem[] = orderItems.flatMap(item => {
@@ -98,6 +88,30 @@ export class PreOrderService {
       const { items: calculatedItems, subtotal, total } = await ProductCalculationService.calculateOrderItems(
         flattenedOrderItems
       );
+
+      // Validate minimum order value for delivery
+      const minimumValue = config.minimumOrderValueForDelivery ? Number(config.minimumOrderValueForDelivery) : 0;
+      
+      if (orderType === OrderType.DELIVERY && minimumValue > 0 && total < minimumValue) {
+        const difference = minimumValue - total;
+        const message = `El pedido mínimo para entrega a domicilio es de $${minimumValue.toFixed(2)}. Te faltan $${difference.toFixed(2)} para alcanzarlo. ¿Deseas agregar algo más?`;
+        
+        throw new ValidationError(
+          ErrorCode.MINIMUM_ORDER_VALUE_NOT_MET,
+          message,
+          {
+            minimumValue: minimumValue.toFixed(2),
+            currentValue: total.toFixed(2),
+            difference: difference.toFixed(2),
+            metadata: {
+              orderType,
+              currentTotal: total,
+              minimumRequired: minimumValue,
+              missingAmount: difference
+            }
+          }
+        );
+      }
 
       // Create pre-order data
       const preOrderData: any = {
