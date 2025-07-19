@@ -67,48 +67,7 @@ router.post('/send',
       return;
     }
     
-    if (customer.addresses.length === 1) {
-      // Only one address, no need to update yet
-      // The user will confirm or change it
-      
-      await sendWhatsAppInteractiveMessage(
-        customer.whatsappPhoneNumber,
-        {
-          type: "button",
-          body: {
-            text: `📍 *Dirección de entrega:*\n${formatAddressFull(customer.addresses[0])}\n\n¿Deseas usar esta dirección o cambiarla?`
-          },
-          action: {
-            buttons: [
-              {
-                type: "reply",
-                reply: {
-                  id: `confirm_address_${customer.addresses[0].id}`,
-                  title: "✅ Usar dirección"
-                }
-              },
-              {
-                type: "reply", 
-                reply: {
-                  id: "change_address",
-                  title: "🔄 Cambiar dirección"
-                }
-              }
-            ]
-          }
-        }
-      );
-      
-      res.json({ 
-        success: true,
-        message: 'Single address confirmation sent',
-        hasAddresses: true,
-        addressCount: 1
-      });
-      return;
-    }
-    
-    // Multiple addresses, send selection list
+    // Always use list for consistency
     const sections = [
       {
         title: "Mis direcciones",
@@ -132,6 +91,11 @@ router.post('/send',
       description: "Registrar una nueva dirección de entrega"
     });
     
+    // Determine body text based on number of addresses
+    const bodyText = customer.addresses.length === 1
+      ? "Puedes usar tu dirección actual o agregar una nueva:"
+      : "Por favor selecciona la dirección de entrega para tu pedido:";
+    
     await sendWhatsAppInteractiveMessage(
       customer.whatsappPhoneNumber,
       {
@@ -141,13 +105,13 @@ router.post('/send',
           text: "📍 Seleccionar Dirección"
         },
         body: {
-          text: "Por favor selecciona la dirección de entrega para tu pedido:"
+          text: bodyText
         },
         footer: {
-          text: "Elige una opción de la lista"
+          text: "Elige una opción"
         },
         action: {
-          button: "Ver direcciones",
+          button: "Ver opciones",
           sections
         }
       }

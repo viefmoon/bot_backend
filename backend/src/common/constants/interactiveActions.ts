@@ -9,7 +9,6 @@ export const INTERACTIVE_ACTIONS = {
   PREORDER_CHANGE_ADDRESS: 'preorder_change_address:',
   
   // Address actions
-  CONFIRM_ADDRESS: 'confirm_address_',
   SELECT_ADDRESS: 'select_address_',
   CHANGE_ADDRESS: 'change_address',
   ADD_NEW_ADDRESS: 'add_new_address',

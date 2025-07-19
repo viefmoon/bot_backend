@@ -42,7 +42,8 @@
       "Bash(pm2 reload:*)",
       "Bash(git reset:*)",
       "Bash(git pull:*)",
-      "Bash(git stash:*)"
+      "Bash(git stash:*)",
+      "Bash(npx ts-node:*)"
     ],
     "deny": []
   }
