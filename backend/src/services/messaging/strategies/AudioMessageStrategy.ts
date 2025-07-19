@@ -75,11 +75,14 @@ export class AudioMessageStrategy extends MessageStrategy {
         body: transcription
       };
       
-      // Process the transcribed text directly using the shared service
-      await TextProcessingService.processTextMessage(transcription, context);
+      // Change the message type to text so it gets processed by TextMessageStrategy
+      context.message.type = 'text';
       
-      // Stop the pipeline here since we've already processed the message
-      context.stop();
+      // Mark that we already sent an initial response
+      context.set('audio_transcribed', true);
+      
+      // DON'T stop the pipeline - let it continue processing as a text message
+      // This ensures the history gets updated properly
       
     } catch (error) {
       logger.error('Error processing audio message:', error);
