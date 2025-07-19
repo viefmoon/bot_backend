@@ -155,10 +155,9 @@ export class OrderFormattingService {
     
     const config = await ConfigService.getConfig();
     
-    let message = `🎉 *¡Tu orden ha sido creada exitosamente!* 🎉\n\n`;
-    message += `📞 *Teléfono:* ${formattedOrder.phoneNumber}\n`;
-    message += `📅 *Fecha de creación:* ${formattedOrder.createdAt}\n`;
+    let message = `📅 *Fecha de creación:* ${formattedOrder.createdAt}\n`;
     message += `🚚 *Información de entrega:* ${orderTypeText} - ${formattedOrder.deliveryInfo}\n`;
+    message += `📞 *Teléfono:* ${formattedOrder.phoneNumber}\n`;
     
     if (formattedOrder.estimatedDeliveryTime) {
       message += `⏱️ *Hora estimada de entrega:* ${formattedOrder.estimatedDeliveryTime}\n`;
