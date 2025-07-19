@@ -11,7 +11,7 @@ import { ValidationError, BusinessLogicError, TechnicalError, ErrorCode } from '
 
 // Type definition for content
 interface Content {
-  role: 'user' | 'model' | 'tool';
+  role: 'user' | 'model';
   parts: Array<{ text: string }>;
 }
 
@@ -69,14 +69,18 @@ export class TextProcessingService {
           updatedMessages.push(response.candidates[0].content);
         }
         
-        // Add function responses as tool messages
-        for (const unifiedResponse of unifiedResponses) {
-          if (unifiedResponse.metadata.shouldSend === false && unifiedResponse.content?.text) {
-            updatedMessages.push({
-              role: 'tool',
-              parts: [{ text: unifiedResponse.content.text }]
-            });
-          }
+        // Add function responses as user messages (following Gemini's pattern)
+        // The model expects function responses to come from 'user' role
+        const functionResponses = unifiedResponses
+          .filter(r => r.metadata.shouldSend === false && r.content?.text)
+          .map(r => r.content!.text)
+          .join('\n\n');
+        
+        if (functionResponses) {
+          updatedMessages.push({
+            role: 'user',
+            parts: [{ text: functionResponses }]
+          });
         }
         
         logger.debug('Making follow-up call to AgentService with tool responses');

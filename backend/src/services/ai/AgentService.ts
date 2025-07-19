@@ -8,7 +8,7 @@ import { MenuSearchService } from './MenuSearchService';
 
 // Definiciones de tipos para el nuevo SDK
 interface Content {
-  role: 'user' | 'model' | 'tool';
+  role: 'user' | 'model';
   parts: Array<{ text: string } | { inlineData: { mimeType: string; data: string } }>;
 }
 
