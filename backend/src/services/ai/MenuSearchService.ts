@@ -12,9 +12,10 @@ import { TechnicalError, ErrorCode } from '../../common/services/errors';
 export class MenuSearchService {
   private static genAI = new GoogleGenAI({ apiKey: env.GOOGLE_AI_API_KEY });
   
-  // Configurable constants for vector search
-  private static readonly SIMILARITY_THRESHOLD = parseFloat(env.MENU_SEARCH_SIMILARITY_THRESHOLD || '0.4');
-  private static readonly RESULTS_LIMIT = parseInt(env.MENU_SEARCH_RESULTS_LIMIT || '15', 10);
+  // Constants for vector search optimization
+  // Based on testing: 0.0-0.3 = very similar, 0.3-0.4 = somewhat similar, >0.4 = different
+  private static readonly SIMILARITY_THRESHOLD = 0.4; // Only include products with strong similarity
+  private static readonly RESULTS_LIMIT = 15; // Reasonable limit for relevant results
   private static readonly FALLBACK_THRESHOLD = 0.45; // Slightly higher threshold for fallback
 
   /**
