@@ -48,14 +48,16 @@ export class AudioMessageStrategy extends MessageStrategy {
       });
       
       // Determinar tipo MIME
-      const mimeType = context.message.audio.mime_type || 'audio/ogg';
+      const fullMimeType = context.message.audio.mime_type || 'audio/ogg';
+      // Extract base MIME type without parameters (e.g., "audio/ogg" from "audio/ogg; codecs=opus")
+      const mimeType = fullMimeType.split(';')[0].trim();
       const validMimeTypes = ['audio/ogg', 'audio/mpeg', 'audio/mp4', 'audio/wav'];
       
       if (!validMimeTypes.includes(mimeType)) {
         throw new ValidationError(
           ErrorCode.TRANSCRIPTION_ERROR,
           `Unsupported audio format: ${mimeType}`,
-          { metadata: { mimeType, validMimeTypes } }
+          { metadata: { mimeType: fullMimeType, baseMimeType: mimeType, validMimeTypes } }
         );
       }
       
