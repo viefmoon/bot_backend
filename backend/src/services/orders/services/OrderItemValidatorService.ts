@@ -329,9 +329,13 @@ export class OrderItemValidatorService {
 
       // Validar si es requerido
       if (group.isRequired && selectionCount === 0) {
+        // Obtener los modificadores activos disponibles
+        const activeModifiers = group.productModifiers.filter(m => m.isActive);
+        const availableOptions = activeModifiers.map(m => m.name).join(', ');
+        
         errors.push({
           code: ErrorCode.MODIFIER_GROUP_REQUIRED,
-          message: `Para el producto '${product.name}', es necesario que elijas una opción del grupo '${group.name}'.`,
+          message: `Para el producto '${product.name}', es necesario que elijas una opción del grupo '${group.name}'. Opciones disponibles: ${availableOptions}`,
           context: {
             productName: product.name,
             groupName: group.name,
@@ -340,7 +344,8 @@ export class OrderItemValidatorService {
               productName: product.name,
               modifierGroupId: group.id,
               modifierGroupName: group.name,
-              validationFailure: 'MISSING_REQUIRED_MODIFIER_GROUP'
+              validationFailure: 'MISSING_REQUIRED_MODIFIER_GROUP',
+              availableModifiers: activeModifiers.map(m => ({ id: m.id, name: m.name }))
             }
           },
           itemIndex
@@ -350,9 +355,12 @@ export class OrderItemValidatorService {
 
       // Validar selecciones mínimas (solo si se seleccionó algo o si es requerido)
       if (selectionCount < group.minSelections && (selectionCount > 0 || group.isRequired)) {
+        const activeModifiers = group.productModifiers.filter(m => m.isActive);
+        const availableOptions = activeModifiers.map(m => m.name).join(', ');
+        
         errors.push({
           code: ErrorCode.MODIFIER_SELECTION_COUNT_INVALID,
-          message: `Para el grupo de modificadores '${group.name}', debes seleccionar al menos ${group.minSelections} opción(es).`,
+          message: `Para el grupo de modificadores '${group.name}', debes seleccionar al menos ${group.minSelections} opción(es). Opciones disponibles: ${availableOptions}`,
           context: {
             productName: product.name,
             groupName: group.name,
@@ -377,9 +385,14 @@ export class OrderItemValidatorService {
 
       // Validar selecciones máximas
       if (selectionCount > group.maxSelections) {
+        const selectedModifiers = group.productModifiers
+          .filter(m => selectedModifierIds.has(m.id))
+          .map(m => m.name)
+          .join(', ');
+        
         errors.push({
           code: ErrorCode.MODIFIER_SELECTION_COUNT_INVALID,
-          message: `Para el grupo de modificadores '${group.name}', puedes seleccionar como máximo ${group.maxSelections} opción(es).`,
+          message: `Para el grupo de modificadores '${group.name}', puedes seleccionar como máximo ${group.maxSelections} opción(es). Has seleccionado: ${selectedModifiers}`,
           context: {
             productName: product.name,
             groupName: group.name,
@@ -422,15 +435,24 @@ export class OrderItemValidatorService {
     // REGLA: Una pizza debe tener al menos una personalización de tipo 'ADD'.
     const hasAddedCustomization = customizations.some(c => c.action === 'ADD');
     if (!hasAddedCustomization) {
+      // Obtener personalizaciones disponibles
+      const availableCustomizations = product.pizzaCustomizations
+        .filter(pc => pc.isActive)
+        .map(pc => pc.name)
+        .join(', ');
+      
       errors.push({
         code: ErrorCode.PIZZA_CUSTOMIZATION_REQUIRED,
-        message: `Para pedir la pizza '${product.name}', debes seleccionar al menos un sabor o ingrediente.`,
+        message: `Para pedir la pizza '${product.name}', debes seleccionar al menos un sabor o ingrediente. Opciones disponibles: ${availableCustomizations}`,
         context: {
           productName: product.name,
           metadata: {
             productId: product.id,
             productName: product.name,
-            validationFailure: 'PIZZA_MISSING_ADD_CUSTOMIZATION'
+            validationFailure: 'PIZZA_MISSING_ADD_CUSTOMIZATION',
+            availableCustomizations: product.pizzaCustomizations
+              .filter(pc => pc.isActive)
+              .map(pc => ({ id: pc.id, name: pc.name }))
           }
         },
         itemIndex

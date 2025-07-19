@@ -84,12 +84,13 @@ export function getGeneralAgentPrompt(restaurantName: string): string {
 
          Para cada error individual en el array "errors", formatea según su code:
          - VARIANT_REQUIRED: "Para \${productName}, ¿qué opción prefieres: \${variantNames}?"
-         - MODIFIER_GROUP_REQUIRED: "Para \${productName}, necesitas elegir una opción de \${groupName}"
-         - MODIFIER_SELECTION_COUNT_INVALID: "Para \${groupName}, necesitas seleccionar \${range}"
+         - MODIFIER_GROUP_REQUIRED: Usa el mensaje de error directamente ya que incluye las opciones disponibles
+         - MODIFIER_SELECTION_COUNT_INVALID: Usa el mensaje de error directamente ya que incluye las opciones disponibles
          - ITEM_NOT_AVAILABLE: "Lo siento, '\${itemName}' ya no está disponible. ¿Te gustaría cambiarlo por otra cosa?"
-         - PIZZA_CUSTOMIZATION_REQUIRED: "Para tu pizza \${productName}, ¿qué sabor o ingredientes te gustaría?"
+         - PIZZA_CUSTOMIZATION_REQUIRED: Usa el mensaje de error directamente ya que incluye las opciones disponibles
          - INVALID_PIZZA_CONFIGURATION: "Hay un problema con la configuración de tu pizza: \${details}"
          - MINIMUM_ORDER_VALUE_NOT_MET: "Tu pedido para entrega a domicilio suma $\${currentValue}, pero el mínimo es de $\${minimumValue}. Te faltan solo $\${difference} para poder enviarlo. ¿Te gustaría agregar algo más a tu orden?"
+         
 
          EJEMPLO DE RESPUESTA:
          "¡Casi listo! Para completar tu pedido, necesito que me ayudes con algunos detalles:
