@@ -52,9 +52,30 @@ export class OrderFormattingService {
     // Group items by product and variant
     const itemGroups: { [key: string]: any[] } = {};
     
-    // Group items by product and variant
+    // Helper function to create a unique key for grouping identical items
+    const getItemGroupingKey = (item: any): string => {
+      const parts = [
+        item.productId,
+        item.productVariantId || 'null',
+        // Include sorted modifier IDs
+        (item.productModifiers || [])
+          .map((mod: any) => mod.id)
+          .sort()
+          .join(',') || 'no-modifiers',
+        // Include sorted pizza customizations
+        (item.selectedPizzaCustomizations || [])
+          .map((c: any) => `${c.pizzaCustomizationId}-${c.half}-${c.action}`)
+          .sort()
+          .join(',') || 'no-customizations',
+        // Include preparation notes/comments
+        item.comments || 'no-comments'
+      ];
+      return parts.join('|');
+    };
+    
+    // Group items by all relevant attributes
     order.orderItems?.forEach((item: any) => {
-      const key = `${item.productId}_${item.productVariantId || 'null'}`;
+      const key = getItemGroupingKey(item);
       if (!itemGroups[key]) {
         itemGroups[key] = [];
       }

@@ -42,6 +42,26 @@ export class PreOrderService {
           }
         );
       }
+
+      // Flatten order items based on quantity
+      const flattenedOrderItems: BaseOrderItem[] = orderItems.flatMap(item => {
+        // If quantity is not defined or is 1, return the item as is
+        if (!item.quantity || item.quantity <= 1) {
+          return [{ ...item, quantity: 1 }];
+        }
+        
+        // If quantity is > 1, create an array of cloned items
+        const clones: BaseOrderItem[] = [];
+        for (let i = 0; i < item.quantity; i++) {
+          clones.push({
+            ...item,
+            quantity: 1 // Each individual record represents a quantity of 1
+          });
+        }
+        return clones;
+      });
+
+      logger.info(`Flattened ${orderItems.length} items to ${flattenedOrderItems.length} items based on quantities`)
       
       // Get restaurant config
       const config = await RestaurantService.getConfig();
@@ -76,7 +96,7 @@ export class PreOrderService {
 
       // Calculate items and totals
       const { items: calculatedItems, subtotal, total } = await ProductCalculationService.calculateOrderItems(
-        orderItems
+        flattenedOrderItems
       );
 
       // Create pre-order data
@@ -151,22 +171,68 @@ export class PreOrderService {
       // Delivery info is now attached to the preOrder
       const deliveryInfo = preOrder.deliveryInfo;
 
-      // Format order items from the created preOrder
-      const formattedItems = preOrder.orderItems.map(item => ({
-        ...item,
-        productName: item.product.name,
-        variantName: item.productVariant?.name,
-        modifierNames: item.productModifiers.map(m => m.name),
-        pizzaCustomizationDetails: item.selectedPizzaCustomizations.map(sc => ({
-          pizzaCustomizationId: sc.pizzaCustomizationId,
-          name: sc.pizzaCustomization.name,
-          type: sc.pizzaCustomization.type,
-          half: sc.half,
-          action: sc.action
-        })),
-        quantity: 1, // Quantity is always 1 per item in our current model
-        totalPrice: item.finalPrice
-      }));
+      // Helper function to create a unique key for grouping identical items
+      const getItemGroupingKey = (item: any): string => {
+        const parts = [
+          item.productId,
+          item.productVariantId || 'null',
+          // Include sorted modifier IDs
+          (item.productModifiers || [])
+            .map((mod: any) => mod.id)
+            .sort()
+            .join(',') || 'no-modifiers',
+          // Include sorted pizza customizations
+          (item.selectedPizzaCustomizations || [])
+            .map((c: any) => `${c.pizzaCustomizationId}-${c.half}-${c.action}`)
+            .sort()
+            .join(',') || 'no-customizations'
+        ];
+        return parts.join('|');
+      };
+
+      // Group identical items
+      const itemGroups = new Map<string, any[]>();
+      preOrder.orderItems.forEach(item => {
+        const key = getItemGroupingKey(item);
+        if (!itemGroups.has(key)) {
+          itemGroups.set(key, []);
+        }
+        itemGroups.get(key)!.push(item);
+      });
+
+      // Format grouped items
+      const formattedItems = Array.from(itemGroups.values()).map(items => {
+        const firstItem = items[0];
+        const quantity = items.length;
+        const totalPrice = items.reduce((sum, item) => sum + item.finalPrice, 0);
+        
+        return {
+          productId: firstItem.productId,
+          productVariantId: firstItem.productVariantId,
+          productName: firstItem.product.name,
+          variantName: firstItem.productVariant?.name,
+          modifierNames: firstItem.productModifiers.map((m: any) => m.name),
+          pizzaCustomizationDetails: firstItem.selectedPizzaCustomizations.map((sc: any) => ({
+            pizzaCustomizationId: sc.pizzaCustomizationId,
+            name: sc.pizzaCustomization.name,
+            type: sc.pizzaCustomization.type,
+            half: sc.half,
+            action: sc.action
+          })),
+          quantity: quantity,
+          totalPrice: totalPrice,
+          // Preserve other fields from first item
+          selectedModifiers: firstItem.productModifiers.map((m: any) => m.id),
+          selectedPizzaCustomizations: firstItem.selectedPizzaCustomizations.map((sc: any) => ({
+            pizzaCustomizationId: sc.pizzaCustomizationId,
+            half: sc.half,
+            action: sc.action
+          })),
+          basePrice: firstItem.basePrice,
+          finalPrice: firstItem.finalPrice,
+          comments: firstItem.comments
+        };
+      });
 
       return {
         preOrderId: preOrder.id,

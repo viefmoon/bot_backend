@@ -117,10 +117,10 @@ export class ProductCalculationService {
     // Add pizza extra cost to item price
     itemPrice += extraCost;
 
-    // Total item price
-    itemPrice = itemPrice * item.quantity;
+    // Since we now handle quantities by creating multiple items,
+    // each item's price is just its unit price (no multiplication)
     
-    logger.info(`Final item price after quantity (${item.quantity}): ${itemPrice}`);
+    logger.info(`Final item price: ${itemPrice}`);
 
     // At this point, product is guaranteed to exist due to validation above
     if (!product) {
@@ -131,15 +131,15 @@ export class ProductCalculationService {
     const calculatedItem: CalculatedOrderItem = {
       productId: product.id,
       productVariantId: productVariant?.id || null,
-      quantity: item.quantity,
+      quantity: 1, // Always 1 since we handle quantities by creating multiple items
       comments: item.comments,
       selectedModifiers: item.selectedModifiers,
       selectedPizzaCustomizations: item.selectedPizzaCustomizations,
       // Pricing information
       basePrice: productVariant?.price || product.price || 0,
       modifiersPrice: modifiers.totalPrice,
-      unitPrice: (productVariant?.price || product.price || 0) + modifiers.totalPrice + extraCost,
-      totalPrice: itemPrice,
+      unitPrice: itemPrice,
+      totalPrice: itemPrice, // totalPrice equals unitPrice since quantity is always 1
       // Display information
       productName: product.name,
       variantName: productVariant?.name || null,

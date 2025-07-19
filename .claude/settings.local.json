@@ -46,7 +46,8 @@
       "Bash(npx ts-node:*)",
       "Bash(del \"C:\\Users\\Leonel\\Desktop\\bot_backend\\backend\\src\\common\\utils\\dto.utils.ts\")",
       "WebFetch(domain:ai.google.dev)",
-      "Bash(npm run seed:embeddings:*)"
+      "Bash(npm run seed:embeddings:*)",
+      "Bash(del backendtest-quantity-fix.js)"
     ],
     "deny": []
   }
