@@ -50,11 +50,82 @@ export class ProductService {
   }
   
   /**
+   * Get active products optimized for WhatsApp menu display
+   * Only selects fields needed for formatting, significantly reducing data transfer
+   */
+  static async getActiveProductsForWhatsApp(): Promise<any[]> {
+    try {
+      return await prisma.product.findMany({
+        where: { isActive: true },
+        orderBy: { sortOrder: 'asc' },
+        select: {
+          name: true,
+          price: true,
+          hasVariants: true,
+          isPizza: true,
+          subcategory: {
+            select: {
+              category: {
+                select: { 
+                  name: true, 
+                  sortOrder: true 
+                }
+              }
+            }
+          },
+          variants: {
+            where: { isActive: true },
+            orderBy: { sortOrder: 'asc' },
+            select: { 
+              name: true, 
+              price: true 
+            }
+          },
+          modifierGroups: {
+            where: { isActive: true },
+            orderBy: { sortOrder: 'asc' },
+            select: {
+              name: true,
+              productModifiers: {
+                where: { isActive: true },
+                orderBy: { sortOrder: 'asc' },
+                select: { 
+                  name: true, 
+                  price: true 
+                }
+              }
+            }
+          },
+          pizzaCustomizations: {
+            where: { isActive: true },
+            orderBy: { sortOrder: 'asc' },
+            select: { 
+              name: true, 
+              type: true, 
+              ingredients: true, 
+              toppingValue: true 
+            }
+          },
+          pizzaConfiguration: {
+            select: { 
+              includedToppings: true, 
+              extraToppingCost: true 
+            }
+          }
+        }
+      });
+    } catch (error) {
+      logger.error('Error fetching optimized products for WhatsApp:', error);
+      throw error;
+    }
+  }
+
+  /**
    * Get formatted menu for WhatsApp
    */
   static async getMenuForWhatsApp(): Promise<string> {
     try {
-      const products = await this.getActiveProducts();
+      const products = await this.getActiveProductsForWhatsApp();
       
       // Get restaurant name
       let restaurantName = "Nuestro Restaurante";
