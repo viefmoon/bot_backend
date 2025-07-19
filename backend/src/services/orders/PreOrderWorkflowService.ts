@@ -6,6 +6,7 @@ import { OrderManagementService } from './services/OrderManagementService';
 import { sendWhatsAppMessage, WhatsAppService } from '../whatsapp';
 import { generateOrderSummary } from '../../whatsapp/handlers/orders/orderFormatters';
 import { BusinessLogicError, ErrorCode, ValidationError } from '../../common/services/errors';
+import { redisKeys, REDIS_KEYS } from '../../common/constants';
 import logger from '../../common/utils/logger';
 import { SyncMetadataService } from '../sync/SyncMetadataService';
 import {
@@ -16,7 +17,6 @@ import {
 } from '../../common/types/preorder.types';
 
 export class PreOrderWorkflowService {
-  private static readonly TOKEN_PREFIX = 'preorder:token:';
   private static readonly TOKEN_TTL_SECONDS = 600; // 10 minutes
   private static readonly PREORDER_EXPIRY_MINUTES = 10; // Same as token TTL
   
@@ -103,7 +103,8 @@ export class PreOrderWorkflowService {
     if (params.action === 'confirm') {
       await this.confirmPreOrder(validation.preOrderId, params.whatsappNumber);
     } else {
-      await this.discardPreOrder(validation.preOrderId, params.whatsappNumber);
+      // Use the method that includes user interaction
+      await this.discardPreOrderAndResetConversation(validation.preOrderId, params.whatsappNumber);
     }
     
     await this.deleteActionToken(params.token);
@@ -111,7 +112,7 @@ export class PreOrderWorkflowService {
   
   private static async generateActionToken(preOrderId: number): Promise<string> {
     const token = randomUUID();
-    const key = `${this.TOKEN_PREFIX}${token}`;
+    const key = redisKeys.preorderToken(token);
     
     await redisService.set(key, preOrderId.toString(), this.TOKEN_TTL_SECONDS);
     
@@ -124,7 +125,7 @@ export class PreOrderWorkflowService {
   }
   
   private static async validateActionToken(token: string): Promise<TokenValidationResult> {
-    const key = `${this.TOKEN_PREFIX}${token}`;
+    const key = redisKeys.preorderToken(token);
     
     try {
       const preOrderIdStr = await redisService.get(key);
@@ -164,7 +165,7 @@ export class PreOrderWorkflowService {
   }
   
   private static async deleteActionToken(token: string): Promise<void> {
-    const key = `${this.TOKEN_PREFIX}${token}`;
+    const key = redisKeys.preorderToken(token);
     await redisService.del(key);
   }
   
@@ -384,16 +385,41 @@ export class PreOrderWorkflowService {
     await orderManagementService.sendOrderConfirmation(whatsappNumber, order.id, 'confirmed');
   }
   
-  private static async discardPreOrder(
+  /**
+   * Discards a preorder and resets the conversation for the user
+   * This includes clearing chat history and sending a notification
+   */
+  private static async discardPreOrderAndResetConversation(
     preOrderId: number, 
     whatsappNumber: string
   ): Promise<void> {
-    logger.info('Discarding preorder and clearing history', { preOrderId });
+    logger.info('Discarding preorder and resetting conversation', { preOrderId });
+    
+    // 1. Discard the preorder data
+    await this.discardPreOrderData(preOrderId);
+    
+    // 2. Clear chat history
+    await this.clearCustomerChatHistory(whatsappNumber);
+    
+    // 3. Send reset notification to user
+    await this.sendDiscardNotification(whatsappNumber);
+  }
+  
+  /**
+   * Only discards the preorder data without any side effects
+   * Useful for silent cleanup operations
+   */
+  private static async discardPreOrderData(preOrderId: number): Promise<void> {
+    logger.info('Discarding preorder data', { preOrderId });
     
     const orderManagementService = new OrderManagementService();
-    
     await orderManagementService.discardPreOrder(preOrderId);
-    
+  }
+  
+  /**
+   * Clears the customer's chat history
+   */
+  private static async clearCustomerChatHistory(whatsappNumber: string): Promise<void> {
     const customer = await prisma.customer.findUnique({
       where: { whatsappPhoneNumber: whatsappNumber }
     });
@@ -408,7 +434,12 @@ export class PreOrderWorkflowService {
       });
       logger.info(`Cleared relevant chat history for customer ${customer.id}`);
     }
-    
+  }
+  
+  /**
+   * Sends a notification message after discarding a preorder
+   */
+  private static async sendDiscardNotification(whatsappNumber: string): Promise<void> {
     await sendWhatsAppMessage(
       whatsappNumber,
       "❌ Tu pedido ha sido descartado y tu historial de conversación ha sido reiniciado.\n\n" +
@@ -429,7 +460,7 @@ export class PreOrderWorkflowService {
       
       logger.info(`Found ${activePreOrders.length} active preorders for ${whatsappNumber}. Discarding them.`);
       
-      const tokenKeys = await redisService.keys(`${this.TOKEN_PREFIX}*`);
+      const tokenKeys = await redisService.keys(`${REDIS_KEYS.PREORDER_TOKEN_PREFIX}*`);
       for (const key of tokenKeys) {
         const preOrderIdStr = await redisService.get(key);
         if (preOrderIdStr) {
@@ -471,7 +502,7 @@ export class PreOrderWorkflowService {
       
       logger.info(`Found ${expiredPreOrders.length} expired preorders to clean up`);
       
-      const tokenKeys = await redisService.keys(`${this.TOKEN_PREFIX}*`);
+      const tokenKeys = await redisService.keys(`${REDIS_KEYS.PREORDER_TOKEN_PREFIX}*`);
       for (const key of tokenKeys) {
         const preOrderIdStr = await redisService.get(key);
         if (preOrderIdStr) {
@@ -580,15 +611,14 @@ export class PreOrderWorkflowService {
       };
       
       // Mark that we're updating a preOrder to prevent welcome message
-      const updateKey = `preorder:updating:${params.whatsappNumber}`;
+      const updateKey = redisKeys.preorderUpdating(params.whatsappNumber);
       await redisService.set(updateKey, 'true', 60); // 60 seconds TTL
       
       // Discard the old preOrder
-      const orderManagementService = new OrderManagementService();
-      await orderManagementService.discardPreOrder(params.oldPreOrderId);
+      await this.discardPreOrderData(params.oldPreOrderId);
       
       // Delete old token
-      const tokenKeys = await redisService.keys(`${this.TOKEN_PREFIX}*`);
+      const tokenKeys = await redisService.keys(`${REDIS_KEYS.PREORDER_TOKEN_PREFIX}*`);
       for (const key of tokenKeys) {
         const storedPreOrderId = await redisService.get(key);
         if (storedPreOrderId === params.oldPreOrderId.toString()) {

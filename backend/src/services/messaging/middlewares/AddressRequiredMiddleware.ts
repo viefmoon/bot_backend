@@ -3,6 +3,7 @@ import { MessageContext } from '../MessageContext';
 import { sendMessageWithUrlButton } from '../../whatsapp';
 import { OTPService } from '../../security/OTPService';
 import { env } from '../../../common/config/envValidator';
+import { CONTEXT_KEYS } from '../../../common/constants';
 import logger from '../../../common/utils/logger';
 
 export class AddressRequiredMiddleware implements MessageMiddleware {
@@ -10,7 +11,7 @@ export class AddressRequiredMiddleware implements MessageMiddleware {
 
   async process(context: MessageContext): Promise<MessageContext> {
     try {
-      const hasNoAddress = context.get('hasNoAddress');
+      const hasNoAddress = context.get(CONTEXT_KEYS.HAS_NO_ADDRESS);
       const customerId = context.message.from;
       
       // Si el cliente no tiene dirección, bloquear la conversación

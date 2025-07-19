@@ -3,14 +3,13 @@ import { RestaurantConfig, BusinessHours } from '../../common/types';
 import logger from '../../common/utils/logger';
 import { BusinessLogicError, ErrorCode } from '../../common/services/errors';
 import { redisService } from '../redis/RedisService';
+import { redisKeys } from '../../common/constants';
 
 /**
  * Service for managing restaurant configuration and business hours
  */
 export class RestaurantService {
-  // Redis cache keys
-  private static readonly REDIS_CONFIG_KEY = 'restaurant:config';
-  private static readonly REDIS_BUSINESS_HOURS_KEY = 'restaurant:business_hours';
+  // Cache configuration
   private static readonly CACHE_TTL = 300; // 5 minutes cache
   
   // Memory cache fallback
@@ -24,7 +23,7 @@ export class RestaurantService {
     try {
       // Try Redis cache first
       if (redisService.isAvailable()) {
-        const cached = await redisService.getJSON<RestaurantConfig>(this.REDIS_CONFIG_KEY);
+        const cached = await redisService.getJSON<RestaurantConfig>(redisKeys.restaurantConfig());
         if (cached) {
           logger.debug('Restaurant config retrieved from Redis cache');
           return cached;
@@ -53,7 +52,7 @@ export class RestaurantService {
 
       // Cache in Redis if available
       if (redisService.isAvailable()) {
-        await redisService.setJSON(this.REDIS_CONFIG_KEY, config, this.CACHE_TTL);
+        await redisService.setJSON(redisKeys.restaurantConfig(), config, this.CACHE_TTL);
       }
       
       // Cache in memory
@@ -145,7 +144,7 @@ export class RestaurantService {
     try {
       // Try Redis cache first
       if (redisService.isAvailable()) {
-        const cached = await redisService.getJSON<BusinessHours[]>(this.REDIS_BUSINESS_HOURS_KEY);
+        const cached = await redisService.getJSON<BusinessHours[]>(redisKeys.restaurantBusinessHours());
         if (cached) {
           logger.debug('Business hours retrieved from Redis cache');
           return cached;
@@ -166,7 +165,7 @@ export class RestaurantService {
 
       // Cache in Redis if available
       if (redisService.isAvailable()) {
-        await redisService.setJSON(this.REDIS_BUSINESS_HOURS_KEY, businessHours, this.CACHE_TTL);
+        await redisService.setJSON(redisKeys.restaurantBusinessHours(), businessHours, this.CACHE_TTL);
       }
       
       // Cache in memory
@@ -250,8 +249,8 @@ export class RestaurantService {
   static async clearCache(): Promise<void> {
     // Clear Redis cache if available
     if (redisService.isAvailable()) {
-      await redisService.del(this.REDIS_CONFIG_KEY);
-      await redisService.del(this.REDIS_BUSINESS_HOURS_KEY);
+      await redisService.del(redisKeys.restaurantConfig());
+      await redisService.del(redisKeys.restaurantBusinessHours());
     }
     
     // Clear memory cache

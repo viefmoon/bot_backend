@@ -3,6 +3,7 @@ import { MessageContext } from '../MessageContext';
 import { sendWhatsAppMessage, sendWhatsAppInteractiveMessage } from '../../whatsapp';
 import { WELCOME_MESSAGE_INTERACTIVE, UNSUPPORTED_MESSAGE_TYPE } from '../../../common/config/predefinedMessages';
 import { ConfigService } from '../../../services/config/ConfigService';
+import { CONTEXT_KEYS, redisKeys } from '../../../common/constants';
 import logger from '../../../common/utils/logger';
 
 export class MessageTypeMiddleware implements MessageMiddleware {
@@ -17,12 +18,12 @@ export class MessageTypeMiddleware implements MessageMiddleware {
       
       // Check if we're in the middle of updating a preOrder
       const { redisService } = await import('../../redis/RedisService');
-      const updateKey = `preorder:updating:${context.message.from}`;
+      const updateKey = redisKeys.preorderUpdating(context.message.from);
       const isUpdatingPreOrder = await redisService.get(updateKey);
       
       // Only send welcome if it's a new conversation (not a brand new customer who just registered)
       // and we're not in the middle of updating a preOrder
-      if (context.get('isNewConversation') && !isVeryNewCustomer && !isUpdatingPreOrder) {
+      if (context.get(CONTEXT_KEYS.IS_NEW_CONVERSATION) && !isVeryNewCustomer && !isUpdatingPreOrder) {
         const config = ConfigService.getConfig();
         const welcomeMessage = WELCOME_MESSAGE_INTERACTIVE(config);
         await sendWhatsAppInteractiveMessage(context.message.from, welcomeMessage);
@@ -37,11 +38,11 @@ export class MessageTypeMiddleware implements MessageMiddleware {
       }
       
       // Establecer tipo de mensaje para procesamiento
-      context.set('messageType', context.message.type);
+      context.set(CONTEXT_KEYS.MESSAGE_TYPE, context.message.type);
       
       // Para mensajes de audio, necesitaremos manejar la transcripción
       if (context.message.type === 'audio') {
-        context.set('needsTranscription', true);
+        context.set(CONTEXT_KEYS.NEEDS_TRANSCRIPTION, true);
       }
       
       return context;

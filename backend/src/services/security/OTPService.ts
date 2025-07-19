@@ -1,6 +1,7 @@
 import logger from '../../common/utils/logger';
 import crypto from 'crypto';
 import { redisService } from '../redis/RedisService';
+import { redisKeys, REDIS_KEYS } from '../../common/constants';
 
 /**
  * Service for managing One-Time Passwords (OTP)
@@ -10,13 +11,11 @@ export class OTPService {
   private static memoryStore = new Map<string, { code: string; expires: Date }>();
   private static cleanupInterval: NodeJS.Timeout | null = null;
   private static readonly OTP_EXPIRY_MINUTES = 10;
-  private static readonly REDIS_KEY_PREFIX = 'otp:';
-
   /**
    * Get Redis key for OTP
    */
   private static getRedisKey(whatsappPhoneNumber: string): string {
-    return `${this.REDIS_KEY_PREFIX}${whatsappPhoneNumber}`;
+    return redisKeys.otp(whatsappPhoneNumber);
   }
 
   /**
@@ -198,7 +197,7 @@ export class OTPService {
     
     // Check Redis if available
     if (redisService.isAvailable()) {
-      const keys = await redisService.keys(`${this.REDIS_KEY_PREFIX}*`);
+      const keys = await redisService.keys(`${REDIS_KEYS.OTP_PREFIX}*`);
       total = keys.length;
       
       // For expired count in Redis, we'd need to check each key

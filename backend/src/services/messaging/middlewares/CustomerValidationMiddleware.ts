@@ -5,6 +5,7 @@ import { sendWhatsAppMessage } from '../../whatsapp';
 import { BANNED_USER_MESSAGE } from '../../../common/config/predefinedMessages';
 import { ConfigService } from '../../../services/config/ConfigService';
 import { SyncMetadataService } from '../../../services/sync/SyncMetadataService';
+import { CONTEXT_KEYS } from '../../../common/constants';
 import logger from '../../../common/utils/logger';
 
 export class CustomerValidationMiddleware implements MessageMiddleware {
@@ -54,8 +55,8 @@ export class CustomerValidationMiddleware implements MessageMiddleware {
         await SyncMetadataService.markForSync('Customer', customer.id, 'REMOTE');
         
         // Marcar como cliente nuevo para mensaje de bienvenida
-        context.set('isNewCustomer', true);
-        context.set('hasNoAddress', true);
+        context.set(CONTEXT_KEYS.IS_NEW_CUSTOMER, true);
+        context.set(CONTEXT_KEYS.HAS_NO_ADDRESS, true);
       } else {
         // Verificar si el cliente está baneado
         if (customer.isBanned) {
@@ -70,7 +71,7 @@ export class CustomerValidationMiddleware implements MessageMiddleware {
         // Verificar si el cliente tiene direcciones activas
         const activeAddresses = customer.addresses.filter(addr => !addr.deletedAt);
         if (activeAddresses.length === 0) {
-          context.set('hasNoAddress', true);
+          context.set(CONTEXT_KEYS.HAS_NO_ADDRESS, true);
           logger.info(`Customer ${whatsappPhoneNumber} has no active addresses`);
         }
       }
@@ -95,16 +96,16 @@ export class CustomerValidationMiddleware implements MessageMiddleware {
         logger.debug(`Historial relevante limitado a los últimos 20 mensajes (de ${relevantChatHistory.length} total)`);
       }
       
-      context.set('fullChatHistory', fullChatHistory);
-      context.set('relevantChatHistory', relevantChatHistory);
+      context.set(CONTEXT_KEYS.FULL_CHAT_HISTORY, fullChatHistory);
+      context.set(CONTEXT_KEYS.RELEVANT_CHAT_HISTORY, relevantChatHistory);
       
       // Verificar si es una conversación nueva (más de 1 hora desde la última interacción)
       const isNewConversation = customer.lastInteraction && 
         (new Date().getTime() - new Date(customer.lastInteraction).getTime() > 60 * 60 * 1000) ||
         relevantChatHistory.length === 0;
       
-      if (isNewConversation && !context.get('isNewCustomer')) {
-        context.set('isNewConversation', true);
+      if (isNewConversation && !context.get(CONTEXT_KEYS.IS_NEW_CUSTOMER)) {
+        context.set(CONTEXT_KEYS.IS_NEW_CONVERSATION, true);
       }
 
       return context;

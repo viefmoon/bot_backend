@@ -2,6 +2,7 @@ import { MessageMiddleware } from '../types';
 import { MessageContext } from '../MessageContext';
 import { sendWhatsAppMessage } from '../../whatsapp';
 import { RATE_LIMIT_MESSAGE } from '../../../common/config/predefinedMessages';
+import { redisKeys } from '../../../common/constants';
 import logger from '../../../common/utils/logger';
 import { env } from '../../../common/config/envValidator';
 import { RedisService } from '../../redis/RedisService';
@@ -39,7 +40,7 @@ export class RateLimitMiddleware implements MessageMiddleware {
   }
 
   private async processWithRedis(context: MessageContext, redisClient: any): Promise<MessageContext> {
-    const key = `rate-limit:${context.message.from}`;
+    const key = redisKeys.rateLimit(context.message.from);
     
     try {
       // Increment the counter atomically

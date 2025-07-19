@@ -1,10 +1,11 @@
-import { PreOrderWorkflowService } from "../../services/orders/preOrderWorkflowService";
+import { PreOrderWorkflowService } from "../../services/orders/PreOrderWorkflowService";
 import { INTERACTIVE_ACTIONS, startsWithAction, extractIdFromAction } from "../../common/constants/interactiveActions";
 import { prisma } from '../../lib/prisma';
 import { sendWhatsAppMessage, sendMessageWithUrlButton, WhatsAppService } from "../../services/whatsapp";
 import Stripe from "stripe";
 import { OTPService } from "../../services/security/OTPService";
 import { redisService } from "../../services/redis/RedisService";
+import { redisKeys } from "../../common/constants";
 import {
   WAIT_TIMES_MESSAGE,
   RESTAURANT_INFO_MESSAGE,
@@ -25,23 +26,37 @@ const stripeClient = env.STRIPE_SECRET_KEY
     })
   : null;
 
-// Map of button action prefixes to their handlers
-const BUTTON_ACTION_HANDLERS = new Map<string, (from: string, buttonId: string) => Promise<void>>([  
-  [INTERACTIVE_ACTIONS.PREORDER_CONFIRM.slice(0, -1), handlePreOrderAction], // Remove trailing colon
-  [INTERACTIVE_ACTIONS.PREORDER_DISCARD.slice(0, -1), handlePreOrderAction], // Remove trailing colon
-  [INTERACTIVE_ACTIONS.PREORDER_CHANGE_ADDRESS.slice(0, -1), handlePreOrderChangeAddress], // Remove trailing colon
+// Unified action registry for all interactive messages
+const actionRegistry = new Map<string, (from: string, id: string) => Promise<void>>([
+  // List actions (exact match)
+  [INTERACTIVE_ACTIONS.WAIT_TIMES, async (from, id) => handleWaitTimes(from)],
+  [INTERACTIVE_ACTIONS.VIEW_MENU, async (from, id) => sendMenu(from)],
+  [INTERACTIVE_ACTIONS.RESTAURANT_INFO, async (from, id) => handleRestaurantInfo(from)],
+  [INTERACTIVE_ACTIONS.CHATBOT_HELP, async (from, id) => handleChatbotHelp(from)],
+  [INTERACTIVE_ACTIONS.CHANGE_DELIVERY_INFO, async (from, id) => handleChangeDeliveryInfo(from)],
+  [INTERACTIVE_ACTIONS.ADD_NEW_ADDRESS, async (from, id) => handleAddNewAddress(from)],
+  
+  // Button actions (prefix match - remove trailing colon)
+  [INTERACTIVE_ACTIONS.PREORDER_CONFIRM.slice(0, -1), handlePreOrderAction],
+  [INTERACTIVE_ACTIONS.PREORDER_DISCARD.slice(0, -1), handlePreOrderAction],
+  [INTERACTIVE_ACTIONS.PREORDER_CHANGE_ADDRESS.slice(0, -1), handlePreOrderChangeAddress],
+  [INTERACTIVE_ACTIONS.CONFIRM_ADDRESS.slice(0, -1), handleAddressConfirmation],
+  [INTERACTIVE_ACTIONS.SELECT_ADDRESS.slice(0, -1), handleAddressSelection],
   ['pay_online', handleOnlinePaymentWithId],
-  ['add_new_address_preorder', handleAddNewAddressFromButton], // New handler for add new address button
-  ['select_address', handleAddressSelectionButton], // Handler for address selection buttons
+  ['add_new_address_preorder', async (from, id) => {
+    // Special case: parse preOrderId from id
+    if (id.includes(':')) {
+      const preOrderId = parseInt(id.split(':')[1], 10);
+      await handleAddNewAddressForPreOrder(from, preOrderId);
+    } else {
+      await handleAddNewAddressFromButton(from, id);
+    }
+  }],
+  ['select_address', handleAddressSelectionButton],
+  
+  // Special case handlers with full ID
+  [INTERACTIVE_ACTIONS.CHANGE_ADDRESS, async (from, id) => handleChangeDeliveryInfo(from)],
 ]);
-
-const LIST_ACTIONS = {
-  [INTERACTIVE_ACTIONS.WAIT_TIMES]: handleWaitTimes,
-  [INTERACTIVE_ACTIONS.VIEW_MENU]: sendMenu,
-  [INTERACTIVE_ACTIONS.RESTAURANT_INFO]: handleRestaurantInfo,
-  [INTERACTIVE_ACTIONS.CHATBOT_HELP]: handleChatbotHelp,
-  [INTERACTIVE_ACTIONS.CHANGE_DELIVERY_INFO]: handleChangeDeliveryInfo,
-} as const;
 
 export async function handleInteractiveMessage(
   from: string,
@@ -55,51 +70,40 @@ export async function handleInteractiveMessage(
       return;
     }
     
-    const { type, button_reply, list_reply } = message.interactive;
-    const messageId = message.context?.id || null;
+    const reply = message.interactive.button_reply || message.interactive.list_reply;
+    if (!reply) {
+      logger.error('No reply found in interactive message');
+      return;
+    }
 
-    if (type === "button_reply") {
-      logger.info(`Processing button_reply: ${button_reply.id}`);
+    const { id } = reply;
+    logger.info(`Processing interactive reply: ${id}`);
+    
+    // First, try exact match
+    let handler = actionRegistry.get(id);
+    
+    // If no exact match, try prefix match for actions with parameters
+    if (!handler) {
+      const [actionPrefix] = id.split(':');
+      handler = actionRegistry.get(actionPrefix);
       
-      // Check for address confirmation
-      if (startsWithAction(button_reply.id, INTERACTIVE_ACTIONS.CONFIRM_ADDRESS)) {
-        logger.info(`Handling address confirmation: ${button_reply.id}`);
-        await handleAddressConfirmation(from, button_reply.id);
-      } else if (button_reply.id === INTERACTIVE_ACTIONS.CHANGE_ADDRESS) {
-        logger.info(`Handling change address`);
-        await handleChangeDeliveryInfo(from);
-      } else {
-        // Check for action handlers by prefix
-        const [actionPrefix] = button_reply.id.split(':');
-        logger.info(`Looking for handler with prefix: ${actionPrefix}`);
-        const handler = BUTTON_ACTION_HANDLERS.get(actionPrefix);
-        
-        if (handler) {
-          logger.info(`Found handler for prefix: ${actionPrefix}`);
-          await handler(from, button_reply.id);
-        } else {
-          logger.warn(`No handler found for button action: ${button_reply.id}`);
+      // Special handling for actions that start with a prefix
+      if (!handler && id.includes(':')) {
+        // Check for actions that use startsWithAction pattern
+        for (const [key, value] of actionRegistry) {
+          if (id.startsWith(key + ':')) {
+            handler = value;
+            break;
+          }
         }
       }
-    } else if (type === "list_reply") {
-      // Check for address selection
-      if (startsWithAction(list_reply.id, INTERACTIVE_ACTIONS.SELECT_ADDRESS)) {
-        await handleAddressSelection(from, list_reply.id);
-      } else if (list_reply.id === INTERACTIVE_ACTIONS.ADD_NEW_ADDRESS) {
-        await handleAddNewAddress(from);
-      } else if (startsWithAction(list_reply.id, 'add_new_address_preorder:')) {
-        // Handle add new address from preorder flow
-        const preOrderId = parseInt(list_reply.id.split(':')[1], 10);
-        await handleAddNewAddressForPreOrder(from, preOrderId);
-      } else {
-        const action = LIST_ACTIONS[list_reply.id as keyof typeof LIST_ACTIONS];
-        if (action) {
-          logger.info(`Executing action: ${list_reply.id}`);
-          await action(from);
-        } else {
-          logger.error(`No action found for: ${list_reply.id}`);
-        }
-      }
+    }
+    
+    if (handler) {
+      logger.info(`Executing handler for action: ${id}`);
+      await handler(from, id);
+    } else {
+      logger.warn(`No handler found for interactive action: ${id}`);
     }
   } catch (error) {
     await handleWhatsAppError(error, from, {
@@ -277,35 +281,29 @@ async function handleOnlinePayment(
     );
 }
 
-async function sendMenu(phoneNumber: string): Promise<boolean> {
-  try {
-    // Usa la lógica centralizada para obtener y dividir el menú
-    const toolResponse = await getMenuResponses();
-    
-    // Normaliza a array para manejar ambos casos (respuesta única o múltiple)
-    const responses = Array.isArray(toolResponse) ? toolResponse : [toolResponse];
-    
-    // Envía cada parte del menú por separado
-    // La división ya fue manejada por getMenuResponses usando splitMenu
-    for (const response of responses) {
-      if (response && response.text) {
-        // sendWhatsAppMessage no volverá a dividir porque cada parte es < 3500 chars
-        const result = await sendWhatsAppMessage(phoneNumber, response.text);
-        if (!result) {
-          logger.error(`Failed to send menu part to ${phoneNumber}`);
-          return false;
-        }
+async function sendMenu(phoneNumber: string): Promise<void> {
+  // No hay try...catch aquí. Si algo falla, el error sube al manejador principal.
+  
+  // Usa la lógica centralizada para obtener y dividir el menú
+  const toolResponse = await getMenuResponses();
+  
+  // Normaliza a array para manejar ambos casos (respuesta única o múltiple)
+  const responses = Array.isArray(toolResponse) ? toolResponse : [toolResponse];
+  
+  // Envía cada parte del menú por separado
+  // La división ya fue manejada por getMenuResponses usando splitMenu
+  for (const response of responses) {
+    if (response && response.content?.text) {
+      // sendWhatsAppMessage no volverá a dividir porque cada parte es < 3500 chars
+      const result = await sendWhatsAppMessage(phoneNumber, response.content.text);
+      if (!result) {
+        // Lanza un error para que el manejador principal lo capture
+        throw new BusinessLogicError(
+          ErrorCode.WHATSAPP_ERROR,
+          `Failed to send menu part to ${phoneNumber}`
+        );
       }
     }
-    
-    return true;
-  } catch (error) {
-    logger.error(`Error sending menu from interactive handler for ${phoneNumber}:`, error);
-    await sendWhatsAppMessage(
-      phoneNumber, 
-      "Lo siento, tuvimos un problema al generar el menú. Por favor, intenta de nuevo más tarde."
-    );
-    return false;
   }
 }
 
@@ -397,7 +395,7 @@ async function handleAddressSelection(from: string, selectionId: string): Promis
     // If we have a specific preOrderId, use it. Otherwise, check for recent preorder
     if (preOrderId) {
       // Recreate preorder with selected address
-      const { PreOrderWorkflowService } = await import('../../services/orders/preOrderWorkflowService');
+      const { PreOrderWorkflowService } = await import('../../services/orders/PreOrderWorkflowService');
       
       try {
         // This will create a new preOrder with the new address and discard the old one
@@ -531,7 +529,7 @@ async function handlePreOrderChangeAddress(from: string, buttonId: string): Prom
   }
   
   // Validate token and get preOrderId
-  const key = `preorder:token:${token}`;
+  const key = redisKeys.preorderToken(token);
   const preOrderIdStr = await redisService.get(key);
   
   if (!preOrderIdStr) {

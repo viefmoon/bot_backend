@@ -1,8 +1,10 @@
 import { MessageContext } from './MessageContext';
 import { AgentService } from '../ai';
-import { PreOrderWorkflowService } from '../orders/preOrderWorkflowService';
+import { PreOrderWorkflowService } from '../orders/PreOrderWorkflowService';
 import { sendWhatsAppMessage } from '../whatsapp';
 import { getToolHandler } from '../ai/tools/toolHandlers';
+import { ResponseBuilder, ResponseType, UnifiedResponse } from './types/responses';
+import { CONTEXT_KEYS } from '../../common/constants';
 import logger from '../../common/utils/logger';
 import { ProcessedOrderData } from '../../common/types/preorder.types';
 import { ValidationError, BusinessLogicError, TechnicalError, ErrorCode } from '../../common/services/errors';
@@ -29,7 +31,7 @@ export class TextProcessingService {
       );
     }
 
-    let relevantChatHistory = context.get('relevantChatHistory') || [];
+    let relevantChatHistory = context.get(CONTEXT_KEYS.RELEVANT_CHAT_HISTORY) || [];
     
     // Create a working copy that includes the current message
     const workingHistory = [...relevantChatHistory];
@@ -48,58 +50,26 @@ export class TextProcessingService {
       const response = await AgentService.processMessage(messages);
       logger.debug('AgentService response:', JSON.stringify(response, null, 2));
       
-      // Convert response to expected format
-      const aiResponses = await this.processGeminiResponse(response, context);
+      // Process Gemini response and get UnifiedResponses
+      const unifiedResponses = await this.processGeminiResponse(response, context);
       
-      // Process AI responses
-      for (const response of aiResponses) {
-        if (response.text) {
-          context.addResponse({
-            text: response.text,
-            sendToWhatsApp: response.sendToWhatsApp !== false,
-            isRelevant: response.isRelevant !== false,
-            historyMarker: response.historyMarker
-          });
-        }
+      // Process unified responses
+      for (const unifiedResponse of unifiedResponses) {
+        // Add response to context
+        context.addUnifiedResponse(unifiedResponse);
         
-        if (response.urlButton) {
-          // Handle URL button message
-          const { sendMessageWithUrlButton } = await import('../whatsapp');
-          await sendMessageWithUrlButton(
-            context.message.from,
-            response.urlButton.title,
-            response.urlButton.body,
-            response.urlButton.buttonText,
-            response.urlButton.url
-          );
-          
-          // Add to context so it's saved in history
-          context.addResponse({
-            text: `${response.urlButton.title}\n\n${response.urlButton.body}`,
-            sendToWhatsApp: false, // Already sent with sendMessageWithUrlButton
-            isRelevant: response.isRelevant !== false
-          });
-        }
-        
-        if (response.preprocessedContent) {
-          await this.handlePreprocessedContent(context, response.preprocessedContent);
-        }
-        
-        if (response.confirmationMessage) {
-          context.addResponse({
-            text: response.confirmationMessage,
-            sendToWhatsApp: true,
-            isRelevant: true
-          });
+        // Handle special cases
+        if (unifiedResponse.processedData) {
+          await this.handlePreprocessedContent(context, unifiedResponse.processedData);
         }
       }
     } catch (error) {
       logger.error("Error processing text message:", error);
-      context.addResponse({
-        text: "Error al procesar la solicitud: " + (error as Error).message,
-        sendToWhatsApp: true,
-        isRelevant: true
-      });
+      const errorResponse = ResponseBuilder.error(
+        'PROCESSING_ERROR',
+        "Error al procesar la solicitud: " + (error as Error).message
+      );
+      context.addUnifiedResponse(errorResponse);
     }
   }
 
@@ -111,11 +81,9 @@ export class TextProcessingService {
         await sendWhatsAppMessage(context.message.from, warningMessage);
         
         // Add observations to context so they're saved in relevant history
-        context.addResponse({
-          text: warningMessage,
-          sendToWhatsApp: false, // Already sent with sendWhatsAppMessage
-          isRelevant: true
-        });
+        const warningResponse = ResponseBuilder.text(warningMessage, true);
+        warningResponse.metadata.shouldSend = false; // Already sent with sendWhatsAppMessage
+        context.addUnifiedResponse(warningResponse);
       }
       
       // Prepare order data
@@ -133,20 +101,20 @@ export class TextProcessingService {
       });
       
       // Store the action token in context for potential tracking
-      context.set('lastPreOrderToken', workflowResult.actionToken);
+      context.set(CONTEXT_KEYS.LAST_PREORDER_TOKEN, workflowResult.actionToken);
       
       // Mark that interactive response was already sent by the workflow
-      context.set('interactiveResponseSent', true);
+      context.set(CONTEXT_KEYS.INTERACTIVE_RESPONSE_SENT, true);
     } catch (error: any) {
       logger.error('Error creating preorder:', error);
       
       // For known business errors, use the direct message
       if (error instanceof BusinessLogicError || error instanceof ValidationError) {
-        context.addResponse({
-          text: error.message,
-          isRelevant: true,
-          sendToWhatsApp: true
-        });
+        const businessErrorResponse = ResponseBuilder.error(
+          error.code || 'BUSINESS_ERROR',
+          error.message
+        );
+        context.addUnifiedResponse(businessErrorResponse);
         return;
       }
       
@@ -155,11 +123,11 @@ export class TextProcessingService {
         ? 'Lo siento, hubo un problema técnico. Por favor intenta de nuevo más tarde.'
         : 'Lo siento, hubo un error al procesar tu pedido. Por favor intenta de nuevo.';
       
-      context.addResponse({
-        text: genericMessage,
-        isRelevant: true,
-        sendToWhatsApp: true
-      });
+      const genericErrorResponse = ResponseBuilder.error(
+        'GENERIC_ERROR',
+        genericMessage
+      );
+      context.addUnifiedResponse(genericErrorResponse);
     }
   }
 
@@ -167,12 +135,12 @@ export class TextProcessingService {
    * Process Gemini API response and extract meaningful content
    * This method is public so it can be used by tool handlers that need it
    */
-  public static async processGeminiResponse(response: any, context?: MessageContext): Promise<any[]> {
+  public static async processGeminiResponse(response: any, context?: MessageContext): Promise<UnifiedResponse[]> {
     logger.debug('=== processGeminiResponse DEBUG ===');
     logger.debug('Response type:', typeof response);
     logger.debug('Response keys:', response ? Object.keys(response) : 'null');
     
-    const responses: any[] = [];
+    const responses: UnifiedResponse[] = [];
     
     // Verify valid response structure
     if (!response?.candidates?.[0]?.content?.parts) {
@@ -182,10 +150,7 @@ export class TextProcessingService {
                           response?.candidates?.[0]?.finishReason || 
                           "Lo siento, hubo un problema al procesar tu solicitud. Por favor intenta de nuevo.";
       
-      return [{
-        text: errorMessage,
-        isRelevant: true
-      }];
+      return [ResponseBuilder.error('GEMINI_ERROR', errorMessage)];
     }
     
     const parts = response.candidates[0].content.parts;
@@ -194,10 +159,7 @@ export class TextProcessingService {
     for (const part of parts) {
       if (part.text) {
         // Simple text response
-        responses.push({
-          text: part.text,
-          isRelevant: true,
-        });
+        responses.push(ResponseBuilder.text(part.text, true));
       } else if (part.functionCall) {
         // Process function calls
         const functionResponse = await this.handleFunctionCall(
@@ -222,7 +184,7 @@ export class TextProcessingService {
     return responses;
   }
 
-  private static async handleFunctionCall(name: string, args: any, context?: MessageContext): Promise<any | null> {
+  private static async handleFunctionCall(name: string, args: any, context?: MessageContext): Promise<UnifiedResponse | UnifiedResponse[] | null> {
     logger.debug(`=== handleFunctionCall: ${name} ===`);
     
     // Get the handler for this function
@@ -237,10 +199,10 @@ export class TextProcessingService {
         logger.error(`Error in handler ${name}:`, error);
         
         // Return a formatted error response instead of throwing
-        return {
-          text: '😔 Lo siento, hubo un problema al procesar tu solicitud. Por favor, intenta de nuevo.',
-          isRelevant: true
-        };
+        return ResponseBuilder.error(
+          'TOOL_ERROR',
+          '😔 Lo siento, hubo un problema al procesar tu solicitud. Por favor, intenta de nuevo.'
+        );
       }
     }
     

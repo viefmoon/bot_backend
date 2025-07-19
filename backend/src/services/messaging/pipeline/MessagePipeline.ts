@@ -7,10 +7,10 @@ import { AddressRequiredMiddleware } from '../middlewares/AddressRequiredMiddlew
 import { MessageTypeMiddleware } from '../middlewares/MessageTypeMiddleware';
 import { MessageProcessingMiddleware } from '../middlewares/MessageProcessingMiddleware';
 import { prisma } from '../../../lib/prisma';
+import { CONTEXT_KEYS } from '../../../common/constants';
 import logger from '../../../common/utils/logger';
-import { sendWhatsAppMessage, sendWhatsAppInteractiveMessage } from '../../whatsapp';
+import { sendWhatsAppMessage, sendWhatsAppInteractiveMessage, sendMessageWithUrlButton } from '../../whatsapp';
 import { SyncMetadataService } from '../../../services/sync/SyncMetadataService';
-import { adaptMessageResponseToUnified } from '../responseAdapter';
 
 export class MessagePipeline {
   private middlewares: MessageMiddleware[] = [];
@@ -56,25 +56,29 @@ export class MessagePipeline {
   
   
   private async sendResponses(context: MessageContext): Promise<void> {
-    // 1. Adaptar todas las respuestas antiguas al nuevo formato
-    const adaptedResponses = context.responses.map(adaptMessageResponseToUnified);
-    
-    // 2. Combinar respuestas adaptadas con respuestas unificadas nativas
-    const allResponses: UnifiedResponse[] = [...adaptedResponses, ...context.unifiedResponses];
-    
-    // 3. Enviar solo las respuestas que deben enviarse
-    for (const response of allResponses) {
+    // Enviar solo las respuestas que deben enviarse
+    for (const response of context.unifiedResponses) {
       if (!response.metadata.shouldSend) continue;
       
       try {
+        // Enviar botón con URL si existe
+        if (response.content?.urlButton) {
+          const { title, body, buttonText, url } = response.content.urlButton;
+          await sendMessageWithUrlButton(
+            context.message.from,
+            title,
+            body,
+            buttonText,
+            url
+          );
+        }
         // Enviar texto si existe
-        if (response.content?.text) {
+        else if (response.content?.text) {
           // La utilidad messageSender se encarga de dividir mensajes largos automáticamente
           await sendWhatsAppMessage(context.message.from, response.content.text);
         }
-        
         // Enviar mensaje interactivo si existe
-        if (response.content?.interactive) {
+        else if (response.content?.interactive) {
           await sendWhatsAppInteractiveMessage(
             context.message.from, 
             response.content.interactive
@@ -90,13 +94,13 @@ export class MessagePipeline {
     if (!context.customer || context.shouldStop) return;
     
     // Si se marca skipHistoryUpdate, no guardar nada en el historial
-    if (context.get('skipHistoryUpdate')) {
+    if (context.get(CONTEXT_KEYS.SKIP_HISTORY_UPDATE)) {
       logger.debug('Skipping history update due to skipHistoryUpdate flag');
       return;
     }
     
-    const fullChatHistory = context.get('fullChatHistory') || [];
-    let relevantChatHistory = context.get('relevantChatHistory') || [];
+    const fullChatHistory = context.get(CONTEXT_KEYS.FULL_CHAT_HISTORY) || [];
+    let relevantChatHistory = context.get(CONTEXT_KEYS.RELEVANT_CHAT_HISTORY) || [];
     
     // Agregar mensaje del usuario al historial
     fullChatHistory.push({
@@ -112,12 +116,8 @@ export class MessagePipeline {
       timestamp: new Date()
     });
     
-    // Convertir respuestas antiguas y combinar con las nuevas
-    const adaptedResponses = context.responses.map(adaptMessageResponseToUnified);
-    const allResponses: UnifiedResponse[] = [...adaptedResponses, ...context.unifiedResponses];
-    
     // Agregar respuestas al historial usando la lógica unificada
-    for (const response of allResponses) {
+    for (const response of context.unifiedResponses) {
       const textContent = response.content?.text;
       const historyMarker = response.metadata.historyMarker;
       const isRelevant = response.metadata.isRelevant;

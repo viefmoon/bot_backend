@@ -396,7 +396,7 @@ async function updatePreOrderWithAddress(preOrderId: number, address: Address): 
     return;
   }
   
-  const { PreOrderWorkflowService } = await import('../services/orders/preOrderWorkflowService');
+  const { PreOrderWorkflowService } = await import('../services/orders/PreOrderWorkflowService');
   await PreOrderWorkflowService.recreatePreOrderWithNewAddress({
     oldPreOrderId: preOrderId,
     newAddressId: address.id,

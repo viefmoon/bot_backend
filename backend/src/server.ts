@@ -245,7 +245,7 @@ async function startServer() {
     OTPService.startOTPCleanup();
     
     // Start PreOrder cleanup interval
-    const { PreOrderWorkflowService } = await import('./services/orders/preOrderWorkflowService');
+    const { PreOrderWorkflowService } = await import('./services/orders/PreOrderWorkflowService');
     preOrderCleanupInterval = setInterval(async () => {
       await PreOrderWorkflowService.cleanupExpiredPreOrders();
     }, 5 * 60 * 1000); // Run every 5 minutes

@@ -10,17 +10,12 @@ export class ProductService {
   /**
    * Get all active products with their relations
    */
-  static async getActiveProducts(options?: {
-    includeRelations?: boolean;
-    formatForAI?: boolean;
-    formatForWhatsApp?: boolean;
-    restaurantName?: string;
-  }): Promise<Product[] | string> {
+  static async getActiveProducts(includeRelations = true): Promise<Product[]> {
     try {
       const products = await prisma.product.findMany({
         where: { isActive: true },
         orderBy: { sortOrder: 'asc' },
-        include: options?.includeRelations !== false ? {
+        include: includeRelations ? {
           subcategory: {
             include: {
               category: true
@@ -47,31 +42,33 @@ export class ProductService {
         } : undefined
       });
 
-      // Obtener nombre del restaurante si no se proporciona
-      let restaurantName = options?.restaurantName;
-      if (!restaurantName && (options?.formatForAI || options?.formatForWhatsApp)) {
-        try {
-          const { RestaurantService } = await import('../restaurant/RestaurantService');
-          const config = await RestaurantService.getConfig();
-          restaurantName = config.restaurantName;
-        } catch (error) {
-          restaurantName = "Nuestro Restaurante";
-        }
-      }
-
-      // Si se solicita formato para WhatsApp, usar formato simplificado
-      if (options?.formatForWhatsApp) {
-        return this.formatMenuForWhatsApp(products, restaurantName);
-      }
-
-      // Si se solicita formato para AI, formatear el menú con markdown
-      if (options?.formatForAI) {
-        return this.formatMenuForAI(products, restaurantName);
-      }
-
       return products;
     } catch (error) {
       logger.error('Error fetching active products:', error);
+      throw error;
+    }
+  }
+  
+  /**
+   * Get formatted menu for WhatsApp
+   */
+  static async getMenuForWhatsApp(): Promise<string> {
+    try {
+      const products = await this.getActiveProducts();
+      
+      // Get restaurant name
+      let restaurantName = "Nuestro Restaurante";
+      try {
+        const { RestaurantService } = await import('../restaurant/RestaurantService');
+        const config = await RestaurantService.getConfig();
+        restaurantName = config.restaurantName;
+      } catch (error) {
+        // Use default name
+      }
+      
+      return this.formatMenuForWhatsApp(products, restaurantName);
+    } catch (error) {
+      logger.error('Error getting menu for WhatsApp:', error);
       throw error;
     }
   }
@@ -80,8 +77,11 @@ export class ProductService {
    * Format menu for WhatsApp - Improved formatting with better readability
    */
   private static formatMenuForWhatsApp(products: any[], restaurantName: string = "Nuestro Restaurante"): string {
-    let menuText = `*🍽️ MENÚ ${restaurantName.toUpperCase()} 🍽️*\n`;
-    menuText += "━━━━━━━━━━━━━━━━━━━━━━\n";
+    const menuLines: string[] = [];
+
+    // Header
+    menuLines.push(`*🍽️ MENÚ ${restaurantName.toUpperCase()} 🍽️*`);
+    menuLines.push("━━━━━━━━━━━━━━━━━━━━━━");
 
     // Agrupar por categoría con sortOrder
     const productsByCategory = products.reduce((acc, product) => {
@@ -105,237 +105,90 @@ export class ProductService {
 
     // Formatear por categoría
     for (const [category, data] of sortedCategories) {
-      menuText += `\n*◆ ${category.toUpperCase()} ◆*\n`;
+      menuLines.push(`\n*◆ ${category.toUpperCase()} ◆*`);
       
       // Productos ya vienen ordenados por sortOrder desde la consulta
-      for (let i = 0; i < (data as any).products.length; i++) {
-        const product = (data as any).products[i];
-        
+      (data as any).products.forEach((product: any, index: number) => {
         // Agregar separación entre productos (excepto el primero)
-        if (i > 0) {
-          menuText += '─────────\n';
+        if (index > 0) {
+          menuLines.push('─────────');
         }
         
-        menuText += `*${product.name}*`;
-        
-        // Precio si no tiene variantes
+        // Nombre del producto con precio si no tiene variantes
+        let productLine = `*${product.name}*`;
         if (!product.hasVariants && product.price) {
-          menuText += ` → \`$${product.price.toFixed(2)}\``;
+          productLine += ` → \`$${product.price.toFixed(2)}\``;
         }
-        menuText += '\n';
+        menuLines.push(productLine);
         
         // Variantes con precios (ya ordenadas)
         if (product.variants?.length > 0 && product.hasVariants) {
-          for (const variant of product.variants) {
-            menuText += ` _${variant.name}_: \`$${variant.price.toFixed(2)}\`\n`;
-          }
+          product.variants.forEach((variant: any) => {
+            menuLines.push(` _${variant.name}_: \`$${variant.price.toFixed(2)}\``);
+          });
         }
         
         // Para pizzas, mostrar sabores disponibles
         if (product.isPizza && product.pizzaCustomizations?.length > 0) {
           const flavors = product.pizzaCustomizations.filter((c: any) => c.type === 'FLAVOR');
           if (flavors.length > 0) {
-            menuText += ` _◇ Sabores:_\n`;
+            menuLines.push(` _◇ Sabores:_`);
             
             // Obtener configuración de pizza
             const pizzaConfig = product.pizzaConfiguration;
             const includedToppings = pizzaConfig?.includedToppings || 4;
             const extraToppingCost = pizzaConfig?.extraToppingCost || 20;
             
-            for (const flavor of flavors) {
-              let flavorText = `  • ${flavor.name}`;
+            flavors.forEach((flavor: any) => {
+              let flavorLine = `  • ${flavor.name}`;
               
               // Agregar ingredientes si existen
               if (flavor.ingredients) {
-                flavorText += ` _(${flavor.ingredients})_`;
+                flavorLine += ` _(${flavor.ingredients})_`;
               }
               
               // Calcular precio extra si el sabor excede los toppings incluidos
               if (flavor.toppingValue > includedToppings) {
                 const extraToppings = flavor.toppingValue - includedToppings;
                 const extraCost = extraToppings * extraToppingCost;
-                flavorText += ` \`+$${extraCost.toFixed(2)}\``;
+                flavorLine += ` \`+$${extraCost.toFixed(2)}\``;
               }
               
-              menuText += `${flavorText}\n`;
-            }
+              menuLines.push(flavorLine);
+            });
             
-            menuText += ` _◇ Máx. 2 mitades_\n`;
+            menuLines.push(` _◇ Máx. 2 mitades_`);
           }
         }
         
         // Mostrar todos los modificadores agrupados
         if (product.modifierGroups?.length > 0) {
-          for (const group of product.modifierGroups) {
+          product.modifierGroups.forEach((group: any) => {
             const activeModifiers = group.productModifiers?.filter((m: any) => m.isActive) || [];
             if (activeModifiers.length > 0) {
-              menuText += ` _◇ ${group.name}:_\n`;
-              const modifierDetails = activeModifiers.map((m: any) => {
+              menuLines.push(` _◇ ${group.name}:_`);
+              
+              activeModifiers.forEach((modifier: any) => {
                 // Solo agregar precio si es mayor a 0
-                if (m.price && m.price > 0) {
-                  return `  • ${m.name} \`+$${m.price.toFixed(2)}\``;
+                if (modifier.price && modifier.price > 0) {
+                  menuLines.push(`  • ${modifier.name} \`+$${modifier.price.toFixed(2)}\``);
+                } else {
+                  menuLines.push(`  • ${modifier.name}`);
                 }
-                return `  • ${m.name}`;
-              }).join('\n');
-              menuText += `${modifierDetails}\n`;
+              });
             }
-          }
+          });
         }
-      }
+      });
     }
 
-    menuText += "\n━━━━━━━━━━━━━━━━━━━━━━\n";
-    menuText += "_📱 Para ordenar: menciona el producto completo con variante, extras y comentarios_";
+    // Footer
+    menuLines.push("\n━━━━━━━━━━━━━━━━━━━━━━");
+    menuLines.push("_📱 Para ordenar: menciona el producto completo con variante, extras y comentarios_");
 
-    return menuText;
+    return menuLines.join('\n');
   }
 
-  /**
-   * Format menu for AI consumption
-   */
-  private static formatMenuForAI(products: any[], restaurantName: string = "Nuestro Restaurante"): string {
-    let menuText = `🍽️ **MENÚ DE ${restaurantName.toUpperCase()}** 🍽️\n`;
-    menuText += "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n";
-
-    // Agrupar por categoría y subcategoría
-    const productsByCategory = products.reduce((acc, product) => {
-      const categoryName = product.subcategory?.category?.name || 'Sin categoría';
-      const subcategoryName = product.subcategory?.name || 'Sin subcategoría';
-      
-      if (!acc[categoryName]) acc[categoryName] = {};
-      if (!acc[categoryName][subcategoryName]) {
-        acc[categoryName][subcategoryName] = {
-          description: product.subcategory?.description,
-          products: []
-        };
-      }
-      acc[categoryName][subcategoryName].products.push(product);
-      return acc;
-    }, {} as Record<string, Record<string, { description: string | null; products: any[] }>>);
-
-    // Mapeo de emojis por tipo de categoría (genérico)
-    const categoryEmojis: Record<string, string> = {
-      'pizza': '🍕',
-      'pizzas': '🍕',
-      'hamburguesa': '🍔',
-      'hamburguesas': '🍔',
-      'bebida': '🥤',
-      'bebidas': '🥤',
-      'postre': '🍰',
-      'postres': '🍰',
-      'ensalada': '🥗',
-      'ensaladas': '🥗',
-      'pasta': '🍝',
-      'pastas': '🍝',
-      'sandwich': '🥪',
-      'sandwiches': '🥪',
-      'sushi': '🍱',
-      'comida china': '🥡',
-      'tacos': '🌮',
-      'mexicana': '🌮',
-      'desayuno': '🍳',
-      'desayunos': '🍳',
-      'café': '☕',
-      'cafés': '☕',
-      'sopa': '🍲',
-      'sopas': '🍲',
-      'mariscos': '🦐',
-      'pescados': '🐟',
-      'pollo': '🍗',
-      'carne': '🥩',
-      'carnes': '🥩',
-      'vegano': '🌱',
-      'vegetariano': '🥦',
-      'combo': '🍱',
-      'combos': '🍱',
-      'promoción': '⭐',
-      'promociones': '⭐'
-    };
-
-    // Función para obtener emoji apropiado
-    const getEmoji = (categoryName: string): string => {
-      const lowerName = categoryName.toLowerCase();
-      for (const [key, emoji] of Object.entries(categoryEmojis)) {
-        if (lowerName.includes(key)) {
-          return emoji;
-        }
-      }
-      return '🍽️'; // Emoji por defecto
-    };
-
-    // Formatear por categoría y subcategoría
-    for (const [category, subcategories] of Object.entries(productsByCategory)) {
-      const emoji = getEmoji(category);
-      
-      menuText += `\n${emoji} **${category.toUpperCase()}** ${emoji}\n`;
-      menuText += `${'─'.repeat(30)}\n\n`;
-      
-      for (const [subcategory, data] of Object.entries(subcategories as Record<string, any>)) {
-        if (subcategory !== 'Sin subcategoría') {
-          menuText += `▸ _${subcategory}_\n\n`;
-        }
-        
-        const categoryProducts = data.products;
-        
-        for (const product of categoryProducts) {
-          // Nombre del producto
-          menuText += `  **${product.name}**`;
-          
-          // Precio si no tiene variantes
-          if (!product.hasVariants && product.price) {
-            menuText += ` ─ $${product.price.toFixed(2)}`;
-          }
-          
-          menuText += '\n';
-          
-          // Variantes con precios
-          if (product.variants?.length > 0 && product.hasVariants) {
-            for (const variant of product.variants) {
-              menuText += `    • ${variant.name}: **$${variant.price.toFixed(2)}**\n`;
-            }
-          }
-          
-          // Personalizaciones de pizza (si aplica)
-          if (product.pizzaCustomizations?.length > 0 && product.isPizza) {
-            const flavors = product.pizzaCustomizations.filter((c: any) => c.type === 'FLAVOR');
-            const ingredients = product.pizzaCustomizations.filter((c: any) => c.type === 'INGREDIENT');
-            
-            if (flavors.length > 0) {
-              menuText += `    _Sabores disponibles: ${flavors.map((f: any) => f.name).join(', ')}_\n`;
-            }
-            if (ingredients.length > 0) {
-              menuText += `    _Ingredientes extra: ${ingredients.map((i: any) => i.name).join(', ')}_\n`;
-            }
-          }
-          
-          // Modificadores disponibles
-          if (product.modifierGroups?.length > 0) {
-            for (const modGroup of product.modifierGroups) {
-              if (modGroup.productModifiers?.length > 0) {
-                menuText += `\n    **${modGroup.name}**\n`;
-                for (const mod of modGroup.productModifiers) {
-                  const price = mod.price ? `+$${mod.price.toFixed(2)}` : 'Sin costo';
-                  menuText += `      ○ ${mod.name} (${price})\n`;
-                }
-              }
-            }
-          }
-          
-          menuText += "\n";
-        }
-      }
-    }
-
-    // Agregar información adicional
-    menuText += "\n━━━━━━━━━━━━━━━━━━━━━━\n";
-    menuText += "💡 **Cómo ordenar:**\n";
-    menuText += "• Menciona el nombre del producto\n";
-    menuText += "• Especifica el tamaño si hay variantes\n";
-    menuText += "• Indica modificadores si deseas\n";
-    menuText += "━━━━━━━━━━━━━━━━━━━━━━\n";
-
-    return menuText;
-  }
 
   /**
    * Get all active categories

@@ -12,6 +12,12 @@ export interface UnifiedResponse {
   content?: {
     text?: string;
     interactive?: any;
+    urlButton?: {
+      title: string;
+      body: string;
+      buttonText: string;
+      url: string;
+    };
   };
   
   // Metadatos
@@ -65,6 +71,11 @@ export enum ResponseType {
   MENU_INFO = 'MENU_INFO',
   WAIT_TIME_INFO = 'WAIT_TIME_INFO',
   RESTAURANT_INFO = 'RESTAURANT_INFO',
+  
+  // Respuestas de sistema
+  ADDRESS_UPDATE = 'ADDRESS_UPDATE',
+  BOT_INSTRUCTIONS = 'BOT_INSTRUCTIONS',
+  CONVERSATION_RESET = 'CONVERSATION_RESET',
   
   // Errores
   ERROR = 'ERROR',
@@ -205,6 +216,26 @@ export class ResponseBuilder {
         shouldSend: false,
         isRelevant: false,
         type: ResponseType.TEXT,
+      },
+    };
+  }
+  
+  /**
+   * Crea una respuesta con botón de URL
+   * @param title - Título del mensaje
+   * @param body - Cuerpo del mensaje
+   * @param buttonText - Texto del botón
+   * @param url - URL a abrir cuando se presiona el botón
+   */
+  static urlButton(title: string, body: string, buttonText: string, url: string): UnifiedResponse {
+    return {
+      content: {
+        urlButton: { title, body, buttonText, url }
+      },
+      metadata: {
+        shouldSend: true,
+        isRelevant: true,
+        type: ResponseType.ADDRESS_UPDATE, // Podríamos crear un nuevo tipo URL_BUTTON
       },
     };
   }

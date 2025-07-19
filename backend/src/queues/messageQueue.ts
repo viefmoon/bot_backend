@@ -1,6 +1,7 @@
 import { Queue, Worker, Job } from 'bullmq';
 import IORedis from 'ioredis';
 import { env } from '../common/config/envValidator';
+import { redisKeys } from '../common/constants';
 import logger from '../common/utils/logger';
 import { processMessageJob } from '../workers/messageWorker';
 import { WhatsAppMessageJob } from './types';
@@ -33,7 +34,7 @@ let messageWorker: Worker<WhatsAppMessageJob> | null = null;
 
 // Acquire a distributed lock for a user
 async function acquireUserLock(userId: string, timeoutSeconds: number = 60): Promise<boolean> {
-  const lockKey = `user-lock:${userId}`;
+  const lockKey = redisKeys.userLock(userId);
   
   try {
     // SET key value NX EX seconds
@@ -49,7 +50,7 @@ async function acquireUserLock(userId: string, timeoutSeconds: number = 60): Pro
 
 // Release the distributed lock for a user
 async function releaseUserLock(userId: string): Promise<void> {
-  const lockKey = `user-lock:${userId}`;
+  const lockKey = redisKeys.userLock(userId);
   
   try {
     await redisClient.del(lockKey);

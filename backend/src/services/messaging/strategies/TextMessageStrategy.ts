@@ -1,6 +1,7 @@
 import { MessageStrategy } from './MessageStrategy';
 import { MessageContext } from '../MessageContext';
 import { TextProcessingService } from '../TextProcessingService';
+import { ResponseBuilder, ResponseType } from '../types/responses';
 import logger from '../../../common/utils/logger';
 
 export class TextMessageStrategy extends MessageStrategy {
@@ -20,11 +21,13 @@ export class TextMessageStrategy extends MessageStrategy {
       await TextProcessingService.processTextMessage(text, context);
     } catch (error) {
       logger.error("Error in TextMessageStrategy:", error);
-      context.addResponse({
-        text: "Error al procesar la solicitud: " + (error as Error).message,
-        sendToWhatsApp: true,
-        isRelevant: true
-      });
+      
+      // Use UnifiedResponse for error handling
+      const errorResponse = ResponseBuilder.error(
+        'PROCESSING_ERROR',
+        "Error al procesar la solicitud: " + (error as Error).message
+      );
+      context.addUnifiedResponse(errorResponse);
     }
   }
 }
