@@ -14,9 +14,8 @@ export * from './menu';
 // Restaurant types
 export * from './restaurant';
 
-// WhatsApp & Webhook types
-export * from './whatsapp.types';
-export * from './webhook.types';
+// WhatsApp & Message types
+export * from './whatsapp-messages.types';
 
 // Response types are now in messaging/types/responses
 

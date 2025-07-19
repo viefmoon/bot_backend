@@ -2,31 +2,8 @@ import { Customer } from '@prisma/client';
 
 export * from './types/responses';
 
-export interface IncomingMessage {
-  id: string;
-  from: string;
-  type: 'text' | 'interactive' | 'audio' | 'image' | 'document' | 'location';
-  timestamp: string;
-  text?: {
-    body: string;
-  };
-  interactive?: {
-    type: 'button_reply' | 'list_reply';
-    button_reply?: {
-      id: string;
-      title: string;
-    };
-    list_reply?: {
-      id: string;
-      title: string;
-      description?: string;
-    };
-  };
-  audio?: {
-    id: string;
-    mime_type: string;
-  };
-}
+// Re-exportar tipos de WhatsApp desde la ubicación centralizada
+export { IncomingMessage } from '../../common/types/whatsapp-messages.types';
 
 export interface MessageContext {
   message: IncomingMessage;
