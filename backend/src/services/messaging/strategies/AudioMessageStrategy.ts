@@ -69,11 +69,11 @@ export class AudioMessageStrategy extends MessageStrategy {
       
       logger.info(`Audio transcribed successfully: "${transcription}"`);
       
-      // Notificar al usuario de la transcripción
-      await sendWhatsAppMessage(
-        context.message.from,
-        `🎤 Entendí: "${transcription}"\n\nProcesando tu mensaje...`
-      );
+      // Store the transcription in the message context so it gets saved to history
+      // This simulates a text message structure for the pipeline
+      context.message.text = {
+        body: transcription
+      };
       
       // Process the transcribed text directly using the shared service
       await TextProcessingService.processTextMessage(transcription, context);
