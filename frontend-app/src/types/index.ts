@@ -8,6 +8,3 @@ export type {
   CustomerDeliveryInfo,
   Location
 } from './customer.types';
-
-// Export order types
-export type * from './order.types';
