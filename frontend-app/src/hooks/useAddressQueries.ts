@@ -61,20 +61,6 @@ export const useUpdateAddress = () => {
   });
 };
 
-export const useDeleteAddress = () => {
-  const queryClient = useQueryClient();
-  
-  return useMutation({
-    mutationFn: addressApi.deleteAddress,
-    onSuccess: (_, variables) => {
-      // Invalidate the OTP verification query to refresh customer data
-      queryClient.invalidateQueries({
-        queryKey: addressQueryKeys.verifyOtp(variables.whatsappPhoneNumber, variables.otp),
-      });
-    },
-  });
-};
-
 export const useSetDefaultAddress = () => {
   const queryClient = useQueryClient();
   

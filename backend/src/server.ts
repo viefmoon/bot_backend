@@ -12,7 +12,7 @@ import { DeliveryInfoService } from './services/orders/services/DeliveryInfoServ
 import { envValidator, env } from './common/config/envValidator';
 import { globalErrorHandler, asyncHandler } from './common/middlewares/errorHandler';
 import { validationMiddleware, queryValidationMiddleware } from './common/middlewares/validation.middleware';
-import { VerifyOtpDto, InvalidateOtpDto } from './dto/auth';
+import { VerifyOtpDto } from './dto/auth';
 import { AddressDto, GetAddressesQueryDto, UpdateAddressDto } from './dto/address';
 import { SendMessageDto } from './dto/whatsapp';
 import { CreateOrderDto } from './dto/order';
@@ -75,14 +75,6 @@ app.post('/backend/otp/verify',
     const { whatsappPhoneNumber, otp } = req.body as VerifyOtpDto;
     const isValid = await OTPService.verifyOTP(whatsappPhoneNumber, otp);
     res.json({ valid: isValid });
-  }));
-
-app.post('/backend/otp/invalidate',
-  validationMiddleware(InvalidateOtpDto),
-  asyncHandler(async (req: Request, res: Response) => {
-    const { whatsappPhoneNumber } = req.body as InvalidateOtpDto;
-    await OTPService.invalidateOTP(whatsappPhoneNumber);
-    res.json({ success: true });
   }));
 
 // Customer addresses endpoints
@@ -177,37 +169,6 @@ app.delete('/backend/addresses/:addressId',
     await DeliveryInfoService.deleteCustomerAddress(addressId, existingAddress.customerId);
     res.json({ success: true });
   }));
-
-// Pre-orders endpoint
-app.post('/backend/pre-orders/create',
-  validationMiddleware(CreateOrderDto),
-  asyncHandler(async (req: Request, res: Response) => {
-    const preOrderService = new PreOrderService();
-    const dto = req.body as CreateOrderDto;
-    
-    // Transform DTO to match PreOrderService expectations
-    const orderData = {
-      orderItems: dto.orderItems.map(item => ({
-        productId: item.productId,
-        productVariantId: item.productVariantId || null,
-        quantity: item.quantity,
-        comments: item.comments,
-        selectedModifiers: item.selectedModifiers,
-        selectedPizzaCustomizations: item.selectedPizzaCustomizations.map(pc => ({
-          pizzaCustomizationId: pc.pizzaCustomizationId,
-          half: pc.half as "FULL" | "HALF_1" | "HALF_2",
-          action: pc.action as "ADD" | "REMOVE"
-        }))
-      })),
-      whatsappPhoneNumber: dto.whatsappPhoneNumber,
-      orderType: dto.orderType,
-      scheduledAt: dto.scheduledAt,
-      deliveryInfo: dto.deliveryInfo
-    };
-    
-    const result = await preOrderService.createPreOrder(orderData);
-  res.status(200).json(result);
-}));
 
 // WhatsApp send message endpoint
 app.post('/backend/whatsapp/send-message',

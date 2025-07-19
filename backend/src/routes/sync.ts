@@ -97,16 +97,4 @@ router.post('/pull-changes', apiKeyAuthMiddleware, asyncHandler(async (req: Requ
   }
 }));
 
-
-// Legacy endpoints - kept for backward compatibility
-// NOTE: These endpoints are deprecated. Use POST /sync-restaurant-data instead
-
-router.get('/status', asyncHandler(async (_req: Request, res: Response) => {
-  res.json({
-    success: true,
-    status: 'healthy',
-    timestamp: new Date()
-  });
-}));
-
 export default router;

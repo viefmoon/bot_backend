@@ -291,32 +291,6 @@ router.get('/:customerId/addresses',
 );
 
 /**
- * Eliminar dirección del cliente
- * DELETE /backend/address-registration/:addressId
- */
-router.delete('/:addressId',
-  otpAuthMiddleware,
-  asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
-    const { addressId } = req.params;
-    const customer = req.customer; // Customer already validated by middleware
-    
-    // Eliminar dirección (eliminación suave)
-    await DeliveryInfoService.deleteCustomerAddress(
-      addressId,
-      customer.id
-    );
-    
-    // Mark customer for sync since addresses are part of customer data
-    await SyncMetadataService.markForSync('Customer', customer.id, 'REMOTE');
-    
-    res.json({ 
-      success: true,
-      message: 'Address deleted successfully'
-    });
-  })
-);
-
-/**
  * Establecer dirección como predeterminada
  * PUT /backend/address-registration/:addressId/default
  */

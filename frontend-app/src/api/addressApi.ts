@@ -30,12 +30,6 @@ export interface UpdateAddressParams extends CreateAddressParams {
   addressId: string;
 }
 
-export interface DeleteAddressParams {
-  addressId: string;
-  whatsappPhoneNumber: string;
-  otp: string;
-}
-
 export interface SetDefaultAddressParams {
   addressId: string;
   whatsappPhoneNumber: string;
@@ -77,13 +71,6 @@ export const addressApi = {
 
   updateAddress: async ({ addressId, ...params }: UpdateAddressParams) => {
     const { data } = await apiClient.put(`/backend/address-registration/${addressId}`, params);
-    return data;
-  },
-
-  deleteAddress: async ({ addressId, ...params }: DeleteAddressParams) => {
-    const { data } = await apiClient.delete(`/backend/address-registration/${addressId}`, {
-      data: params,
-    });
     return data;
   },
 
