@@ -4,7 +4,6 @@ import cors from 'cors';
 import webhookRoutes from './routes/webhook';
 import syncRoutes from './routes/sync';
 import addressRegistrationRoutes from './routes/address-registration';
-import addressSelectionRoutes from './routes/address-selection';
 import logger from './common/utils/logger';
 import { OTPService } from './services/security/OTPService';
 import { PreOrderService } from './services/orders/PreOrderService';
@@ -64,7 +63,6 @@ app.get('/backend', (_, res) => {
 app.use('/api/webhook', webhookRoutes);
 app.use('/api/sync', syncRoutes);
 app.use('/backend/address-registration', addressRegistrationRoutes);
-app.use('/backend/address-selection', addressSelectionRoutes);
 
 // Import and use audio routes
 import audioOrderRoutes from './api/audio/audioOrder.routes';
