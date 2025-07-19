@@ -5,7 +5,8 @@
 La forma más fácil de iniciar el desarrollo local es usando el script automatizado:
 
 ```bash
-./start-local.sh
+./start-dev.sh      # Linux/Mac
+start-dev.bat       # Windows
 ```
 
 Este script:

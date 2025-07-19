@@ -57,10 +57,6 @@ export const ERROR_MESSAGES: Record<ErrorCode, ErrorMessageConfig> = {
     user: "❌ Falta información requerida. Por favor, completa todos los campos.",
     log: "Missing required field"
   },
-  [ErrorCode.INVALID_ORDER_TYPE]: {
-    user: "❌ Tipo de orden no válido. Por favor, selecciona entrega a domicilio o recolección.",
-    log: "Invalid order type"
-  },
   [ErrorCode.INVALID_OTP]: {
     user: "❌ El código OTP es inválido o ha expirado. Por favor, solicita uno nuevo.",
     log: "Invalid or expired OTP"

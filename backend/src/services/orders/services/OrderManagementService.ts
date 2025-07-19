@@ -125,26 +125,6 @@ export class OrderManagementService {
   }
 
 
-  
-  async getOrderById(orderId: string): Promise<Order | null> {
-    return await prisma.order.findUnique({
-      where: { id: orderId },
-      include: {
-        orderItems: {
-          include: {
-            product: true,
-            productVariant: true,
-            productModifiers: true,
-            selectedPizzaCustomizations: {
-              include: { pizzaCustomization: true },
-            },
-          },
-        },
-        deliveryInfo: true,
-      },
-    });
-  }
-
   async discardPreOrder(preOrderId: number): Promise<void> {
     const preOrder = await prisma.preOrder.findUnique({
       where: { id: preOrderId },

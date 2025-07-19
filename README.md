@@ -8,7 +8,7 @@ Ver la guía completa en: **[QUICK_START.md](QUICK_START.md)**
 
 ### Resumen:
 1. Configura credenciales de WhatsApp y Google AI
-2. Ejecuta `./start-local.sh`
+2. Ejecuta `./start-dev.sh` (Linux/Mac) o `start-dev.bat` (Windows)
 3. Usa ngrok para exponer el webhook
 4. ¡Listo! El bot responde por WhatsApp
 
@@ -89,7 +89,8 @@ Railway desplegará automáticamente cuando hagas push a tu repositorio.
 
 ```bash
 # Iniciar todo (backend + frontend + PostgreSQL)
-./start-local.sh
+./start-dev.sh      # Linux/Mac
+start-dev.bat       # Windows
 
 # Iniciar solo el frontend (requiere backend corriendo)
 ./start-frontend.sh

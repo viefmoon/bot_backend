@@ -83,7 +83,8 @@ cd backend && npm run build        # TypeScript compilation checks
 ### Testing WhatsApp Locally
 ```bash
 # 1. Start the backend
-./start-local.sh
+./start-dev.sh      # Linux/Mac
+start-dev.bat       # Windows
 
 # 2. In another terminal, expose webhook with ngrok
 ngrok http 5000
@@ -179,7 +180,7 @@ Middleware Pipeline:
 - Run `npm run seed:embeddings` to generate embeddings for all products
 - Uses Google's text-embedding-004 model (768 dimensions)
 - Production: Enable pgvector extension in PostgreSQL
-- Development: Uses JSONB field for local testing
+- Development: Uses Docker image with pgvector extension enabled
 - Important: Embeddings must be generated before search will work
 
 ### Service Architecture
@@ -359,4 +360,4 @@ Auto-deploys on push to connected repository.
 - **Redis**: Runs on port 6380 (via Docker, optional for OTP/cache)
 - **Docker Compose**: Manages local database and cache services
 - Backend port is 5000 (not 3001 as sometimes referenced)
-- Use `start-local.sh` to ensure Docker containers are running
+- Use `start-dev.sh` (Linux/Mac) or `start-dev.bat` (Windows) to ensure Docker containers are running

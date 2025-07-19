@@ -4,7 +4,7 @@
 This project uses pgvector for semantic search capabilities. pgvector is a PostgreSQL extension that enables vector similarity search, which powers our AI-based menu search functionality.
 
 ## Automatic Setup
-When you run `start-local.sh`, everything is configured automatically:
+When you run `start-dev.sh` (Linux/Mac) or `start-dev.bat` (Windows), everything is configured automatically:
 1. Docker Compose uses the `pgvector/pgvector:pg15` image
 2. Database migrations create the vector extension and embedding column
 3. Product embeddings are generated automatically when the server starts

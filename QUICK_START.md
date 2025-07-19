@@ -52,7 +52,8 @@ Ngrok ahora requiere autenticación (cuenta gratuita):
 
 ### 1️⃣ Iniciar Backend y Base de Datos
 ```bash
-./start-local.sh
+./start-dev.sh      # Linux/Mac
+start-dev.bat       # Windows
 ```
 
 Esto automáticamente:
@@ -90,7 +91,7 @@ Forwarding  https://abc123.ngrok-free.app -> http://localhost:5000
 ## ✅ ¡Listo para Probar!
 
 1. **Envía un mensaje** a tu número de WhatsApp Business
-2. **Verás los logs** en la terminal donde ejecutaste `./start-local.sh`
+2. **Verás los logs** en la terminal donde ejecutaste el script de inicio
 3. **El bot responderá** directamente por WhatsApp
 
 ### Mensajes de Prueba:
@@ -109,7 +110,7 @@ cd backend && npx prisma studio
 docker compose logs -f
 
 # Reiniciar todo
-docker compose down && ./start-local.sh
+docker compose down && ./start-dev.sh  # O start-dev.bat en Windows
 ```
 
 ## 🛑 Para Detener Todo
