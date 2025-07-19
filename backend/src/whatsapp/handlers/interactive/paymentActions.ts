@@ -2,6 +2,7 @@
  * Payment related interactive message handlers
  */
 import { prisma } from '../../../lib/prisma';
+import { PaymentStatus, PaymentMethod } from '@prisma/client';
 import { sendWhatsAppMessage } from '../../../services/whatsapp';
 import Stripe from 'stripe';
 import { env } from '../../../common/config/envValidator';
@@ -62,7 +63,7 @@ async function handleOnlinePayment(
     const existingPayment = await prisma.payment.findFirst({
       where: {
         orderId: order.id,
-        paymentMethod: 'STRIPE',
+        paymentMethod: PaymentMethod.STRIPE,
         stripePaymentId: { not: null }
       }
     });
@@ -169,9 +170,9 @@ async function handleOnlinePayment(
     await prisma.payment.create({
       data: {
         orderId: order.id,
-        paymentMethod: 'STRIPE',
+        paymentMethod: PaymentMethod.STRIPE,
         amount: order.total,
-        status: 'PENDING',
+        status: PaymentStatus.PENDING,
         stripePaymentId: session.id,
         metadata: {
           sessionUrl: session.url,

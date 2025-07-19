@@ -47,7 +47,7 @@ export class PreOrderService {
       const config = await RestaurantService.getConfig();
       
       // Calculate estimated time based on order type
-      const estimatedDeliveryTime = orderType === 'DELIVERY' 
+      const estimatedDeliveryTime = orderType === OrderType.DELIVERY 
         ? config.estimatedDeliveryTime 
         : config.estimatedPickupTime;
 
@@ -64,7 +64,7 @@ export class PreOrderService {
       
       // Get or create delivery info
       let deliveryInfoId = null;
-      if (customer && (orderType === 'DELIVERY' || orderType === 'TAKE_AWAY')) {
+      if (customer && (orderType === OrderType.DELIVERY || orderType === OrderType.TAKE_AWAY)) {
         const deliveryInfo = await DeliveryInfoService.getOrCreateDeliveryInfo(
           orderType,  // Pass the enum directly
           customer.id,

@@ -1,4 +1,5 @@
 import { GeminiService } from './GeminiService';
+import { OrderType } from '@prisma/client';
 import logger from '../../common/utils/logger';
 import { ProductService } from '../products/ProductService';
 import { getGeneralAgentPrompt, getOrderAgentPrompt } from './prompts';
@@ -68,7 +69,7 @@ export class AgentService {
       const messages: Content[] = [{
         role: 'user',
         parts: [{ 
-          text: `ORDEN: ${orderContext.itemsSummary}\nTIPO: ${orderContext.orderType || 'DELIVERY'}` 
+          text: `ORDEN: ${orderContext.itemsSummary}\nTIPO: ${orderContext.orderType || OrderType.DELIVERY}` 
         }]
       }];
       
@@ -87,7 +88,7 @@ export class AgentService {
       logger.debug('=== COMPLETE ORDER AGENT INPUT ===');
       logger.debug('System Instruction includes menu:');
       logger.debug(`Order: ${orderContext.itemsSummary}`);
-      logger.debug(`Type: ${orderContext.orderType || 'DELIVERY'}`);
+      logger.debug(`Type: ${orderContext.orderType || OrderType.DELIVERY}`);
       try {
         const menuParsed = JSON.parse(orderContext.relevantMenu);
         (logger as any).json('Relevant Menu:', menuParsed);

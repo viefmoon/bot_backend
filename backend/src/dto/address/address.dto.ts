@@ -1,55 +1,28 @@
-import { IsNotEmpty, IsString, IsNumber, IsOptional, IsBoolean } from 'class-validator';
+import { IsNotEmpty } from 'class-validator';
+import { BaseAddressDto } from './base-address.dto';
 
-export class AddressDto {
+export class AddressDto extends BaseAddressDto {
   @IsNotEmpty({ message: 'El nombre de la dirección es requerido' })
-  @IsString()
-  name!: string;
+  declare name: string;
 
   @IsNotEmpty({ message: 'La calle es requerida' })
-  @IsString()
-  street!: string;
+  declare street: string;
 
   @IsNotEmpty({ message: 'El número es requerido' })
-  @IsString()
-  number!: string;
-
-  @IsOptional()
-  @IsString()
-  interiorNumber?: string;
-
-  @IsOptional()
-  @IsString()
-  neighborhood?: string;
+  declare number: string;
 
   @IsNotEmpty({ message: 'La ciudad es requerida' })
-  @IsString()
-  city!: string;
+  declare city: string;
 
   @IsNotEmpty({ message: 'El estado es requerido' })
-  @IsString()
-  state!: string;
-
-  @IsOptional()
-  @IsString()
-  zipCode?: string;
+  declare state: string;
 
   @IsNotEmpty({ message: 'El país es requerido' })
-  @IsString()
-  country!: string;
+  declare country: string;
 
   @IsNotEmpty({ message: 'La latitud es requerida' })
-  @IsNumber()
-  latitude!: number;
+  declare latitude: number;
 
   @IsNotEmpty({ message: 'La longitud es requerida' })
-  @IsNumber()
-  longitude!: number;
-
-  @IsOptional()
-  @IsString()
-  deliveryInstructions?: string;
-
-  @IsOptional()
-  @IsBoolean()
-  isDefault?: boolean;
+  declare longitude: number;
 }

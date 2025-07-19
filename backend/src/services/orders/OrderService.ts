@@ -1,5 +1,5 @@
 import { prisma } from '../../lib/prisma';
-import { PizzaHalf, CustomizationAction } from '@prisma/client';
+import { PizzaHalf, CustomizationAction, OrderType } from '@prisma/client';
 import { CreateOrderDto } from '../../dto/order';
 import logger from '../../common/utils/logger';
 import { NotFoundError, ErrorCode } from '../../common/services/errors';
@@ -23,7 +23,7 @@ export class OrderService {
       
       // Get restaurant config for estimated times
       const config = await prisma.restaurantConfig.findFirst();
-      const estimatedMinutes = createOrderDto.orderType === 'DELIVERY' 
+      const estimatedMinutes = createOrderDto.orderType === OrderType.DELIVERY 
         ? (config?.estimatedDeliveryTime || 40)
         : (config?.estimatedPickupTime || 20);
       

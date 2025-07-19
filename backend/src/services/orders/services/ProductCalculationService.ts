@@ -1,4 +1,5 @@
 import { prisma } from '../../../lib/prisma';
+import { CustomizationAction, PizzaHalf } from '@prisma/client';
 import { ValidationError, ErrorCode } from "../../../common/services/errors";
 import logger from "../../../common/utils/logger";
 import { BaseOrderItem, CalculatedOrderItem } from "../../../common/types";
@@ -270,8 +271,8 @@ export class ProductCalculationService {
     const mappedCustomizations = selectedCustomizations.map(selected => {
       const customization = customizations.find(c => c.id === selected.pizzaCustomizationId);
       
-      if (selected.action === 'ADD' && customization) {
-        if (selected.half === 'FULL') {
+      if (selected.action === CustomizationAction.ADD && customization) {
+        if (selected.half === PizzaHalf.FULL) {
           totalToppingValue += customization.toppingValue;
         } else {
           // Half pizza counts as half the topping value

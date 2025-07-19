@@ -1,17 +1,14 @@
-import { IsOptional, IsString, IsNumber, IsBoolean } from 'class-validator';
+import { IsString, IsNumber, IsOptional, IsBoolean } from 'class-validator';
 
-export class UpdateAddressDto {
-  @IsOptional()
+export abstract class BaseAddressDto {
   @IsString()
-  name?: string;
+  name!: string;
 
-  @IsOptional()
   @IsString()
-  street?: string;
+  street!: string;
 
-  @IsOptional()
   @IsString()
-  number?: string;
+  number!: string;
 
   @IsOptional()
   @IsString()
@@ -21,29 +18,24 @@ export class UpdateAddressDto {
   @IsString()
   neighborhood?: string;
 
-  @IsOptional()
   @IsString()
-  city?: string;
+  city!: string;
 
-  @IsOptional()
   @IsString()
-  state?: string;
+  state!: string;
 
   @IsOptional()
   @IsString()
   zipCode?: string;
 
-  @IsOptional()
   @IsString()
-  country?: string;
+  country!: string;
 
-  @IsOptional()
   @IsNumber()
-  latitude?: number;
+  latitude!: number;
 
-  @IsOptional()
   @IsNumber()
-  longitude?: number;
+  longitude!: number;
 
   @IsOptional()
   @IsString()

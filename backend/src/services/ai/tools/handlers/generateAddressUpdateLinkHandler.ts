@@ -1,7 +1,6 @@
 import { ToolHandler } from '../types';
 import { MessageContext } from '../../../messaging/MessageContext';
-import { OTPService } from '../../../security/OTPService';
-import { env } from '../../../../common/config/envValidator';
+import { LinkGenerationService } from '../../../security/LinkGenerationService';
 import { TechnicalError, ErrorCode } from '../../../../common/services/errors';
 import { UnifiedResponse, ResponseBuilder, ResponseType } from '../../../messaging/types/responses';
 import logger from '../../../../common/utils/logger';
@@ -22,12 +21,8 @@ export const handleGenerateAddressUpdateLink: ToolHandler = async (args, context
     );
   }
   
-  // Generate OTP
-  const otp = OTPService.generateOTP();
-  await OTPService.storeOTP(customerId, otp, true); // true = address registration
-  
-  // Create registration link
-  const registrationLink = `${env.FRONTEND_BASE_URL}/address-registration/${customerId}?otp=${otp}`;
+  // Generate secure registration link
+  const registrationLink = await LinkGenerationService.generateAddressRegistrationLink(customerId);
   
   // Create response with URL button using the new dedicated method
   return ResponseBuilder.urlButton(

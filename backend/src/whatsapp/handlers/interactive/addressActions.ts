@@ -3,8 +3,7 @@
  */
 import { prisma } from '../../../lib/prisma';
 import { sendWhatsAppMessage, sendMessageWithUrlButton } from '../../../services/whatsapp';
-import { OTPService } from '../../../services/security/OTPService';
-import { env } from '../../../common/config/envValidator';
+import { LinkGenerationService } from '../../../services/security/LinkGenerationService';
 import { BusinessLogicError, ErrorCode } from '../../../common/services/errors';
 import { extractIdFromAction, INTERACTIVE_ACTIONS } from '../../../common/constants/interactiveActions';
 import { formatAddressFull } from '../../../common/utils/addressFormatter';
@@ -14,9 +13,7 @@ import logger from '../../../common/utils/logger';
  * Handle general change delivery info request
  */
 export async function handleChangeDeliveryInfo(from: string): Promise<void> {
-  const otp = OTPService.generateOTP();
-  await OTPService.storeOTP(from, otp, true); // true for address registration
-  const updateLink = `${env.FRONTEND_BASE_URL}/address-registration/${from}?otp=${otp}`;
+  const updateLink = await LinkGenerationService.generateAddressRegistrationLink(from);
   
   // Send message with URL button
   await sendMessageWithUrlButton(
@@ -126,10 +123,10 @@ export async function handleAddNewAddress(from: string): Promise<void> {
     orderBy: { createdAt: 'desc' }
   });
   
-  const otp = OTPService.generateOTP();
-  await OTPService.storeOTP(customer.whatsappPhoneNumber, otp, true);
-  
-  const updateLink = `${env.FRONTEND_BASE_URL}/address-registration/${customer.whatsappPhoneNumber}?otp=${otp}${preOrder ? `&preOrderId=${preOrder.id}` : ''}&viewMode=form`;
+  const updateLink = await LinkGenerationService.generateNewAddressLink(
+    customer.whatsappPhoneNumber,
+    preOrder?.id?.toString()
+  );
   
   await sendMessageWithUrlButton(
     from,
@@ -156,10 +153,10 @@ export async function handleAddNewAddressForPreOrder(from: string, preOrderId: n
     );
   }
   
-  const otp = OTPService.generateOTP();
-  await OTPService.storeOTP(customer.whatsappPhoneNumber, otp, true);
-  
-  const updateLink = `${env.FRONTEND_BASE_URL}/address-registration/${customer.whatsappPhoneNumber}?otp=${otp}&preOrderId=${preOrderId}&viewMode=form`;
+  const updateLink = await LinkGenerationService.generateNewAddressLink(
+    customer.whatsappPhoneNumber,
+    preOrderId.toString()
+  );
   
   await sendMessageWithUrlButton(
     from,

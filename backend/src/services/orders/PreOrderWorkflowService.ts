@@ -1,5 +1,6 @@
 import { randomUUID } from 'crypto';
 import { prisma } from '../../lib/prisma';
+import { OrderType, CustomizationAction } from '@prisma/client';
 import { redisService } from '../redis/RedisService';
 import { PreOrderService } from './PreOrderService';
 import { OrderManagementService } from './services/OrderManagementService';
@@ -196,7 +197,7 @@ export class PreOrderWorkflowService {
     ];
     
     // Add change address button only for delivery orders
-    if (preOrderResult.orderType === 'DELIVERY') {
+    if (preOrderResult.orderType === OrderType.DELIVERY) {
       buttons.push({
         type: "reply",
         reply: {
@@ -235,7 +236,7 @@ export class PreOrderWorkflowService {
    * Removes sensitive information like prices
    */
   private static createHistoryMarker(preOrderResult: any): string {
-    const orderType = preOrderResult.orderType === 'DELIVERY' ? 'entrega a domicilio' : 'recolección';
+    const orderType = preOrderResult.orderType === OrderType.DELIVERY ? 'entrega a domicilio' : 'recolección';
     
     let historyMessage = `📋 Resumen de pedido (${orderType}):\n`;
     
@@ -259,7 +260,7 @@ export class PreOrderWorkflowService {
         // Agregar personalizaciones de pizza
         if (item.pizzaCustomizations && item.pizzaCustomizations.length > 0) {
           const customNames = item.pizzaCustomizations
-            .filter((cust: any) => cust.action === 'ADD')
+            .filter((cust: any) => cust.action === CustomizationAction.ADD)
             .map((cust: any) => cust.name)
             .join(', ');
           if (customNames) {

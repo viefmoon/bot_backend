@@ -180,7 +180,7 @@ export class OrderManagementService {
       const formattedOrder = OrderFormattingService.formatOrderForWhatsApp(fullOrder, whatsappNumber);
       const orderSummary = await OrderFormattingService.generateConfirmationMessage(fullOrder, formattedOrder);
       
-      if (fullOrder.orderStatus === "PENDING" || fullOrder.orderStatus === "IN_PROGRESS") {
+      if (fullOrder.orderStatus === OrderStatus.PENDING || fullOrder.orderStatus === OrderStatus.IN_PROGRESS) {
         const message = {
           type: "button",
           header: {

@@ -2,6 +2,7 @@
 
 import { env } from '../../../common/config/envValidator';
 import { CalculatedOrderItem } from '../../../common/types';
+import { OrderType, CustomizationAction, CustomizationType } from '@prisma/client';
 
 /**
  * Formatea las personalizaciones de una pizza de manera legible.
@@ -23,9 +24,9 @@ function formatPizzaCustomizations(customizations: CalculatedOrderItem['pizzaCus
 
   // Función auxiliar para formatear una mitad
   const formatHalf = (halfCustoms: typeof customizations): string => {
-    const flavors = halfCustoms.filter(c => c.type === 'FLAVOR' && c.action === 'ADD').map(c => c.name);
-    const ingredients = halfCustoms.filter(c => c.type === 'INGREDIENT' && c.action === 'ADD').map(c => c.name);
-    const removed = halfCustoms.filter(c => c.action === 'REMOVE').map(c => c.name);
+    const flavors = halfCustoms.filter(c => c.type === CustomizationType.FLAVOR && c.action === CustomizationAction.ADD).map(c => c.name);
+    const ingredients = halfCustoms.filter(c => c.type === CustomizationType.INGREDIENT && c.action === CustomizationAction.ADD).map(c => c.name);
+    const removed = halfCustoms.filter(c => c.action === CustomizationAction.REMOVE).map(c => c.name);
 
     let parts: string[] = [];
     if (flavors.length > 0) parts.push(flavors.join(', '));
@@ -87,27 +88,37 @@ export function generateProductSummary(item: CalculatedOrderItem): string {
  * Genera el resumen completo de un pedido para enviar por WhatsApp.
  */
 export function generateOrderSummary(order: {
-  orderType: string;
+  orderType: OrderType | string;
   deliveryInfo?: any;
   items: CalculatedOrderItem[];
   total: number;
   estimatedDeliveryTime?: number;
   scheduledAt?: Date;
 }): string {
-  const orderType = (order.orderType || '').toString().toLowerCase();
-  const deliveryTypeText = orderType === "delivery" ? "Entrega a domicilio" : "Recolección";
+  // Convertir a OrderType si viene como string para mantener compatibilidad
+  const orderTypeEnum = order.orderType as OrderType;
+  const deliveryTypeText = orderTypeEnum === OrderType.DELIVERY ? "Entrega a domicilio" : "Recolección";
 
   let message = `📋 *Resumen de tu pedido:*\n\n`;
   message += `📦 *Tipo de orden:* ${deliveryTypeText}\n\n`;
 
-  if (orderType === "delivery" && order.deliveryInfo) {
+  if (order.deliveryInfo) {
     const info = order.deliveryInfo;
-    message += `📍 *Dirección de entrega:*\n`;
-    if (info.name) message += `*${info.name}*\n`;
-    message += `${info.street} ${info.number || ''}${info.interiorNumber ? ` Int. ${info.interiorNumber}` : ''}\n`;
-    if (info.neighborhood) message += `Col. ${info.neighborhood}\n`;
-    if (info.deliveryInstructions) message += `Ref: ${info.deliveryInstructions}\n`;
-    message += "\n";
+    
+    // Para órdenes de recolección, mostrar el nombre del cliente
+    if (orderTypeEnum === OrderType.TAKE_AWAY && info.recipientName) {
+      message += `👤 *Cliente:* ${info.recipientName}\n\n`;
+    }
+    
+    // Para órdenes de delivery, mostrar solo la dirección
+    if (orderTypeEnum === OrderType.DELIVERY) {
+      message += `📍 *Dirección de entrega:*\n`;
+      if (info.name) message += `${info.name}\n`; // Nombre de la dirección (Casa, Oficina, etc)
+      message += `${info.street} ${info.number || ''}${info.interiorNumber ? ` Int. ${info.interiorNumber}` : ''}\n`;
+      if (info.neighborhood) message += `Col. ${info.neighborhood}\n`;
+      if (info.deliveryInstructions) message += `Ref: ${info.deliveryInstructions}\n`;
+      message += "\n";
+    }
   }
 
   message += `🛒 *Productos:*\n`;

@@ -1,4 +1,5 @@
 import { prisma } from '../../server';
+import { OrderType } from '@prisma/client';
 import logger from '../../common/utils/logger';
 import { SyncMetadataService } from './SyncMetadataService';
 import { EmbeddingManager } from './EmbeddingManager';
@@ -275,9 +276,9 @@ export class UnifiedSyncService {
         state: null,
         zipCode: null,
         country: null,
-        recipientName: order.orderType === 'TAKE_AWAY' ? 
+        recipientName: order.orderType === OrderType.TAKE_AWAY ? 
           `${order.customer.firstName || ''} ${order.customer.lastName || ''}`.trim() || order.customer.whatsappPhoneNumber : null,
-        recipientPhone: order.orderType === 'TAKE_AWAY' ? 
+        recipientPhone: order.orderType === OrderType.TAKE_AWAY ? 
           order.customer.whatsappPhoneNumber : null,
         deliveryInstructions: null,
         latitude: null,

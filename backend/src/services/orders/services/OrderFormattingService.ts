@@ -1,6 +1,6 @@
 import { FormattedOrder, FormattedOrderProduct } from "../../../common/types/order.types";
 import { env } from "../../../common/config/envValidator";
-import { PizzaHalf, CustomizationAction, CustomizationType } from "@prisma/client";
+import { PizzaHalf, CustomizationAction, CustomizationType, OrderType } from "@prisma/client";
 import { ConfigService } from "../../config/ConfigService";
 
 export class OrderFormattingService {
@@ -12,7 +12,7 @@ export class OrderFormattingService {
     let deliveryInfo = "";
 
     // Format delivery information
-    if (orderType === "DELIVERY" && order.deliveryInfo) {
+    if (orderType === OrderType.DELIVERY && order.deliveryInfo) {
       const info = order.deliveryInfo;
       
       // Use full address if available (for phone orders)
@@ -42,7 +42,7 @@ export class OrderFormattingService {
       if (info.recipientPhone) {
         deliveryInfo += ` Tel: ${info.recipientPhone}`;
       }
-    } else if (orderType === "TAKE_AWAY" && order.deliveryInfo?.recipientName) {
+    } else if (orderType === OrderType.TAKE_AWAY && order.deliveryInfo?.recipientName) {
       deliveryInfo = `Recogerá: ${order.deliveryInfo.recipientName}`;
       if (order.deliveryInfo.recipientPhone) {
         deliveryInfo += ` - Tel: ${order.deliveryInfo.recipientPhone}`;
@@ -150,8 +150,8 @@ export class OrderFormattingService {
    * Generate order confirmation message
    */
   static async generateConfirmationMessage(order: any, formattedOrder: FormattedOrder): Promise<string> {
-    const orderTypeText = order.orderType === "DELIVERY" ? "A domicilio" : 
-                         order.orderType === "TAKE_AWAY" ? "Para llevar" : "Para comer aquí";
+    const orderTypeText = order.orderType === OrderType.DELIVERY ? "A domicilio" : 
+                         order.orderType === OrderType.TAKE_AWAY ? "Para llevar" : "Para comer aquí";
     
     const config = await ConfigService.getConfig();
     
