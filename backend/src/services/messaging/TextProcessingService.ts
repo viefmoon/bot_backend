@@ -11,7 +11,7 @@ import { ValidationError, BusinessLogicError, TechnicalError, ErrorCode } from '
 
 // Type definition for content
 interface Content {
-  role: 'user' | 'model';
+  role: 'user' | 'model' | 'tool';
   parts: Array<{ text: string }>;
 }
 
@@ -53,14 +53,56 @@ export class TextProcessingService {
       // Process Gemini response and get UnifiedResponses
       const unifiedResponses = await this.processGeminiResponse(response, context);
       
-      // Process unified responses
-      for (const unifiedResponse of unifiedResponses) {
-        // Add response to context
-        context.addUnifiedResponse(unifiedResponse);
+      // Check if we need to do a multi-turn conversation
+      const needsFollowUp = unifiedResponses.some(r => 
+        r.metadata.shouldSend === false && 
+        r.metadata.isRelevant === true &&
+        r.content?.text
+      );
+      
+      if (needsFollowUp) {
+        // Build new message history including the tool responses
+        const updatedMessages = [...messages];
         
-        // Handle special cases
-        if (unifiedResponse.processedData) {
-          await this.handlePreprocessedContent(context, unifiedResponse.processedData);
+        // Add the model's response (including function calls)
+        if (response?.candidates?.[0]?.content) {
+          updatedMessages.push(response.candidates[0].content);
+        }
+        
+        // Add function responses as tool messages
+        for (const unifiedResponse of unifiedResponses) {
+          if (unifiedResponse.metadata.shouldSend === false && unifiedResponse.content?.text) {
+            updatedMessages.push({
+              role: 'tool',
+              parts: [{ text: unifiedResponse.content.text }]
+            });
+          }
+        }
+        
+        logger.debug('Making follow-up call to AgentService with tool responses');
+        
+        // Make a second call to the agent with the tool responses
+        const followUpResponse = await AgentService.processMessage(updatedMessages);
+        const followUpUnifiedResponses = await this.processGeminiResponse(followUpResponse, context);
+        
+        // Process the follow-up responses
+        for (const followUpUnifiedResponse of followUpUnifiedResponses) {
+          context.addUnifiedResponse(followUpUnifiedResponse);
+          
+          if (followUpUnifiedResponse.processedData) {
+            await this.handlePreprocessedContent(context, followUpUnifiedResponse.processedData);
+          }
+        }
+      } else {
+        // Original flow: process responses normally
+        for (const unifiedResponse of unifiedResponses) {
+          // Add response to context
+          context.addUnifiedResponse(unifiedResponse);
+          
+          // Handle special cases
+          if (unifiedResponse.processedData) {
+            await this.handlePreprocessedContent(context, unifiedResponse.processedData);
+          }
         }
       }
     } catch (error) {

@@ -7,6 +7,7 @@ import { handleGenerateAddressUpdateLink } from './handlers/generateAddressUpdat
 import { handleSendBotInstructions } from './handlers/sendBotInstructionsHandler';
 import { handleGetWaitTimes } from './handlers/getWaitTimesHandler';
 import { handleResetConversation } from './handlers/resetConversationHandler';
+import { handleGetMenuInformation } from './handlers/getMenuInformationHandler';
 
 /**
  * Registry of all available tool handlers
@@ -20,6 +21,7 @@ export const toolHandlers: Record<string, ToolHandler> = {
   'generate_address_update_link': handleGenerateAddressUpdateLink,
   'send_bot_instructions': handleSendBotInstructions,
   'get_wait_times': handleGetWaitTimes,
+  'get_menu_information': handleGetMenuInformation,
   'reset_conversation': handleResetConversation,
 };
 

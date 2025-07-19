@@ -70,6 +70,20 @@ export function getGeneralAgentTools(): any[] {
       }
     },
     {
+      name: "get_menu_information",
+      description: "Obtiene información específica sobre productos, ingredientes, precios o categorías del menú para responder preguntas del cliente.",
+      parameters: {
+        type: "object",
+        properties: {
+          query: {
+            type: "string",
+            description: "La pregunta o tema específico que el cliente consultó sobre el menú (ej: 'ingredientes de la pizza mexicana', 'tipos de hamburguesas', 'bebidas sin alcohol')"
+          }
+        },
+        required: ["query"]
+      }
+    },
+    {
       name: "reset_conversation",
       description: "Reinicia la conversación y borra el historial relevante cuando el cliente lo solicite",
       parameters: {

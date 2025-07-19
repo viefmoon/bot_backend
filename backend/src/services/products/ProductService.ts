@@ -2,11 +2,15 @@ import { prisma } from '../../lib/prisma';
 import { Product, Category, ProductVariant } from '@prisma/client';
 import logger from '../../common/utils/logger';
 import { NotFoundError, ErrorCode } from '../../common/services/errors';
+import { RedisService } from '../redis/RedisService';
 
 /**
  * Service for managing products and menu
  */
 export class ProductService {
+  // Cache configuration
+  private static readonly MENU_CACHE_KEY = 'menu:whatsapp:full_text';
+  private static readonly MENU_CACHE_TTL = 3600; // 1 hour in seconds
   /**
    * Get all active products with their relations
    */
@@ -121,10 +125,21 @@ export class ProductService {
   }
 
   /**
-   * Get formatted menu for WhatsApp
+   * Get formatted menu for WhatsApp with aggressive caching
    */
   static async getMenuForWhatsApp(): Promise<string> {
     try {
+      // Try to get cached menu first
+      const redisService = RedisService.getInstance();
+      const cachedMenu = await redisService.get(this.MENU_CACHE_KEY);
+      
+      if (cachedMenu) {
+        logger.debug('Returning cached WhatsApp menu');
+        return cachedMenu;
+      }
+      
+      // Cache miss - generate menu
+      logger.info('Cache miss - generating WhatsApp menu');
       const products = await this.getActiveProductsForWhatsApp();
       
       // Get restaurant name
@@ -137,10 +152,30 @@ export class ProductService {
         // Use default name
       }
       
-      return this.formatMenuForWhatsApp(products, restaurantName);
+      const menuText = this.formatMenuForWhatsApp(products, restaurantName);
+      
+      // Cache the generated menu
+      await redisService.set(this.MENU_CACHE_KEY, menuText, this.MENU_CACHE_TTL);
+      logger.info('WhatsApp menu cached successfully');
+      
+      return menuText;
     } catch (error) {
       logger.error('Error getting menu for WhatsApp:', error);
       throw error;
+    }
+  }
+  
+  /**
+   * Invalidate the WhatsApp menu cache
+   * Call this when menu data changes
+   */
+  static async invalidateMenuCache(): Promise<void> {
+    try {
+      const redisService = RedisService.getInstance();
+      await redisService.del(this.MENU_CACHE_KEY);
+      logger.info('WhatsApp menu cache invalidated');
+    } catch (error) {
+      logger.error('Error invalidating menu cache:', error);
     }
   }
 

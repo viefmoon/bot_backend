@@ -8,7 +8,7 @@ import { MenuSearchService } from './MenuSearchService';
 
 // Definiciones de tipos para el nuevo SDK
 interface Content {
-  role: 'user' | 'model';
+  role: 'user' | 'model' | 'tool';
   parts: Array<{ text: string } | { inlineData: { mimeType: string; data: string } }>;
 }
 
@@ -117,16 +117,7 @@ export class AgentService {
    * Instrucciones para el agente general
    */
   private static async getGeneralAgentInstruction(): Promise<string> {
-    let menuJson = '{}';
     let restaurantName = 'nuestro restaurante';
-    
-    try {
-      // Obtener estructura del menú
-      const menuStructure = await ProductService.getMenuStructureForAI();
-      menuJson = JSON.stringify(menuStructure, null, 2);
-    } catch (error) {
-      logger.error('Error obteniendo estructura del menú para AI:', error);
-    }
     
     try {
       // Obtener configuración del restaurante
@@ -137,7 +128,7 @@ export class AgentService {
       logger.error('Error obteniendo configuración del restaurante:', error);
     }
     
-    return getGeneralAgentPrompt(menuJson, restaurantName);
+    return getGeneralAgentPrompt(restaurantName);
   }
   
   /**

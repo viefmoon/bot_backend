@@ -96,6 +96,12 @@ export class UnifiedSyncService {
       // Process the data
       await this.processRestaurantData(normalizedData);
       logger.info('Restaurant data processed successfully');
+      
+      // Invalidate WhatsApp menu cache after successful sync
+      const { ProductService } = await import('../products/ProductService');
+      await ProductService.invalidateMenuCache();
+      logger.info('WhatsApp menu cache invalidated due to data sync');
+      
       return true;
     } catch (error) {
       logger.error('Error processing restaurant data push:', error);
