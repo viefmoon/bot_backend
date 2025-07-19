@@ -15,15 +15,16 @@ export class RestaurantHoursMiddleware implements MessageMiddleware {
       // Get restaurant configuration
       const config = await RestaurantService.getConfig();
       
-      // Check if restaurant is accepting orders
-      if (!config.acceptingOrders) {
-        const formattedHours = await getFormattedBusinessHours();
-        const closedMessage = RESTAURANT_CLOSED_MESSAGE(formattedHours);
-        await sendWhatsAppMessage(context.message.from, closedMessage);
-        context.stop();
+      // PRIORITY 1: Check if restaurant is accepting orders
+      // This is the master switch - if true, we process orders regardless of hours
+      if (config.acceptingOrders) {
+        // Restaurant wants to accept orders - continue processing
         return context;
       }
-
+      
+      // PRIORITY 2: Restaurant is NOT accepting orders
+      // Now we check WHY to give an appropriate message
+      
       // Get current restaurant time
       const currentTime = await getCurrentMexicoTime();
       const dayOfWeek = currentTime.day();
@@ -32,70 +33,67 @@ export class RestaurantHoursMiddleware implements MessageMiddleware {
       // Get business hours for today
       const businessHours = await RestaurantService.getBusinessHoursForDay(dayOfWeek);
       
+      let message: string;
+      
+      // Check if it's a scheduled closed day
       if (!businessHours || businessHours.isClosed || !businessHours.openingTime || !businessHours.closingTime) {
         logger.info(`Restaurant is closed on day ${dayOfWeek}`);
+        // It's a regularly scheduled closed day
         const formattedHours = await getFormattedBusinessHours();
-        const closedMessage = RESTAURANT_CLOSED_MESSAGE(formattedHours);
-        await sendWhatsAppMessage(context.message.from, closedMessage);
-        context.stop();
-        return context;
-      }
-
-      // Parse opening and closing times
-      const [openHour, openMinute] = businessHours.openingTime.split(':').map(Number);
-      const [closeHour, closeMinute] = businessHours.closingTime.split(':').map(Number);
-      
-      const openTime = openHour * 60 + openMinute;
-      const closeTime = closeHour * 60 + closeMinute;
-      
-      // Apply grace periods
-      const effectiveOpenTime = openTime + (config.openingGracePeriod || 0);
-      const effectiveCloseTime = closeTime - (config.closingGracePeriod || 0);
-
-      // Check if current time is within operating hours (with grace periods)
-      if (currentMinutes < effectiveOpenTime || currentMinutes > effectiveCloseTime) {
-        logger.info(`Restaurant hours check failed: current=${currentMinutes}, open=${effectiveOpenTime}, close=${effectiveCloseTime}`);
+        message = RESTAURANT_CLOSED_MESSAGE(formattedHours);
+      } else {
+        // Parse opening and closing times
+        const [openHour, openMinute] = businessHours.openingTime.split(':').map(Number);
+        const [closeHour, closeMinute] = businessHours.closingTime.split(':').map(Number);
         
-        // Check if we're in a grace period
-        let message: string;
-        if (currentMinutes >= openTime && currentMinutes < effectiveOpenTime) {
-          // In opening grace period
-          const minutesUntilOpen = effectiveOpenTime - currentMinutes;
-          message = `⏰ ¡Buenos días! Aunque nuestro restaurante ya abrió, todavía no estamos recibiendo pedidos.
+        const openTime = openHour * 60 + openMinute;
+        const closeTime = closeHour * 60 + closeMinute;
+        
+        // Apply grace periods
+        const effectiveOpenTime = openTime + (config.openingGracePeriod || 0);
+        const effectiveCloseTime = closeTime - (config.closingGracePeriod || 0);
+        
+        // Check if we're within normal operating hours
+        if (currentMinutes >= effectiveOpenTime && currentMinutes <= effectiveCloseTime) {
+          // We're in operating hours but acceptingOrders is false
+          // This suggests temporary closure (high demand, technical issues, etc.)
+          message = `🚫 En este momento no estamos tomando pedidos.
 
-🕐 Comenzaremos a tomar pedidos en ${minutesUntilOpen} minutos.
+⏰ Nuestro horario regular es de ${businessHours.openingTime} a ${businessHours.closingTime}.
 
-📍 *Horario de hoy:*
-Apertura: ${businessHours.openingTime}
-Inicio de pedidos: ${Math.floor(effectiveOpenTime / 60)}:${(effectiveOpenTime % 60).toString().padStart(2, '0')}
-Cierre de pedidos: ${Math.floor(effectiveCloseTime / 60)}:${(effectiveCloseTime % 60).toString().padStart(2, '0')}
-Cierre: ${businessHours.closingTime}
+Por favor, intenta más tarde o comunícate directamente al restaurante.
 
-¡Gracias por tu paciencia! 🙏`;
-        } else if (currentMinutes > effectiveCloseTime && currentMinutes <= closeTime) {
-          // In closing grace period
-          message = `⏰ Lo sentimos, ya no estamos recibiendo nuevos pedidos por hoy.
+¡Gracias por tu comprensión! 🙏`;
+        } else {
+          // We're outside operating hours
+          if (currentMinutes < effectiveOpenTime) {
+            // Before opening
+            const minutesUntilOpen = effectiveOpenTime - currentMinutes;
+            const hoursUntilOpen = Math.floor(minutesUntilOpen / 60);
+            const minsUntilOpen = minutesUntilOpen % 60;
+            
+            message = `⏰ Aún no estamos recibiendo pedidos.
 
-🕐 Dejamos de tomar pedidos ${config.closingGracePeriod} minutos antes del cierre para garantizar la calidad del servicio.
+🕐 Comenzaremos a tomar pedidos ${hoursUntilOpen > 0 ? `en ${hoursUntilOpen} hora${hoursUntilOpen > 1 ? 's' : ''} y ${minsUntilOpen} minutos` : `en ${minsUntilOpen} minutos`}.
 
-📍 *Horario de hoy:*
-Último pedido: ${Math.floor(effectiveCloseTime / 60)}:${(effectiveCloseTime % 60).toString().padStart(2, '0')}
-Cierre: ${businessHours.closingTime}
+📍 *Horario de atención:*
+${businessHours.openingTime} a ${businessHours.closingTime}
+
+¡Te esperamos! 😊`;
+          } else {
+            // After closing
+            message = `⏰ Ya hemos cerrado por hoy.
+
+📍 *Nuestro horario de atención es:*
+${businessHours.openingTime} a ${businessHours.closingTime}
 
 ¡Te esperamos mañana! 😊`;
-        } else {
-          // Outside business hours completely
-          const formattedHours = await getFormattedBusinessHours();
-          const closedMessage = RESTAURANT_CLOSED_MESSAGE(formattedHours);
-          message = closedMessage;
+          }
         }
-        
-        await sendWhatsAppMessage(context.message.from, message);
-        context.stop();
-        return context;
       }
-
-      // Restaurant is open, continue processing
+      
+      await sendWhatsAppMessage(context.message.from, message);
+      context.stop();
       return context;
     } catch (error) {
       logger.error('Error in RestaurantHoursMiddleware:', error);
