@@ -14,8 +14,6 @@ import {
   useSetDefaultAddress 
 } from '@/hooks/useAddressQueries';
 import { CustomerNameForm } from '@/components/CustomerNameForm';
-import { useOTPVerification } from '@/hooks/useOTPVerification';
-import { isOTPError, getErrorMessage } from '@/utils/errorHandlers';
 import type { AddressFormData, Address } from '@/types';
 import { t } from '@/i18n';
 
@@ -107,49 +105,6 @@ export function AddressRegistration() {
   const updateAddressMutation = useUpdateAddress();
   const updateCustomerNameMutation = useUpdateCustomerName();
   const setDefaultAddressMutation = useSetDefaultAddress();
-
-  // Hook for periodic OTP verification
-  useOTPVerification({
-    whatsappPhoneNumber: customerId,
-    otp: otp,
-    onOTPExpired: () => {
-      // Show expiry toast
-      toast.error(
-        <div className="flex items-center">
-          <div className="flex-shrink-0">
-            <svg className="w-6 h-6 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-          </div>
-          <div className="ml-3">
-            <p className="text-sm font-semibold text-gray-900">Sesión Expirada</p>
-            <p className="text-xs text-gray-600">
-              Tu sesión ha expirado por seguridad. Serás redirigido para solicitar un nuevo enlace.
-            </p>
-          </div>
-        </div>,
-        {
-          duration: 4000,
-          style: {
-            background: '#fef2f2',
-            border: '1px solid #fecaca',
-            padding: '16px',
-            maxWidth: '420px',
-          },
-        }
-      );
-      
-      // Show error screen after toast
-      setTimeout(() => {
-        setShowOTPErrorScreen(true);
-        // Try to close window after 5 seconds
-        setTimeout(() => {
-          window.close();
-        }, 5000);
-      }, 2000);
-    },
-    checkInterval: 30000 // Check every 30 seconds
-  });
 
   const loadExistingAddress = useCallback((address: Address) => {
     setEditingAddressId(address.id.toString());
@@ -376,14 +331,18 @@ export function AddressRegistration() {
         }, 1500);
       }
     } catch (error: any) {
-      // Check if it's an OTP error
-      if (isOTPError(error)) {
+      // Verificar si es un error de OTP expirado
+      const isOTPError = error?.response?.data?.code === 'VAL006' || 
+                        error?.response?.data?.error?.includes('OTP') ||
+                        error?.message?.toLowerCase().includes('otp');
+      
+      if (isOTPError) {
         // Error de OTP expirado
         toast.error(
           <div className="flex items-center">
             <div className="flex-shrink-0">
               <svg className="w-6 h-6 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v2m0 2h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
             </div>
             <div className="ml-3">
@@ -414,8 +373,10 @@ export function AddressRegistration() {
           }, 5000);
         }, 2000);
       } else {
-        // Other errors - use the error handler utility
-        const errorMessage = getErrorMessage(error);
+        // Otros errores
+        const errorMessage = error?.response?.data?.error || 
+                           error?.message || 
+                           'Hubo un error al guardar la dirección';
         
         toast.error(
           <div className="flex items-center">
@@ -479,49 +440,15 @@ export function AddressRegistration() {
           loadExistingAddress(defaultAddress);
         }
       }
-    } catch (error: any) {
-      // Check if it's an OTP error
-      if (isOTPError(error)) {
-        // Error de OTP expirado
-        toast.error(
-          <div className="flex items-center">
-            <div className="flex-shrink-0">
-              <svg className="w-6 h-6 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-            </div>
-            <div className="ml-3">
-              <p className="text-sm font-semibold text-gray-900">🕒 Enlace Expirado</p>
-              <p className="text-xs text-gray-600">
-                Tu enlace de registro ha expirado por seguridad.
-                Por favor, solicita un nuevo enlace desde WhatsApp.
-              </p>
-            </div>
-          </div>,
-          {
-            duration: 6000,
-            style: {
-              background: '#fef2f2',
-              border: '1px solid #fecaca',
-              padding: '16px',
-              maxWidth: '420px',
-            },
-          }
-        );
-        
-        // Mostrar pantalla de error después de 2 segundos
-        setTimeout(() => {
-          setShowOTPErrorScreen(true);
-          // Intentar cerrar automáticamente después de 5 segundos
-          setTimeout(() => {
-            window.close();
-          }, 5000);
-        }, 2000);
-      } else {
-        // Other errors
-        const errorMessage = getErrorMessage(error);
-        toast.error(errorMessage);
+    } catch (error) {
+      
+      let errorMessage = 'Error al actualizar tu información';
+      
+      if (error instanceof Error) {
+        errorMessage = error.message;
       }
+      
+      toast.error(errorMessage);
     }
   };
 
@@ -938,68 +865,29 @@ export function AddressRegistration() {
                                       }));
                                       setCustomer({ ...customer, addresses: updatedAddresses });
                                     }
-                                  } catch (error: any) {
-                                    // Check if it's an OTP error
-                                    if (isOTPError(error)) {
-                                      // Error de OTP expirado
-                                      toast.error(
-                                        <div className="flex items-center">
-                                          <div className="flex-shrink-0">
-                                            <svg className="w-6 h-6 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                            </svg>
-                                          </div>
-                                          <div className="ml-3">
-                                            <p className="text-sm font-semibold text-gray-900">🕒 Enlace Expirado</p>
-                                            <p className="text-xs text-gray-600">
-                                              Tu enlace de registro ha expirado por seguridad.
-                                              Por favor, solicita un nuevo enlace desde WhatsApp.
-                                            </p>
-                                          </div>
-                                        </div>,
-                                        {
-                                          duration: 6000,
-                                          style: {
-                                            background: '#fef2f2',
-                                            border: '1px solid #fecaca',
-                                            padding: '16px',
-                                            maxWidth: '420px',
-                                          },
-                                        }
-                                      );
-                                      
-                                      // Mostrar pantalla de error después de 2 segundos
-                                      setTimeout(() => {
-                                        setShowOTPErrorScreen(true);
-                                        // Intentar cerrar automáticamente después de 5 segundos
-                                        setTimeout(() => {
-                                          window.close();
-                                        }, 5000);
-                                      }, 2000);
-                                    } else {
-                                      toast.error(
-                                        <div className="flex items-center">
-                                          <div className="flex-shrink-0">
-                                            <svg className="w-6 h-6 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                            </svg>
-                                          </div>
-                                          <div className="ml-3">
-                                            <p className="text-sm font-semibold text-gray-900">Error</p>
-                                            <p className="text-xs text-gray-600">{getErrorMessage(error)}</p>
-                                          </div>
-                                        </div>,
-                                        {
-                                          duration: 5000,
-                                          style: {
-                                            background: '#fef2f2',
-                                            border: '1px solid #fecaca',
-                                            padding: '16px',
-                                            maxWidth: '420px',
-                                          },
-                                        }
-                                      );
-                                    }
+                                  } catch {
+                                    toast.error(
+                                      <div className="flex items-center">
+                                        <div className="flex-shrink-0">
+                                          <svg className="w-6 h-6 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                          </svg>
+                                        </div>
+                                        <div className="ml-3">
+                                          <p className="text-sm font-semibold text-gray-900">Error</p>
+                                          <p className="text-xs text-gray-600">No se pudo cambiar la dirección principal</p>
+                                        </div>
+                                      </div>,
+                                      {
+                                        duration: 5000,
+                                        style: {
+                                          background: '#fef2f2',
+                                          border: '1px solid #fecaca',
+                                          padding: '16px',
+                                          maxWidth: '420px',
+                                        },
+                                      }
+                                    );
                                   }
                                 }}
                                 disabled={setDefaultAddressMutation.isPending}
