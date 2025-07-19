@@ -36,15 +36,18 @@ export * from './addressActions';
 export * from './infoActions';
 export * from './paymentActions';
 
-// Handler type definition
-type InteractiveHandler = (from: string, id: string) => Promise<void>;
+// Import UnifiedResponse for type definition
+import { UnifiedResponse } from '../../../services/messaging/types';
+
+// Handler type definition - now returns UnifiedResponse
+type InteractiveHandler = (from: string, id: string) => Promise<void | UnifiedResponse | UnifiedResponse[]>;
 
 /**
  * Unified action registry for all interactive messages
  * Maps action IDs to their corresponding handlers
  */
 export const actionRegistry = new Map<string, InteractiveHandler>([
-  // List actions (exact match)
+  // List actions (exact match) - now return UnifiedResponse
   [INTERACTIVE_ACTIONS.WAIT_TIMES, async (from, id) => handleWaitTimes(from)],
   [INTERACTIVE_ACTIONS.VIEW_MENU, async (from, id) => sendMenu(from)],
   [INTERACTIVE_ACTIONS.RESTAURANT_INFO, async (from, id) => handleRestaurantInfo(from)],
@@ -52,11 +55,11 @@ export const actionRegistry = new Map<string, InteractiveHandler>([
   [INTERACTIVE_ACTIONS.CHANGE_DELIVERY_INFO, async (from, id) => handleChangeDeliveryInfo(from)],
   [INTERACTIVE_ACTIONS.ADD_NEW_ADDRESS, async (from, id) => handleAddNewAddress(from)],
   
-  // Button actions (prefix match - remove trailing colon)
-  [INTERACTIVE_ACTIONS.PREORDER_CONFIRM.slice(0, -1), handlePreOrderAction],
-  [INTERACTIVE_ACTIONS.PREORDER_DISCARD.slice(0, -1), handlePreOrderAction],
-  [INTERACTIVE_ACTIONS.PREORDER_CHANGE_ADDRESS.slice(0, -1), handlePreOrderChangeAddress],
-  [INTERACTIVE_ACTIONS.SELECT_ADDRESS.slice(0, -1), handleAddressSelection],
+  // Button actions (prefix match)
+  [INTERACTIVE_ACTIONS.PREORDER_CONFIRM, handlePreOrderAction],
+  [INTERACTIVE_ACTIONS.PREORDER_DISCARD, handlePreOrderAction],
+  [INTERACTIVE_ACTIONS.PREORDER_CHANGE_ADDRESS, handlePreOrderChangeAddress],
+  [INTERACTIVE_ACTIONS.SELECT_ADDRESS, handleAddressSelection],
   [INTERACTIVE_ACTIONS.PAY_ONLINE, handleOnlinePaymentWithId],
   ['add_new_address_preorder', async (from, id) => {
     // Special case: parse preOrderId from id
@@ -74,29 +77,30 @@ export const actionRegistry = new Map<string, InteractiveHandler>([
 ]);
 
 /**
- * Find handler for an interactive action ID
- * Supports both exact matches and prefix-based matches
+ * Find handler for an interactive action ID.
+ * Supports both exact matches and prefix-based matches.
+ * This revised version is more robust.
  */
 export function findHandler(actionId: string): InteractiveHandler | undefined {
-  // First, try exact match
+  // 1. First, try for an exact match for performance.
   let handler = actionRegistry.get(actionId);
-  
-  // If no exact match, try prefix match for actions with parameters
-  if (!handler) {
-    const [actionPrefix] = actionId.split(':');
-    handler = actionRegistry.get(actionPrefix);
-    
-    // Special handling for actions that start with a prefix
-    if (!handler && actionId.includes(':')) {
-      // Check for actions that use startsWithAction pattern
-      for (const [key, value] of actionRegistry) {
-        if (actionId.startsWith(key + ':')) {
-          handler = value;
-          break;
-        }
-      }
+  if (handler) {
+    return handler;
+  }
+
+  // 2. If no exact match, try a prefix-based match.
+  // Sort keys by length in descending order to match the most specific prefix first
+  // (e.g., to prevent 'prefix' from matching before 'prefix_sub').
+  const sortedKeys = Array.from(actionRegistry.keys()).sort((a, b) => b.length - a.length);
+
+  for (const key of sortedKeys) {
+    // Check if the actionId starts with a known key.
+    // This works for keys like 'preorder_confirm:' and 'select_address_'.
+    if (actionId.startsWith(key)) {
+      return actionRegistry.get(key);
     }
   }
-  
-  return handler;
+
+  // 3. If no handler is found, return undefined.
+  return undefined;
 }

@@ -43,8 +43,8 @@ export class DeliveryInfoService {
       // Esto crea una instantánea de la dirección en el momento de la orden
       deliveryInfoData = {
         street: deliveryInfoInput?.street || customerAddress.street,
-        number: customerAddress.number,
-        interiorNumber: customerAddress.interiorNumber,
+        number: deliveryInfoInput?.number || customerAddress.number,
+        interiorNumber: deliveryInfoInput?.interiorNumber || customerAddress.interiorNumber,
         neighborhood: deliveryInfoInput?.neighborhood || customerAddress.neighborhood,
         zipCode: deliveryInfoInput?.zipCode || customerAddress.zipCode,
         city: deliveryInfoInput?.city || customerAddress.city,
