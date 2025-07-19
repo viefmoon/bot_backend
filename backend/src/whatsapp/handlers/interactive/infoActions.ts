@@ -25,13 +25,6 @@ export async function sendMenu(phoneNumber: string): Promise<UnifiedResponse[]> 
   // Normaliza a array para manejar ambos casos (respuesta única o múltiple)
   const responses = Array.isArray(toolResponse) ? toolResponse : [toolResponse];
   
-  // Add history marker to the first response
-  if (responses.length > 0 && responses[0]) {
-    responses[0] = ResponseBuilder.textWithHistoryMarker(
-      responses[0].content?.text || '',
-      "[ACCIÓN DEL BOT]: Envió el menú completo del restaurante."
-    );
-  }
   
   return responses;
 }

@@ -19,7 +19,11 @@ export async function getMenuResponses(): Promise<UnifiedResponse | UnifiedRespo
     return parts.map((part, index) => {
       if (index === parts.length - 1) {
         // Last part gets the history marker
-        return ResponseBuilder.textWithHistoryMarker(part, "MENÚ ENVIADO", ResponseType.MENU_INFO);
+        return ResponseBuilder.textWithHistoryMarker(
+          part,
+          "[ACCIÓN DEL BOT]: Envió el menú completo del restaurante.",
+          ResponseType.MENU_INFO
+        );
       } else {
         // Other parts are not relevant for history
         const response = ResponseBuilder.text(part, false);
@@ -28,7 +32,11 @@ export async function getMenuResponses(): Promise<UnifiedResponse | UnifiedRespo
       }
     });
   } else {
-    return ResponseBuilder.textWithHistoryMarker(menuText, "MENÚ ENVIADO", ResponseType.MENU_INFO);
+    return ResponseBuilder.textWithHistoryMarker(
+      menuText,
+      "[ACCIÓN DEL BOT]: Envió el menú completo del restaurante.",
+      ResponseType.MENU_INFO
+    );
   }
 }
 
