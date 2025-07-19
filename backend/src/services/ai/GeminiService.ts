@@ -23,33 +23,6 @@ export class GeminiService {
   }
 
   /**
-   * Genera una respuesta simple de texto
-   */
-  static async generateText(prompt: string, systemInstruction?: string): Promise<string> {
-    try {
-      logger.debug('=== GeminiService.generateText DEBUG ===');
-      logger.debug(`Prompt: ${prompt}`);
-      logger.debug(`System Instruction: ${systemInstruction || 'None'}`);
-      
-      const client = this.getClient();
-      const response = await client.models.generateContent({
-        model: env.GEMINI_MODEL,
-        contents: prompt,
-        config: systemInstruction ? { systemInstruction } : undefined,
-      });
-      
-      logger.debug('Response:', JSON.stringify(response, null, 2));
-      logger.debug(`Extracted text: ${response.text || 'No text in response'}`);
-      logger.debug('=== End DEBUG ===');
-      
-      return response.text || '';
-    } catch (error) {
-      logger.error('GeminiService: Error generando texto', error);
-      throw error;
-    }
-  }
-
-  /**
    * Genera contenido con historial de conversación
    */
   static async generateContentWithHistory(
@@ -193,22 +166,4 @@ export class GeminiService {
     }
   }
 
-  /**
-   * Crea una sesión de chat con historial
-   */
-  static createChat(config?: {
-    history?: any[];
-    systemInstruction?: string;
-    tools?: any[];
-  }) {
-    const client = this.getClient();
-    return client.chats.create({
-      model: env.GEMINI_MODEL,
-      history: config?.history || [],
-      config: {
-        systemInstruction: config?.systemInstruction,
-        tools: config?.tools ? [{ functionDeclarations: config.tools }] : undefined,
-      },
-    });
-  }
 }

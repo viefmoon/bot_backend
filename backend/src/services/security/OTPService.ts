@@ -50,25 +50,6 @@ export class OTPService {
   }
 
   /**
-   * Generate and store OTP for a WhatsApp phone number
-   */
-  static async generateAndSendOTP(whatsappPhoneNumber: string): Promise<boolean> {
-    try {
-      const otp = this.generateOTP();
-      await this.storeOTP(whatsappPhoneNumber, otp);
-
-      // In production, send via SMS/WhatsApp
-      // For development, just log it
-      logger.info(`OTP for phone ${whatsappPhoneNumber}: ${otp}`);
-
-      return true;
-    } catch (error) {
-      logger.error('Error generating OTP:', error);
-      return false;
-    }
-  }
-
-  /**
    * Verify an OTP
    */
   static async verifyOTP(whatsappPhoneNumber: string, code: string): Promise<boolean> {
@@ -186,37 +167,4 @@ export class OTPService {
     }
   }
 
-  /**
-   * Get OTP statistics (for monitoring)
-   */
-  static async getStats(): Promise<{ total: number; expired: number; source: 'redis' | 'memory' | 'both' }> {
-    const now = new Date();
-    let expired = 0;
-    let total = 0;
-    let source: 'redis' | 'memory' | 'both' = 'memory';
-    
-    // Check Redis if available
-    if (redisService.isAvailable()) {
-      const keys = await redisService.keys(`${REDIS_KEYS.OTP_PREFIX}*`);
-      total = keys.length;
-      
-      // For expired count in Redis, we'd need to check each key
-      // which is expensive, so we'll skip it for Redis
-      source = 'redis';
-    } else {
-      // Use memory store
-      total = this.memoryStore.size;
-      for (const [, otp] of this.memoryStore.entries()) {
-        if (now > otp.expires) {
-          expired++;
-        }
-      }
-    }
-
-    return {
-      total,
-      expired,
-      source
-    };
-  }
 }
