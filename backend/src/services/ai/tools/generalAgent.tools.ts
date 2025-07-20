@@ -49,19 +49,6 @@ export function getGeneralAgentTools(): any[] {
       }
     },
     {
-      name: "generate_address_update_link",
-      description: "Genera un enlace seguro para que el cliente actualice o agregue una dirección de entrega",
-      parameters: {
-        type: "object",
-        properties: {
-          reason: {
-            type: "string",
-            description: "Razón por la cual el cliente quiere actualizar la dirección"
-          }
-        }
-      }
-    },
-    {
       name: "send_bot_instructions",
       description: "Envía las instrucciones completas de cómo usar el bot cuando el cliente lo solicite",
       parameters: {
