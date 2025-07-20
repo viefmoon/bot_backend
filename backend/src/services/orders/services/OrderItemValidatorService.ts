@@ -459,9 +459,21 @@ export class OrderItemValidatorService {
       });
     }
     
-    // REGLA: No se puede tener un sabor 'FULL' y al mismo tiempo un sabor en 'HALF_1' o 'HALF_2'.
-    const hasFullFlavor = customizations.some(c => c.half === 'FULL');
-    const hasHalfFlavor = customizations.some(c => c.half === 'HALF_1' || c.half === 'HALF_2');
+    // REGLA: No se puede tener un sabor (FLAVOR) 'FULL' y al mismo tiempo un sabor en 'HALF_1' o 'HALF_2'.
+    const hasFullFlavor = customizations.some(c => {
+      if (c.half === 'FULL') {
+        const pc = product.pizzaCustomizations.find(pc => pc.id === c.pizzaCustomizationId);
+        return pc && pc.type === 'FLAVOR';
+      }
+      return false;
+    });
+    const hasHalfFlavor = customizations.some(c => {
+      if (c.half === 'HALF_1' || c.half === 'HALF_2') {
+        const pc = product.pizzaCustomizations.find(pc => pc.id === c.pizzaCustomizationId);
+        return pc && pc.type === 'FLAVOR';
+      }
+      return false;
+    });
 
     if (hasFullFlavor && hasHalfFlavor) {
       errors.push({
@@ -482,12 +494,19 @@ export class OrderItemValidatorService {
       });
     }
     
-    // REGLA ADICIONAL: Validar que no haya más de 1 sabor principal para pizzas de mitades
+    // REGLA ADICIONAL: Validar que no haya más de 1 sabor principal (FLAVOR) para pizzas de mitades
     const halfFlavorCount = new Map<string, number>();
     customizations
       .filter(c => c.action === 'ADD' && c.half !== 'FULL')
       .forEach(c => {
-        halfFlavorCount.set(c.half, (halfFlavorCount.get(c.half) || 0) + 1);
+        // Buscar la personalización en el producto para verificar si es FLAVOR
+        const pizzaCustomization = product.pizzaCustomizations.find(
+          pc => pc.id === c.pizzaCustomizationId
+        );
+        // Solo contar si es un FLAVOR, no un INGREDIENT
+        if (pizzaCustomization && pizzaCustomization.type === 'FLAVOR') {
+          halfFlavorCount.set(c.half, (halfFlavorCount.get(c.half) || 0) + 1);
+        }
       });
     
     for (const [half, count] of halfFlavorCount.entries()) {
