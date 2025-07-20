@@ -7,9 +7,10 @@ import { OrderManagementService } from './services/OrderManagementService';
 import { sendWhatsAppMessage, WhatsAppService } from '../whatsapp';
 import { generateOrderSummary } from '../../whatsapp/handlers/orders/orderFormatters';
 import { BusinessLogicError, ErrorCode, ValidationError } from '../../common/services/errors';
-import { redisKeys, REDIS_KEYS } from '../../common/constants';
+import { redisKeys, REDIS_KEYS, CONTEXT_KEYS } from '../../common/constants';
 import logger from '../../common/utils/logger';
 import { SyncMetadataService } from '../sync/SyncMetadataService';
+import { MessageContext } from '../messaging/MessageContext';
 import {
   ProcessedOrderData,
   PreOrderWorkflowResult,
@@ -85,7 +86,7 @@ export class PreOrderWorkflowService {
     }
   }
   
-  static async processAction(params: PreOrderActionParams): Promise<void> {
+  static async processAction(params: PreOrderActionParams, context?: MessageContext): Promise<void> {
     logger.info('Processing preorder action', { 
       action: params.action,
       token: params.token.substring(0, 8) + '...' 
@@ -102,7 +103,7 @@ export class PreOrderWorkflowService {
     }
     
     if (params.action === 'confirm') {
-      await this.confirmPreOrder(validation.preOrderId, params.whatsappNumber);
+      await this.confirmPreOrder(validation.preOrderId, params.whatsappNumber, context);
     } else {
       // Use the method that includes user interaction
       await this.discardPreOrderAndResetConversation(validation.preOrderId, params.whatsappNumber);
@@ -272,6 +273,8 @@ export class PreOrderWorkflowService {
       });
     }
     
+    historyMessage += '\n(Puedes seguir agregando o modificando productos antes de confirmar)';
+    
     return historyMessage.trim();
   }
   
@@ -351,7 +354,8 @@ export class PreOrderWorkflowService {
   
   private static async confirmPreOrder(
     preOrderId: number, 
-    whatsappNumber: string
+    whatsappNumber: string,
+    context?: MessageContext
   ): Promise<void> {
     logger.info('Confirming preorder', { preOrderId });
     
@@ -384,6 +388,12 @@ export class PreOrderWorkflowService {
       
       // Mark for sync
       await SyncMetadataService.markForSync('Customer', customer.id, 'REMOTE');
+    }
+    
+    // Tell the pipeline to skip the final history update for this interaction
+    if (context) {
+      context.set(CONTEXT_KEYS.SKIP_HISTORY_UPDATE, true);
+      logger.info(`Setting SKIP_HISTORY_UPDATE flag for customer ${whatsappNumber}`);
     }
   }
   

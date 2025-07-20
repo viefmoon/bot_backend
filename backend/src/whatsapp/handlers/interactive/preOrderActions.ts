@@ -13,11 +13,12 @@ import { redisKeys } from '../../../common/constants';
 import { formatAddressShort, formatAddressDescription } from '../../../common/utils/addressFormatter';
 import logger from '../../../common/utils/logger';
 import { UnifiedResponse, ResponseBuilder } from '../../../services/messaging/types';
+import { MessageContext } from '../../../services/messaging/MessageContext';
 
 /**
  * Handles preorder actions (confirm/discard) using the token-based system
  */
-export async function handlePreOrderAction(from: string, buttonId: string): Promise<UnifiedResponse> {
+export async function handlePreOrderAction(from: string, buttonId: string, context?: MessageContext): Promise<UnifiedResponse> {
   // Extract token from button ID
   // Format: preorder_confirm:token or preorder_discard:token
   const parts = buttonId.split(':');
@@ -46,7 +47,7 @@ export async function handlePreOrderAction(from: string, buttonId: string): Prom
         action,
         token,
         whatsappNumber: from
-      });
+      }, context);
       
       // Return empty response since the workflow service handles sending messages
       return ResponseBuilder.empty();
@@ -67,7 +68,7 @@ export async function handlePreOrderAction(from: string, buttonId: string): Prom
 /**
  * Handles preorder change address action
  */
-export async function handlePreOrderChangeAddress(from: string, buttonId: string): Promise<UnifiedResponse> {
+export async function handlePreOrderChangeAddress(from: string, buttonId: string, context?: MessageContext): Promise<UnifiedResponse> {
   // Extract token from button ID
   const parts = buttonId.split(':');
   const token = parts[1];

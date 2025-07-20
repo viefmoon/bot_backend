@@ -35,7 +35,7 @@ export class InteractiveMessageStrategy extends MessageStrategy {
       if (handler) {
         logger.info(`Executing handler for action: ${id}`);
         // El manejador ahora devuelve una o más UnifiedResponse.
-        const responses = await handler(context.message.from, id);
+        const responses = await handler(context.message.from, id, context);
         
         if (responses) {
           // Añadir las respuestas del bot al contexto para que el pipeline las envíe.

@@ -38,9 +38,10 @@ export * from './paymentActions';
 
 // Import UnifiedResponse for type definition
 import { UnifiedResponse } from '../../../services/messaging/types';
+import { MessageContext } from '../../../services/messaging/MessageContext';
 
 // Handler type definition - now returns UnifiedResponse
-type InteractiveHandler = (from: string, id: string) => Promise<void | UnifiedResponse | UnifiedResponse[]>;
+type InteractiveHandler = (from: string, id: string, context?: MessageContext) => Promise<void | UnifiedResponse | UnifiedResponse[]>;
 
 /**
  * Unified action registry for all interactive messages

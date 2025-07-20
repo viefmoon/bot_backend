@@ -144,6 +144,7 @@ export function generateOrderSummary(order: {
   }
 
   message += `\n📝 Por favor, confirma si tu pedido es correcto.`;
+  message += `\n\n💡 *Tip:* Puedes seguir agregando o modificando productos antes de confirmar.`;
   
   return message;
 }
