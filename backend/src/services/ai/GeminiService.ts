@@ -33,6 +33,7 @@ export class GeminiService {
     enableDynamicThinking: boolean = true
   ): Promise<any> {
     try {
+      logger.info('GeminiService.generateContentWithHistory called');
       const client = this.getClient();
       
       // Construir la configuración
