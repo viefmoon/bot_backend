@@ -35,6 +35,7 @@ export class AgentService {
       const tools = getGeneralAgentTools();
       
       // Log completo de lo que recibe el modelo
+      logger.info('=== AgentService.processMessage: About to call GeminiService ===');
       logger.debug('=== COMPLETE AI MODEL INPUT ===');
       logger.debug(`System Instruction:\n${systemInstruction}`);
       (logger as any).json('Messages:', messages);
