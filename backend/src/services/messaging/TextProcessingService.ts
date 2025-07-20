@@ -48,6 +48,8 @@ export class TextProcessingService {
       
       // Determine which agent to use based on configuration
       const useUnifiedAgent = AgentService.useUnifiedAgent();
+      const agentType = useUnifiedAgent ? 'UNIFIED' : 'TWO-AGENT';
+      logger.info(`[AGENT MODE] Using ${agentType} system for processing (USE_UNIFIED_AGENT=${useUnifiedAgent})`);
       logger.debug(`Using ${useUnifiedAgent ? 'UNIFIED' : 'GENERAL'} agent for processing`);
       
       logger.debug('Calling AgentService with messages:', messages);

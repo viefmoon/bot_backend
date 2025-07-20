@@ -45,6 +45,11 @@ export class AgentService {
       
       // Log completo de lo que recibe el modelo
       logger.info(`=== AgentService.processMessage: Using ${useUnified ? 'UNIFIED' : 'GENERAL'} agent ===`);
+      if (useUnified) {
+        logger.info('UNIFIED AGENT: Handles both queries and orders in a single AI call');
+      } else {
+        logger.info('TWO-AGENT SYSTEM: General agent for queries, separate Order agent for mapping');
+      }
       logger.debug('=== COMPLETE AI MODEL INPUT ===');
       logger.debug(`System Instruction:\n${systemInstruction}`);
       (logger as any).json('Messages:', messages);
