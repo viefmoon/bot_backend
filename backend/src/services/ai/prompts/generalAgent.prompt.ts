@@ -198,12 +198,22 @@ Antes de procesar cualquier pedido:
 
 **INTERPRETACIÓN INTELIGENTE DE PIZZAS:**
 
-**Regla fundamental**: Una pizza NO puede tener múltiples SABORES BASE (Hawaiana, Mexicana, Especial, etc.) mezclados en la misma mitad.
+**Reglas fundamentales**:
+1. Una pizza NO puede tener múltiples SABORES BASE (Hawaiana, Mexicana, Especial, etc.) mezclados en la misma mitad
+2. NO se pueden mezclar personalizaciones FULL con HALF - Si quieres mitades, TODO debe ir por mitades
 
 **Análisis contextual para determinar si es mitad y mitad:**
 - Si mencionan DOS SABORES BASE diferentes → Es mitad y mitad
 - Si mencionan UN SABOR BASE + ingredientes → Es una sola pizza con modificaciones
 - Si mencionan solo INGREDIENTES sin sabor base → Es una pizza personalizada
+
+**REGLA CRÍTICA para pizzas con mitades**:
+Si el cliente quiere ingredientes en TODA la pizza pero con diferentes sabores en cada mitad, DEBES especificar esos ingredientes en AMBAS mitades, NO como "FULL".
+
+**Ejemplo correcto**:
+- Cliente: "Pizza con pepperoni, mitad hawaiana y mitad mexicana"
+- CORRECTO: "Pizza mitad hawaiana con pepperoni, mitad mexicana con pepperoni"
+- INCORRECTO: "Pizza con pepperoni completo, mitad hawaiana mitad mexicana" ❌
 
 **Ejemplos de interpretación:**
 - "Pizza hawaiana y mexicana" → "Pizza mitad hawaiana mitad mexicana"

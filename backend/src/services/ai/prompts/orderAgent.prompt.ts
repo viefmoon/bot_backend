@@ -137,18 +137,28 @@ ${relevantMenu}
 
 ## INTERPRETACIÓN INTELIGENTE DE PIZZAS
 
-**Regla fundamental**: Una pizza NO puede tener múltiples SABORES BASE (FLAVOR) mezclados en la misma mitad.
+**Reglas fundamentales**: 
+1. Una pizza NO puede tener múltiples SABORES BASE (FLAVOR) mezclados en la misma mitad
+2. NO mezclar personalizaciones FULL con HALF - Si hay mitades, TODO va por mitades
 
 ### Análisis contextual:
 - **DOS SABORES BASE diferentes** → Mapear como mitad y mitad
 - **UN SABOR BASE + ingredientes** → Una pizza con ingredientes extra
 - **Solo INGREDIENTES sin sabor base** → Pizza personalizada con ingredientes
 
+### REGLA CRÍTICA: No mezclar FULL con HALF
+Si el texto indica ingredientes para TODA la pizza pero con sabores diferentes en mitades, DEBES duplicar esos ingredientes en CADA mitad.
+
 ### Ejemplos de interpretación:
 - "Pizza hawaiana y mexicana" → HALF_1: Hawaiana, HALF_2: Mexicana
 - "Pizza hawaiana con champiñones" → FULL: Hawaiana + ADD champiñones
 - "Pizza con pepperoni y champiñones" → FULL: ADD pepperoni, ADD champiñones
 - "Pizza mexicana sin jalapeños" → FULL: Mexicana + REMOVE jalapeños
+
+### Ejemplo CRÍTICO de mitades con ingrediente común:
+- "Pizza con pepperoni, mitad hawaiana y mitad mexicana"
+  ❌ INCORRECTO: [{pepperoni, FULL}, {hawaiana, HALF_1}, {mexicana, HALF_2}]
+  ✅ CORRECTO: [{hawaiana, HALF_1}, {pepperoni, HALF_1}, {mexicana, HALF_2}, {pepperoni, HALF_2}]
 
 ## REGLAS DE MAPEO CRÍTICAS
 

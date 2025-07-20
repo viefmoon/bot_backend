@@ -529,5 +529,39 @@ export class OrderItemValidatorService {
         });
       }
     }
+    
+    // REGLA NUEVA: No se pueden mezclar personalizaciones FULL con HALF
+    // Si hay mitades (HALF_1 o HALF_2), NO puede haber personalizaciones FULL
+    const hasFullCustomization = customizations.some(c => c.half === 'FULL' && c.action === 'ADD');
+    const hasHalfCustomization = customizations.some(c => (c.half === 'HALF_1' || c.half === 'HALF_2') && c.action === 'ADD');
+    
+    if (hasFullCustomization && hasHalfCustomization) {
+      // Obtener los nombres de las personalizaciones FULL para el mensaje de error
+      const fullCustomizations = customizations
+        .filter(c => c.half === 'FULL' && c.action === 'ADD')
+        .map(c => {
+          const pc = product.pizzaCustomizations.find(pc => pc.id === c.pizzaCustomizationId);
+          return pc ? pc.name : 'Desconocido';
+        })
+        .join(', ');
+      
+      errors.push({
+        code: ErrorCode.INVALID_PIZZA_CONFIGURATION,
+        message: `No puedes combinar ingredientes para toda la pizza con ingredientes por mitades. Si quieres "${fullCustomizations}" en toda la pizza con mitades diferentes, debes agregarlo a cada mitad por separado.`,
+        context: {
+          productName: product.name,
+          details: "No se pueden mezclar personalizaciones FULL con HALF",
+          metadata: {
+            productId: product.id,
+            productName: product.name,
+            validationFailure: 'PIZZA_FULL_HALF_MIX',
+            fullCustomizations,
+            hasFullCustomization,
+            hasHalfCustomization
+          }
+        },
+        itemIndex
+      });
+    }
   }
 }
