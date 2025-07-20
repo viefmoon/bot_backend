@@ -47,8 +47,11 @@ export class GeminiService {
       }
       
       // Agregar configuración de pensamiento dinámico para modelos compatibles
+      logger.info(`GeminiService: Checking thinking config - Model: ${env.GEMINI_MODEL}, enableDynamicThinking: ${enableDynamicThinking}`);
+      
       if (enableDynamicThinking && env.GEMINI_MODEL.includes('2.5')) {
         const thinkingBudget = env.GEMINI_THINKING_BUDGET ? parseInt(env.GEMINI_THINKING_BUDGET) : -1;
+        logger.info(`GeminiService: GEMINI_THINKING_BUDGET value: ${env.GEMINI_THINKING_BUDGET || 'not set (defaulting to -1)'}`);
         
         // Solo agregar thinkingConfig si no es 0 o si está explícitamente configurado
         if (thinkingBudget !== 0 || env.GEMINI_THINKING_BUDGET === '0') {
@@ -57,13 +60,15 @@ export class GeminiService {
           };
           
           if (thinkingBudget === -1) {
-            logger.debug('GeminiService: Pensamiento dinámico activado');
+            logger.info('GeminiService: Pensamiento dinámico ACTIVADO');
           } else if (thinkingBudget === 0) {
-            logger.debug('GeminiService: Pensamiento desactivado');
+            logger.info('GeminiService: Pensamiento DESACTIVADO');
           } else {
-            logger.debug(`GeminiService: Presupuesto de pensamiento fijo: ${thinkingBudget} tokens`);
+            logger.info(`GeminiService: Presupuesto de pensamiento fijo: ${thinkingBudget} tokens`);
           }
         }
+      } else {
+        logger.info(`GeminiService: Thinking not enabled - Model: ${env.GEMINI_MODEL}, enableDynamicThinking: ${enableDynamicThinking}`);
       }
       
       const response = await client.models.generateContent({
