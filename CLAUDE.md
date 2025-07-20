@@ -157,23 +157,17 @@ Middleware Pipeline:
 
 ### AI Agent Architecture
 
-**Two-Agent System**:
-
-1. **General Agent** (`AgentService.processMessage`)
-   - Detects user intent and routes appropriately
+**Single Agent System** (`AgentService.processMessage`):
+   - Handles all customer interactions including queries and order processing
    - Function tools available:
      - `send_menu`: Display full restaurant menu
      - `get_business_hours`: Restaurant info and hours
-     - `prepare_order_context`: Initiate order processing
-     - `generate_address_update_link`: OTP-secured address update
+     - `get_menu_information`: Search for specific menu items and verify availability
+     - `map_order_items`: Create pre-orders from natural language
      - `send_bot_instructions`: Help messages
      - `reset_conversation`: Clear chat history
-   - Always asks for order type (delivery/takeaway) before processing
-
-2. **Order Agent** (`AgentService.processOrderMapping`)
-   - Specialized for mapping natural language to menu items
-   - Uses semantic similarity matching with pgvector
-   - Executes `map_order_items` function
+     - `get_wait_times`: Get estimated wait times
+   - Uses semantic similarity matching with pgvector for menu search
    - Creates structured order data from conversational input
 
 **Semantic Search Setup**:

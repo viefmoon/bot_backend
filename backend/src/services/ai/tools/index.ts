@@ -1,7 +1,5 @@
 /**
  * AI Agent Tools
- * Centralized export for all agent tool definitions
+ * Export for the agent tool definitions
  */
-export { getGeneralAgentTools } from './generalAgent.tools';
-export { getOrderAgentTools } from './orderAgent.tools';
-export { getUnifiedAgentTools } from './unifiedAgent.tools';
+export { getAgentTools } from './agent.tools';

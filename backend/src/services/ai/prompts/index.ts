@@ -1,7 +1,5 @@
 /**
- * AI Agent Prompts
- * Centralized export for all agent prompt templates
+ * AI Agent Prompt
+ * Export for the agent prompt template
  */
-export { getGeneralAgentPrompt } from './generalAgent.prompt';
-export { getOrderAgentPrompt } from './orderAgent.prompt';
-export { getUnifiedAgentPrompt } from './unifiedAgent.prompt';
+export { getAgentPrompt } from './agent.prompt';

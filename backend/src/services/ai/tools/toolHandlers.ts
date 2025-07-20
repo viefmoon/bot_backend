@@ -2,7 +2,6 @@ import { ToolHandler } from './types';
 import { handleMapOrderItems } from './handlers/mapOrderItemsHandler';
 import { handleSendMenu } from './handlers/sendMenuHandler';
 import { handleGetBusinessHours } from './handlers/getBusinessHoursHandler';
-import { handlePrepareOrderContext } from './handlers/prepareOrderContextHandler';
 import { handleSendBotInstructions } from './handlers/sendBotInstructionsHandler';
 import { handleGetWaitTimes } from './handlers/getWaitTimesHandler';
 import { handleResetConversation } from './handlers/resetConversationHandler';
@@ -16,7 +15,6 @@ export const toolHandlers: Record<string, ToolHandler> = {
   'map_order_items': handleMapOrderItems,
   'send_menu': handleSendMenu,
   'get_business_hours': handleGetBusinessHours,
-  'prepare_order_context': handlePrepareOrderContext,
   'send_bot_instructions': handleSendBotInstructions,
   'get_wait_times': handleGetWaitTimes,
   'get_menu_information': handleGetMenuInformation,

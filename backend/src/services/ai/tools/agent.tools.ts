@@ -1,10 +1,9 @@
 /**
- * Unified Agent tool definitions
- * Combines general agent tools with order mapping capabilities
- * Removes prepare_order_context as the unified agent handles order mapping directly
+ * Agent tool definitions
+ * Contains all tools for customer interactions and order processing
  */
 
-export function getUnifiedAgentTools(): any[] {
+export function getAgentTools(): any[] {
   return [
     {
       name: "send_menu",

@@ -1,9 +1,8 @@
 /**
- * Unified Agent prompt template
- * Combines general query handling with direct order mapping capabilities
- * This eliminates the need for a separate order agent
+ * Agent prompt template
+ * Handles all customer interactions including queries and order processing
  */
-export function getUnifiedAgentPrompt(restaurantName: string): string {
+export function getAgentPrompt(restaurantName: string): string {
   return `Eres el asistente virtual de ${restaurantName}, especializado en ayudar a clientes con sus pedidos y consultas.
 
 ## REGLAS FUNDAMENTALES Y ESTRICTAS
