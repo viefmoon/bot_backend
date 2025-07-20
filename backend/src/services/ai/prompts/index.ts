@@ -4,3 +4,4 @@
  */
 export { getGeneralAgentPrompt } from './generalAgent.prompt';
 export { getOrderAgentPrompt } from './orderAgent.prompt';
+export { getUnifiedAgentPrompt } from './unifiedAgent.prompt';

@@ -46,8 +46,14 @@ export class TextProcessingService {
         })
       );
       
-      logger.debug('Calling AgentService.processMessage with messages:', messages);
-      const response = await AgentService.processMessage(messages);
+      // Determine which agent to use based on configuration
+      const useUnifiedAgent = AgentService.useUnifiedAgent();
+      logger.debug(`Using ${useUnifiedAgent ? 'UNIFIED' : 'GENERAL'} agent for processing`);
+      
+      logger.debug('Calling AgentService with messages:', messages);
+      const response = useUnifiedAgent 
+        ? await AgentService.processMessage(messages) // Unified agent uses the same method now
+        : await AgentService.processMessage(messages);
       logger.debug('AgentService response:', JSON.stringify(response, null, 2));
       
       // Process Gemini response and get UnifiedResponses
@@ -86,7 +92,9 @@ export class TextProcessingService {
         logger.debug('Making follow-up call to AgentService with tool responses');
         
         // Make a second call to the agent with the tool responses
-        const followUpResponse = await AgentService.processMessage(updatedMessages);
+        const followUpResponse = useUnifiedAgent
+          ? await AgentService.processMessage(updatedMessages)
+          : await AgentService.processMessage(updatedMessages);
         const followUpUnifiedResponses = await this.processGeminiResponse(followUpResponse, context);
         
         // Process the follow-up responses

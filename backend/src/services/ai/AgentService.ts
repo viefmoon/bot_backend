@@ -2,8 +2,8 @@ import { GeminiService } from './GeminiService';
 import { OrderType } from '@prisma/client';
 import logger from '../../common/utils/logger';
 import { ProductService } from '../products/ProductService';
-import { getGeneralAgentPrompt, getOrderAgentPrompt } from './prompts';
-import { getGeneralAgentTools, getOrderAgentTools } from './tools';
+import { getGeneralAgentPrompt, getOrderAgentPrompt, getUnifiedAgentPrompt } from './prompts';
+import { getGeneralAgentTools, getOrderAgentTools, getUnifiedAgentTools } from './tools';
 import { MenuSearchService } from './MenuSearchService';
 
 // Definiciones de tipos para el nuevo SDK
@@ -24,18 +24,27 @@ interface OrderContext {
  */
 export class AgentService {
   /**
-   * Procesa mensajes con el agente general
+   * Determina si usar el agente unificado basado en configuración
+   */
+  static useUnifiedAgent(): boolean {
+    return process.env.USE_UNIFIED_AGENT === 'true';
+  }
+  /**
+   * Procesa mensajes con el agente general o unificado
    */
   static async processMessage(
     messages: Content[]
   ): Promise<any> {
     try {
-      // Usar el agente general para detectar intención
-      const systemInstruction = await this.getGeneralAgentInstruction();
-      const tools = getGeneralAgentTools();
+      // Determinar qué agente usar
+      const useUnified = this.useUnifiedAgent();
+      const systemInstruction = useUnified 
+        ? await this.getUnifiedAgentInstruction()
+        : await this.getGeneralAgentInstruction();
+      const tools = useUnified ? getUnifiedAgentTools() : getGeneralAgentTools();
       
       // Log completo de lo que recibe el modelo
-      logger.info('=== AgentService.processMessage: About to call GeminiService ===');
+      logger.info(`=== AgentService.processMessage: Using ${useUnified ? 'UNIFIED' : 'GENERAL'} agent ===`);
       logger.debug('=== COMPLETE AI MODEL INPUT ===');
       logger.debug(`System Instruction:\n${systemInstruction}`);
       (logger as any).json('Messages:', messages);
@@ -130,6 +139,24 @@ export class AgentService {
     }
     
     return getGeneralAgentPrompt(restaurantName);
+  }
+  
+  /**
+   * Instrucciones para el agente unificado
+   */
+  private static async getUnifiedAgentInstruction(): Promise<string> {
+    let restaurantName = 'nuestro restaurante';
+    
+    try {
+      // Obtener configuración del restaurante
+      const { RestaurantService } = await import('../restaurant/RestaurantService');
+      const restaurantConfig = await RestaurantService.getConfig();
+      restaurantName = restaurantConfig.restaurantName;
+    } catch (error) {
+      logger.error('Error obteniendo configuración del restaurante:', error);
+    }
+    
+    return getUnifiedAgentPrompt(restaurantName);
   }
   
   /**
