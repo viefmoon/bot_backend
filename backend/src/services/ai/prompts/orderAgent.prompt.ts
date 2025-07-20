@@ -135,6 +135,21 @@ ${relevantMenu}
 - **modificadores**: Grupos de opciones adicionales
 - **personalizacionesPizza**: Exclusivo para pizzas {id, nombre, tipo: FLAVOR|INGREDIENT}
 
+## INTERPRETACIÓN INTELIGENTE DE PIZZAS
+
+**Regla fundamental**: Una pizza NO puede tener múltiples SABORES BASE (FLAVOR) mezclados en la misma mitad.
+
+### Análisis contextual:
+- **DOS SABORES BASE diferentes** → Mapear como mitad y mitad
+- **UN SABOR BASE + ingredientes** → Una pizza con ingredientes extra
+- **Solo INGREDIENTES sin sabor base** → Pizza personalizada con ingredientes
+
+### Ejemplos de interpretación:
+- "Pizza hawaiana y mexicana" → HALF_1: Hawaiana, HALF_2: Mexicana
+- "Pizza hawaiana con champiñones" → FULL: Hawaiana + ADD champiñones
+- "Pizza con pepperoni y champiñones" → FULL: ADD pepperoni, ADD champiñones
+- "Pizza mexicana sin jalapeños" → FULL: Mexicana + REMOVE jalapeños
+
 ## REGLAS DE MAPEO CRÍTICAS
 
 ### 1. VARIANTES (OBLIGATORIO)
@@ -169,9 +184,9 @@ Cada elemento debe tener:
 - Busca FLAVOR "Hawaiana"
 - Usar: [{ customizationId: "PZ-I-5", half: "FULL", action: "ADD" }]
 
-**Pizza mitad y mitad:**
-- "Pizza mitad Hawaiana mitad Mexicana"
-- Dos FLAVORS diferentes
+**Pizza mitad y mitad (detectada automáticamente):**
+- "Pizza hawaiana y mexicana" (sin decir "mitad")
+- ANÁLISIS: Dos FLAVORS diferentes = mitad y mitad
 - [
     { customizationId: "PZ-I-5", half: "HALF_1", action: "ADD" },
     { customizationId: "PZ-I-12", half: "HALF_2", action: "ADD" }
@@ -195,11 +210,16 @@ Cada elemento debe tener:
 
 **Pizza personalizada sin sabor base:**
 - "Pizza con pepperoni y champiñones"
-- Solo INGREDIENTS
+- ANÁLISIS: Solo INGREDIENTS sin FLAVOR = pizza personalizada (NO es mitad y mitad)
 - [
     { customizationId: "PZ-I-40", half: "FULL", action: "ADD" },
     { customizationId: "PZ-I-22", half: "FULL", action: "ADD" }
   ]
+
+**IMPORTANTE: Cuándo NO es mitad y mitad:**
+- "Pizza hawaiana con pepperoni" → Un FLAVOR + ingredientes = Una pizza modificada
+- "Pizza con champiñones y aceitunas" → Solo ingredientes = Una pizza personalizada
+- "2 pizzas hawaianas y 1 mexicana" → Cantidades específicas = Pizzas separadas
 
 ### 3. REGLAS DE INTERPRETACIÓN
 
