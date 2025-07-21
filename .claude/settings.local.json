@@ -52,7 +52,8 @@
       "Bash(dir:*)",
       "Bash(echo:*)",
       "Bash(npm test:*)",
-      "Bash(python:*)"
+      "Bash(python:*)",
+      "Bash(timeout 2 cat src/services/messaging/MessageProcessor.ts)"
     ],
     "deny": []
   }
