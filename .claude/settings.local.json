@@ -50,7 +50,9 @@
       "Bash(del backendtest-quantity-fix.js)",
       "Bash(pm2 list:*)",
       "Bash(dir:*)",
-      "Bash(echo:*)"
+      "Bash(echo:*)",
+      "Bash(npm test:*)",
+      "Bash(python:*)"
     ],
     "deny": []
   }

@@ -11,6 +11,8 @@ import { CONTEXT_KEYS } from '../../../common/constants';
 import logger from '../../../common/utils/logger';
 import { sendWhatsAppMessage, sendWhatsAppInteractiveMessage, sendMessageWithUrlButton } from '../../whatsapp';
 import { SyncMetadataService } from '../../../services/sync/SyncMetadataService';
+import { redisService } from '../../redis/RedisService';
+import { redisKeys } from '../../../common/constants';
 
 export class MessagePipeline {
   private middlewares: MessageMiddleware[] = [];
@@ -27,8 +29,8 @@ export class MessagePipeline {
     ];
   }
 
-  async process(message: IncomingMessage): Promise<void> {
-    const context = new MessageContext(message);
+  async process(message: IncomingMessage, runId: string): Promise<void> {
+    const context = new MessageContext(message, runId);
     
     try {
       // Ejecutar todos los middlewares
@@ -56,6 +58,18 @@ export class MessagePipeline {
   
   
   private async sendResponses(context: MessageContext): Promise<void> {
+    // POST-PROCESS CANCELLATION CHECK
+    const currentRunKey = redisKeys.currentRun(context.message.from);
+    const activeRunId = await redisService.get(currentRunKey);
+    
+    // Check if this context's runId is still the active one in Redis
+    if (activeRunId && activeRunId !== context.runId) {
+      logger.info(`[Cancelled Post-Process] Run ${context.runId} is obsolete. Active run is ${activeRunId}. Discarding ${context.unifiedResponses.length} responses.`);
+      // A newer job has taken control. Don't send anything.
+      return;
+    }
+    
+    // If we get here, we have permission to send the responses
     // Enviar solo las respuestas que deben enviarse
     for (const response of context.unifiedResponses) {
       if (!response.metadata.shouldSend) continue;

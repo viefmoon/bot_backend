@@ -16,7 +16,7 @@ export class MessageProcessor {
   }
   
   // Este método procesa los mensajes entrantes a través del pipeline
-  static async processWithPipeline(message: any): Promise<void> {
+  static async processWithPipeline(message: any, runId: string): Promise<void> {
     try {
       // Convertir el formato del mensaje al formato del pipeline
       const incomingMessage: IncomingMessage = {
@@ -29,8 +29,8 @@ export class MessageProcessor {
         audio: message.audio
       };
       
-      // Procesar con el pipeline
-      await this.getPipeline().process(incomingMessage);
+      // Procesar con el pipeline con runId
+      await this.getPipeline().process(incomingMessage, runId);
     } catch (error) {
       logger.error('Error in MessageProcessor:', error);
       throw error; // Dejar que el llamador maneje el error

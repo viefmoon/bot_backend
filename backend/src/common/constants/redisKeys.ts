@@ -19,6 +19,10 @@ export const REDIS_KEYS = {
   // Restaurant data caching
   RESTAURANT_CONFIG: 'restaurant:config',
   RESTAURANT_BUSINESS_HOURS: 'restaurant:business_hours',
+  
+  // Message cancellation keys
+  LATEST_MESSAGE_TIMESTAMP_PREFIX: 'latest-message-timestamp:',
+  CURRENT_RUN_PREFIX: 'current-run:',
 } as const;
 
 // Helper functions to generate Redis keys
@@ -39,6 +43,10 @@ export const redisKeys = {
   // Restaurant (static keys)
   restaurantConfig: () => REDIS_KEYS.RESTAURANT_CONFIG,
   restaurantBusinessHours: () => REDIS_KEYS.RESTAURANT_BUSINESS_HOURS,
+  
+  // Message cancellation
+  latestMessageTimestamp: (userId: string) => `${REDIS_KEYS.LATEST_MESSAGE_TIMESTAMP_PREFIX}${userId}`,
+  currentRun: (userId: string) => `${REDIS_KEYS.CURRENT_RUN_PREFIX}${userId}`,
 };
 
 // Type for Redis keys

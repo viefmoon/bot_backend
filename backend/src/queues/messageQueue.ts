@@ -5,6 +5,7 @@ import { redisKeys } from '../common/constants';
 import logger from '../common/utils/logger';
 import { processMessageJob } from '../workers/messageWorker';
 import { WhatsAppMessageJob } from './types';
+import { redisService } from '../services/redis/RedisService';
 
 // Redis connection configuration
 const connection = {
@@ -72,6 +73,10 @@ export function startMessageWorker(): void {
     'whatsapp-messages',
     async (job: Job<WhatsAppMessageJob>) => {
       const userId = job.data.from;
+      const runId = job.id!; // Use BullMQ job ID as our unique run ID
+      const currentRunKey = redisKeys.currentRun(userId);
+      const latestMessageTimestampKey = redisKeys.latestMessageTimestamp(userId);
+      
       let lockAcquired = false;
       
       try {
@@ -97,17 +102,46 @@ export function startMessageWorker(): void {
           throw new Error(`Failed to acquire lock for user ${userId} after ${maxAttempts} attempts`);
         }
         
-        logger.info(`Processing job ${job.id} for user ${userId}`);
+        // PRE-PROCESS CANCELLATION CHECK (for queued jobs)
+        try {
+          const latestTimestampStr = await redisService.get(latestMessageTimestampKey);
+          if (latestTimestampStr) {
+            const latestTimestamp = parseInt(latestTimestampStr, 10);
+            const currentMessageTimestamp = parseInt(job.data.timestamp, 10);
+            if (currentMessageTimestamp < latestTimestamp) {
+              logger.info(`[Cancelled Pre-Process] Job ${runId} (ts:${currentMessageTimestamp}) is obsolete. Newest is ${latestTimestamp}. Aborting.`);
+              return; // Abort before processing
+            }
+          }
+        } catch (error) {
+          logger.warn(`[Pre-Process Check] Failed to check latest timestamp for ${userId}. Redis may be unavailable. Proceeding anyway.`, error);
+          // Continue processing if Redis fails
+        }
         
-        // Process the message
-        await processMessageJob(job.data);
+        // Set the "I'm the active job" flag
+        try {
+          await redisService.set(currentRunKey, runId, 300); // 5 minutes TTL
+          logger.debug(`[Set Run ID] Job ${runId} is now the active run for user ${userId}`);
+        } catch (error) {
+          logger.warn(`[Set Run ID] Failed to set active run for ${userId}. Redis may be unavailable.`, error);
+          // Continue processing even if we can't set the run ID
+        }
+        
+        logger.info(`Processing job ${runId} for user ${userId}`);
+        
+        // Process the message with runId
+        await processMessageJob(job.data, runId);
         
         // Small delay to ensure BullMQ completes its internal operations
         await new Promise(resolve => setTimeout(resolve, 100));
         
       } finally {
-        // Always release the lock if we acquired it
         if (lockAcquired) {
+          // Optional: Clean up the run flag if our job was the last to execute
+          const finalRunId = await redisService.get(currentRunKey);
+          if (finalRunId === runId) {
+            await redisService.del(currentRunKey);
+          }
           await releaseUserLock(userId);
           logger.debug(`Lock released for user ${userId}`);
         }

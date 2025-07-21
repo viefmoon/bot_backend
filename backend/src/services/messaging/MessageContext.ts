@@ -1,8 +1,10 @@
 import { IncomingMessage, UnifiedResponse } from './types';
 import { Customer } from '../../common/types';
+import logger from '../../common/utils/logger';
 
 export class MessageContext {
   public message: IncomingMessage;
+  public runId: string;
   public customer?: Customer;
   public chatHistory: any[] = [];
   public unifiedResponses: UnifiedResponse[] = [];
@@ -10,8 +12,14 @@ export class MessageContext {
   public shouldStop: boolean = false;
   public error?: Error;
 
-  constructor(message: IncomingMessage) {
+  constructor(message: IncomingMessage, runId: string) {
     this.message = message;
+    this.runId = runId;
+    
+    // Validate runId
+    if (!runId) {
+      logger.warn('[MessageContext] Created without runId. This may cause issues with message cancellation.');
+    }
   }
   
   addUnifiedResponse(response: UnifiedResponse) {

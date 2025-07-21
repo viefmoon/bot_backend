@@ -7,6 +7,8 @@ import { ExternalServiceError, ErrorCode } from '../../common/services/errors';
 import { MessageSplitter } from '../../common/utils/messageSplitter';
 import { messageQueue } from '../../queues/messageQueue';
 import { WhatsAppMessageJob } from '../../queues/types';
+import { redisService } from '../redis/RedisService';
+import { redisKeys } from '../../common/constants';
 
 export class WhatsAppService {
   private static readonly WHATSAPP_API_URL = 'https://graph.facebook.com/v17.0';
@@ -100,7 +102,22 @@ export class WhatsAppService {
         }
       }
       
-      // 4. Prepare job data if message passed age check
+      // 4. Set latest message timestamp signal in Redis
+      const latestMessageTimestampKey = redisKeys.latestMessageTimestamp(from);
+      // Use a TTL of 300 seconds (5 minutes) to handle longer queue times
+      try {
+        const setResult = await redisService.set(latestMessageTimestampKey, message.timestamp, 300);
+        if (!setResult) {
+          logger.warn(`[Signal] Failed to set latest timestamp for ${from}. Redis may be unavailable. Proceeding anyway.`);
+        } else {
+          logger.debug(`[Signal] Set latest timestamp for ${from} to ${message.timestamp}`);
+        }
+      } catch (error) {
+        logger.warn(`[Signal] Error setting timestamp in Redis for ${from}:`, error);
+        // Continue processing even if Redis fails
+      }
+      
+      // 5. Prepare job data if message passed age check
       const jobData: WhatsAppMessageJob = {
         id: message.id,
         from: message.from,
