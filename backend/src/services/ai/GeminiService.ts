@@ -55,7 +55,7 @@ export class GeminiService {
         logger.info(`\nMensaje ${index + 1}:`);
         logger.info(`  Rol: ${msg.role}`);
         if (msg.parts && msg.parts.length > 0) {
-          msg.parts.forEach((part, partIndex) => {
+          msg.parts.forEach((part: any, partIndex: number) => {
             if (part.text) {
               logger.info(`  Parte ${partIndex + 1} (texto): ${part.text.substring(0, 200)}${part.text.length > 200 ? '...' : ''}`);
             } else if (part.functionCall) {
@@ -150,7 +150,7 @@ export class GeminiService {
       }
       if (response.functionCalls) {
         logger.info(`Respuesta contiene ${response.functionCalls.length} llamadas a funciones`);
-        response.functionCalls.forEach((fc, index) => {
+        response.functionCalls.forEach((fc: any, index: number) => {
           logger.info(`  Función ${index + 1}: ${fc.name}`);
         });
       }
