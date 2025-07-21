@@ -36,14 +36,14 @@ export class NewCustomerGreetingMiddleware implements MessageMiddleware {
               type: "reply",
               reply: {
                 id: "request_delivery_registration",
-                title: "🚚 Entrega a domicilio"
+                title: "Entrega a domicilio"
               }
             },
             {
               type: "reply",
               reply: {
                 id: "request_pickup_registration",
-                title: "🏪 Recoger en tienda"
+                title: "Recoger en tienda"
               }
             }
           ]
