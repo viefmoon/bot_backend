@@ -14,6 +14,20 @@ export class NewCustomerGreetingMiddleware implements MessageMiddleware {
     const hasNoName = !context.customer?.firstName;
     const hasNoAddress = context.get(CONTEXT_KEYS.HAS_NO_ADDRESS);
     
+    // Verificar si es un mensaje interactivo (respuesta a botón)
+    const isInteractiveMessage = context.message.type === 'interactive';
+    
+    // Si es un mensaje interactivo y es una respuesta de registro, permitir que pase
+    if (isInteractiveMessage && context.message.interactive?.button_reply?.id) {
+      const buttonId = context.message.interactive.button_reply.id;
+      const isRegistrationAction = buttonId === 'request_delivery_registration' || 
+                                  buttonId === 'request_pickup_registration';
+      if (isRegistrationAction) {
+        logger.info(`Allowing registration action ${buttonId} to pass through`);
+        return context;
+      }
+    }
+    
     // Interceptar si el cliente no tiene nombre (independientemente de si es nuevo o no)
     // Esto maneja casos donde el cliente fue creado pero el registro falló
     const needsRegistration = hasNoName;
