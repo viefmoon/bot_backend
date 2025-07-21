@@ -607,12 +607,12 @@ export function AddressRegistration() {
               </svg>
             </div>
             <h2 className="text-2xl font-bold text-gray-900 mb-2">
-              {registrationMode === 'nameOnly' ? '¡Nombre Registrado!' : '¡Dirección Guardada!'}
+              {registrationMode === 'nameOnly' ? '¡Registro Completado!' : '¡Dirección Guardada!'}
             </h2>
             <p className="text-gray-600 mb-6">
               {registrationMode === 'nameOnly' 
-                ? 'Tu nombre se ha registrado correctamente. Ya puedes continuar con tu pedido en WhatsApp.'
-                : 'Tu dirección se ha registrado correctamente. Ya puedes continuar con tu pedido en WhatsApp.'}
+                ? 'Tu información se ha registrado correctamente. Ya puedes continuar con tu pedido para recolección en WhatsApp.'
+                : 'Tu dirección se ha registrado correctamente. Ya puedes continuar con tu pedido a domicilio en WhatsApp.'}
             </p>
           </div>
           
@@ -706,11 +706,13 @@ export function AddressRegistration() {
           {/* Header con gradiente naranja-rosa */}
           <div className="bg-gradient-to-r from-orange-500 to-pink-600 p-4 sm:p-6 text-white">
             <h1 className="text-xl sm:text-2xl md:text-3xl font-bold mb-2 drop-shadow-lg">
-              📍 {viewMode === 'list' 
-                ? 'Mis Direcciones de Entrega' 
-                : editingAddressId 
-                  ? `Actualizar: ${formData.name || 'Dirección'}` 
-                  : 'Registrar Dirección de Entrega'}
+              {registrationMode === 'nameOnly' 
+                ? '📝 Registro de Cliente'
+                : viewMode === 'list' 
+                  ? '📍 Mis Direcciones de Entrega' 
+                  : editingAddressId 
+                    ? `📍 Actualizar: ${formData.name || 'Dirección'}` 
+                    : '📍 Registrar Dirección de Entrega'}
             </h1>
             <div className="flex items-center gap-3 flex-wrap">
               <div className="flex items-center gap-2">
@@ -765,6 +767,7 @@ export function AddressRegistration() {
                 initialLastName={customer.lastName || ''}
                 isEditing={isEditingCustomerName}
                 onCancel={() => setIsEditingCustomerName(false)}
+                registrationMode={registrationMode}
               />
             )}
 

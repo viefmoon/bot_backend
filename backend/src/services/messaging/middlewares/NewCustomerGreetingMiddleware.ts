@@ -3,6 +3,7 @@ import { MessageContext } from '../MessageContext';
 import { sendWhatsAppInteractiveMessage } from '../../whatsapp';
 import { CONTEXT_KEYS } from '../../../common/constants';
 import logger from '../../../common/utils/logger';
+import { ConfigService } from '../../config/ConfigService';
 
 export class NewCustomerGreetingMiddleware implements MessageMiddleware {
   name = 'NewCustomerGreetingMiddleware';
@@ -19,10 +20,14 @@ export class NewCustomerGreetingMiddleware implements MessageMiddleware {
     if (isBrandNewCustomer) {
       logger.info(`Customer ${context.message.from} is brand new. Sending order type selection.`);
 
+      // Obtener el nombre del restaurante de la configuración
+      const config = ConfigService.getConfig();
+      const restaurantName = config.restaurantName || 'nuestro restaurante';
+
       const greetingMessage = {
         type: "button",
         body: {
-          text: `¡Hola! 👋 ¡Bienvenido! Para empezar, ¿cómo te gustaría realizar tu pedido?`
+          text: `¡Hola! 👋 ¡Bienvenido a *${restaurantName}*!\n\n📝 Estamos listos para tomar tu orden.\n\n¿Cómo prefieres recibir tu pedido?`
         },
         action: {
           buttons: [
@@ -30,14 +35,14 @@ export class NewCustomerGreetingMiddleware implements MessageMiddleware {
               type: "reply",
               reply: {
                 id: "request_delivery_registration",
-                title: "🚚 A domicilio"
+                title: "🚚 Entrega a domicilio"
               }
             },
             {
               type: "reply",
               reply: {
                 id: "request_pickup_registration",
-                title: "🏠 Recoger en tienda"
+                title: "🏪 Recolección en restaurante"
               }
             }
           ]
