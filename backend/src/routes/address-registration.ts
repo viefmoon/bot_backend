@@ -107,27 +107,19 @@ router.post('/create',
     
     // Enviar mensaje de confirmación a WhatsApp
     try {
-      const { sendWhatsAppMessage, sendWhatsAppInteractiveMessage } = await import('../services/whatsapp');
-      const { ADDRESS_REGISTRATION_SUCCESS, WELCOME_MESSAGE_INTERACTIVE } = await import('../common/config/predefinedMessages');
-      const { ConfigService } = await import('../services/config/ConfigService');
+      const { sendWhatsAppMessage } = await import('../services/whatsapp');
+      const { ADDRESS_REGISTRATION_SUCCESS } = await import('../common/config/predefinedMessages');
       
       // Verificar si viene de un preOrder (el frontend lo pasa como query param)
       const isFromPreOrder = preOrderId;
       
       if (!isFromPreOrder) {
-        // Solo enviar estos mensajes si NO es parte de un preorder
+        // Enviar ÚNICAMENTE el mensaje de éxito del registro
+        // Este mensaje ya guía al usuario sobre el siguiente paso
         await sendWhatsAppMessage(
           customer.whatsappPhoneNumber,
           ADDRESS_REGISTRATION_SUCCESS(newAddress)
         );
-        
-        // Pequeño retraso para asegurar el orden correcto de mensajes
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        
-        // Enviar mensaje de bienvenida
-        const config = ConfigService.getConfig();
-        const welcomeMessage = WELCOME_MESSAGE_INTERACTIVE(config);
-        await sendWhatsAppInteractiveMessage(customer.whatsappPhoneNumber, welcomeMessage);
       }
       
       // Siempre actualizar lastInteraction
@@ -196,23 +188,16 @@ router.put('/update-customer-name',
       where: { customerId: updatedCustomer.id, deletedAt: null }
     });
 
-    // Si no tiene direcciones, es el flujo de "Recolección", enviar mensajes de éxito
+    // Si no tiene direcciones, es el flujo de "Recolección", enviar mensaje de éxito
     if (addressCount === 0) {
       try {
-        const { sendWhatsAppMessage, sendWhatsAppInteractiveMessage } = await import('../services/whatsapp');
-        const { WELCOME_MESSAGE_INTERACTIVE } = await import('../common/config/predefinedMessages');
-        const { ConfigService } = await import('../services/config/ConfigService');
+        const { sendWhatsAppMessage } = await import('../services/whatsapp');
 
+        // Solo enviar mensaje de confirmación, sin mensaje de bienvenida
         await sendWhatsAppMessage(
           whatsappPhoneNumber,
-          `✅ ¡Gracias ${firstName}! Tu nombre ha sido registrado exitosamente.`
+          `✅ ¡Gracias ${firstName}! Tu nombre ha sido registrado exitosamente. Ahora puedes realizar tu pedido.`
         );
-        
-        await new Promise(resolve => setTimeout(resolve, 1000));
-
-        const config = ConfigService.getConfig();
-        const welcomeMessage = WELCOME_MESSAGE_INTERACTIVE(config);
-        await sendWhatsAppInteractiveMessage(whatsappPhoneNumber, welcomeMessage);
       } catch (msgError) {
         logger.error('Error sending confirmation message for name registration:', msgError);
       }
@@ -261,25 +246,16 @@ router.put('/:addressId',
     
     // Enviar notificación de WhatsApp sobre actualización de dirección
     try {
-      const { sendWhatsAppMessage, sendWhatsAppInteractiveMessage } = await import('../services/whatsapp');
-      const { ADDRESS_UPDATE_SUCCESS, WELCOME_MESSAGE_INTERACTIVE } = await import('../common/config/predefinedMessages');
-      const { ConfigService } = await import('../services/config/ConfigService');
+      const { sendWhatsAppMessage } = await import('../services/whatsapp');
+      const { ADDRESS_UPDATE_SUCCESS } = await import('../common/config/predefinedMessages');
       
-      // Usar whatsappPhoneNumber del customer autenticado
+      // Solo enviar el mensaje de confirmación de actualización
       await sendWhatsAppMessage(
         customer.whatsappPhoneNumber,
         ADDRESS_UPDATE_SUCCESS(updatedAddress)
       );
       
-      // Pequeño retraso para asegurar el orden correcto de mensajes
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      // Enviar mensaje de bienvenida inmediatamente después
-      const config = ConfigService.getConfig();
-      const welcomeMessage = WELCOME_MESSAGE_INTERACTIVE(config);
-      await sendWhatsAppInteractiveMessage(customer.whatsappPhoneNumber, welcomeMessage);
-      
-      // Marcar que hubo interacción para evitar mensaje de bienvenida duplicado
+      // Actualizar lastInteraction
       await prisma.customer.update({
         where: { id: customer.id },
         data: { 
