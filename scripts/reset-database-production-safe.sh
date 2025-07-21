@@ -374,15 +374,43 @@ print_step "Generando cliente Prisma..."
 npm run generate
 print_success "Cliente Prisma generado"
 
-# Paso 8: Limpiar y recompilar el proyecto
-print_step "Limpiando código compilado anterior..."
+# Paso 8: Limpiar y recompilar el backend
+print_step "Limpiando código compilado del backend..."
 rm -rf dist/
-print_success "Código compilado eliminado"
+print_success "Código compilado del backend eliminado"
 print_info "Esto previene errores de código obsoleto en el cache"
 
-print_step "Recompilando proyecto TypeScript..."
+print_step "Recompilando backend TypeScript..."
 npm run build
-print_success "Proyecto recompilado con código actualizado"
+print_success "Backend recompilado con código actualizado"
+
+# Paso 8.5: Compilar el frontend si existe
+if [ -d "$HOME/bot_backend/frontend-app" ]; then
+    print_step "Compilando frontend desde cero..."
+    cd ~/bot_backend/frontend-app
+    
+    # Limpiar build anterior
+    print_step "Limpiando build anterior del frontend..."
+    rm -rf dist/ .next/ build/
+    print_success "Build anterior del frontend eliminado"
+    
+    # Instalar dependencias del frontend si es necesario
+    if [ ! -d "node_modules" ] || [ ! -s "node_modules" ]; then
+        print_step "Instalando dependencias del frontend..."
+        npm install
+        print_success "Dependencias del frontend instaladas"
+    fi
+    
+    # Compilar frontend
+    print_step "Ejecutando build del frontend..."
+    npm run build
+    print_success "Frontend compilado exitosamente"
+    
+    # Volver al directorio backend
+    cd ~/bot_backend/backend
+else
+    print_warning "No se encontró directorio frontend-app, saltando compilación del frontend"
+fi
 
 # Paso 9: Generar embeddings si está configurado
 if grep -q "GOOGLE_AI_API_KEY=" .env && grep -q "^GOOGLE_AI_API_KEY=." .env; then
@@ -416,7 +444,8 @@ echo "================================================"
 echo ""
 echo "✅ Base de datos completamente limpia"
 echo "✅ Nuevas migraciones aplicadas"
-echo "✅ Proyecto recompilado (sin código antiguo)"
+echo "✅ Backend recompilado (sin código antiguo)"
+echo "✅ Frontend compilado desde cero"
 echo "✅ Servicios reiniciados desde cero"
 echo ""
 if [ -f ~/$BACKUP_FILE ]; then

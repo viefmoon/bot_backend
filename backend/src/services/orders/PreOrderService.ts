@@ -98,10 +98,10 @@ export class PreOrderService {
       // Customer already fetched above for orderType inference
       
       // If delivery order without addresses, convert to TAKE_AWAY
-      if (orderType === OrderType.DELIVERY) {
+      if (orderType === OrderType.DELIVERY && customer) {
         const addressCount = await prisma.address.count({
           where: {
-            customerId: customer?.id,
+            customerId: customer.id,
             deletedAt: null
           }
         });
@@ -114,11 +114,17 @@ export class PreOrderService {
           // Recalculate estimated time for pickup
           estimatedDeliveryTime = config.estimatedPickupTime;
         }
+      } else if (orderType === OrderType.DELIVERY && !customer) {
+        // No customer found but trying to create delivery order
+        logger.info(`No customer found, converting DELIVERY to TAKE_AWAY for ${whatsappPhoneNumber}`);
+        orderType = OrderType.TAKE_AWAY;
+        estimatedDeliveryTime = config.estimatedPickupTime;
       }
       
       // Get or create delivery info
       let deliveryInfoId = null;
       if (customer && (orderType === OrderType.DELIVERY || orderType === OrderType.TAKE_AWAY)) {
+        logger.info(`Creating delivery info for orderType: ${orderType}, customerId: ${customer.id}`);
         const deliveryInfo = await DeliveryInfoService.getOrCreateDeliveryInfo(
           orderType,  // Pass the enum directly
           customer.id,

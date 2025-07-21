@@ -27,18 +27,19 @@ export class DeliveryInfoService {
       ]
     });
 
-    if (!customerAddress) {
-      throw new ValidationError(
-        ErrorCode.MISSING_DELIVERY_INFO,
-        'Customer has no active addresses',
-        { metadata: { customerId } }
-      );
-    }
-
     // Construir datos de información de entrega basados en el tipo de orden
     let deliveryInfoData: any = {};
 
     if (orderType === OrderType.DELIVERY) {
+      // Para pedidos de entrega, verificar que tenga dirección
+      if (!customerAddress) {
+        throw new ValidationError(
+          ErrorCode.MISSING_DELIVERY_INFO,
+          'Customer has no active addresses for delivery order',
+          { metadata: { customerId, orderType } }
+        );
+      }
+
       // Copiar todos los campos de dirección desde la dirección del cliente
       // Esto crea una instantánea de la dirección en el momento de la orden
       deliveryInfoData = {
