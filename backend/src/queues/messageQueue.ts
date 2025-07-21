@@ -6,6 +6,8 @@ import logger from '../common/utils/logger';
 import { processMessageJob } from '../workers/messageWorker';
 import { WhatsAppMessageJob } from './types';
 import { redisService } from '../services/redis/RedisService';
+import { prisma } from '../server';
+import { SyncMetadataService } from '../services/sync/SyncMetadataService';
 
 // Redis connection configuration
 const connection = {
@@ -102,6 +104,49 @@ export function startMessageWorker(): void {
           throw new Error(`Failed to acquire lock for user ${userId} after ${maxAttempts} attempts`);
         }
         
+        // =================================================================
+        // PASO 1: GUARDAR EL MENSAJE DEL USUARIO INMEDIATAMENTE
+        // Esto se hace ANTES de cualquier verificación de cancelación.
+        // =================================================================
+        const messageContent = job.data.text?.body || '[Mensaje no textual]';
+        const customer = await prisma.customer.findUnique({ where: { whatsappPhoneNumber: userId } });
+
+        if (customer) {
+          // Obtenemos los historiales existentes
+          const fullHistory = Array.isArray(customer.fullChatHistory) ? customer.fullChatHistory : [];
+          const relevantHistory = Array.isArray(customer.relevantChatHistory) ? customer.relevantChatHistory : [];
+
+          const userMessageEntry = {
+            role: 'user',
+            content: messageContent,
+            timestamp: new Date().toISOString()
+          };
+
+          // Agregamos el nuevo mensaje
+          fullHistory.push(userMessageEntry);
+          relevantHistory.push(userMessageEntry);
+
+          // Actualizamos en la base de datos
+          await prisma.customer.update({
+            where: { id: customer.id },
+            data: {
+              fullChatHistory: fullHistory as any, // Prisma espera JsonValue
+              relevantChatHistory: relevantHistory.slice(-20) as any, // Mantenemos el límite de 20
+              lastInteraction: new Date()
+            }
+          });
+
+          // Marcar para sincronización
+          await SyncMetadataService.markForSync('Customer', customer.id, 'REMOTE');
+          logger.info(`[History] User message from job ${runId} saved for user ${userId}.`);
+        } else {
+          logger.warn(`[History] Could not save message for job ${runId}. Customer ${userId} not found.`);
+        }
+        
+        // =================================================================
+        // PASO 2: VERIFICACIÓN DE CANCELACIÓN (AHORA ES SEGURO HACERLO)
+        // Si se cancela, la RESPUESTA se aborta, pero el mensaje del usuario ya está guardado.
+        // =================================================================
         // PRE-PROCESS CANCELLATION CHECK (for queued jobs)
         logger.info(`[DEBUG Pre-Process] Checking cancellation for job ${runId} from ${userId}`);
         logger.info(`[DEBUG Pre-Process] Current message timestamp: ${job.data.timestamp}, serverTimestamp: ${job.data.serverTimestamp || 'N/A'}`);
@@ -124,14 +169,14 @@ export function startMessageWorker(): void {
             // First compare WhatsApp timestamps
             if (currentWATimestamp < latestWATimestamp) {
               logger.info(`[DEBUG Pre-Process] CANCELLING: WA timestamp ${currentWATimestamp} < ${latestWATimestamp}`);
-              logger.info(`[Cancelled Pre-Process] Job ${runId} is obsolete. Aborting.`);
+              logger.info(`[Cancelled Pre-Process] Job ${runId} is obsolete. Aborting RESPONSE generation.`);
               return;
             } else if (currentWATimestamp === latestWATimestamp && currentServerTimestamp && latestServerTimestamp) {
               // If WhatsApp timestamps are equal, compare server timestamps
               logger.info(`[DEBUG Pre-Process] WA timestamps equal, comparing server: current ${currentServerTimestamp} vs latest ${latestServerTimestamp}`);
               if (currentServerTimestamp < latestServerTimestamp) {
                 logger.info(`[DEBUG Pre-Process] CANCELLING: Server timestamp ${currentServerTimestamp} < ${latestServerTimestamp}`);
-                logger.info(`[Cancelled Pre-Process] Job ${runId} is obsolete (same second). Aborting.`);
+                logger.info(`[Cancelled Pre-Process] Job ${runId} is obsolete (same second). Aborting RESPONSE generation.`);
                 return;
               }
             }

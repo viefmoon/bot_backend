@@ -137,28 +137,20 @@ export class MessagePipeline {
       return;
     }
     
-    const fullChatHistory = context.get(CONTEXT_KEYS.FULL_CHAT_HISTORY) || [];
-    let relevantChatHistory = context.get(CONTEXT_KEYS.RELEVANT_CHAT_HISTORY) || [];
-    
-    // Agregar mensaje del usuario al historial
-    fullChatHistory.push({
-      role: 'user',
-      content: context.message.text?.body || '[Non-text message]',
-      timestamp: new Date()
-    });
-    
-    // Siempre agregar al historial relevante
-    relevantChatHistory.push({
-      role: 'user',
-      content: context.message.text?.body || '[Non-text message]',
-      timestamp: new Date()
-    });
-    
     // Check if responses were cancelled before adding them to history
     const wasCancelled = await this.wasCancelled(context);
     if (wasCancelled) {
       logger.info(`Skipping history update for assistant responses because job ${context.runId} was cancelled.`);
-    } else {
+      return; // No need to update anything if cancelled
+    }
+    
+    // Ya no necesitamos guardar el mensaje del usuario aquí, ya se hizo en el worker.
+    // Solo guardamos las respuestas del asistente.
+    const fullChatHistory = context.get(CONTEXT_KEYS.FULL_CHAT_HISTORY) || [];
+    let relevantChatHistory = context.get(CONTEXT_KEYS.RELEVANT_CHAT_HISTORY) || [];
+    
+    // Agregar solo las respuestas del asistente al historial
+    if (!wasCancelled) {
       // Agregar respuestas al historial usando la lógica unificada
       for (const response of context.unifiedResponses) {
         const textContent = response.content?.text;
@@ -198,8 +190,8 @@ export class MessagePipeline {
     await prisma.customer.update({
       where: { id: context.customer.id },
       data: {
-        fullChatHistory: JSON.stringify(fullChatHistory),
-        relevantChatHistory: JSON.stringify(relevantChatHistory),
+        fullChatHistory: fullChatHistory as any,
+        relevantChatHistory: relevantChatHistory as any,
         lastInteraction: new Date()
       }
     });
