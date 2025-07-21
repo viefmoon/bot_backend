@@ -2,8 +2,8 @@ import { IncomingMessage, MessageMiddleware, UnifiedResponse } from '../types';
 import { MessageContext } from '../MessageContext';
 import { RateLimitMiddleware } from '../middlewares/RateLimitMiddleware';
 import { CustomerValidationMiddleware } from '../middlewares/CustomerValidationMiddleware';
+import { NewCustomerGreetingMiddleware } from '../middlewares/NewCustomerGreetingMiddleware';
 import { RestaurantHoursMiddleware } from '../middlewares/RestaurantHoursMiddleware';
-import { AddressRequiredMiddleware } from '../middlewares/AddressRequiredMiddleware';
 import { MessageTypeMiddleware } from '../middlewares/MessageTypeMiddleware';
 import { MessageProcessingMiddleware } from '../middlewares/MessageProcessingMiddleware';
 import { prisma } from '../../../lib/prisma';
@@ -20,8 +20,8 @@ export class MessagePipeline {
     this.middlewares = [
       new RateLimitMiddleware(),
       new CustomerValidationMiddleware(),
+      new NewCustomerGreetingMiddleware(), // Intercepta clientes nuevos antes de cualquier procesamiento
       new RestaurantHoursMiddleware(), // Verifica horarios antes de cualquier procesamiento
-      new AddressRequiredMiddleware(), // Bloquea si no hay dirección
       new MessageTypeMiddleware(),
       new MessageProcessingMiddleware(), // Lógica principal de procesamiento
     ];

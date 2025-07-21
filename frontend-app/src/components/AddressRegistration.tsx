@@ -27,6 +27,7 @@ export function AddressRegistration() {
   
   // Estado para controlar qué vista mostrar - MUST be before any conditional returns
   const [viewMode, setViewMode] = useState<'list' | 'form'>('list');
+  const [registrationMode, setRegistrationMode] = useState<'full' | 'nameOnly'>('full');
   const [isEditingCustomerName, setIsEditingCustomerName] = useState(false);
   const [isGettingLocation, setIsGettingLocation] = useState(false);
   const [showSuccessScreen, setShowSuccessScreen] = useState(false);
@@ -74,9 +75,15 @@ export function AddressRegistration() {
     const urlOtp = searchParams.get('otp') || '';
     const urlPreOrderId = searchParams.get('preOrderId') || null;
     const urlViewMode = searchParams.get('viewMode');
+    const urlMode = searchParams.get('mode');
     
     if (urlCustomerId && urlOtp) {
       setSession(urlCustomerId, urlOtp, urlPreOrderId || undefined);
+    }
+    
+    // Check if mode=nameOnly for pickup orders
+    if (urlMode === 'nameOnly') {
+      setRegistrationMode('nameOnly');
     }
     
     // If viewMode=form is specified, go directly to form view with clean form
@@ -599,10 +606,13 @@ export function AddressRegistration() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
               </svg>
             </div>
-            <h2 className="text-2xl font-bold text-gray-900 mb-2">¡Dirección Guardada!</h2>
+            <h2 className="text-2xl font-bold text-gray-900 mb-2">
+              {registrationMode === 'nameOnly' ? '¡Nombre Registrado!' : '¡Dirección Guardada!'}
+            </h2>
             <p className="text-gray-600 mb-6">
-              Tu dirección se ha registrado correctamente.
-              Ya puedes continuar con tu pedido en WhatsApp.
+              {registrationMode === 'nameOnly' 
+                ? 'Tu nombre se ha registrado correctamente. Ya puedes continuar con tu pedido en WhatsApp.'
+                : 'Tu dirección se ha registrado correctamente. Ya puedes continuar con tu pedido en WhatsApp.'}
             </p>
           </div>
           
@@ -739,7 +749,16 @@ export function AddressRegistration() {
               <CustomerNameForm
                 onSubmit={async (firstName, lastName) => {
                   await handleUpdateCustomerName(firstName, lastName);
-                  setIsEditingCustomerName(false);
+                  if (registrationMode === 'nameOnly') {
+                    // Si es solo nombre, mostramos la pantalla de éxito
+                    setShowSuccessScreen(true);
+                    setTimeout(() => {
+                      window.close();
+                    }, 3000);
+                  } else {
+                    // Si es registro completo, dejamos que el estado del customer se actualice
+                    setIsEditingCustomerName(false);
+                  }
                 }}
                 isSubmitting={updateCustomerNameMutation.isPending}
                 initialFirstName={customer.firstName || ''}
@@ -750,7 +769,7 @@ export function AddressRegistration() {
             )}
 
             {/* Show list view if customer has addresses and viewMode is 'list' AND not editing name */}
-            {customer && customer.firstName && customer.lastName && !isEditingCustomerName && viewMode === 'list' && customer.addresses.length > 0 && (
+            {registrationMode === 'full' && customer && customer.firstName && customer.lastName && !isEditingCustomerName && viewMode === 'list' && customer.addresses.length > 0 && (
               <div>
                 <div className="grid gap-4 mb-6">
                   {customer.addresses.map((address) => (
@@ -932,7 +951,7 @@ export function AddressRegistration() {
             )}
 
             {/* Show form view if viewMode is 'form' or no addresses AND not editing name */}
-            {customer && customer.firstName && customer.lastName && !isEditingCustomerName && (viewMode === 'form' || customer.addresses.length === 0) && (
+            {registrationMode === 'full' && customer && customer.firstName && customer.lastName && !isEditingCustomerName && (viewMode === 'form' || customer.addresses.length === 0) && (
               <>
                 {/* Botón para volver a la lista si hay direcciones */}
                 {customer.addresses.length > 0 && (

@@ -7,13 +7,13 @@ import { INTERACTIVE_ACTIONS, startsWithAction } from '../../../common/constants
 // Import all domain-specific handlers
 import {
   handlePreOrderAction,
-  handlePreOrderChangeAddress
-} from './preOrderActions';
+  handlePreOrderChangeType,
+  handleSelectOrderType
+} from './preorderActions';
 
 import {
   handleChangeDeliveryInfo,
   handleAddressSelection,
-  handleAddNewAddress,
   handleAddNewAddressForPreOrder,
   handleAddNewAddressFromButton,
   handleAddressSelectionButton
@@ -30,11 +30,17 @@ import {
   handleOnlinePaymentWithId
 } from './paymentActions';
 
+import {
+  handleRequestDeliveryRegistration,
+  handleRequestPickupRegistration
+} from './registrationActions';
+
 // Export all handlers for individual use
-export * from './preOrderActions';
+export * from './preorderActions';
 export * from './addressActions';
 export * from './infoActions';
 export * from './paymentActions';
+export * from './registrationActions';
 
 // Import UnifiedResponse for type definition
 import { UnifiedResponse } from '../../../services/messaging/types';
@@ -54,15 +60,15 @@ export const actionRegistry = new Map<string, InteractiveHandler>([
   [INTERACTIVE_ACTIONS.RESTAURANT_INFO, async (from, id) => handleRestaurantInfo(from)],
   [INTERACTIVE_ACTIONS.CHATBOT_HELP, async (from, id) => handleChatbotHelp(from)],
   [INTERACTIVE_ACTIONS.CHANGE_DELIVERY_INFO, async (from, id) => handleChangeDeliveryInfo(from)],
-  [INTERACTIVE_ACTIONS.ADD_NEW_ADDRESS, async (from, id) => handleAddNewAddress(from)],
   
   // Button actions (prefix match)
   [INTERACTIVE_ACTIONS.PREORDER_CONFIRM, handlePreOrderAction],
   [INTERACTIVE_ACTIONS.PREORDER_DISCARD, handlePreOrderAction],
-  [INTERACTIVE_ACTIONS.PREORDER_CHANGE_ADDRESS, handlePreOrderChangeAddress],
+  [INTERACTIVE_ACTIONS.PREORDER_CHANGE_TYPE, handlePreOrderChangeType],
+  [INTERACTIVE_ACTIONS.SELECT_ORDER_TYPE, handleSelectOrderType],
   [INTERACTIVE_ACTIONS.SELECT_ADDRESS, handleAddressSelection],
   [INTERACTIVE_ACTIONS.PAY_ONLINE, handleOnlinePaymentWithId],
-  ['add_new_address_preorder', async (from, id) => {
+  [INTERACTIVE_ACTIONS.ADD_NEW_ADDRESS_PREORDER, async (from, id) => {
     // Special case: parse preOrderId from id
     if (id.includes(':')) {
       const preOrderId = parseInt(id.split(':')[1], 10);
@@ -71,10 +77,11 @@ export const actionRegistry = new Map<string, InteractiveHandler>([
       await handleAddNewAddressFromButton(from, id);
     }
   }],
-  ['select_address', handleAddressSelectionButton],
+  [INTERACTIVE_ACTIONS.SELECT_ADDRESS, handleAddressSelectionButton],
   
-  // Special case handlers with full ID
-  [INTERACTIVE_ACTIONS.CHANGE_ADDRESS, async (from, id) => handleChangeDeliveryInfo(from)],
+  // Registration flow handlers
+  [INTERACTIVE_ACTIONS.REQUEST_DELIVERY_REGISTRATION, async (from, id) => handleRequestDeliveryRegistration(from)],
+  [INTERACTIVE_ACTIONS.REQUEST_PICKUP_REGISTRATION, async (from, id) => handleRequestPickupRegistration(from)],
 ]);
 
 /**

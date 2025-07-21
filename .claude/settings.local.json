@@ -48,7 +48,8 @@
       "WebFetch(domain:ai.google.dev)",
       "Bash(npm run seed:embeddings:*)",
       "Bash(del backendtest-quantity-fix.js)",
-      "Bash(pm2 list:*)"
+      "Bash(pm2 list:*)",
+      "Bash(dir:*)"
     ],
     "deny": []
   }

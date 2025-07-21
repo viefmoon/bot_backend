@@ -6,12 +6,14 @@ export const INTERACTIVE_ACTIONS = {
   // PreOrder actions
   PREORDER_CONFIRM: 'preorder_confirm:',
   PREORDER_DISCARD: 'preorder_discard:',
-  PREORDER_CHANGE_ADDRESS: 'preorder_change_address:',
+  PREORDER_CHANGE_TYPE: 'preorder_change_type:',
+  
+  // Order type selection
+  SELECT_ORDER_TYPE: 'select_order_type',
   
   // Address actions
   SELECT_ADDRESS: 'select_address_',
-  CHANGE_ADDRESS: 'change_address',
-  ADD_NEW_ADDRESS: 'add_new_address',
+  ADD_NEW_ADDRESS_PREORDER: 'add_new_address_preorder',
   
   // Order actions
   PAY_ONLINE: 'pay_online',
@@ -22,6 +24,10 @@ export const INTERACTIVE_ACTIONS = {
   WAIT_TIMES: 'wait_times',
   CHATBOT_HELP: 'chatbot_help',
   CHANGE_DELIVERY_INFO: 'change_delivery_info',
+  
+  // Registration flow actions
+  REQUEST_DELIVERY_REGISTRATION: 'request_delivery_registration',
+  REQUEST_PICKUP_REGISTRATION: 'request_pickup_registration',
 } as const;
 
 /**

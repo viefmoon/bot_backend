@@ -150,14 +150,14 @@ export function getAgentTools(): any[] {
           orderType: {
             type: "string",
             enum: ["DELIVERY", "TAKE_AWAY"],
-            description: "Tipo de orden: DELIVERY (entrega a domicilio) o TAKE_AWAY (para llevar/recoger)"
+            description: "Tipo de orden: DELIVERY (entrega a domicilio) o TAKE_AWAY (para llevar/recoger). OPCIONAL - Si no se especifica, el sistema lo inferirá automáticamente basándose en si el cliente tiene direcciones registradas"
           },
           warnings: { 
             type: "string",
             description: "Advertencias o notas sobre el mapeo si hay productos no encontrados o ambigüedades"
           }
         },
-        required: ["orderItems", "orderType"]
+        required: ["orderItems"]
       }
     }
   ];

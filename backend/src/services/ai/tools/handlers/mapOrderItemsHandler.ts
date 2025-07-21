@@ -18,7 +18,7 @@ export const handleMapOrderItems: ToolHandler = async (args): Promise<UnifiedRes
   // Return UnifiedResponse with processed data
   return ResponseBuilder.orderProcessing({
     orderItems: processedItems,
-    orderType: args.orderType || 'DELIVERY',
+    orderType: args.orderType, // Don't default - let PreOrderService infer it
     warnings: args.warnings ? [args.warnings] : [],
     scheduledAt: args.scheduledAt || null
   });

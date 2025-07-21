@@ -191,6 +191,33 @@ router.put('/update-customer-name',
     // Mark for sync
     await SyncMetadataService.markForSync('Customer', updatedCustomer.id, 'REMOTE');
     
+    // Verificar si el cliente tiene direcciones
+    const addressCount = await prisma.address.count({
+      where: { customerId: updatedCustomer.id, deletedAt: null }
+    });
+
+    // Si no tiene direcciones, es el flujo de "Recolección", enviar mensajes de éxito
+    if (addressCount === 0) {
+      try {
+        const { sendWhatsAppMessage, sendWhatsAppInteractiveMessage } = await import('../services/whatsapp');
+        const { WELCOME_MESSAGE_INTERACTIVE } = await import('../common/config/predefinedMessages');
+        const { ConfigService } = await import('../services/config/ConfigService');
+
+        await sendWhatsAppMessage(
+          whatsappPhoneNumber,
+          `✅ ¡Gracias ${firstName}! Tu nombre ha sido registrado exitosamente.`
+        );
+        
+        await new Promise(resolve => setTimeout(resolve, 1000));
+
+        const config = ConfigService.getConfig();
+        const welcomeMessage = WELCOME_MESSAGE_INTERACTIVE(config);
+        await sendWhatsAppInteractiveMessage(whatsappPhoneNumber, welcomeMessage);
+      } catch (msgError) {
+        logger.error('Error sending confirmation message for name registration:', msgError);
+      }
+    }
+    
     res.json({
       success: true,
       customer: updatedCustomer

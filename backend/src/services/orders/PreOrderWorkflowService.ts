@@ -30,7 +30,7 @@ export class PreOrderWorkflowService {
     try {
       logger.info('Creating preorder with workflow', { 
         customerId: params.customerId,
-        orderType: params.orderData.orderType 
+        orderType: params.orderData.orderType || 'will be inferred' 
       });
       
         if (!params.orderData.orderItems || params.orderData.orderItems.length === 0) {
@@ -53,7 +53,7 @@ export class PreOrderWorkflowService {
       const preOrderService = new PreOrderService();
       const preOrderResult = await preOrderService.createPreOrder({
         orderItems: params.orderData.orderItems,
-        orderType: params.orderData.orderType,
+        orderType: params.orderData.orderType, // Now optional - will be inferred if not provided
         scheduledAt: params.orderData.scheduledAt || undefined,
         whatsappPhoneNumber: params.whatsappNumber,
         deliveryInfo: params.orderData.deliveryInfo,
@@ -197,16 +197,14 @@ export class PreOrderWorkflowService {
       }
     ];
     
-    // Add change address button only for delivery orders
-    if (preOrderResult.orderType === OrderType.DELIVERY) {
-      buttons.push({
-        type: "reply",
-        reply: {
-          id: `preorder_change_address:${token}`,
-          title: "📍 Cambiar dirección"
-        }
-      });
-    }
+    // Add change order type button (available for both delivery and pickup)
+    buttons.push({
+      type: "reply",
+      reply: {
+        id: `preorder_change_type:${token}`,
+        title: "🔄 Cambiar tipo"
+      }
+    });
     
     buttons.push({
       type: "reply",
@@ -565,7 +563,8 @@ export class PreOrderWorkflowService {
                 }
               }
             }
-          }
+          },
+          deliveryInfo: true
         }
       });
       
@@ -652,6 +651,140 @@ export class PreOrderWorkflowService {
       return result;
     } catch (error) {
       logger.error('Error recreating preOrder with new address', error);
+      throw error;
+    }
+  }
+
+  static async recreatePreOrderWithNewType(params: {
+    oldPreOrderId: number;
+    newOrderType: OrderType;
+    whatsappNumber: string;
+  }): Promise<PreOrderWorkflowResult> {
+    try {
+      // Get the old preOrder with all details
+      const oldPreOrder = await prisma.preOrder.findUnique({
+        where: { id: params.oldPreOrderId },
+        include: {
+          orderItems: {
+            include: {
+              product: true,
+              productVariant: true,
+              productModifiers: true,
+              selectedPizzaCustomizations: {
+                include: {
+                  pizzaCustomization: true
+                }
+              }
+            }
+          },
+          deliveryInfo: true
+        }
+      });
+      
+      if (!oldPreOrder) {
+        throw new BusinessLogicError(
+          ErrorCode.ORDER_NOT_FOUND,
+          'PreOrder not found',
+          { metadata: { preOrderId: params.oldPreOrderId } }
+        );
+      }
+      
+      // Get customer
+      const customer = await prisma.customer.findUnique({
+        where: { whatsappPhoneNumber: params.whatsappNumber }
+      });
+      
+      if (!customer) {
+        throw new BusinessLogicError(
+          ErrorCode.CUSTOMER_NOT_FOUND,
+          'Customer not found',
+          { metadata: { whatsappNumber: params.whatsappNumber } }
+        );
+      }
+      
+      // Prepare order data from old preOrder
+      const orderData: ProcessedOrderData = {
+        orderItems: (oldPreOrder as any).orderItems.map((item: any) => ({
+          productId: item.productId,
+          productVariantId: item.productVariantId || undefined,
+          quantity: 1,
+          selectedModifiers: item.productModifiers.map((m: any) => m.id),
+          selectedPizzaCustomizations: item.selectedPizzaCustomizations.map((pc: any) => ({
+            pizzaCustomizationId: pc.pizzaCustomizationId,
+            half: pc.half,
+            action: pc.action
+          }))
+        })),
+        orderType: params.newOrderType as 'DELIVERY' | 'TAKE_AWAY',
+        scheduledAt: oldPreOrder.scheduledAt || undefined
+      };
+      
+      // Include delivery info only if it exists and we're keeping delivery
+      if ((oldPreOrder as any).deliveryInfo && params.newOrderType === OrderType.DELIVERY) {
+        // Get the delivery info
+        const deliveryInfo = await prisma.deliveryInfo.findUnique({
+          where: { id: (oldPreOrder as any).deliveryInfo.id }
+        });
+        
+        if (!deliveryInfo) {
+          throw new BusinessLogicError(
+            ErrorCode.MISSING_DELIVERY_INFO,
+            'Delivery info not found'
+          );
+        }
+        
+        orderData.deliveryInfo = {
+          name: deliveryInfo.name || undefined,
+          street: deliveryInfo.street || undefined,
+          number: deliveryInfo.number || undefined,
+          interiorNumber: deliveryInfo.interiorNumber || undefined,
+          neighborhood: deliveryInfo.neighborhood || undefined,
+          city: deliveryInfo.city || undefined,
+          state: deliveryInfo.state || undefined,
+          zipCode: deliveryInfo.zipCode || undefined,
+          country: deliveryInfo.country || undefined,
+          deliveryInstructions: deliveryInfo.deliveryInstructions || undefined,
+          latitude: deliveryInfo.latitude?.toNumber() || null,
+          longitude: deliveryInfo.longitude?.toNumber() || null
+        };
+      }
+      
+      // Mark that we're updating a preOrder to prevent welcome message
+      const updateKey = redisKeys.preorderUpdating(params.whatsappNumber);
+      await redisService.set(updateKey, 'true', 60); // 60 seconds TTL
+      
+      // Discard the old preOrder
+      await this.discardPreOrderData(params.oldPreOrderId);
+      
+      // Delete old token
+      const tokenKeys = await redisService.keys(`${REDIS_KEYS.PREORDER_TOKEN_PREFIX}*`);
+      for (const key of tokenKeys) {
+        const storedPreOrderId = await redisService.get(key);
+        if (storedPreOrderId === params.oldPreOrderId.toString()) {
+          await redisService.del(key);
+          break;
+        }
+      }
+      
+      // Create new preOrder with updated type
+      const result = await this.createAndNotify({
+        orderData,
+        customerId: customer.id,
+        whatsappNumber: params.whatsappNumber
+      });
+      
+      // Send notification about the change
+      const typeText = params.newOrderType === OrderType.DELIVERY 
+        ? "entrega a domicilio 🚚" 
+        : "recolección en el restaurante 🏠";
+      await sendWhatsAppMessage(
+        params.whatsappNumber,
+        `✅ Tu pedido ha sido actualizado para ${typeText}`
+      );
+      
+      return result;
+    } catch (error) {
+      logger.error('Error recreating preOrder with new type', error);
       throw error;
     }
   }

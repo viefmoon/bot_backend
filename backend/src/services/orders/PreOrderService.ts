@@ -16,11 +16,12 @@ export class PreOrderService {
   async createPreOrder(orderData: {
     orderItems: BaseOrderItem[];
     whatsappPhoneNumber: string;
-    orderType: OrderType;
+    orderType?: OrderType;  // Now optional
     scheduledAt?: string | Date;
     deliveryInfo?: DeliveryInfoInput;
   }) {
-    const { orderItems, whatsappPhoneNumber, orderType, scheduledAt, deliveryInfo: inputDeliveryInfo } = orderData;
+    const { orderItems, whatsappPhoneNumber, scheduledAt, deliveryInfo: inputDeliveryInfo } = orderData;
+    let { orderType } = orderData;
 
     logger.info(`Starting createPreOrder for ${whatsappPhoneNumber}`, {
       orderType,
@@ -32,6 +33,26 @@ export class PreOrderService {
     try {
       // Validate all order items before any other operation
       await OrderItemValidatorService.validateOrderItems(orderItems);
+
+      // Get customer to check for addresses (needed for orderType inference)
+      const customer = await prisma.customer.findUnique({
+        where: { whatsappPhoneNumber }
+      });
+
+      // Infer orderType if not provided
+      if (!orderType) {
+        const addressCount = await prisma.address.count({
+          where: {
+            customerId: customer?.id,
+            deletedAt: null
+          }
+        });
+
+        // If customer has addresses, default to DELIVERY; otherwise TAKE_AWAY
+        orderType = addressCount > 0 ? OrderType.DELIVERY : OrderType.TAKE_AWAY;
+        
+        logger.info(`Inferred orderType: ${orderType} (addresses: ${addressCount})`);
+      }
 
       // Flatten order items based on quantity
       const flattenedOrderItems: BaseOrderItem[] = orderItems.flatMap(item => {
@@ -53,11 +74,18 @@ export class PreOrderService {
 
       logger.info(`Flattened ${orderItems.length} items to ${flattenedOrderItems.length} items based on quantities`)
       
-      // Get restaurant config
-      const config = await RestaurantService.getConfig();
+      // Get restaurant config from database
+      const config = await prisma.restaurantConfig.findFirst();
       
-      // Calculate estimated time based on order type
-      const estimatedDeliveryTime = orderType === OrderType.DELIVERY 
+      if (!config) {
+        throw new ValidationError(
+          ErrorCode.MISSING_REQUIRED_FIELD,
+          'Restaurant configuration not found'
+        );
+      }
+      
+      // Calculate estimated time based on order type (will recalculate later if type changes)
+      let estimatedDeliveryTime = orderType === OrderType.DELIVERY 
         ? config.estimatedDeliveryTime 
         : config.estimatedPickupTime;
 
@@ -67,10 +95,26 @@ export class PreOrderService {
         orderType
       );
 
-      // Get customerId from whatsapp phone number for delivery info
-      const customer = await prisma.customer.findUnique({
-        where: { whatsappPhoneNumber }
-      });
+      // Customer already fetched above for orderType inference
+      
+      // If delivery order without addresses, convert to TAKE_AWAY
+      if (orderType === OrderType.DELIVERY) {
+        const addressCount = await prisma.address.count({
+          where: {
+            customerId: customer?.id,
+            deletedAt: null
+          }
+        });
+
+        if (addressCount === 0) {
+          // Customer is trying to order delivery without any registered addresses
+          // Convert to TAKE_AWAY instead of throwing error
+          logger.info(`Converting DELIVERY order to TAKE_AWAY due to no addresses for customer ${whatsappPhoneNumber}`);
+          orderType = OrderType.TAKE_AWAY;
+          // Recalculate estimated time for pickup
+          estimatedDeliveryTime = config.estimatedPickupTime;
+        }
+      }
       
       // Get or create delivery info
       let deliveryInfoId = null;
@@ -90,7 +134,7 @@ export class PreOrderService {
       );
 
       // Validate minimum order value for delivery
-      const minimumValue = config.minimumOrderValueForDelivery ? Number(config.minimumOrderValueForDelivery) : 0;
+      const minimumValue = (config as any).minimumOrderValueForDelivery ? Number((config as any).minimumOrderValueForDelivery) : 0;
       
       if (orderType === OrderType.DELIVERY && minimumValue > 0 && total < minimumValue) {
         const difference = minimumValue - total;

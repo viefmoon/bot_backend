@@ -63,4 +63,23 @@ export class LinkGenerationService {
       preOrderId
     });
   }
+  
+  /**
+   * Generates a link for name-only registration (for pickup orders)
+   * @param whatsappPhoneNumber - The customer's WhatsApp phone number
+   * @returns The registration URL directed to name-only form view
+   */
+  static async generateNameRegistrationLink(
+    whatsappPhoneNumber: string
+  ): Promise<string> {
+    const otp = OTPService.generateOTP();
+    await OTPService.storeOTP(whatsappPhoneNumber, otp, true);
+    
+    // La clave es el query param `mode=nameOnly`
+    const url = `${env.FRONTEND_BASE_URL}/address-registration/${whatsappPhoneNumber}?otp=${otp}&mode=nameOnly`;
+    
+    logger.info('Generated name-only registration link', { whatsappPhoneNumber });
+    
+    return url;
+  }
 }
