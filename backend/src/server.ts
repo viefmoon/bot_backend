@@ -214,6 +214,11 @@ async function startServer() {
     const { initializeEmbeddings } = await import('./startup/embeddingInitializer');
     await initializeEmbeddings();
     
+    // Start the message worker
+    const { startMessageWorker } = await import('./queues/messageQueue');
+    startMessageWorker();
+    logger.info('Message worker started');
+    
     const server = app.listen(PORT, () => {
       logger.info(`Server is running on port ${PORT}`);
     });

@@ -7,10 +7,10 @@ require('dotenv').config();
 module.exports = {
   apps: [
     {
-      // API Server Configuration
+      // API Server Configuration (includes the worker)
       name: 'whatsapp-api',
       script: 'dist/src/server.js',
-      instances: 1, // API usually needs only one instance
+      instances: 1, // API and worker run in the same process now
       autorestart: true,
       watch: false,
       max_memory_restart: '1G',
@@ -21,23 +21,6 @@ module.exports = {
       out_file: 'logs/api-out.log',
       log_file: 'logs/api-combined.log',
       time: true,
-    },
-    {
-      // Worker Configuration
-      name: 'whatsapp-worker',
-      script: 'dist/src/workers/messageWorker.js',
-      instances: parseInt(process.env.NUM_WORKERS || '1', 10), // Read from .env
-      autorestart: true,
-      watch: false,
-      max_memory_restart: '1G',
-      env: {
-        NODE_ENV: 'production',
-      },
-      error_file: 'logs/worker-error.log',
-      out_file: 'logs/worker-out.log',
-      log_file: 'logs/worker-combined.log',
-      time: true,
-      exec_mode: 'cluster', // Enable cluster mode for multiple instances
     },
   ],
 
