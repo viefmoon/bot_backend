@@ -153,32 +153,38 @@ export class MessagePipeline {
       timestamp: new Date()
     });
     
-    // Agregar respuestas al historial usando la lógica unificada
-    for (const response of context.unifiedResponses) {
-      const textContent = response.content?.text;
-      const historyMarker = response.metadata.historyMarker;
-      const isRelevant = response.metadata.isRelevant;
-      
-      // Para el historial completo, siempre usar el texto completo si existe
-      if (textContent) {
-        fullChatHistory.push({
-          role: 'assistant',
-          content: textContent,
-          timestamp: new Date()
-        });
-      }
-      
-      // Para el historial relevante, aplicar las reglas de prioridad:
-      // 1. Si hay historyMarker, usarlo siempre
-      // 2. Si no hay historyMarker pero isRelevant es true, usar el texto
-      // 3. Si isRelevant es false y no hay historyMarker, no guardar
-      if (historyMarker || (isRelevant && textContent)) {
-        const contentToSave = historyMarker || textContent;
-        relevantChatHistory.push({
-          role: 'assistant',
-          content: contentToSave!,
-          timestamp: new Date()
-        });
+    // Check if responses were cancelled before adding them to history
+    const wasCancelled = await this.wasCancelled(context);
+    if (wasCancelled) {
+      logger.info(`Skipping history update for assistant responses because job ${context.runId} was cancelled.`);
+    } else {
+      // Agregar respuestas al historial usando la lógica unificada
+      for (const response of context.unifiedResponses) {
+        const textContent = response.content?.text;
+        const historyMarker = response.metadata.historyMarker;
+        const isRelevant = response.metadata.isRelevant;
+        
+        // Para el historial completo, siempre usar el texto completo si existe
+        if (textContent) {
+          fullChatHistory.push({
+            role: 'assistant',
+            content: textContent,
+            timestamp: new Date()
+          });
+        }
+        
+        // Para el historial relevante, aplicar las reglas de prioridad:
+        // 1. Si hay historyMarker, usarlo siempre
+        // 2. Si no hay historyMarker pero isRelevant es true, usar el texto
+        // 3. Si isRelevant es false y no hay historyMarker, no guardar
+        if (historyMarker || (isRelevant && textContent)) {
+          const contentToSave = historyMarker || textContent;
+          relevantChatHistory.push({
+            role: 'assistant',
+            content: contentToSave!,
+            timestamp: new Date()
+          });
+        }
       }
     }
     
@@ -221,6 +227,27 @@ export class MessagePipeline {
     } else {
       this.middlewares.push(middleware);
     }
+  }
+  
+  // Helper method to check if responses were cancelled
+  private async wasCancelled(context: MessageContext): Promise<boolean> {
+    const latestMessageTimestampKey = redisKeys.latestMessageTimestamp(context.message.from);
+    const latestCombinedStr = await redisService.get(latestMessageTimestampKey);
+    
+    if (!latestCombinedStr) return false;
+    
+    const [latestWAStr, latestServerStr] = latestCombinedStr.split(':');
+    const latestWATimestamp = parseInt(latestWAStr, 10);
+    const latestServerTimestamp = latestServerStr ? parseInt(latestServerStr, 10) : 0;
+    
+    const currentMessage = context.message as any;
+    const currentWATimestamp = parseInt(currentMessage.timestamp, 10);
+    const currentServerTimestamp = currentMessage.serverTimestamp || 0;
+    
+    if (currentWATimestamp < latestWATimestamp) return true;
+    if (currentWATimestamp === latestWATimestamp && currentServerTimestamp < latestServerTimestamp) return true;
+    
+    return false;
   }
   
 }
