@@ -413,20 +413,20 @@ npm run build || {
     print_error "Error de compilación detectado"
     print_info "Diagnosticando el problema..."
     
-    # Verificar si el archivo existe
+    # Verificar si el archivo existe (con cualquier capitalización)
     print_step "Verificando archivos..."
-    if [ -f "src/whatsapp/handlers/interactive/preorderActions.ts" ]; then
-        print_success "Archivo preorderActions.ts existe"
+    ACTUAL_FILE=$(ls src/whatsapp/handlers/interactive/ | grep -i "^preorderactions.ts$" | head -1)
+    
+    if [ ! -z "$ACTUAL_FILE" ]; then
+        print_info "Archivo encontrado: $ACTUAL_FILE"
         
-        # Verificar el nombre exacto del archivo
-        ACTUAL_NAME=$(ls -la src/whatsapp/handlers/interactive/ | grep -i "preorderactions.ts" | awk '{print $9}')
-        print_info "Nombre real del archivo: $ACTUAL_NAME"
-        
-        # Si el nombre tiene diferente capitalización
-        if [ "$ACTUAL_NAME" != "preorderActions.ts" ] && [ ! -z "$ACTUAL_NAME" ]; then
-            print_step "Renombrando archivo a preorderActions.ts..."
-            mv "src/whatsapp/handlers/interactive/$ACTUAL_NAME" "src/whatsapp/handlers/interactive/preorderActions.ts"
+        # Si el nombre no es exactamente preorderActions.ts, renombrarlo
+        if [ "$ACTUAL_FILE" != "preorderActions.ts" ]; then
+            print_step "Renombrando $ACTUAL_FILE a preorderActions.ts..."
+            mv "src/whatsapp/handlers/interactive/$ACTUAL_FILE" "src/whatsapp/handlers/interactive/preorderActions.ts"
             print_success "Archivo renombrado correctamente"
+        else
+            print_success "Archivo preorderActions.ts tiene el nombre correcto"
         fi
     else
         print_error "Archivo preorderActions.ts NO encontrado"
