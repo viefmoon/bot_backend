@@ -411,22 +411,60 @@ print_success "Verificación completada"
 print_step "Recompilando proyecto TypeScript..."
 npm run build || {
     print_error "Error de compilación detectado"
-    print_info "Intentando arreglar errores comunes..."
+    print_info "Diagnosticando el problema..."
     
-    # Si hay errores de case sensitivity con preorderActions
+    # Verificar si el archivo existe
+    print_step "Verificando archivos..."
+    if [ -f "src/whatsapp/handlers/interactive/preorderActions.ts" ]; then
+        print_success "Archivo preorderActions.ts existe"
+        
+        # Verificar el nombre exacto del archivo
+        ACTUAL_NAME=$(ls -la src/whatsapp/handlers/interactive/ | grep -i "preorderactions.ts" | awk '{print $9}')
+        print_info "Nombre real del archivo: $ACTUAL_NAME"
+        
+        # Si el nombre tiene diferente capitalización
+        if [ "$ACTUAL_NAME" != "preorderActions.ts" ] && [ ! -z "$ACTUAL_NAME" ]; then
+            print_step "Renombrando archivo a preorderActions.ts..."
+            mv "src/whatsapp/handlers/interactive/$ACTUAL_NAME" "src/whatsapp/handlers/interactive/preorderActions.ts"
+            print_success "Archivo renombrado correctamente"
+        fi
+    else
+        print_error "Archivo preorderActions.ts NO encontrado"
+        print_info "Contenido del directorio:"
+        ls -la src/whatsapp/handlers/interactive/
+    fi
+    
+    # Si hay errores de módulo no encontrado
     if npm run build 2>&1 | grep -q "Cannot find module.*preorderActions"; then
-        print_step "Corrigiendo case sensitivity en imports..."
-        # Buscar y corregir referencias incorrectas
-        find src -name "*.ts" -type f -exec sed -i 's/preOrderActions/preorderActions/g' {} \;
-        find src -name "*.ts" -type f -exec sed -i 's/PreorderActions/preorderActions/g' {} \;
-        print_success "Case sensitivity corregido"
+        print_step "Intentando arreglos adicionales..."
+        
+        # Limpiar cache de TypeScript más agresivamente
+        print_step "Limpiando cache de TypeScript..."
+        rm -rf node_modules/.cache
+        rm -rf .tsbuildinfo
+        rm -rf tsconfig.tsbuildinfo
+        rm -rf dist
+        
+        # Reinstalar @types/node específicamente
+        print_step "Reinstalando tipos de TypeScript..."
+        npm install --save-dev @types/node
+        
+        print_success "Limpieza adicional completada"
     fi
     
     # Intentar compilar de nuevo
     print_step "Reintentando compilación..."
     npm run build || {
         print_error "La compilación sigue fallando"
-        print_info "Por favor, revisa los errores arriba"
+        print_info "Ejecutando diagnóstico adicional..."
+        
+        # Mostrar más información de debug
+        print_info "Verificando referencias en index.ts:"
+        grep -n "preorderActions" src/whatsapp/handlers/interactive/index.ts || true
+        
+        print_info "Archivos en el directorio:"
+        ls -la src/whatsapp/handlers/interactive/ | grep -E "\.ts$"
+        
         exit 1
     }
 }
