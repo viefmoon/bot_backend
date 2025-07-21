@@ -31,15 +31,13 @@ export class TextProcessingService {
       );
     }
 
-    let relevantChatHistory = context.get(CONTEXT_KEYS.RELEVANT_CHAT_HISTORY) || [];
-    
-    // Create a working copy that includes the current message
-    const workingHistory = [...relevantChatHistory];
-    workingHistory.push({ role: "user", content: text });
+    // El historial que viene en el contexto YA incluye el mensaje actual del usuario,
+    // preparado y ordenado por el worker.
+    const relevantChatHistory = context.get(CONTEXT_KEYS.RELEVANT_CHAT_HISTORY) || [];
     
     try {
-      // Process with AI - use workingHistory that includes the current message
-      const messages: Content[] = workingHistory.map(
+      // Usamos 'relevantChatHistory' directamente - ya incluye el mensaje actual
+      const messages: Content[] = relevantChatHistory.map(
         ({ role, content }: any) => ({
           role: role === "assistant" ? "model" : role,
           parts: [{ text: content }]
