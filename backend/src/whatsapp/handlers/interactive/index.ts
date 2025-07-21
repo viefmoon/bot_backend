@@ -9,7 +9,7 @@ import {
   handlePreOrderAction,
   handlePreOrderChangeType,
   handleSelectOrderType
-} from './preorderActions';
+} from './preOrderActions';
 
 import {
   handleChangeDeliveryInfo,
@@ -36,7 +36,7 @@ import {
 } from './registrationActions';
 
 // Export all handlers for individual use
-export * from './preorderActions';
+export * from './preOrderActions';
 export * from './addressActions';
 export * from './infoActions';
 export * from './paymentActions';

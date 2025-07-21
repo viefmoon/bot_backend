@@ -377,97 +377,11 @@ print_success "Cliente Prisma generado"
 # Paso 8: Limpiar y recompilar el proyecto
 print_step "Limpiando código compilado anterior..."
 rm -rf dist/
-rm -rf node_modules/.cache
-rm -rf .tsbuildinfo
-rm -rf tsconfig.tsbuildinfo
-print_success "Código compilado y cache eliminados"
+print_success "Código compilado eliminado"
 print_info "Esto previene errores de código obsoleto en el cache"
 
-# Limpiar módulos npm problemáticos
-print_step "Limpiando módulos npm problemáticos..."
-rm -rf node_modules/@types
-npm cache clean --force
-print_success "Cache de npm limpiado"
-
-# Reinstalar dependencias
-print_step "Reinstalando dependencias..."
-npm install
-print_success "Dependencias reinstaladas"
-
-# Verificar cambios en archivos con case sensitivity
-print_step "Verificando nombres de archivos..."
-# Verificar si hay problemas de case sensitivity
-if [ -d "src" ]; then
-    CASE_PROBLEMS=$(find src -name "*.ts" -type f -exec grep -l -E "from ['\"]\..*preOrderActions['\"]|from ['\"]\..*PreorderActions['\"]" {} \; 2>/dev/null || true)
-    if [ ! -z "$CASE_PROBLEMS" ]; then
-        print_warning "Detectados posibles problemas de case sensitivity"
-        echo "$CASE_PROBLEMS"
-    fi
-else
-    print_info "Directorio src no encontrado, saltando verificación"
-fi
-print_success "Verificación completada"
-
 print_step "Recompilando proyecto TypeScript..."
-npm run build || {
-    print_error "Error de compilación detectado"
-    print_info "Diagnosticando el problema..."
-    
-    # Verificar si el archivo existe (con cualquier capitalización)
-    print_step "Verificando archivos..."
-    ACTUAL_FILE=$(ls src/whatsapp/handlers/interactive/ | grep -i "^preorderactions.ts$" | head -1)
-    
-    if [ ! -z "$ACTUAL_FILE" ]; then
-        print_info "Archivo encontrado: $ACTUAL_FILE"
-        
-        # Si el nombre no es exactamente preorderActions.ts, renombrarlo
-        if [ "$ACTUAL_FILE" != "preorderActions.ts" ]; then
-            print_step "Renombrando $ACTUAL_FILE a preorderActions.ts..."
-            mv "src/whatsapp/handlers/interactive/$ACTUAL_FILE" "src/whatsapp/handlers/interactive/preorderActions.ts"
-            print_success "Archivo renombrado correctamente"
-        else
-            print_success "Archivo preorderActions.ts tiene el nombre correcto"
-        fi
-    else
-        print_error "Archivo preorderActions.ts NO encontrado"
-        print_info "Contenido del directorio:"
-        ls -la src/whatsapp/handlers/interactive/
-    fi
-    
-    # Si hay errores de módulo no encontrado
-    if npm run build 2>&1 | grep -q "Cannot find module.*preorderActions"; then
-        print_step "Intentando arreglos adicionales..."
-        
-        # Limpiar cache de TypeScript más agresivamente
-        print_step "Limpiando cache de TypeScript..."
-        rm -rf node_modules/.cache
-        rm -rf .tsbuildinfo
-        rm -rf tsconfig.tsbuildinfo
-        rm -rf dist
-        
-        # Reinstalar @types/node específicamente
-        print_step "Reinstalando tipos de TypeScript..."
-        npm install --save-dev @types/node
-        
-        print_success "Limpieza adicional completada"
-    fi
-    
-    # Intentar compilar de nuevo
-    print_step "Reintentando compilación..."
-    npm run build || {
-        print_error "La compilación sigue fallando"
-        print_info "Ejecutando diagnóstico adicional..."
-        
-        # Mostrar más información de debug
-        print_info "Verificando referencias en index.ts:"
-        grep -n "preorderActions" src/whatsapp/handlers/interactive/index.ts || true
-        
-        print_info "Archivos en el directorio:"
-        ls -la src/whatsapp/handlers/interactive/ | grep -E "\.ts$"
-        
-        exit 1
-    }
-}
+npm run build
 print_success "Proyecto recompilado con código actualizado"
 
 # Paso 9: Generar embeddings si está configurado
