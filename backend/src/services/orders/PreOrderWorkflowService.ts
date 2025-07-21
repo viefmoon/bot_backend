@@ -745,14 +745,6 @@ export class PreOrderWorkflowService {
         whatsappNumber: params.whatsappNumber
       });
       
-      // Send notification about the change
-      const typeText = params.newOrderType === OrderType.DELIVERY 
-        ? "entrega a domicilio 🚚" 
-        : "recolección en el restaurante 🏠";
-      await sendWhatsAppMessage(
-        params.whatsappNumber,
-        `✅ Tu pedido ha sido actualizado para ${typeText}`
-      );
       
       return result;
     } catch (error) {
