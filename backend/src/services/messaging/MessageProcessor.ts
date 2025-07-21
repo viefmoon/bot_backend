@@ -24,6 +24,7 @@ export class MessageProcessor {
         from: message.from,
         type: message.type,
         timestamp: message.timestamp,
+        serverTimestamp: message.serverTimestamp,
         text: message.text,
         interactive: message.interactive,
         audio: message.audio
