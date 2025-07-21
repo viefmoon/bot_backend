@@ -48,6 +48,26 @@ export class GeminiService {
       }
       
       // Agregar configuración de pensamiento dinámico para modelos compatibles
+      // Log del historial completo de mensajes
+      logger.info('===== HISTORIAL DE MENSAJES ENVIADOS AL MODELO =====');
+      logger.info(`Total de mensajes en el historial: ${messages.length}`);
+      messages.forEach((msg, index) => {
+        logger.info(`\nMensaje ${index + 1}:`);
+        logger.info(`  Rol: ${msg.role}`);
+        if (msg.parts && msg.parts.length > 0) {
+          msg.parts.forEach((part, partIndex) => {
+            if (part.text) {
+              logger.info(`  Parte ${partIndex + 1} (texto): ${part.text.substring(0, 200)}${part.text.length > 200 ? '...' : ''}`);
+            } else if (part.functionCall) {
+              logger.info(`  Parte ${partIndex + 1} (function call): ${part.functionCall.name}`);
+            } else if (part.functionResponse) {
+              logger.info(`  Parte ${partIndex + 1} (function response): ${JSON.stringify(part.functionResponse).substring(0, 200)}...`);
+            }
+          });
+        }
+      });
+      logger.info('===== FIN DEL HISTORIAL =====\n');
+      
       logger.info(`GeminiService: Checking thinking config - Model: ${env.GEMINI_MODEL}, enableDynamicThinking: ${enableDynamicThinking}`);
       
       if (enableDynamicThinking && env.GEMINI_MODEL.includes('2.5')) {
@@ -122,6 +142,19 @@ export class GeminiService {
       } catch (e3) {
         logger.debug('Could not JSON.stringify response');
       }
+      
+      // Log de la respuesta del modelo
+      logger.info('===== RESPUESTA DEL MODELO =====');
+      if (response.text) {
+        logger.info(`Respuesta (texto): ${response.text.substring(0, 300)}${response.text.length > 300 ? '...' : ''}`);
+      }
+      if (response.functionCalls) {
+        logger.info(`Respuesta contiene ${response.functionCalls.length} llamadas a funciones`);
+        response.functionCalls.forEach((fc, index) => {
+          logger.info(`  Función ${index + 1}: ${fc.name}`);
+        });
+      }
+      logger.info('===== FIN DE LA RESPUESTA =====\n');
       
       return response;
     } catch (error) {
