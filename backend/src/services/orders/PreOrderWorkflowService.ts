@@ -603,7 +603,7 @@ export class PreOrderWorkflowService {
             action: pc.action
           }))
         })),
-        orderType: oldPreOrder.orderType as 'DELIVERY' | 'TAKE_AWAY',
+        orderType: OrderType.DELIVERY, // Force DELIVERY when adding new address
         scheduledAt: oldPreOrder.scheduledAt || undefined,
         deliveryInfo: {
           name: newAddress.name,
@@ -703,6 +703,7 @@ export class PreOrderWorkflowService {
       }
       
       // Prepare order data from old preOrder
+      // Simplified: Let PreOrderService handle delivery info creation based on orderType
       const orderData: ProcessedOrderData = {
         orderItems: (oldPreOrder as any).orderItems.map((item: any) => ({
           productId: item.productId,
@@ -717,37 +718,8 @@ export class PreOrderWorkflowService {
         })),
         orderType: params.newOrderType as 'DELIVERY' | 'TAKE_AWAY',
         scheduledAt: oldPreOrder.scheduledAt || undefined
+        // No deliveryInfo - PreOrderService will handle it properly based on orderType
       };
-      
-      // Include delivery info only if it exists and we're keeping delivery
-      if ((oldPreOrder as any).deliveryInfo && params.newOrderType === OrderType.DELIVERY) {
-        // Get the delivery info
-        const deliveryInfo = await prisma.deliveryInfo.findUnique({
-          where: { id: (oldPreOrder as any).deliveryInfo.id }
-        });
-        
-        if (!deliveryInfo) {
-          throw new BusinessLogicError(
-            ErrorCode.MISSING_DELIVERY_INFO,
-            'Delivery info not found'
-          );
-        }
-        
-        orderData.deliveryInfo = {
-          name: deliveryInfo.name || undefined,
-          street: deliveryInfo.street || undefined,
-          number: deliveryInfo.number || undefined,
-          interiorNumber: deliveryInfo.interiorNumber || undefined,
-          neighborhood: deliveryInfo.neighborhood || undefined,
-          city: deliveryInfo.city || undefined,
-          state: deliveryInfo.state || undefined,
-          zipCode: deliveryInfo.zipCode || undefined,
-          country: deliveryInfo.country || undefined,
-          deliveryInstructions: deliveryInfo.deliveryInstructions || undefined,
-          latitude: deliveryInfo.latitude?.toNumber() || null,
-          longitude: deliveryInfo.longitude?.toNumber() || null
-        };
-      }
       
       // Mark that we're updating a preOrder to prevent welcome message
       const updateKey = redisKeys.preorderUpdating(params.whatsappNumber);
