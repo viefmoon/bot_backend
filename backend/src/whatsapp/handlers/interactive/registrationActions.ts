@@ -7,7 +7,7 @@ export const handleRequestDeliveryRegistration = wrapWhatsAppHandler(async (from
   const registrationLink = await LinkGenerationService.generateNewAddressLink(from);
   await sendMessageWithUrlButton(
     from,
-    "📝 Registro Completo",
+    "📝 Completa tu Registro",
     "¡Perfecto! Para continuar, por favor completa tu nombre y dirección de entrega.",
     "Registrarme",
     registrationLink
