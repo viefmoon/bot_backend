@@ -396,12 +396,12 @@ print_success "Dependencias reinstaladas"
 
 # Verificar cambios en archivos con case sensitivity
 print_step "Verificando nombres de archivos..."
-find src -name "*.ts" -type f | while read file; do
-    # Verificar imports con case incorrecto
-    grep -E "from ['\"]\..*['\"]" "$file" | grep -E "(preOrderActions|PreorderActions)" && {
-        print_warning "Posible problema de case sensitivity en: $file"
-    }
-done
+# Verificar si hay problemas de case sensitivity
+CASE_PROBLEMS=$(find src -name "*.ts" -type f -exec grep -l -E "from ['\"]\..*preOrderActions['\"]|from ['\"]\..*PreorderActions['\"]" {} \; 2>/dev/null || true)
+if [ ! -z "$CASE_PROBLEMS" ]; then
+    print_warning "Detectados posibles problemas de case sensitivity"
+    echo "$CASE_PROBLEMS"
+fi
 
 print_step "Recompilando proyecto TypeScript..."
 npm run build || {
