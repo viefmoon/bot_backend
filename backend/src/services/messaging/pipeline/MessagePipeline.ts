@@ -13,6 +13,7 @@ import { sendWhatsAppMessage, sendWhatsAppInteractiveMessage, sendMessageWithUrl
 import { SyncMetadataService } from '../../../services/sync/SyncMetadataService';
 import { redisService } from '../../redis/RedisService';
 import { redisKeys } from '../../../common/constants';
+import { Customer } from '@prisma/client';
 
 export class MessagePipeline {
   private middlewares: MessageMiddleware[] = [];
@@ -29,8 +30,19 @@ export class MessagePipeline {
     ];
   }
 
-  async process(message: IncomingMessage, runId: string): Promise<void> {
+  async process(
+    message: IncomingMessage, 
+    runId: string,
+    customer: Customer,
+    fullHistory: any[],
+    relevantHistory: any[]
+  ): Promise<void> {
     const context = new MessageContext(message, runId);
+    
+    // Inyectar el contexto pre-cargado
+    context.setCustomer(customer);
+    context.set(CONTEXT_KEYS.FULL_CHAT_HISTORY, fullHistory);
+    context.set(CONTEXT_KEYS.RELEVANT_CHAT_HISTORY, relevantHistory);
     
     try {
       // Ejecutar todos los middlewares

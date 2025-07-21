@@ -1,6 +1,7 @@
 import { MessagePipeline } from './pipeline/MessagePipeline';
 import { IncomingMessage } from './types';
 import logger from '../../common/utils/logger';
+import { Customer } from '@prisma/client';
 
 // Esta clase proporciona una interfaz simple para procesar mensajes de WhatsApp
 // a través de nuestro pipeline de procesamiento de mensajes
@@ -16,7 +17,13 @@ export class MessageProcessor {
   }
   
   // Este método procesa los mensajes entrantes a través del pipeline
-  static async processWithPipeline(message: any, runId: string): Promise<void> {
+  static async processWithPipeline(
+    message: any, 
+    runId: string,
+    customer: Customer,
+    fullHistory: any[],
+    relevantHistory: any[]
+  ): Promise<void> {
     try {
       // Convertir el formato del mensaje al formato del pipeline
       const incomingMessage: IncomingMessage = {
@@ -30,8 +37,14 @@ export class MessageProcessor {
         audio: message.audio
       };
       
-      // Procesar con el pipeline con runId
-      await this.getPipeline().process(incomingMessage, runId);
+      // Procesar con el pipeline con runId y contexto pre-cargado
+      await this.getPipeline().process(
+        incomingMessage, 
+        runId,
+        customer,
+        fullHistory,
+        relevantHistory
+      );
     } catch (error) {
       logger.error('Error in MessageProcessor:', error);
       throw error; // Dejar que el llamador maneje el error

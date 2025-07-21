@@ -3,11 +3,11 @@ import IORedis from 'ioredis';
 import { env } from '../common/config/envValidator';
 import { redisKeys } from '../common/constants';
 import logger from '../common/utils/logger';
-import { processMessageJob } from '../workers/messageWorker';
 import { WhatsAppMessageJob } from './types';
 import { redisService } from '../services/redis/RedisService';
 import { prisma } from '../server';
 import { SyncMetadataService } from '../services/sync/SyncMetadataService';
+import { MessageProcessor } from '../services/messaging/MessageProcessor';
 
 // Redis connection configuration
 const connection = {
@@ -76,7 +76,6 @@ export function startMessageWorker(): void {
     async (job: Job<WhatsAppMessageJob>) => {
       const userId = job.data.from;
       const runId = job.id!; // Use BullMQ job ID as our unique run ID
-      const currentRunKey = redisKeys.currentRun(userId);
       const latestMessageTimestampKey = redisKeys.latestMessageTimestamp(userId);
       
       let lockAcquired = false;
@@ -105,118 +104,102 @@ export function startMessageWorker(): void {
         }
         
         // =================================================================
-        // PASO 1: GUARDAR EL MENSAJE DEL USUARIO INMEDIATAMENTE
-        // Esto se hace ANTES de cualquier verificación de cancelación.
+        // PASO 1: OBTENER Y PREPARAR EL HISTORIAL DE FORMA ATÓMICA
         // =================================================================
-        const messageContent = job.data.text?.body || '[Mensaje no textual]';
         const customer = await prisma.customer.findUnique({ where: { whatsappPhoneNumber: userId } });
-
-        if (customer) {
-          // Obtenemos los historiales existentes
-          const fullHistory = Array.isArray(customer.fullChatHistory) ? customer.fullChatHistory : [];
-          const relevantHistory = Array.isArray(customer.relevantChatHistory) ? customer.relevantChatHistory : [];
-
-          // Crear la nueva entrada con el timestamp original de WhatsApp
+        
+        if (!customer) {
+          // Crear nuevo cliente
+          const newCustomer = await prisma.customer.create({
+            data: {
+              whatsappPhoneNumber: userId,
+              lastInteraction: new Date(),
+              fullChatHistory: [],
+              relevantChatHistory: []
+            }
+          });
+          await SyncMetadataService.markForSync('Customer', newCustomer.id, 'REMOTE');
+          logger.info(`Created new customer for ${userId}`);
+          
+          // Para nuevos clientes, procesar con historiales vacíos
+          const messageContent = job.data.text?.body || '[Mensaje no textual]';
           const userMessageEntry = {
             role: 'user',
             content: messageContent,
             timestamp: new Date(parseInt(job.data.timestamp, 10) * 1000).toISOString()
           };
+          
+          const fullHistory = [userMessageEntry];
+          const relevantHistory = [userMessageEntry];
+          
+          // Procesar con el nuevo cliente
+          await MessageProcessor.processWithPipeline(
+            job.data,
+            runId,
+            newCustomer,
+            fullHistory,
+            relevantHistory
+          );
+          return;
+        }
 
-          // Agregamos el nuevo mensaje
-          fullHistory.push(userMessageEntry);
-          relevantHistory.push(userMessageEntry);
+        // Cliente existente: obtener y actualizar historiales
+        let fullHistory = Array.isArray(customer.fullChatHistory) ? customer.fullChatHistory : [];
+        let relevantHistory = Array.isArray(customer.relevantChatHistory) ? customer.relevantChatHistory : [];
 
-          // *** PASO CLAVE DE ORDENAMIENTO ***
-          // Ordenar ambos historiales por timestamp antes de guardarlos
-          const sortHistory = (a: any, b: any) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime();
-          fullHistory.sort(sortHistory);
-          relevantHistory.sort(sortHistory);
+        // Añadir el mensaje actual
+        const messageContent = job.data.text?.body || '[Mensaje no textual]';
+        const userMessageEntry = {
+          role: 'user',
+          content: messageContent,
+          timestamp: new Date(parseInt(job.data.timestamp, 10) * 1000).toISOString()
+        };
+        
+        fullHistory.push(userMessageEntry);
+        relevantHistory.push(userMessageEntry);
 
-          // Actualizamos en la base de datos con historiales ordenados
+        // Ordenar para garantizar la cronología
+        const sortHistory = (a: any, b: any) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime();
+        fullHistory.sort(sortHistory);
+        relevantHistory.sort(sortHistory);
+        
+        // =================================================================
+        // PASO 2: VERIFICACIÓN DE CANCELACIÓN
+        // =================================================================
+        const isObsolete = await isJobObsolete(job, latestMessageTimestampKey);
+        if (isObsolete) {
+          // Si es obsoleto, guardamos el historial con el nuevo mensaje y terminamos
           await prisma.customer.update({
             where: { id: customer.id },
             data: {
-              fullChatHistory: fullHistory as any, // Prisma espera JsonValue
-              relevantChatHistory: relevantHistory.slice(-20) as any, // Mantenemos el límite de 20
+              fullChatHistory: fullHistory as any,
+              relevantChatHistory: relevantHistory.slice(-20) as any,
               lastInteraction: new Date()
             }
           });
-
-          // Marcar para sincronización
           await SyncMetadataService.markForSync('Customer', customer.id, 'REMOTE');
-          logger.info(`[History] User message from job ${runId} saved and sorted for user ${userId}.`);
-        } else {
-          logger.warn(`[History] Could not save message for job ${runId}. Customer ${userId} not found.`);
+          logger.info(`[Cancelled Pre-Process] Job ${runId} is obsolete. Message saved, but response aborted.`);
+          return;
         }
         
         // =================================================================
-        // PASO 2: VERIFICACIÓN DE CANCELACIÓN (AHORA ES SEGURO HACERLO)
-        // Si se cancela, la RESPUESTA se aborta, pero el mensaje del usuario ya está guardado.
+        // PASO 3: PASAR EL HISTORIAL CORRECTO AL PIPELINE
         // =================================================================
-        // PRE-PROCESS CANCELLATION CHECK (for queued jobs)
-        logger.info(`[DEBUG Pre-Process] Checking cancellation for job ${runId} from ${userId}`);
-        logger.info(`[DEBUG Pre-Process] Current message timestamp: ${job.data.timestamp}, serverTimestamp: ${job.data.serverTimestamp || 'N/A'}`);
+        logger.info(`Processing job ${runId} for user ${userId} with unified history`);
         
-        try {
-          const latestCombinedStr = await redisService.get(latestMessageTimestampKey);
-          logger.info(`[DEBUG Pre-Process] Latest combined timestamp from Redis: ${latestCombinedStr || 'NULL'}`);
-          
-          if (latestCombinedStr) {
-            // Parse combined timestamp format: "whatsappTimestamp:serverTimestamp"
-            const [latestWAStr, latestServerStr] = latestCombinedStr.split(':');
-            const latestWATimestamp = parseInt(latestWAStr, 10);
-            const latestServerTimestamp = latestServerStr ? parseInt(latestServerStr, 10) : 0;
-            
-            const currentWATimestamp = parseInt(job.data.timestamp, 10);
-            const currentServerTimestamp = job.data.serverTimestamp || 0;
-            
-            logger.info(`[DEBUG Pre-Process] Comparing WA timestamps: current ${currentWATimestamp} vs latest ${latestWATimestamp}`);
-            
-            // First compare WhatsApp timestamps
-            if (currentWATimestamp < latestWATimestamp) {
-              logger.info(`[DEBUG Pre-Process] CANCELLING: WA timestamp ${currentWATimestamp} < ${latestWATimestamp}`);
-              logger.info(`[Cancelled Pre-Process] Job ${runId} is obsolete. Aborting RESPONSE generation.`);
-              return;
-            } else if (currentWATimestamp === latestWATimestamp && currentServerTimestamp && latestServerTimestamp) {
-              // If WhatsApp timestamps are equal, compare server timestamps
-              logger.info(`[DEBUG Pre-Process] WA timestamps equal, comparing server: current ${currentServerTimestamp} vs latest ${latestServerTimestamp}`);
-              if (currentServerTimestamp < latestServerTimestamp) {
-                logger.info(`[DEBUG Pre-Process] CANCELLING: Server timestamp ${currentServerTimestamp} < ${latestServerTimestamp}`);
-                logger.info(`[Cancelled Pre-Process] Job ${runId} is obsolete (same second). Aborting RESPONSE generation.`);
-                return;
-              }
-            }
-          }
-        } catch (error) {
-          logger.warn(`[Pre-Process Check] Failed to check latest timestamp for ${userId}. Redis may be unavailable. Proceeding anyway.`, error);
-          // Continue processing if Redis fails
-        }
-        
-        // Set the "I'm the active job" flag
-        try {
-          await redisService.set(currentRunKey, runId, 300); // 5 minutes TTL
-          logger.debug(`[Set Run ID] Job ${runId} is now the active run for user ${userId}`);
-        } catch (error) {
-          logger.warn(`[Set Run ID] Failed to set active run for ${userId}. Redis may be unavailable.`, error);
-          // Continue processing even if we can't set the run ID
-        }
-        
-        logger.info(`Processing job ${runId} for user ${userId}`);
-        
-        // Process the message with runId
-        await processMessageJob(job.data, runId);
+        await MessageProcessor.processWithPipeline(
+          job.data,
+          runId,
+          customer,
+          fullHistory,
+          relevantHistory.slice(-20) // Pasamos la versión ya ordenada y limitada
+        );
         
         // Small delay to ensure BullMQ completes its internal operations
         await new Promise(resolve => setTimeout(resolve, 100));
         
       } finally {
         if (lockAcquired) {
-          // Optional: Clean up the run flag if our job was the last to execute
-          const finalRunId = await redisService.get(currentRunKey);
-          if (finalRunId === runId) {
-            await redisService.del(currentRunKey);
-          }
           await releaseUserLock(userId);
           logger.debug(`Lock released for user ${userId}`);
         }
@@ -252,6 +235,31 @@ export function startMessageWorker(): void {
   });
 
   logger.info('BullMQ Message Worker started and listening for jobs');
+}
+
+// Helper function to check if a job is obsolete
+async function isJobObsolete(job: Job<WhatsAppMessageJob>, latestMessageTimestampKey: string): Promise<boolean> {
+  try {
+    const latestCombinedStr = await redisService.get(latestMessageTimestampKey);
+    if (!latestCombinedStr) return false;
+
+    const [latestWAStr, latestServerStr] = latestCombinedStr.split(':');
+    const latestWATimestamp = parseInt(latestWAStr, 10);
+    const latestServerTimestamp = latestServerStr ? parseInt(latestServerStr, 10) : 0;
+
+    const currentWATimestamp = parseInt(job.data.timestamp, 10);
+    const currentServerTimestamp = job.data.serverTimestamp || 0;
+
+    logger.info(`[DEBUG Pre-Process] Comparing timestamps - Current: ${currentWATimestamp}:${currentServerTimestamp}, Latest: ${latestWATimestamp}:${latestServerTimestamp}`);
+
+    if (currentWATimestamp < latestWATimestamp) return true;
+    if (currentWATimestamp === latestWATimestamp && currentServerTimestamp < latestServerTimestamp) return true;
+
+    return false;
+  } catch (error) {
+    logger.warn(`[Pre-Process Check] Failed to check latest timestamp. Redis may be unavailable. Proceeding anyway.`, error);
+    return false;
+  }
 }
 
 export async function stopMessageWorker(): Promise<void> {
