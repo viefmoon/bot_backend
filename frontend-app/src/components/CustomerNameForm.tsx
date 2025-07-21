@@ -8,7 +8,6 @@ interface CustomerNameFormProps {
   initialLastName?: string;
   isEditing?: boolean;
   onCancel?: () => void;
-  registrationMode?: 'full' | 'nameOnly';
 }
 
 export function CustomerNameForm({ 
@@ -17,8 +16,7 @@ export function CustomerNameForm({
   initialFirstName = '',
   initialLastName = '',
   isEditing = false,
-  onCancel,
-  registrationMode = 'full'
+  onCancel
 }: CustomerNameFormProps) {
   const [firstName, setFirstName] = useState(initialFirstName);
   const [lastName, setLastName] = useState(initialLastName);
@@ -69,9 +67,7 @@ export function CustomerNameForm({
         <p className="text-base text-gray-600 max-w-md mx-auto">
           {isEditing 
             ? 'Modifica tu información personal para mantener tus datos actualizados.'
-            : registrationMode === 'nameOnly'
-              ? <><span className="font-semibold text-orange-600">Es necesario completar tu información personal</span> para poder procesar tu pedido de recolección.</>
-              : <><span className="font-semibold text-orange-600">Es necesario completar tu información personal</span> para poder registrar tus direcciones de entrega y procesar tus pedidos.</>
+            : <><span className="font-semibold text-orange-600">Es necesario completar tu información personal</span> para poder registrar tus direcciones de entrega y procesar tus pedidos.</>
           }
         </p>
       </div>
@@ -140,11 +136,7 @@ export function CustomerNameForm({
               </div>
             ) : (
               <span className="flex items-center justify-center">
-                {isEditing 
-                  ? 'Guardar cambios' 
-                  : registrationMode === 'nameOnly' 
-                    ? 'Completar registro' 
-                    : 'Continuar al registro de dirección'}
+                {isEditing ? 'Guardar cambios' : 'Continuar al registro de dirección'}
                 <svg className="ml-2 w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                 </svg>

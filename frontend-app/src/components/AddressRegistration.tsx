@@ -27,7 +27,6 @@ export function AddressRegistration() {
   
   // Estado para controlar qué vista mostrar - MUST be before any conditional returns
   const [viewMode, setViewMode] = useState<'list' | 'form'>('list');
-  const [registrationMode, setRegistrationMode] = useState<'full' | 'nameOnly'>('full');
   const [isEditingCustomerName, setIsEditingCustomerName] = useState(false);
   const [isGettingLocation, setIsGettingLocation] = useState(false);
   const [showSuccessScreen, setShowSuccessScreen] = useState(false);
@@ -75,15 +74,9 @@ export function AddressRegistration() {
     const urlOtp = searchParams.get('otp') || '';
     const urlPreOrderId = searchParams.get('preOrderId') || null;
     const urlViewMode = searchParams.get('viewMode');
-    const urlMode = searchParams.get('mode');
     
     if (urlCustomerId && urlOtp) {
       setSession(urlCustomerId, urlOtp, urlPreOrderId || undefined);
-    }
-    
-    // Check if mode=nameOnly for pickup orders
-    if (urlMode === 'nameOnly') {
-      setRegistrationMode('nameOnly');
     }
     
     // If viewMode=form is specified, go directly to form view with clean form
@@ -606,13 +599,9 @@ export function AddressRegistration() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
               </svg>
             </div>
-            <h2 className="text-2xl font-bold text-gray-900 mb-2">
-              {registrationMode === 'nameOnly' ? '¡Registro Completado!' : '¡Dirección Guardada!'}
-            </h2>
+            <h2 className="text-2xl font-bold text-gray-900 mb-2">¡Dirección Guardada!</h2>
             <p className="text-gray-600 mb-6">
-              {registrationMode === 'nameOnly' 
-                ? 'Tu información se ha registrado correctamente. Ya puedes continuar con tu pedido para recolección en WhatsApp.'
-                : 'Tu dirección se ha registrado correctamente. Ya puedes continuar con tu pedido a domicilio en WhatsApp.'}
+              Tu dirección se ha registrado correctamente. Ya puedes continuar con tu pedido a domicilio en WhatsApp.
             </p>
           </div>
           
@@ -706,13 +695,11 @@ export function AddressRegistration() {
           {/* Header con gradiente naranja-rosa */}
           <div className="bg-gradient-to-r from-orange-500 to-pink-600 p-4 sm:p-6 text-white">
             <h1 className="text-xl sm:text-2xl md:text-3xl font-bold mb-2 drop-shadow-lg">
-              {registrationMode === 'nameOnly' 
-                ? '📝 Registro de Cliente'
-                : viewMode === 'list' 
-                  ? '📍 Mis Direcciones de Entrega' 
-                  : editingAddressId 
-                    ? `📍 Actualizar: ${formData.name || 'Dirección'}` 
-                    : '📍 Registrar Dirección de Entrega'}
+              📍 {viewMode === 'list' 
+                ? 'Mis Direcciones de Entrega' 
+                : editingAddressId 
+                  ? `Actualizar: ${formData.name || 'Dirección'}` 
+                  : 'Registrar Dirección de Entrega'}
             </h1>
             <div className="flex items-center gap-3 flex-wrap">
               <div className="flex items-center gap-2">
@@ -751,28 +738,18 @@ export function AddressRegistration() {
               <CustomerNameForm
                 onSubmit={async (firstName, lastName) => {
                   await handleUpdateCustomerName(firstName, lastName);
-                  if (registrationMode === 'nameOnly') {
-                    // Si es solo nombre, mostramos la pantalla de éxito
-                    setShowSuccessScreen(true);
-                    setTimeout(() => {
-                      window.close();
-                    }, 3000);
-                  } else {
-                    // Si es registro completo, dejamos que el estado del customer se actualice
-                    setIsEditingCustomerName(false);
-                  }
+                  setIsEditingCustomerName(false);
                 }}
                 isSubmitting={updateCustomerNameMutation.isPending}
                 initialFirstName={customer.firstName || ''}
                 initialLastName={customer.lastName || ''}
                 isEditing={isEditingCustomerName}
                 onCancel={() => setIsEditingCustomerName(false)}
-                registrationMode={registrationMode}
               />
             )}
 
             {/* Show list view if customer has addresses and viewMode is 'list' AND not editing name */}
-            {registrationMode === 'full' && customer && customer.firstName && customer.lastName && !isEditingCustomerName && viewMode === 'list' && customer.addresses.length > 0 && (
+            {customer && customer.firstName && customer.lastName && !isEditingCustomerName && viewMode === 'list' && customer.addresses.length > 0 && (
               <div>
                 <div className="grid gap-4 mb-6">
                   {customer.addresses.map((address) => (
@@ -954,7 +931,7 @@ export function AddressRegistration() {
             )}
 
             {/* Show form view if viewMode is 'form' or no addresses AND not editing name */}
-            {registrationMode === 'full' && customer && customer.firstName && customer.lastName && !isEditingCustomerName && (viewMode === 'form' || customer.addresses.length === 0) && (
+            {customer && customer.firstName && customer.lastName && !isEditingCustomerName && (viewMode === 'form' || customer.addresses.length === 0) && (
               <>
                 {/* Botón para volver a la lista si hay direcciones */}
                 {customer.addresses.length > 0 && (

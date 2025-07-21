@@ -75,8 +75,8 @@ export class LinkGenerationService {
     const otp = OTPService.generateOTP();
     await OTPService.storeOTP(whatsappPhoneNumber, otp, true);
     
-    // La clave es el query param `mode=nameOnly`
-    const url = `${env.FRONTEND_BASE_URL}/address-registration/${whatsappPhoneNumber}?otp=${otp}&mode=nameOnly`;
+    // Usar la nueva ruta específica para registro de nombre
+    const url = `${env.FRONTEND_BASE_URL}/name-registration/${whatsappPhoneNumber}?otp=${otp}`;
     
     logger.info('Generated name-only registration link', { whatsappPhoneNumber });
     

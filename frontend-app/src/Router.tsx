@@ -1,5 +1,6 @@
 import { Routes, Route } from 'react-router-dom';
 import AddressRegistration from './components/AddressRegistration';
+import NameRegistration from './components/NameRegistration';
 
 function Router() {
   return (
@@ -13,6 +14,7 @@ function Router() {
         </div>
       } />
       <Route path="/address-registration/:customerId" element={<AddressRegistration />} />
+      <Route path="/name-registration/:customerId" element={<NameRegistration />} />
     </Routes>
   );
 }
