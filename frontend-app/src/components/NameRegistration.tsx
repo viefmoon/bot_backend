@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, useParams } from 'react-router-dom';
 import toast, { Toaster } from 'react-hot-toast';
 import { useVerifyOtp, useUpdateCustomerName } from '@/hooks/useAddressQueries';
 
@@ -12,6 +12,7 @@ interface Customer {
 
 export function NameRegistration() {
   const [searchParams] = useSearchParams();
+  const { customerId: urlCustomerId } = useParams<{ customerId: string }>();
   
   // Estado del componente
   const [customerId, setCustomerId] = useState<string>('');
@@ -25,16 +26,14 @@ export function NameRegistration() {
 
   // Initialize session from URL params
   useEffect(() => {
-    // Get customerId from URL path (e.g., /name-registration/5213320407035)
-    const pathParts = window.location.pathname.split('/');
-    const urlCustomerId = pathParts[pathParts.length - 1] || searchParams.get('from') || '';
+    // El customerId ahora viene de useParams de forma segura
     const urlOtp = searchParams.get('otp') || '';
     
     if (urlCustomerId && urlOtp) {
       setCustomerId(urlCustomerId);
       setOtp(urlOtp);
     }
-  }, [searchParams]);
+  }, [searchParams, urlCustomerId]);
 
   // React Query hooks
   const { data: otpData, isLoading: isVerifying } = useVerifyOtp(

@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, useParams } from 'react-router-dom';
 import toast, { Toaster } from 'react-hot-toast';
 import { loadGoogleMaps } from '@/utils/loadGoogleMaps';
 import { AddressForm } from '@/components/AddressForm';
@@ -24,6 +24,7 @@ interface Location {
 
 export function AddressRegistration() {
   const [searchParams] = useSearchParams();
+  const { customerId: urlCustomerId } = useParams<{ customerId: string }>();
   
   // Estado para controlar qué vista mostrar - MUST be before any conditional returns
   const [viewMode, setViewMode] = useState<'list' | 'form'>('list');
@@ -68,9 +69,7 @@ export function AddressRegistration() {
       }
     }
     
-    // Get customerId from URL path (e.g., /address-registration/5213320407035)
-    const pathParts = window.location.pathname.split('/');
-    const urlCustomerId = pathParts[pathParts.length - 1] || searchParams.get('from') || '';
+    // El customerId ahora viene de useParams de forma segura
     const urlOtp = searchParams.get('otp') || '';
     const urlPreOrderId = searchParams.get('preOrderId') || null;
     const urlViewMode = searchParams.get('viewMode');
@@ -85,7 +84,7 @@ export function AddressRegistration() {
       resetForm();
       setEditingAddressId(null);
     }
-  }, [searchParams, setSession]);
+  }, [searchParams, setSession, urlCustomerId]);
 
   // Google Maps loading state
   const [isLoaded, setIsLoaded] = useState(false);
