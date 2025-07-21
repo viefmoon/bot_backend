@@ -59,11 +59,16 @@ export class MessagePipeline {
   
   private async sendResponses(context: MessageContext): Promise<void> {
     // POST-PROCESS CANCELLATION CHECK
+    logger.info(`[DEBUG Post-Process] Checking cancellation for runId ${context.runId} from ${context.message.from}`);
+    
     const currentRunKey = redisKeys.currentRun(context.message.from);
     const activeRunId = await redisService.get(currentRunKey);
     
+    logger.info(`[DEBUG Post-Process] Active runId from Redis: ${activeRunId || 'NULL'}, Current runId: ${context.runId}`);
+    
     // Check if this context's runId is still the active one in Redis
     if (activeRunId && activeRunId !== context.runId) {
+      logger.info(`[DEBUG Post-Process] CANCELLING: ${context.runId} !== ${activeRunId}`);
       logger.info(`[Cancelled Post-Process] Run ${context.runId} is obsolete. Active run is ${activeRunId}. Discarding ${context.unifiedResponses.length} responses.`);
       // A newer job has taken control. Don't send anything.
       return;

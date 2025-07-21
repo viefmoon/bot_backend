@@ -110,7 +110,7 @@ export class WhatsAppService {
         if (!setResult) {
           logger.warn(`[Signal] Failed to set latest timestamp for ${from}. Redis may be unavailable. Proceeding anyway.`);
         } else {
-          logger.debug(`[Signal] Set latest timestamp for ${from} to ${message.timestamp}`);
+          logger.info(`[DEBUG Signal] Set timestamp for ${from}: ${message.timestamp} with key: ${latestMessageTimestampKey}`);
         }
       } catch (error) {
         logger.warn(`[Signal] Error setting timestamp in Redis for ${from}:`, error);

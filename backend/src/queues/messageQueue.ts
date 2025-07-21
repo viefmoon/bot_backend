@@ -103,12 +103,21 @@ export function startMessageWorker(): void {
         }
         
         // PRE-PROCESS CANCELLATION CHECK (for queued jobs)
+        logger.info(`[DEBUG Pre-Process] Checking cancellation for job ${runId} from ${userId}`);
+        logger.info(`[DEBUG Pre-Process] Current message timestamp: ${job.data.timestamp}`);
+        
         try {
           const latestTimestampStr = await redisService.get(latestMessageTimestampKey);
+          logger.info(`[DEBUG Pre-Process] Latest timestamp from Redis: ${latestTimestampStr || 'NULL'}`);
+          
           if (latestTimestampStr) {
             const latestTimestamp = parseInt(latestTimestampStr, 10);
             const currentMessageTimestamp = parseInt(job.data.timestamp, 10);
+            
+            logger.info(`[DEBUG Pre-Process] Comparing: current ${currentMessageTimestamp} vs latest ${latestTimestamp}`);
+            
             if (currentMessageTimestamp < latestTimestamp) {
+              logger.info(`[DEBUG Pre-Process] CANCELLING: ${currentMessageTimestamp} < ${latestTimestamp}`);
               logger.info(`[Cancelled Pre-Process] Job ${runId} (ts:${currentMessageTimestamp}) is obsolete. Newest is ${latestTimestamp}. Aborting.`);
               return; // Abort before processing
             }
