@@ -1,7 +1,7 @@
 import { Queue, Worker, Job } from 'bullmq';
 import IORedis from 'ioredis';
 import { env } from '../common/config/envValidator';
-import { redisKeys } from '../common/constants';
+import { redisKeys, CONTEXT_KEYS } from '../common/constants';
 import logger from '../common/utils/logger';
 import { WhatsAppMessageJob } from './types';
 import { redisService } from '../services/redis/RedisService';
@@ -187,13 +187,59 @@ export function startMessageWorker(): void {
         // =================================================================
         logger.info(`Processing job ${runId} for user ${userId} with unified history`);
         
-        await MessageProcessor.processWithPipeline(
+        const finalContext = await MessageProcessor.processWithPipeline(
           job.data,
           runId,
           customer,
           fullHistory,
           relevantHistory.slice(-20) // Pasamos la versión ya ordenada y limitada
         );
+        
+        // =================================================================
+        // PASO 4: AGREGAR RESPUESTAS DEL BOT Y GUARDAR UNA SOLA VEZ
+        // =================================================================
+        const wasCancelled = await wasJobCancelled(job);
+        if (!wasCancelled && !finalContext.get(CONTEXT_KEYS.SKIP_HISTORY_UPDATE)) {
+          for (const response of finalContext.unifiedResponses || []) {
+            const textContent = response.content?.text;
+            const historyMarker = response.metadata?.historyMarker;
+            const isRelevant = response.metadata?.isRelevant;
+
+            if (textContent) {
+              const assistantEntry = {
+                role: 'assistant',
+                content: textContent,
+                timestamp: new Date().toISOString()
+              };
+              fullHistory.push(assistantEntry);
+
+              if (historyMarker || isRelevant) {
+                relevantHistory.push({
+                  ...assistantEntry,
+                  content: historyMarker || textContent
+                });
+              }
+            }
+          }
+          
+          // Ordenar una última vez y aplicar límite
+          fullHistory.sort(sortHistory);
+          relevantHistory.sort(sortHistory);
+          relevantHistory = relevantHistory.slice(-20);
+        }
+        
+        // Guardar el historial completo actualizado
+        await prisma.customer.update({
+          where: { id: customer.id },
+          data: {
+            fullChatHistory: fullHistory as any,
+            relevantChatHistory: relevantHistory as any,
+            lastInteraction: new Date()
+          }
+        });
+        
+        await SyncMetadataService.markForSync('Customer', customer.id, 'REMOTE');
+        logger.info(`[History] Final unified history for job ${runId} saved for user ${userId}.`);
         
         // Small delay to ensure BullMQ completes its internal operations
         await new Promise(resolve => setTimeout(resolve, 100));
@@ -260,6 +306,12 @@ async function isJobObsolete(job: Job<WhatsAppMessageJob>, latestMessageTimestam
     logger.warn(`[Pre-Process Check] Failed to check latest timestamp. Redis may be unavailable. Proceeding anyway.`, error);
     return false;
   }
+}
+
+// Helper function to check if a job was cancelled
+async function wasJobCancelled(job: Job<WhatsAppMessageJob>): Promise<boolean> {
+  const latestMessageTimestampKey = redisKeys.latestMessageTimestamp(job.data.from);
+  return isJobObsolete(job, latestMessageTimestampKey);
 }
 
 export async function stopMessageWorker(): Promise<void> {
