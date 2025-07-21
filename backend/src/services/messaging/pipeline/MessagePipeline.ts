@@ -58,20 +58,38 @@ export class MessagePipeline {
   
   
   private async sendResponses(context: MessageContext): Promise<void> {
-    // POST-PROCESS CANCELLATION CHECK
+    // POST-PROCESS CANCELLATION CHECK - Using timestamp-based logic
     logger.info(`[DEBUG Post-Process] Checking cancellation for runId ${context.runId} from ${context.message.from}`);
     
-    const currentRunKey = redisKeys.currentRun(context.message.from);
-    const activeRunId = await redisService.get(currentRunKey);
+    const latestMessageTimestampKey = redisKeys.latestMessageTimestamp(context.message.from);
+    const latestCombinedStr = await redisService.get(latestMessageTimestampKey);
     
-    logger.info(`[DEBUG Post-Process] Active runId from Redis: ${activeRunId || 'NULL'}, Current runId: ${context.runId}`);
-    
-    // Check if this context's runId is still the active one in Redis
-    if (activeRunId && activeRunId !== context.runId) {
-      logger.info(`[DEBUG Post-Process] CANCELLING: ${context.runId} !== ${activeRunId}`);
-      logger.info(`[Cancelled Post-Process] Run ${context.runId} is obsolete. Active run is ${activeRunId}. Discarding ${context.unifiedResponses.length} responses.`);
-      // A newer job has taken control. Don't send anything.
-      return;
+    if (latestCombinedStr) {
+      const [latestWAStr, latestServerStr] = latestCombinedStr.split(':');
+      const latestWATimestamp = parseInt(latestWAStr, 10);
+      const latestServerTimestamp = latestServerStr ? parseInt(latestServerStr, 10) : 0;
+      
+      const currentMessage = context.message as any; // Cast to access serverTimestamp
+      const currentWATimestamp = parseInt(currentMessage.timestamp, 10);
+      const currentServerTimestamp = currentMessage.serverTimestamp || 0;
+      
+      let shouldCancel = false;
+      
+      // Compare WhatsApp timestamp first
+      if (currentWATimestamp < latestWATimestamp) {
+        shouldCancel = true;
+      }
+      // If equal, compare server timestamp for more precision
+      else if (currentWATimestamp === latestWATimestamp && currentServerTimestamp < latestServerTimestamp) {
+        shouldCancel = true;
+      }
+      
+      if (shouldCancel) {
+        logger.info(`[Cancelled Post-Process] Job ${context.runId} is obsolete. ` +
+                    `Current timestamp ${currentWATimestamp}:${currentServerTimestamp} is older than latest ${latestCombinedStr}. ` +
+                    `Discarding ${context.unifiedResponses.length} responses.`);
+        return; // Stop sending responses
+      }
     }
     
     // If we get here, we have permission to send the responses
