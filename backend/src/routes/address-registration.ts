@@ -107,19 +107,35 @@ router.post('/create',
     
     // Enviar mensaje de confirmación a WhatsApp
     try {
-      const { sendWhatsAppMessage } = await import('../services/whatsapp');
-      const { ADDRESS_REGISTRATION_SUCCESS } = await import('../common/config/predefinedMessages');
+      const { sendWhatsAppInteractiveMessage } = await import('../services/whatsapp');
+      const { WELCOME_MESSAGE_INTERACTIVE } = await import('../common/config/predefinedMessages');
+      const { ConfigService } = await import('../services/config/ConfigService');
       
       // Verificar si viene de un preOrder (el frontend lo pasa como query param)
       const isFromPreOrder = preOrderId;
       
       if (!isFromPreOrder) {
-        // Enviar ÚNICAMENTE el mensaje de éxito del registro
-        // Este mensaje ya guía al usuario sobre el siguiente paso
-        await sendWhatsAppMessage(
-          customer.whatsappPhoneNumber,
-          ADDRESS_REGISTRATION_SUCCESS(newAddress)
-        );
+        // Combinar mensaje de éxito con menú de bienvenida
+        const config = ConfigService.getConfig();
+        const welcomeMessage = WELCOME_MESSAGE_INTERACTIVE(config);
+        
+        // Crear mensaje interactivo que combine confirmación y bienvenida
+        const successAndWelcomeBody = `✅ *¡Dirección registrada exitosamente!*\n\nTu dirección ha sido guardada. Ahora puedes realizar tu pedido.\n\n¿Cómo podemos ayudarte? 😊`;
+        
+        const interactiveMessage = {
+          type: "list",
+          header: {
+            type: "text",
+            text: `¡Bienvenido, ${customer.firstName || 'a bordo'}! 🎉`
+          },
+          body: {
+            text: successAndWelcomeBody
+          },
+          footer: welcomeMessage.footer,
+          action: welcomeMessage.action
+        };
+        
+        await sendWhatsAppInteractiveMessage(customer.whatsappPhoneNumber, interactiveMessage);
       }
       
       // Siempre actualizar lastInteraction
@@ -188,16 +204,32 @@ router.put('/update-customer-name',
       where: { customerId: updatedCustomer.id, deletedAt: null }
     });
 
-    // Si no tiene direcciones, es el flujo de "Recolección", enviar mensaje de éxito
+    // Si no tiene direcciones, es el flujo de "Recolección", enviar mensaje de éxito con menú
     if (addressCount === 0) {
       try {
-        const { sendWhatsAppMessage } = await import('../services/whatsapp');
+        const { sendWhatsAppInteractiveMessage } = await import('../services/whatsapp');
+        const { WELCOME_MESSAGE_INTERACTIVE } = await import('../common/config/predefinedMessages');
+        const { ConfigService } = await import('../services/config/ConfigService');
 
-        // Solo enviar mensaje de confirmación, sin mensaje de bienvenida
-        await sendWhatsAppMessage(
-          whatsappPhoneNumber,
-          `✅ ¡Gracias ${firstName}! Tu nombre ha sido registrado exitosamente. Ahora puedes realizar tu pedido.`
-        );
+        const config = ConfigService.getConfig();
+        const welcomeMessage = WELCOME_MESSAGE_INTERACTIVE(config);
+        
+        const successAndWelcomeBody = `✅ ¡Gracias, ${firstName}! Tu nombre se registró correctamente.\n\nAhora puedes realizar tu pedido para recoger en tienda.\n\n¿Cómo podemos ayudarte? 😊`;
+
+        const interactiveMessage = {
+          type: "list",
+          header: {
+            type: "text",
+            text: `¡Bienvenido, ${firstName}! 🎉`
+          },
+          body: {
+            text: successAndWelcomeBody
+          },
+          footer: welcomeMessage.footer,
+          action: welcomeMessage.action
+        };
+
+        await sendWhatsAppInteractiveMessage(whatsappPhoneNumber, interactiveMessage);
       } catch (msgError) {
         logger.error('Error sending confirmation message for name registration:', msgError);
       }
