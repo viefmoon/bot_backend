@@ -20,29 +20,9 @@ const queryClient = new QueryClient({
   },
 });
 
-// Detectar el basename basado en la URL actual
-const getBasename = () => {
-  // Si estamos en desarrollo, no hay basename
-  if (window.location.hostname === 'localhost') {
-    return undefined;
-  }
-  
-  // Buscar si hay un path antes de address-registration o name-registration
-  const pathname = window.location.pathname;
-  const match = pathname.match(/^(.*?)\/(address-registration|name-registration)\//);
-  
-  if (match && match[1]) {
-    return match[1];
-  }
-  
-  return undefined;
-};
-
-const basename = getBasename();
-
 createRoot(document.getElementById('root')!).render(
   <QueryClientProvider client={queryClient}>
-    <BrowserRouter basename={basename}>
+    <BrowserRouter>
       <Router />
     </BrowserRouter>
     <ReactQueryDevtools initialIsOpen={false} />
