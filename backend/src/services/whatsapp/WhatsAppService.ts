@@ -104,13 +104,18 @@ export class WhatsAppService {
       
       // 4. Set latest message timestamp signal in Redis
       const latestMessageTimestampKey = redisKeys.latestMessageTimestamp(from);
+      // Create a combined timestamp: WhatsApp timestamp + server reception time in milliseconds
+      // This handles multiple messages in the same second
+      const serverTimestamp = Date.now();
+      const combinedTimestamp = `${message.timestamp}:${serverTimestamp}`;
+      
       // Use a TTL of 300 seconds (5 minutes) to handle longer queue times
       try {
-        const setResult = await redisService.set(latestMessageTimestampKey, message.timestamp, 300);
+        const setResult = await redisService.set(latestMessageTimestampKey, combinedTimestamp, 300);
         if (!setResult) {
           logger.warn(`[Signal] Failed to set latest timestamp for ${from}. Redis may be unavailable. Proceeding anyway.`);
         } else {
-          logger.info(`[DEBUG Signal] Set timestamp for ${from}: ${message.timestamp} with key: ${latestMessageTimestampKey}`);
+          logger.info(`[DEBUG Signal] Set combined timestamp for ${from}: ${combinedTimestamp} (WA: ${message.timestamp}, Server: ${serverTimestamp})`);
         }
       } catch (error) {
         logger.warn(`[Signal] Error setting timestamp in Redis for ${from}:`, error);
@@ -123,6 +128,7 @@ export class WhatsAppService {
         from: message.from,
         type: message.type,
         timestamp: message.timestamp,
+        serverTimestamp: serverTimestamp, // Add server timestamp for combined comparison
         text: message.text,
         interactive: message.interactive,
         audio: message.audio

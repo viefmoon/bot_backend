@@ -104,22 +104,36 @@ export function startMessageWorker(): void {
         
         // PRE-PROCESS CANCELLATION CHECK (for queued jobs)
         logger.info(`[DEBUG Pre-Process] Checking cancellation for job ${runId} from ${userId}`);
-        logger.info(`[DEBUG Pre-Process] Current message timestamp: ${job.data.timestamp}`);
+        logger.info(`[DEBUG Pre-Process] Current message timestamp: ${job.data.timestamp}, serverTimestamp: ${job.data.serverTimestamp || 'N/A'}`);
         
         try {
-          const latestTimestampStr = await redisService.get(latestMessageTimestampKey);
-          logger.info(`[DEBUG Pre-Process] Latest timestamp from Redis: ${latestTimestampStr || 'NULL'}`);
+          const latestCombinedStr = await redisService.get(latestMessageTimestampKey);
+          logger.info(`[DEBUG Pre-Process] Latest combined timestamp from Redis: ${latestCombinedStr || 'NULL'}`);
           
-          if (latestTimestampStr) {
-            const latestTimestamp = parseInt(latestTimestampStr, 10);
-            const currentMessageTimestamp = parseInt(job.data.timestamp, 10);
+          if (latestCombinedStr) {
+            // Parse combined timestamp format: "whatsappTimestamp:serverTimestamp"
+            const [latestWAStr, latestServerStr] = latestCombinedStr.split(':');
+            const latestWATimestamp = parseInt(latestWAStr, 10);
+            const latestServerTimestamp = latestServerStr ? parseInt(latestServerStr, 10) : 0;
             
-            logger.info(`[DEBUG Pre-Process] Comparing: current ${currentMessageTimestamp} vs latest ${latestTimestamp}`);
+            const currentWATimestamp = parseInt(job.data.timestamp, 10);
+            const currentServerTimestamp = job.data.serverTimestamp || 0;
             
-            if (currentMessageTimestamp < latestTimestamp) {
-              logger.info(`[DEBUG Pre-Process] CANCELLING: ${currentMessageTimestamp} < ${latestTimestamp}`);
-              logger.info(`[Cancelled Pre-Process] Job ${runId} (ts:${currentMessageTimestamp}) is obsolete. Newest is ${latestTimestamp}. Aborting.`);
-              return; // Abort before processing
+            logger.info(`[DEBUG Pre-Process] Comparing WA timestamps: current ${currentWATimestamp} vs latest ${latestWATimestamp}`);
+            
+            // First compare WhatsApp timestamps
+            if (currentWATimestamp < latestWATimestamp) {
+              logger.info(`[DEBUG Pre-Process] CANCELLING: WA timestamp ${currentWATimestamp} < ${latestWATimestamp}`);
+              logger.info(`[Cancelled Pre-Process] Job ${runId} is obsolete. Aborting.`);
+              return;
+            } else if (currentWATimestamp === latestWATimestamp && currentServerTimestamp && latestServerTimestamp) {
+              // If WhatsApp timestamps are equal, compare server timestamps
+              logger.info(`[DEBUG Pre-Process] WA timestamps equal, comparing server: current ${currentServerTimestamp} vs latest ${latestServerTimestamp}`);
+              if (currentServerTimestamp < latestServerTimestamp) {
+                logger.info(`[DEBUG Pre-Process] CANCELLING: Server timestamp ${currentServerTimestamp} < ${latestServerTimestamp}`);
+                logger.info(`[Cancelled Pre-Process] Job ${runId} is obsolete (same second). Aborting.`);
+                return;
+              }
             }
           }
         } catch (error) {
