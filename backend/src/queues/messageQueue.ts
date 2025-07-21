@@ -116,17 +116,24 @@ export function startMessageWorker(): void {
           const fullHistory = Array.isArray(customer.fullChatHistory) ? customer.fullChatHistory : [];
           const relevantHistory = Array.isArray(customer.relevantChatHistory) ? customer.relevantChatHistory : [];
 
+          // Crear la nueva entrada con el timestamp original de WhatsApp
           const userMessageEntry = {
             role: 'user',
             content: messageContent,
-            timestamp: new Date().toISOString()
+            timestamp: new Date(parseInt(job.data.timestamp, 10) * 1000).toISOString()
           };
 
           // Agregamos el nuevo mensaje
           fullHistory.push(userMessageEntry);
           relevantHistory.push(userMessageEntry);
 
-          // Actualizamos en la base de datos
+          // *** PASO CLAVE DE ORDENAMIENTO ***
+          // Ordenar ambos historiales por timestamp antes de guardarlos
+          const sortHistory = (a: any, b: any) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime();
+          fullHistory.sort(sortHistory);
+          relevantHistory.sort(sortHistory);
+
+          // Actualizamos en la base de datos con historiales ordenados
           await prisma.customer.update({
             where: { id: customer.id },
             data: {
@@ -138,7 +145,7 @@ export function startMessageWorker(): void {
 
           // Marcar para sincronización
           await SyncMetadataService.markForSync('Customer', customer.id, 'REMOTE');
-          logger.info(`[History] User message from job ${runId} saved for user ${userId}.`);
+          logger.info(`[History] User message from job ${runId} saved and sorted for user ${userId}.`);
         } else {
           logger.warn(`[History] Could not save message for job ${runId}. Customer ${userId} not found.`);
         }

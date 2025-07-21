@@ -79,13 +79,23 @@ export class CustomerValidationMiddleware implements MessageMiddleware {
       context.setCustomer(customer);
       
       // Cargar historial de chat
-      const fullChatHistory = Array.isArray(customer.fullChatHistory)
+      let fullChatHistory = Array.isArray(customer.fullChatHistory)
         ? customer.fullChatHistory
         : JSON.parse((customer.fullChatHistory as string) || "[]");
       
       let relevantChatHistory = Array.isArray(customer.relevantChatHistory)
         ? customer.relevantChatHistory
         : JSON.parse((customer.relevantChatHistory as string) || "[]");
+      
+      // ORDENAR SIEMPRE ANTES DE USAR
+      const sortByTimestamp = (a: any, b: any) => {
+        const timeA = a.timestamp ? new Date(a.timestamp).getTime() : 0;
+        const timeB = b.timestamp ? new Date(b.timestamp).getTime() : 0;
+        return timeA - timeB;
+      };
+      
+      fullChatHistory.sort(sortByTimestamp);
+      relevantChatHistory.sort(sortByTimestamp);
       
       // Limpiar duplicados consecutivos en el historial relevante
       relevantChatHistory = this.removeDuplicateMessages(relevantChatHistory);
