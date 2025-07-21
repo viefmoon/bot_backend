@@ -377,11 +377,54 @@ print_success "Cliente Prisma generado"
 # Paso 8: Limpiar y recompilar el proyecto
 print_step "Limpiando código compilado anterior..."
 rm -rf dist/
-print_success "Código compilado eliminado"
+rm -rf node_modules/.cache
+rm -rf .tsbuildinfo
+rm -rf tsconfig.tsbuildinfo
+print_success "Código compilado y cache eliminados"
 print_info "Esto previene errores de código obsoleto en el cache"
 
+# Limpiar módulos npm problemáticos
+print_step "Limpiando módulos npm problemáticos..."
+rm -rf node_modules/@types
+npm cache clean --force
+print_success "Cache de npm limpiado"
+
+# Reinstalar dependencias
+print_step "Reinstalando dependencias..."
+npm install
+print_success "Dependencias reinstaladas"
+
+# Verificar cambios en archivos con case sensitivity
+print_step "Verificando nombres de archivos..."
+find src -name "*.ts" -type f | while read file; do
+    # Verificar imports con case incorrecto
+    grep -E "from ['\"]\..*['\"]" "$file" | grep -E "(preOrderActions|PreorderActions)" && {
+        print_warning "Posible problema de case sensitivity en: $file"
+    }
+done
+
 print_step "Recompilando proyecto TypeScript..."
-npm run build
+npm run build || {
+    print_error "Error de compilación detectado"
+    print_info "Intentando arreglar errores comunes..."
+    
+    # Si hay errores de case sensitivity con preorderActions
+    if npm run build 2>&1 | grep -q "Cannot find module.*preorderActions"; then
+        print_step "Corrigiendo case sensitivity en imports..."
+        # Buscar y corregir referencias incorrectas
+        find src -name "*.ts" -type f -exec sed -i 's/preOrderActions/preorderActions/g' {} \;
+        find src -name "*.ts" -type f -exec sed -i 's/PreorderActions/preorderActions/g' {} \;
+        print_success "Case sensitivity corregido"
+    fi
+    
+    # Intentar compilar de nuevo
+    print_step "Reintentando compilación..."
+    npm run build || {
+        print_error "La compilación sigue fallando"
+        print_info "Por favor, revisa los errores arriba"
+        exit 1
+    }
+}
 print_success "Proyecto recompilado con código actualizado"
 
 # Paso 9: Generar embeddings si está configurado
