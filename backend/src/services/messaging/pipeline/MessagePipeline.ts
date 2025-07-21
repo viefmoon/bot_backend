@@ -44,11 +44,12 @@ export class MessagePipeline {
       
       // El procesamiento ahora se maneja por middlewares
       
-      // Enviar respuestas
-      await this.sendResponses(context);
-      
-      // Actualizar historial de chat del cliente
+      // Actualizar historial de chat del cliente ANTES de enviar respuestas
+      // Esto garantiza que el mensaje del usuario siempre se guarde, incluso si se cancela
       await this.updateChatHistory(context);
+      
+      // Enviar respuestas (puede cancelarse si el mensaje es obsoleto)
+      await this.sendResponses(context);
       
     } catch (error) {
       logger.error('Error in MessagePipeline:', error);
