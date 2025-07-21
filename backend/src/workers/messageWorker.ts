@@ -18,6 +18,7 @@ export async function processMessageJob(messageData: WhatsAppMessageJob, runId: 
       from: messageData.from,
       type: messageData.type as 'text' | 'interactive' | 'audio' | 'image' | 'document' | 'location',
       timestamp: messageData.timestamp,
+      serverTimestamp: messageData.serverTimestamp, // CRÍTICO: Propagar serverTimestamp para evitar autocancelación
       text: messageData.text,
       interactive: messageData.interactive,
       audio: messageData.audio

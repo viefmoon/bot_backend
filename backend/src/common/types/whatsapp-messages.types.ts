@@ -9,6 +9,7 @@ export interface IncomingMessage {
   from: string;
   type: 'text' | 'interactive' | 'audio' | 'image' | 'document' | 'location';
   timestamp: string;
+  serverTimestamp?: number; // Timestamp del servidor para desempatar mensajes concurrentes
   text?: {
     body: string;
   };
