@@ -139,18 +139,18 @@ export class TextProcessingService {
         scheduledAt: preprocessedContent.scheduledAt,
       };
       
-      // Use the PreOrderWorkflowService
-      const workflowResult = await PreOrderWorkflowService.createAndNotify({
+      // Ahora createAndNotify devuelve el resultado y la respuesta
+      const { workflowResult, responseToSend } = await PreOrderWorkflowService.createAndNotify({
         orderData,
         customerId: context.customer!.id,
         whatsappNumber: context.message.from,
       });
       
+      // AÑADIR la respuesta devuelta al contexto del pipeline
+      context.addUnifiedResponse(responseToSend);
+
       // Store the action token in context for potential tracking
       context.set(CONTEXT_KEYS.LAST_PREORDER_TOKEN, workflowResult.actionToken);
-      
-      // Mark that interactive response was already sent by the workflow
-      context.set(CONTEXT_KEYS.INTERACTIVE_RESPONSE_SENT, true);
     } catch (error: any) {
       logger.error('Error creating preorder:', error);
       
