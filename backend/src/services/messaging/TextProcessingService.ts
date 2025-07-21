@@ -107,13 +107,24 @@ export class TextProcessingService {
           }
         }
       }
-    } catch (error) {
+    } catch (error: any) {
       logger.error("Error processing text message:", error);
-      const errorResponse = ResponseBuilder.error(
-        'PROCESSING_ERROR',
-        "Error al procesar la solicitud: " + (error as Error).message
-      );
-      context.addUnifiedResponse(errorResponse);
+      
+      // Si es un ExternalServiceError con código GEMINI_ERROR, usar el mensaje amigable
+      if (error.code === ErrorCode.GEMINI_ERROR) {
+        const errorResponse = ResponseBuilder.error(
+          ErrorCode.GEMINI_ERROR,
+          "🤖 El asistente no está disponible temporalmente. Por favor, intenta más tarde."
+        );
+        context.addUnifiedResponse(errorResponse);
+      } else {
+        // Para otros errores, usar un mensaje genérico
+        const errorResponse = ResponseBuilder.error(
+          'PROCESSING_ERROR',
+          "Lo siento, ocurrió un error procesando tu mensaje. Por favor intenta de nuevo."
+        );
+        context.addUnifiedResponse(errorResponse);
+      }
     }
   }
 
