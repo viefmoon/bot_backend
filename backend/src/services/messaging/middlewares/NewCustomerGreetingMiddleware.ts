@@ -9,16 +9,17 @@ export class NewCustomerGreetingMiddleware implements MessageMiddleware {
   name = 'NewCustomerGreetingMiddleware';
 
   async process(context: MessageContext): Promise<MessageContext> {
-    // Esta condición identifica a un cliente recién creado que aún no ha interactuado.
+    // Esta condición identifica a un cliente que aún no ha completado su registro.
     const isNewCustomer = context.get(CONTEXT_KEYS.IS_NEW_CUSTOMER);
     const hasNoName = !context.customer?.firstName;
     const hasNoAddress = context.get(CONTEXT_KEYS.HAS_NO_ADDRESS);
     
-    // Solo interceptar si es un cliente completamente nuevo (sin nombre ni dirección)
-    const isBrandNewCustomer = isNewCustomer && hasNoName && hasNoAddress;
+    // Interceptar si el cliente no tiene nombre (independientemente de si es nuevo o no)
+    // Esto maneja casos donde el cliente fue creado pero el registro falló
+    const needsRegistration = hasNoName;
 
-    if (isBrandNewCustomer) {
-      logger.info(`Customer ${context.message.from} is brand new. Sending order type selection.`);
+    if (needsRegistration) {
+      logger.info(`Customer ${context.message.from} needs registration. Sending order type selection.`);
 
       // Obtener el nombre del restaurante de la configuración
       const config = ConfigService.getConfig();
@@ -42,7 +43,7 @@ export class NewCustomerGreetingMiddleware implements MessageMiddleware {
               type: "reply",
               reply: {
                 id: "request_pickup_registration",
-                title: "🏪 Recolección en restaurante"
+                title: "🏪 Recoger en tienda"
               }
             }
           ]
