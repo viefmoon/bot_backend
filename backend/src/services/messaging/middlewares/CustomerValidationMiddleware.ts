@@ -41,7 +41,6 @@ export class CustomerValidationMiddleware implements MessageMiddleware {
       
       if (addressCount === 0) {
         context.set(CONTEXT_KEYS.HAS_NO_ADDRESS, true);
-        logger.info(`Customer ${customer.whatsappPhoneNumber} has no active addresses`);
       }
 
       // Verificar si es conversación nueva

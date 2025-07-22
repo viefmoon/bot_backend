@@ -18,6 +18,7 @@ import { SendMessageDto } from './dto/whatsapp';
 import { CreateOrderDto } from './dto/order';
 import { ConfigService } from './services/config/ConfigService';
 import { prisma } from './lib/prisma';
+import { NotFoundError, ErrorCode } from './common/services/errors';
 
 // Validate environment variables
 try {
@@ -110,7 +111,6 @@ app.get('/backend/customer/:customerId/addresses',
 
 app.get('/backend/customer/:customerId/addresses/default', asyncHandler(async (req: Request, res: Response) => {
   const { customerId } = req.params;
-  const { NotFoundError, ErrorCode } = await import('./common/services/errors');
   const address = await DeliveryInfoService.getCustomerDefaultAddress(customerId);
   if (!address) {
     throw new NotFoundError(
@@ -144,7 +144,6 @@ app.put('/backend/addresses/:addressId/set-default',
     });
     
     if (!existingAddress) {
-      const { NotFoundError, ErrorCode } = await import('./common/services/errors');
       throw new NotFoundError(
         ErrorCode.ADDRESS_NOT_FOUND,
         'Address not found',
@@ -167,7 +166,6 @@ app.delete('/backend/addresses/:addressId',
     });
     
     if (!existingAddress) {
-      const { NotFoundError, ErrorCode } = await import('./common/services/errors');
       throw new NotFoundError(
         ErrorCode.ADDRESS_NOT_FOUND,
         'Address not found',

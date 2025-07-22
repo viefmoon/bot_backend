@@ -114,8 +114,6 @@ export class WhatsAppService {
         const setResult = await redisService.set(latestMessageTimestampKey, combinedTimestamp, 300);
         if (!setResult) {
           logger.warn(`[Signal] Failed to set latest timestamp for ${from}. Redis may be unavailable. Proceeding anyway.`);
-        } else {
-          logger.info(`[DEBUG Signal] Set combined timestamp for ${from}: ${combinedTimestamp} (WA: ${message.timestamp}, Server: ${serverTimestamp})`);
         }
       } catch (error) {
         logger.warn(`[Signal] Error setting timestamp in Redis for ${from}:`, error);
@@ -139,8 +137,6 @@ export class WhatsAppService {
       await messageQueue.add(`msg-${from}`, jobData, {
         jobId: messageId, // Use WhatsApp message ID for deduplication
       });
-      
-      logger.info(`Message ${messageId} from ${from} enqueued for processing`);
       
     } catch (error) {
       logger.error('Error enqueuing incoming message:', error);

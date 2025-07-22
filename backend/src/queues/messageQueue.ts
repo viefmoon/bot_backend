@@ -125,7 +125,6 @@ export function startMessageWorker(): void {
             }
           });
           await SyncMetadataService.markForSync('Customer', newCustomer.id, 'REMOTE');
-          logger.info(`Created new customer for ${userId}`);
           
           // Para nuevos clientes, procesar con historiales vacíos
           const messageContent = job.data.text?.body || '[Mensaje no textual]';
