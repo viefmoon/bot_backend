@@ -1,4 +1,4 @@
-import { IncomingMessage, MessageMiddleware, UnifiedResponse } from '../types';
+import { IncomingMessage, MessageMiddleware } from '../types';
 import { MessageContext } from '../MessageContext';
 import { RateLimitMiddleware } from '../middlewares/RateLimitMiddleware';
 import { CustomerValidationMiddleware } from '../middlewares/CustomerValidationMiddleware';
@@ -6,13 +6,9 @@ import { NewCustomerGreetingMiddleware } from '../middlewares/NewCustomerGreetin
 import { RestaurantHoursMiddleware } from '../middlewares/RestaurantHoursMiddleware';
 import { MessageTypeMiddleware } from '../middlewares/MessageTypeMiddleware';
 import { MessageProcessingMiddleware } from '../middlewares/MessageProcessingMiddleware';
-import { prisma } from '../../../lib/prisma';
 import { CONTEXT_KEYS } from '../../../common/constants';
 import logger from '../../../common/utils/logger';
-import { sendWhatsAppMessage, sendWhatsAppInteractiveMessage, sendMessageWithUrlButton } from '../../whatsapp';
-import { SyncMetadataService } from '../../../services/sync/SyncMetadataService';
-import { redisService } from '../../redis/RedisService';
-import { redisKeys } from '../../../common/constants';
+import { sendWhatsAppMessage } from '../../whatsapp';
 import { Customer } from '@prisma/client';
 
 export class MessagePipeline {
@@ -56,10 +52,7 @@ export class MessagePipeline {
       
       // El procesamiento ahora se maneja por middlewares
       
-      // Enviar respuestas (puede cancelarse si el mensaje es obsoleto)
-      await this.sendResponses(context);
-      
-      // Devolver el contexto para que el worker pueda manejar el historial
+      // Devolver el contexto para que el worker pueda manejar el historial y envío
       return context;
       
     } catch (error) {
@@ -68,78 +61,6 @@ export class MessagePipeline {
       return context; // Devolver el contexto incluso en caso de error
     }
   }
-  
-  
-  private async sendResponses(context: MessageContext): Promise<void> {
-    // POST-PROCESS CANCELLATION CHECK - Using timestamp-based logic
-    logger.info(`[DEBUG Post-Process] Checking cancellation for runId ${context.runId} from ${context.message.from}`);
-    
-    const latestMessageTimestampKey = redisKeys.latestMessageTimestamp(context.message.from);
-    const latestCombinedStr = await redisService.get(latestMessageTimestampKey);
-    
-    if (latestCombinedStr) {
-      const [latestWAStr, latestServerStr] = latestCombinedStr.split(':');
-      const latestWATimestamp = parseInt(latestWAStr, 10);
-      const latestServerTimestamp = latestServerStr ? parseInt(latestServerStr, 10) : 0;
-      
-      const currentMessage = context.message as any; // Cast to access serverTimestamp
-      const currentWATimestamp = parseInt(currentMessage.timestamp, 10);
-      const currentServerTimestamp = currentMessage.serverTimestamp || 0;
-      
-      let shouldCancel = false;
-      
-      // Compare WhatsApp timestamp first
-      if (currentWATimestamp < latestWATimestamp) {
-        shouldCancel = true;
-      }
-      // If equal, compare server timestamp for more precision
-      else if (currentWATimestamp === latestWATimestamp && currentServerTimestamp < latestServerTimestamp) {
-        shouldCancel = true;
-      }
-      
-      if (shouldCancel) {
-        logger.info(`[Cancelled Post-Process] Job ${context.runId} is obsolete. ` +
-                    `Current timestamp ${currentWATimestamp}:${currentServerTimestamp} is older than latest ${latestCombinedStr}. ` +
-                    `Discarding ${context.unifiedResponses.length} responses.`);
-        return; // Stop sending responses
-      }
-    }
-    
-    // If we get here, we have permission to send the responses
-    // Enviar solo las respuestas que deben enviarse
-    for (const response of context.unifiedResponses) {
-      if (!response.metadata.shouldSend) continue;
-      
-      try {
-        // Enviar botón con URL si existe
-        if (response.content?.urlButton) {
-          const { title, body, buttonText, url } = response.content.urlButton;
-          await sendMessageWithUrlButton(
-            context.message.from,
-            title,
-            body,
-            buttonText,
-            url
-          );
-        }
-        // Enviar texto si existe
-        else if (response.content?.text) {
-          // La utilidad messageSender se encarga de dividir mensajes largos automáticamente
-          await sendWhatsAppMessage(context.message.from, response.content.text);
-        }
-        // Enviar mensaje interactivo si existe
-        else if (response.content?.interactive) {
-          await sendWhatsAppInteractiveMessage(
-            context.message.from, 
-            response.content.interactive
-          );
-        }
-      } catch (error) {
-        logger.error('Error sending response:', error);
-      }
-    }
-  }
-  
   
   private async handleError(context: MessageContext, error: Error): Promise<void> {
     logger.error('Pipeline error:', error);

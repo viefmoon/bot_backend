@@ -8,6 +8,8 @@ import { redisService } from '../services/redis/RedisService';
 import { prisma } from '../server';
 import { SyncMetadataService } from '../services/sync/SyncMetadataService';
 import { MessageProcessor } from '../services/messaging/MessageProcessor';
+import { MessageContext } from '../services/messaging/MessageContext';
+import { sendWhatsAppMessage, sendWhatsAppInteractiveMessage, sendMessageWithUrlButton } from '../services/whatsapp';
 
 // Redis connection configuration
 const connection = {
@@ -284,6 +286,11 @@ export function startMessageWorker(): void {
         await SyncMetadataService.markForSync('Customer', customer.id, 'REMOTE');
         logger.info(`[History] Final unified history for job ${runId} saved for user ${userId}.`);
         
+        // SEND RESPONSES ONLY AFTER SAVING HISTORY (if not cancelled)
+        if (!wasCancelled) {
+          await sendResponsesFromContext(finalContext);
+        }
+        
         // Small delay to ensure BullMQ completes its internal operations
         await new Promise(resolve => setTimeout(resolve, 100));
         
@@ -355,6 +362,40 @@ async function isJobObsolete(job: Job<WhatsAppMessageJob>, latestMessageTimestam
 async function wasJobCancelled(job: Job<WhatsAppMessageJob>): Promise<boolean> {
   const latestMessageTimestampKey = redisKeys.latestMessageTimestamp(job.data.from);
   return isJobObsolete(job, latestMessageTimestampKey);
+}
+
+// Helper function to send responses from context
+async function sendResponsesFromContext(context: MessageContext): Promise<void> {
+  for (const response of context.unifiedResponses) {
+    if (!response.metadata.shouldSend) continue;
+    
+    try {
+      // Send URL button if exists
+      if (response.content?.urlButton) {
+        const { title, body, buttonText, url } = response.content.urlButton;
+        await sendMessageWithUrlButton(
+          context.message.from,
+          title,
+          body,
+          buttonText,
+          url
+        );
+      }
+      // Send text if exists
+      else if (response.content?.text) {
+        await sendWhatsAppMessage(context.message.from, response.content.text);
+      }
+      // Send interactive message if exists
+      else if (response.content?.interactive) {
+        await sendWhatsAppInteractiveMessage(
+          context.message.from, 
+          response.content.interactive
+        );
+      }
+    } catch (error) {
+      logger.error(`Error sending response for job ${context.runId}:`, error);
+    }
+  }
 }
 
 export async function stopMessageWorker(): Promise<void> {
