@@ -78,6 +78,10 @@ app.post('/backend/otp/verify',
   }));
 
 // Customer addresses endpoints
+// NOTE: These endpoints are currently not used by the WhatsApp bot
+// The bot uses a web-based address registration flow (address-registration.ts)
+// Keep these if planning to build an admin panel or mobile app
+// Otherwise, consider removing them to simplify the codebase
 app.post('/backend/customer/:customerId/addresses',
   validationMiddleware(AddressDto),
   asyncHandler(async (req: Request, res: Response) => {
