@@ -77,11 +77,16 @@ app.post('/backend/otp/verify',
     res.json({ valid: isValid });
   }));
 
-// Customer addresses endpoints
-// NOTE: These endpoints are currently not used by the WhatsApp bot
-// The bot uses a web-based address registration flow (address-registration.ts)
-// Keep these if planning to build an admin panel or mobile app
-// Otherwise, consider removing them to simplify the codebase
+// ===================================================================
+// DEPRECATED: Customer addresses REST endpoints
+// ===================================================================
+// These endpoints are NOT used by the current WhatsApp bot implementation
+// The bot uses a web-based flow via address-registration.ts
+// 
+// KEEP IF: Building an admin panel, mobile app, or external integration
+// REMOVE IF: Only using WhatsApp bot (reduces API surface and complexity)
+// ===================================================================
+/*
 app.post('/backend/customer/:customerId/addresses',
   validationMiddleware(AddressDto),
   asyncHandler(async (req: Request, res: Response) => {
@@ -173,6 +178,8 @@ app.delete('/backend/addresses/:addressId',
     await DeliveryInfoService.deleteCustomerAddress(addressId, existingAddress.customerId);
     res.json({ success: true });
   }));
+*/
+// ===================================================================
 
 // WhatsApp send message endpoint
 app.post('/backend/whatsapp/send-message',

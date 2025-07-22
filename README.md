@@ -124,6 +124,68 @@ npm run studio
 npm run seed
 ```
 
+## 🚀 Optimización de Rendimiento
+
+### Configuración de Workers
+
+```env
+# Número de trabajos concurrentes por worker
+BULLMQ_WORKER_CONCURRENCY=10  # Desarrollo: 2-5, Producción: 10-20
+
+# Número de procesos worker (PM2)
+NUM_WORKERS=4  # Desarrollo: 1, Producción: 2-4 según CPU
+```
+
+### Pool de Conexiones de Base de Datos
+
+Prisma gestiona automáticamente el pool de conexiones. Para optimizar:
+
+```env
+# Agregar parámetros a DATABASE_URL
+DATABASE_URL=postgresql://user:pass@host:5432/db?connection_limit=20&pool_timeout=20
+
+# connection_limit: Número máximo de conexiones (default: num_cpus * 2 + 1)
+# pool_timeout: Tiempo de espera para obtener conexión (segundos)
+```
+
+### Configuración de Redis (Opcional)
+
+```env
+# Redis mejora rendimiento para OTP y caché
+REDIS_HOST=localhost
+REDIS_PORT=6380
+REDIS_PASSWORD=tu_password  # Opcional
+```
+
+### Límites de Rate Limiting
+
+```env
+# Ajustar según carga esperada
+RATE_LIMIT_MAX_MESSAGES=30  # Máximo de mensajes
+RATE_LIMIT_TIME_WINDOW_MINUTES=5  # Ventana de tiempo
+```
+
+### Producción con PM2
+
+```bash
+# Configurar workers en .env
+BULLMQ_WORKER_CONCURRENCY=10
+NUM_WORKERS=4
+
+# Iniciar con PM2
+npm run pm2:start
+
+# Monitorear
+npm run pm2:monit
+```
+
+### Métricas de Rendimiento
+
+- **Tiempo de respuesta promedio**: < 2 segundos
+- **Procesamiento concurrente**: Hasta 40 mensajes simultáneos (4 workers × 10 jobs)
+- **Historial relevante**: Últimos 30 mensajes por usuario
+- **TTL de caché**: 2 minutos para configuración del restaurante
+
 ## 📝 Notas Importantes
 
 - El bot usa Google Gemini AI para procesar mensajes
@@ -131,3 +193,4 @@ npm run seed
 - Los webhooks de WhatsApp deben apuntar a: `https://tu-app.railway.app/backend/webhook`
 - El puerto 5433 se usa localmente para evitar conflictos con PostgreSQL existente
 - Para probar con WhatsApp real en local, usa ngrok o similar
+- Los mensajes se procesan secuencialmente por usuario para mantener el contexto
