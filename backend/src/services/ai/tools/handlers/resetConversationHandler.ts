@@ -13,10 +13,10 @@ import logger from '../../../../common/utils/logger';
  * Clears chat history and resets conversation state
  */
 export const handleResetConversation: ToolHandler = async (args, context?: MessageContext): Promise<UnifiedResponse> => {
-  logger.debug('Resetting conversation');
-  
   // Get customerId from context
   const customerId = context?.customer?.id;
+  const whatsappNumber = context?.customer?.whatsappPhoneNumber;
+  
   if (!customerId) {
     throw new TechnicalError(
       ErrorCode.CUSTOMER_NOT_FOUND,
@@ -24,12 +24,14 @@ export const handleResetConversation: ToolHandler = async (args, context?: Messa
     );
   }
   
+  logger.info(`[Reset Conversation] Clearing history for customer ${whatsappNumber}`);
+  
   // Reset chat history immediately
   await prisma.customer.update({
     where: { id: customerId },
     data: { 
-      relevantChatHistory: JSON.stringify([]),
-      fullChatHistory: JSON.stringify([]),
+      relevantChatHistory: [],
+      fullChatHistory: [],
       lastInteraction: new Date()
     }
   });

@@ -215,7 +215,13 @@ export function startMessageWorker(): void {
         // PASO 4: AGREGAR RESPUESTAS DEL BOT Y GUARDAR UNA SOLA VEZ
         // =================================================================
         const wasCancelled = await wasJobCancelled(job);
-        if (!wasCancelled && !finalContext.get(CONTEXT_KEYS.SKIP_HISTORY_UPDATE)) {
+        const skipHistoryUpdate = finalContext.get(CONTEXT_KEYS.SKIP_HISTORY_UPDATE);
+        
+        if (skipHistoryUpdate) {
+          logger.debug(`[History] Skipping history update - SKIP_HISTORY_UPDATE flag is set`);
+        }
+        
+        if (!wasCancelled && !skipHistoryUpdate) {
           for (const response of finalContext.unifiedResponses || []) {
             const textContent = response.content?.text;
             const historyMarker = response.metadata?.historyMarker;
@@ -253,6 +259,19 @@ export function startMessageWorker(): void {
         }
         
         // Guardar el historial completo actualizado
+        // Si se marcó SKIP_HISTORY_UPDATE, verificar si el contexto tiene historiales vacíos (reset)
+        if (skipHistoryUpdate) {
+          const contextFullHistory = finalContext.get(CONTEXT_KEYS.FULL_CHAT_HISTORY);
+          const contextRelevantHistory = finalContext.get(CONTEXT_KEYS.RELEVANT_CHAT_HISTORY);
+          
+          // Si el contexto tiene historiales vacíos (reset), usar esos
+          if (Array.isArray(contextFullHistory) && contextFullHistory.length === 0) {
+            fullHistory = contextFullHistory;
+            relevantHistory = contextRelevantHistory || [];
+            logger.debug(`[History] Using empty histories from context for reset`);
+          }
+        }
+        
         await prisma.customer.update({
           where: { id: customer.id },
           data: {
