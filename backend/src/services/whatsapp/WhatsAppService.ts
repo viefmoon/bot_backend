@@ -25,7 +25,6 @@ export class WhatsAppService {
 
     if (mode && token) {
       if (mode === 'subscribe' && token === this.VERIFY_TOKEN) {
-        logger.info('Webhook verified');
         return { verified: true, challenge };
       }
     }
@@ -161,8 +160,6 @@ export class WhatsAppService {
         }
       );
       
-      logger.debug(`Full message sent to ${to}:`, message);
-      logger.info(`Message sent to ${to} (${message.length} chars)`);
       return { success: true, messageId: response.data.messages[0].id };
     } catch (error: any) {
       logger.error('Error sending WhatsApp message:', error.response?.data || error.message);

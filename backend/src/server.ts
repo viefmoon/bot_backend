@@ -199,11 +199,9 @@ async function startServer() {
   try {
     // Test database connection
     await prisma.$connect();
-    logger.info('Database connected successfully');
     
     // Load restaurant configuration
     await ConfigService.loadConfig();
-    logger.info('Restaurant configuration loaded');
     
     // Connect to Redis
     const { redisService } = await import('./services/redis/RedisService');
@@ -217,14 +215,13 @@ async function startServer() {
     preOrderCleanupInterval = setInterval(async () => {
       await PreOrderWorkflowService.cleanupExpiredPreOrders();
     }, 5 * 60 * 1000); // Run every 5 minutes
-    logger.info('PreOrder cleanup interval started');
     
     // Initialize embeddings on startup
     const { initializeEmbeddings } = await import('./startup/embeddingInitializer');
     await initializeEmbeddings();
     
     const server = app.listen(PORT, () => {
-      logger.info(`Server is running on port ${PORT}`);
+      console.log(`Server is running on port ${PORT}`);
     });
     
     // Initialize WebSocket for sync notifications
@@ -239,7 +236,7 @@ async function startServer() {
     
     const { SyncNotificationService } = await import('./services/sync/SyncNotificationService');
     SyncNotificationService.initialize(socketServer);
-    logger.info('WebSocket server initialized for sync notifications');
+    // WebSocket server initialized
   } catch (error) {
     logger.error('Failed to start server:', error);
     process.exit(1);

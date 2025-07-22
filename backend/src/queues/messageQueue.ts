@@ -97,7 +97,6 @@ export function startMessageWorker(): void {
           lockAcquired = await acquireUserLock(userId, 10); // Short 10 second lock
           
           if (lockAcquired) {
-            logger.debug(`Lock acquired for user ${userId} on attempt ${attempts + 1}`);
             break;
           }
           
@@ -199,7 +198,6 @@ export function startMessageWorker(): void {
       } finally {
         if (lockAcquired) {
           await releaseUserLock(userId);
-          logger.debug(`Lock released for user ${userId} - Phase 1 complete`);
         }
       }
       
@@ -297,7 +295,6 @@ export function startMessageWorker(): void {
         } finally {
           if (lockAcquired) {
             await releaseUserLock(userId);
-            logger.debug(`Lock released for user ${userId} - Phase 3 complete`);
           }
         }
       }

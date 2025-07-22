@@ -134,12 +134,10 @@ export class ProductService {
       const cachedMenu = await redisService.get(this.MENU_CACHE_KEY);
       
       if (cachedMenu) {
-        logger.debug('Returning cached WhatsApp menu');
         return cachedMenu;
       }
       
       // Cache miss - generate menu
-      logger.info('Cache miss - generating WhatsApp menu');
       const products = await this.getActiveProductsForWhatsApp();
       
       // Get restaurant name
@@ -156,7 +154,6 @@ export class ProductService {
       
       // Cache the generated menu
       await redisService.set(this.MENU_CACHE_KEY, menuText, this.MENU_CACHE_TTL);
-      logger.info('WhatsApp menu cached successfully');
       
       return menuText;
     } catch (error) {

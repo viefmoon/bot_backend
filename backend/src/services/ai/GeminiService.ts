@@ -40,8 +40,6 @@ export class GeminiService {
   static getClient(): GoogleGenAI {
     if (!this.instance) {
       this.instance = new GoogleGenAI({ apiKey: env.GOOGLE_AI_API_KEY });
-      logger.info('GeminiService: Cliente inicializado');
-      logger.info(`GeminiService: Using model ${env.GEMINI_MODEL}`);
     }
     return this.instance;
   }
@@ -94,11 +92,7 @@ export class GeminiService {
     while (attempt < maxRetries) {
       try {
         // Log del intento
-        if (attempt > 0) {
-          logger.info(`Reintentando llamada a Gemini API. Intento ${attempt + 1}/${maxRetries}...`);
-        } else {
-          logger.info('Llamando a Gemini API...');
-        }
+        // Retry logic
         
         const response = await client.models.generateContent({
           model: env.GEMINI_MODEL,
@@ -106,7 +100,7 @@ export class GeminiService {
           config,
         });
         
-        logger.info('Gemini API respondió exitosamente.');
+        // Response received
         
         // Log simplificado de la respuesta
         if (response.text) {
@@ -186,11 +180,7 @@ export class GeminiService {
     while (attempt < maxRetries) {
       try {
         // Log del intento
-        if (attempt > 0) {
-          logger.info(`Reintentando transcripción de audio. Intento ${attempt + 1}/${maxRetries}...`);
-        } else {
-          logger.info('Transcribiendo audio con Gemini API...');
-        }
+        // Retry logic for audio transcription
 
         const response = await client.models.generateContent({
           model: env.GEMINI_MODEL,
@@ -208,7 +198,7 @@ export class GeminiService {
           );
         }
 
-        logger.info('Transcripción de audio exitosa.');
+        // Transcription successful
         return transcription;
 
       } catch (error: any) {
