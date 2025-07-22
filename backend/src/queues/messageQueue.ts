@@ -163,6 +163,14 @@ export function startMessageWorker(): void {
         fullHistory.sort(sortHistory);
         relevantHistory.sort(sortHistory);
         
+        // Log del historial ordenado para debugging
+        logger.info(`[History Debug] User ${userId} - History after adding message and sorting:`);
+        logger.info(`[History Debug] Total messages: ${fullHistory.length}`);
+        const last5Messages = fullHistory.slice(-5);
+        last5Messages.forEach((msg: any, idx) => {
+          logger.info(`[History Debug] Message ${fullHistory.length - 5 + idx + 1}: [${msg.role}] "${msg.content.substring(0, 50)}..." at ${msg.timestamp}`);
+        });
+        
         // =================================================================
         // PASO 2: VERIFICACIÓN DE CANCELACIÓN
         // =================================================================
@@ -185,7 +193,7 @@ export function startMessageWorker(): void {
         // =================================================================
         // PASO 3: PASAR EL HISTORIAL CORRECTO AL PIPELINE
         // =================================================================
-        logger.info(`Processing job ${runId} for user ${userId} with unified history`);
+        logger.info(`[Worker ${process.pid}] Processing job ${runId} for user ${userId} with unified history`);
         
         const finalContext = await MessageProcessor.processWithPipeline(
           job.data,
@@ -226,6 +234,14 @@ export function startMessageWorker(): void {
           fullHistory.sort(sortHistory);
           relevantHistory.sort(sortHistory);
           relevantHistory = relevantHistory.slice(-20);
+          
+          // Log del historial final para debugging
+          logger.info(`[History Debug] User ${userId} - Final history after bot responses:`);
+          logger.info(`[History Debug] Total messages: ${fullHistory.length}`);
+          const finalLast5 = fullHistory.slice(-5);
+          finalLast5.forEach((msg: any, idx) => {
+            logger.info(`[History Debug] Message ${fullHistory.length - 5 + idx + 1}: [${msg.role}] "${msg.content.substring(0, 50)}..." at ${msg.timestamp}`);
+          });
         }
         
         // Guardar el historial completo actualizado
