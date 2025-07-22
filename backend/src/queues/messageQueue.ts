@@ -80,6 +80,12 @@ export function startMessageWorker(): void {
       const runId = job.id!; // Use BullMQ job ID as our unique run ID
       const latestMessageTimestampKey = redisKeys.latestMessageTimestamp(userId);
       
+      // ==========================================================
+      // ETAPA 1: ESCRITURA ATÓMICA Y RÁPIDA DEL MENSAJE DEL USUARIO
+      // ==========================================================
+      let customer: any;
+      let fullHistory: any[] = [];
+      let relevantHistory: any[] = [];
       let lockAcquired = false;
       
       try {
@@ -88,7 +94,7 @@ export function startMessageWorker(): void {
         const maxAttempts = 100; // 100 * 150ms = 15 seconds max wait
         
         while (attempts < maxAttempts) {
-          lockAcquired = await acquireUserLock(userId, 300); // 5 minute timeout
+          lockAcquired = await acquireUserLock(userId, 10); // Short 10 second lock
           
           if (lockAcquired) {
             logger.debug(`Lock acquired for user ${userId} on attempt ${attempts + 1}`);
@@ -105,10 +111,8 @@ export function startMessageWorker(): void {
           throw new Error(`Failed to acquire lock for user ${userId} after ${maxAttempts} attempts`);
         }
         
-        // =================================================================
-        // PASO 1: OBTENER Y PREPARAR EL HISTORIAL DE FORMA ATÓMICA
-        // =================================================================
-        const customer = await prisma.customer.findUnique({ where: { whatsappPhoneNumber: userId } });
+        // OBTENER Y PREPARAR EL HISTORIAL DE FORMA ATÓMICA
+        customer = await prisma.customer.findUnique({ where: { whatsappPhoneNumber: userId } });
         
         if (!customer) {
           // Crear nuevo cliente
@@ -146,16 +150,9 @@ export function startMessageWorker(): void {
         }
 
         // Cliente existente: obtener y actualizar historiales
-        let fullHistory = Array.isArray(customer.fullChatHistory) ? customer.fullChatHistory : [];
-        let relevantHistory = Array.isArray(customer.relevantChatHistory) ? customer.relevantChatHistory : [];
+        fullHistory = Array.isArray(customer.fullChatHistory) ? customer.fullChatHistory : [];
+        relevantHistory = Array.isArray(customer.relevantChatHistory) ? customer.relevantChatHistory : [];
 
-        // Log del historial relevante ANTES de agregar el nuevo mensaje
-        logger.info(`[History Debug] User ${userId} - Relevant history BEFORE adding new message:`);
-        logger.info(`[History Debug] Current relevant history length: ${relevantHistory.length}`);
-        relevantHistory.forEach((msg: any, idx) => {
-          const content = msg.content.length > 100 ? msg.content.substring(0, 100) + "..." : msg.content;
-          logger.info(`[History Debug] Message ${idx + 1}: [${msg.role}] "${content}" at ${msg.timestamp}`);
-        });
 
         // Añadir el mensaje actual
         const messageContent = job.data.text?.body || '[Mensaje no textual]';
@@ -172,58 +169,77 @@ export function startMessageWorker(): void {
         const sortHistory = (a: any, b: any) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime();
         fullHistory.sort(sortHistory);
         relevantHistory.sort(sortHistory);
+        relevantHistory = relevantHistory.slice(-30);
         
-        // Log del historial relevante completo para debugging
-        logger.info(`[History Debug] User ${userId} - Relevant history after adding message and sorting:`);
-        logger.info(`[History Debug] Total messages in relevant history: ${relevantHistory.length}`);
-        relevantHistory.forEach((msg: any, idx) => {
-          const content = msg.content.length > 100 ? msg.content.substring(0, 100) + "..." : msg.content;
-          logger.info(`[History Debug] Message ${idx + 1}: [${msg.role}] "${content}" at ${msg.timestamp}`);
+        // Guardar el historial actualizado CON el mensaje del usuario
+        await prisma.customer.update({
+          where: { id: customer.id },
+          data: {
+            fullChatHistory: fullHistory as any,
+            relevantChatHistory: relevantHistory as any,
+            lastInteraction: new Date()
+          }
         });
+        await SyncMetadataService.markForSync('Customer', customer.id, 'REMOTE');
+        logger.info(`[History-Phase1] User message from job ${runId} saved for user ${userId}.`);
         
-        // =================================================================
-        // PASO 2: VERIFICACIÓN DE CANCELACIÓN
-        // =================================================================
-        const isObsolete = await isJobObsolete(job, latestMessageTimestampKey);
-        if (isObsolete) {
-          // Si es obsoleto, guardamos el historial con el nuevo mensaje y terminamos
-          await prisma.customer.update({
-            where: { id: customer.id },
-            data: {
-              fullChatHistory: fullHistory as any,
-              relevantChatHistory: relevantHistory.slice(-20) as any,
-              lastInteraction: new Date()
-            }
+      } finally {
+        if (lockAcquired) {
+          await releaseUserLock(userId);
+          logger.debug(`Lock released for user ${userId} - Phase 1 complete`);
+        }
+      }
+      
+      // ==========================================================
+      // ETAPA 2: PROCESAMIENTO DE RESPUESTA (SIN BLOQUEO)
+      // ==========================================================
+      const isObsolete = await isJobObsolete(job, latestMessageTimestampKey);
+      if (isObsolete) {
+        logger.info(`[Cancelled] Job ${runId} is obsolete. Response generation aborted.`);
+        return;
+      }
+      
+      logger.info(`[Worker ${process.pid}] Processing job ${runId} for user ${userId} with AI`);
+      
+      const finalContext = await MessageProcessor.processWithPipeline(
+        job.data,
+        runId,
+        customer,
+        fullHistory,
+        relevantHistory // Ya está limitado a 20
+      );
+        
+      // ==========================================================
+      // ETAPA 3: GUARDADO DE LA RESPUESTA DEL BOT (CON OTRO BLOQUEO)
+      // ==========================================================
+      const wasCancelled = await wasJobCancelled(job);
+      const skipHistoryUpdate = finalContext.get(CONTEXT_KEYS.SKIP_HISTORY_UPDATE);
+      
+      if (skipHistoryUpdate) {
+        logger.debug(`[History] Skipping history update - SKIP_HISTORY_UPDATE flag is set`);
+      }
+      
+      if (!wasCancelled && !skipHistoryUpdate) {
+        lockAcquired = false; // Reset for new lock
+        
+        try {
+          // Acquire lock again for saving bot response
+          lockAcquired = await acquireUserLock(userId, 10);
+          if (!lockAcquired) {
+            throw new Error(`Could not acquire lock for bot response on job ${runId}`);
+          }
+          
+          // Re-read history in case it changed while AI was processing
+          const latestCustomer = await prisma.customer.findUnique({ 
+            where: { id: customer.id } 
           });
-          await SyncMetadataService.markForSync('Customer', customer.id, 'REMOTE');
-          logger.info(`[Cancelled Pre-Process] Job ${runId} is obsolete. Message saved, but response aborted.`);
-          return;
-        }
-        
-        // =================================================================
-        // PASO 3: PASAR EL HISTORIAL CORRECTO AL PIPELINE
-        // =================================================================
-        logger.info(`[Worker ${process.pid}] Processing job ${runId} for user ${userId} with unified history`);
-        
-        const finalContext = await MessageProcessor.processWithPipeline(
-          job.data,
-          runId,
-          customer,
-          fullHistory,
-          relevantHistory.slice(-20) // Pasamos la versión ya ordenada y limitada
-        );
-        
-        // =================================================================
-        // PASO 4: AGREGAR RESPUESTAS DEL BOT Y GUARDAR UNA SOLA VEZ
-        // =================================================================
-        const wasCancelled = await wasJobCancelled(job);
-        const skipHistoryUpdate = finalContext.get(CONTEXT_KEYS.SKIP_HISTORY_UPDATE);
-        
-        if (skipHistoryUpdate) {
-          logger.debug(`[History] Skipping history update - SKIP_HISTORY_UPDATE flag is set`);
-        }
-        
-        if (!wasCancelled && !skipHistoryUpdate) {
+          
+          let latestFullHistory = Array.isArray(latestCustomer?.fullChatHistory) 
+            ? latestCustomer.fullChatHistory 
+            : fullHistory;
+          let latestRelevantHistory = Array.isArray(latestCustomer?.relevantChatHistory) 
+            ? latestCustomer.relevantChatHistory 
+            : relevantHistory;
           for (const response of finalContext.unifiedResponses || []) {
             const textContent = response.content?.text;
             const historyMarker = response.metadata?.historyMarker;
@@ -235,10 +251,10 @@ export function startMessageWorker(): void {
                 content: textContent,
                 timestamp: new Date().toISOString()
               };
-              fullHistory.push(assistantEntry);
+              latestFullHistory.push(assistantEntry);
 
               if (historyMarker || isRelevant) {
-                relevantHistory.push({
+                latestRelevantHistory.push({
                   ...assistantEntry,
                   content: historyMarker || textContent
                 });
@@ -246,58 +262,57 @@ export function startMessageWorker(): void {
             }
           }
           
-          // Ordenar una última vez y aplicar límite
-          fullHistory.sort(sortHistory);
-          relevantHistory.sort(sortHistory);
-          relevantHistory = relevantHistory.slice(-20);
+          // Sort and limit
+          const sortHistory = (a: any, b: any) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime();
+          latestFullHistory.sort(sortHistory);
+          latestRelevantHistory.sort(sortHistory);
+          latestRelevantHistory = latestRelevantHistory.slice(-30);
           
-          // Log del historial relevante final para debugging
-          logger.info(`[History Debug] User ${userId} - Final relevant history after bot responses:`);
-          logger.info(`[History Debug] Total messages in relevant history: ${relevantHistory.length}`);
-          relevantHistory.forEach((msg: any, idx) => {
-            const content = msg.content.length > 100 ? msg.content.substring(0, 100) + "..." : msg.content;
-            logger.info(`[History Debug] Message ${idx + 1}: [${msg.role}] "${content}" at ${msg.timestamp}`);
+          // Save the final history with bot response
+          await prisma.customer.update({
+            where: { id: customer.id },
+            data: {
+              fullChatHistory: latestFullHistory as any,
+              relevantChatHistory: latestRelevantHistory as any,
+              lastInteraction: new Date()
+            }
           });
-        }
-        
-        // Guardar el historial completo actualizado
-        // Si se marcó SKIP_HISTORY_UPDATE, verificar si el contexto tiene historiales vacíos (reset)
-        if (skipHistoryUpdate) {
-          const contextFullHistory = finalContext.get(CONTEXT_KEYS.FULL_CHAT_HISTORY);
-          const contextRelevantHistory = finalContext.get(CONTEXT_KEYS.RELEVANT_CHAT_HISTORY);
           
-          // Si el contexto tiene historiales vacíos (reset), usar esos
-          if (Array.isArray(contextFullHistory) && contextFullHistory.length === 0) {
-            fullHistory = contextFullHistory;
-            relevantHistory = contextRelevantHistory || [];
-            logger.debug(`[History] Using empty histories from context for reset`);
+          await SyncMetadataService.markForSync('Customer', customer.id, 'REMOTE');
+          logger.info(`[History-Phase2] Bot response from job ${runId} saved for user ${userId}.`);
+          
+          // SEND RESPONSES ONLY AFTER SAVING HISTORY
+          await sendResponsesFromContext(finalContext);
+          
+        } finally {
+          if (lockAcquired) {
+            await releaseUserLock(userId);
+            logger.debug(`Lock released for user ${userId} - Phase 3 complete`);
           }
         }
+      }
+      
+      // Handle special case of SKIP_HISTORY_UPDATE (like reset)
+      else if (skipHistoryUpdate) {
+        const contextFullHistory = finalContext.get(CONTEXT_KEYS.FULL_CHAT_HISTORY);
+        const contextRelevantHistory = finalContext.get(CONTEXT_KEYS.RELEVANT_CHAT_HISTORY);
         
-        await prisma.customer.update({
-          where: { id: customer.id },
-          data: {
-            fullChatHistory: fullHistory as any,
-            relevantChatHistory: relevantHistory as any,
-            lastInteraction: new Date()
-          }
-        });
+        // If context has empty histories (reset), save those
+        if (Array.isArray(contextFullHistory) && contextFullHistory.length === 0) {
+          await prisma.customer.update({
+            where: { id: customer.id },
+            data: {
+              fullChatHistory: [],
+              relevantChatHistory: [],
+              lastInteraction: new Date()
+            }
+          });
+          logger.info(`[History] Reset histories saved for user ${userId}.`);
+        }
         
-        await SyncMetadataService.markForSync('Customer', customer.id, 'REMOTE');
-        logger.info(`[History] Final unified history for job ${runId} saved for user ${userId}.`);
-        
-        // SEND RESPONSES ONLY AFTER SAVING HISTORY (if not cancelled)
+        // Send any responses even if history wasn't updated
         if (!wasCancelled) {
           await sendResponsesFromContext(finalContext);
-        }
-        
-        // Small delay to ensure BullMQ completes its internal operations
-        await new Promise(resolve => setTimeout(resolve, 100));
-        
-      } finally {
-        if (lockAcquired) {
-          await releaseUserLock(userId);
-          logger.debug(`Lock released for user ${userId}`);
         }
       }
     },

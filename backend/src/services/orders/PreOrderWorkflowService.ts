@@ -335,8 +335,8 @@ export class PreOrderWorkflowService {
         timestamp: new Date()
       });
       
-      // Limitar historial relevante a 20 mensajes
-      const limitedRelevantHistory = relevantChatHistory.slice(-20);
+      // Limitar historial relevante a 30 mensajes
+      const limitedRelevantHistory = relevantChatHistory.slice(-30);
       
       await prisma.customer.update({
         where: { id: customer.id },
