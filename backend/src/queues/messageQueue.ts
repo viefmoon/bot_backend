@@ -147,6 +147,14 @@ export function startMessageWorker(): void {
         let fullHistory = Array.isArray(customer.fullChatHistory) ? customer.fullChatHistory : [];
         let relevantHistory = Array.isArray(customer.relevantChatHistory) ? customer.relevantChatHistory : [];
 
+        // Log del historial relevante ANTES de agregar el nuevo mensaje
+        logger.info(`[History Debug] User ${userId} - Relevant history BEFORE adding new message:`);
+        logger.info(`[History Debug] Current relevant history length: ${relevantHistory.length}`);
+        relevantHistory.forEach((msg: any, idx) => {
+          const content = msg.content.length > 100 ? msg.content.substring(0, 100) + "..." : msg.content;
+          logger.info(`[History Debug] Message ${idx + 1}: [${msg.role}] "${content}" at ${msg.timestamp}`);
+        });
+
         // Añadir el mensaje actual
         const messageContent = job.data.text?.body || '[Mensaje no textual]';
         const userMessageEntry = {
@@ -163,12 +171,12 @@ export function startMessageWorker(): void {
         fullHistory.sort(sortHistory);
         relevantHistory.sort(sortHistory);
         
-        // Log del historial ordenado para debugging
-        logger.info(`[History Debug] User ${userId} - History after adding message and sorting:`);
-        logger.info(`[History Debug] Total messages: ${fullHistory.length}`);
-        const last5Messages = fullHistory.slice(-5);
-        last5Messages.forEach((msg: any, idx) => {
-          logger.info(`[History Debug] Message ${fullHistory.length - 5 + idx + 1}: [${msg.role}] "${msg.content.substring(0, 50)}..." at ${msg.timestamp}`);
+        // Log del historial relevante completo para debugging
+        logger.info(`[History Debug] User ${userId} - Relevant history after adding message and sorting:`);
+        logger.info(`[History Debug] Total messages in relevant history: ${relevantHistory.length}`);
+        relevantHistory.forEach((msg: any, idx) => {
+          const content = msg.content.length > 100 ? msg.content.substring(0, 100) + "..." : msg.content;
+          logger.info(`[History Debug] Message ${idx + 1}: [${msg.role}] "${content}" at ${msg.timestamp}`);
         });
         
         // =================================================================
@@ -235,12 +243,12 @@ export function startMessageWorker(): void {
           relevantHistory.sort(sortHistory);
           relevantHistory = relevantHistory.slice(-20);
           
-          // Log del historial final para debugging
-          logger.info(`[History Debug] User ${userId} - Final history after bot responses:`);
-          logger.info(`[History Debug] Total messages: ${fullHistory.length}`);
-          const finalLast5 = fullHistory.slice(-5);
-          finalLast5.forEach((msg: any, idx) => {
-            logger.info(`[History Debug] Message ${fullHistory.length - 5 + idx + 1}: [${msg.role}] "${msg.content.substring(0, 50)}..." at ${msg.timestamp}`);
+          // Log del historial relevante final para debugging
+          logger.info(`[History Debug] User ${userId} - Final relevant history after bot responses:`);
+          logger.info(`[History Debug] Total messages in relevant history: ${relevantHistory.length}`);
+          relevantHistory.forEach((msg: any, idx) => {
+            const content = msg.content.length > 100 ? msg.content.substring(0, 100) + "..." : msg.content;
+            logger.info(`[History Debug] Message ${idx + 1}: [${msg.role}] "${content}" at ${msg.timestamp}`);
           });
         }
         
