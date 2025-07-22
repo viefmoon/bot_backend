@@ -153,6 +153,13 @@ export function startMessageWorker(): void {
         fullHistory = Array.isArray(customer.fullChatHistory) ? customer.fullChatHistory : [];
         relevantHistory = Array.isArray(customer.relevantChatHistory) ? customer.relevantChatHistory : [];
 
+        // Log del historial relevante ANTES de agregar el nuevo mensaje
+        logger.info(`[History Debug] User ${userId} - Relevant history BEFORE adding new message:`);
+        logger.info(`[History Debug] Current relevant history length: ${relevantHistory.length}`);
+        relevantHistory.forEach((msg: any, idx) => {
+          const content = msg.content.length > 100 ? msg.content.substring(0, 100) + "..." : msg.content;
+          logger.info(`[History Debug] Message ${idx + 1}: [${msg.role}] "${content}" at ${msg.timestamp}`);
+        });
 
         // Añadir el mensaje actual
         const messageContent = job.data.text?.body || '[Mensaje no textual]';
@@ -170,6 +177,14 @@ export function startMessageWorker(): void {
         fullHistory.sort(sortHistory);
         relevantHistory.sort(sortHistory);
         relevantHistory = relevantHistory.slice(-30);
+        
+        // Log del historial relevante DESPUÉS de agregar el nuevo mensaje
+        logger.info(`[History Debug] User ${userId} - Relevant history AFTER adding new message:`);
+        logger.info(`[History Debug] Updated relevant history length: ${relevantHistory.length}`);
+        relevantHistory.forEach((msg: any, idx) => {
+          const content = msg.content.length > 100 ? msg.content.substring(0, 100) + "..." : msg.content;
+          logger.info(`[History Debug] Message ${idx + 1}: [${msg.role}] "${content}" at ${msg.timestamp}`);
+        });
         
         // Guardar el historial actualizado CON el mensaje del usuario
         await prisma.customer.update({
