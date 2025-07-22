@@ -195,7 +195,6 @@ export function startMessageWorker(): void {
           }
         });
         await SyncMetadataService.markForSync('Customer', customer.id, 'REMOTE');
-        logger.info(`[History-Phase1] User message from job ${runId} saved for user ${userId}.`);
         
       } finally {
         if (lockAcquired) {
@@ -212,8 +211,6 @@ export function startMessageWorker(): void {
         logger.info(`[Cancelled] Job ${runId} is obsolete. Response generation aborted.`);
         return;
       }
-      
-      logger.info(`[Worker ${process.pid}] Processing job ${runId} for user ${userId} with AI`);
       
       const finalContext = await MessageProcessor.processWithPipeline(
         job.data,
@@ -293,7 +290,6 @@ export function startMessageWorker(): void {
           });
           
           await SyncMetadataService.markForSync('Customer', customer.id, 'REMOTE');
-          logger.info(`[History-Phase2] Bot response from job ${runId} saved for user ${userId}.`);
           
           // SEND RESPONSES ONLY AFTER SAVING HISTORY
           await sendResponsesFromContext(finalContext);
@@ -340,7 +336,7 @@ export function startMessageWorker(): void {
 
   // Event handlers
   messageWorker.on('completed', (job: Job<WhatsAppMessageJob>) => {
-    logger.info(`Job ${job.id} for user ${job.data.from} completed successfully`);
+    // Job completed successfully
   });
 
   messageWorker.on('failed', (job: Job<WhatsAppMessageJob> | undefined, err: Error) => {
@@ -374,8 +370,6 @@ async function isJobObsolete(job: Job<WhatsAppMessageJob>, latestMessageTimestam
 
     const currentWATimestamp = parseInt(job.data.timestamp, 10);
     const currentServerTimestamp = job.data.serverTimestamp || 0;
-
-    logger.info(`[DEBUG Pre-Process] Comparing timestamps - Current: ${currentWATimestamp}:${currentServerTimestamp}, Latest: ${latestWATimestamp}:${latestServerTimestamp}`);
 
     if (currentWATimestamp < latestWATimestamp) return true;
     if (currentWATimestamp === latestWATimestamp && currentServerTimestamp < latestServerTimestamp) return true;
