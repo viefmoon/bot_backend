@@ -113,4 +113,26 @@ export class SyncNotificationService {
       apiKeyPrefix: apiKey.substring(0, 10) + '...'
     }));
   }
+  
+  /**
+   * Send test notification to all connected clients
+   */
+  static sendTestNotification() {
+    if (!this.io) {
+      logger.warn('WebSocket not initialized');
+      return { success: false, message: 'WebSocket not initialized' };
+    }
+    
+    const clientCount = this.connectedClients.size;
+    logger.info(`Sending test notification to ${clientCount} connected clients`);
+    
+    // Send test notification
+    this.io.of('/sync').emit('changes:pending');
+    
+    return { 
+      success: true, 
+      message: `Test notification sent to ${clientCount} clients`,
+      connectedClients: this.getConnectedClients()
+    };
+  }
 }
