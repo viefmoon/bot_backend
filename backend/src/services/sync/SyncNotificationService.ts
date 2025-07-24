@@ -95,6 +95,9 @@ export class SyncNotificationService {
     
     if (!order) return;
     
+    // Log agregado para informar sobre la notificación de sincronización
+    logger.info(`Sending new order notification (webhook) for synchronization. Order ID: ${order.id}. Informing ${this.connectedClients.size} clients.`);
+    
     // Notify all connected clients
     this.io.of('/sync').emit('order:new', {
       orderId: order.id,
