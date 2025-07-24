@@ -100,8 +100,8 @@ router.post('/pull-changes', apiKeyAuthMiddleware, asyncHandler(async (req: Requ
 
 // Debug endpoint to check WebSocket connections and send test notification
 router.get('/debug/websocket', apiKeyAuthMiddleware, asyncHandler(async (req: Request, res: Response) => {
-  const clients = SyncNotificationService.getConnectedClients();
-  const isConnected = SyncNotificationService.isAnyClientConnected();
+  const clients = await SyncNotificationService.getConnectedClients();
+  const isConnected = await SyncNotificationService.isAnyClientConnected();
   
   logger.info('WebSocket debug endpoint called', {
     connectedClients: clients.length,

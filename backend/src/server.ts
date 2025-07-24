@@ -224,18 +224,31 @@ async function startServer() {
       console.log(`Server is running on port ${PORT}`);
     });
     
-    // Initialize WebSocket for sync notifications
+    // Initialize WebSocket for sync notifications with Redis adapter
     const io = await import('socket.io');
+    const { createAdapter } = await import('@socket.io/redis-adapter');
+    const IORedis = (await import('ioredis')).default;
+    
+    // Create pub/sub clients for Socket.IO
+    const pubClient = new IORedis({
+      host: env.REDIS_HOST || 'localhost',
+      port: parseInt(env.REDIS_PORT || '6380', 10),
+      password: env.REDIS_PASSWORD,
+    });
+    const subClient = pubClient.duplicate();
+    
     const socketServer = new io.Server(server, {
       cors: {
         origin: '*', // Configure this properly in production
         methods: ['GET', 'POST']
       },
-      path: '/socket.io/'
+      path: '/socket.io/',
+      adapter: createAdapter(pubClient, subClient)
     });
     
     const { SyncNotificationService } = await import('./services/sync/SyncNotificationService');
     SyncNotificationService.initialize(socketServer);
+    logger.info('WebSocket server initialized with Redis adapter');
     // WebSocket server initialized
     
     // Initialize sync retry service

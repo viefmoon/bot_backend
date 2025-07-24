@@ -64,7 +64,7 @@ export class SyncRetryService {
    */
   static async scheduleRetryIfNeeded(orderId: string) {
     // Check if any client is connected
-    if (SyncNotificationService.isAnyClientConnected()) {
+    if (await SyncNotificationService.isAnyClientConnected()) {
       logger.debug(`Clients connected, no retry needed for order ${orderId}`);
       return;
     }
@@ -117,7 +117,7 @@ export class SyncRetryService {
     }
 
     // Check if any client is connected now
-    if (SyncNotificationService.isAnyClientConnected()) {
+    if (await SyncNotificationService.isAnyClientConnected()) {
       logger.info(`Clients now connected, retrying sync notification for order ${orderId}`);
       
       // Retry the notification
