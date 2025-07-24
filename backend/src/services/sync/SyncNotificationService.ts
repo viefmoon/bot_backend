@@ -2,6 +2,7 @@ import { Server as SocketIOServer } from 'socket.io';
 import logger from '../../common/utils/logger';
 import { prisma } from '../../lib/prisma';
 import { env } from '../../common/config/envValidator';
+import { SyncRetryService } from './SyncRetryService';
 
 export class SyncNotificationService {
   private static io: SocketIOServer | null = null;
@@ -76,38 +77,24 @@ export class SyncNotificationService {
   }
   
   /**
-   * Notify all connected local backends about new order
+   * Notify all connected local backends about pending changes
    */
-  static async notifyNewOrder(orderId: string) {
+  static async notifyPendingChanges(orderId: string) {
     if (!this.io) {
       logger.warn('WebSocket not initialized, cannot send notification');
       return;
     }
     
-    const order = await prisma.order.findUnique({
-      where: { id: orderId },
-      include: {
-        customer: true,
-        orderItems: true,
-        deliveryInfo: true
-      }
-    });
-    
-    if (!order) return;
-    
     // Log agregado para informar sobre la notificación de sincronización
-    logger.info(`Sending new order notification (webhook) for synchronization. Order ID: ${order.id}. Informing ${this.connectedClients.size} clients.`);
+    logger.info(`Sending changes:pending notification for new order ${orderId}. Informing ${this.connectedClients.size} clients.`);
     
-    // Notify all connected clients
-    this.io.of('/sync').emit('order:new', {
-      orderId: order.id,
-      orderType: order.orderType,
-      customerName: `${order.customer.firstName || ''} ${order.customer.lastName || ''}`.trim(),
-      total: order.total,
-      createdAt: order.createdAt
-    });
+    // Simply notify that there are pending changes - clients will call sync endpoint
+    this.io.of('/sync').emit('changes:pending');
     
-    logger.info(`Notified ${this.connectedClients.size} local backends about new order ${orderId}`);
+    logger.info(`Notified ${this.connectedClients.size} local backends about pending changes`);
+    
+    // Schedule retry if no clients are connected
+    await SyncRetryService.scheduleRetryIfNeeded(orderId);
   }
   
   /**

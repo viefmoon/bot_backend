@@ -116,7 +116,7 @@ export class OrderManagementService {
     await SyncMetadataService.markForSync('Order', order.id, 'REMOTE');
     
     try {
-      await SyncNotificationService.notifyNewOrder(order.id);
+      await SyncNotificationService.notifyPendingChanges(order.id);
     } catch (error) {
       logger.warn('Could not notify sync service about new order:', error);
     }

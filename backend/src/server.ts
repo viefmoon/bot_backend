@@ -237,6 +237,10 @@ async function startServer() {
     const { SyncNotificationService } = await import('./services/sync/SyncNotificationService');
     SyncNotificationService.initialize(socketServer);
     // WebSocket server initialized
+    
+    // Initialize sync retry service
+    const { SyncRetryService } = await import('./services/sync/SyncRetryService');
+    await SyncRetryService.initialize();
   } catch (error) {
     logger.error('Failed to start server:', error);
     process.exit(1);
