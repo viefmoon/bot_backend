@@ -15,21 +15,16 @@ export class AudioOrderController {
         'El archivo de audio es requerido'
       );
     }
-
-    const { transcription } = req.body;
     
     // Debug incoming request
     logger.debug('Audio order request received', {
       fileSize: req.file.size,
-      mimeType: req.file.mimetype,
-      transcriptionLength: transcription?.length || 0,
-      transcriptionPreview: transcription?.substring(0, 100) || 'No transcription'
+      mimeType: req.file.mimetype
     });
 
     const result = await AudioOrderService.processAudioOrder({
       audioBuffer: req.file.buffer,
-      audioMimeType: req.file.mimetype,
-      transcription
+      audioMimeType: req.file.mimetype
     });
 
     res.status(200).json({

@@ -3,9 +3,9 @@ import multer from 'multer';
 import { AudioOrderController } from './audioOrder.controller';
 import { AudioHealthController } from './audioHealth.controller';
 import { apiKeyAuthMiddleware } from '../../common/middlewares/apiKeyAuth.middleware';
-import { validationMiddleware } from '../../common/middlewares/validation.middleware';
+// Removed validation middleware - not needed for audio-only processing
 import { asyncHandler } from '../../common/middlewares/errorHandler';
-import { ProcessAudioOrderDto } from '../../dto/order';
+// No DTO validation needed - only audio file validation via multer
 
 const router = Router();
 
@@ -44,7 +44,6 @@ router.post(
   '/process-order',
   apiKeyAuthMiddleware,
   upload.single('audio'),
-  validationMiddleware(ProcessAudioOrderDto),
   asyncHandler(AudioOrderController.processAudioOrder)
 );
 
