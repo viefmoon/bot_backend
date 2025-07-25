@@ -9,7 +9,6 @@ import logger from '../../../../common/utils/logger';
  * Returns estimated wait times for pickup and delivery
  */
 export const handleGetWaitTimes: ToolHandler = async (): Promise<UnifiedResponse> => {
-  logger.debug('Getting wait times');
   
   const config = await RestaurantService.getConfig();
   

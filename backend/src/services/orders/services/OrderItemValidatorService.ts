@@ -126,12 +126,6 @@ export class OrderItemValidatorService {
     errors: ValidationErrorDetail[],
     itemIndex: number
   ): void {
-    logger.debug(`Validating item ${itemIndex} for product: ${product.name}`, { 
-      productId: product.id,
-      hasVariants: product.hasVariants,
-      isPizza: product.isPizza,
-      modifierGroupCount: product.modifierGroups.length
-    });
     
     // Si la validación de disponibilidad falla con errores críticos, 
     // no continuamos con las otras validaciones para este item

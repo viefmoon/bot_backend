@@ -55,11 +55,6 @@ export class AudioOrderProcessor {
     const config = ConfigService.getConfig();
     const systemPrompt = AudioOrderPrompts.buildSystemPrompt(config.restaurantName);
     
-    // Debug log the context being sent to Gemini
-    logger.debug('Gemini request context', {
-      audioMimeType: params.audioMimeType,
-      audioSize: params.audioBase64.length
-    });
 
     const userPrompt = AudioOrderPrompts.buildUserPrompt();
 
@@ -93,14 +88,6 @@ export class AudioOrderProcessor {
     // Handle multi-turn conversation for tool calls
     const result = await this.handleToolCalls(response, contents, systemPrompt, tools);
     
-    // Debug log the extracted data
-    logger.debug('Gemini extracted data', {
-      functionCallArgs: result,
-      hasOrderItems: !!result.orderItems?.length,
-      orderType: result.orderType,
-      hasDeliveryInfo: !!result.deliveryInfo,
-      hasScheduledDelivery: !!result.scheduledDelivery
-    });
 
     return result;
   }
@@ -127,10 +114,6 @@ export class AudioOrderProcessor {
         );
       }
 
-      logger.debug('Tool call detected', {
-        functionName: functionCall.name,
-        args: functionCall.args
-      });
 
       if (functionCall.name === 'get_menu_information') {
         // Handle menu search tool

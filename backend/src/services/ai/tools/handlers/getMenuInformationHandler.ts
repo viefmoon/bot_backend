@@ -10,7 +10,6 @@ import logger from '../../../../common/utils/logger';
  */
 export const handleGetMenuInformation: ToolHandler = async (args): Promise<UnifiedResponse> => {
   const query = args.query;
-  logger.debug(`Executing get_menu_information tool with query: "${query}"`);
 
   // 1. Use the existing powerful MenuSearchService to find relevant products
   const relevantMenuJSON = await MenuSearchService.getRelevantMenu(query);

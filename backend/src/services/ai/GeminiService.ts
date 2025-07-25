@@ -68,8 +68,6 @@ export class GeminiService {
     }
     
     // Agregar configuración de pensamiento dinámico para modelos compatibles
-    // Log simplificado del historial
-    logger.debug(`GeminiService: Processing ${messages.length} messages`);
     
     if (enableDynamicThinking && env.GEMINI_MODEL.includes('2.5')) {
       const thinkingBudget = env.GEMINI_THINKING_BUDGET ? parseInt(env.GEMINI_THINKING_BUDGET) : -1;
@@ -80,7 +78,6 @@ export class GeminiService {
           thinkingBudget
         };
         
-        logger.debug(`GeminiService: Thinking config set - budget: ${thinkingBudget === -1 ? 'dynamic' : thinkingBudget}`);
       }
     }
     
@@ -104,11 +101,9 @@ export class GeminiService {
         
         // Log simplificado de la respuesta
         if (response.text) {
-          logger.debug(`Gemini response: Text (${response.text.length} chars)`);
         }
         if (response.functionCalls) {
           const functionNames = response.functionCalls.map((fc: any) => fc.name).join(', ');
-          logger.debug(`Gemini response: Function calls - ${functionNames}`);
         }
         
         return response; // Si tiene éxito, salimos del bucle y devolvemos la respuesta
@@ -148,7 +143,6 @@ export class GeminiService {
     audioData: string,
     mimeType: string
   ): Promise<string> {
-    logger.debug(`GeminiService.transcribeAudio: Processing ${audioData.length} bytes of ${mimeType}`);
     
     const client = this.getClient();
     
@@ -188,7 +182,6 @@ export class GeminiService {
         });
 
         const transcription = response.text?.trim() || '';
-        logger.debug(`Transcription result: ${transcription.length} chars`);
         
         if (!transcription || transcription === 'ERROR_TRANSCRIPTION' || transcription.length < 2) {
           throw new ValidationError(

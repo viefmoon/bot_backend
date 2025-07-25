@@ -315,7 +315,6 @@ export class WhatsAppService {
       
       // Split long message using unified utility
       const parts = MessageSplitter.splitMessage(message, this.MAX_MESSAGE_LENGTH);
-      logger.debug(`Message split into ${parts.length} parts`);
       
       // Send each part
       for (const part of parts) {

@@ -131,7 +131,6 @@ export class ConfigService {
   private static async reloadConfigAsync(): Promise<void> {
     // Prevent multiple concurrent reloads
     if (this.reloadInProgress) {
-      logger.debug('Configuration reload already in progress, skipping');
       return;
     }
 

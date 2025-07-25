@@ -9,7 +9,6 @@ import logger from '../../../../common/utils/logger';
  * Sends instructions on how to use the bot
  */
 export const handleSendBotInstructions: ToolHandler = async (): Promise<UnifiedResponse> => {
-  logger.debug('Sending bot instructions');
   
   const config = ConfigService.getConfig();
   const instructions = CHATBOT_HELP_MESSAGE(config);

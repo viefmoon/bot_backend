@@ -8,7 +8,6 @@ import logger from '../../../../common/utils/logger';
  * Transforms AI order items to consistent format for pre-order creation
  */
 export const handleMapOrderItems: ToolHandler = async (args): Promise<UnifiedResponse> => {
-  logger.debug('Processing map_order_items with args:', args);
   
   // Transform AI order items to consistent format
   const processedItems = (args.orderItems || []).map((item: AIOrderItem) => 

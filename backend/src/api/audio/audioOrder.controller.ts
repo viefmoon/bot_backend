@@ -16,11 +16,6 @@ export class AudioOrderController {
       );
     }
     
-    // Debug incoming request
-    logger.debug('Audio order request received', {
-      fileSize: req.file.size,
-      mimeType: req.file.mimetype
-    });
 
     const result = await AudioOrderService.processAudioOrder({
       audioBuffer: req.file.buffer,

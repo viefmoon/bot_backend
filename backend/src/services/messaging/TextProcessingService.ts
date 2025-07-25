@@ -31,12 +31,9 @@ export class TextProcessingService {
       );
     }
 
-    // El historial que viene en el contexto YA incluye el mensaje actual del usuario,
-    // preparado y ordenado por el worker.
     const relevantChatHistory = context.get(CONTEXT_KEYS.RELEVANT_CHAT_HISTORY) || [];
     
     try {
-      // Usamos 'relevantChatHistory' directamente - ya incluye el mensaje actual
       const messages: Content[] = relevantChatHistory.map(
         ({ role, content }: any) => ({
           role: role === "assistant" ? "model" : role,
@@ -44,9 +41,7 @@ export class TextProcessingService {
         })
       );
       
-      logger.debug('Calling AgentService with messages:', messages);
       const response = await AgentService.processMessage(messages);
-      logger.debug('AgentService response:', JSON.stringify(response, null, 2));
       
       // Process Gemini response and get UnifiedResponses
       const unifiedResponses = await this.processGeminiResponse(response, context);
@@ -81,7 +76,6 @@ export class TextProcessingService {
           });
         }
         
-        logger.debug('Making follow-up call to AgentService with tool responses');
         
         // Make a second call to the agent with the tool responses
         const followUpResponse = await AgentService.processMessage(updatedMessages);
@@ -110,7 +104,6 @@ export class TextProcessingService {
     } catch (error: any) {
       logger.error("Error processing text message:", error);
       
-      // Si es un ExternalServiceError con código GEMINI_ERROR, usar el mensaje amigable
       if (error.code === ErrorCode.GEMINI_ERROR) {
         const errorResponse = ResponseBuilder.error(
           ErrorCode.GEMINI_ERROR,
@@ -118,7 +111,6 @@ export class TextProcessingService {
         );
         context.addUnifiedResponse(errorResponse);
       } else {
-        // Para otros errores, usar un mensaje genérico
         const errorResponse = ResponseBuilder.error(
           'PROCESSING_ERROR',
           "Lo siento, ocurrió un error procesando tu mensaje. Por favor intenta de nuevo."
@@ -191,9 +183,6 @@ export class TextProcessingService {
    * This method is public so it can be used by tool handlers that need it
    */
   public static async processGeminiResponse(response: any, context?: MessageContext): Promise<UnifiedResponse[]> {
-    logger.debug('=== processGeminiResponse DEBUG ===');
-    logger.debug('Response type:', typeof response);
-    logger.debug('Response keys:', response ? Object.keys(response) : 'null');
     
     const responses: UnifiedResponse[] = [];
     
@@ -233,14 +222,11 @@ export class TextProcessingService {
       }
     }
     
-    logger.debug(`Total responses processed: ${responses.length}`);
-    logger.debug('=== End processGeminiResponse DEBUG ===');
     
     return responses;
   }
 
   private static async handleFunctionCall(name: string, args: any, context?: MessageContext): Promise<UnifiedResponse | UnifiedResponse[] | null> {
-    logger.debug(`=== handleFunctionCall: ${name} ===`);
     
     // Get the handler for this function
     const handler = getToolHandler(name);
@@ -248,7 +234,6 @@ export class TextProcessingService {
     if (handler) {
       try {
         const result = await handler(args, context);
-        logger.debug(`Handler ${name} completed successfully`);
         return result;
       } catch (error) {
         logger.error(`Error in handler ${name}:`, error);

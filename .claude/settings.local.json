@@ -53,7 +53,8 @@
       "Bash(echo:*)",
       "Bash(npm test:*)",
       "Bash(python:*)",
-      "Bash(timeout 2 cat src/services/messaging/MessageProcessor.ts)"
+      "Bash(timeout 2 cat src/services/messaging/MessageProcessor.ts)",
+      "Bash(rg:*)"
     ],
     "deny": []
   }

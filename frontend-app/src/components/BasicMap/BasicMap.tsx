@@ -40,7 +40,6 @@ export const BasicMap: React.FC<BasicMapProps> = ({
   useEffect(() => {
     loadGoogleMaps()
       .then(() => {
-        console.log('Google Maps loaded successfully');
         setIsMapLoaded(true);
         
         if (mapRef.current && !map) {
@@ -195,7 +194,6 @@ export const BasicMap: React.FC<BasicMapProps> = ({
               const place = autocomplete.getPlace();
               
               if (!place.geometry || !place.geometry.location) {
-                console.log('No se encontró la ubicación');
                 return;
               }
 
