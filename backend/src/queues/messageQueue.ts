@@ -1,10 +1,15 @@
 import { Queue, Worker, Job } from 'bullmq';
 import IORedis from 'ioredis';
 import { env } from '../common/config/envValidator';
-import { redisKeys } from '../common/constants';
+import { redisKeys, CONTEXT_KEYS } from '../common/constants';
 import logger from '../common/utils/logger';
-import { processMessageJob } from '../workers/messageWorker';
 import { WhatsAppMessageJob } from './types';
+import { redisService } from '../services/redis/RedisService';
+import { prisma } from '../server';
+import { SyncMetadataService } from '../services/sync/SyncMetadataService';
+import { MessageProcessor } from '../services/messaging/MessageProcessor';
+import { MessageContext } from '../services/messaging/MessageContext';
+import { sendWhatsAppMessage, sendWhatsAppInteractiveMessage, sendMessageWithUrlButton } from '../services/whatsapp';
 
 // Redis connection configuration
 const connection = {
@@ -72,6 +77,15 @@ export function startMessageWorker(): void {
     'whatsapp-messages',
     async (job: Job<WhatsAppMessageJob>) => {
       const userId = job.data.from;
+      const runId = job.id!; // Use BullMQ job ID as our unique run ID
+      const latestMessageTimestampKey = redisKeys.latestMessageTimestamp(userId);
+      
+      // ==========================================================
+      // ETAPA 1: ESCRITURA ATÓMICA Y RÁPIDA DEL MENSAJE DEL USUARIO
+      // ==========================================================
+      let customer: any;
+      let fullHistory: any[] = [];
+      let relevantHistory: any[] = [];
       let lockAcquired = false;
       
       try {
@@ -80,10 +94,9 @@ export function startMessageWorker(): void {
         const maxAttempts = 100; // 100 * 150ms = 15 seconds max wait
         
         while (attempts < maxAttempts) {
-          lockAcquired = await acquireUserLock(userId, 300); // 5 minute timeout
+          lockAcquired = await acquireUserLock(userId, 10); // Short 10 second lock
           
           if (lockAcquired) {
-            logger.debug(`Lock acquired for user ${userId} on attempt ${attempts + 1}`);
             break;
           }
           
@@ -97,19 +110,216 @@ export function startMessageWorker(): void {
           throw new Error(`Failed to acquire lock for user ${userId} after ${maxAttempts} attempts`);
         }
         
-        logger.info(`Processing job ${job.id} for user ${userId}`);
+        // OBTENER Y PREPARAR EL HISTORIAL DE FORMA ATÓMICA
+        customer = await prisma.customer.findUnique({ where: { whatsappPhoneNumber: userId } });
         
-        // Process the message
-        await processMessageJob(job.data);
+        if (!customer) {
+          // Crear nuevo cliente
+          const newCustomer = await prisma.customer.create({
+            data: {
+              whatsappPhoneNumber: userId,
+              lastInteraction: new Date(),
+              fullChatHistory: [],
+              relevantChatHistory: []
+            }
+          });
+          await SyncMetadataService.markForSync('Customer', newCustomer.id, 'REMOTE');
+          
+          // Para nuevos clientes, procesar con historiales vacíos
+          const messageContent = job.data.text?.body || '[Mensaje no textual]';
+          const userMessageEntry = {
+            role: 'user',
+            content: messageContent,
+            timestamp: new Date(parseInt(job.data.timestamp, 10) * 1000).toISOString()
+          };
+          
+          const fullHistory = [userMessageEntry];
+          const relevantHistory = [userMessageEntry];
+          
+          // Procesar con el nuevo cliente
+          await MessageProcessor.processWithPipeline(
+            job.data,
+            runId,
+            newCustomer,
+            fullHistory,
+            relevantHistory
+          );
+          return;
+        }
+
+        // Cliente existente: obtener y actualizar historiales
+        fullHistory = Array.isArray(customer.fullChatHistory) ? customer.fullChatHistory : [];
+        relevantHistory = Array.isArray(customer.relevantChatHistory) ? customer.relevantChatHistory : [];
+
+        // Log del historial relevante ANTES de agregar el nuevo mensaje
+        logger.info(`[History Debug] User ${userId} - Relevant history BEFORE adding new message:`);
+        logger.info(`[History Debug] Current relevant history length: ${relevantHistory.length}`);
+        relevantHistory.forEach((msg: any, idx) => {
+          const content = msg.content.length > 100 ? msg.content.substring(0, 100) + "..." : msg.content;
+          logger.info(`[History Debug] Message ${idx + 1}: [${msg.role}] "${content}" at ${msg.timestamp}`);
+        });
+
+        // Añadir el mensaje actual
+        const messageContent = job.data.text?.body || '[Mensaje no textual]';
+        const userMessageEntry = {
+          role: 'user',
+          content: messageContent,
+          timestamp: new Date(parseInt(job.data.timestamp, 10) * 1000).toISOString()
+        };
         
-        // Small delay to ensure BullMQ completes its internal operations
-        await new Promise(resolve => setTimeout(resolve, 100));
+        fullHistory.push(userMessageEntry);
+        relevantHistory.push(userMessageEntry);
+
+        // Ordenar para garantizar la cronología
+        const sortHistory = (a: any, b: any) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime();
+        fullHistory.sort(sortHistory);
+        relevantHistory.sort(sortHistory);
+        relevantHistory = relevantHistory.slice(-30);
+        
+        // Log del historial relevante DESPUÉS de agregar el nuevo mensaje
+        logger.info(`[History Debug] User ${userId} - Relevant history AFTER adding new message:`);
+        logger.info(`[History Debug] Updated relevant history length: ${relevantHistory.length}`);
+        relevantHistory.forEach((msg: any, idx) => {
+          const content = msg.content.length > 100 ? msg.content.substring(0, 100) + "..." : msg.content;
+          logger.info(`[History Debug] Message ${idx + 1}: [${msg.role}] "${content}" at ${msg.timestamp}`);
+        });
+        
+        // Guardar el historial actualizado CON el mensaje del usuario
+        await prisma.customer.update({
+          where: { id: customer.id },
+          data: {
+            fullChatHistory: fullHistory as any,
+            relevantChatHistory: relevantHistory as any,
+            lastInteraction: new Date()
+          }
+        });
+        await SyncMetadataService.markForSync('Customer', customer.id, 'REMOTE');
         
       } finally {
-        // Always release the lock if we acquired it
         if (lockAcquired) {
           await releaseUserLock(userId);
-          logger.debug(`Lock released for user ${userId}`);
+        }
+      }
+      
+      // ==========================================================
+      // ETAPA 2: PROCESAMIENTO DE RESPUESTA (SIN BLOQUEO)
+      // ==========================================================
+      const isObsolete = await isJobObsolete(job, latestMessageTimestampKey);
+      if (isObsolete) {
+        logger.info(`[Cancelled] Job ${runId} is obsolete. Response generation aborted.`);
+        return;
+      }
+      
+      const finalContext = await MessageProcessor.processWithPipeline(
+        job.data,
+        runId,
+        customer,
+        fullHistory,
+        relevantHistory // Ya está limitado a 20
+      );
+        
+      // ==========================================================
+      // ETAPA 3: GUARDADO DE LA RESPUESTA DEL BOT (CON OTRO BLOQUEO)
+      // ==========================================================
+      const wasCancelled = await wasJobCancelled(job);
+      const skipHistoryUpdate = finalContext.get(CONTEXT_KEYS.SKIP_HISTORY_UPDATE);
+      
+      if (skipHistoryUpdate) {
+        logger.debug(`[History] Skipping history update - SKIP_HISTORY_UPDATE flag is set`);
+      }
+      
+      if (!wasCancelled && !skipHistoryUpdate) {
+        lockAcquired = false; // Reset for new lock
+        
+        try {
+          // Acquire lock again for saving bot response
+          lockAcquired = await acquireUserLock(userId, 10);
+          if (!lockAcquired) {
+            throw new Error(`Could not acquire lock for bot response on job ${runId}`);
+          }
+          
+          // Re-read history in case it changed while AI was processing
+          const latestCustomer = await prisma.customer.findUnique({ 
+            where: { id: customer.id } 
+          });
+          
+          let latestFullHistory = Array.isArray(latestCustomer?.fullChatHistory) 
+            ? latestCustomer.fullChatHistory 
+            : fullHistory;
+          let latestRelevantHistory = Array.isArray(latestCustomer?.relevantChatHistory) 
+            ? latestCustomer.relevantChatHistory 
+            : relevantHistory;
+          for (const response of finalContext.unifiedResponses || []) {
+            const textContent = response.content?.text;
+            const historyMarker = response.metadata?.historyMarker;
+            const isRelevant = response.metadata?.isRelevant;
+
+            if (textContent) {
+              const assistantEntry = {
+                role: 'assistant',
+                content: textContent,
+                timestamp: new Date().toISOString()
+              };
+              latestFullHistory.push(assistantEntry);
+
+              if (historyMarker || isRelevant) {
+                latestRelevantHistory.push({
+                  ...assistantEntry,
+                  content: historyMarker || textContent
+                });
+              }
+            }
+          }
+          
+          // Sort and limit
+          const sortHistory = (a: any, b: any) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime();
+          latestFullHistory.sort(sortHistory);
+          latestRelevantHistory.sort(sortHistory);
+          latestRelevantHistory = latestRelevantHistory.slice(-30);
+          
+          // Save the final history with bot response
+          await prisma.customer.update({
+            where: { id: customer.id },
+            data: {
+              fullChatHistory: latestFullHistory as any,
+              relevantChatHistory: latestRelevantHistory as any,
+              lastInteraction: new Date()
+            }
+          });
+          
+          await SyncMetadataService.markForSync('Customer', customer.id, 'REMOTE');
+          
+          // SEND RESPONSES ONLY AFTER SAVING HISTORY
+          await sendResponsesFromContext(finalContext);
+          
+        } finally {
+          if (lockAcquired) {
+            await releaseUserLock(userId);
+          }
+        }
+      }
+      
+      // Handle special case of SKIP_HISTORY_UPDATE (like reset)
+      else if (skipHistoryUpdate) {
+        const contextFullHistory = finalContext.get(CONTEXT_KEYS.FULL_CHAT_HISTORY);
+        const contextRelevantHistory = finalContext.get(CONTEXT_KEYS.RELEVANT_CHAT_HISTORY);
+        
+        // If context has empty histories (reset), save those
+        if (Array.isArray(contextFullHistory) && contextFullHistory.length === 0) {
+          await prisma.customer.update({
+            where: { id: customer.id },
+            data: {
+              fullChatHistory: [],
+              relevantChatHistory: [],
+              lastInteraction: new Date()
+            }
+          });
+          logger.info(`[History] Reset histories saved for user ${userId}.`);
+        }
+        
+        // Send any responses even if history wasn't updated
+        if (!wasCancelled) {
+          await sendResponsesFromContext(finalContext);
         }
       }
     },
@@ -123,7 +333,7 @@ export function startMessageWorker(): void {
 
   // Event handlers
   messageWorker.on('completed', (job: Job<WhatsAppMessageJob>) => {
-    logger.info(`Job ${job.id} for user ${job.data.from} completed successfully`);
+    // Job completed successfully
   });
 
   messageWorker.on('failed', (job: Job<WhatsAppMessageJob> | undefined, err: Error) => {
@@ -143,6 +353,69 @@ export function startMessageWorker(): void {
   });
 
   logger.info('BullMQ Message Worker started and listening for jobs');
+}
+
+// Helper function to check if a job is obsolete
+async function isJobObsolete(job: Job<WhatsAppMessageJob>, latestMessageTimestampKey: string): Promise<boolean> {
+  try {
+    const latestCombinedStr = await redisService.get(latestMessageTimestampKey);
+    if (!latestCombinedStr) return false;
+
+    const [latestWAStr, latestServerStr] = latestCombinedStr.split(':');
+    const latestWATimestamp = parseInt(latestWAStr, 10);
+    const latestServerTimestamp = latestServerStr ? parseInt(latestServerStr, 10) : 0;
+
+    const currentWATimestamp = parseInt(job.data.timestamp, 10);
+    const currentServerTimestamp = job.data.serverTimestamp || 0;
+
+    if (currentWATimestamp < latestWATimestamp) return true;
+    if (currentWATimestamp === latestWATimestamp && currentServerTimestamp < latestServerTimestamp) return true;
+
+    return false;
+  } catch (error) {
+    logger.warn(`[Pre-Process Check] Failed to check latest timestamp. Redis may be unavailable. Proceeding anyway.`, error);
+    return false;
+  }
+}
+
+// Helper function to check if a job was cancelled
+async function wasJobCancelled(job: Job<WhatsAppMessageJob>): Promise<boolean> {
+  const latestMessageTimestampKey = redisKeys.latestMessageTimestamp(job.data.from);
+  return isJobObsolete(job, latestMessageTimestampKey);
+}
+
+// Helper function to send responses from context
+async function sendResponsesFromContext(context: MessageContext): Promise<void> {
+  for (const response of context.unifiedResponses) {
+    if (!response.metadata.shouldSend) continue;
+    
+    try {
+      // Send URL button if exists
+      if (response.content?.urlButton) {
+        const { title, body, buttonText, url } = response.content.urlButton;
+        await sendMessageWithUrlButton(
+          context.message.from,
+          title,
+          body,
+          buttonText,
+          url
+        );
+      }
+      // Send text if exists
+      else if (response.content?.text) {
+        await sendWhatsAppMessage(context.message.from, response.content.text);
+      }
+      // Send interactive message if exists
+      else if (response.content?.interactive) {
+        await sendWhatsAppInteractiveMessage(
+          context.message.from, 
+          response.content.interactive
+        );
+      }
+    } catch (error) {
+      logger.error(`Error sending response for job ${context.runId}:`, error);
+    }
+  }
 }
 
 export async function stopMessageWorker(): Promise<void> {

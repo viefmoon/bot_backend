@@ -7,6 +7,8 @@ import { ExternalServiceError, ErrorCode } from '../../common/services/errors';
 import { MessageSplitter } from '../../common/utils/messageSplitter';
 import { messageQueue } from '../../queues/messageQueue';
 import { WhatsAppMessageJob } from '../../queues/types';
+import { redisService } from '../redis/RedisService';
+import { redisKeys } from '../../common/constants';
 
 export class WhatsAppService {
   private static readonly WHATSAPP_API_URL = 'https://graph.facebook.com/v17.0';
@@ -23,7 +25,6 @@ export class WhatsAppService {
 
     if (mode && token) {
       if (mode === 'subscribe' && token === this.VERIFY_TOKEN) {
-        logger.info('Webhook verified');
         return { verified: true, challenge };
       }
     }
@@ -100,12 +101,31 @@ export class WhatsAppService {
         }
       }
       
-      // 4. Prepare job data if message passed age check
+      // 4. Set latest message timestamp signal in Redis
+      const latestMessageTimestampKey = redisKeys.latestMessageTimestamp(from);
+      // Create a combined timestamp: WhatsApp timestamp + server reception time in milliseconds
+      // This handles multiple messages in the same second
+      const serverTimestamp = Date.now();
+      const combinedTimestamp = `${message.timestamp}:${serverTimestamp}`;
+      
+      // Use a TTL of 300 seconds (5 minutes) to handle longer queue times
+      try {
+        const setResult = await redisService.set(latestMessageTimestampKey, combinedTimestamp, 300);
+        if (!setResult) {
+          logger.warn(`[Signal] Failed to set latest timestamp for ${from}. Redis may be unavailable. Proceeding anyway.`);
+        }
+      } catch (error) {
+        logger.warn(`[Signal] Error setting timestamp in Redis for ${from}:`, error);
+        // Continue processing even if Redis fails
+      }
+      
+      // 5. Prepare job data if message passed age check
       const jobData: WhatsAppMessageJob = {
         id: message.id,
         from: message.from,
         type: message.type,
         timestamp: message.timestamp,
+        serverTimestamp: serverTimestamp, // Add server timestamp for combined comparison
         text: message.text,
         interactive: message.interactive,
         audio: message.audio
@@ -116,8 +136,6 @@ export class WhatsAppService {
       await messageQueue.add(`msg-${from}`, jobData, {
         jobId: messageId, // Use WhatsApp message ID for deduplication
       });
-      
-      logger.info(`Message ${messageId} from ${from} enqueued for processing`);
       
     } catch (error) {
       logger.error('Error enqueuing incoming message:', error);
@@ -142,8 +160,6 @@ export class WhatsAppService {
         }
       );
       
-      logger.debug(`Full message sent to ${to}:`, message);
-      logger.info(`Message sent to ${to} (${message.length} chars)`);
       return { success: true, messageId: response.data.messages[0].id };
     } catch (error: any) {
       logger.error('Error sending WhatsApp message:', error.response?.data || error.message);
@@ -175,9 +191,6 @@ export class WhatsAppService {
         }
       );
       
-      const messageType = interactive.type || 'interactive';
-      const buttonText = interactive.action?.button || interactive.action?.buttons?.[0]?.reply?.title || '';
-      logger.info(`Interactive message (${messageType}) sent to ${to}${buttonText ? `: "${buttonText}"` : ''}`);
       return response.data.messages[0].id;
     } catch (error: any) {
       logger.error('Error sending interactive message:', error.response?.data || error.message);

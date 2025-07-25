@@ -11,6 +11,7 @@ import { redisKeys, REDIS_KEYS, CONTEXT_KEYS } from '../../common/constants';
 import logger from '../../common/utils/logger';
 import { SyncMetadataService } from '../sync/SyncMetadataService';
 import { MessageContext } from '../messaging/MessageContext';
+import { ResponseBuilder, ResponseType, UnifiedResponse } from '../messaging/types/responses';
 import {
   ProcessedOrderData,
   PreOrderWorkflowResult,
@@ -26,7 +27,7 @@ export class PreOrderWorkflowService {
     orderData: ProcessedOrderData;
     customerId: string;
     whatsappNumber: string;
-  }): Promise<PreOrderWorkflowResult> {
+  }): Promise<{ workflowResult: PreOrderWorkflowResult; responseToSend: UnifiedResponse }> {
     try {
       logger.info('Creating preorder with workflow', { 
         customerId: params.customerId,
@@ -62,24 +63,27 @@ export class PreOrderWorkflowService {
       const actionToken = await this.generateActionToken(preOrderResult.preOrderId);
       const expiresAt = new Date(Date.now() + this.TOKEN_TTL_SECONDS * 1000);
       
-      await this.sendOrderSummaryWithButtons(
+      // NO ENVIAR! Solo construir la respuesta.
+      const responseToSend = await this.buildOrderSummaryResponse(
         params.whatsappNumber, 
         preOrderResult,
         actionToken
       );
-      
+
       await this.updateChatHistoryWithPreOrder(params.whatsappNumber, preOrderResult);
       
-      logger.info('PreOrder workflow completed', { 
-        preOrderId: preOrderResult.preOrderId,
-        token: actionToken.substring(0, 8) + '...' 
-      });
-      
-      return { 
+      const workflowResult = { 
         preOrderId: preOrderResult.preOrderId, 
         actionToken,
         expiresAt 
       };
+
+      logger.info('PreOrder workflow completed, returning response to pipeline', { 
+        preOrderId: workflowResult.preOrderId
+      });
+      
+      // Devolver el resultado y el mensaje a enviar
+      return { workflowResult, responseToSend };
     } catch (error) {
       logger.error('Error in preorder workflow', error);
       throw error;
@@ -171,11 +175,15 @@ export class PreOrderWorkflowService {
     await redisService.del(key);
   }
   
-  static async sendOrderSummaryWithButtons(
+  /**
+   * NUEVO método helper para construir la respuesta del resumen de orden
+   * Extraído de sendOrderSummaryWithButtons para centralizar el envío de mensajes
+   */
+  private static async buildOrderSummaryResponse(
     whatsappNumber: string, 
     preOrderResult: any,
     token: string
-  ): Promise<void> {
+  ): Promise<UnifiedResponse> {
     let orderSummary = generateOrderSummary(preOrderResult);
     
     // WhatsApp button messages have a 1024 character limit for the body
@@ -224,10 +232,8 @@ export class PreOrderWorkflowService {
       }
     };
     
-    await WhatsAppService.sendInteractiveMessage(
-      whatsappNumber, 
-      message
-    );
+    // Usar el ResponseBuilder para crear una respuesta unificada
+    return ResponseBuilder.interactive(message, preOrderResult.preOrderId, true);
   }
   
   /**
@@ -329,8 +335,8 @@ export class PreOrderWorkflowService {
         timestamp: new Date()
       });
       
-      // Limitar historial relevante a 20 mensajes
-      const limitedRelevantHistory = relevantChatHistory.slice(-20);
+      // Limitar historial relevante a 30 mensajes
+      const limitedRelevantHistory = relevantChatHistory.slice(-30);
       
       await prisma.customer.update({
         where: { id: customer.id },
@@ -639,16 +645,22 @@ export class PreOrderWorkflowService {
       }
       
       // Create new preOrder with new address
-      const result = await this.createAndNotify({
+      const { workflowResult, responseToSend } = await this.createAndNotify({
         orderData,
         customerId: newAddress.customerId,
         whatsappNumber: params.whatsappNumber
       });
+
+      // Send the response since this is called from interactive handlers
+      await WhatsAppService.sendInteractiveMessage(
+        params.whatsappNumber, 
+        responseToSend.content!.interactive
+      );
       
       // Clean up the update flag
       await redisService.del(updateKey);
       
-      return result;
+      return workflowResult;
     } catch (error) {
       logger.error('Error recreating preOrder with new address', error);
       throw error;
@@ -739,14 +751,19 @@ export class PreOrderWorkflowService {
       }
       
       // Create new preOrder with updated type
-      const result = await this.createAndNotify({
+      const { workflowResult, responseToSend } = await this.createAndNotify({
         orderData,
         customerId: customer.id,
         whatsappNumber: params.whatsappNumber
       });
+
+      // Send the response since this is called from interactive handlers
+      await WhatsAppService.sendInteractiveMessage(
+        params.whatsappNumber, 
+        responseToSend.content!.interactive
+      );
       
-      
-      return result;
+      return workflowResult;
     } catch (error) {
       logger.error('Error recreating preOrder with new type', error);
       throw error;

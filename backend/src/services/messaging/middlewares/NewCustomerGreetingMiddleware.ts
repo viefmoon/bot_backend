@@ -33,7 +33,6 @@ export class NewCustomerGreetingMiddleware implements MessageMiddleware {
     const needsRegistration = hasNoName;
 
     if (needsRegistration) {
-      logger.info(`Customer ${context.message.from} needs registration. Sending order type selection.`);
 
       // Obtener el nombre del restaurante de la configuración
       const config = ConfigService.getConfig();

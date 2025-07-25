@@ -18,6 +18,7 @@ import { SendMessageDto } from './dto/whatsapp';
 import { CreateOrderDto } from './dto/order';
 import { ConfigService } from './services/config/ConfigService';
 import { prisma } from './lib/prisma';
+import { NotFoundError, ErrorCode } from './common/services/errors';
 
 // Validate environment variables
 try {
@@ -77,7 +78,16 @@ app.post('/backend/otp/verify',
     res.json({ valid: isValid });
   }));
 
-// Customer addresses endpoints
+// ===================================================================
+// DEPRECATED: Customer addresses REST endpoints
+// ===================================================================
+// These endpoints are NOT used by the current WhatsApp bot implementation
+// The bot uses a web-based flow via address-registration.ts
+// 
+// KEEP IF: Building an admin panel, mobile app, or external integration
+// REMOVE IF: Only using WhatsApp bot (reduces API surface and complexity)
+// ===================================================================
+/*
 app.post('/backend/customer/:customerId/addresses',
   validationMiddleware(AddressDto),
   asyncHandler(async (req: Request, res: Response) => {
@@ -101,7 +111,6 @@ app.get('/backend/customer/:customerId/addresses',
 
 app.get('/backend/customer/:customerId/addresses/default', asyncHandler(async (req: Request, res: Response) => {
   const { customerId } = req.params;
-  const { NotFoundError, ErrorCode } = await import('./common/services/errors');
   const address = await DeliveryInfoService.getCustomerDefaultAddress(customerId);
   if (!address) {
     throw new NotFoundError(
@@ -135,7 +144,6 @@ app.put('/backend/addresses/:addressId/set-default',
     });
     
     if (!existingAddress) {
-      const { NotFoundError, ErrorCode } = await import('./common/services/errors');
       throw new NotFoundError(
         ErrorCode.ADDRESS_NOT_FOUND,
         'Address not found',
@@ -158,7 +166,6 @@ app.delete('/backend/addresses/:addressId',
     });
     
     if (!existingAddress) {
-      const { NotFoundError, ErrorCode } = await import('./common/services/errors');
       throw new NotFoundError(
         ErrorCode.ADDRESS_NOT_FOUND,
         'Address not found',
@@ -169,6 +176,8 @@ app.delete('/backend/addresses/:addressId',
     await DeliveryInfoService.deleteCustomerAddress(addressId, existingAddress.customerId);
     res.json({ success: true });
   }));
+*/
+// ===================================================================
 
 // WhatsApp send message endpoint
 app.post('/backend/whatsapp/send-message',
@@ -190,11 +199,9 @@ async function startServer() {
   try {
     // Test database connection
     await prisma.$connect();
-    logger.info('Database connected successfully');
     
     // Load restaurant configuration
     await ConfigService.loadConfig();
-    logger.info('Restaurant configuration loaded');
     
     // Connect to Redis
     const { redisService } = await import('./services/redis/RedisService');
@@ -208,29 +215,45 @@ async function startServer() {
     preOrderCleanupInterval = setInterval(async () => {
       await PreOrderWorkflowService.cleanupExpiredPreOrders();
     }, 5 * 60 * 1000); // Run every 5 minutes
-    logger.info('PreOrder cleanup interval started');
     
     // Initialize embeddings on startup
     const { initializeEmbeddings } = await import('./startup/embeddingInitializer');
     await initializeEmbeddings();
     
     const server = app.listen(PORT, () => {
-      logger.info(`Server is running on port ${PORT}`);
+      console.log(`Server is running on port ${PORT}`);
     });
     
-    // Initialize WebSocket for sync notifications
+    // Initialize WebSocket for sync notifications with Redis adapter
     const io = await import('socket.io');
+    const { createAdapter } = await import('@socket.io/redis-adapter');
+    const IORedis = (await import('ioredis')).default;
+    
+    // Create pub/sub clients for Socket.IO
+    const pubClient = new IORedis({
+      host: env.REDIS_HOST || 'localhost',
+      port: parseInt(env.REDIS_PORT || '6380', 10),
+      password: env.REDIS_PASSWORD,
+    });
+    const subClient = pubClient.duplicate();
+    
     const socketServer = new io.Server(server, {
       cors: {
         origin: '*', // Configure this properly in production
         methods: ['GET', 'POST']
       },
-      path: '/socket.io/'
+      path: '/socket.io/',
+      adapter: createAdapter(pubClient, subClient)
     });
     
     const { SyncNotificationService } = await import('./services/sync/SyncNotificationService');
     SyncNotificationService.initialize(socketServer);
-    logger.info('WebSocket server initialized for sync notifications');
+    logger.info('WebSocket server initialized with Redis adapter');
+    // WebSocket server initialized
+    
+    // Initialize sync retry service
+    const { SyncRetryService } = await import('./services/sync/SyncRetryService');
+    await SyncRetryService.initialize();
   } catch (error) {
     logger.error('Failed to start server:', error);
     process.exit(1);

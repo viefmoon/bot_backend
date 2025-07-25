@@ -31,15 +31,13 @@ export class TextProcessingService {
       );
     }
 
-    let relevantChatHistory = context.get(CONTEXT_KEYS.RELEVANT_CHAT_HISTORY) || [];
-    
-    // Create a working copy that includes the current message
-    const workingHistory = [...relevantChatHistory];
-    workingHistory.push({ role: "user", content: text });
+    // El historial que viene en el contexto YA incluye el mensaje actual del usuario,
+    // preparado y ordenado por el worker.
+    const relevantChatHistory = context.get(CONTEXT_KEYS.RELEVANT_CHAT_HISTORY) || [];
     
     try {
-      // Process with AI - use workingHistory that includes the current message
-      const messages: Content[] = workingHistory.map(
+      // Usamos 'relevantChatHistory' directamente - ya incluye el mensaje actual
+      const messages: Content[] = relevantChatHistory.map(
         ({ role, content }: any) => ({
           role: role === "assistant" ? "model" : role,
           parts: [{ text: content }]
@@ -109,13 +107,24 @@ export class TextProcessingService {
           }
         }
       }
-    } catch (error) {
+    } catch (error: any) {
       logger.error("Error processing text message:", error);
-      const errorResponse = ResponseBuilder.error(
-        'PROCESSING_ERROR',
-        "Error al procesar la solicitud: " + (error as Error).message
-      );
-      context.addUnifiedResponse(errorResponse);
+      
+      // Si es un ExternalServiceError con código GEMINI_ERROR, usar el mensaje amigable
+      if (error.code === ErrorCode.GEMINI_ERROR) {
+        const errorResponse = ResponseBuilder.error(
+          ErrorCode.GEMINI_ERROR,
+          "🤖 El asistente no está disponible temporalmente. Por favor, intenta más tarde."
+        );
+        context.addUnifiedResponse(errorResponse);
+      } else {
+        // Para otros errores, usar un mensaje genérico
+        const errorResponse = ResponseBuilder.error(
+          'PROCESSING_ERROR',
+          "Lo siento, ocurrió un error procesando tu mensaje. Por favor intenta de nuevo."
+        );
+        context.addUnifiedResponse(errorResponse);
+      }
     }
   }
 
@@ -139,18 +148,18 @@ export class TextProcessingService {
         scheduledAt: preprocessedContent.scheduledAt,
       };
       
-      // Use the PreOrderWorkflowService
-      const workflowResult = await PreOrderWorkflowService.createAndNotify({
+      // Ahora createAndNotify devuelve el resultado y la respuesta
+      const { workflowResult, responseToSend } = await PreOrderWorkflowService.createAndNotify({
         orderData,
         customerId: context.customer!.id,
         whatsappNumber: context.message.from,
       });
       
+      // AÑADIR la respuesta devuelta al contexto del pipeline
+      context.addUnifiedResponse(responseToSend);
+
       // Store the action token in context for potential tracking
       context.set(CONTEXT_KEYS.LAST_PREORDER_TOKEN, workflowResult.actionToken);
-      
-      // Mark that interactive response was already sent by the workflow
-      context.set(CONTEXT_KEYS.INTERACTIVE_RESPONSE_SENT, true);
     } catch (error: any) {
       logger.error('Error creating preorder:', error);
       

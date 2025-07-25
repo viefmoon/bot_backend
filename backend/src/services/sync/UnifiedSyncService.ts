@@ -3,6 +3,7 @@ import { OrderType } from '@prisma/client';
 import logger from '../../common/utils/logger';
 import { SyncMetadataService } from './SyncMetadataService';
 import { EmbeddingManager } from './EmbeddingManager';
+import { SyncRetryService } from './SyncRetryService';
 
 interface PullChangesResponse {
   pending_orders: any[];
@@ -824,6 +825,9 @@ export class UnifiedSyncService {
         data: { shiftOrderNumber: order.shiftOrderNumber }
       });
       entities.push({ entityType: 'Order', entityId: order.orderId });
+      
+      // Cancel any pending retry jobs for this order
+      await SyncRetryService.cancelRetries(order.orderId);
     }
 
     // Add customers to entities list

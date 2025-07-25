@@ -10,7 +10,7 @@ module.exports = {
       // API Server Configuration
       name: 'whatsapp-api',
       script: 'dist/src/server.js',
-      instances: 1, // API usually needs only one instance
+      instances: 1, // API usually runs as single instance
       autorestart: true,
       watch: false,
       max_memory_restart: '1G',
@@ -23,10 +23,11 @@ module.exports = {
       time: true,
     },
     {
-      // Worker Configuration
+      // Worker Process Configuration
       name: 'whatsapp-worker',
-      script: 'dist/src/workers/messageWorker.js',
-      instances: parseInt(process.env.NUM_WORKERS || '1', 10), // Read from .env
+      script: 'dist/src/run-workers.js',
+      instances: parseInt(process.env.NUM_WORKERS || '2', 10), // Scale workers based on env
+      exec_mode: 'cluster',
       autorestart: true,
       watch: false,
       max_memory_restart: '1G',
@@ -37,7 +38,6 @@ module.exports = {
       out_file: 'logs/worker-out.log',
       log_file: 'logs/worker-combined.log',
       time: true,
-      exec_mode: 'cluster', // Enable cluster mode for multiple instances
     },
   ],
 

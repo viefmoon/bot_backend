@@ -7,6 +7,7 @@ import { CreateOrderDto } from '../../../dto/order';
 import { sendWhatsAppMessage, WhatsAppService } from "../../whatsapp";
 import { OrderFormattingService } from "./OrderFormattingService";
 import { SyncMetadataService } from "../../sync/SyncMetadataService";
+import { SyncNotificationService } from "../../sync/SyncNotificationService";
 
 export class OrderManagementService {
   async confirmPreOrder(preOrderId: number): Promise<Order> {
@@ -115,8 +116,7 @@ export class OrderManagementService {
     await SyncMetadataService.markForSync('Order', order.id, 'REMOTE');
     
     try {
-      const { SyncNotificationService } = await import('../../sync/SyncNotificationService');
-      await SyncNotificationService.notifyNewOrder(order.id);
+      await SyncNotificationService.notifyPendingChanges(order.id);
     } catch (error) {
       logger.warn('Could not notify sync service about new order:', error);
     }

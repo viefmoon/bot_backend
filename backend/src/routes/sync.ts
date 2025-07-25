@@ -2,6 +2,7 @@ import { Router, Request, Response } from 'express';
 import { asyncHandler } from '../common/middlewares/errorHandler';
 import { apiKeyAuthMiddleware } from '../common/middlewares/apiKeyAuth.middleware';
 import { UnifiedSyncService } from '../services/sync/UnifiedSyncService';
+import { SyncNotificationService } from '../services/sync/SyncNotificationService';
 import logger from '../common/utils/logger';
 
 const router = Router();
@@ -95,6 +96,34 @@ router.post('/pull-changes', apiKeyAuthMiddleware, asyncHandler(async (req: Requ
       }
     });
   }
+}));
+
+// Debug endpoint to check WebSocket connections and send test notification
+router.get('/debug/websocket', apiKeyAuthMiddleware, asyncHandler(async (req: Request, res: Response) => {
+  const clients = await SyncNotificationService.getConnectedClients();
+  const isConnected = await SyncNotificationService.isAnyClientConnected();
+  
+  logger.info('WebSocket debug endpoint called', {
+    connectedClients: clients.length,
+    clients
+  });
+  
+  res.json({
+    websocket: {
+      connected: isConnected,
+      clientCount: clients.length,
+      clients
+    }
+  });
+}));
+
+// Send test notification to all connected clients
+router.post('/debug/test-notification', apiKeyAuthMiddleware, asyncHandler(async (req: Request, res: Response) => {
+  const result = SyncNotificationService.sendTestNotification();
+  
+  logger.info('Test notification sent', result);
+  
+  res.json(result);
 }));
 
 export default router;
