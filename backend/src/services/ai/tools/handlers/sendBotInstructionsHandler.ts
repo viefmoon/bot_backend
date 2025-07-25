@@ -2,7 +2,6 @@ import { ToolHandler } from '../types';
 import { CHATBOT_HELP_MESSAGE } from '../../../../common/config/predefinedMessages';
 import { ConfigService } from '../../../config/ConfigService';
 import { UnifiedResponse, ResponseBuilder, ResponseType } from '../../../messaging/types/responses';
-import logger from '../../../../common/utils/logger';
 
 /**
  * Handles the send_bot_instructions function call

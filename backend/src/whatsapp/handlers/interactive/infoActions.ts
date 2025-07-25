@@ -13,7 +13,6 @@ import { ConfigService } from '../../../services/config/ConfigService';
 import { getFormattedBusinessHours } from '../../../common/utils/timeUtils';
 import { BusinessLogicError, ErrorCode } from '../../../common/services/errors';
 import { UnifiedResponse, ResponseBuilder } from '../../../services/messaging/types';
-import logger from '../../../common/utils/logger';
 
 /**
  * Send menu to customer

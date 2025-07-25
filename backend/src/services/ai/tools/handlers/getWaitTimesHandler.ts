@@ -2,7 +2,6 @@ import { ToolHandler } from '../types';
 import { WAIT_TIMES_MESSAGE } from '../../../../common/config/predefinedMessages';
 import { RestaurantService } from '../../../restaurant/RestaurantService';
 import { UnifiedResponse, ResponseBuilder, ResponseType } from '../../../messaging/types/responses';
-import logger from '../../../../common/utils/logger';
 
 /**
  * Handles the get_wait_times function call

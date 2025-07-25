@@ -1,7 +1,6 @@
 import { ToolHandler } from '../types';
 import { AIOrderItem, transformAIOrderItem } from '../../../../common/types';
 import { UnifiedResponse, ResponseBuilder } from '../../../messaging/types/responses';
-import logger from '../../../../common/utils/logger';
 
 /**
  * Handles the map_order_items function call

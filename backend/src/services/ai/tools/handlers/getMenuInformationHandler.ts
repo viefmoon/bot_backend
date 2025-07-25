@@ -1,7 +1,6 @@
 import { ToolHandler } from '../types';
 import { MenuSearchService } from '../../MenuSearchService';
 import { ResponseBuilder, UnifiedResponse } from '../../../messaging/types/responses';
-import logger from '../../../../common/utils/logger';
 
 /**
  * Handles the get_menu_information function call.

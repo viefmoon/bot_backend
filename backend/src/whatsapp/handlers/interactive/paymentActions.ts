@@ -8,7 +8,6 @@ import Stripe from 'stripe';
 import { env } from '../../../common/config/envValidator';
 import { BusinessLogicError, ErrorCode } from '../../../common/services/errors';
 import { getCurrentMexicoTime } from '../../../common/utils/timeUtils';
-import logger from '../../../common/utils/logger';
 
 const stripeClient = env.STRIPE_SECRET_KEY 
   ? new Stripe(env.STRIPE_SECRET_KEY, {
